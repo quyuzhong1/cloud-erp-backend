@@ -32,41 +32,6 @@ import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 @RequestMapping("/cfgSupplierSalesCondition")
 public class CfgSupplierSalesConditionController extends BaseController {
 
-    @Resource
-    private CfgSupplierSalesConditionService cfgSupplierSalesConditionService;
-
-    /**
-    * 新增
-    * @author jack
-    * @date:  2025-06-13
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "销量设置条件明细新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgSupplierSalesConditionDTO.AddDTO dto) {
-        return success(cfgSupplierSalesConditionService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-06-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "销量设置条件明细修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "scm:cfgSupplierSalesCondition:update",
-        serviceClass = CfgSupplierSalesConditionService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgSupplierSalesConditionDTO.UpdateDTO dto) {
-        cfgSupplierSalesConditionService.update(dto);
-        return success();
-    }
-
 
 
 }

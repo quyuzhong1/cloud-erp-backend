@@ -9,26 +9,34 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
+import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
+import com.erp.server.scm.service.CfgSupplierSalesConditionService;
 import com.erp.server.scm.service.CfgSupplierSalesService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.SupplierService;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
+import java.math.BigDecimal;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT;
 
 /**
  * <p>
@@ -44,15 +52,23 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private CfgSupplierSalesConditionService cfgConditionService;
+
+    @Resource
+    private SupplierService supplierService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgSupplierSalesDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(CfgSupplierSalesDTO.CommonDTO addDTO) {
+        handleData(addDTO);
+
         CfgSupplierSalesEntity cfgSupplierSalesEntity = new CfgSupplierSalesEntity();
         BeanMapperUtils.copy(addDTO, cfgSupplierSalesEntity);
-
-        // 数据处理
-        handleData(cfgSupplierSalesEntity);
 
         log.info("开始新增销量设置");
         boolean save = super.save(cfgSupplierSalesEntity);
@@ -62,11 +78,39 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销量设置" , cfgSupplierSalesEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        moduleOperateLogService.addModuleOperateLog(msg, null, cfgSupplierSalesEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(), "新增操作");
+
+        //处理配置条件
+        handlerCondition(addDTO, cfgSupplierSalesEntity.getId());
 
         return new BaseResultDTO.AddDTO(cfgSupplierSalesEntity.getId(), cfgSupplierSalesEntity.getId());
+    }
+
+    private void handlerCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
+        //sku配置
+        if(CollUtil.isNotEmpty(addDTO.getSkuList())){
+            cfgConditionService.saveRuleCondition(id, addDTO.getSkuList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+        }
+
+        //可销库存配置
+        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList())){
+            cfgConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(), addDTO.getWarehouseType());
+        }
+
+        //销量统计配置
+        if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
+            cfgConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+        }
+
+        //通知配置
+        if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
+            cfgConditionService.saveRuleCondition(id, addDTO.getNoticeList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+        }
+
+        if(Objects.nonNull(addDTO.getBlackCondition())){
+            cfgConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+        }
     }
 
     /**
@@ -74,25 +118,27 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgSupplierSalesDTO.UpdateDTO addOrUpdateDTO) {
+    public Boolean update(CfgSupplierSalesDTO.CommonDTO addOrUpdateDTO) {
         CfgSupplierSalesEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销量设置"));
-        CfgSupplierSalesEntity cfgSupplierSalesEntity =  BeanMapperUtils.map(CfgSupplierSalesEntity.class, addOrUpdateDTO);
 
         // 数据处理
-        handleData(cfgSupplierSalesEntity);
+        handleData(addOrUpdateDTO);
+
+        CfgSupplierSalesEntity cfgSupplierSalesEntity =  BeanMapperUtils.map(CfgSupplierSalesEntity.class, addOrUpdateDTO);
+
         log.info("编辑 开始修改销量设置数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgSupplierSalesEntity);
         if(!save) {
             throw new ServiceException("销量设置保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
-            log.info("编辑 开始记录销量设置日志数据，id：【{}】", cfgSupplierSalesEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSupplierSalesEntity.getId(), "销量设置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        moduleOperateLogService.addModuleOperateLogByObj(old, cfgSupplierSalesEntity, null, cfgSupplierSalesEntity.getId(),"", msg);
+        log.info("编辑 开始记录销量设置日志数据，id：【{}】", cfgSupplierSalesEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSupplierSalesEntity.getId(), "销量设置");
+        moduleOperateLogService.addModuleOperateLogByObj(old, cfgSupplierSalesEntity, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(),"", msg);
+
+        //处理配置条件
+        handlerCondition(addOrUpdateDTO, cfgSupplierSalesEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -100,21 +146,96 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     /**
      * 新增修改处理数据
      */
-    private void handleData(CfgSupplierSalesEntity cfgSupplierSalesEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(CfgSupplierSalesDTO.CommonDTO dto) {
+        //供应商名称
+        SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(() -> new ServiceException("未找到供应商数据"));
+        dto.setSupplierCode(supplierEntity.getCode());
+        dto.setSupplierName(supplierEntity.getName());
+
+        //处理销量比列
+        String salesRatioType = dto.getSalesRatioType();
+        if(Objects.equals(salesRatioType,CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
+            //todo 查询供应商的采购比例
+        }else if(Objects.equals(salesRatioType,CfgSupplierSalesSalesRatioTypeEnum.SALESSTATISTICRATIO.getCode())){
+            if(Objects.isNull(dto.getSalesRatio()) ){
+                throw new ServiceException("请填写销量比例");
+            }
+            if(dto.getSalesRatio().compareTo(BigDecimal.ZERO)<=0 || dto.getSalesRatio().compareTo(BigDecimal.ONE)>0){
+                throw new ServiceException("请填写销量比例范围0-1");
+            }
+        }else {
+            throw new ServiceException("请选择正确的销量比例类型");
+        }
+
+        //字段显示
+        dto.setDisplayField(String.join(",", dto.getDisplayFieldList()));
+
+
+        //黑名单列表
+        if(Boolean.TRUE.equals(dto.getIsBlack())){
+            if(CollUtil.isEmpty(dto.getBlackList())){
+                throw new ServiceException("勾选黑名单SKU，则黑名单sku列表不能为空");
+            }
+            CfgSupplierSalesConditionDTO.ConditionDTO black = new CfgSupplierSalesConditionDTO.ConditionDTO();
+            black.setType(CfgSupplierSalesConditionTypeEnum.BLACK.getCode());
+            black.setField("skuId");
+            black.setCompare("inList");
+            black.setLogic("and");
+            black.setSalesSettingId("");
+            black.setSourceType(SourceTypeEnum.CFG_SUPPLIER_SALES.getCode());
+            black.setValueType("String");
+            black.setValue(String.join(",",  dto.getBlackList()));
+            dto.setBlackCondition(black);
+        }
+
     }
 
     @Override
+    public CfgSupplierSalesDTO.ViewDTO view(String id) {
+        CfgSupplierSalesEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到销量设置数据"));
+        // 数据填充处理
+        return fillOne(entity);
+
+    }
+
+    private CfgSupplierSalesDTO.ViewDTO fillOne(CfgSupplierSalesEntity entity) {
+        CfgSupplierSalesDTO.ViewDTO data = new CfgSupplierSalesDTO.ViewDTO();
+        BeanMapper.copy(entity,data);
+
+        return data;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         CfgSupplierSalesEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到销量设置数据"));
         // 删除主单数据
         super.removeById(id);
         // 删除子表
-
+        cfgConditionService.lambdaUpdate()
+                .set(CfgSupplierSalesConditionEntity::getIsDeleted, Boolean.TRUE)
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                .update();
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "销量设置");
-        moduleOperateLogService.addModuleOperateLog(msg, null, entity.getId(), "销量设置删除");
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), entity.getId(), "销量设置删除");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO enable(String id, Boolean disabled) {
+        CfgSupplierSalesEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到销量设置数据"));
+        if(!entity.getDisabled().equals(disabled)){
+            lambdaUpdate()
+                    .set(CfgSupplierSalesEntity::getDisabled, disabled)
+                    .eq(CfgSupplierSalesEntity::getId, id)
+                    .update();
+            // 日志
+            String msg = StrUtil.format("用户【{}】操作【{}】单据变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(),  "销量设置",Objects.equals(disabled, Boolean.FALSE) ? "启用" : "停用");
+            moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), entity.getId(), "更新销量设置");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
     }
 
 
@@ -145,6 +266,10 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         }
     }
 
+    @Override
+    public void exportList(CfgSupplierSalesDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("销量设置导出", EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT.getCode(), pagingParamDTO);
+    }
 
 
 }

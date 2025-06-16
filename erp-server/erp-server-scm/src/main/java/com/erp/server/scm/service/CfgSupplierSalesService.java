@@ -5,6 +5,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
+
 /**
  * <p>
  * 销量设置 服务类
@@ -22,7 +25,7 @@ public interface CfgSupplierSalesService extends SuperService<CfgSupplierSalesEn
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgSupplierSalesDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(CfgSupplierSalesDTO.CommonDTO dto);
 
     /**
     * 修改
@@ -31,10 +34,16 @@ public interface CfgSupplierSalesService extends SuperService<CfgSupplierSalesEn
     * @param dto
     * @return
     */
-    Boolean update(CfgSupplierSalesDTO.UpdateDTO dto);
+    Boolean update(CfgSupplierSalesDTO.CommonDTO dto);
 
 
     PagingVO<CfgSupplierSalesDTO.ListDTO> paging(PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> pagingParamDTO);
 
     BatchResultDTO delete(String id);
+
+    BatchResultDTO enable(String id, Boolean disabled);
+
+    void exportList(CfgSupplierSalesDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
+
+    CfgSupplierSalesDTO.ViewDTO view(String id);
 }

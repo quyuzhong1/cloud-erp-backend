@@ -42,6 +42,10 @@ public class ExportScmFeignController {
     private SupplierReportService supplierReportService;
     @Resource
     private SupplierUserService supplierUserService;
+
+    @Resource
+    private CfgSupplierSalesService cfgSupplierSalesService;
+    
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
@@ -143,6 +147,12 @@ public class ExportScmFeignController {
     @WebAdvanceQuery(handler = SubcontractChangeQueryHandler.class)
     public PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(@RequestBody PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
         return subcontractChangeService.exportSubcontractChangeOrder(dto);
+    }
+
+    @PostMapping("/cfgSupplierSales")
+    @WebAdvanceQuery
+    public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
+        return cfgSupplierSalesService.paging(dto);
     }
 
 }

@@ -49,6 +49,8 @@ public class CfgSupplierSalesConditionEntity extends BaseEntity<CfgSupplierSales
     */
     @TableField("field")
     private String field;
+    @TableField(exist = false)
+    private String fieldName;
     /**
     * 比较符
     */

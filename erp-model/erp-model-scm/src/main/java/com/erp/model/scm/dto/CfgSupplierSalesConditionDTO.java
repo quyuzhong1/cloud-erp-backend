@@ -2,9 +2,8 @@ package com.erp.model.scm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -219,6 +218,88 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ConditionDTO {
+
+        private String id;
+
+        /**
+         * sales_setting_id
+         */
+        private String salesSettingId;
+
+        /**
+         * 配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置
+         */
+        private String type;
+
+        /**
+         * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓
+         */
+        private String warehouseType;
+
+        /**
+         * 左括号
+         */
+        private String leftBracket;
+
+        /**
+         * 条件的字段
+         */
+        @NotBlank(message = "条件的字段不能为空")
+        private String field;
+
+        /**
+         * 比较符
+         */
+        private String compare;
+
+        /**
+         * 对应的值
+         */
+        @NotBlank(message = "比较符不能为空")
+        private String value;
+
+        /**
+         * 右括号
+         */
+        private String rightBracket;
+
+        /**
+         * 逻辑关系 or 和 and
+         */
+        private String logic;
+
+        /**
+         * 顺序
+         */
+        private Integer index;
+
+        /**
+         * 值对应名称
+         */
+        private String name;
+
+        /**
+         * 条件所属规则来源
+         */
+        private String sourceType;
+
+        /**
+         * 值类型
+         */
+        private String valueType;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
+
+
+    }
+
 
 
 }

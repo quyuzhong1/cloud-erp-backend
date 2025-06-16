@@ -25,6 +25,7 @@ public enum SourceTypeEnum {
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
     SUPPLIER("supplier", "供应商列表","supplier"),
+    CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
 
 
     //WMS

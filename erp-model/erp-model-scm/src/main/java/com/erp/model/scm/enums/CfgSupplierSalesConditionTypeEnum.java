@@ -17,6 +17,7 @@ public enum CfgSupplierSalesConditionTypeEnum implements EnumMessage {
 	SALEABLESTOCK("saleableStock", "可销库存配置"),
 	SALESSTATISTIC("salesStatistic", "销量统计配置"),
 	NOTICE("notice", "通知配置"),
+	BLACK("black", "黑名单配置"),
     ;
     /**
      * 类型

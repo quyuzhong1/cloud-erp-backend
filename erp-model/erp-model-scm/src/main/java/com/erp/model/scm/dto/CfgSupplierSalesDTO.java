@@ -4,17 +4,16 @@ import java.math.BigDecimal;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -37,67 +36,97 @@ public class CfgSupplierSalesDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
-        /**
-        * 主键id
-        */
         private String  id;
 
         /**
-        * 供应商id
-        */
+         * 供应商id
+         */
         private String supplierId;
 
         /**
-        * 供应商编码
-        */
+         * 供应商编码
+         */
         private String supplierCode;
 
         /**
-        * 供应商名称
-        */
+         * 供应商名称
+         */
         private String supplierName;
 
         /**
-        * 页面权限：view=仅查看,download=查看并下载
-        */
+         * 页面权限：view=仅查看,download=查看并下载
+         */
         private String permission;
 
         /**
-        * 日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算
-        */
+         * 日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算
+         */
         private String dailySalesType;
 
         /**
-        * 销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例
-        */
+         * 销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例
+         */
         private String salesRatioType;
 
         /**
-        * 销量比例值
-        */
+         * 销量比例值
+         */
         private BigDecimal salesRatio;
 
         /**
-        * 是否启用通知
-        */
+         * 是否启用通知
+         */
         private Boolean noticeEnabled;
 
         /**
-        * 统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间
-        */
+         * 统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间
+         */
         private String dimension;
 
         /**
-        * 禁用状态
-        */
+         * 禁用状态
+         */
         private Boolean disabled;
 
         /**
-        * 字段显示
-        */
+         * 字段显示
+         */
         private String displayField;
+        private List<String> displayFieldList;
+        private List<String> displayFieldNameList;
 
+        /**
+         * 是否启用sku黑名单
+         */
+        private Boolean isBlack;
+        /**
+         * sku黑名单集合
+         */
+        private List<String> blackList;
+        private List<String> blackNameList;
+
+        /**
+         * sku查看配置
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> skuViewList;
+
+        /**
+         * 仓库类型
+         */
+        private String warehouseType;
+        /**
+         * 可销库存配置
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList ;
+
+        /**
+         * 销量统计配置
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> salesStatisticList ;
+        /**
+         * 通知配置执行条件
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> noticeList;
 
     }
 
@@ -129,53 +158,40 @@ public class CfgSupplierSalesDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
         * 供应商id
         */
-        @NotBlank(message = "供应商id不能为空")
-        @Size(max = 64,message = "供应商id最大长度不能超过64位")
+        @NotBlank(message = "供应商不能为空")
         private String supplierId;
-
-        /**
-        * 供应商编码
-        */
-        @NotBlank(message = "供应商编码不能为空")
-        @Size(max = 32,message = "供应商编码最大长度不能超过32位")
         private String supplierCode;
-
-        /**
-        * 供应商名称
-        */
-        @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 500,message = "供应商名称最大长度不能超过500位")
         private String supplierName;
 
         /**
         * 页面权限：view=仅查看,download=查看并下载
         */
-        @NotBlank(message = "页面权限：view=仅查看,download=查看并下载不能为空")
-        @Size(max = 32,message = "页面权限：view=仅查看,download=查看并下载最大长度不能超过32位")
+        @NotBlank(message = "页面权限不能为空")
         private String permission;
 
         /**
         * 日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算
         */
-        @NotBlank(message = "日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算不能为空")
-        @Size(max = 32,message = "日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算最大长度不能超过32位")
+        @NotBlank(message = "日均销量不能为空")
         private String dailySalesType;
 
         /**
         * 销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例
         */
-        @NotBlank(message = "销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例不能为空")
-        @Size(max = 32,message = "销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例最大长度不能超过32位")
+        @NotBlank(message = "销量比例不能为空")
         private String salesRatioType;
 
         /**
         * 销量比例值
         */
-        @NotNull(message = "销量比例值不能为空")
         @Digits(integer = 12, fraction = 4, message = "销量比例值整数位不能超过12位，小数位不能超过4位")
         private BigDecimal salesRatio;
 
@@ -188,8 +204,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
         * 统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间
         */
-        @NotBlank(message = "统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间不能为空")
-        @Size(max = 32,message = "统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间最大长度不能超过32位")
+        @NotBlank(message = "统计维度不能为空")
         private String dimension;
 
         /**
@@ -201,10 +216,45 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
         * 字段显示
         */
-        @NotBlank(message = "字段显示不能为空")
-        @Size(max = 255,message = "字段显示最大长度不能超过255位")
         private String displayField;
+        @NotEmpty(message = "字段显示不能为空")
+        private List<String> displayFieldList;
 
+        /**
+         * 是否启用sku黑名单
+         */
+        private Boolean isBlack;
+        /**
+         * sku黑名单集合
+         */
+        private List<String> blackList;
+
+        private CfgSupplierSalesConditionDTO.ConditionDTO blackCondition;
+
+        /**
+         * sku查看配置
+         */
+        @NotEmpty(message = "sku查看配置不能为空")
+        private List<CfgSupplierSalesConditionDTO. @Valid ConditionDTO> skuList;
+
+        /**
+         * 仓库类型
+         */
+        private String warehouseType;
+        /**
+         * 可销库存配置
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList ;
+
+        /**
+         * 销量统计配置
+         */
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> salesStatisticList ;
+        /**
+         * 通知配置执行条件
+         */
+        @NotEmpty(message = "通知配置不能为空")
+        private List<CfgSupplierSalesConditionDTO. @Valid ConditionDTO> noticeList;
 
     }
 
@@ -269,6 +319,7 @@ public class CfgSupplierSalesDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+        private String disabledName;
     }
 
 
@@ -336,6 +387,19 @@ public class CfgSupplierSalesDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EnableStatusDTO {
 
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "状态不能为空")
+        private Boolean disabled;
+
+    }
 
 }
