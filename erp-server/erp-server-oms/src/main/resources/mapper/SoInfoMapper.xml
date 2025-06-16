@@ -55,6 +55,7 @@
         sod.all_amount_local_currency AS allAmountLocalCurrency,
         sod.frozen_qty as frozenQty,
         sod.is_close,
+        sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName
@@ -219,6 +220,7 @@
             sod.is_close AS isClose,
             sod.platform_sku_no AS platformSkuNo,
             sod.frozen_qty as frozenQty,
+            sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
