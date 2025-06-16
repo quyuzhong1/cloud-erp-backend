@@ -178,4 +178,8 @@ public interface BusinessNoConstant {
     //售后
     String SHSQ = "SHSQ";
     String TCTZ = "TCTZ";
+
+    //合同管理
+    String GYSHT = "GYSHT";
+
 }
