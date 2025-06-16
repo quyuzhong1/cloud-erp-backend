@@ -5,11 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.entity.SalesSharingEntity;
 import com.erp.server.scm.mapper.SalesSharingMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesSharingService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.scm.service.OperateLogService;
-import com.erp.server.scm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper, SalesSharingEntity> implements SalesSharingService {
     @Autowired
-    private OperateLogService operateLogService;
+    private ModuleOperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -82,7 +81,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
             log.info("编辑 开始记录销量共享单日志数据，id：【{}】", salesSharingEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), salesSharingEntity.getId(), "销量共享单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, salesSharingEntity, null, salesSharingEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, salesSharingEntity, null, salesSharingEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 

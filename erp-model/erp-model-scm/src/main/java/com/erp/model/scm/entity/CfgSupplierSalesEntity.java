@@ -76,7 +76,7 @@ public class CfgSupplierSalesEntity extends BaseEntity<CfgSupplierSalesEntity> {
     @TableField("disabled")
     private Boolean disabled;
     /**
-    * 字段显示
+    * 字段显示 CfgSupplierSalesDisplayFieldEnum
     */
     @TableField("display_field")
     private String displayField;

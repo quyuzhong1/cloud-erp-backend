@@ -36,37 +36,35 @@ public class CfgSupplierSalesDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-        private String  id;
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
          * 供应商id
          */
         private String supplierId;
-
-        /**
-         * 供应商编码
-         */
         private String supplierCode;
-
-        /**
-         * 供应商名称
-         */
         private String supplierName;
 
         /**
          * 页面权限：view=仅查看,download=查看并下载
          */
         private String permission;
+        private String permissionName;
 
         /**
          * 日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算
          */
         private String dailySalesType;
+        private String dailySalesTypeName;
 
         /**
          * 销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例
          */
         private String salesRatioType;
+        private String salesRatioTypeName;
 
         /**
          * 销量比例值
@@ -82,6 +80,7 @@ public class CfgSupplierSalesDTO implements Serializable {
          * 统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间
          */
         private String dimension;
+        private String dimensionName;
 
         /**
          * 禁用状态
@@ -108,25 +107,26 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * sku查看配置
          */
-        private List<CfgSupplierSalesConditionDTO.ConditionDTO> skuViewList;
+        private List<CfgSupplierSalesConditionDTO.View> skuList;
 
         /**
          * 仓库类型
          */
         private String warehouseType;
+        private String warehouseTypeName;
         /**
          * 可销库存配置
          */
-        private List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList ;
+        private List<CfgSupplierSalesConditionDTO.View> saleableStockList ;
 
         /**
          * 销量统计配置
          */
-        private List<CfgSupplierSalesConditionDTO.ConditionDTO> salesStatisticList ;
+        private List<CfgSupplierSalesConditionDTO.View> salesStatisticList ;
         /**
          * 通知配置执行条件
          */
-        private List<CfgSupplierSalesConditionDTO.ConditionDTO> noticeList;
+        private List<CfgSupplierSalesConditionDTO.View> noticeList;
 
     }
 

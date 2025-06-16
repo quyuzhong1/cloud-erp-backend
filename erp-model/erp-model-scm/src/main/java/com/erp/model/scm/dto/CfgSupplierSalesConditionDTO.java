@@ -1,7 +1,11 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
@@ -204,6 +208,24 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
         */
         private String valueType;
 
+
+    }
+
+    @Getter
+    @Setter
+    public static class View {
+        private String id;
+        private String leftBracket;
+        private String field;
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS, tableName = "dict_rule_condition", queryFieldName = "key", returnFieldName = "value")
+        private String compare;
+        private String value;
+        private String rightBracket;
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS, tableName = "dict_rule_condition", queryFieldName = "key", returnFieldName = "value")
+        private String logic;
+        private String name;
+        private Integer index;
+        private String valueType;
 
     }
 

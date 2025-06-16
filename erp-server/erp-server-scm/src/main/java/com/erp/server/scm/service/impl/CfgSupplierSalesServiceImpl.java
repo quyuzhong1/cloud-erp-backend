@@ -4,19 +4,21 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
 import com.erp.server.scm.service.CfgSupplierSalesConditionService;
 import com.erp.server.scm.service.CfgSupplierSalesService;
@@ -25,6 +27,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -32,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
@@ -53,13 +58,15 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private CfgSupplierSalesConditionService CfgSupplierSalesConditionService;
+    private CfgSupplierSalesConditionService cfgSupplierSalesConditionService;
 
     @Resource
     private SupplierService supplierService;
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private ProductDetailFeign productDetailFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -90,26 +97,26 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     private void saveCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
         //sku配置
         if(CollUtil.isNotEmpty(addDTO.getSkuList())){
-            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSkuList(), RuleTypeEnum.SKU.getCode(),"");
+            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSkuList(), RuleTypeEnum.SKU.getCode(),"");
         }
 
         //可销库存配置
         if(CollUtil.isNotEmpty(addDTO.getSaleableStockList())){
-            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.SALEABLESTOCK.getCode(), addDTO.getWarehouseType());
+            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.SALEABLESTOCK.getCode(), addDTO.getWarehouseType());
         }
 
         //销量统计配置
         if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
-            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
         }
 
         //通知配置
         if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
-            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getNoticeList(), RuleTypeEnum.NOTICE.getCode(),"");
+            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getNoticeList(), RuleTypeEnum.NOTICE.getCode(),"");
         }
 
         if(Objects.nonNull(addDTO.getBlackCondition())){
-            CfgSupplierSalesConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), RuleTypeEnum.BLACK.getCode(),"");
+            cfgSupplierSalesConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), RuleTypeEnum.BLACK.getCode(),"");
         }
     }
 
@@ -145,18 +152,18 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     private void updateCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
         //sku配置
-        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(),"");
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(),"");
 
         //可销库存配置
-        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALEABLESTOCK.getCode(),addDTO.getWarehouseType());
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALEABLESTOCK.getCode(),addDTO.getWarehouseType());
 
         //销量统计配置
-        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
 
         //通知配置
-        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
 
-        CfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
+        cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
     }
 
     /**
@@ -215,6 +222,63 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     private CfgSupplierSalesDTO.ViewDTO fillOne(CfgSupplierSalesEntity entity) {
         CfgSupplierSalesDTO.ViewDTO data = new CfgSupplierSalesDTO.ViewDTO();
         BeanMapper.copy(entity,data);
+        data.setPermissionName(CfgSupplierSalesPermissionEnum.getName(data.getPermission()));
+
+        data.setDailySalesTypeName(CfgSupplierSalesDailySalesTypeEnum.getName(data.getDailySalesType()));
+
+        data.setSalesRatioTypeName(CfgSupplierSalesSalesRatioTypeEnum.getName(data.getSalesRatioType()));
+
+        data.setDimensionName(CfgSupplierSalesDimensionEnum.getName(data.getDimension()));
+        //字段显示
+        if(StringUtils.isNotBlank(entity.getDisplayField())){
+            List<String> displayFieldList = Arrays.asList(entity.getDisplayField().split(","));
+            data.setDisplayFieldList(displayFieldList);
+
+            List<String> displayFieldNameList = Optional.ofNullable(displayFieldList)
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .map(CfgSupplierSalesDisplayFieldEnum::getName)
+                    .collect(Collectors.toList());
+            data.setDisplayFieldNameList(displayFieldNameList);
+        }
+
+        //查询配置
+        List<CfgSupplierSalesConditionEntity> list = cfgSupplierSalesConditionService.list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, entity.getId()));
+
+        Map<String, List<CfgSupplierSalesConditionEntity>> map = list.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSourceType));
+
+        for (Map.Entry<String, List<CfgSupplierSalesConditionEntity>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            List<CfgSupplierSalesConditionEntity> value = entry.getValue();
+
+            List<CfgSupplierSalesConditionDTO.View> conditionList = value.stream()
+                    .sorted(Comparator.comparingInt(CfgSupplierSalesConditionEntity::getIndex))
+                    .map(e -> BeanMapperUtils.map(CfgSupplierSalesConditionDTO.View.class, e))
+                    .collect(Collectors.toList());
+
+            if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
+                data.setSkuList(conditionList);
+            }
+            if(Objects.equals(key,RuleTypeEnum.SALEABLESTOCK.getCode())){
+                data.setSaleableStockList(conditionList);
+            }
+            if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
+                data.setSalesStatisticList(conditionList);
+            }
+            if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
+                data.setNoticeList(conditionList);
+            }
+            if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
+                String sku = conditionList.get(0).getValue();
+                List<String> skuIdList = Arrays.asList(sku.split(","));
+                List<ProductDetailEntity> productDetailEntities = productDetailFeign.listByIds(skuIdList);
+                List<String> blackList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+                List<String> blackNameList = productDetailEntities.stream().map(ProductDetailEntity::getName).collect(Collectors.toList());
+                data.setBlackList(blackList);
+                data.setBlackNameList(blackNameList);
+            }
+        }
 
         return data;
     }
@@ -226,7 +290,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         // 删除主单数据
         super.removeById(id);
         // 删除子表
-        CfgSupplierSalesConditionService.lambdaUpdate()
+        cfgSupplierSalesConditionService.lambdaUpdate()
                 .set(CfgSupplierSalesConditionEntity::getIsDeleted, Boolean.TRUE)
                 .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
                 .update();
