@@ -41,11 +41,6 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
         private String salesSettingId;
 
         /**
-        * 配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置
-        */
-        private String type;
-
-        /**
         * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓
         */
         private String warehouseType;
@@ -140,13 +135,6 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
         private String salesSettingId;
 
         /**
-        * 配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置
-        */
-        @NotBlank(message = "配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置不能为空")
-        @Size(max = 32,message = "配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置最大长度不能超过32位")
-        private String type;
-
-        /**
         * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓
         */
         @NotBlank(message = "仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓不能为空")
@@ -229,11 +217,6 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
          * sales_setting_id
          */
         private String salesSettingId;
-
-        /**
-         * 配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置
-         */
-        private String type;
 
         /**
          * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓

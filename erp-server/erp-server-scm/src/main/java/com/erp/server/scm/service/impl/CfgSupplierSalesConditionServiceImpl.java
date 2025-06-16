@@ -10,8 +10,10 @@ import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
+import com.erp.model.scm.dto.CfgConditionDTO;
 import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import com.erp.server.scm.mapper.CfgSupplierSalesConditionMapper;
+import com.erp.server.scm.service.CfgConditionService;
 import com.erp.server.scm.service.CfgSupplierSalesConditionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -49,6 +51,8 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
 
     @Resource
     private SpElServer spElServer;
+    @Resource
+    private CfgConditionService cfgConditionService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -70,67 +74,68 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
     }
 
 
-//    @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    public void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType) {
-//        if(CollUtil.isNotEmpty(conditionList)){
-//            checkRuleCondition(conditionList);
-//        }
-//        //查询规则条件
-//        List<CfgSupplierSalesConditionEntity> oleConditions = list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
-//                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId));
-//        List<CfgConditionDTO.CommonDTO> cfgConditions = cfgConditionService.listByType(sourceType);
-//        Map<String, String> cfgConditionMap = cfgConditions.stream()
-//                .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField, CfgConditionDTO.CommonDTO::getConditionFieldName));
-//        List<String> actionIds = conditionList.stream().map(CfgSupplierSalesConditionDTO.ConditionDTO::getId).collect(Collectors.toList());
-//        // 处理删除的数据
-//        List<String> removeIds = oleConditions.stream()
-//                .map(CfgSupplierSalesConditionEntity::getId)
-//                .filter(id -> !actionIds.contains(id))
-//                .collect(Collectors.toList());
-//        if (!CollectionUtils.isEmpty(removeIds)) {
-//            List<Pair<String, String>> removePairList = oleConditions.stream()
-//                    .filter(old -> removeIds.contains(old.getId()))
-//                    .map(old -> Pair.create(salesSettingId, cfgConditionMap.getOrDefault(old.getField(), "")))
-//                    .collect(Collectors.toList());
-//            removeByIds(removeIds);
-//            operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
-//        }
-//        AtomicInteger index = new AtomicInteger(0);
-//        List<CfgSupplierSalesConditionEntity> ruleConditionEntities = conditionList.stream()
-//                .map(action -> {
-//                    CfgSupplierSalesConditionEntity entity = BeanMapperUtils.map(CfgSupplierSalesConditionEntity.class, action);
-//                    entity.setIndex(index.incrementAndGet());
-//                    entity.setSourceType(sourceType);
-//                    entity.setSalesSettingId(salesSettingId);
-//                    return entity;
-//                }).collect(Collectors.toList());
-//
-//        //添加的条件
-//        List<CfgSupplierSalesConditionDTO.ConditionDTO> addList = conditionList.stream().filter(r -> StringUtils.isEmpty(r.getId())).collect(Collectors.toList());
-//        if (!CollectionUtils.isEmpty(addList)) {
-//            List<Pair<String, String>> addPairList = addList.stream()
-//                    .map(obj -> new Pair<>(salesSettingId, cfgConditionMap.getOrDefault(obj.getField(), "")))
-//                    .collect(Collectors.toList());
-//            operateLogService.batchAddModuleOperateLog("添加一个条件字段【%s】", moduleType, addPairList, "添加操作");
-//        }
-//        //修改的
-//        List<CfgSupplierSalesConditionEntity> updateList = ruleConditionEntities.stream().filter(r -> StringUtils.hasText(r.getId())).collect(Collectors.toList());
-//        for (CfgSupplierSalesConditionEntity updateItem : updateList) {
-//            CfgSupplierSalesConditionEntity old = oleConditions.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
-//            if (Objects.nonNull(old)) {
-//                old.setFieldName(cfgConditionMap.get(old.getField()));
-//                updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
-//                //值没有的时候名称置空
-//                if (CharSequenceUtil.isBlank(updateItem.getValue())) {
-//                    updateItem.setName("");
-//                }
-//                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, salesSettingId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
-//            }
-//        }
-//        handleDataList(ruleConditionEntities);
-//        ApplicationContextUtils.getBean(CfgSupplierSalesConditionService.class).saveOrUpdateBatch(ruleConditionEntities);
-//    }
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType, String warehouseType) {
+        if(CollUtil.isNotEmpty(conditionList)){
+            checkRuleCondition(conditionList);
+        }
+        //查询规则条件
+        List<CfgSupplierSalesConditionEntity> oleConditions = list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId));
+        List<CfgConditionDTO.CommonDTO> cfgConditions = cfgConditionService.listByType(sourceType);
+        Map<String, String> cfgConditionMap = cfgConditions.stream()
+                .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField, CfgConditionDTO.CommonDTO::getConditionFieldName));
+        List<String> actionIds = conditionList.stream().map(CfgSupplierSalesConditionDTO.ConditionDTO::getId).collect(Collectors.toList());
+        // 处理删除的数据
+        List<String> removeIds = oleConditions.stream()
+                .map(CfgSupplierSalesConditionEntity::getId)
+                .filter(id -> !actionIds.contains(id))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeIds)) {
+            List<Pair<String, String>> removePairList = oleConditions.stream()
+                    .filter(old -> removeIds.contains(old.getId()))
+                    .map(old -> Pair.create(salesSettingId, cfgConditionMap.getOrDefault(old.getField(), "")))
+                    .collect(Collectors.toList());
+            removeByIds(removeIds);
+            operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
+        }
+        AtomicInteger index = new AtomicInteger(0);
+        List<CfgSupplierSalesConditionEntity> ruleConditionEntities = conditionList.stream()
+                .map(action -> {
+                    CfgSupplierSalesConditionEntity entity = BeanMapperUtils.map(CfgSupplierSalesConditionEntity.class, action);
+                    entity.setIndex(index.incrementAndGet());
+                    entity.setSourceType(sourceType);
+                    entity.setSalesSettingId(salesSettingId);
+                    entity.setWarehouseType(warehouseType);
+                    return entity;
+                }).collect(Collectors.toList());
+
+        //添加的条件
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> addList = conditionList.stream().filter(r -> StringUtils.isEmpty(r.getId())).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream()
+                    .map(obj -> new Pair<>(salesSettingId, cfgConditionMap.getOrDefault(obj.getField(), "")))
+                    .collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加一个条件字段【%s】", moduleType, addPairList, "添加操作");
+        }
+        //修改的
+        List<CfgSupplierSalesConditionEntity> updateList = ruleConditionEntities.stream().filter(r -> StringUtils.hasText(r.getId())).collect(Collectors.toList());
+        for (CfgSupplierSalesConditionEntity updateItem : updateList) {
+            CfgSupplierSalesConditionEntity old = oleConditions.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(old)) {
+                old.setFieldName(cfgConditionMap.get(old.getField()));
+                updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
+                //值没有的时候名称置空
+                if (CharSequenceUtil.isBlank(updateItem.getValue())) {
+                    updateItem.setName("");
+                }
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, salesSettingId,"", CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
+            }
+        }
+        handleDataList(ruleConditionEntities);
+        ApplicationContextUtils.getBean(CfgSupplierSalesConditionService.class).saveOrUpdateBatch(ruleConditionEntities);
+    }
 
     /**
      * 校验规则条件是否合法

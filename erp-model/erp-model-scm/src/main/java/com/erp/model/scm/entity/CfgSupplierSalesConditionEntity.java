@@ -30,11 +30,6 @@ public class CfgSupplierSalesConditionEntity extends BaseEntity<CfgSupplierSales
     @TableField("sales_setting_id")
     private String salesSettingId;
     /**
-    * 配置类型：sku=sku查看配置,saleableStock=可销库存配置,salesStatistic=销量统计配置,notice=通知配置  枚举：CfgSupplierSalesConditionTypeEnum
-    */
-    @TableField("type")
-    private String type;
-    /**
     * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓  枚举：CfgSupplierSalesConditionWarehouseTypeEnum
     */
     @TableField("warehouse_type")

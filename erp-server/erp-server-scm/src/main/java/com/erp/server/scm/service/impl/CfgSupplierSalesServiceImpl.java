@@ -53,7 +53,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private CfgSupplierSalesConditionService cfgConditionService;
+    private CfgSupplierSalesConditionService CfgSupplierSalesConditionService;
 
     @Resource
     private SupplierService supplierService;
@@ -82,34 +82,34 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(), "新增操作");
 
         //处理配置条件
-        handlerCondition(addDTO, cfgSupplierSalesEntity.getId());
+        saveCondition(addDTO, cfgSupplierSalesEntity.getId());
 
         return new BaseResultDTO.AddDTO(cfgSupplierSalesEntity.getId(), cfgSupplierSalesEntity.getId());
     }
 
-    private void handlerCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
+    private void saveCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
         //sku配置
         if(CollUtil.isNotEmpty(addDTO.getSkuList())){
-            cfgConditionService.saveRuleCondition(id, addDTO.getSkuList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSkuList(), RuleTypeEnum.SKU.getCode(),"");
         }
 
         //可销库存配置
         if(CollUtil.isNotEmpty(addDTO.getSaleableStockList())){
-            cfgConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(), addDTO.getWarehouseType());
+            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.SALEABLESTOCK.getCode(), addDTO.getWarehouseType());
         }
 
         //销量统计配置
         if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
-            cfgConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
         }
 
         //通知配置
         if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
-            cfgConditionService.saveRuleCondition(id, addDTO.getNoticeList(), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+            CfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getNoticeList(), RuleTypeEnum.NOTICE.getCode(),"");
         }
 
         if(Objects.nonNull(addDTO.getBlackCondition())){
-            cfgConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), SourceTypeEnum.CFG_SUPPLIER_SALES.getCode(),"");
+            CfgSupplierSalesConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), RuleTypeEnum.BLACK.getCode(),"");
         }
     }
 
@@ -138,10 +138,26 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         moduleOperateLogService.addModuleOperateLogByObj(old, cfgSupplierSalesEntity, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(),"", msg);
 
         //处理配置条件
-        handlerCondition(addOrUpdateDTO, cfgSupplierSalesEntity.getId());
+        updateCondition(addOrUpdateDTO, cfgSupplierSalesEntity.getId());
         return Boolean.TRUE;
     }
 
+
+    private void updateCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
+        //sku配置
+        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(),"");
+
+        //可销库存配置
+        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALEABLESTOCK.getCode(),addDTO.getWarehouseType());
+
+        //销量统计配置
+        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+
+        //通知配置
+        CfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
+
+        CfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
+    }
 
     /**
      * 新增修改处理数据
@@ -177,12 +193,10 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                 throw new ServiceException("勾选黑名单SKU，则黑名单sku列表不能为空");
             }
             CfgSupplierSalesConditionDTO.ConditionDTO black = new CfgSupplierSalesConditionDTO.ConditionDTO();
-            black.setType(CfgSupplierSalesConditionTypeEnum.BLACK.getCode());
             black.setField("skuId");
             black.setCompare("inList");
             black.setLogic("and");
             black.setSalesSettingId("");
-            black.setSourceType(SourceTypeEnum.CFG_SUPPLIER_SALES.getCode());
             black.setValueType("String");
             black.setValue(String.join(",",  dto.getBlackList()));
             dto.setBlackCondition(black);
@@ -212,7 +226,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         // 删除主单数据
         super.removeById(id);
         // 删除子表
-        cfgConditionService.lambdaUpdate()
+        CfgSupplierSalesConditionService.lambdaUpdate()
                 .set(CfgSupplierSalesConditionEntity::getIsDeleted, Boolean.TRUE)
                 .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
                 .update();

@@ -13,7 +13,6 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="sales_setting_id" property="salesSettingId" />
-       <result column="type" property="type" />
        <result column="warehouse_type" property="warehouseType" />
        <result column="left_bracket" property="leftBracket" />
        <result column="field" property="field" />
@@ -38,7 +37,7 @@
         update_time,
         version,
         is_deleted,
-        sales_setting_id, type, warehouse_type, left_bracket, field, compare, value, right_bracket, logic, index, name, source_type, value_type
+        sales_setting_id, warehouse_type, left_bracket, field, compare, value, right_bracket, logic, index, name, source_type, value_type
     </sql>
 
 
