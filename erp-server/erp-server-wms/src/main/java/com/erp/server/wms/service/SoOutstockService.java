@@ -162,6 +162,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
      */
     List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto);
+    
+    /**
+     * 获取tab
+     * @author yl
+     * @date 2023-05-19 14:23
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
+     */
+    List<SoOutstockDTO.TabListDTO> dorisTabList(PermissionsDTO dto);
 
     
     /**
@@ -172,6 +181,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
      */
     PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
+    
+    /**
+     * 分页列表
+     * @author yl
+     * @date 2023-05-22 8:56
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
+     */
+    PagingVO<SoOutstockDTO.PagingViewDTO> dorisPaging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
 
     
     /**

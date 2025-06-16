@@ -9,6 +9,7 @@ import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -44,4 +45,12 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/inputDetailList")
     List<DmpInoutDTO.ListDTO> inputDetailList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList);
+    
+    /**
+     * 获取是否查询doris
+     * @param key
+     * @return
+     */
+    @PostMapping("feign/inout/getQueryDoris")
+    boolean getQueryDoris(@RequestParam(value = "key") String key);
 }
