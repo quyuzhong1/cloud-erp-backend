@@ -9,15 +9,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
-import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.enums.*;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
@@ -68,6 +65,21 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Resource
     private ProcessFormFactory processFormFactory;
 
+    @Resource
+    private CfgProcessRuleService cfgProcessRuleService;
+
+    @Resource
+    private ProcessManagementService processManagementService;
+
+    @Resource
+    private ProcessDefinitionService processDefinitionService;
+
+    @Resource
+    private ThirdProcessManagementService thirdProcessManagementService;
+
+    @Resource
+    private ThirdProcessDefinitionService thirdProcessDefinitionService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
@@ -86,7 +98,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置字段配置");
+        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "字段配置");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
         return new BaseResultDTO.AddDTO();
     }
@@ -94,7 +106,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
-        // 遍历addDTO，id为空的保存，id不为空的更新，使用ruleId查询ruleId的记录，如果查询的结果数小于addDTO数量，那么找出结果中未包含于addDTO的中的id，然后将此id对应的entiy删除
         // 查询数据库中与 ruleId 关联的记录
         List<CfgProcessFieldMapEntity> existingEntities = this.list(
                 new LambdaQueryWrapper<CfgProcessFieldMapEntity>()
@@ -117,16 +128,16 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             //生成日志
             Map<String, CfgProcessFieldMapEntity> entityMap = entitiesToAddOrUpdate.stream()
                     .collect(Collectors.toMap(CfgProcessFieldMapEntity::getId, entity -> entity));
-            existingEntities.forEach(old -> {
-                CfgProcessFieldMapEntity entity = entityMap.get(old.getId());
-                if (ObjectUtil.isNotEmpty(old)) {
-                    operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+            existingEntities.forEach(item -> {
+                CfgProcessFieldMapEntity entity = entityMap.get(item.getId());
+                if (ObjectUtil.isNotEmpty(item)) {
+                    operateLogService.addModuleOperateLogByObj(item, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
                 }
             });
 
             return new BaseResultDTO.AddDTO();
         } catch (Exception e) {
-            throw new ServiceException("流程设置字段配置新增失败:{}", e.getMessage());
+            throw new ServiceException("字段配置新增失败:{}", e.getMessage());
         }
     }
 

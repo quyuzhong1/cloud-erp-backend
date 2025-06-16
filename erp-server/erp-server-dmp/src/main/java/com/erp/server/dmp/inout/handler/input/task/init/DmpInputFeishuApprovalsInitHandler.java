@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,9 @@ public class DmpInputFeishuApprovalsInitHandler extends DmpInputInitHandler{
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 		List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntityList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
 				.isNotNull(ThirdProcessDefinitionEntity::getApprovalCode)
+				.eq(ThirdProcessDefinitionEntity::getEnableStatus , Boolean.TRUE)
+				.eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode().toLowerCase())
+				.eq(ThirdProcessDefinitionEntity::getIsDeleted,Boolean.FALSE)
 				.ne(ThirdProcessDefinitionEntity::getApprovalCode , "")
 				.list();
 		JSONArray result = new JSONArray();

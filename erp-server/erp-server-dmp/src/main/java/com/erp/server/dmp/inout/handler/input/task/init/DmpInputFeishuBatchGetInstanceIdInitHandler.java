@@ -44,7 +44,9 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntityList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
                 .isNotNull(ThirdProcessDefinitionEntity::getApprovalCode)
-                .ne(ThirdProcessDefinitionEntity::getApprovalCode, "")
+                .eq(ThirdProcessDefinitionEntity::getEnableStatus , Boolean.TRUE)
+                .eq(ThirdProcessDefinitionEntity::getIsDeleted,Boolean.FALSE)
+                .ne(ThirdProcessDefinitionEntity::getApprovalCode , "")
                 .list();
         JSONArray result = new JSONArray();
         if (CollUtil.isNotEmpty(thirdProcessDefinitionEntityList)) {

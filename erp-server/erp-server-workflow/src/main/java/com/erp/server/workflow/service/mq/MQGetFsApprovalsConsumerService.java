@@ -32,7 +32,7 @@ public class MQGetFsApprovalsConsumerService implements RocketMQListener<JSONObj
         String approval_code = jsonObject.getStr("ulanzi_approval_code");
         log.info("status: {}, form: {}", status, form);
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
-        thirdProcessDefinitionEntity.setStatus(status);
+        thirdProcessDefinitionEntity.setStatus(status.toLowerCase());
         thirdProcessDefinitionEntity.setFormJson(form);
         thirdProcessDefinitionEntity.setApprovalCode(approval_code);
         //更新thirdProcessDefinitionEntity，以APPROVALCODE为条件

@@ -49,6 +49,7 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
         //查询
         List<ThirdProcessInstanceEntity> thirdProcessInstanceEntityList = FeignQuery.create(ThirdProcessInstanceEntity.class)
                 .isNotNull(ThirdProcessInstanceEntity::getApprovalCode)
+                .eq(ThirdProcessInstanceEntity::getStatus,  FSApprovalStatusEnum.PENDING.getCode())
                 .ne(ThirdProcessInstanceEntity::getApprovalCode , "")
                 .list();
         //收集done的id,
