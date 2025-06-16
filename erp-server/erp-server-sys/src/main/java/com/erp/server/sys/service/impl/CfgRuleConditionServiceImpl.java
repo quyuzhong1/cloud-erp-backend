@@ -51,8 +51,6 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
 
     @Resource
     private OperateLogService operateLogService;
-    @Resource
-    private CfgConditionService cfgConditionService;
     @Lazy
     @Resource
     private CfgRuleConditionService service;
@@ -106,9 +104,6 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         //查询规则条件
         List<CfgRuleConditionEntity> oleConditions = list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, ruleId));
-        List<CfgConditionDTO.CommonDTO> cfgConditions = cfgConditionService.listByType(sourceType);
-        Map<String, String> cfgConditionMap = cfgConditions.stream()
-                .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField, CfgConditionDTO.CommonDTO::getConditionFieldName));
         List<String> actionIds = conditionList.stream().map(CfgRuleConditionDTO.Update::getId).collect(Collectors.toList());
         // 处理删除的数据
         List<String> removeIds = oleConditions.stream()
@@ -116,13 +111,9 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 .filter(id -> !actionIds.contains(id))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(removeIds)) {
-            List<Pair<String, String>> removePairList = oleConditions.stream()
-                    .filter(old -> removeIds.contains(old.getId()))
-                    .map(old -> Pair.create(ruleId, cfgConditionMap.getOrDefault(old.getField(), "")))
-                    .collect(Collectors.toList());
             removeByIds(removeIds);
-            operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
         }
+
         AtomicInteger index = new AtomicInteger(0);
         List<CfgRuleConditionEntity> ruleConditionEntities = conditionList.stream()
                 .map(action -> {
@@ -132,29 +123,6 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                     entity.setRuleId(ruleId);
                     return entity;
                 }).collect(Collectors.toList());
-
-        //添加的条件
-        List<CfgRuleConditionDTO.Update> addList = conditionList.stream().filter(r -> StringUtils.isEmpty(r.getId())).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream()
-                    .map(obj -> new Pair<>(ruleId, cfgConditionMap.getOrDefault(obj.getField(), "")))
-                    .collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加一个条件字段【%s】", moduleType, addPairList, "添加操作");
-        }
-        //修改的
-        List<CfgRuleConditionEntity> updateList = ruleConditionEntities.stream().filter(r -> StringUtils.hasText(r.getId())).collect(Collectors.toList());
-        for (CfgRuleConditionEntity updateItem : updateList) {
-            CfgRuleConditionEntity old = oleConditions.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
-            if (Objects.nonNull(old)) {
-                old.setFieldName(cfgConditionMap.get(old.getField()));
-                updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
-                //值没有的时候名称置空
-                if (CharSequenceUtil.isBlank(updateItem.getValue())) {
-                    updateItem.setName("");
-                }
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));
-            }
-        }
         handleDataList(ruleConditionEntities);
         ApplicationContextUtils.getBean(CfgRuleConditionService.class).saveOrUpdateBatch(ruleConditionEntities);
     }
