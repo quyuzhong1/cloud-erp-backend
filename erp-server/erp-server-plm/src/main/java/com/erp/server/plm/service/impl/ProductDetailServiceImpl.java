@@ -4429,7 +4429,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
             return SaleMethodEnum.getNameByCode(Integer.valueOf(dto.getValues().toString()));
         }
-        return "";
+        return dto.getName();
     }
 
     @Override
