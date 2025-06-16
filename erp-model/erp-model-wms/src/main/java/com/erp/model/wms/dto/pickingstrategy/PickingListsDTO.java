@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +238,7 @@ public class PickingListsDTO {
     }
     @Data
     @NoArgsConstructor
-    public static class PrintCombinationView {
+    public static class PrintCombinationView implements Serializable {
 
         /**
          * 单据编号
