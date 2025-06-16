@@ -106,6 +106,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         entity.setStatus(jsonObject.getStr("status"));
         entity.setForm(jsonObject.getStr("form"));
         entity.setInstanceCode(jsonObject.getStr("instanceCode"));
+        entity.setApprovalName(jsonObject.getStr("approvalName"));
         return entity;
     }
 

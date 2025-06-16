@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.builder.EqualsBuilder;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -109,37 +110,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                         .eq(CfgProcessRuleEntity::getCfgProcessId, cfgProcessId)
                         .eq(CfgProcessRuleEntity::getIsDeleted, false)
         );
+        Map<String, CfgProcessRuleEntity> oldMap = old.stream().collect(Collectors.toMap(CfgProcessRuleEntity::getId, v -> v));
 
-        //校验是否存在运行中的审批实例
-        Map<String, List<CfgProcessRuleEntity>> map = old.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
-        StringBuilder errmsg = new StringBuilder();
-        for (Map.Entry<String, List<CfgProcessRuleEntity>> entry : map.entrySet()) {
-            String key = entry.getKey();
-            List<CfgProcessRuleEntity> value = entry.getValue();
-            if (key.equals(CfgProcessRuleTypeEnum.ERPPROCESS)) {
-                for (CfgProcessRuleEntity ruleEntity : value) {
-                    String definitionId = ruleEntity.getProcessDefinitionId();
-                    ProcessDefinitionEntity entity = processDefinitionService.getById(definitionId);
-                    List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getProcessDefinitionId, definitionId).eq(ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING));
-                    if (processManagementEntities.size() > 0) {
-                        errmsg.append(entity.getProcessName());
-                    }
-                }
-                continue;
-            }
-            // 其他处理逻辑
-            for (CfgProcessRuleEntity entity : value) {
-                String approvalCode = entity.getProcessDefinitionId();
-                List<ThirdProcessManagementEntity> list = thirdProcessManagementService.list(new LambdaQueryWrapper<ThirdProcessManagementEntity>().eq(ThirdProcessManagementEntity::getProcessDefinitionId, approvalCode).eq(ThirdProcessManagementEntity::getStatus, FSApprovalStatusEnum.PENDING));
-                ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, approvalCode));
-                if (list.size() > 0) {
-                    errmsg.append(thirdProcessDefinition.getName());
-                }
-            }
-        }
-        if (StrUtil.isNotBlank(errmsg)) {
-            throw new ServiceException(errmsg+"流程已被单据使用，不可编辑");
-        }
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
                 .map(CfgProcessRuleDTO.AddOrUpdateDTO::getId)
@@ -265,19 +237,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             throw new ServiceException(errmsg + "流程已被单据使用，不可删除");
         }
 
-        //单次校验
-//        processRuleEntityList.forEach(item -> {
-//            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
-//                List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
-//                if (processManagementEntities.size() > 0) {
-//                    throw new ServiceException("流程已被单据使用，不可删除");
-//                }
-//            }
-//            List<ThirdProcessInstanceEntity> thirdProcessInstanceEntities = thirdProcessInstanceService.list(new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getApprovalCode, item.getProcessDefinitionId()).eq(ThirdProcessInstanceEntity::getIsDeleted, false));
-//            if (thirdProcessInstanceEntities.size() > 0) {
-//                throw new ServiceException("流程已被单据使用，不可删除");
-//            }
-//        });
         if (CollUtil.isNotEmpty(ids)) {
             try {
                 removeByIds(ids);
