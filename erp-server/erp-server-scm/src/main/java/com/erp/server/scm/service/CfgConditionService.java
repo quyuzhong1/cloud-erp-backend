@@ -16,4 +16,6 @@ import java.util.List;
  */
 public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     List<CfgConditionDTO.CommonDTO> listByType(String sourceType);
+
+    List<CfgConditionDTO.TreeDTO> tree(String type);
 }

@@ -19,7 +19,6 @@ import com.common.business.enums.ApproveStatusEnum;
  * @since 2025-06-16
 */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("cfg_condition")
 public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
@@ -90,7 +89,7 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
     @TableField("value_type")
     private String valueType;
     /**
-    * 条件所属规则类型 PICKING_STRATEGY（拣货规则）
+    * 条件所属规则类型
     */
     @TableField("rule_type")
     private String ruleType;
