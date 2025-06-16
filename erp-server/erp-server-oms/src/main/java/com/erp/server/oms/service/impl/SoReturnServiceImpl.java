@@ -727,7 +727,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     .eq(SoReturnEntity::getId, entity.getId())
                     .update(new SoReturnEntity());
             //增加广播通知
-            entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+//            entityList.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -969,7 +969,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .in(SoReturnEntity::getId, ids)
                 .update(new SoReturnEntity());
         //推送到DMP
-        this.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+//        this.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         //操作日志
         operateLogService.addModuleOperateLog(String.format("反审核销售退货订单【%s】", entity.getCode()), ModuleTypeEnum.SO_RETURN.getCode(),entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");

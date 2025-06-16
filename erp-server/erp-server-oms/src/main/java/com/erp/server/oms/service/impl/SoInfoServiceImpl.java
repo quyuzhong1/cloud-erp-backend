@@ -1469,7 +1469,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
 
             //推送同步中台dmp任务
-            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+//            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -1561,7 +1561,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             // TODO 收款字段需补
 
             //推送同步中台dmp任务
-            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+//            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
@@ -1712,7 +1712,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(syncList)) {
 
                 //推送同步中台dmp任务
-                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+//                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
                 //发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());

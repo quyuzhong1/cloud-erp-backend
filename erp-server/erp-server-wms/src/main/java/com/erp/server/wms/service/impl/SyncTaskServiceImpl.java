@@ -522,7 +522,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 }
                 resultList.add(pushTaskEntity);
             }
-            syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
+//            syncKingdeeSoOutstockService.syncOrderToDmp(entity,syncParamDetailDTO.getSyncOperate());
         }
         return resultList;
     }
