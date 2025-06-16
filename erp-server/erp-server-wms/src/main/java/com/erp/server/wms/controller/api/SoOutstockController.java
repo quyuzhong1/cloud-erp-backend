@@ -115,7 +115,12 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<SoOutstockDTO.PagingTotalDTO> getTotalByQuery(@RequestBody @Validated SoOutstockDTO.PagingParamDTO dto) {
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
+    	SoOutstockDTO.PagingTotalDTO pagingTotalDTO = null;
+    	if(dmpInoutTaskFeign.getQueryDoris(SettingEnum.DORIS_QUERY_CFG_SOOUTSTOCK.getKey())) {
+    		pagingTotalDTO = soOutstockService.dorisGetTotalByQuery(dto);
+    	}else {
+    		pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
+    	}
         return success(pagingTotalDTO);
     }
 

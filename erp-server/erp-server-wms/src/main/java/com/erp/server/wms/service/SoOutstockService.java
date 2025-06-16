@@ -404,6 +404,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
+    
+    SoOutstockDTO.PagingTotalDTO dorisGetTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
 
     /**
      * 生成B2C销售出库单
@@ -565,6 +567,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
+    
+    PagingVO<SoOutstockDTO.PagingViewDTO> dorisExportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
 
 
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
