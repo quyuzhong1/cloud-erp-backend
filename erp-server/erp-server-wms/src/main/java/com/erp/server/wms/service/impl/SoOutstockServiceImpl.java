@@ -8,6 +8,8 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -1536,6 +1538,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
+    
+    @DS("doris")
+    @Override
+    public List<SoOutstockDTO.TabListDTO> dorisTabList(PermissionsDTO dto) {
+    	return tabList(dto);
+    }
 
     /**
      * 分页列表
@@ -1558,6 +1566,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //处理分页数据
         fillPaging(list,false);
         return new PagingVO<>(pageData);
+    }
+    
+    @DS("doris")
+    @Override
+    public PagingVO<SoOutstockDTO.PagingViewDTO> dorisPaging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    	return paging(dto);
     }
 
     private String getPermissionSql(String permissionSql) {

@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -67,7 +68,13 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
             }
         }
         if("ci.platform_type".equals(field)){
-            return " EXISTS (SELECT 1 from customer_info ci where so.customer_id = ci.id AND ci.is_deleted = FALSE AND ci.platform_type "+ compareCodeSplicingValueSql +" ) ";
+        	List<String> list = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).in(CustomerInfoEntity::getPlatformType, list).list();
+            if (CollectionUtils.isEmpty(customerList)) {
+                return getQueryAllSql();
+            }
+            List<String> customerIds = customerList.stream().map(v->v.getId()).collect(Collectors.toList());
+            super.buildDefaultDTO("so.customer_id", customerIds);
         }
         return null;
     }
