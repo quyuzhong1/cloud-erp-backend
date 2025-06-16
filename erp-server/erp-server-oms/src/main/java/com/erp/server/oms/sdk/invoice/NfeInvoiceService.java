@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
@@ -22,6 +23,7 @@ import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
@@ -33,6 +35,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -98,6 +101,8 @@ public class NfeInvoiceService {
     private ShopInfoService shopInfoService;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -241,7 +246,32 @@ public class NfeInvoiceService {
             return BigDecimal.ZERO;
         }
         SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
-        return financeEntity.getShippingCost();
+        if (Objects.isNull(financeEntity)){
+            throw new ServiceException("销售订单财务信息不存在");
+        }
+        if (BigDecimal.ZERO.compareTo(financeEntity.getShippingCost()) == 0){
+            return BigDecimal.ZERO;
+        }
+        if (CharSequenceUtil.isBlank(financeEntity.getCurrency())){
+            throw new ServiceException("销售订单财务信息币种不存在");
+        }
+        if (CurrencyEnum.BRL.getCurrencyCode().equals(soB2cEntity.getCurrency())){
+            return financeEntity.getShippingCost();
+        }
+        //转换成人民币
+        BigDecimal rate;
+        try {
+            rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        }catch (Exception e){
+            throw new ServiceException(soB2cEntity.getCurrency() + "获取汇率失败");
+        }
+        BigDecimal rate2;
+        try {
+            rate2 = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.BRL.getCurrencyCode());
+            return MathUtil.divide(MathUtil.multiplyWithFour(rate,financeEntity.getShippingCost()), rate2);
+        }catch (Exception e){
+            throw new ServiceException(CurrencyEnum.BRL.getCurrencyName() + "获取汇率失败");
+        }
     }
 
     /**
@@ -378,7 +408,7 @@ public class NfeInvoiceService {
             nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
-            nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
+            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,invoiceSettingDetail));
             itens.add(nfeItensDTO);
             valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
@@ -387,31 +417,44 @@ public class NfeInvoiceService {
 
         //查询运费
         BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail);
-        createDTO.setFinalTotal(MathUtil.subtract(valorTotal,shipCost));
+        createDTO.setFinalTotal(MathUtil.add(valorTotal,shipCost));
     }
 
     /**
      * 真实售价
-     * @author will
-     * @date 2025/4/14 14:42
+     *
+     * @param soB2cEntity
      * @param detailEntity
      * @param invoiceSettingDetail
      * @return BigDecimal
+     * @author will
+     * @date 2025/4/14 14:42
      */
-    private BigDecimal getUnitPrice (SoB2cDetailEntity detailEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+    private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        BigDecimal price = detailEntity.getPrice();
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
-            return detailEntity.getPrice();
+            price = detailEntity.getPrice();
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.AMOUNT.getCode())) {
-            return detailEntity.getPrice();
+            price = detailEntity.getPrice();
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.CUSTOM.getCode())) {
-            return MathUtil.multiplyWithTwo(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
+            price = MathUtil.multiplyWithTwo(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.DEDUCT.getCode())) {
-            return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
+            price = MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
         }
-        return detailEntity.getPrice();
+        String currency = detailEntity.getCurrency();
+        if(CurrencyEnum.BRL.getCurrencyCode().equals(currency)){
+            return price;
+        }
+        BigDecimal exchangeRate = detailEntity.getExchangeRate();
+        try {
+            BigDecimal rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.BRL.getCurrencyCode());
+            return MathUtil.divide(MathUtil.multiplyWithFour(exchangeRate,price), rate);
+        }catch (Exception e){
+            throw new ServiceException( CurrencyEnum.BRL.getCurrencyName() + "汇率为空，请维护汇率后再提交");
+        }
     }
 
     /**
