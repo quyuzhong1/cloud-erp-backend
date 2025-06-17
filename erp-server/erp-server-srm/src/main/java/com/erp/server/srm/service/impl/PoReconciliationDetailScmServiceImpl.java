@@ -68,6 +68,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -289,6 +290,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRate(MathUtil.multiplyWithTwo(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
             listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            listDTO.setDiscountRate(MathUtil.multiplyWithTwo(listDTO.getDiscountRate(),MathUtil.BigDecimal_100));
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -850,6 +852,20 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     || !CharSequenceUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
+            //税率
+            BigDecimal taxRate = MathUtil.compareTo(entity.getTaxRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100);
+            entity.setTaxRate(taxRate);
+
+            //折扣
+            BigDecimal discountRate = MathUtil.compareTo(entity.getDiscountRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100);
+            entity.setDiscountRate(discountRate);
+
+            //价税合计
+            entity.setTaxAmount(MathUtil.multiplyWithTwo(entity.getTaxPrice(),old.getQty()));
+            //折后价税合计
+            BigDecimal discountAmount = MathUtil.multiplyWithFour(entity.getTaxAmount(), entity.getDiscountRate());
+            entity.setDiscountTaxAmount(MathUtil.subtract(entity.getTaxAmount(),entity.getPrepayAmount()).subtract(discountAmount));
+
             entity.setMainId(mainId);
             //操作日志
             operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_RECONCILIATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
