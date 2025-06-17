@@ -56,6 +56,11 @@ public class ProductDTO implements Serializable {
     private String applicationCategoryName;
 
     /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryIdList;
+
+    /**
      * 产品属性
      */
     @NotBlank(message = "产品属性不能为空")

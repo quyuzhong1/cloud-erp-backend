@@ -566,9 +566,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setCategoryIdList(categoryIdList);
 
         }
-        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
-        if (ObjectUtils.isNotEmpty(applicationCategory)) {
-            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        if(StringUtils.isNotBlank(noSpecDetailById.getApplicationCategoryId())){
+            List<String> applicationCategoryIdList = Arrays.stream(noSpecDetailById.getApplicationCategoryId().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            noSpecDetailById.setApplicationCategoryIdList(applicationCategoryIdList);
+            List<ApplicationCategoryEntity> applicationCategory = applicationCategoryService.listByIds(applicationCategoryIdList);
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                List<String> applicationCategoryNameList = applicationCategory.stream()
+                        .map(ApplicationCategoryEntity::getName)
+                        .collect(Collectors.toList());
+                noSpecDetailById.setApplicationCategoryNameList(applicationCategoryNameList);
+            }
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -726,9 +735,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
             manySpecDetailById.setCategoryIdList(categoryIdList);
-            ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(manySpecDetailById.getApplicationCategoryId());
-            if (ObjectUtils.isNotEmpty(applicationCategory)) {
-                manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            if(StringUtils.isNotBlank(manySpecDetailById.getApplicationCategoryId())){
+                List<String> applicationCategoryIdList = Arrays.stream(manySpecDetailById.getApplicationCategoryId().split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
+                manySpecDetailById.setApplicationCategoryIdList(applicationCategoryIdList);
+                List<ApplicationCategoryEntity> applicationCategory = applicationCategoryService.listByIds(applicationCategoryIdList);
+                if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                    List<String> applicationCategoryNameList = applicationCategory.stream()
+                            .map(ApplicationCategoryEntity::getName)
+                            .collect(Collectors.toList());
+                    manySpecDetailById.setApplicationCategoryNameList(applicationCategoryNameList);
+                }
             }
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
@@ -1191,6 +1209,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95015);
         }
+        if(CollectionUtils.isNotEmpty(productSpuBaseInfoDTO.getApplicationCategoryIdList())){
+            productSpuBaseInfoDTO.setApplicationCategoryId(String.join(",", productSpuBaseInfoDTO.getApplicationCategoryIdList()));
+        }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         checkSizeAndWeight(productPackDTO);
@@ -1560,6 +1581,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(basicDict)) {
                 productInfoDTO.setGrade(basicDict.getValue());
             }
+        }
+        if(CollectionUtils.isNotEmpty(productInfoDTO.getApplicationCategoryIdList())){
+            productInfoDTO.setApplicationCategoryId(String.join(",", productInfoDTO.getApplicationCategoryIdList()));
         }
         //SKU操作日志-产品信息
         String id = productInfoDTO.getId();
@@ -5862,12 +5886,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     continue;
                 }
             }
-            String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
-            if (ObjectUtils.isEmpty(applicationCategoryId)) {
-                errorMsgList.add("应用分类不存在");
-            } else {
-                productInfoDTO.setApplicationCategoryId(applicationCategoryId);
+
+            List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            List<String> applicationCategoryIdList = new ArrayList<>();
+            for (String applicationCategoryName : applicationCategoryNameList) {
+                String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
+                if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                    errorMsgList.add(applicationCategoryName+" 应用分类不存在");
+                    continue;
+                }
+                applicationCategoryIdList.add(applicationCategoryId);
             }
+            productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
 
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
