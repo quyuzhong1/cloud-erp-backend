@@ -78,8 +78,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
             //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
-                deleteList.stream().forEach(obj -> obj.setMainId(""));
-                list.addAll(deleteList);
+                poReconciliationDetailScmService.cleanDetailByDetailIdList(deleteIds);
             }
         }
 
@@ -101,12 +100,12 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
     }
 
     @Override
-    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
         //默认查询当前登录人的绑定的供应商数据
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         dto.setSupplierId(supplierEntity.getId());
 //        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL.getCode(), dto);
-        poReconciliationDetailScmService.exportList(dto, response);
+        poReconciliationDetailScmService.exportList(dto);
     }
 
     /**

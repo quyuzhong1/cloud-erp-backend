@@ -163,8 +163,9 @@ public interface BusinessNoConstant {
     String THD = "THD";
     String TKD = "TKD";
     String XLSS = "XLSS";
-    String YHBG = "YHBG";
     String MJ = "MJ";
+    String YHBG = "YHBG";
+
     //库龄批次号
     String N = "N";
     String INV = "INV";
@@ -188,4 +189,8 @@ public interface BusinessNoConstant {
     //三方审批生成
     String SFSC = "SFSC";
     String XNKC = "XNKC";
+
+    //合同管理
+    String GYSHT = "GYSHT";
+
 }

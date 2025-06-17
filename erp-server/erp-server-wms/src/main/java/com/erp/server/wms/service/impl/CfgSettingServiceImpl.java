@@ -392,4 +392,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     public List<CfgSettingEntity> listCfgSetting () {
         return baseMapper.listCfgSetting();
     }
+
+    @Override
+    public CfgSettingValueDTO.PoReconciliationSettingDTO getPoReconciliationSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PO_RECONCILIATION.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return new CfgSettingValueDTO.PoReconciliationSettingDTO();
+        }
+        CfgSettingValueDTO.PoReconciliationSettingDTO bean = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
+        bean.setReconciliationTypeName(ReconciliationTypeEnum.getNameByCode(bean.getReconciliationType()));
+        return bean;
+    }
 }

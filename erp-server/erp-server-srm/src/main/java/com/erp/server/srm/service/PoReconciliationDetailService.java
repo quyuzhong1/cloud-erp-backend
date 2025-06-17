@@ -42,5 +42,5 @@ public interface PoReconciliationDetailService extends SuperService<PoReconcilia
      * @author Will
      * @date: 2024/1/20 12:03
      */
-    void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportList(PoReconciliationDetailDTO.PagingParamDTO dto);
 }

@@ -20,6 +20,8 @@ public enum SourceTypeEnum {
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
     SUPPLIER("supplier", "供应商列表","supplier"),
+    CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
+
 
 
     //WMS

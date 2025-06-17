@@ -1,12 +1,15 @@
 package com.erp.server.srm.service;
+
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
+import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.srm.dto.DeliveryOrderDTO;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -77,8 +80,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList);
 
     Boolean updateReceiveStatus(List<String> ids);
-
-    void removePoReconciliationDetail (List<String> idList);
 
     PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 }

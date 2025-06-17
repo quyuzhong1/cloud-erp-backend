@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 对账单明细【srm】
@@ -61,8 +60,8 @@ public class PoReconciliationDetailController extends BaseController {
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
     @WebAdvanceQuery(handler = PoReconciliationDetailQueryHandler.class)
-    public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response) {
-        poReconciliationDetailService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDetailDTO.PagingParamDTO dto) {
+        poReconciliationDetailService.exportList(dto);
         return success(true);
     }
 

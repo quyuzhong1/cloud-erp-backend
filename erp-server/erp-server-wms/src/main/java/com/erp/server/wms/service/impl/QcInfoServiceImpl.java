@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -595,7 +596,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //当是 b2b 质检的时候 生成入库单
             if (b2bQc.equals(qcType) && isExist) {
                 //生成入库单
-                autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
+                autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
             //新品首批回填SKU的尺寸信息
             updateProductPack(Collections.singletonList(billId));
@@ -798,7 +799,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @author yl
      * @date 2023-04-20 14:55
      */
-    private void autoStockInBill(String billId, QcResultDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
+    private void autoStockInBill(String billId, QcResultDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId,String code) {
         PoInstockDTO.AddDTO dto = new PoInstockDTO.AddDTO();
         List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>(1);
         PoInstockDetailDTO.AddDTO detail = new PoInstockDetailDTO.AddDTO();
@@ -809,6 +810,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         details.add(detail);
         dto.setDetails(details);
         dto.setSourceId(billId);
+        dto.setSourceCode(code);
         dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
@@ -852,11 +854,20 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Map<String, List<QcResultDTO.StockInDTO>> map = stockInList.stream().collect(Collectors.groupingBy(QcResultDTO.StockInDTO::getMainId));
         List<PoInstockDTO.AddDTO> addList = new ArrayList<>(map.size());
 
+        List<String> mainIdList = stockInList.stream().map(QcResultDTO.StockInDTO::getMainId).collect(Collectors.toList());
+        List<QcInfoEntity> qcInfoList = this.listByIds(mainIdList);
+        Map<String, QcInfoEntity> qcMap = qcInfoList.stream().collect(Collectors.toMap(QcInfoEntity::getId, Function.identity()));
+
         for (Map.Entry<String, List<QcResultDTO.StockInDTO>> entry : map.entrySet()) {
             String mainId = entry.getKey();
             List<QcResultDTO.StockInDTO> qcList = entry.getValue();
             PoInstockDTO.AddDTO addStockIn = new PoInstockDTO.AddDTO();
+            QcInfoEntity qcInfoEntity = qcMap.get(mainId);
+            if (ObjUtil.isEmpty(qcInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
             addStockIn.setSourceId(mainId);
+            addStockIn.setSourceCode(qcInfoEntity.getCode());
             addStockIn.setSourceType(sourceType);
             addStockIn.setStockInUserId(userId);
             addStockIn.setStockInDeptId(depart.getDepartmentId());
@@ -1065,7 +1076,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //当是 b2b 质检的时候 生成入库单
             if (b2bQc.equals(qcType) && isExist) {
                 //生成入库单
-                autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId);
+                autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
 
             //异步发送通知

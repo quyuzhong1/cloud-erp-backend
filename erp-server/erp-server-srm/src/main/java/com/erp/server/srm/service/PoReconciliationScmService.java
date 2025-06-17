@@ -10,8 +10,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -88,7 +90,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO receive(String id);
+    BatchResultDTO receive(String id, LocalDate date);
 
     /**
      * @description: 查看详情(主表)
@@ -137,4 +139,29 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
     PagingVO<PoReconciliationDTO.ListDTO> exportPoReconciliationScmExport(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
 
     StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(PoReconciliationDTO.PagingParamDTO dto);
+    /**
+     * 明细批量导入
+     * @author will
+     * @date 2025/6/13 11:52
+     * @param excelFile
+     * @param response
+     * @return ImportDTO
+     */
+    PoReconciliationDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 取消签收
+     * @author will
+     * @date 2025/6/13 11:55
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelReceive(String id);
+    /**
+     * 导出模板
+     * @author will
+     * @date 2025/6/13 12:39
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

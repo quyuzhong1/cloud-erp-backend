@@ -30,13 +30,11 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
@@ -116,8 +114,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
-    @Resource
-    private PoReconciliationDetailScmService poReconciliationDetailScmService;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -729,89 +725,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
     }
 
-    /**
-     * @description: 添加对账明细
-     * @author Will
-     * @date: 2024/1/26 9:24
-     * @param idList
-     */
-    private void addPoReconciliationDetail (List<String> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
-            return;
-        }
-        //送货单
-        List<DeliveryOrderEntity> deliveryOrderList = this.listByIds(idList);
-
-        //送货明细
-        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
-        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listByMainIdList(deliveryOrderIdList);
-
-        //采购订单
-        List<String> sourceIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getSourceId).collect(Collectors.toList());
-        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(sourceIdList);
-
-        //添加信息
-        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
-        for (DeliveryOrderDetailEntity detailEntity :deliveryOrderDetailList) {
-            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
-            //送货单主表
-            DeliveryOrderEntity deliveryOrderEntity = deliveryOrderList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(deliveryOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
-            }
-
-            addDTO.setPoId(deliveryOrderEntity.getSourceId());
-            addDTO.setPoCode(deliveryOrderEntity.getSourceCode());
-            addDTO.setPoDetailId(detailEntity.getSourceDetailId());
-            addDTO.setSupplierId(deliveryOrderEntity.getSupplierId());
-            addDTO.setSourceId(deliveryOrderEntity.getId());
-            addDTO.setSourceDetailId(detailEntity.getId());
-            addDTO.setSourceCode(deliveryOrderEntity.getCode());
-            addDTO.setSourceType(SourceTypeEnum.DELIVERY_ORDER.getCode());
-            addDTO.setConfirmDate(detailEntity.getConfirmReceiveDate());
-            addDTO.setSkuId(detailEntity.getSkuId());
-            addDTO.setDeliveryQty(detailEntity.getDeliveryQty());
-            addDTO.setReceiveQty(detailEntity.getReceiveQty());
-            addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
-
-            //采购订单
-            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> CharSequenceUtil.equals(deliveryOrderEntity.getSourceId(), obj.getId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
-            }
-            addDTO.setSettleOrgId(purchaseOrderEntity.getPurchaseOrgId());
-
-            addList.add(addDTO);
-        }
-        poReconciliationDetailScmService.add(addList);
-    }
-
-    /**
-     * @description: 添加对账明细
-     * @author Will
-     * @date: 2024/1/26 9:24
-     * @param idList
-     */
-    @Override
-    public void removePoReconciliationDetail (List<String> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
-            return;
-        }
-        //送货单
-        List<DeliveryOrderEntity> deliveryOrderList = this.listByIds(idList);
-        if (CollectionUtils.isEmpty(deliveryOrderList)) {
-            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
-        }
-        //送货明细
-        List<String> deliveryOrderIdList = deliveryOrderList.stream().map(DeliveryOrderEntity::getId).distinct().collect(Collectors.toList());
-        List<DeliveryOrderDetailEntity> deliveryOrderDetailList = detailService.listByMainIdList(deliveryOrderIdList);
-        if (CollectionUtils.isEmpty(deliveryOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST);
-        }
-        List<String> detailIdList = deliveryOrderDetailList.stream().map(DeliveryOrderDetailEntity::getId).collect(Collectors.toList());
-        poReconciliationDetailScmService.deleteDetailBySourceDetailIdList(detailIdList,true);
-    }
-
     @Override
     public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -887,10 +800,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             }else if(detailEntityList.stream().anyMatch(v->DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode().equals(v.getReceiptStatus()))){
                 orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
             }
-        }
-        List<String> confirmIds = deliveryOrderEntityList.stream().filter(v->DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode().equals(v.getReceiptStatus())).map(BaseEntity::getId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(confirmIds)){
-            this.addPoReconciliationDetail(confirmIds);
         }
         DeliveryOrderServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderServiceImpl.class);
         return bean.updateBatchById(deliveryOrderEntityList);
