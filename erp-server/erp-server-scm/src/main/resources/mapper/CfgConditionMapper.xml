@@ -42,7 +42,8 @@
         condition_field, logic, controls, api_url, condition_field_name, request_method, param, label, value, index, search_key, remote_label, value_type, rule_type
     </sql>
     <select id="listByType" resultType="com.erp.model.scm.dto.CfgConditionDTO$CommonDTO">
-        condition_field,
+        select
+            condition_field,
             controls,
             api_url,
             condition_field_name,
