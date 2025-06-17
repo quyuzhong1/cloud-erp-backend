@@ -849,6 +849,10 @@ public class SoDetailDTO implements Serializable {
          */
         private String customerPO;
         /**
+         * 目的地
+         */
+        private String toCountry;
+        /**
          * 备注
          */
         private String remark;
