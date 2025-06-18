@@ -826,8 +826,8 @@
             t.supplier_name,
             t.sku_id,
             t.sku_no,
-            t.supplier_purchase_qty,
-            SUM(t.supplier_purchase_qty) OVER (PARTITION BY t.sku_id) AS total_purchase_qty,
+            t.supplier_purchase_qty as supplierQty,
+            SUM(t.supplier_purchase_qty) OVER (PARTITION BY t.sku_id) AS total_purchase_qty as skuTotalQty,
                 ROUND(
                         t.supplier_purchase_qty * 1.0 / SUM(t.supplier_purchase_qty) OVER (PARTITION BY t.sku_id),
                         4
@@ -847,6 +847,7 @@
                      po.is_deleted = FALSE
                    AND po.invalid_status = FALSE
                    AND po.approve_status = 'approve'
+                   AND po.create_time <![CDATA[ < ]]> CURRENT_DATE
                  GROUP BY
                      pos.supplier_id,
                      pos.supplier_name,

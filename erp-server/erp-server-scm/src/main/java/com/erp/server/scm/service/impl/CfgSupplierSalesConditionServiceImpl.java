@@ -81,8 +81,12 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
             checkRuleCondition(conditionList);
         }
         //查询规则条件
-        List<CfgSupplierSalesConditionEntity> oleConditions = list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
-                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId));
+//        List<CfgSupplierSalesConditionEntity> oleConditions = list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
+//                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId));
+        List<CfgSupplierSalesConditionEntity> oleConditions = lambdaQuery()
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId)
+                .eq(CfgSupplierSalesConditionEntity::getSourceType, sourceType)
+                .list();
         List<CfgConditionDTO.CommonDTO> cfgConditions = cfgConditionService.listByType(sourceType);
         Map<String, String> cfgConditionMap = cfgConditions.stream()
                 .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField, CfgConditionDTO.CommonDTO::getConditionFieldName));

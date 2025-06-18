@@ -259,12 +259,12 @@ public class CfgSupplierSalesConditionDTO implements Serializable {
         /**
          * 比较符
          */
+        @NotBlank(message = "比较符不能为空")
         private String compare;
 
         /**
          * 对应的值
          */
-        @NotBlank(message = "比较符不能为空")
         private String value;
 
         /**

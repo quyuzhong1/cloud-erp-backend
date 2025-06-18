@@ -151,7 +151,7 @@ public class ExportScmFeignController {
 
     @PostMapping("/cfgSupplierSales")
     @WebAdvanceQuery
-    public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
+    public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(@RequestBody PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
         return cfgSupplierSalesService.paging(dto);
     }
 

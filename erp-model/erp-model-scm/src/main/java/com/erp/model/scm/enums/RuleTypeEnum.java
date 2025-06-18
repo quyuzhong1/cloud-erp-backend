@@ -14,7 +14,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum RuleTypeEnum implements EnumMessage {
 	SKU("sku", "sku查看配置"),
-	SALEABLESTOCK("saleableStock", "可销库存配置"),
+	PHYSICALWAREHOUSE("physicalWarehouse", "可销库存配置--实体仓"),
+	VIRTUALWAREHOUSE("virtualWarehouse", "可销库存配置--虚拟仓"),
 	SALESSTATISTIC("salesStatistic", "销量统计配置"),
     NOTICE("notice", "通知配置"),
 	BLACK("black", "黑名单配置"),

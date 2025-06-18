@@ -12,12 +12,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
 import com.erp.server.scm.service.CfgSupplierSalesConditionService;
@@ -66,7 +68,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private ProductDetailFeign productDetailFeign;
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -101,8 +103,13 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         }
 
         //可销库存配置
-        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList())){
-            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.SALEABLESTOCK.getCode(), addDTO.getWarehouseType());
+        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList()) ){
+            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode())){
+                cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(), addDTO.getWarehouseType());
+            }
+            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
+                cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), addDTO.getWarehouseType());
+            }
         }
 
         //销量统计配置
@@ -155,7 +162,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(),"");
 
         //可销库存配置
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALEABLESTOCK.getCode(),addDTO.getWarehouseType());
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+
+        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),addDTO.getWarehouseType());
 
         //销量统计配置
         cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
@@ -229,6 +238,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         data.setSalesRatioTypeName(CfgSupplierSalesSalesRatioTypeEnum.getName(data.getSalesRatioType()));
 
         data.setDimensionName(CfgSupplierSalesDimensionEnum.getName(data.getDimension()));
+
         //字段显示
         if(StringUtils.isNotBlank(entity.getDisplayField())){
             List<String> displayFieldList = Arrays.asList(entity.getDisplayField().split(","));
@@ -260,7 +270,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
                 data.setSkuList(conditionList);
             }
-            if(Objects.equals(key,RuleTypeEnum.SALEABLESTOCK.getCode())){
+            if(Objects.equals(key,RuleTypeEnum.PHYSICALWAREHOUSE.getCode()) || Objects.equals(key,RuleTypeEnum.VIRTUALWAREHOUSE.getCode())){
+                data.setWarehouseType(value.get(0).getWarehouseType());
+                data.setWarehouseTypeName(CfgSupplierSalesConditionWarehouseTypeEnum.getName(value.get(0).getWarehouseType()));
                 data.setSaleableStockList(conditionList);
             }
             if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
@@ -270,11 +282,13 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                 data.setNoticeList(conditionList);
             }
             if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
+                data.setIsBlack(Boolean.TRUE);
+
                 String sku = conditionList.get(0).getValue();
-                List<String> skuIdList = Arrays.asList(sku.split(","));
-                List<ProductDetailEntity> productDetailEntities = productDetailFeign.listByIds(skuIdList);
-                List<String> blackList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-                List<String> blackNameList = productDetailEntities.stream().map(ProductDetailEntity::getName).collect(Collectors.toList());
+                List<String> skuNoList = Arrays.asList(sku.split(","));
+                List<SkuVO> productDetailEntities = plmTaskFeign.listBySkuNoList(skuNoList);
+                List<String> blackList = productDetailEntities.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+                List<String> blackNameList = productDetailEntities.stream().map(SkuVO::getSkuName).collect(Collectors.toList());
                 data.setBlackList(blackList);
                 data.setBlackNameList(blackNameList);
             }
@@ -341,6 +355,8 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             record.setNoticeEnabledName(Boolean.TRUE.equals(record.getNoticeEnabled()) ? "是" : "否");
 
             record.setDimensionName(CfgSupplierSalesDimensionEnum.getName(record.getDimension()));
+
+            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
         }
     }
 

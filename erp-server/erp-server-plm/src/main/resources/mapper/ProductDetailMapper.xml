@@ -1760,7 +1760,7 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName ,retailPricefrom
+        select id,sku_id,spu_no,sku_no,productName ,retailPrice from
        (
             select
                 pi."id",

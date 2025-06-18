@@ -97,7 +97,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * 是否启用sku黑名单
          */
-        private Boolean isBlack;
+        private Boolean isBlack = Boolean.FALSE;
         /**
          * sku黑名单集合
          */
