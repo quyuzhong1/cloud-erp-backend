@@ -243,6 +243,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
+            if (entity.getSysParentId().equals("main")) {
+                entity.setSysParentId(null); // 如果是主表字段，则不设置 sysParentId
+            }
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);
         }
