@@ -118,6 +118,8 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
+    ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
+    ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
 
     /**
      * 警告信息 从800 开始
@@ -272,6 +274,8 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
     CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
     FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
+    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，请检查流程图是否配置正确"),
+
     PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
     PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
     /**
@@ -855,7 +859,7 @@ public enum ApiError implements Serializable {
     ERROR_99043(99043,"未找到调拨申请单"),
     ERROR_99044(99044,"未找到调拨申请明细"),
     ERROR_99045(99045,"调拨申请单已下推直接调拨单，不支持反审核"),
-    ERROR_99046(99046,"调拨申请单已下推分布式调出单，不支持反审核"),
+    ERROR_99046(99046,"调拨申请单已下推分步式调出单，不支持反审核"),
     ERROR_99047(99047,"未找到直接调拨单"),
     ERROR_99048(99048,"未找到直接调拨明细"),
     ERROR_99049(99049,"未找到调拨方向"),
@@ -875,7 +879,8 @@ public enum ApiError implements Serializable {
     ERROR_99063(99063,"未找到其他出库客户信息"),
     ERROR_99064(99064,"只有已审核调拨申请单支持下推单据"),
     ERROR_99065(99065,"调入数量不能大于调出数量"),
-    ERROR_99066(99066,"未找到分布式调入单"),
+    ERROR_99066(99066,"未找到分步式调入单"),
+    ERROR_NOT_EXIST_TRANSFER_OUT(99066,"未找到分步式调出单"),
     ERROR_99067(99067,"调出仓库不能修改"),
     ERROR_99068(99068,"已下推销售退货签收单，不能反审核"),
     ERROR_99069(99068,"调入数量+途损数量 不能超过计划调入数量"),
@@ -1506,7 +1511,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
     ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
-    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到采购价目明细"),
+    ERROR_NOT_FOUND_SO_PRICE(98099,"未找到销售价目表数据"),
+    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到销售价目明细"),
     ERROR_SO_PRICE_ID_REPEAT(98100,"请选择同一销售价目表下明细进行变更"),
     ERROR_SO_ORDER_ID_REPEAT(98101,"请选择同一销售订单下明细进行变更"),
     SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),

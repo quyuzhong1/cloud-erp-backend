@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import com.erp.model.oms.entity.SoPriceChangeDetailEntity;
-import com.erp.model.oms.entity.SoPriceDetailEntity;
 import com.erp.model.oms.entity.SoPriceEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -165,7 +164,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      * @param entity
      * @return
      */
-    BatchResultDTO disApprove(SoPriceEntity entity, List<SoPriceDetailEntity> detailEntityList, List<SoPriceChangeDetailEntity> changeDetailEntityList);
+    BatchResultDTO disApprove(SoPriceEntity entity, List<SoPriceChangeDetailEntity> changeDetailEntityList);
     /**
      * @description: 更新明细备注
      * @author Will
