@@ -78,8 +78,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Resource
     private DmpMqFeign dmpMqFeign;
 
-
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -318,4 +316,18 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         List<KingdeeOperatorRefPostDTO.OperatorDTO> resultList = baseMapper.listOperatorByUserIdList(userIdList);
         return resultList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateState(KingdeeBusinessOperatorDTO.BatchUpdateDTO dto) {
+        boolean result = lambdaUpdate().in(KingdeeOperatorRefPostEntity::getId, dto.getIds())
+                .set(KingdeeOperatorRefPostEntity::getDisabled, dto.getDisabled())
+                .update();
+
+        if (!result) {
+            throw new ServiceException("业务员状态更新失败");
+        }
+        log.warn("业务员状态更新成功, ids: {}, disabled: {}", dto.getIds(), dto.getDisabled());
+    }
+
 }

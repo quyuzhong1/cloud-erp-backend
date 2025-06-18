@@ -263,6 +263,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(checkResult){
             throw new ServiceException("SPU已存在,不可重复创建");
         }
+        if(CollectionUtils.isNotEmpty(dto.getApplicationCategoryIdList())){
+            dto.setApplicationCategoryId(String.join(",", dto.getApplicationCategoryIdList()));
+        }
         //根据id查询
         ProductInfoEntity oldEntity = this.getById(dto.getId());
         ProductInfoEntity entity = new ProductInfoEntity();
@@ -884,10 +887,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             //工时统计
             List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> taskTimeList = projectTaskTimeRecordService.listByProductIds(productIds);
-            List<String> applicationCategoryId = list.stream().map(ProductShowDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
-            List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.listByIds(applicationCategoryId);
-            Map<String, String> categoryMap = categoryEntityList.stream()
-                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
+            List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
 
             //根据产品id 获取到对应的要交付的文档数
             List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
@@ -899,7 +899,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //完成的任务的状态
             List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode());
             for (ProductShowDTO item : list) {
-                item.setApplicationCategoryName(categoryMap.get(item.getApplicationCategoryId()));
+                if(StringUtils.isNotBlank(item.getApplicationCategoryId())){
+                    List<String> applicationCategoryIdList = Arrays.stream(item.getApplicationCategoryId().split(","))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    List<String> applicationCategory = applicationCategoryList.stream()
+                            .filter(ac -> applicationCategoryIdList.contains(ac.getId()))
+                            .map(ApplicationCategoryEntity::getName)
+                            .collect(Collectors.toList());
+                    if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                        String applicationCategoryName = String.join(",", applicationCategory);
+                        item.setApplicationCategoryName(applicationCategoryName);
+                    }
+                }
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                     item.setIsAddProductName("是");
@@ -1232,7 +1244,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setIterateRefSkuId("");
             productInfoEntity.setIterateRefSkuNo("");
         }
-
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }
@@ -2572,24 +2583,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         List<ProductInfoEntity> list = new ArrayList<>();
         List<ApplicationCategoryEntity> applicationCategoryList= applicationCategoryService.list();
-        Map<String, String> applicationMap = applicationCategoryList.stream()
-                .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
-            String oldName = applicationMap.get(productInfoEntity.getApplicationCategoryId());
-            productInfoEntity.setApplicationCategoryId(dto.getApplicationCategoryId());
+            List<String> oldApplicationCategoryIdList = Arrays.stream(productInfoEntity.getApplicationCategoryId().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            String oldName = applicationCategoryList.stream().filter(v->oldApplicationCategoryIdList.contains(v.getId())).map(ApplicationCategoryEntity::getName).collect(Collectors.joining(","));
+            String newName = applicationCategoryList.stream().filter(v->dto.getApplicationCategoryIdList().contains(v.getId())).map(ApplicationCategoryEntity::getName).collect(Collectors.joining(","));
+
+            productInfoEntity.setApplicationCategoryId(String.join(",", dto.getApplicationCategoryIdList()));
             list.add(productInfoEntity);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(req);
             List<String> remarkList = new ArrayList<>();
-            remarkList.add("转移应用分类[应用分类]由[" + oldName + "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]");
+            remarkList.add("转移应用分类[应用分类]由[" + oldName + "]改为[" + newName + "]");
             productOperateRecordDTO.setRemark(toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),applicationMap.get(dto.getApplicationCategoryId()))));
+                    .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),newName)));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);

@@ -30,10 +30,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -80,6 +77,13 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
         ValidatorUtil.validateEntity(request);
         String iossCode = request.getIossCode();
+        if(!logisticsOrderVO.getLogisticsChannelEntity().getIsIossPrepay()){
+            request.setIossCode(null);
+            request.setOrderExtra(Arrays.asList(YunTuCreateOrderRequest.OrderExtra.builder()
+                    .extraCode("V1")
+                    .extraName("云途预缴")
+                    .build()));
+        }
         try {
             YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getAuthMap());
             if(isFailure(yunTuResponse.getCode())){
