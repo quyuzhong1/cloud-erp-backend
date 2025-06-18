@@ -43,7 +43,7 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoOutstockService soOutstockService;
-
+    
 
     /**
      * 获取 tab列表
@@ -59,7 +59,7 @@ public class SoOutstockController extends BaseController {
             tableAlias = "so"
     )
     public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
+    	List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
     }
 
@@ -80,7 +80,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-        PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
         return success(pagingVO);
     }
 
@@ -100,7 +100,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<SoOutstockDTO.PagingTotalDTO> getTotalByQuery(@RequestBody @Validated SoOutstockDTO.PagingParamDTO dto) {
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
+    	SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
         return success(pagingTotalDTO);
     }
 
