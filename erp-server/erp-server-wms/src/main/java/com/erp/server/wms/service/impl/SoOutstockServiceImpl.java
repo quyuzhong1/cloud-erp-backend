@@ -9,7 +9,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 
-import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -1429,12 +1428,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return new PagingVO<>(page);
     }
     
-    @DS("doris")
-    @Override
-    public PagingVO<SoOutstockDTO.PagingViewDTO> dorisExportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-    	return exportSoOutStock(dto);
-    }
-
     /**
      * 作废
      *
@@ -1545,12 +1538,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
     
-    @DS("doris")
-    @Override
-    public List<SoOutstockDTO.TabListDTO> dorisTabList(PermissionsDTO dto) {
-    	return tabList(dto);
-    }
-
     /**
      * 分页列表
      *
@@ -1574,12 +1561,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return new PagingVO<>(pageData);
     }
     
-    @DS("doris")
-    @Override
-    public PagingVO<SoOutstockDTO.PagingViewDTO> dorisPaging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-    	return paging(dto);
-    }
-
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
@@ -2621,12 +2602,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return pagingTotalDTO;
     }
     
-    @DS("doris")
-    @Override
-    public SoOutstockDTO.PagingTotalDTO dorisGetTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-    	return getTotalByQuery(params);
-    }
-
     /**
      * 生成销售出库单
      *
