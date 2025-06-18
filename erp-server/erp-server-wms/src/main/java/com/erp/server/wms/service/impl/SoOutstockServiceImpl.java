@@ -1427,7 +1427,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
     }
-    
+
     /**
      * 作废
      *
@@ -1537,7 +1537,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
-    
+
     /**
      * 分页列表
      *
@@ -1560,7 +1560,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(list,false);
         return new PagingVO<>(pageData);
     }
-    
+
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
@@ -2601,7 +2601,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
-    
+
     /**
      * 生成销售出库单
      *
@@ -2849,6 +2849,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (ApiError.isNotServiceException(e)){
+                    throw e;
+                }
                 //记录异常订单
                 String soB2cId = dto.getSoId();
                 String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
@@ -3152,7 +3156,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } catch (Exception e) {
                 log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
                 // 非ServiceException 异常，抛出由中台重试
-                if (! (e instanceof ServiceException)){
+                if (ApiError.isNotServiceException(e)){
                     throw e;
                 }
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();

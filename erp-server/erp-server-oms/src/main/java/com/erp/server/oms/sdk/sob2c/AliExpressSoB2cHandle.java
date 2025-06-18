@@ -11,6 +11,7 @@ import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
@@ -129,13 +130,13 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             this.createAliExpressOutStock(dto, mainEntity);
         } catch (Exception e) {
             //查询发货单是否全部已出库
-            List<AliexpressDeliveryEntity> aliexpressDeliveryEntities = aliexpressDeliveryFeign.listBySoId(mainEntity.getId());
-            if(CollectionUtils.isNotEmpty(aliexpressDeliveryEntities) && aliexpressDeliveryEntities.stream().allMatch(AliexpressDeliveryEntity::getIsOutstock)){
-                return Boolean.TRUE;
-            }
+//            List<AliexpressDeliveryEntity> aliexpressDeliveryEntities = aliexpressDeliveryFeign.listBySoId(mainEntity.getId());
+//            if(CollectionUtils.isNotEmpty(aliexpressDeliveryEntities) && aliexpressDeliveryEntities.stream().allMatch(AliexpressDeliveryEntity::getIsOutstock)){
+//                return Boolean.TRUE;
+//            }
             log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
             // 非ServiceException 异常，抛出由中台重试
-            if (! (e instanceof ServiceException)){
+            if (ApiError.isNotServiceException(e)){
                 throw e;
             }
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -291,9 +292,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             }catch (Exception e){
                 log.error("[速卖处理销售明细出库失败]:order={},msg={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 // 非ServiceException 异常，抛出由中台重试
-                if (! (e instanceof ServiceException)){
+                if (ApiError.isNotServiceException(e)){
                     throw e;
                 }
+
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson("");
