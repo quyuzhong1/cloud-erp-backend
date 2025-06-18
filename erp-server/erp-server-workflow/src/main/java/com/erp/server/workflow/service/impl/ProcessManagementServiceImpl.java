@@ -368,6 +368,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             String ruleId = cfgProcessRuleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             //TODO 获取当前用户
+            startDTO.setUserId(UserContext.getLoginUser().getUid());
             startDTO.setRuleId(ruleId);
             startDTO.setRuleType(cfgProcessRuleEntity.getType());
             log.info("startDTO重要标识:{}",startDTO.toString());
@@ -947,9 +948,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                                 : thirdUser.getThirdOpenId() != null
                                 ? thirdUser.getThirdOpenId()
                                 : thirdUser.getThirdUnionId();
-                        Boolean revoke = fsService.revoke(approvalCode, thirdInstanceCode, userId);
-                        if (revoke){
-                            return new ProcessManagementDTO.RevokeResultDTO(dto);
+                        try {
+                            Boolean revoke = fsService.revoke(approvalCode, thirdInstanceCode, userId);
+                            if (revoke){
+                                return new ProcessManagementDTO.RevokeResultDTO(dto);
+                            }
+                        }catch (Exception e){
+                            throw new ServiceException(e.getMessage());
                         }
                     }
                 }
