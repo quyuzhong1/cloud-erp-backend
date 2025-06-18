@@ -39,6 +39,7 @@ public interface PlmWorkflowFeign extends BaseWorkflowService{
      * @param dto
      * @return Boolean
      */
+    @PostMapping("/feign/plmWorkflow/disApprove")
     Boolean disApprove(ApproveDTO.DisApproveDTO dto);
     /**
      * 撤销流程
@@ -47,6 +48,7 @@ public interface PlmWorkflowFeign extends BaseWorkflowService{
      * @param dto
      * @return Boolean
      */
+    @PostMapping("/feign/plmWorkflow/cancelProcess")
     Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
 }
