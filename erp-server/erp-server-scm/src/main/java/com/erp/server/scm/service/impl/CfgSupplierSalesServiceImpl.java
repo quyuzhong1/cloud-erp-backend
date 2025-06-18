@@ -200,9 +200,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                 throw new ServiceException("勾选黑名单SKU，则黑名单sku列表不能为空");
             }
             CfgSupplierSalesConditionDTO.ConditionDTO black = new CfgSupplierSalesConditionDTO.ConditionDTO();
-            black.setField("skuId");
+            black.setField("skuNo");
             black.setCompare("inList");
-            black.setLogic("and");
+            black.setLogic("");
             black.setSalesSettingId("");
             black.setValueType("String");
             black.setValue(String.join(",",  dto.getBlackList()));
