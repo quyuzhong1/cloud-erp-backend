@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.ThirdProcessTaskManagementEntity;
 import com.erp.server.workflow.mapper.ThirdProcessTaskManagementMapper;
@@ -17,12 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
+
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author will
@@ -31,66 +36,57 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ThirdProcessTaskManagementServiceImpl extends SuperServiceImpl<ThirdProcessTaskManagementMapper, ThirdProcessTaskManagementEntity> implements ThirdProcessTaskManagementService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(ThirdProcessTaskManagementDTO.AddDTO addDTO) {
-        ThirdProcessTaskManagementEntity thirdProcessTaskManagementEntity = new ThirdProcessTaskManagementEntity();
-        BeanMapperUtils.copy(addDTO, thirdProcessTaskManagementEntity);
-
-        // 数据处理
-        handleData(thirdProcessTaskManagementEntity);
-
+    public BaseResultDTO.AddDTO add(List<ThirdProcessTaskManagementDTO.AddDTO> addDTO) {
+        List<ThirdProcessTaskManagementEntity> taskManagementEntityList = BeanMapperUtils.copyList(ThirdProcessTaskManagementEntity.class, addDTO);
         log.info("开始新增");
-        boolean save = super.save(thirdProcessTaskManagementEntity);
-        if(!save) {
+        boolean save = super.saveBatch(taskManagementEntityList);
+        if (!save) {
             throw new ServiceException("保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , thirdProcessTaskManagementEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, thirdProcessTaskManagementEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(thirdProcessTaskManagementEntity.getId(), thirdProcessTaskManagementEntity.getId());
+        return new BaseResultDTO.AddDTO("", "");
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ThirdProcessTaskManagementDTO.UpdateDTO addOrUpdateDTO) {
-        ThirdProcessTaskManagementEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-        ThirdProcessTaskManagementEntity thirdProcessTaskManagementEntity =  BeanMapperUtils.map(ThirdProcessTaskManagementEntity.class, addOrUpdateDTO);
+    public Boolean update(List<ThirdProcessTaskManagementDTO.UpdateDTO> addOrUpdateDTO) {
+        List<ThirdProcessTaskManagementEntity> taskEntities = BeanMapperUtils.copyList(ThirdProcessTaskManagementEntity.class, addOrUpdateDTO);
+        Set<String> mianids = taskEntities.stream().map(ThirdProcessTaskManagementEntity::getMainId).collect(Collectors.toSet());
+        List<ThirdProcessTaskManagementEntity> oldEntityList = super.list(new LambdaQueryWrapper<ThirdProcessTaskManagementEntity>().in(ThirdProcessTaskManagementEntity::getMainId, mianids));
+        // 构建 oldEntity 的 map，key 为 mainId + "_" + taskId
+        Map<String, ThirdProcessTaskManagementEntity> oldEntityMap = oldEntityList.stream()
+                .collect(Collectors.toMap(
+                        e -> e.getMainId() + "_" + e.getTaskId(),
+                        e -> e
+                ));
 
-        // 数据处理
-        handleData(thirdProcessTaskManagementEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
-        boolean save = super.updateById(thirdProcessTaskManagementEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+        // 构建新 entity 的 key 集合
+        Set<String> newEntityKeys = taskEntities.stream()
+                .map(e -> e.getMainId() + "_" + e.getTaskId())
+                .collect(Collectors.toSet());
+
+        // 找出待删除的 oldEntity
+        List<ThirdProcessTaskManagementEntity> toDeleteList = oldEntityList.stream()
+                .filter(e -> !newEntityKeys.contains(e.getMainId() + "_" + e.getTaskId()))
+                .collect(Collectors.toList());
+        if (!toDeleteList.isEmpty()){
+            List<String> removeIds = toDeleteList.stream().map(ThirdProcessTaskManagementEntity::getId).collect(Collectors.toList());
+            super.removeByIds(removeIds);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", thirdProcessTaskManagementEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), thirdProcessTaskManagementEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, thirdProcessTaskManagementEntity, null, thirdProcessTaskManagementEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(ThirdProcessTaskManagementEntity thirdProcessTaskManagementEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 匹配到的 entity 赋值 id
+        for (ThirdProcessTaskManagementEntity entity : taskEntities) {
+            String key = entity.getMainId() + "_" + entity.getTaskId();
+            if (oldEntityMap.containsKey(key)) {
+                entity.setId(oldEntityMap.get(key).getId());
+            }
+        }
+        return super.saveOrUpdateBatch(taskEntities);
     }
 }

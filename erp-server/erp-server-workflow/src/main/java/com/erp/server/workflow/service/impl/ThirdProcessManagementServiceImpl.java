@@ -6,14 +6,17 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.erp.model.workflow.entity.ThirdProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.FSApprovalStatusEnum;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
 import com.erp.server.workflow.service.*;
@@ -31,14 +34,19 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 
+import static com.common.business.enums.ApproveTypeEnum.PASS;
+import static com.common.business.enums.ApproveTypeEnum.REJECT;
+
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author will
@@ -47,8 +55,6 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdProcessManagementMapper, ThirdProcessManagementEntity> implements ThirdProcessManagementService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @Resource
     private ApproveTaskInfoService approveTaskInfoService;
@@ -59,139 +65,202 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
     @Resource
     private ThirdProcessTaskManagementService thirdProcessTaskManagementService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    private ProcessManagementService processManagementService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdProcessManagementDTO.AddDTO addDTO) {
         ThirdProcessManagementEntity thirdProcessManagementEntity = new ThirdProcessManagementEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessManagementEntity);
 
-        // 数据处理
-        handleData(thirdProcessManagementEntity);
-
-        log.info("开始新增");
+        log.info("开始新增主记录。");
         boolean save = super.save(thirdProcessManagementEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+        if (!save) {
+            throw new ServiceException("保存主记录失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , thirdProcessManagementEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, thirdProcessManagementEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(thirdProcessManagementEntity.getId(), thirdProcessManagementEntity.getId());
+        String mainId = thirdProcessManagementEntity.getId();
+        if (addDTO.getTaskList() != null && !addDTO.getTaskList().isEmpty()) {
+            thirdProcessTaskManagementService.add(addDTO.getTaskList());
+        }
+        return new BaseResultDTO.AddDTO(mainId, mainId);
     }
 
     /**
-    * 修改
-    */
+     * 修改一条现有记录及其关联的任务。
+     * 现在假定任务列表是 UpdateDTO 的一部分。
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ThirdProcessManagementDTO.UpdateDTO addOrUpdateDTO) {
-        ThirdProcessManagementEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-        ThirdProcessManagementEntity thirdProcessManagementEntity =  BeanMapperUtils.map(ThirdProcessManagementEntity.class, addOrUpdateDTO);
+    public Boolean update(ThirdProcessManagementDTO.UpdateDTO updateDTO) {
+        ThirdProcessManagementEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
 
-        // 数据处理
-        handleData(thirdProcessManagementEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        ThirdProcessManagementEntity thirdProcessManagementEntity = BeanMapperUtils.map(ThirdProcessManagementEntity.class, updateDTO);
+
+        log.info("开始修改数据，id：【{}】", old.getId());
         boolean save = super.updateById(thirdProcessManagementEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+        if (!save) {
+            throw new ServiceException("保存主记录失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", thirdProcessManagementEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), thirdProcessManagementEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, thirdProcessManagementEntity, null, thirdProcessManagementEntity.getId(), msg);
+        if (updateDTO.getTaskList() != null) {
+            List<ThirdProcessTaskManagementDTO.UpdateDTO> updateDTOList = BeanUtil.copyToList(updateDTO.getTaskList(), ThirdProcessTaskManagementDTO.UpdateDTO.class);
+            for (ThirdProcessTaskManagementDTO.UpdateDTO dto : updateDTOList) {
+                dto.setMainId(updateDTO.getId());
+            }
+            thirdProcessTaskManagementService.update(updateDTOList);
+        }
         return Boolean.TRUE;
     }
 
+    /**
+     * 处理来自第三方源数据的入口点。
+     * 此方法现在作为“编排者”，解析请求并委托给 add() 或 update()。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void insert(JSONObject jsonObject, String sourcePlatform) {
-        // 1. 通过 instance_code 查询是否已有记录
-        String instanceCode = jsonObject.getStr("instanceCode");
-        ThirdProcessManagementEntity thirdProcessManagementEntity = this.lambdaQuery()
+    public void addOrUpdate(JSONObject jsonObject, String sourcePlatform) {
+        String instanceCode = jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode());
+
+        // 1. 检查记录是否已存在
+        ThirdProcessManagementEntity existingEntity = this.lambdaQuery()
                 .eq(ThirdProcessManagementEntity::getProcessInstanceId, instanceCode)
                 .one();
 
-        // 2. 组装主表数据
-        ApproveTaskInfoEntity one = approveTaskInfoService.getOne(
-                new LambdaQueryWrapper<ApproveTaskInfoEntity>()
-                        .eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr("instanceCode"))
-                        .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
-        );
-        ThirdProcessManagementDTO.AddDTO addDTO = new ThirdProcessManagementDTO.AddDTO();
-        addDTO.setProcessInstanceId(instanceCode);
-        addDTO.setProcessDefinitionId(jsonObject.getStr("approvalCode"));
-        SysUserThirdEntity sysUser = sysUserFeign.getUserByThird("FS", jsonObject.getStr("userId"));
-        addDTO.setSysUserId(sysUser.getUserId());
-        addDTO.setBusinessId(one.getBussinessId());
-        addDTO.setBusinessCode(one.getBussinessCode());
-        addDTO.setBusinessKey(one.getBussinessKey());
-        addDTO.setStatus(jsonObject.getStr("status"));
-        addDTO.setProcessInstanceName(jsonObject.getStr("approvalName"));
-        addDTO.setSourcePlatform(sourcePlatform);
-        addDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("startTime")), ZoneId.systemDefault()));
-        addDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("endTime")), ZoneId.systemDefault()));
+        // 2. 从 JSON 载荷构建 DTO
+        ThirdProcessManagementDTO.AddDTO addDTO = buildAddDTOFromJson(jsonObject, sourcePlatform);
 
-        if (thirdProcessManagementEntity != null) {
-            // 已有记录，更新
-            BeanMapperUtils.copy(addDTO, thirdProcessManagementEntity);
-            this.updateById(thirdProcessManagementEntity);
+        // 3. 委托给 add() 或 update()
+        if (existingEntity != null) {
+            // 这是更新操作
+            ThirdProcessManagementDTO.UpdateDTO updateDTO = BeanMapperUtils.map(ThirdProcessManagementDTO.UpdateDTO.class, addDTO);
+            updateDTO.setId(existingEntity.getId());
+            this.update(updateDTO);
         } else {
-            // 没有记录，新增
-            thirdProcessManagementEntity = BeanUtil.copyProperties(addDTO, ThirdProcessManagementEntity.class);
-            this.save(thirdProcessManagementEntity);
+            // 这是新增操作
+            this.add(addDTO);
         }
 
-        // 3. 生成 task 明细数据
-        JSONArray taskList = jsonObject.getJSONArray("taskList");
-        ArrayList<ThirdProcessTaskManagementEntity> arrayList = new ArrayList<>();
-        String id = thirdProcessManagementEntity.getId();
-        taskList.jsonIter().forEach(task -> {
-            ThirdProcessTaskManagementEntity taskDTO = new ThirdProcessTaskManagementEntity();
-            taskDTO.setTaskId(task.getStr("id"));
-            taskDTO.setNodeId(task.getStr("node_id"));
-            taskDTO.setNodeName(task.getStr("node_name"));
-            taskDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("startTime")), ZoneId.systemDefault()));
-            taskDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("endTime")), ZoneId.systemDefault()));
-            taskDTO.setTaskStatus(task.getStr("status"));
-            taskDTO.setThirdUserId(task.getStr("userId"));
-            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird("FS", task.getStr("userId"));
-            taskDTO.setSysUserId(userByThird.getUserId());
-            taskDTO.setMainId(id);
-            arrayList.add(taskDTO);
-        });
-        //arrayList根据nodeid更新或插入数据
-        for (ThirdProcessTaskManagementEntity taskEntity : arrayList) {
-            LambdaQueryWrapper<ThirdProcessTaskManagementEntity> queryWrapper = new LambdaQueryWrapper<ThirdProcessTaskManagementEntity>()
-                    .eq(ThirdProcessTaskManagementEntity::getMainId, taskEntity.getMainId())
-                    .eq(ThirdProcessTaskManagementEntity::getNodeId, taskEntity.getNodeId());
-            ThirdProcessTaskManagementEntity exist = thirdProcessTaskManagementService.getOne(queryWrapper);
-            if (exist != null) {
-                // 更新
-                taskEntity.setId(exist.getId());
-                thirdProcessTaskManagementService.updateById(taskEntity);
-            } else {
-                // 插入
-                thirdProcessTaskManagementService.save(taskEntity);
-            }
+        // 4. 处理后置的回调逻辑
+        FSApprovalStatusEnum statusEnum = FSApprovalStatusEnum.getByCode(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        if (statusEnum != FSApprovalStatusEnum.PENDING) {
+            ApproveTaskInfoEntity one = approveTaskInfoService.getOne(
+                    new LambdaQueryWrapper<ApproveTaskInfoEntity>()
+                            .eq(ApproveTaskInfoEntity::getThirdInstanceId, instanceCode)
+                            .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
+            );
+            handleCallbackLogic(jsonObject, statusEnum, one);
         }
-        //TODO 根据status执行后续流程
-
     }
 
+    /**
+     * 从传入的 JSONObject 构建一个完整填充的 AddDTO 的辅助方法。
+     * 此方法封装了映射和数据检索逻辑。
+     */
+    private ThirdProcessManagementDTO.AddDTO buildAddDTOFromJson(JSONObject jsonObject, String sourcePlatform) {
+        ThirdProcessManagementDTO.AddDTO processManagementDTO = new ThirdProcessManagementDTO.AddDTO();
+
+        String instanceCode = jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode());
+
+        // 获取关联的业务信息
+        ApproveTaskInfoEntity one = approveTaskInfoService.getOne(
+                new LambdaQueryWrapper<ApproveTaskInfoEntity>()
+                        .eq(ApproveTaskInfoEntity::getThirdInstanceId, instanceCode)
+                        .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
+        );
+
+        // 映射任务列表明细
+        JSONArray taskListJson = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
+        List<ThirdProcessTaskManagementDTO.AddDTO> taskManagementDTOList = new ArrayList<>();
+        // 为了提高效率，您可能需要一次性获取所有用户
+        ArrayList<String> userIds = new ArrayList<>();
+        for (JSONObject task : taskListJson.jsonIter()) {
+            userIds.add(task.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
+        }
+        userIds.add(jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
+        List<SysUserThirdEntity> users = sysUserFeign.getUserByThirdIdList(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userIds);
+        Map<String, String> thirdIdToSysIdMap = users.stream().collect(Collectors.toMap(SysUserThirdEntity::getThirdUserId, SysUserThirdEntity::getUserId));
+
+        // 映射主表字段
+        processManagementDTO.setProcessInstanceId(instanceCode);
+        processManagementDTO.setProcessDefinitionId(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode()));
+        processManagementDTO.setSysUserId(thirdIdToSysIdMap.get(jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode())));
+        processManagementDTO.setThirdUserId(jsonObject.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
+        processManagementDTO.setBusinessId(one.getBussinessId());
+        processManagementDTO.setBusinessCode(one.getBussinessCode());
+        processManagementDTO.setBusinessKey(one.getBussinessKey());
+
+        processManagementDTO.setStatus(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+
+        processManagementDTO.setProcessInstanceName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
+        processManagementDTO.setSourcePlatform(sourcePlatform);
+        processManagementDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong(FsRequestBodyAttributesEnum.STARTTIME.getCode())), ZoneId.systemDefault()));
+        processManagementDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode())), ZoneId.systemDefault()));
+
+        //处理明细
+        taskListJson.jsonIter().forEach(taskJson -> {
+            ThirdProcessTaskManagementDTO.AddDTO taskManagementDTO = new ThirdProcessTaskManagementDTO.AddDTO(); // 替换为您实际的任务DTO
+            String thirdId = taskJson.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
+            taskManagementDTO.setTaskId(taskJson.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
+            taskManagementDTO.setNodeId(taskJson.getStr(FsRequestBodyAttributesEnum.NODEID.getCode()));
+            taskManagementDTO.setNodeName(taskJson.getStr(FsRequestBodyAttributesEnum.NODENAME.getCode()));
+            taskManagementDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(taskJson.getLong(FsRequestBodyAttributesEnum.STARTTIME.getCode())), ZoneId.systemDefault()));
+            taskManagementDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(taskJson.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode())), ZoneId.systemDefault()));
+
+            taskManagementDTO.setTaskStatus(taskJson.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+
+            taskManagementDTO.setThirdUserId(taskJson.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
+            taskManagementDTO.setSysUserId(thirdIdToSysIdMap.get(thirdId));
+            taskManagementDTOList.add(taskManagementDTO);
+        });
+        processManagementDTO.setTaskList(taskManagementDTOList);
+
+        return processManagementDTO;
+    }
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(ThirdProcessManagementEntity thirdProcessManagementEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 根据流程状态处理最终的回调逻辑。
+     */
+    private void handleCallbackLogic(JSONObject jsonObject, FSApprovalStatusEnum statusEnum, ApproveTaskInfoEntity one) {
+        JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
+        JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
+        String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
+        Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
+        LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
+        switch (statusEnum) {
+            case APPROVED:
+                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+                break;
+            case REJECTED:
+                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
+                break;
+            case CANCELED:
+                // TODO 缺少统一撤销入口
+                break;
+            case DELETED:
+                // TODO 缺少统一的反审核入口
+                break;
+            default:
+                // PENDING 或其他无需操作的状态
+                break;
+        }
+    }
+
+    /**
+     * 原始的回调方法，保持不变。
+     */
+    @Override
+    public void handleCallback(ApproveTaskInfoEntity one, String approveStatus, String userId, LocalDateTime approveTime) {
+        EndProcessDTO processDTO = new EndProcessDTO();
+        processDTO.setBusinessKey(one.getBussinessKey());
+        processDTO.setBusinessId(one.getBussinessId());
+        processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
+        // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
+        SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        processDTO.setApproveUserId(user.getUserId());
+        processDTO.setApproveTime(approveTime);
+        processManagementService.callFeign(one.getBussinessKey(), processDTO);
     }
 }

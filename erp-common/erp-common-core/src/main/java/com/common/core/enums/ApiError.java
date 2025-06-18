@@ -275,7 +275,8 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
     CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
     FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
-
+    PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
+    PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
     /**
      * PLM 错误
      * 从95000 开始  以端口号
@@ -1719,7 +1720,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_END(1000000, "系统错误");
+    ;
 
     public Integer code;
     public String msg;

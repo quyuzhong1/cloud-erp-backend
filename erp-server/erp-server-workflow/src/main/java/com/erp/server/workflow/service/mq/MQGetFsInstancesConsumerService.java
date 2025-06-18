@@ -7,6 +7,7 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.server.workflow.context.CreateBillFactory;
@@ -64,7 +65,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(JSONObject jsonObject) {
-        String approvalCode = jsonObject.getStr("approvalCode");
+        String approvalCode = jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode());
 
         // 1. 获取启用的流程定义
         List<ThirdProcessDefinitionEntity> activeDefs = thirdProcessDefinitionService.list(
@@ -76,7 +77,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         // 2. 保存或更新实例
         ThirdProcessInstanceEntity instanceEntity = buildInstanceEntity(jsonObject);
         thirdProcessInstanceService.saveOrUpdate(instanceEntity,
-                new QueryWrapper<ThirdProcessInstanceEntity>().eq("instance_code", instanceEntity.getInstanceCode())
+                new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getInstanceCode, instanceEntity.getInstanceCode())
         );
 
         // 3. 查找当前 approvalCode 对应的流程定义类型
@@ -99,20 +100,20 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
 
     private ThirdProcessInstanceEntity buildInstanceEntity(JSONObject jsonObject) {
         ThirdProcessInstanceEntity entity = new ThirdProcessInstanceEntity();
-        entity.setApprovalCode(jsonObject.getStr("approvalCode"));
-        entity.setStartTime(jsonObject.getStr("startTime"));
-        entity.setEndTime(jsonObject.getStr("endTime"));
-        entity.setSerialNumber(jsonObject.getStr("serialNumber"));
-        entity.setStatus(jsonObject.getStr("status"));
-        entity.setForm(jsonObject.getStr("form"));
-        entity.setInstanceCode(jsonObject.getStr("instanceCode"));
-        entity.setApprovalName(jsonObject.getStr("approvalName"));
+        entity.setApprovalCode(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
+        entity.setStartTime(jsonObject.getStr(FsRequestBodyAttributesEnum.STARTTIME.getCode()));
+        entity.setEndTime(jsonObject.getStr(FsRequestBodyAttributesEnum.ENDTIME.getCode()));
+        entity.setSerialNumber(jsonObject.getStr(FsRequestBodyAttributesEnum.SERIALNUMBER.getCode()));
+        entity.setStatus(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        entity.setForm(jsonObject.getStr(FsRequestBodyAttributesEnum.FORM.getCode()));
+        entity.setInstanceCode(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
+        entity.setApprovalName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
         return entity;
     }
 
     private void handleUpdateStatus(JSONObject jsonObject, String sourcePlatform) {
         //TODO 更新thirdTask
-        thirdProcessManagementService.insert(jsonObject,sourcePlatform);
+        thirdProcessManagementService.addOrUpdate(jsonObject,sourcePlatform);
     }
 
     private void handleAddInstance(JSONObject jsonObject) {
@@ -125,7 +126,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
 
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
-        String instanceCode = jsonObject.getStr("instanceCode");
+        String instanceCode = jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode());
         // 根据 instanceCode 查询对应的记录
         ApproveTaskInfoEntity taskInfo = approveTaskInfoService.getOne(
                 new LambdaQueryWrapper<ApproveTaskInfoEntity>()

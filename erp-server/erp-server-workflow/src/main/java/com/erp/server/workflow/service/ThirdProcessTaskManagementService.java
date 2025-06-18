@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -21,7 +23,7 @@ public interface ThirdProcessTaskManagementService extends SuperService<ThirdPro
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ThirdProcessTaskManagementDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(List<ThirdProcessTaskManagementDTO.AddDTO> dto);
 
     /**
     * 修改
@@ -30,7 +32,7 @@ public interface ThirdProcessTaskManagementService extends SuperService<ThirdPro
     * @param dto
     * @return
     */
-    Boolean update(ThirdProcessTaskManagementDTO.UpdateDTO dto);
+    Boolean update(List<ThirdProcessTaskManagementDTO.UpdateDTO> dto);
 
 
 }

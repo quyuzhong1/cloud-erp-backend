@@ -123,7 +123,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
         //TODO 更新thirdTask
-        thirdProcessManagementService.insert(jsonObject,thirdProcessEntity.getSourcePlatform());
+        thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
     @Override

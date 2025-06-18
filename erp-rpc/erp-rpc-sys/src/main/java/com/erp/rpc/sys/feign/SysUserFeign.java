@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -605,4 +606,12 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/dept/getDeptEntityList")
     List<SysDepartmentEntity> getDeptEntityList();
+
+    /**
+     * @param platform
+     * @param thirdIds
+     * @return
+     */
+    @PostMapping("feign/user/getUserByThirdIdList")
+    List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
 }

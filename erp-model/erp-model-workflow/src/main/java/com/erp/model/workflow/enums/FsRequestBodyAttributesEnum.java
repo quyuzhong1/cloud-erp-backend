@@ -25,7 +25,19 @@ public enum FsRequestBodyAttributesEnum {
     REQUIRED("required", "是否必填"),
     CURRENCY("currency", "币种"),
     CURRENCYRange("currencyRange", "币种"),
+    STATUS("status", "审批状态"),
+    ENDTIME("endTime", "审批结束时间"),
+    STARTTIME("startTime", "审批开始时间"),
+    USERID("userId", "审批人id"),
+    NODEID("nodeId", "节点id"),
+    NODENAME("nodeName", "节点名称"),
+    TASKLIST("taskList", "任务列表"),
+    APPROVALNAME("approvalName", "审批名称"),
+    INSTANCECODE("instanceCode", "实例编号"),
+    APPROVALCODE("approvalCode", "审批编号"),
+    SERIALNUMBER("serialNumber", "序号"),
     TYPE("type", "审批终止");
+
 
     private final String code;
     private final String description;

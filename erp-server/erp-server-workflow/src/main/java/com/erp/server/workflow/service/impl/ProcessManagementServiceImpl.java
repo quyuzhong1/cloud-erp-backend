@@ -47,6 +47,7 @@ import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
@@ -54,6 +55,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.sdk.fs.enmu.FsActionStatusEnum;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.listeners.CamundaGlobalListener;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
@@ -167,6 +169,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private MQSyncFsHandler mqSyncFsHandler;
     @Resource
     private CfgQueryOptionService cfgQueryOptionService;
+    @Resource
+    private ApproveTaskInfoService approveTaskInfoService;
+    @Resource
+    private FsService fsService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -800,6 +806,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
+        ProcessManagementDTO.RevokeResultDTO resultDTO = revokeThirdInstance(dto);
+        if (resultDTO != null) {
+            return resultDTO;
+        }
+
         // 查询业务数据和关联流程定义
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
@@ -894,6 +905,50 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 //            }
 //        });
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
+    }
+
+    /**
+     * 撤回飞书审批
+     * @param dto
+     * @return
+     */
+    private ProcessManagementDTO.RevokeResultDTO revokeThirdInstance(ProcessManagementDTO.RevokeDTO dto) {
+        ApproveTaskInfoEntity taskInfo = null;
+        try {
+            //查询三方生成查询记录
+             taskInfo = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getBussinessKey, dto.getBusinessKey()).eq(ApproveTaskInfoEntity::getBussinessId, dto.getBusinessId()).eq(ApproveTaskInfoEntity::getIsDeleted, Boolean.FALSE));
+        }catch (Exception e){
+            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_INFO_ERROR);
+        }
+            //判断是否走飞书审批
+            if (ObjectUtil.isNotEmpty(taskInfo)) {
+                String approvalCode = taskInfo.getThirdApprovalCode();
+                String thirdInstanceCode = taskInfo.getThirdInstanceId();
+
+                if (StrUtil.isNotEmpty(dto.getUserId()) && StrUtil.isNotEmpty(taskInfo.getCreateUserId())) {
+                    if (!taskInfo.getCreateUserId().equals(dto.getUserId())) {
+                        throw new ServiceException(ApiError.PROCESS_NOT_START_USER);
+                    }
+                    //查询用户
+                    List<ThirdUnionDTO> thirdUsers = sysUserFeign.getThirdByUserIds(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), Collections.singletonList(dto.getUserId()));
+                    if (thirdUsers.size() > 1){
+                        throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_MULTIPLE);
+                    }
+                    for (ThirdUnionDTO thirdUser : thirdUsers) {
+                        //这里需要判断thirdUnionId;thirdUserId;thirdOpenId;是否为空，哪个不为空，用哪个
+                        String userId = thirdUser.getThirdUserId() != null
+                                ? thirdUser.getThirdUserId()
+                                : thirdUser.getThirdOpenId() != null
+                                ? thirdUser.getThirdOpenId()
+                                : thirdUser.getThirdUnionId();
+                        Boolean revoke = fsService.revoke(approvalCode, thirdInstanceCode, userId);
+                        if (revoke){
+                            return new ProcessManagementDTO.RevokeResultDTO(dto);
+                        }
+                    }
+                }
+            }
+        return null;
     }
 
     @Override

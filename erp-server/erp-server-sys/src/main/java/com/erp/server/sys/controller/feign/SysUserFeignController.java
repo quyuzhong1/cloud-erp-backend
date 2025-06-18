@@ -28,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -578,5 +579,13 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getUserByThird")
     public SysUserThirdEntity getUserByThird(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId)  {
         return sysUserThirdService.getUserByThird( platform,thirdId);
+    }
+
+    /**
+     * 根据第三方平台和id查询用户
+     **/
+    @PostMapping("/getUserByThirdIdList")
+    public List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds)  {
+        return sysUserThirdService.getUserByThirdIdList( platform,thirdIds);
     }
 }
