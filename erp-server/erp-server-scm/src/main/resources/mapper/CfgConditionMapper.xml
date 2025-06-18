@@ -52,7 +52,8 @@
             label,
             value,
             search_key,
-            remote_label
+            remote_label,
+            value_type
         FROM
             cfg_condition cc
         WHERE cc.rule_type = #{type}

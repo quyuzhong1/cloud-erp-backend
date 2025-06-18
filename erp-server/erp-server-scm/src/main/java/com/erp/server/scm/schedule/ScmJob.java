@@ -152,4 +152,18 @@ public class ScmJob {
         XxlJobHelper.log("=====同步金蝶付款条件 结束任务=====");
     }
 
+
+    /**
+     * (供应商 + 采购订单 + sku )采购数量计算
+     */
+    @XxlJob("calSupplierPurchaseQty")
+    public void calSupplierPurchaseQty() {
+        XxlJobHelper.log("=====(供应商+采购订单+sku)采购数量计算 开始任务=====");
+        long start = System.currentTimeMillis();
+        purchaseOrderService.calSupplierPurchaseQty();
+        long end = System.currentTimeMillis();
+        XxlJobHelper.log("主线程花费时间：{}", (end - start));
+        XxlJobHelper.log("=====(供应商+采购订单+sku)采购数量计算 结束任务=====");
+    }
+
 }

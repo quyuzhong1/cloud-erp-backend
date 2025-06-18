@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.entity.CfgConditionEntity;
@@ -31,7 +32,10 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
 
     @Override
     public List<CfgConditionDTO.CommonDTO> listByType(String type) {
-        return baseMapper.listByType(type);
+        List<CfgConditionEntity> list = lambdaQuery()
+                .eq(CfgConditionEntity::getRuleType, type)
+                .list();
+        return BeanMapper.copyList(list,CfgConditionDTO.CommonDTO.class);
     }
 
     @Override
