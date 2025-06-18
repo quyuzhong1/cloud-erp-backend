@@ -2480,7 +2480,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setSourceCode("");
                 pagingViewDTO.setSourceTypeName("");
                 pagingViewDTO.setFbaBoxNo("");
-                pagingViewDTO.setBoxNo("");
+                pagingViewDTO.setBoxNo(null);
                 pagingViewDTO.setPackingTotalStatusName("");
                 pagingViewDTO.setTotalQty(null);
                 pagingViewDTO.setLength(null);

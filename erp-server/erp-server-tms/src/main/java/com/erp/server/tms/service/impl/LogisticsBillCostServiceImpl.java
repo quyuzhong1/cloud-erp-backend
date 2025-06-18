@@ -1018,7 +1018,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
             }
             if (CollectionUtils.isEmpty(updateDetailList)) {
-                return;
+                continue;
             }
 
             //物流单

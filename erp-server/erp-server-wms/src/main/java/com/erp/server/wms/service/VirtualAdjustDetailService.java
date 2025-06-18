@@ -35,14 +35,9 @@ public interface VirtualAdjustDetailService extends SuperService<VirtualAdjustDe
     */
     Boolean update(VirtualAdjustDetailDTO.UpdateDTO dto);
 
-
-    void addDetail(String mainId, List<VirtualAdjustDetailDTO.AddDTO> detailList);
-
-    void updateDetail(String mainId, List<VirtualAdjustDetailDTO.UpdateDTO> detailList);
+    void updateDetail(String mainId, List<VirtualAdjustDetailEntity> detailEntityList);
 
     List<VirtualAdjustDetailEntity> listByMainIdList(List<String> mainIdList);
 
     void removeByMainId(String id);
-
-    void validateSubmit(VirtualAdjustEntity entity);
 }

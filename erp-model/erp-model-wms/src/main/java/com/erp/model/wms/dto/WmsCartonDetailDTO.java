@@ -214,7 +214,7 @@ public class WmsCartonDetailDTO implements Serializable {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * 箱数
          */
