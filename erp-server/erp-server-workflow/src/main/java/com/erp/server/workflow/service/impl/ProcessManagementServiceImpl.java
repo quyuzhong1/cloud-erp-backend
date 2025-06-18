@@ -363,6 +363,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             String ruleId = cfgProcessRuleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             //TODO 获取当前用户
+            startDTO.setUserId(UserContext.getLoginUser().getUid());
             startDTO.setRuleId(ruleId);
             startDTO.setRuleType(cfgProcessRuleEntity.getType());
             log.info("startDTO重要标识:{}",startDTO.toString());

@@ -17,6 +17,8 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.sys.entity.SysDepartmentThirdEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
@@ -206,26 +208,26 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 break;
 
             case "department":
-//                SysDepartmentThirdEntity fsDepartment = sysDepartmentThirdFeign.findByDepartmentId("FS", finalValue.toString());
-//                if (StrUtil.isEmpty(fsDepartment.getThirdOpenDeptId())) {
-//                    throw new ServiceException("未查询到飞书部门信息，请检查部门是否存在:{}", finalValue.toString());
-//                }
+                SysDepartmentThirdEntity fsDepartment = sysDepartmentThirdFeign.findByDepartmentId("FS", finalValue.toString());
+                if (StrUtil.isEmpty(fsDepartment.getThirdOpenDeptId())) {
+                    throw new ServiceException("未查询到飞书部门信息，请检查部门是否存在:{}", finalValue.toString());
+                }
                 JSONObject openId = new JSONObject();
-//                openId.set("open_id", Arrays.asList(fsDepartment.getThirdOpenDeptId()));
+                openId.set("open_id", Arrays.asList(fsDepartment.getThirdOpenDeptId()));
                 openId.set("open_id", Arrays.asList(finalValue));
                 resultField.set("value", Arrays.asList(openId));
                 break;
 
             case "contact":
-//                List<ThirdUnionDTO> fsUser = sysUserFeign.getThirdByUserIds("FS", Arrays.asList(finalValue.toString()));
-//                if (CollUtil.isEmpty(fsUser) || StrUtil.isEmpty(fsUser.get(0).getThirdUserId()) && StrUtil.isEmpty(fsUser.get(0).getThirdOpenId())) {
-//                    throw new ServiceException("未查询到飞书用户信息，请检查用户是否存在:{}", finalValue);
-//                }
-//                if (!StrUtil.isEmpty(fsUser.get(0).getThirdUserId())) {
-//                    resultField.set("value", Arrays.asList(fsUser.get(0).getThirdUserId()));
-//                } else {
-//                    resultField.set("open_ids", Arrays.asList(fsUser.get(0).getThirdOpenId()));
-//                }
+                List<ThirdUnionDTO> fsUser = sysUserFeign.getThirdByUserIds("FS", Arrays.asList(finalValue.toString()));
+                if (CollUtil.isEmpty(fsUser) || StrUtil.isEmpty(fsUser.get(0).getThirdUserId()) && StrUtil.isEmpty(fsUser.get(0).getThirdOpenId())) {
+                    throw new ServiceException("未查询到飞书用户信息，请检查用户是否存在:{}", finalValue);
+                }
+                if (!StrUtil.isEmpty(fsUser.get(0).getThirdUserId())) {
+                    resultField.set("value", Arrays.asList(fsUser.get(0).getThirdUserId()));
+                } else {
+                    resultField.set("open_ids", Arrays.asList(fsUser.get(0).getThirdOpenId()));
+                }
                 resultField.set("value", Arrays.asList(finalValue));
                 break;
 

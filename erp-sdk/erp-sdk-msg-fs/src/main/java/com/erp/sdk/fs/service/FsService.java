@@ -1129,10 +1129,10 @@ public class FsService {
     public Boolean revoke(String approvalCode, String instanceCode, String userId) {
         try {
             // 构建client
-            Client client = getClient();
-
+            Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
             // 创建请求对象
             CancelInstanceReq req = CancelInstanceReq.newBuilder()
+                    .userIdType("user_id")
                     .instanceCancel(InstanceCancel.newBuilder()
                             .approvalCode(approvalCode)
                             .instanceCode(instanceCode)
