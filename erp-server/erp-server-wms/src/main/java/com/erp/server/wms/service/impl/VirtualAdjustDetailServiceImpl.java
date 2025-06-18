@@ -7,7 +7,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
@@ -21,6 +25,7 @@ import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +41,8 @@ import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 
+import static cn.hutool.json.XMLTokener.entity;
+
 /**
  * <p>
  * 虚拟仓调整单明细表 服务实现类
@@ -49,15 +56,6 @@ import javax.annotation.Resource;
 public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdjustDetailMapper, VirtualAdjustDetailEntity> implements VirtualAdjustDetailService {
     @Autowired
     private OperateLogService operateLogService;
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-    @Lazy
-    @Resource
-    private VirtualWarehouseService virtualWarehouseService;
-    @Resource
-    private VirtualInventoryService virtualInventoryService;
-    @Resource
-    private InventoryService inventoryService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -76,10 +74,7 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓调整单明细单" , virtualAdjustDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, virtualAdjustDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), virtualAdjustDetailEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(virtualAdjustDetailEntity.getId(), virtualAdjustDetailEntity.getId());
     }
 
@@ -103,10 +98,9 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录虚拟仓调整单明细单日志数据，id：【{}】", virtualAdjustDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualAdjustDetailEntity.getId(), "虚拟仓调整单明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, virtualAdjustDetailEntity, null, virtualAdjustDetailEntity.getId(), msg);
+        log.info("编辑 开始记录虚拟仓调整单明细单日志数据，id：【{}】", virtualAdjustDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualAdjustDetailEntity.getId(), "虚拟仓调整单明细单");
+        operateLogService.addModuleOperateLogByObj(old, virtualAdjustDetailEntity, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), virtualAdjustDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -119,18 +113,27 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         }
         handleBatchData(detailEntityList, mainId);
         List<String> detailIds = detailEntityList.stream().map(VirtualAdjustDetailEntity::getId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        //删除原数据
-        log.info("删除原虚拟仓调整单明细单数据，mainId：【{}】", mainId);
-        super.remove(new LambdaQueryWrapper<VirtualAdjustDetailEntity>().eq(VirtualAdjustDetailEntity::getMainId, mainId).notIn(CollUtil.isNotEmpty(detailIds),VirtualAdjustDetailEntity::getId,detailIds));
+        List<VirtualAdjustDetailEntity> detailEntityList1 = this.listByMainIdList(Collections.singletonList(mainId));
+        detailEntityList1.stream().filter(e -> !detailIds.contains(e.getId())).forEach(e -> {
+            //删除原数据
+            log.info("删除原虚拟仓调整单明细单数据，id：【{}】", e.getId());
+            this.removeById(e.getId());
+            String msg = StrUtil.format("用户【{}】id为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), e.getId(), "虚拟仓调整单明细单");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), mainId, "删除虚拟仓调整单明细数据");
+        });
         //批量修改
         log.info("批量修改虚拟仓调整单明细单数据，mainId：【{}】", mainId);
         List<VirtualAdjustDetailEntity> addList = detailEntityList.stream().filter(detail -> CharSequenceUtil.isBlank(detail.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
+            String msg = StrUtil.format("用户【{}】id为【{}】的【{}】单据新增操作 ", UserContext.getDefaultLoginUser().getUserName(), addList.stream().map(VirtualAdjustDetailEntity::getId).collect(Collectors.joining(",")), "虚拟仓调整单明细单");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), mainId, "新增虚拟仓调整单明细数据");
         }
         List<VirtualAdjustDetailEntity> updateList = detailEntityList.stream().filter(detail -> CharSequenceUtil.isNotBlank(detail.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(updateList)){
             this.updateBatchById(updateList);
+            List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getId())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("编辑明细【%s】", ModuleTypeEnum.VIRTUAL_ADJUST.getCode(),pairList,"编辑操作");
         }
     }
 

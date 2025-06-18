@@ -27,6 +27,7 @@ import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.VirtualAdjustDetailExcelListener;
@@ -239,7 +240,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
 
     @Override
     public Boolean exportList(VirtualAdjustDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("发票管理", EXPORT_WMS_VIRTUAL_ADJUST_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("虚拟仓库存调整", EXPORT_WMS_VIRTUAL_ADJUST_REPORT.getCode(), param);
         return Boolean.TRUE;
     }
 
@@ -366,7 +367,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         VirtualAdjustEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到虚拟仓调整单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_DELETE);
         }
         //删除明细数据（如果有明细数据的话）
         virtualAdjustDetailService.removeByMainId(id);
@@ -376,7 +377,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         // 删除日志数据
         log.info("删除 开始删除虚拟仓调整单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "虚拟仓调整单主单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除虚拟仓调整单主单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), entity.getCode(), "删除虚拟仓调整单主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -628,12 +629,16 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        List<String> ids = list.stream().map(VirtualAdjustDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
         // 属性赋值
         for(VirtualAdjustDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getInventoryStatus()));
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            String userName = org.apache.commons.lang3.StringUtils.join(curApproveName, ",");
+            data.setApproveUserName(userName);
         }
     }
     /**

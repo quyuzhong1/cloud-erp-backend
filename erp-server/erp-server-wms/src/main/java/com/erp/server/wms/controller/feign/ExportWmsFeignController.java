@@ -1042,6 +1042,7 @@ public class ExportWmsFeignController {
      * 导出虚拟库存调整
      */
     @PostMapping("/exportVirtualAdjust")
+    @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
     PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
         return virtualAdjustService.paging(dto);
     }
