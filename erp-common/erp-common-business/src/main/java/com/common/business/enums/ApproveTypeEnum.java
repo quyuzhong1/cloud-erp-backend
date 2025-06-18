@@ -25,6 +25,7 @@ public enum ApproveTypeEnum {
     REJECT_APPOINT("reject_appoint", "驳回指定节点"),
     REVOKE("revoke", "撤回流程"),
     CANCEL("cancel", "撤销"),
+    DIS_APPROVE("disApprove","反审核");
     ;
     @JsonValue
     @EnumValue

@@ -15,6 +15,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -462,7 +463,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             taskService.createComment(managementTask.getTaskId(), processInstanceId, dto.getComment());
             Map<String, Object> variablesMap = dto.getVariablesMap();
             variablesMap.put(APPROVE_TYPE, dto.getApproveType().getStatus());
-            taskService.complete(managementTask.getTaskId(), variablesMap);
+            try {
+                taskService.complete(managementTask.getTaskId(), variablesMap);
+            } catch (Exception e) {
+                log.error("审核失败，msg ={}",e.getMessage());
+                throw new ServiceException(ApiError.ERROR_TASK_COMPLETE_FAIL);
+            }
         }
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
             // 审核不通过
@@ -1397,6 +1403,28 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
         return feignService.approveEnd(dto);
+    }
+
+    @Override
+    public Boolean disApproveFeign(ApproveDTO.DisApproveDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.disApprove(dto);
+    }
+
+    @Override
+    public Boolean cancelProcessFeign(ApproveDTO.CancelProcessDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.cancelProcess(dto);
     }
 
     @Override

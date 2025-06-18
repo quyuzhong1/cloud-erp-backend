@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.stereotype.Service;
 
@@ -19,4 +20,22 @@ public interface WorkflowProcessService {
      * @return Boolean
      */
     Boolean approveEnd(EndProcessDTO dto);
+
+
+    /**
+     * 反审核
+     * @author will
+     * @date 2025/6/18 09:32
+     * @param dto
+     * @return Boolean
+     */
+    Boolean disApprove(ApproveDTO.DisApproveDTO dto);
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/6/18 10:41
+     * @param dto
+     * @return Boolean
+     */
+    Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 }

@@ -144,14 +144,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 反审核
      *
-     * @param dto
      * @param entity
      * @param soChangeEntityList
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:48
      */
-    BatchResultDTO disApprove(BaseIdsDTO.IdsDTO dto, SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList);
+    BatchResultDTO disApprove(SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList);
 
     /**
      * 撤销流程

@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 
 import java.util.Map;
@@ -29,4 +30,21 @@ public interface WorkflowProcessService {
      * @return Map<String, Object>
      */
     Map<String, Object> getVariablesMap(EndProcessDTO dto);
+
+    /**
+     * 反审核
+     * @author will
+     * @date 2025/6/18 09:32
+     * @param dto
+     * @return Boolean
+     */
+    Boolean disApprove(ApproveDTO.DisApproveDTO dto);
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/6/18 10:41
+     * @param dto
+     * @return Boolean
+     */
+    Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 }

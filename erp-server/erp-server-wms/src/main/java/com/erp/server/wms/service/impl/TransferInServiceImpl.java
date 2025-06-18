@@ -523,7 +523,16 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        //TODO 撤销流程
+        //撤销现有流程
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.WAIT_SUBMIT, "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("分布式调入单【%s】取消流程", ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "取消流程操作");

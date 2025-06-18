@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -178,8 +179,33 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param processInstanceId
      */
     Boolean endExecutionHandle(String processInstanceId);
-
+    /**
+     * 审核结果回调
+     * @author will
+     * @date 2025/6/18 09:23
+     * @param businessKey
+     * @param dto
+     * @return Boolean
+     */
     Boolean callFeign(String businessKey, EndProcessDTO dto);
+
+    /**
+     * 反审核通过回调
+     * @author will
+     * @date 2025/6/18 09:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean disApproveFeign(ApproveDTO.DisApproveDTO dto);
+
+    /**
+     * 取消流程回调
+     * @author will
+     * @date 2025/6/18 09:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean cancelProcessFeign(ApproveDTO.CancelProcessDTO dto);
     /**
      * 批量启动流程
      * @param dto

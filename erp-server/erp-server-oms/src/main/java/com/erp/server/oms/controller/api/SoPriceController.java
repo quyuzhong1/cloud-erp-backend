@@ -366,7 +366,7 @@ public class SoPriceController extends BaseController {
             List<String> priceDetailList = detailEntityList.stream().map(SoPriceDetailEntity::getId).distinct().collect(Collectors.toList());
             List<SoPriceChangeDetailEntity> changeDetailEntityList = changeDetailList.stream().filter(e -> priceDetailList.contains(e.getSoPriceDetailId())).collect(Collectors.toList());
             try {
-                resultDTOS.add(soPriceService.disApprove(entity,detailEntityList,changeDetailEntityList));
+                resultDTOS.add(soPriceService.disApprove(entity,changeDetailEntityList));
             }catch (Exception e){
                 log.error("销售价目反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

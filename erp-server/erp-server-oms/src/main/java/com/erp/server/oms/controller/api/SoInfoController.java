@@ -437,7 +437,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.disApprove(dto, entity,soChangeList ));
+                resultDTOS.add(soInfoService.disApprove(entity,soChangeList ));
             }catch (Exception e){
                 log.error("B2B销售订单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

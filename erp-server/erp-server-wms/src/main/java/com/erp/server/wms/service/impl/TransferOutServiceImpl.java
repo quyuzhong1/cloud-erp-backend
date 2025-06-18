@@ -444,7 +444,15 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持撤销流程"));
         });
         log.info("撤销  开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
-        workflowFeign.cancelProcess(ids);
+        //撤销现有流程
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
 
         log.info("撤销 开始修改分布式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
         updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
