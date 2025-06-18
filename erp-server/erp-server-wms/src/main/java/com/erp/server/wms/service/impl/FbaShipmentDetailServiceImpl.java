@@ -1,22 +1,23 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -97,5 +98,24 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
             return baseMapper.getDetail(shipmentCode, asin, msku);
         }
         return null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDetailByReceiveList(List<FbaShipmentDetailEntity> detailEntityList, List<FbaShipmentReceiveEntity> list) {
+        if (CollUtil.isEmpty(detailEntityList)){
+            return;
+        }
+        detailEntityList.forEach(detailEntity -> {
+            List<FbaShipmentReceiveEntity> collect = list.stream().filter(e -> e.getDetailId().equals(detailEntity.getId())).collect(Collectors.toList());
+            int receiveQty = collect.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+            detailEntity.setReceiveQty(receiveQty);
+            int diffQty = receiveQty - detailEntity.getDeclareQty();
+            detailEntity.setDiffQty(diffQty);
+            this.lambdaUpdate().eq(FbaShipmentDetailEntity::getId,detailEntity.getId())
+                    .set(FbaShipmentDetailEntity::getReceiveQty,receiveQty)
+                    .set(FbaShipmentDetailEntity::getDiffQty,diffQty)
+                    .update();
+        });
     }
 }
