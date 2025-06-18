@@ -159,20 +159,71 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     private void updateCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
         //sku配置
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(),"");
+        if(CollUtil.isNotEmpty(addDTO.getSkuList())) {
+            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(), "");
+        }else {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.SKU.getCode())
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
 
+            moduleOperateLogService.addModuleOperateLog("删除了SKU配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
         //可销库存配置
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(),addDTO.getWarehouseType());
-
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList()) ){
+            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode())){
+                cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+            }
+            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
+                cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+            }
+        }else {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .in(CfgSupplierSalesConditionEntity::getSourceType, Arrays.asList(RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),RuleTypeEnum.PHYSICALWAREHOUSE.getCode()))
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
+            moduleOperateLogService.addModuleOperateLog("删除了可销库存配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
 
         //销量统计配置
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+        if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
+            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+        }else {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.SALESSTATISTIC.getCode())
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
+            moduleOperateLogService.addModuleOperateLog("删除了销量统计配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
 
         //通知配置
-        cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
+        if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
+            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
+        }else {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.NOTICE.getCode())
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
 
-        cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
+            moduleOperateLogService.addModuleOperateLog("删除了通知配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
+
+        if(Objects.nonNull(addDTO.getBlackCondition())){
+            cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
+        }else {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.BLACK.getCode())
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
+
+            moduleOperateLogService.addModuleOperateLog("删除了黑名单条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
+
     }
 
     /**
