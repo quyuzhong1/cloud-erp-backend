@@ -500,11 +500,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 
-
-    /**
-     * 单提交
-     */
-    BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
     /**
      * 定时任务 ： (供应商 + 采购订单 + sku )采购数量计算
      */
