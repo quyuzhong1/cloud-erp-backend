@@ -943,9 +943,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                                 : thirdUser.getThirdOpenId() != null
                                 ? thirdUser.getThirdOpenId()
                                 : thirdUser.getThirdUnionId();
-                        Boolean revoke = fsService.revoke(approvalCode, thirdInstanceCode, userId);
-                        if (revoke){
-                            return new ProcessManagementDTO.RevokeResultDTO(dto);
+                        try {
+                            Boolean revoke = fsService.revoke(approvalCode, thirdInstanceCode, userId);
+                            if (revoke){
+                                return new ProcessManagementDTO.RevokeResultDTO(dto);
+                            }
+                        }catch (Exception e){
+                            throw new ServiceException(e.getMessage());
                         }
                     }
                 }
