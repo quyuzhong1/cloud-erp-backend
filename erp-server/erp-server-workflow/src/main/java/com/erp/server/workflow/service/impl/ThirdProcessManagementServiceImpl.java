@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -73,17 +74,20 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
     public BaseResultDTO.AddDTO add(ThirdProcessManagementDTO.AddDTO addDTO) {
         ThirdProcessManagementEntity thirdProcessManagementEntity = new ThirdProcessManagementEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessManagementEntity);
-
+        String id = IdWorker.getIdStr();
+        thirdProcessManagementEntity.setId(id);
         log.info("开始新增主记录。");
         boolean save = super.save(thirdProcessManagementEntity);
         if (!save) {
             throw new ServiceException("保存主记录失败");
         }
-        String mainId = thirdProcessManagementEntity.getId();
+        for (ThirdProcessTaskManagementDTO.AddDTO dto : addDTO.getTaskList()) {
+            dto.setMainId(id);
+        }
         if (addDTO.getTaskList() != null && !addDTO.getTaskList().isEmpty()) {
             thirdProcessTaskManagementService.add(addDTO.getTaskList());
         }
-        return new BaseResultDTO.AddDTO(mainId, mainId);
+        return new BaseResultDTO.AddDTO(id,id);
     }
 
     /**
@@ -231,7 +235,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
 
         switch (statusEnum) {
             case APPROVED:
-                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+//                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
                 break;
             case REJECTED:
                 handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
