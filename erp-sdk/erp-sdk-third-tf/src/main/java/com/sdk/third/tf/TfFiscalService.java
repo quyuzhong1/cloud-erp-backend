@@ -100,6 +100,7 @@ public class TfFiscalService {
         String accessToken = getAccessToken();
         addCompanyDTO.setTokenPlataforma(accessToken);
         buildDefaultCompany(addCompanyDTO);
+        log.error("创建公司,{}", JSONUtil.toJsonStr(addCompanyDTO));
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(addCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -128,6 +129,7 @@ public class TfFiscalService {
         bodyMap.put("token_plataforma",accessToken);
         Map<String, String> headerMap = new HashMap<>();
 
+        log.error("查询公司信息,{}", JSONUtil.toJsonStr(bodyMap));
         //拉取数据
         ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
@@ -154,7 +156,7 @@ public class TfFiscalService {
 //        updateCompanyDTO.setTokenPlataforma(accessToken);
         buildDefaultCompany(updateCompanyDTO);
         updateCompanyDTO.setApiCompleta(null);
-        log.error("请求参数,url:{},data:{}", URL+path, JSONUtil.toJsonStr(updateCompanyDTO));
+        log.error("更新公司信息,{}", JSONUtil.toJsonStr(updateCompanyDTO));
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(updateCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -180,6 +182,7 @@ public class TfFiscalService {
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("cnpj",cnpj);
         paramMap.put("token_plataforma",accessToken);
+        log.error("删除公司,{}", JSONUtil.toJsonStr(paramMap));
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(paramMap), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
