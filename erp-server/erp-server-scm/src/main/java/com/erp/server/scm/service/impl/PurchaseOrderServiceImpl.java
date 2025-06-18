@@ -939,7 +939,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         purchaseOrderEntity = this.getById(purchaseOrderEntity.getId());
         //提交
-        return this.submitEntity(purchaseOrderEntity, Boolean.TRUE);
+        return this.submit(purchaseOrderEntity, Boolean.TRUE);
     }
 
     @Override
