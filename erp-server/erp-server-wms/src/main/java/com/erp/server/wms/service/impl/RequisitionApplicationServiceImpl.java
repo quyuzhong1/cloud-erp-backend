@@ -3051,6 +3051,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //要货申请未关联审核通过的发货单时，不允许操作库存释放
         List<String> ids = dto.getIds();
         List<RequisitionApplicationEntity> entityList = this.listByIds(ids);
+        //过滤三方仓数据
+        entityList = entityList.stream().filter(v -> !RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(v.getType())).collect(Collectors.toList());
         if (CollUtil.isEmpty(entityList)){
             throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,"要货申请单");
         }
