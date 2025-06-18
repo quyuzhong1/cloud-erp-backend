@@ -235,7 +235,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
 
         switch (statusEnum) {
             case APPROVED:
-//                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
                 break;
             case REJECTED:
                 handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
