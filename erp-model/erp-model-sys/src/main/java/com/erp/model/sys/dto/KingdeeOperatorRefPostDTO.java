@@ -1,6 +1,7 @@
 package com.erp.model.sys.dto;
 
 import cn.hutool.core.annotation.Alias;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -118,6 +119,11 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
          *  用户名
          */
         private String userName;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 
 

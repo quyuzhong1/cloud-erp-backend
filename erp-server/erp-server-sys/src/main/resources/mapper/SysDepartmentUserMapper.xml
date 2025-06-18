@@ -8,7 +8,8 @@
         FROM sys_department_user sdu
         INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
         INNER JOIN sys_department sd ON sd.id=sdu.department_id
-        WHERE sui.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and  sui.is_deleted = false
         <if test="departmentIds !=null  and  departmentIds.size>0">
           AND  sdu.department_id IN
             <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">

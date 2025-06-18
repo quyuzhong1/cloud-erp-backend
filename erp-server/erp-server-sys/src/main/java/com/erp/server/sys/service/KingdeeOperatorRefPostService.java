@@ -71,4 +71,6 @@ public interface KingdeeOperatorRefPostService extends SuperService<KingdeeOpera
     List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 
     List<KingdeeOperatorRefPostDTO.OperatorDTO> listOperatorByUserIdList(List<String> userIdList);
+
+    void updateState(KingdeeBusinessOperatorDTO.BatchUpdateDTO dto);
 }

@@ -3,6 +3,10 @@ package com.erp.model.sys.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
 /**
  * @author Lambda
  * @Classname KingdeeBusinessOperatorDTO
@@ -12,6 +16,30 @@ import lombok.NoArgsConstructor;
 public class KingdeeBusinessOperatorDTO  {
 
     private KingdeeBusinessOperatorDTO() {
+    }
+
+
+    /**
+     * 批量修改
+     * 状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateDTO {
+
+        /**
+         * ids 不能为空
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        @NotNull(message = "禁用状态不能为空")
+        private Boolean disabled;
     }
 
     @Data

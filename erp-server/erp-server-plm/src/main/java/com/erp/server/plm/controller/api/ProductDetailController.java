@@ -1158,7 +1158,8 @@ public class ProductDetailController extends BaseController {
                 Boolean flag = productDetailService.updateBatchFiled(new ProductDetailBatchUpdateDTO(
                         Collections.singletonList(id),
                         dto.getUpdateFiledCode(),
-                        dto.getValues()
+                        dto.getValues(),
+                        dto.getName()
                 ));
                 if (flag){
                     resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"产品详情批量更新成功"));

@@ -51,6 +51,12 @@ public class KingdeeOperatorRefPostEntity extends BaseEntity<KingdeeOperatorRefP
     @TableField("use_org_name")
     private String useOrgName;
 
+    /**
+     * 禁用状态
+     */
+    @TableField(value = "disabled")
+    private Boolean disabled;
+
     @TableField(exist = false)
     private String useOrgCode;
 
