@@ -1,8 +1,11 @@
 package com.erp.server.scm.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.SalesSharingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.SalesSharingDTO;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -10,27 +13,12 @@ import com.erp.model.scm.dto.SalesSharingDTO;
  * </p>
  *
  * @author jack
- * @since 2025-06-13
+ * @since 2025-06-18
  */
 public interface SalesSharingService extends SuperService<SalesSharingEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-06-13
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SalesSharingDTO.AddDTO dto);
 
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-06-13
-    * @param dto
-    * @return
-    */
-    Boolean update(SalesSharingDTO.UpdateDTO dto);
+    PagingVO<SalesSharingDTO.ListDTO> paging(PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO);
 
-
+    void exportList(SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 }

@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-06-13
+ * @since 2025-06-18
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -70,11 +70,6 @@ public class SalesSharingEntity extends BaseEntity<SalesSharingEntity> {
     */
     @TableField("sale_state")
     private Integer saleState;
-    /**
-    * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
-    */
-    @TableField("sale_state_name")
-    private String saleStateName;
     /**
     * 可销库存
     */
@@ -139,8 +134,6 @@ public class SalesSharingEntity extends BaseEntity<SalesSharingEntity> {
     public static final String SKU_NAME = "sku_name";
 
     public static final String SALE_STATE = "sale_state";
-
-    public static final String SALE_STATE_NAME = "sale_state_name";
 
     public static final String SALEABLE_STOCK = "saleable_stock";
 

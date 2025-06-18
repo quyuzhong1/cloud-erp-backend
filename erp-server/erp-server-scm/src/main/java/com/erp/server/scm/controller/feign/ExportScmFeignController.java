@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.*;
@@ -12,6 +13,7 @@ import com.erp.model.sys.dto.UserPagingSearchDTO;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.server.scm.query.*;
 import com.erp.server.scm.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +47,8 @@ public class ExportScmFeignController {
 
     @Resource
     private CfgSupplierSalesService cfgSupplierSalesService;
+    @Resource
+    private SalesSharingService salesSharingService;
     
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -153,6 +157,11 @@ public class ExportScmFeignController {
     @WebAdvanceQuery
     public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(@RequestBody PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
         return cfgSupplierSalesService.paging(dto);
+    }
+    @PostMapping("/salesSharing")
+    @WebAdvanceQuery
+    public PagingVO<SalesSharingDTO.ListDTO> paging(@RequestBody @Validated PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO) {
+        return salesSharingService.paging(pagingParamDTO);
     }
 
 }

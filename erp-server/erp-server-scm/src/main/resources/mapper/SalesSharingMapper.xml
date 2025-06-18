@@ -21,7 +21,6 @@
        <result column="sku_no" property="skuNo" />
        <result column="sku_name" property="skuName" />
        <result column="sale_state" property="saleState" />
-       <result column="sale_state_name" property="saleStateName" />
        <result column="saleable_stock" property="saleableStock" />
        <result column="daily_sales" property="dailySales" />
        <result column="sales_last_3_days" property="salesLast3Days" />
@@ -44,8 +43,13 @@
         update_time,
         version,
         is_deleted,
-        supplier_id, supplier_code, supplier_name, product_image, product_image_url, sku_id, sku_no, sku_name, sale_state, sale_state_name, saleable_stock, daily_sales, sales_last_3_days, sales_last_7_days, sales_last_30_days, sales_last_60_days, sales_last_90_days, sales_ratio, saleable_days
+        supplier_id, supplier_code, supplier_name, product_image, product_image_url, sku_id, sku_no, sku_name, sale_state, saleable_stock, daily_sales, sales_last_3_days, sales_last_7_days, sales_last_30_days, sales_last_60_days, sales_last_90_days, sales_ratio, saleable_days
     </sql>
+    <select id="paging" resultType="com.erp.model.scm.dto.SalesSharingDTO$ListDTO">
+
+
+
+    </select>
 
 
 </mapper>
