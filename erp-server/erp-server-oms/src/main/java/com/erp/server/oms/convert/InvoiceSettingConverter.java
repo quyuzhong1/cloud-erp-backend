@@ -54,6 +54,7 @@ public interface InvoiceSettingConverter {
             @Mapping(target = "cep", source = "postCode"),
             @Mapping(target = "ultimoNumeroNfe", source = "startCode", qualifiedByName = "lastNumber"),
             @Mapping(target = "numeroSerieNfe", source = "no"),
+            @Mapping(target = "tokenEmpresa", source = "token"),
     })
     UpdateCompanyDTO invoiceSettinToUpdateCompanyDTOTo(CfgInvoiceSettingEntity cfgVatInvoiceEntity);
 }
