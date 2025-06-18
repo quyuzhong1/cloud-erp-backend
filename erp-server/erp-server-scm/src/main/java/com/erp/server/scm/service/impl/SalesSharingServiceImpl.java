@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.entity.SalesSharingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -61,7 +62,9 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         return new PagingVO(pageData);
     }
     private void fillList(List<SalesSharingDTO.ListDTO> records) {
-
+        for (SalesSharingDTO.ListDTO record : records) {
+            record.setSaleStateName(SaleStateEnum.getNameByCode(record.getSaleState()));
+        }
     }
 
     @Override
