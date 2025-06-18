@@ -186,6 +186,10 @@ public class TransferInfoDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
     }
 
     @Data
