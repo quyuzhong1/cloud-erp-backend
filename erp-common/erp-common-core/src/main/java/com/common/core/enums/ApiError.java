@@ -1,6 +1,7 @@
 package com.common.core.enums;
 
 
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -1681,4 +1682,15 @@ public enum ApiError implements Serializable {
     public Integer code;
     public String msg;
 
+    /**
+     * 检查非 ServiceException 异常是否需要抛出
+     */
+    public static Boolean isNotServiceException(Exception e){
+        if (! (e instanceof ServiceException)){
+            return true;
+        } else {
+            ServiceException serviceException = (ServiceException) e;
+            return 9999 == serviceException.getCode();
+        }
+    }
 }

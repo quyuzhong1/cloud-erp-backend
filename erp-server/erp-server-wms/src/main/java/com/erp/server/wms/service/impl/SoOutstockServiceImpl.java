@@ -2846,6 +2846,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (ApiError.isNotServiceException(e)){
+                    throw e;
+                }
                 // 记录明细(事务分开)
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
@@ -3133,7 +3137,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } catch (Exception e) {
                 log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
                 // 非ServiceException 异常，抛出由中台重试
-                if (! (e instanceof ServiceException)){
+                if (ApiError.isNotServiceException(e)){
                     throw e;
                 }
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
