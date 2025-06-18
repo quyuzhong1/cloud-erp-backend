@@ -1,39 +1,45 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.excel.util.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.excel.VirtualAdjustDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
 import com.erp.model.wms.entity.VirtualAdjustEntity;
+import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.VirtualAdjustDetailExcelListener;
 import com.erp.server.wms.mapper.VirtualAdjustMapper;
-import com.erp.server.wms.service.VirtualAdjustDetailService;
-import com.erp.server.wms.service.VirtualAdjustService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.wms.service.VirtualInventoryTransCoreService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -91,6 +97,15 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Lazy
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
+    @Resource
+    private InventoryService inventoryService;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualAdjustDTO.AddDTO addDTO) {
@@ -98,6 +113,8 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         BeanUtil.copyProperties(addDTO,virtualAdjustEntity,"approveStatus");
         // 数据处理
         handleData(virtualAdjustEntity);
+        List<VirtualAdjustDetailEntity> detailEntityList = BeanMapperUtils.copyList(VirtualAdjustDetailEntity.class, addDTO.getDetailList());
+        handleDetailData(detailEntityList);
 
         log.info("开始新增虚拟仓调整单主单");
         // 生成单号
@@ -111,8 +128,46 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓调整单主单" , virtualAdjustEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), virtualAdjustEntity.getId(), "新增操作");
         //新增明细
-        virtualAdjustDetailService.addDetail(virtualAdjustEntity.getId(), addDTO.getDetailList());
+        virtualAdjustDetailService.updateDetail(virtualAdjustEntity.getId(), detailEntityList);
         return new BaseResultDTO.AddDTO(virtualAdjustEntity.getId(), code);
+    }
+
+    private void handleDetailData(List<VirtualAdjustDetailEntity> detailEntityList) {
+        //补充sku信息
+        List<String> skuIdList = detailEntityList.stream().map(VirtualAdjustDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
+        //补充仓库信息
+        List<String> virtualWarehouseIdList = detailEntityList.stream().map(VirtualAdjustDetailEntity::getVirtualWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseDTO.ViewWarehouseDTO> warehouseDTOS = virtualWarehouseService.listWarehouseInfoByIds(virtualWarehouseIdList);
+        detailEntityList.forEach(detail -> {
+            if (detail.getQty() > 0) {
+                detail.setType(InventoryInOutEnum.IN_STOCK.getCode());
+            }else {
+                detail.setType(InventoryInOutEnum.OUT_STOCK.getCode());
+            }
+            if (CharSequenceUtil.isNotBlank(detail.getSkuId())){
+                SkuVO skuVO = skuVOS.stream().filter(sku -> sku.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
+                detail.setSkuNo(Objects.nonNull(skuVO) ? skuVO.getSkuNo() : detail.getSkuNo());
+                detail.setProductName(Objects.nonNull(skuVO)? skuVO.getSkuName() : detail.getProductName());
+            }
+            if (CharSequenceUtil.isNotBlank(detail.getVirtualWarehouseId())){
+                VirtualWarehouseDTO.ViewWarehouseDTO warehouseDTO = warehouseDTOS.stream().filter(warehouse -> warehouse.getVirtualWarehouseId().equals(detail.getVirtualWarehouseId())).findFirst().orElse(null);
+                detail.setWarehouseId(Objects.nonNull(warehouseDTO)? warehouseDTO.getWarehouseId() : detail.getWarehouseId());
+                detail.setWarehouseName(Objects.nonNull(warehouseDTO)? warehouseDTO.getWarehouseName() : detail.getWarehouseName());
+                detail.setVirtualWarehouseName(Objects.nonNull(warehouseDTO)? warehouseDTO.getVirtualWarehouseName() : detail.getVirtualWarehouseName());
+            }
+            if (CharSequenceUtil.isBlank(detail.getSkuId())){
+                throw new ServiceException("SKU不能为空");
+            }
+            if (CharSequenceUtil.isBlank(detail.getVirtualWarehouseId())){
+                throw new ServiceException("虚拟仓不能为空");
+            }
+            if (CharSequenceUtil.isBlank(detail.getWarehouseId())){
+                throw new ServiceException("实体仓不能为空");
+            }
+        });
+        //校验库存
+        checkInventory(detailEntityList);
     }
 
     /**
@@ -132,13 +187,15 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         virtualAdjustEntity.setApproveStatus(old.getApproveStatus());
         // 数据处理
         handleData(virtualAdjustEntity);
+        List<VirtualAdjustDetailEntity> detailEntityList = BeanMapperUtils.copyList(VirtualAdjustDetailEntity.class, addOrUpdateDTO.getDetailList());
+        handleDetailData(detailEntityList);
         log.info("编辑 开始修改虚拟仓调整单主单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(virtualAdjustEntity);
         if(!save) {
             throw new ServiceException("虚拟仓调整单主单保存失败");
         }
         //修改明细数据（包含增删改）（如果有明细的话）
-        virtualAdjustDetailService.updateDetail(virtualAdjustEntity.getId(), addOrUpdateDTO.getDetailList());
+        virtualAdjustDetailService.updateDetail(virtualAdjustEntity.getId(), detailEntityList);
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓调整单主单日志数据，单号：【{}】", virtualAdjustEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualAdjustEntity.getCode(), "虚拟仓调整单主单");
@@ -587,7 +644,8 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        virtualAdjustDetailService.validateSubmit(entity);
+        List<VirtualAdjustDetailEntity> detailEntityList = virtualAdjustDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        checkInventory(detailEntityList);
     }
 
     /**
@@ -596,6 +654,40 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     private void handleData(VirtualAdjustEntity virtualAdjustEntity) {
         if (Objects.isNull(virtualAdjustEntity.getApproveStatus())) {
             virtualAdjustEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        }
+    }
+
+    private void checkInventory(List<VirtualAdjustDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)){
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(VirtualAdjustDetailEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = detailList.stream().map(VirtualAdjustDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        //获取虚拟仓对应的实体仓库存
+        VirtualInventoryDTO.ParamDTO params = new VirtualInventoryDTO.ParamDTO();
+        params.setSkuIdList(skuIds);
+        params.setWarehouseIdList(warehouseIds);
+        List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryRealList = virtualInventoryService.getRealQty(params);
+        //获取实体库存
+        List<String> inventoryStatusList = Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode());
+        List<InventoryDTO.RealQtyDTO> inventoryRealList = inventoryService.getRealQty(skuIds,warehouseIds,inventoryStatusList);
+        //根据仓库+sku分组
+        Map<String, List<VirtualAdjustDetailEntity>> groupMap = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId() + item.getSkuId()));
+        for (String key : groupMap.keySet()) {
+            //获取调整单明细数据
+            List<VirtualAdjustDetailEntity> detailEntityList = groupMap.get(key);
+            String warehouseId = detailEntityList.get(0).getWarehouseId();
+            String skuId = detailEntityList.get(0).getSkuId();
+            //调整单明细数据求和
+            Integer adjustQty = detailEntityList.stream().mapToInt(VirtualAdjustDetailEntity::getQty).sum();
+            //虚拟库存求和
+            Integer virtualRealQty = virtualInventoryRealList.stream().filter(e -> e.getSkuId().equals(skuId) && e.getWarehouseId().equals(warehouseId)).mapToInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).sum();
+            //实体库存求和
+            Integer realQty = inventoryRealList.stream().filter(e -> e.getSkuId().equals(skuId) && e.getWarehouseId().equals(warehouseId)).mapToInt(InventoryDTO.RealQtyDTO::getRealQty).sum();
+            //调整虚拟仓库存+虚拟仓实际库存 > 实体库存 报错
+            if (adjustQty + virtualRealQty > realQty){
+                throw new ServiceException("调整后的虚拟仓【{}】SKU【{}】虚拟库存大于实体【{}】库存【{}】",detailEntityList.get(0).getVirtualWarehouseName(),detailEntityList.get(0).getSkuNo(),detailEntityList.get(0).getWarehouseName(),realQty);
+            }
         }
     }
 }
