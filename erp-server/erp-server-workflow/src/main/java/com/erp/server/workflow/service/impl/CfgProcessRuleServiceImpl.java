@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.View;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -63,6 +64,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     private ThirdProcessManagementService thirdProcessManagementService;
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
+    @Autowired
+    private View view;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -89,7 +92,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.add(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList, ThirdConstants.CfgProcess);
+
+                cfgProcessFieldMapService.add(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList,dto.getProcessDefinitionId(),dto.getType());
             }
         }
 
@@ -110,7 +114,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                         .eq(CfgProcessRuleEntity::getCfgProcessId, cfgProcessId)
                         .eq(CfgProcessRuleEntity::getIsDeleted, false)
         );
-        Map<String, CfgProcessRuleEntity> oldMap = old.stream().collect(Collectors.toMap(CfgProcessRuleEntity::getId, v -> v));
 
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
@@ -166,7 +169,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList, ThirdConstants.CfgProcess);
+                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList,dto.getProcessDefinitionId(),dto.getType());
             }
         }
         // 操作日志，遍历entities，找出old中和entity id相同的

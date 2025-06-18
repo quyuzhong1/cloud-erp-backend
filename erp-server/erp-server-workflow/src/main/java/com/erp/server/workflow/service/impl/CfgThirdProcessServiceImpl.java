@@ -87,40 +87,8 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         if (!save) {
             throw new ServiceException("三方审批生成保存失败");
         }
-
-        List<CfgProcessFieldMapDTO.ViewDTO> view = cfgProcessFieldMapService.view(addDTO.getThirdProcessDefinitionCode(), addDTO.getSourcePlatform());
-        //筛选出必填的飞书审批定义字段,并转为map
-        List<String> ids = view.stream().filter(e -> e.getThirdFieldRequired()).map(CfgProcessFieldMapDTO.ViewDTO::getThirdField).collect(Collectors.toList());
-        Map<String, List<CfgProcessFieldMapDTO.ViewDTO>> collect = view.stream().collect(Collectors.groupingBy(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId));
-        //分离必填
-        if (CollUtil.isNotEmpty(ids)) {
-            //删除飞书审批定义字段
-            List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList = addDTO.getFieldMapList();
-            fieldMapList.stream().map(e -> {
-                if (ids.contains(e.getThirdFieldId())) {
-                    ids.remove(e.getThirdFieldId());
-                }
-                return null;
-            });
-        }
-        if (ids.size() > 0) {
-            //使用ids获取collect中的value
-            List<String> names = new ArrayList<>();
-                    ids.stream()
-                    .map(id -> {
-                        List<CfgProcessFieldMapDTO.ViewDTO> dtos = collect.get(id);
-                        if (CollUtil.isNotEmpty(dtos)) {
-                            for (int i = 0; i < dtos.size(); i++) {
-                                names.add(dtos.get(Integer.valueOf(i)).getThirdField());
-                            }
-                        }
-                        return id;
-                    })
-                    .collect(Collectors.toList());
-            throw new ServiceException("三方审批生成保存失败,缺少飞书必填字段："+StrUtil.join(","+names));
-        }
         //新增明细：field->cfg_type、cfg_id thirdCfg
-        cfgProcessFieldMapService.add(addDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addDTO.getFieldMapList(), ThirdConstants.CfgThirdProcess);
+        cfgProcessFieldMapService.add(addDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addDTO.getFieldMapList(), cfgThirdProcessEntity.getThirdProcessDefinitionCode(), cfgThirdProcessEntity.getSourcePlatform());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方审批生成", cfgThirdProcessEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -143,7 +111,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
             throw new ServiceException("三方审批生成保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
-        cfgProcessFieldMapService.addOrUpdate(addOrUpdateDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addOrUpdateDTO.getFieldMapList(), ThirdConstants.CfgThirdProcess);
+        cfgProcessFieldMapService.addOrUpdate(addOrUpdateDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addOrUpdateDTO.getFieldMapList(), cfgThirdProcessEntity.getThirdProcessDefinitionCode(), cfgThirdProcessEntity.getSourcePlatform());
         // 记录主单操作日志
         log.info("编辑 开始记录三方审批生成日志数据，单号：【{}】", cfgThirdProcessEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgThirdProcessEntity.getCode(), "三方审批生成");

@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -219,6 +220,14 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
             return null;
         }
         return baseMapper.getUserByThird(platform, thirdId);
+    }
+
+    @Override
+    public List<SysUserThirdEntity> getUserByThirdIdList(String platform, ArrayList<String> thirdIds) {
+        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(thirdIds)){
+            return null;
+        }
+        return baseMapper.getUserByThirdList(platform, thirdIds);
     }
 
     /**

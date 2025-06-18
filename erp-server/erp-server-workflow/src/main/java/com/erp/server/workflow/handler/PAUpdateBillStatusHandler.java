@@ -132,7 +132,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
 
-        thirdProcessManagementService.insert(jsonObject,thirdProcessEntity.getSourcePlatform());
+        thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
     @Override

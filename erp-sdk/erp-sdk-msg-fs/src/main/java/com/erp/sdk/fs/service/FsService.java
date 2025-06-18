@@ -592,7 +592,7 @@ public class FsService {
             Map<String, Object> i18nResourcesMap = new HashMap<>();
             i18nResourcesMap.put("locale", LocaleEnum.LOCALE_ZH_CN.getCode());
             i18nResourcesMap.put("is_default", true);
-            if(status.equals(FsActionStatusEnum.SUSPEND.getCode())){//暂停
+            if (status.equals(FsActionStatusEnum.SUSPEND.getCode())) {//暂停
                 status = FsActionStatusEnum.CUSTOM.getCode();
 
                 Map<String, Object> texts = new HashMap<>();
@@ -901,7 +901,7 @@ public class FsService {
         // 发起请求
         GetInstanceResp resp1 = client.approval().v4().instance().get(req1);
         String form = resp1.getData().getForm();
-        JSONArray  formArray = JSONUtil.parseArray(form);
+        JSONArray formArray = JSONUtil.parseArray(form);
         // 业务数据处理
         System.out.println(Jsons.DEFAULT.toJson(resp1.getData()));
     }
@@ -1033,7 +1033,6 @@ public class FsService {
 
     /**
      * 上传文件
-     * TODO 有问题待处理
      */
     public String uploadApprovalFile(File file, String fileName) {
         String responseBody = new String();
@@ -1062,8 +1061,8 @@ public class FsService {
             }
         } catch (Exception e) {
             throw new ServiceException("文件上传失败", e.getMessage());
-        }finally {
-            log.info("文件上传失败：{}",  responseBody);
+        } finally {
+            log.info("文件上传失败：{}", responseBody);
         }
         return fileCode;
     }
@@ -1076,7 +1075,7 @@ public class FsService {
      * @author yl
      * @date 2022-11-18 12:31
      */
-    public Map<String, Object> getCardMessageMap(String title, String conten,String url) {
+    public Map<String, Object> getCardMessageMap(String title, String conten, String url) {
         Map<String, Object> cardMap = new LinkedHashMap<>();
         Map<String, Boolean> configMap = new HashMap<>();
         configMap.put("wide_screen_mode", true);
@@ -1100,7 +1099,7 @@ public class FsService {
         fieldMapList.add(fieldMap);
         fieldAllMap.put("fields", fieldMapList);
         elements.add(fieldAllMap);
-        if(StringUtils.isNotBlank(url)){
+        if (StringUtils.isNotBlank(url)) {
             Map<String, Object> actionAllMap = new LinkedHashMap<>();
             actionAllMap.put("tag", "action");
             actionAllMap.put("layout", "bisected");
@@ -1122,5 +1121,37 @@ public class FsService {
         }
         cardMap.put("elements", elements);
         return cardMap;
+    }
+
+    /**
+     * 撤销飞书审批
+     */
+    public Boolean revoke(String approvalCode, String instanceCode, String userId) {
+        try {
+            // 构建client
+            Client client = getClient();
+
+            // 创建请求对象
+            CancelInstanceReq req = CancelInstanceReq.newBuilder()
+                    .instanceCancel(InstanceCancel.newBuilder()
+                            .approvalCode(approvalCode)
+                            .instanceCode(instanceCode)
+                            .userId(userId)
+                            .build())
+                    .build();
+
+            // 发起请求
+            CancelInstanceResp resp = client.approval().v4().instance().cancel(req);
+
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("撤回飞书审批失败>>>>>{}", msg);
+                throw new ServiceException("撤回飞书审批失败>>>>>{}", msg);
+            }
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            throw new ServiceException("撤回飞书审批失败>>>>>{}", e);
+        }
     }
 }

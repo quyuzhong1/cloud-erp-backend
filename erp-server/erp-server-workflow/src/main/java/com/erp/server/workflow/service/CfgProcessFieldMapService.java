@@ -20,22 +20,22 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
     /**
      * 新增
      *
-     * @param dto
+     * @param addDTO
      * @return
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto,String useType);
+    BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId, String type);
 
     /**
      * 修改
      *
-     * @param dto
+     * @param addDTO
      * @return
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto,String useType);
+    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId, String type);
 
     /**
      * 字段映射详情接口：初次调用解析飞书FormJson

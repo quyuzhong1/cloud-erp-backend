@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -68,26 +69,17 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Resource
     private CfgProcessRuleService cfgProcessRuleService;
 
-    @Resource
-    private ProcessManagementService processManagementService;
-
-    @Resource
-    private ProcessDefinitionService processDefinitionService;
-
-    @Resource
-    private ThirdProcessManagementService thirdProcessManagementService;
-
-    @Resource
-    private ThirdProcessDefinitionService thirdProcessDefinitionService;
-
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
+    public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId, String type) {
+        //校验飞书必填字段
+        validateRequiredFsFields(processDefinitionId, type, addDTO);
+
         try {
-            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO,useType);
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(ruleId, addDTO);
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
         } catch (Exception e) {
-            throw new ServiceException("流程设置字段配置新增失败:{}", e.getMessage());
+            throw new ServiceException("字段配置新增失败:{}", e.getMessage());
         }
         //插入值映射
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
@@ -105,7 +97,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
+    public BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId, String type) {
+        //校验飞书必填字段
+        validateRequiredFsFields(processDefinitionId, type, addDTO);
         // 查询数据库中与 ruleId 关联的记录
         List<CfgProcessFieldMapEntity> existingEntities = this.list(
                 new LambdaQueryWrapper<CfgProcessFieldMapEntity>()
@@ -114,7 +108,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         );
         try {
             //校验更新数据
-            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO, useType);
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(ruleId, addDTO);
             // 批量插入和更新
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
             //更新值映射
@@ -195,14 +189,10 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      * useType用于区分流程配置还是三方审批生成
      */
-    private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
+    private List<CfgProcessFieldMapEntity> handleData(String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+
         //过滤addDto，thirdField为空的数据
         List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdFieldId())).collect(Collectors.toList());
-        List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
-        //筛选出eq(CfgQueryOptionEntity::getIsRequired, true)
-        List<CfgQueryOptionEntity> requiredList = cfgQueryOptionEntities.stream().filter(cfgQueryOptionEntity -> cfgQueryOptionEntity.getIsRequired()).collect(Collectors.toList());
-        List<String> fieldList = requiredList.stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());
-        // 遍历 addDTO，id 为空的保存，id 不为空的更新
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : thirdFieldNotEmptyDTO) {
@@ -247,10 +237,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && thirdFieldType==CfgQueryOptionFieldTypeEnum.FIELDLIST) {
                 throw new ServiceException("明细只能对应明细");
             }
-            // 判断必填是不是已配置
-            if (fieldList.contains(dto.getSysField())) {
-                fieldList.remove(dto.getSysField());
-            }
             // 校验通过后，进行保存或更新操作
             if (StrUtil.isEmpty(dto.getId())) {
                 dto.setId(IdWorker.getIdStr());
@@ -260,12 +246,71 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);
         }
-        if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0 && useType.equals(ThirdConstants.CfgProcess)) {
-            //将fieldList转为一个字符串
-            String fieldListStr = String.join(",", fieldList);
-            throw new ServiceException("存在{}尚未映射，无法提交保存", fieldListStr);
-        }
         return entitiesToAddOrUpdate;
     }
 
+    // CfgProcessFieldMapServiceImpl.java
+
+    /**
+     * 校验飞书必填字段是否都已提供
+     * @param processDefinitionId 飞书的审批定义ID
+     * @param type 规则类型，用于调用view方法
+     * @param fieldMapDTOList 用户提交的字段配置列表
+     */
+    private void validateRequiredFsFields(String processDefinitionId, String type, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapDTOList) {
+        // 1. 如果关键参数为空，则跳过校验 (某些场景可能不需要此校验)
+        if (StrUtil.hasBlank(processDefinitionId, type)) {
+            return;
+        }
+
+        // 2. 调用 view 方法获取飞书审批定义的完整字段信息
+        List<CfgProcessFieldMapDTO.ViewDTO> allFeishuFields = this.view(processDefinitionId, type);
+
+        // 3. 按ID分组所有必填字段。这能正确处理像“金额”字段（一个ID，多个组件）的情况
+        Map<String, List<CfgProcessFieldMapDTO.ViewDTO>> requiredFieldsGroupedById = allFeishuFields.stream()
+                .filter(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldRequired)
+                .collect(Collectors.groupingBy(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId));
+
+        // 如果定义中没有任何必填项，直接返回
+        if (requiredFieldsGroupedById.isEmpty()) {
+            return;
+        }
+
+        // 4. 同样，按ID对用户提交的字段进行分组
+        Map<String, List<CfgProcessFieldMapDTO.AddOrUpdateDTO>> providedFieldsGroupedById = fieldMapDTOList.stream()
+                .filter(dto -> StrUtil.isNotEmpty(dto.getThirdFieldId()))
+                .collect(Collectors.groupingBy(CfgProcessFieldMapDTO.AddOrUpdateDTO::getThirdFieldId));
+
+        // 5. 遍历每个必填字段组，检查其所有组件是否都已满足
+        List<String> missingFieldNames = new ArrayList<>();
+        requiredFieldsGroupedById.forEach((requiredId, requiredComponents) -> {
+            // 获取此ID下所有必填组件的名称集合，例如 ["请款金额", "请款金额(币种)"]
+            Set<String> requiredComponentNames = requiredComponents.stream()
+                    .map(CfgProcessFieldMapDTO.ViewDTO::getThirdField)
+                    .collect(Collectors.toSet());
+
+            List<CfgProcessFieldMapDTO.AddOrUpdateDTO> providedComponents = providedFieldsGroupedById.get(requiredId);
+
+            if (CollUtil.isEmpty(providedComponents)) {
+                // 如果用户提交的数据中完全不包含此ID，则其所有组件都视为缺失
+                missingFieldNames.addAll(requiredComponentNames);
+            } else {
+                // 如果ID存在，则需进一步比对组件名称，检查是否所有组件都已提供
+                Set<String> providedComponentNames = providedComponents.stream()
+                        .map(CfgProcessFieldMapDTO.AddOrUpdateDTO::getThirdField)
+                        .collect(Collectors.toSet());
+
+                // 从“必填”集合中，移除“已提供”的组件
+                requiredComponentNames.removeAll(providedComponentNames);
+
+                // 如果“必填”集合中仍有剩余，说明这些组件是缺失的
+                missingFieldNames.addAll(requiredComponentNames);
+            }
+        });
+
+        // 6. 如果“缺失字段”列表不为空，则抛出一个清晰、详细的异常
+        if (CollUtil.isNotEmpty(missingFieldNames)) {
+            throw new ServiceException("操作失败，缺少必填字段: " + String.join(", ", missingFieldNames));
+        }
+    }
 }
