@@ -47,7 +47,6 @@ public class ProductDTO implements Serializable {
     /**
      * 应用分类id
      */
-    @NotBlank(message = "应用分类不能为空")
     private String applicationCategoryId;
 
     /**

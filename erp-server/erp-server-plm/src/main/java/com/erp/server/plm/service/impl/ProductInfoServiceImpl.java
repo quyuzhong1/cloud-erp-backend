@@ -887,10 +887,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             //工时统计
             List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> taskTimeList = projectTaskTimeRecordService.listByProductIds(productIds);
-            List<String> applicationCategoryId = list.stream().map(ProductShowDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
-            List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.listByIds(applicationCategoryId);
-            Map<String, String> categoryMap = categoryEntityList.stream()
-                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
+            List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
 
             //根据产品id 获取到对应的要交付的文档数
             List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
@@ -902,7 +899,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //完成的任务的状态
             List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode());
             for (ProductShowDTO item : list) {
-                item.setApplicationCategoryName(categoryMap.get(item.getApplicationCategoryId()));
+                if(StringUtils.isNotBlank(item.getApplicationCategoryId())){
+                    List<String> applicationCategoryIdList = Arrays.stream(item.getApplicationCategoryId().split(","))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    List<String> applicationCategory = applicationCategoryList.stream()
+                            .filter(ac -> applicationCategoryIdList.contains(ac.getId()))
+                            .map(ApplicationCategoryEntity::getName)
+                            .collect(Collectors.toList());
+                    if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                        String applicationCategoryName = String.join(",", applicationCategory);
+                        item.setApplicationCategoryName(applicationCategoryName);
+                    }
+                }
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                     item.setIsAddProductName("是");
