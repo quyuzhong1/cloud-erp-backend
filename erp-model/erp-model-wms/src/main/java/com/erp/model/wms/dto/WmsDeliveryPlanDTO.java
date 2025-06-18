@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -247,6 +248,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 单据类型名称
          */
         private String typeName;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
+        /**
+         * 发货类型名称
+         */
+        private String deliveryTypeName;
 
         /**
          * 店铺id
@@ -315,6 +325,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 类型
          */
         private String type;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
+        /**
+         * 发货类型名称
+         */
+        private String deliveryTypeName;
 
         /**
          * 店铺id
@@ -456,6 +475,12 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        @NotBlank(message = "发货类型不能为空")
+        private String deliveryType;
     }
 
     /**

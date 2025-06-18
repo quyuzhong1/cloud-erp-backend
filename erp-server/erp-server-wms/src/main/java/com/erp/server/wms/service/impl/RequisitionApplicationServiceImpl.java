@@ -3053,4 +3053,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
         return baseMapper.rebuildFirstMileVirtualFlow();
     }
+
+    @Override
+    public void generateRequisition(String id) {
+
+    }
 }

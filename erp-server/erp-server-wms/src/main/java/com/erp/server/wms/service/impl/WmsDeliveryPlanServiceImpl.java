@@ -455,6 +455,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
+            // 审核通过 生成要货申请
+            requisitionApplicationService.generateRequisition(entity.getId());
+        }
         return Boolean.TRUE;
     }
 
@@ -510,6 +514,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 //        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
+        data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
 
         //明细信息
         List<WmsDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, WmsDeliveryPlanDetailDTO.ViewDTO.class);
@@ -1130,6 +1135,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         // 属性赋值
         for(WmsDeliveryPlanDTO.ListDTO data : list) {
+            data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(data.getDeliveryStatus()));

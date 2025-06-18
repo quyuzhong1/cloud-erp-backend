@@ -140,6 +140,12 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
      */
     @TableField("expect_logistics_method")
     private String expectLogisticsMethod;
+    /**
+     * 发货类型
+     * ThirdDeliveryTypeEnum
+     */
+    @TableField("deliveryType")
+    private String deliveryType;
 
     public static final String CODE = "code";
 

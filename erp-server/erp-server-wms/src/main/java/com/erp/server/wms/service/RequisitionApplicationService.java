@@ -281,4 +281,10 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
+
+    /**
+     * 发货计划生成要货申请
+     * @param id
+     */
+    void generateRequisition(String id);
 }

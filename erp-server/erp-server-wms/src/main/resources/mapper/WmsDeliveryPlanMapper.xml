@@ -70,6 +70,7 @@
             odpd.platform_spu as platformProductId,
             odpd.platform_fn_sku as platformFnSku,
             odp.type,
+            odp.delivery_type as deliveryType,
             odp.shop_id as shopId,
             odp.shop_name as shopName,
             odp.expect_delivery_date as expectDeliveryDate,
