@@ -165,24 +165,19 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         VirtualAdjustDTO.PagingParamDTO searchParam = new VirtualAdjustDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<VirtualAdjustDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-
+        List<VirtualAdjustDTO.TabListDTO> tabListDTOList = new ArrayList<>();
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(VirtualAdjustDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-                list.add(new VirtualAdjustDTO.TabListDTO(status,"", 0));
+        statusList.forEach(status -> {
+            VirtualAdjustDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equals(status)).findFirst().orElse(null);
+            if (Objects.isNull(tabListDTO)) {
+                tabListDTO = new VirtualAdjustDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
+            }else {
+                tabListDTO.setTabFlagName(ApproveStatusEnum.getTableName(status));
             }
+            tabListDTOList.add(tabListDTO);
         });
-        list.forEach(e -> {
-            if(StrUtil.isBlank(e.getTabFlagName())) {
-                e.setTabFlagName(ApproveStatusEnum.getTableName(e.getTabFlag()));
-            }
-        });
-        list.add(new VirtualAdjustDTO.TabListDTO("all", "全部", list.stream().mapToInt(VirtualAdjustDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+        return tabListDTOList;
     }
 
     @Override
