@@ -624,12 +624,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = null;
-    	if(dmpInoutTaskFeign.getQueryDoris(SettingEnum.DORIS_QUERY_CFG_SOOUTSTOCK.getKey())) {
-    		pagingVO = soOutstockService.dorisExportSoOutStock(dto);
-    	}else {
-    		pagingVO = soOutstockService.exportSoOutStock(dto);
-    	}
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.exportSoOutStock(dto);
         return pagingVO;
     }
 

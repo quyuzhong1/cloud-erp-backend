@@ -172,9 +172,4 @@ public class DmpInoutTaskFeignController{
 				nextLevelIdList);
 	}
 
-	@PostMapping("/getQueryDoris")
-    public boolean getQueryDoris(@RequestParam(value = "key") String key) {
-		return cfgSettingService.getQueryDoris(key);
-	}
-		
 }
