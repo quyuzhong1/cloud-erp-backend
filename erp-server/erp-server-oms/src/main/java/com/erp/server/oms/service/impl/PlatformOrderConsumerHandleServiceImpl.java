@@ -307,6 +307,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }
