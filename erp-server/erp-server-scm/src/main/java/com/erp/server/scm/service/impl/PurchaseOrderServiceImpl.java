@@ -1886,7 +1886,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //供应商map
         String accountId = entity.getSupplierAccountId();
-        Map<String, String> payMethod = dictBasicService.getByKey("supplierPayMethod").stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        Map<String, String> payMethod = dictBasicService.getByKey("supplierPayMode").stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
         supplier.setPayMethodId(payMethod.get(supplier.getPayMethodId()));
         Map<String, Object> supplierMap = BeanUtil.beanToMap(supplier);
         supplierMap.put("supplierAccountId", payeeMap.get(accountId));

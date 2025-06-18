@@ -7,6 +7,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -15,6 +16,7 @@ import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.erp.model.workflow.entity.ThirdProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
@@ -87,7 +89,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         if (addDTO.getTaskList() != null && !addDTO.getTaskList().isEmpty()) {
             thirdProcessTaskManagementService.add(addDTO.getTaskList());
         }
-        return new BaseResultDTO.AddDTO(id,id);
+        return new BaseResultDTO.AddDTO(id, id);
     }
 
     /**
@@ -211,9 +213,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
             taskManagementDTO.setNodeName(taskJson.getStr(FsRequestBodyAttributesEnum.NODENAME.getCode()));
             taskManagementDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(taskJson.getLong(FsRequestBodyAttributesEnum.STARTTIME.getCode())), ZoneId.systemDefault()));
             taskManagementDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(taskJson.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode())), ZoneId.systemDefault()));
-
-            taskManagementDTO.setTaskStatus(taskJson.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
-
+            taskManagementDTO.setTaskStatus(DictBasicEnum.getByCode(taskJson.getStr(FsRequestBodyAttributesEnum.STATUS.getCode())).getCode());
             taskManagementDTO.setThirdUserId(taskJson.getStr(FsRequestBodyAttributesEnum.USERID.getCode()));
             taskManagementDTO.setSysUserId(thirdIdToSysIdMap.get(thirdId));
             taskManagementDTOList.add(taskManagementDTO);
@@ -241,13 +241,18 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
                 handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
                 break;
             case CANCELED:
-                // TODO 缺少统一撤销入口
+                ApproveDTO.CancelProcessDTO cancelProcessDTO = new ApproveDTO.CancelProcessDTO();
+                cancelProcessDTO.setBusinessKey(one.getBussinessKey());
+                cancelProcessDTO.setId(one.getBussinessId());
+                processManagementService.cancelProcessFeign(cancelProcessDTO);
                 break;
             case DELETED:
-                // TODO 缺少统一的反审核入口
+                ApproveDTO.DisApproveDTO disApproveDTO = new ApproveDTO.DisApproveDTO();
+                disApproveDTO.setId(one.getBussinessId());
+                disApproveDTO.setBusinessKey(one.getBussinessKey());
+                processManagementService.disApproveFeign(disApproveDTO);
                 break;
             default:
-                // PENDING 或其他无需操作的状态
                 break;
         }
     }
