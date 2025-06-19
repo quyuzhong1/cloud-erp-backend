@@ -1,10 +1,10 @@
-package com.erp.server.file.business.scm;
+package com.erp.server.file.business.srm;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.SalesSharingDTO;
-import com.erp.rpc.scm.feign.ExportScmFeign;
+import com.erp.model.srm.dto.SalesSharingDTO;
+import com.erp.rpc.srm.feign.ExportSrmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,7 +20,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_SHARI
 @Slf4j
 public class ExportScmSalesSharingHandler extends AbstractPageFileEventHandler<SalesSharingDTO.ListDTO, SalesSharingDTO.PagingParamDTO> {
     @Resource
-    private ExportScmFeign exportScmFeign;
+    private ExportSrmFeign exportSrmFeign;
 
     @Override
     public String getExcelPath() {
@@ -41,6 +41,6 @@ public class ExportScmSalesSharingHandler extends AbstractPageFileEventHandler<S
 
     @Override
     protected PagingVO<SalesSharingDTO.ListDTO> getPageData(PagingDTO<SalesSharingDTO.PagingParamDTO> dto) {
-        return exportScmFeign.exportSalesSharing(dto);
+        return exportSrmFeign.exportSalesSharing(dto);
     }
 }

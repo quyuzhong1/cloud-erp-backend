@@ -1,4 +1,4 @@
-package com.erp.model.scm.entity;
+package com.erp.model.srm.entity;
 
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**

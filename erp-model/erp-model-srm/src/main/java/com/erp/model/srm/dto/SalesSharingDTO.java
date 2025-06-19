@@ -1,4 +1,4 @@
-package com.erp.model.scm.dto;
+package com.erp.model.srm.dto;
 
 import java.math.BigDecimal;
 
@@ -6,7 +6,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -141,7 +141,7 @@ public class SalesSharingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ListDTO extends CfgSupplierSalesDTO.BaseDTO {
+    public static class ListDTO extends BaseDTO {
 
         /**
          * 供应商id

@@ -1,9 +1,9 @@
-package com.erp.server.scm.service;
+package com.erp.server.srm.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.entity.SalesSharingEntity;
+import com.erp.model.srm.entity.SalesSharingEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.scm.dto.SalesSharingDTO;
+import com.erp.model.srm.dto.SalesSharingDTO;
 
 import javax.servlet.http.HttpServletResponse;
 

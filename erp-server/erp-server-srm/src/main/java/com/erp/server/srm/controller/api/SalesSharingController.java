@@ -1,29 +1,23 @@
-package com.erp.server.scm.controller.api;
+package com.erp.server.srm.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.scm.service.SalesSharingService;
+import com.erp.server.srm.service.SalesSharingService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.scm.dto.SalesSharingDTO;
+import com.erp.model.srm.dto.SalesSharingDTO;
 
 /**
  * 销量共享表

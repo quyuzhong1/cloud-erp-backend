@@ -1,32 +1,21 @@
-package com.erp.server.scm.service.impl;
+package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.enums.SaleStateEnum;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
-import com.erp.model.scm.entity.SalesSharingEntity;
+import com.erp.model.srm.entity.SalesSharingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.scm.mapper.SalesSharingMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.SalesSharingService;
+import com.erp.server.srm.mapper.SalesSharingMapper;
+import com.erp.server.srm.service.SalesSharingService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.scm.dto.SalesSharingDTO;
+import com.erp.model.srm.dto.SalesSharingDTO;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
