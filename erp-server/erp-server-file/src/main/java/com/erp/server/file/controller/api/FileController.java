@@ -57,14 +57,15 @@ public class FileController extends BaseController {
     }
 
     /**
-     * 上传文件
+     * 上传文件-返回文件名称
      * @param file
-     * @param fileName
      * @return
      */
     @PostMapping("/uploadFileAndName")
-    public ApiResult<String> uploadFileAndName(@RequestParam("file") File file, @RequestParam("fileName") String fileName){
-        return success(fileService.uploadFile(file, fileName));
+    public ApiResult<SysCommonDTO.AttachmentDTO> uploadFileAndName(@RequestParam("multipartFile")MultipartFile file){
+        String url = fileService.uploadFile(file);
+        String fileName = file.getOriginalFilename();
+        return success(new SysCommonDTO.AttachmentDTO(fileName, url));
     }
 
     /**
