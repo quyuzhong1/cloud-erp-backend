@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -554,6 +555,51 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             return Collections.emptyList();
         }
         return fillParentIds(list);
+    }
+
+    @Override
+    public List<DeptUserDTO.Tree> cascadeTree() {
+        List<SysDepartmentTreeDTO> departments = baseMapper.findTree();
+        if(CollectionUtils.isEmpty(departments)){
+            return new ArrayList<>();
+        }
+        // 按路径排序
+        departments.sort(Comparator.comparing(SysDepartmentTreeDTO::getPath));
+
+        List<DeptUserDTO.Tree> rootTrees = new ArrayList<>();
+
+        // 创建ID到Tree的映射，便于快速查找
+        Map<String, DeptUserDTO.Tree> treeMap = new HashMap<>();
+
+        for (SysDepartmentTreeDTO dept : departments) {
+            // 创建当前部门的Tree对象
+            DeptUserDTO.Tree currentTree = new DeptUserDTO.Tree();
+            currentTree.setCode(dept.getId());
+            currentTree.setValue(dept.getName());
+            currentTree.setType("department"); // 假设类型为department
+            currentTree.setDisabled(false);
+            currentTree.setChildTreeList(new ArrayList<>());
+
+            // 将当前Tree放入映射表
+            treeMap.put(dept.getId(), currentTree);
+
+            // 解析路径，获取父部门ID
+            String[] pathParts = dept.getPath().split(",");
+            if (pathParts.length == 1) {
+                // 如果是根部门，直接添加到根节点列表
+                rootTrees.add(currentTree);
+            } else {
+                // 找到父部门
+                String parentId = pathParts[pathParts.length - 2];
+                DeptUserDTO.Tree parentTree = treeMap.get(parentId);
+                if (parentTree != null) {
+                    // 将当前部门添加到父部门的子节点列表
+                    parentTree.getChildTreeList().add(currentTree);
+                }
+            }
+        }
+
+        return rootTrees;
     }
 
     public List<SysDepartmentEntity> fillParentIds(List<SysDepartmentEntity> departments) {

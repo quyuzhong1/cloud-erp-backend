@@ -1446,7 +1446,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	DictPartitionEntity dictPartitionEntity = null;
     	if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
     		dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getCode().equalsIgnoreCase("china")).findFirst().orElse(null);
-    		sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+    		if(CollUtil.isNotEmpty(sdyPlatformDeptList) && customerInfo != null) {
+    			sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+    		}
     	} else {
     		dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
     	}
@@ -1481,6 +1483,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	//默认出库单
     	viewDto.setTradeLabel(convertOutstockTransactionSubType(transactionSubType));
     	viewDto.setPlatformStatus(entity.getApproveStatus().getName());
+        viewDto.setSourceType(entity.getSourceType());
     	detailView.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
     	
     	//客户信息
@@ -1554,6 +1557,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	detailView.setRemark(soOutstockDetailEntity.getRemark());
     	detailView.setWarehouseId(entity.getWarehouseId());
     	detailView.setWarehouseName(entity.getWarehouseName());
+        detailView.setPlatformDetailId(soOutstockDetailEntity.getPlatformDetailId());
     	
     	viewDto.setDeliveryTime(entity.getActualDeliveryDate());
     	
@@ -1681,7 +1685,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //产品信息
         List<String> skuNos = soOutstockDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<SkuVO> skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
         List<String> skuIds = soOutstockDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //父类产品

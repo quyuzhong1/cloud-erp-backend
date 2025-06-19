@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -23,10 +24,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -150,7 +148,24 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public Boolean saveOrUpdate(ProductCostDTO productCostDTO) {
         ProductCostEntity costEntity = new ProductCostEntity();
         BeanMapper.copy(productCostDTO, costEntity);
+        //处理数据
+        handleSaveOrUpdate(costEntity);
         return this.saveOrUpdate(costEntity);
+    }
+
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/5/13 15:11
+     * @param entity
+     * @return void
+     */
+    private void handleSaveOrUpdate (ProductCostEntity entity) {
+        ProductCostEntity oldEntity = this.getBySkuId(entity.getSkuId());
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        entity.setId(oldEntity.getId());
     }
 
     /**
@@ -163,6 +178,13 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductCostDTO> productCostList) {
         List<ProductCostEntity> list = BeanMapper.copyList(productCostList, ProductCostEntity.class);
+        //根据sku查询
+        List<String> skuIdList = list.stream().map(ProductCostEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductCostEntity> oldList = this.listBySkuIdList(skuIdList);
+        Map<String, String> map = oldList.stream().collect(Collectors.toMap(ProductCostEntity::getSkuId, ProductCostEntity::getId));
+        for (ProductCostEntity costEntity : list) {
+            costEntity.setId(map.get(costEntity.getSkuId()));
+        }
         return this.saveOrUpdateBatch(list);
     }
 
@@ -186,6 +208,14 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
         queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<ProductCostEntity> listBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return  lambdaQuery().in(ProductCostEntity::getSkuId,skuIdList).list();
     }
 }
 

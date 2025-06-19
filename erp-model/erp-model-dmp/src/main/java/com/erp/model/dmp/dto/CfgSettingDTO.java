@@ -7,6 +7,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -140,5 +142,14 @@ public class CfgSettingDTO implements Serializable {
          * 是否推送仓位
          */
         private Boolean isPush;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    public static class DorisQuerySettingDTO{
+    	private String dataSourceName;
+    	private String paramsField;
+    	private String advanceQueryDTOListField;
+    	private Map<String, List<String>> cfgField;
     }
 }

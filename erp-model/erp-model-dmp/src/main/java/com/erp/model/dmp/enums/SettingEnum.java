@@ -80,6 +80,7 @@ public enum SettingEnum {
     
     //数据查询使用doris
     DORIS_QUERY_CFG_DMPOUTPUTTASKRECORD("dmpOutputTaskRecord",SettingEnum.DORIS_QUERY_CFG,"中台监控页面"),
+    DORIS_QUERY_CFG_SOOUTSTOCK("soOutstock",SettingEnum.DORIS_QUERY_CFG,"销售出库单"),
     ;
 
     @EnumValue

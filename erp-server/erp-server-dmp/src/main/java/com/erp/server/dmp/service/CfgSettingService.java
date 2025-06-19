@@ -53,6 +53,4 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      */
     List<CfgSettingDTO.WarehouseLocationSettingDTO> isPushKingdeeWarehouseLocation(List<String> warehouseIdList);
     
-    boolean getQueryDoris(String key);
-
 }

@@ -162,7 +162,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
      */
     List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto);
-
+    
     
     /**
      * 分页列表
@@ -172,7 +172,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
      */
     PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
-
+    
     
     /**
      * 导出销售出库单
@@ -386,7 +386,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
-
+    
     /**
      * 生成B2C销售出库单
      * @author yl
@@ -513,7 +513,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
                                    SoB2cEntity soB2cEntity,
                                    Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
                                    Map<String, SoOutstockEntity> mainEntityMap,
-                                   Map<String, SoOutstockDetailEntity> detailEntityListMap
+                                   Map<String, List<SoOutstockDetailEntity>> detailEntityListMap
     );
 
     /**
@@ -547,8 +547,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
-
-
+    
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
     /**
      * 修复旺店通数据
