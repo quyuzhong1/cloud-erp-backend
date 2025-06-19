@@ -3063,8 +3063,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollUtil.isNotEmpty(noDeliveryList)){
             throw new ServiceException("要货申请【{}】未生成发货单", noDeliveryList.stream().map(RequisitionApplicationEntity::getCode).collect(Collectors.joining(",")));
         }
-        boolean hasUnApprove = deliveryEntityList.stream().anyMatch(v -> !ApproveStatusEnum.APPROVE.getCode().equals(v.getApproveStatus()));
-        if (hasUnApprove){
+        boolean hasApprove = deliveryEntityList.stream().anyMatch(v -> ApproveStatusEnum.APPROVE.getCode().equals(v.getApproveStatus()));
+        if (!hasApprove){
             throw new ServiceException("发货单【{}】未审核通过", deliveryEntityList.stream().filter(v ->!ApproveStatusEnum.APPROVE.getCode().equals(v.getApproveStatus())).map(FirstMileDeliveryEntity::getCode).collect(Collectors.joining(",")));
         }
         //发货单明细
@@ -3074,23 +3074,23 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.InventoryDTO> inventoryDTOList = baseMapper.unLockInventoryView(ids);
         //构造明细数据
         List<RequisitionApplicationDTO.InventoryDTO> result = new ArrayList<>();
-        List<FirstMileDeliveryDetailEntity> collect = firstMileDeliveryDetailEntityList.stream().filter(e -> CharSequenceUtil.isBlank(e.getFbaShipmentCode())).collect(Collectors.toList());
-        collect.forEach(f ->{
-            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(e -> e.getId().equals(f.getSourceDetailId())).findFirst().orElse(null);
-            if (requisitionApplicationDetailEntity != null){
-                inventoryDTOList.stream().filter(g -> g.getId().equals(requisitionApplicationDetailEntity.getMainId()) && g.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).forEach(h ->{
-                    h.setDetailId(requisitionApplicationDetailEntity.getId());
-                    h.setDeliveryId(f.getMainId());
-                    h.setDeliveryDetailId(f.getId());
-                    h.setToWarehouseId(requisitionApplicationDetailEntity.getToWarehouseId());
-                    h.setToWarehouseName(requisitionApplicationDetailEntity.getToWarehouseName());
-                    h.setFromWarehouseId(requisitionApplicationDetailEntity.getFromWarehouseId());
-                    h.setFromWarehouseName(requisitionApplicationDetailEntity.getFromWarehouseName());
-                    h.setFromVirtualWarehouseId(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
-                    h.setFromVirtualWarehouseName(requisitionApplicationDetailEntity.getFromVirtualWarehouseName());
-                    h.setVirtualFrozenQty(requisitionApplicationDetailEntity.getVirtualFrozenQty());
-                    result.add(h);
-                });
+        inventoryDTOList.stream().filter(e -> CharSequenceUtil.isBlank(e.getShipmentCode())).forEach(h ->{
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream()
+                    .filter(e -> e.getSkuId().equals(h.getSkuId()) && e.getPlatformFnSku().equals(h.getFnSku())).findFirst().orElse(null);
+            if (Objects.nonNull(requisitionApplicationDetailEntity)){
+                h.setDetailId(requisitionApplicationDetailEntity.getId());
+                FirstMileDeliveryEntity deliveryEntity = deliveryEntityList.stream().filter(e -> e.getSourceId().equals(requisitionApplicationDetailEntity.getMainId())).findFirst().orElse(null);
+                h.setDeliveryId(Objects.nonNull(deliveryEntity) ? deliveryEntity.getId() : "");
+                FirstMileDeliveryDetailEntity deliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(e -> e.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
+                h.setDeliveryDetailId(Objects.nonNull(deliveryDetailEntity) ? deliveryDetailEntity.getId() : "");
+                h.setToWarehouseId(requisitionApplicationDetailEntity.getToWarehouseId());
+                h.setToWarehouseName(requisitionApplicationDetailEntity.getToWarehouseName());
+                h.setFromWarehouseId(requisitionApplicationDetailEntity.getFromWarehouseId());
+                h.setFromWarehouseName(requisitionApplicationDetailEntity.getFromWarehouseName());
+                h.setFromVirtualWarehouseId(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
+                h.setFromVirtualWarehouseName(requisitionApplicationDetailEntity.getFromVirtualWarehouseName());
+                h.setVirtualFrozenQty(requisitionApplicationDetailEntity.getVirtualFrozenQty());
+                result.add(h);
             }
         });
         return result;
@@ -3108,20 +3108,20 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"要货申请单明细不存在");
         }
         //头程发货单
-        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(dto.getDeliveryId());
-        if (Objects.isNull(deliveryEntity)){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单未生成发货单");
-        }
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(deliveryEntity.getApproveStatus())){
-            return BatchResultDTO.fail(deliveryEntity.getId(),deliveryEntity.getCode(),"要货申请单生成的发货单未审核通过");
-        }
-        FirstMileDeliveryDetailEntity deliveryDetailEntity = firstMileDeliveryDetailService.getById(dto.getDeliveryDetailId());
-        if (Objects.isNull(deliveryDetailEntity)){
-            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细不存在");
-        }
-        if (CharSequenceUtil.isNotBlank(deliveryDetailEntity.getFbaShipmentCode())){
-            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细已绑定FBA发货单");
-        }
+//        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(dto.getDeliveryId());
+//        if (Objects.isNull(deliveryEntity)){
+//            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单未生成发货单");
+//        }
+//        if (!ApproveStatusEnum.APPROVE.getStatus().equals(deliveryEntity.getApproveStatus())){
+//            return BatchResultDTO.fail(deliveryEntity.getId(),deliveryEntity.getCode(),"要货申请单生成的发货单未审核通过");
+//        }
+//        FirstMileDeliveryDetailEntity deliveryDetailEntity = firstMileDeliveryDetailService.getById(dto.getDeliveryDetailId());
+//        if (Objects.isNull(deliveryDetailEntity)){
+//            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细不存在");
+//        }
+//        if (CharSequenceUtil.isNotBlank(deliveryDetailEntity.getFbaShipmentCode())){
+//            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细已绑定FBA发货单");
+//        }
         //释放数量不能大于冻结数量
         if (dto.getVirtualFrozenQty() > detailEntity.getVirtualFrozenQty()){
             return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"释放数量不能大于冻结数量");
