@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public enum ApproveStatusEnum implements EnumMessage  {
     WAIT_SUBMIT("waitSubmit", "待提交", "待提交"),
     APPROVE_ING("approveIng", "审核中","待审核"),
-    REJECT("reject", "审核不通过","不通过"),
-    APPROVE("approve", "已审核","已审核");
+    APPROVE("approve", "已审核","已审核"),
+    REJECT("reject", "审核不通过","不通过");
 
     @EnumValue
     @JsonValue
