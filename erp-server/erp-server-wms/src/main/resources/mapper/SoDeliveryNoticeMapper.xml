@@ -365,4 +365,28 @@
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
         where so.is_deleted = false
     </select>
+    <select id="printSkuLabelView" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PrintSkuLabelDTO">
+        SELECT
+            sdn.id,
+            sdnd.id as detailId,
+            sdn.so_id as soId,
+            sdn.so_code as soCode,
+            sdnd.sku_id as skuId,
+            sdnd.sku_no as skuNo,
+            sdnd.platform_sku_no as platformSkuNo,
+            sdnd.delivery_qty as deliveryQty
+        from so_delivery_notice sdn
+                 LEFT JOIN so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id
+        where sdn.is_deleted = false and sdnd.is_deleted = false
+          and sdn.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getSoDeliveryNoticeDetail" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$SoDeliveryNoticeDetail">
+        select
+            sdn.id,
+            sdn.source_id,
+            sdn.source_type,
+    </select>
 </mapper>

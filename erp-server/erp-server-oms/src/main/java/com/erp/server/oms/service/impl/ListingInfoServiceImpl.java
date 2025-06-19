@@ -568,4 +568,19 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         return Collections.emptyList();
     }
+
+    @Override
+    public void updateLabelInfo(String id, String labelUrl, String labelSourceType) {
+        this.lambdaUpdate().eq(ListingInfoEntity::getId,id).set(ListingInfoEntity::getLabelUrl,labelUrl).set(ListingInfoEntity::getLabelSourceType,labelSourceType).update();
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑产品标签链接",UserContext.getDefaultLoginUser().getUserName()), ModuleTypeEnum.LISTING_INFO.getCode(), id,"更新标签链接");
+    }
+
+    @Override
+    public List<ListingInfoEntity> listInfoByPlatformSkuNo(ListingInfoDTO.QueryDTO queryDTO) {
+        if (CharSequenceUtil.isBlank(queryDTO.getType()) || CollectionUtils.isEmpty(queryDTO.getPlatformSkuNoList())){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ListingInfoEntity::getPlatformSkuNo,queryDTO.getPlatformSkuNoList())
+                .eq(ListingInfoEntity::getType,queryDTO.getType()).list();
+    }
 }

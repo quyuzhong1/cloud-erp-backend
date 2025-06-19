@@ -246,6 +246,17 @@ public class SkuMappingDTO implements Serializable {
          * 图片url，更新时如果没变更传
          */
         private String productImageUrl;
+        /**
+         * 标签url
+         */
+        private String labelUrl;
+        /**
+         * 标签来源
+         * 字段值流转【后端使用】
+         */
+        private String labelSourceType;
+
+
 
 
     }
@@ -744,6 +755,19 @@ public class SkuMappingDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 标签链接
+         */
+        private String labelUrl;
+        /**
+         * 标签来源类型
+         * LabelSourceTypeEnum
+         */
+        private String labelSourceType;
+        /**
+         * 是否 上传附件 true 是 false 否
+         */
+        private Boolean isUploadLabel;
 
         /**
          * 创建人名称
@@ -1625,5 +1649,20 @@ public class SkuMappingDTO implements Serializable {
          * 服务商简称
          */
         private String shortName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CustomerLabelDTO {
+        /**
+         * 客户sku
+         */
+        @NotBlank(message = "客户sku不能为空")
+        private String platformSkuNo;
+        /**
+         * 标签url
+         */
+        @NotBlank(message = "标签url不能为空")
+        private String labelUrl;
     }
 }

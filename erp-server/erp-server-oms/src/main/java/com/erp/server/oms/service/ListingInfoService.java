@@ -100,4 +100,8 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     List<ListingInfoDTO.SearchResultDTO> searchByKey(ListingInfoDTO.SearchParamDTO dto);
 
     List<ListingInfoEntity> listByAuthIds(List<String> authIds);
+
+    void updateLabelInfo(String id, String labelUrl, String labelSourceType);
+
+    List<ListingInfoEntity> listInfoByPlatformSkuNo(ListingInfoDTO.QueryDTO queryDTO);
 }

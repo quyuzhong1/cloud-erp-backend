@@ -672,6 +672,8 @@
         sm.product_name as productName,
         li.match_result,
         li.remark,
+        li.label_url as labelUrl,
+        li.label_source_type as labelSourceType,
         sm.create_user_name as createUserName,
         sm.create_time as createTime,
         sm.update_user_name as updateUserName,
