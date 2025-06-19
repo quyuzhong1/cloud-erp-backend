@@ -40,7 +40,6 @@ public class SalesSharingController extends BaseController {
     @Resource
     private SalesSharingService salesSharingService;
 
-
     /**
      * 列表查询
      * @author jack
@@ -49,11 +48,6 @@ public class SalesSharingController extends BaseController {
      * @return ApiResult<PagingVO<SalesSharingDTO.ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:salesSharing:paging",
-            tableAlias = "ss"
-    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SalesSharingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO) {
         return success(salesSharingService.paging(pagingParamDTO));
@@ -68,12 +62,6 @@ public class SalesSharingController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:salesSharing:export",
-            tableAlias = "ss"
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     @WebAdvanceQuery
     public ApiResult<Object> exportList(@RequestBody @Validated SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         salesSharingService.exportList(pagingParamDTO, response);
