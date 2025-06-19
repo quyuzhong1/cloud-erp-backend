@@ -233,6 +233,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private FileTemplateFeign fileTemplateFeign;
     @Resource
     private SupplierAccountService supplierAccountService;
+    @Resource
+    private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -3392,6 +3394,45 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderEntities) {
                 String oldName = ContractStampStatusEnum.getName(purchaseOrderEntity.getContractStampStatus());
                 moduleOperateLogService.addModuleOperateLog(String.format("合同盖章状态由[%s]变更为[%s]", oldName, name), ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), "合同盖章状态更新");
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void calSupplierPurchaseQty() {
+        List<SupplierPurchaseQuantityEntity> newList = baseMapper.listSupplierPurchaseQty();
+        if (CollUtil.isNotEmpty(newList)) {
+            List<SupplierPurchaseQuantityEntity> oldList = supplierPurchaseQuantityService.list();
+
+            if (CollUtil.isEmpty(oldList)) {
+                // oldList为空，直接批量插入newList
+                supplierPurchaseQuantityService.saveBatch(newList);
+            } else {
+                // 将oldList转换为Map，便于后续查找，key为supplierId+skuId组合
+                Map<String, SupplierPurchaseQuantityEntity> oldMap = oldList.stream()
+                        .collect(Collectors.toMap(
+                                entity -> entity.getSupplierId() + "-" + entity.getSkuId(),
+                                entity -> entity));
+
+                // 遍历newList，判断是更新还是插入
+                for (SupplierPurchaseQuantityEntity newEntity : newList) {
+                    String key = newEntity.getSupplierId() + "-" + newEntity.getSkuId();
+                    SupplierPurchaseQuantityEntity oldEntity = oldMap.get(key);
+
+                    if (Objects.isNull(oldEntity)) {
+                        // 插入新记录
+                        supplierPurchaseQuantityService.save(newEntity);
+                    } else {
+                        // 执行更新操作
+                        supplierPurchaseQuantityService.lambdaUpdate()
+                                .set(SupplierPurchaseQuantityEntity::getSupplierQty,newEntity.getSupplierQty())
+                                .set(SupplierPurchaseQuantityEntity::getSkuTotalQty,newEntity.getSkuTotalQty())
+                                .set(SupplierPurchaseQuantityEntity::getPurchaseRatio,newEntity.getPurchaseRatio())
+                                .eq(SupplierPurchaseQuantityEntity::getId, oldEntity.getId())
+                                .update();
+                    }
+                }
             }
         }
     }

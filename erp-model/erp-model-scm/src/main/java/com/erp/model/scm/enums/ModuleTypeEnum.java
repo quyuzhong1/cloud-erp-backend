@@ -153,6 +153,7 @@ public enum ModuleTypeEnum {
     VIRTUAL_ADJUST("126", "虚拟库存调整"),
     CONTRACT_INFO("128", "合同管理"),
 
+    CFG_SUPPLIER_SALES("130", "销量设置"),
     ;
 
 
