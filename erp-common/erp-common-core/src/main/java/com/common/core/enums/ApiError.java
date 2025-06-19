@@ -1690,7 +1690,8 @@ public enum ApiError implements Serializable {
             return true;
         } else {
             ServiceException serviceException = (ServiceException) e;
-            return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查");
+            return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
+                    serviceException.getMsg().contains("Read timed out");
         }
     }
 }
