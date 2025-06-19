@@ -144,6 +144,9 @@ public enum ModuleTypeEnum {
     CFG_RULE_INVOICE("126", "开票规则"),
     SKU_ORG_REF("127", "SKU与采购组织关系"),
     CONTRACT_INFO("128", "合同管理"),
+    SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+
+
 
     ;
 

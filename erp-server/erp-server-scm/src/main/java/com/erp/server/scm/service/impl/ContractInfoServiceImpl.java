@@ -153,13 +153,6 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(ContractInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new ContractInfoDTO.TabListDTO(status, 0));
-        }
-        });
-        // 计算合计数量
-        list.add(new ContractInfoDTO.TabListDTO("all", list.stream().mapToInt(ContractInfoDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
