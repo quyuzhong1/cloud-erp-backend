@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogSystemModule;
@@ -58,8 +59,12 @@ public class SalesSharingController extends BaseController {
     @PostMapping("/export")
     @WebAdvanceQuery
     public ApiResult<Object> exportList(@RequestBody @Validated SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        salesSharingService.exportList(pagingParamDTO, response);
-        return success();
+        String msg = salesSharingService.exportList(pagingParamDTO, response);
+        if(StringUtils.isBlank(msg)){
+            return success();
+        }else {
+            return failure(msg);
+        }
     }
 
 
