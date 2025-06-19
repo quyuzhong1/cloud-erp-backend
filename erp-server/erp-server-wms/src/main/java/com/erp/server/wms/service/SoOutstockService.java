@@ -513,7 +513,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
                                    SoB2cEntity soB2cEntity,
                                    Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
                                    Map<String, SoOutstockEntity> mainEntityMap,
-                                   Map<String, SoOutstockDetailEntity> detailEntityListMap
+                                   Map<String, List<SoOutstockDetailEntity>> detailEntityListMap
     );
 
     /**
