@@ -84,21 +84,30 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SupplierRefWarehouseDTO.AddDTO addDTO) {
-        SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
-        BeanMapperUtils.copy(addDTO, supplierRefWarehouseEntity);
-
         // 数据处理
-        handleData(supplierRefWarehouseEntity);
+       List<SupplierRefWarehouseEntity> list = handleAddData(addDTO);
 
         log.info("开始新增供应商关联仓库单");
-        boolean save = super.save(supplierRefWarehouseEntity);
+        boolean save = super.saveBatch(list);
         if(!save) {
             throw new ServiceException("供应商关联仓库单保存失败");
         }
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "供应商关联仓库单" , supplierRefWarehouseEntity.getId());
-        operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), supplierRefWarehouseEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(supplierRefWarehouseEntity.getId(), supplierRefWarehouseEntity.getId());
+        return new BaseResultDTO.AddDTO(list.get(0).getId(), list.get(0).getId());
+    }
+
+
+    private List<SupplierRefWarehouseEntity> handleAddData (SupplierRefWarehouseDTO.AddDTO addDTO) {
+        List<String> warehouseLocationCodeList = addDTO.getWarehouseLocationCodeList();
+        List<SupplierRefWarehouseEntity> list = new ArrayList<>();
+        for (String warehouseLocationCode : warehouseLocationCodeList) {
+            SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
+            BeanMapperUtils.copy(addDTO, supplierRefWarehouseEntity);
+            supplierRefWarehouseEntity.setWarehouseLocationCode(warehouseLocationCode);
+            // 数据处理
+            handleData(supplierRefWarehouseEntity);
+            list.add(supplierRefWarehouseEntity);
+        }
+        return list;
     }
 
     /**
@@ -140,7 +149,23 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
+        handlePaging(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+    /**
+     * 分页数据处理
+     * @author will
+     * @date 2025/6/19 16:39
+     * @param list
+     * @return void
+     */
+    private void handlePaging (List<SupplierRefWarehouseDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (SupplierRefWarehouseDTO.ListDTO listDTO : list) {
+            listDTO.setDisabledName(SupplierRefWarehouseTabEnum.getNameByCode(listDTO.getDisabled()));
+        }
     }
 
     @Override

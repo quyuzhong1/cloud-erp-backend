@@ -118,6 +118,10 @@ public class SupplierRefWarehouseDTO implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * true禁用，false启用
+         */
+        private String disabledName;
 
         /**
          * 创建人
@@ -194,33 +198,10 @@ public class SupplierRefWarehouseDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
+    public static class AddDTO {
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class CommonDTO {
-
-        /**
-        * 供应商id
-        */
+         * 供应商id
+         */
         @NotBlank(message = "供应商id不能为空")
         @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
@@ -231,25 +212,71 @@ public class SupplierRefWarehouseDTO implements Serializable {
         private String supplierCode;
 
         /**
-        * 仓库id
-        */
+         * 仓库id
+         */
         @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
         /**
-        * 是否禁用
-        */
+         * 是否禁用
+         */
         @NotNull(message = "是否禁用不能为空")
         private Boolean disabled;
 
         /**
-        * 仓位编码
+         * 仓位编码
+         */
+        @NotEmpty(message = "仓位编码不能为空")
+        private List<String> warehouseLocationCodeList;
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+        * 主键id
         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        @Size(max = 19,message = "供应商id最大长度不能超过19位")
+        private String supplierId;
+
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        /**
+         * 是否禁用
+         */
+        @NotNull(message = "是否禁用不能为空")
+        private Boolean disabled;
+
+        /**
+         * 仓位编码
+         */
         @NotBlank(message = "仓位编码不能为空")
         @Size(max = 64,message = "仓位编码最大长度不能超过64位")
         private String warehouseLocationCode;
     }
+
 
     /**
      * 禁用DTO

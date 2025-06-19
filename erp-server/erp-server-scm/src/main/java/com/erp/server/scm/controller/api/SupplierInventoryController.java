@@ -27,7 +27,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @LogSystemModule("供应商关联仓库表")
-@RequestMapping("/supplierRefWarehouse")
+@RequestMapping("/supplierInventory")
 public class SupplierInventoryController extends BaseController {
 
     @Resource
