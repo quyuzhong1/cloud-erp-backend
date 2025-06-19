@@ -5057,14 +5057,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
-                String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
-                if (ObjectUtils.isEmpty(applicationCategoryId)) {
-                    errorMsgList.add("应用分类不存在");
-                } else {
-                    productInfoDTO.setApplicationCategoryId(applicationCategoryId);
+            List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            List<String> applicationCategoryIdList = new ArrayList<>();
+            for (String applicationCategoryName : applicationCategoryNameList) {
+                String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
+                if (StringUtils.isBlank(applicationCategoryId)) {
+                    errorMsgList.add(applicationCategoryName+" 应用分类不存在");
+                    continue;
                 }
+                applicationCategoryIdList.add(applicationCategoryId);
             }
+            productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
             if (StringUtils.isNotBlank(pirateRisk)) {
@@ -5837,8 +5842,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .collect(Collectors.toList());
             List<String> applicationCategoryIdList = new ArrayList<>();
             for (String applicationCategoryName : applicationCategoryNameList) {
-                String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
-                if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
+                if (StringUtils.isBlank(applicationCategoryId)) {
                     errorMsgList.add(applicationCategoryName+" 应用分类不存在");
                     continue;
                 }
