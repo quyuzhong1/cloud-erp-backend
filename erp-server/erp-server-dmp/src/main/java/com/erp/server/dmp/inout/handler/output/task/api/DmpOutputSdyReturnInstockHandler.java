@@ -182,7 +182,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setSpec_no(spuNo);
 	            shudiyunB2cOrderDTO.setSpec_name(spuName);
 
-				shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
+//				shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
     	        Integer isComb = dmpReturnInstockDetailEntity.getIsComb();
     	        if(isComb == null) {
     	        	isComb = 0;
