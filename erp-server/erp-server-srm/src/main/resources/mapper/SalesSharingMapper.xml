@@ -95,5 +95,9 @@ ss.saleable_days AS saleableDays
         <include refid="paging_sql"></include>
     </select>
 
+    <select id="listByParams" resultType="com.erp.model.srm.dto.SalesSharingDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
 
 </mapper>

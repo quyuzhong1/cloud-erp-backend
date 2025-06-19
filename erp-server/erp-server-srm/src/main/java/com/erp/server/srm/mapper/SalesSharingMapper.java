@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -21,4 +23,6 @@ import org.apache.ibatis.annotations.Param;
 public interface SalesSharingMapper extends BaseMapper<SalesSharingEntity> {
 
     IPage<SalesSharingDTO.ListDTO> paging(Page query,  @Param("params") SalesSharingDTO.PagingParamDTO params);
+
+    List<SalesSharingDTO.ListDTO> listByParams(@Param("params") SalesSharingDTO.PagingParamDTO params);
 }
