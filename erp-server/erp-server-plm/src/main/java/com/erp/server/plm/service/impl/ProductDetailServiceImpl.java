@@ -2352,41 +2352,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.修改/新增 包装信息
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         if (!ObjectUtils.isEmpty(productPackDTO)) {
-            LambdaUpdateWrapper<ProductPackEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper();
-            if (Objects.nonNull(productPackDTO.getProductLength()) && productPackDTO.getProductLength().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getProductLength, productPackDTO.getProductLength());
+            productPackDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getPackId());
+            productPackDTO.setSkuId(skuId);
+            ProductPackEntity byId = productPackService.getById(productPackDTO.getId());
+            if(Objects.nonNull(byId)){
+                BeanMapper.copyNonNull(productPackDTO, byId);
+                BeanUtil.copyProperties(byId,productPackDTO);
             }
-            if (Objects.nonNull(productPackDTO.getProductWidth()) && productPackDTO.getProductWidth().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getProductWidth, productPackDTO.getProductWidth());
-            }
-            if (Objects.nonNull(productPackDTO.getProductHeight()) && productPackDTO.getProductHeight().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getProductHeight, productPackDTO.getProductHeight());
-            }
-            if (Objects.nonNull(productPackDTO.getBoxLength()) && productPackDTO.getBoxLength().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getBoxLength, productPackDTO.getBoxLength());
-            }
-            if (Objects.nonNull(productPackDTO.getBoxWidth()) && productPackDTO.getBoxWidth().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getBoxWidth, productPackDTO.getBoxWidth());
-            }
-            if (Objects.nonNull(productPackDTO.getBoxHeight()) && productPackDTO.getBoxHeight().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getBoxHeight, productPackDTO.getBoxHeight());
-            }
-            if (Objects.nonNull(productPackDTO.getGrossWeight()) && productPackDTO.getGrossWeight().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getGrossWeight, productPackDTO.getGrossWeight());
-            }
-            if (Objects.nonNull(productPackDTO.getNetWeight()) && productPackDTO.getNetWeight().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getNetWeight, productPackDTO.getNetWeight());
-            }
-            if (Objects.nonNull(productPackDTO.getBoxWeight()) && productPackDTO.getBoxWeight().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getBoxWeight, productPackDTO.getBoxWeight());
-            }
-            if (Objects.nonNull(productPackDTO.getBoxQty()) && productPackDTO.getBoxQty().compareTo(BigDecimal.ZERO) > 0) {
-                lambdaUpdateWrapper.set(ProductPackEntity::getBoxQty, productPackDTO.getBoxQty());
-            }
-            lambdaUpdateWrapper.set(ProductPackEntity::getSkuId,skuId);
-            lambdaUpdateWrapper.eq(ProductPackEntity::getId,productKey.getPackId());
 
-            productPackService.update(lambdaUpdateWrapper);
+            productPackService.saveOrUpdate(productPackDTO);
         }
         return id;
     }
