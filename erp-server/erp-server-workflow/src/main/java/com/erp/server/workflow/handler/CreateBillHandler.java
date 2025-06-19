@@ -28,15 +28,33 @@ import java.util.Map;
 
 public interface CreateBillHandler {
     default boolean isMatch(String event) {
-        return getEvent().name().equals(event);
+        return getEvent().getCode().equals(event);
     }
 
     CfgQueryOptionBussinessKeyEnum getEvent();
 
-
+    /**
+     * 根据三方审批生成的类型，更新单据状态 OR 生成单据
+     * @param jsonObject
+     * @param thirdProcessEntity
+     * @param fieldMapList
+     * @param valueMapList
+     */
     void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 
+    /**
+     * 三方生成查询，重新生成功能
+     * @param map
+     * @param thirdProcessEntity
+     * @param entity
+     */
     void afreshGenerate(Map<String,Object> map, CfgThirdProcessEntity thirdProcessEntity, ApproveTaskInfoEntity entity);
 
-    ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(CfgThirdProcessEntity thirdProcessEntity, List<ApproveTaskDetailDTO.AddDTO> addDTOS);
+    /**
+     * 构建taskInfo
+     * @param jsonObject
+     * @param addDTOS
+     * @return
+     */
+    ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS);
 }

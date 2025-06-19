@@ -38,7 +38,7 @@ public class ProcessFormFactory {
 
     public ProcessFormHandler getConstructBillHandler(String event) {
         for (ProcessFormHandler handler : handlers) {
-            if (handler.getEventType().name().equals(event)) {
+            if (handler.getEventType().getCode().equals(event)) {
                 return handler;
             }
         }

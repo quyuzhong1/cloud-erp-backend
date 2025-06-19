@@ -93,8 +93,6 @@ public enum DictBasicEnum {
     PENDING("PENDING", "taskStatus", "approveIng", "审核中"), //公用
     APPROVED("APPROVED", "taskStatus", "approve", "已审核"),//公用
     REJECTED("REJECTED", "taskStatus", "reject", "审核不通过"),//公用
-    CANCELED("CANCELED", "thirdInstanceStatus", "reject", "撤回"),
-    DELETED("DELETED", "thirdInstanceStatus", "approve", "删除"),
     TRANCFERRED("TRANCFERRED", "taskStatus", "approve", "已转交"),
     DONE("DONE", "taskStatus", "approve", "完成"),
     ;

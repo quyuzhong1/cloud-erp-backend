@@ -14,6 +14,11 @@ package com.erp.model.workflow.enums;
  */
 public enum FsRequestBodyAttributesEnum {
     APPROVAL_NAME("approval_name", "审批名称"),
+    APPROVALNAME("approvalName", "审批名称"),
+    INSTANCE_CODE("instance_code", "实例编号"),
+    INSTANCECODE("instanceCode", "实例编号"),
+    APPROVALCODE("approvalCode", "审批编号"),
+    APPROVAL_CODE("approval_Code", "审批编号"),
     FORM("form", "控件参数信息"),
     NAME("name", "控件名"),
     CHILDREN("children", "fieldList的子控件集合信息"),
@@ -32,9 +37,6 @@ public enum FsRequestBodyAttributesEnum {
     NODEID("nodeId", "节点id"),
     NODENAME("nodeName", "节点名称"),
     TASKLIST("taskList", "任务列表"),
-    APPROVALNAME("approvalName", "审批名称"),
-    INSTANCECODE("instanceCode", "实例编号"),
-    APPROVALCODE("approvalCode", "审批编号"),
     SERIALNUMBER("serialNumber", "序号"),
     TYPE("type", "审批终止");
 

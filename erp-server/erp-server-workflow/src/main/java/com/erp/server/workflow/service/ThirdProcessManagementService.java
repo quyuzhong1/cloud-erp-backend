@@ -42,9 +42,4 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
      * @param jsonObject
      */
     void addOrUpdate(JSONObject jsonObject, String sourcePlatform);
-
-    /**
-     * 回调更新状态
-     */
-    void handleCallback(ApproveTaskInfoEntity one, String approveStatus, String userId, LocalDateTime approveTime);
 }
