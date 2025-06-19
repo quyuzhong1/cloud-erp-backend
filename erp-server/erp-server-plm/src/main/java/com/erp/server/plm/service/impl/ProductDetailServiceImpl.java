@@ -4461,9 +4461,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getValues().toString());
             return ObjUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName();
         }
-        if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
-            return SaleMethodEnum.getNameByCode(Integer.valueOf(dto.getValues().toString()));
-        }
         return dto.getName();
     }
 
