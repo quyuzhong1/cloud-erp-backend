@@ -366,7 +366,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     public BatchResultDTO delete(String id) {
         VirtualAdjustEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到虚拟仓调整单主单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.REJECT))) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
         //删除明细数据（如果有明细数据的话）
@@ -506,8 +506,8 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         importDTO.setErrorUrl(url);
         return importDTO;
     }
-
-    private void adjustVirtualInventory(VirtualAdjustEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void adjustVirtualInventory(VirtualAdjustEntity entity) {
         List<VirtualAdjustDetailEntity> detailEntityList = virtualAdjustDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
         //构建库存调整参数
         detailEntityList.forEach(e -> {

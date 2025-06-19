@@ -131,9 +131,11 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         }
         List<VirtualAdjustDetailEntity> updateList = detailEntityList.stream().filter(detail -> CharSequenceUtil.isNotBlank(detail.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(updateList)){
-            this.updateBatchById(updateList);
-            List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getId())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("编辑明细【%s】", ModuleTypeEnum.VIRTUAL_ADJUST.getCode(),pairList,"编辑操作");
+            updateList.forEach(detailEntity -> {
+                VirtualAdjustDetailEntity old = detailEntityList1.stream().filter(e -> e.getId().equals(detailEntity.getId())).findFirst().orElse(null);
+                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), detailEntity.getMainId(), "", "编辑操作");
+                this.updateById(detailEntity);
+            });
         }
     }
 
