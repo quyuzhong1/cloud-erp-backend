@@ -383,10 +383,4 @@
             #{id}
         </foreach>
     </select>
-    <select id="getSoDeliveryNoticeDetail" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$SoDeliveryNoticeDetail">
-        select
-            sdn.id,
-            sdn.source_id,
-            sdn.source_type,
-    </select>
 </mapper>
