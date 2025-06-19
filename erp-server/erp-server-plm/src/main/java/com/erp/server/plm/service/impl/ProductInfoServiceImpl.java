@@ -1189,9 +1189,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             result.setChargeIds(new ArrayList<>());
         }
-        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(entity.getApplicationCategoryId());
-        if (ObjectUtils.isNotEmpty(applicationCategory)) {
-            result.setApplicationCategoryName(applicationCategory.getName());
+        if(StringUtils.isNotBlank(entity.getApplicationCategoryId())){
+            List<String> applicationCategoryIdList = Arrays.stream(entity.getApplicationCategoryId().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            result.setApplicationCategoryIdList(applicationCategoryIdList);
         }
         String chargeName = entity.getChargeName();
         if (StringUtils.isNotBlank(chargeName)) {
