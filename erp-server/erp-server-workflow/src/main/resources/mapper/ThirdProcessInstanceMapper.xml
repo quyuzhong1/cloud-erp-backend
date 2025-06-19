@@ -21,6 +21,7 @@
        <result column="approval_code" property="approvalCode" />
        <result column="instance_code" property="instanceCode" />
         <result column="is_complete" property="isComplete" />
+        <result column="task_list" property="taskList" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -34,7 +35,7 @@
         update_time,
         version,
         is_deleted,
-        approval_name, start_time, end_time, serial_number, status, form, approval_code, instance_code,  is_complete
+        approval_name, start_time, end_time, serial_number, status, form, approval_code, instance_code,  is_complete, task_list
     </sql>
 
 

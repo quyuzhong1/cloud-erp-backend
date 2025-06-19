@@ -15,6 +15,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
@@ -24,11 +25,14 @@ import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.sys.feign.SysDepartmentThirdFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.service.CfgQueryOptionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -59,6 +63,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
     @Resource
     private SysDepartmentThirdFeign sysDepartmentThirdFeign;
+    @Autowired
+    private CfgQueryOptionService cfgQueryOptionService;
 
     @Override
     public JSONArray assembleForm(JSONArray formArray, Map<String, Object> variablesMap,
@@ -738,13 +744,6 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     return (key == null || key.isEmpty()) ? entity.getThirdFieldId() : key;
                 }));
 
-        //fieldMaps、按照sysParentId进行分组，sysParentId为空，则使用sysFieldId进行分组，如果出现重复的则保留最新的
-        Map<String, List<CfgProcessFieldMapEntity>> groupedSysMaps = fieldMaps.stream()
-                .collect(Collectors.groupingBy(entity -> {
-                    String key = entity.getSysParentId();
-                    return (key == null || key.isEmpty()) ? entity.getSysField() : key;
-                }));
-
         Map<String, List<CfgProcessValueMapEntity>> collect = valueMaps.stream().collect(Collectors.groupingBy(CfgProcessValueMapEntity::getFieldMapId));
 
         // 第二步：根据字段映射和值映射转换为系统映射
@@ -1087,7 +1086,6 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
                 CfgProcessFieldMapEntity parentFieldMap = parentFieldMaps.get(0);
                 String sysParentId = parentFieldMap.getSysParentId();
-
                 // 获取系统明细数据
                 List<Map<String, Object>> sysDetailList = (List<Map<String, Object>>) variablesMap.get(sysParentId);
 
