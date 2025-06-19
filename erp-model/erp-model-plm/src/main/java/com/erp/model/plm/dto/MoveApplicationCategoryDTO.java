@@ -27,6 +27,10 @@ public class MoveApplicationCategoryDTO implements Serializable {
     /**
      * 应用分类id
      */
-    @NotBlank(message = "应用分类id 不能为空")
-    private String  applicationCategoryId;
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryIdList;
 }

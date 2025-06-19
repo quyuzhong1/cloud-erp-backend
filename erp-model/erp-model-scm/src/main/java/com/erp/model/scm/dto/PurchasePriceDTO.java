@@ -136,6 +136,11 @@ public class PurchasePriceDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 退货方式
+         */
+        private String returnMode;
         /**
          * 含税单价
          */
@@ -159,6 +164,7 @@ public class PurchasePriceDTO implements Serializable {
 
         private Integer oldPurchaseQty;
 
+        private Integer returnQty;
         /**
          * 价税合计
          */
