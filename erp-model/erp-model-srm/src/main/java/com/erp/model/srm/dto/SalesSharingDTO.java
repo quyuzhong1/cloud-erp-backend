@@ -81,7 +81,7 @@ public class SalesSharingDTO implements Serializable {
         /**
         * 产品名称
         */
-        private String skuName;
+        private String productName;
 
         /**
         * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
@@ -181,7 +181,7 @@ public class SalesSharingDTO implements Serializable {
         /**
          * 产品名称
          */
-        private String skuName;
+        private String productName;
 
         /**
          * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
@@ -360,7 +360,7 @@ public class SalesSharingDTO implements Serializable {
         */
         @NotBlank(message = "产品名称不能为空")
         @Size(max = 500,message = "产品名称最大长度不能超过500位")
-        private String skuName;
+        private String productName;
 
         /**
         * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架

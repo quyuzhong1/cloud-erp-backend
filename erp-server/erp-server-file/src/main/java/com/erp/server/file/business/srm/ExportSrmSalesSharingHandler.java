@@ -14,22 +14,22 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_SHARING_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_SALES_SHARING_REPORT;
 
 @Component
 @Slf4j
-public class ExportScmSalesSharingHandler extends AbstractPageFileEventHandler<SalesSharingDTO.ListDTO, SalesSharingDTO.PagingParamDTO> {
+public class ExportSrmSalesSharingHandler extends AbstractPageFileEventHandler<SalesSharingDTO.ListDTO, SalesSharingDTO.PagingParamDTO> {
     @Resource
     private ExportSrmFeign exportSrmFeign;
 
     @Override
     public String getExcelPath() {
-        return "excel/scm/salesSharingExport.xlsx";
+        return "excel/srm/salesSharingExport.xlsx";
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_SCM_SALES_SHARING_REPORT;
+        return EXPORT_SRM_SALES_SHARING_REPORT;
     }
 
     @Override

@@ -19,8 +19,9 @@
        <result column="product_image_url" property="productImageUrl" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="sku_name" property="skuName" />
+       <result column="product_name" property="productName" />
        <result column="sale_state" property="saleState" />
+       <result column="sale_state_name" property="saleStateName" />
        <result column="saleable_stock" property="saleableStock" />
        <result column="daily_sales" property="dailySales" />
        <result column="sales_last_3_days" property="salesLast3Days" />
@@ -50,8 +51,9 @@ ss.product_image AS productImage,
 ss.product_image_url AS productImageUrl,
 ss.sku_id AS skuId,
 ss.sku_no AS skuNo,
-ss.sku_name AS skuName,
+ss.product_name AS productName,
 ss.sale_state AS saleState,
+ss.sale_state_name AS saleStateName,
 ss.saleable_stock AS saleableStock,
 ss.daily_sales AS dailySales,
 ss.sales_last_3_days AS salesLast3Days,

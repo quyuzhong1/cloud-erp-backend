@@ -20,7 +20,7 @@ import java.util.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_SHARING_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_SALES_SHARING_REPORT;
 
 /**
  * <p>
@@ -46,19 +46,13 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
-    private void fillList(List<SalesSharingDTO.ListDTO> records) {
-        for (SalesSharingDTO.ListDTO record : records) {
-            record.setSaleStateName(SaleStateEnum.getNameByCode(record.getSaleState()));
-        }
-    }
+
 
     @Override
     public void exportList(SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("销量共享导出", EXPORT_SCM_SALES_SHARING_REPORT.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveDownloadTask("销量共享导出", EXPORT_SRM_SALES_SHARING_REPORT.getCode(), pagingParamDTO);
     }
 
 
