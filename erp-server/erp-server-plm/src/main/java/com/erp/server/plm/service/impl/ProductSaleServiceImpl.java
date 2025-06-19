@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -22,6 +23,7 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -97,7 +99,24 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     public Boolean saveOrUpdate(ProductSaleDTO productSaleDTO) {
         ProductSaleEntity saleEntity = new ProductSaleEntity();
         BeanMapper.copy(productSaleDTO, saleEntity);
+        //处理数据
+        handleSaveOrUpdate(saleEntity);
         return this.saveOrUpdate(saleEntity);
+    }
+
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/5/13 15:11
+     * @param entity
+     * @return void
+     */
+    private void handleSaveOrUpdate (ProductSaleEntity entity) {
+        ProductSaleEntity oldEntity = this.getBySkuId(entity.getSkuId());
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        entity.setId(oldEntity.getId());
     }
 
     /**
@@ -110,6 +129,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductSaleDTO> productSaleList) {
         List<ProductSaleEntity> list = BeanMapper.copyList(productSaleList, ProductSaleEntity.class);
+        //根据sku查询
+        List<String> skuIdList = list.stream().map(ProductSaleEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductSaleEntity> oldList = this.listBySkuIds(skuIdList);
+        Map<String, String> map = oldList.stream().collect(Collectors.toMap(ProductSaleEntity::getSkuId, ProductSaleEntity::getId));
+        for (ProductSaleEntity entity : list) {
+            entity.setId(map.get(entity.getSkuId()));
+        }
         return this.saveOrUpdateBatch(list);
     }
 
