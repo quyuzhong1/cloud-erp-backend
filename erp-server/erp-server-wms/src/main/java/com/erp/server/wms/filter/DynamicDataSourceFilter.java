@@ -38,32 +38,44 @@ public class DynamicDataSourceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-        ServletRequest requestWrapper = null;
-        if(request instanceof HttpServletRequest) {
-            requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
-        }
-        //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
-        // 在chain.doFiler方法中传递新的request对象
-        if(requestWrapper == null) {
-            chain.doFilter(request, response);
-        } else {
-        	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
-            try {
-				dynamicDataSourceType = getDynamicDataSourceType(requestWrapper);
-			} catch (Throwable e) {
-				log.error("获取动态数据源类型错误" , e);
-			}
-            if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-            	chain.doFilter(requestWrapper, response);
-            }else {
-            	try {
-    	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-    	            chain.doFilter(requestWrapper, response);
-                } finally {
-                    DynamicDataSourceContextHolder.poll();
+    	String dorisQuerySetting = "0";
+    	try {
+			String requestURI = ((HttpServletRequest) request).getRequestURI();
+			dorisQuerySetting = FeignQuery.invoke(String.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "dorisQuerySetting", Arrays.asList(requestURI));
+		} catch (Exception e1) {
+			log.error("获取动态数据源配置错误" , e1);
+		}
+    	if(!"1".equals(dorisQuerySetting)) {
+    		chain.doFilter(request, response);
+    	}else {
+    		ServletRequest requestWrapper = null;
+            if(request instanceof HttpServletRequest) {
+                requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
+            }
+            //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
+            // 在chain.doFiler方法中传递新的request对象
+            if(requestWrapper == null) {
+                chain.doFilter(request, response);
+            } else {
+            	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
+                try {
+    				dynamicDataSourceType = getDynamicDataSourceType(requestWrapper);
+    			} catch (Throwable e) {
+    				log.error("获取动态数据源类型错误" , e);
+    			}
+                if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
+                	chain.doFilter(requestWrapper, response);
+                }else {
+                	try {
+        	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
+        	            chain.doFilter(requestWrapper, response);
+                    } finally {
+                        DynamicDataSourceContextHolder.poll();
+                    }
                 }
             }
-        }
+    	}
+    	
     }
     
     private DynamicDataSourceTypeEnum getDynamicDataSourceType(ServletRequest requestWrapper) {
