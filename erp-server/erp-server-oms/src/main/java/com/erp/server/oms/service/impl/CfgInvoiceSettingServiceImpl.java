@@ -144,7 +144,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         cfgInvoiceSettingEntity.setStateTaxNo(old.getStateTaxNo());
         cfgInvoiceSettingEntity.setNo(old.getNo());
         cfgInvoiceSettingEntity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
-        cfgInvoiceSettingEntity.setCertificateUrl(old.getToken());
+        cfgInvoiceSettingEntity.setToken(old.getToken());
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         //修改
         boolean update = super.updateById(cfgInvoiceSettingEntity);
