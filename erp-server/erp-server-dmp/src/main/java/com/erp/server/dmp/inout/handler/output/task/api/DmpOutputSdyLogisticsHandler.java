@@ -156,7 +156,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setWaybill_number(bizNo);
     	        shudiyunB2cOrderDTO.setForeign_waybill_number(bizNo);
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
-    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(bizNo);
+    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoLogisticsEntity.getOrderPlatformCode());
 
                 shudiyunB2cOrderDTO.setShop_no(dmpSoLogisticsEntity.getShopNo());
                 shudiyunB2cOrderDTO.setShop_name(dmpSoLogisticsEntity.getShopName());
