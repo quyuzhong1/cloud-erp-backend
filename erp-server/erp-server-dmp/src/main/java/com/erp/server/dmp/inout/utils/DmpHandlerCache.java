@@ -252,17 +252,25 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return dmpCfgDbDataSourceMap.get(dbId);
 	}
 	
-	public DynamicDataSourceTypeEnum getDynamicDataSourceType(String requestURI , String requestBody) {
-		if(StringUtils.isBlank(requestURI) || StringUtils.isBlank(requestBody)) {
-			return DynamicDataSourceTypeEnum.POSTGRES;
-		}
+	public String dorisQuerySetting(String requestURI) {
+		return getDorisQuerySettingDTO(requestURI) != null ? "1" : "0";
+	}
+	
+	private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
 		if(dorisQueryCfgSettingMappingCache == null) {
 			this.initDorisQueryCfgSetting();
 		}
 		if(!requestURI.startsWith("/")) {
 			requestURI = "/" + requestURI;
 		}
-		DorisQuerySettingDTO dorisQuerySettingDTO = dorisQueryCfgSettingMappingCache.get(requestURI);
+		return dorisQueryCfgSettingMappingCache.get(requestURI);
+	}
+	
+	public DynamicDataSourceTypeEnum getDynamicDataSourceType(String requestURI , String requestBody) {
+		if(StringUtils.isBlank(requestURI) || StringUtils.isBlank(requestBody)) {
+			return DynamicDataSourceTypeEnum.POSTGRES;
+		}
+		DorisQuerySettingDTO dorisQuerySettingDTO = this.getDorisQuerySettingDTO(requestURI);
 		if(dorisQuerySettingDTO == null) {
 			return DynamicDataSourceTypeEnum.POSTGRES;
 		}
