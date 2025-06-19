@@ -1815,6 +1815,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
+        if(CollectionUtils.isNotEmpty(productSpuBaseInfoDTO.getApplicationCategoryIdList())){
+            productSpuBaseInfoDTO.setApplicationCategoryId(String.join(",", productSpuBaseInfoDTO.getApplicationCategoryIdList()));
+        }
         productSpuBaseInfoDTO.setSpecType(2);
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -2421,8 +2424,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> secondSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getSecondSupplier).distinct().collect(Collectors.toList());
             mainSupplierIds.addAll(secondSupplierIds);
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
-            Map<String, String> applicationCategoryMap = applicationCategoryService.list()
-                    .stream().collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName));
+            List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
             String chargeId = "";
             String productPropertyId = "";
             String saleCountry = "";
@@ -2434,7 +2436,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
             for(ProductDetailExcelExportDTO l : list) {
-                l.setApplicationCategoryName(applicationCategoryMap.get(l.getApplicationCategoryId()));
+                if(StringUtils.isNotBlank(l.getApplicationCategoryId())){
+                    List<String> applicationCategoryIdList = Arrays.stream(l.getApplicationCategoryId().split(","))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                    List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryList.stream()
+                            .filter(ac -> applicationCategoryIdList.contains(ac.getId()))
+                            .collect(Collectors.toList());
+                    l.setApplicationCategoryName(applicationCategoryEntities.stream()
+                            .map(ApplicationCategoryEntity::getName)
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.joining(",")));
+                }
                 chargeId = l.getChargeId();
                 if(StringUtils.isNotBlank(chargeId)) {
                     chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
@@ -5940,10 +5953,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (Boolean.TRUE.equals(this.checkSpuNo(productInfoDTO.getSpuNo(), productInfoDTO.getId()))) {
                 throw new ServiceException(ApiError.ERROR_95017);
             }
+            BeanUtil.copyProperties(dto, productSkuBaseInfoDTO);
             //sku信息
-            BeanMapper.copy(dto, productSkuBaseInfoDTO);
-            if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
-                productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTime(), dateTimeFormatter));
+            if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
+                productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTimeStr(), dateTimeFormatter));
             }
             productSkuBaseInfoDTO.setProductId("");
             if (ObjectUtil.isNotEmpty(productUnitEntity)) {
@@ -6021,20 +6034,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 预计首批到货时间
              */
-            if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
-                productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTime(), dateTimeFormatter));
+            if (StringUtils.isNotBlank(dto.getPlanArrivalTimeStr())) {
+                productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), dateTimeFormatter));
             }
             /**
              * 实际首批到货时间
              */
-            if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
-                productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTime(), dateTimeFormatter));
+            if (StringUtils.isNotBlank(dto.getActualArrivalTimeStr())) {
+                productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), dateTimeFormatter));
             }
             /**
              * 首批下单时间
              */
-            if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
-                productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTime(), dateTimeFormatter));
+            if (StringUtils.isNotBlank(dto.getPlaceOrderTimeStr())) {
+                productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), dateTimeFormatter));
             }
             /**
              * 交货周期(天)
@@ -6114,8 +6127,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 退市时间
              */
-            if (StringUtils.isNotBlank(dto.getDelistingTime())) {
-                productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTime(), dateTimeFormatter));
+            if (StringUtils.isNotBlank(dto.getDelistingTimeStr())) {
+                productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
             }
             /**
              * 销售状态

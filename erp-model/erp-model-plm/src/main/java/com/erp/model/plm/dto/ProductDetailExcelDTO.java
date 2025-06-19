@@ -147,7 +147,7 @@ public class ProductDetailExcelDTO {
     /**
      * 计划上市时间
      */
-    private String planListingTime;
+    private String planListingTimeStr;
 
     /**
      * 存在侵权风险(是/否)
@@ -246,19 +246,19 @@ public class ProductDetailExcelDTO {
      * 预计首批到货时间
      */
     @FieldValid(fieldName = "预计首批到货时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String planArrivalTime;
+    private String planArrivalTimeStr;
 
     /**
      * 实际首批到货时间
      */
     @FieldValid(fieldName = "实际首批到货时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String actualArrivalTime;
+    private String actualArrivalTimeStr;
 
     /**
      * 首批下单时间
      */
     @FieldValid(fieldName = "首批下单时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String placeOrderTime;
+    private String placeOrderTimeStr;
 
     /**
      * 交货周期(天)
@@ -339,7 +339,7 @@ public class ProductDetailExcelDTO {
      * 退市时间
      */
     @FieldValid(fieldName = "退市时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String delistingTime;
+    private String delistingTimeStr;
 
     /**
      * 销售状态
