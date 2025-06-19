@@ -101,7 +101,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
 
     List<ListingInfoEntity> listByAuthIds(List<String> authIds);
 
-    void updateLabelInfo(String id, String labelUrl, String labelSourceType);
+    void updateLabelInfo(String id, String labelUrl, String labelSourceType, String labelFileName);
 
     List<ListingInfoEntity> listInfoByPlatformSkuNo(ListingInfoDTO.QueryDTO queryDTO);
 }

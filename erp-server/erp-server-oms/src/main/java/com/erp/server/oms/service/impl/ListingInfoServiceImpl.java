@@ -570,8 +570,12 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     }
 
     @Override
-    public void updateLabelInfo(String id, String labelUrl, String labelSourceType) {
-        this.lambdaUpdate().eq(ListingInfoEntity::getId,id).set(ListingInfoEntity::getLabelUrl,labelUrl).set(ListingInfoEntity::getLabelSourceType,labelSourceType).update();
+    public void updateLabelInfo(String id, String labelUrl, String labelSourceType, String labelFileName) {
+        this.lambdaUpdate().eq(ListingInfoEntity::getId,id)
+                .set(ListingInfoEntity::getLabelUrl,labelUrl)
+                .set(ListingInfoEntity::getLabelFileName,labelFileName)
+                .set(ListingInfoEntity::getLabelSourceType,labelSourceType)
+                .update();
         operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑产品标签链接",UserContext.getDefaultLoginUser().getUserName()), ModuleTypeEnum.LISTING_INFO.getCode(), id,"更新标签链接");
     }
 

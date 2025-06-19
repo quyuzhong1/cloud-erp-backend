@@ -139,6 +139,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("label_url")
     private String labelUrl;
     /**
+     * 标签文件名称
+     */
+    @TableField("label_file_name")
+    private String labelFileName;
+    /**
      * 标签来源类型
      * LabelSourceTypeEnum
      */

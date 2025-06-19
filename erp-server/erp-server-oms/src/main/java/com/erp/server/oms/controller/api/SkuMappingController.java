@@ -40,6 +40,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * SKU对照表管理
@@ -178,18 +179,25 @@ public class SkuMappingController extends BaseController {
     @PostMapping("/batchGenerateCustomerLabel")
     public ApiResult<List<BatchResultDTO>> batchGenerateCustomerLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<ListingInfoEntity> entityList = listingInfoService.listByIds(dto.getIds());
+        List<SkuMappingEntity> mappingEntityList = skuMappingService.listByIds(dto.getIds());
+        List<String> listingIds = mappingEntityList.stream().map(SkuMappingEntity::getListingId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(listingIds);
         for (String id : dto.getIds()) {
-            ListingInfoEntity entity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
-            if (Objects.isNull(entity)) {
+            SkuMappingEntity skuMapping = mappingEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(skuMapping)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "映射信息不存在"));
+                continue;
+            }
+            ListingInfoEntity listingInfo = listingInfoEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(listingInfo)) {
                 resultDTOS.add(BatchResultDTO.fail(id, id, "listing信息不存在"));
                 continue;
             }
             try {
-                BatchResultDTO resultDTO = skuMappingService.generateCustomerLabel(entity);
+                BatchResultDTO resultDTO = skuMappingService.generateCustomerLabel(listingInfo, skuMapping);
                 resultDTOS.add(resultDTO);
             } catch (Exception e) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getPlatformSkuNo(), entity.getLabelUrl(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(listingInfo.getPlatformSkuNo(), listingInfo.getLabelUrl(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

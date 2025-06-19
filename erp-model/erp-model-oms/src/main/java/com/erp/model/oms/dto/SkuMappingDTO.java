@@ -251,6 +251,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String labelUrl;
         /**
+         * 标签文件名称
+         */
+        private String labelFileName;
+        /**
          * 标签来源
          * 字段值流转【后端使用】
          */
@@ -759,6 +763,10 @@ public class SkuMappingDTO implements Serializable {
          * 标签链接
          */
         private String labelUrl;
+        /**
+         * 标签文件名称
+         */
+        private String labelFileName;
         /**
          * 标签来源类型
          * LabelSourceTypeEnum
@@ -1664,5 +1672,9 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "标签url不能为空")
         private String labelUrl;
+        /**
+         * 标签文件名称
+         */
+        private String labelFileName;
     }
 }
