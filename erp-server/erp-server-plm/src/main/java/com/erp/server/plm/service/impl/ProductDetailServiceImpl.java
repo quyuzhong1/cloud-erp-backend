@@ -1410,7 +1410,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, id);
-            productCustomsService.saveOrUpdateBatch(customsEntityList);
+            //数据新增或更新
+            batchAddOrUpdateCustoms(customsEntityList);
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
@@ -1721,7 +1722,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, productInfoDTO.getId());
-            productCustomsService.saveOrUpdateBatch(customsEntityList);
+            //数据新增或更新
+            batchAddOrUpdateCustoms(customsEntityList);
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
@@ -1742,6 +1744,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //发送通知
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
         return true;
+    }
+
+    /**
+     * 报关信息新增或修改
+     * @author will
+     * @date 2025/6/19 17:33
+     * @param customsEntityList
+     * @return void
+     */
+    private void batchAddOrUpdateCustoms (List<ProductCustomsEntity> customsEntityList) {
+        if (CollUtil.isEmpty(customsEntityList)) {
+            return;
+        }
+        //数据新增或更新
+        List<ProductCustomsEntity> addList = customsEntityList.stream().filter(obj -> isBlank(obj.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addList)) {
+            productCustomsService.saveBatch(addList);
+        }
+        List<ProductCustomsEntity> updateList = customsEntityList.stream().filter(obj -> isNotBlank(obj.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(updateList)) {
+            productCustomsService.updateBatchById(updateList);
+        }
     }
 
     //产品款名和产品品名关系处理
