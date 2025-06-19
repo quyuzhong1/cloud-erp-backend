@@ -5,10 +5,8 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -113,6 +111,26 @@ public class DmpSoLogisticsDTO implements Serializable {
         * 下一层级id
         */
         private String nextLevelId;
+
+        /**
+         * 店铺对应客户编号
+         */
+        private String shopNo = "";
+
+        /**
+         * 店铺对应客户名称
+         */
+        private String shopName = "";
+
+        /**
+         * 平台单号
+         */
+        private String orderPlatformCode = "";
+
+        /**
+         * 平台代号
+         */
+        private String platformType = "";
 
         /**
          * 明细数据
