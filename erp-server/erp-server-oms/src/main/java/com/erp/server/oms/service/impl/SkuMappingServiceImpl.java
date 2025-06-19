@@ -696,7 +696,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
 
-        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE,dto.getEffectiveTime());
+        SkuMappingEntity existEntity = this.getWarehouseMapping(listingId,dto.getWarehouseId(),dto.getProductSkuId(),RuleTypeEnum.WAREHOUSE,dto.getEffectiveTime(),skuMapping.getId());
         if(Objects.nonNull(existEntity)){
             throw new ServiceException("该仓库下已存在该sku");
         }
@@ -738,7 +738,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
-    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum,LocalDateTime effectiveTime){
+    private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum,LocalDateTime effectiveTime,String mappingId){
         return lambdaQuery()
                 .eq(SkuMappingEntity::getListingId, listingId)
                 .eq(SkuMappingEntity::getWarehouseId, warehouseId)
@@ -746,6 +746,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getEffectiveTime, effectiveTime)
                 .eq(SkuMappingEntity::getProductSkuId, skuId)
                 .eq(SkuMappingEntity::getIsExpire, false)
+                .ne(SkuMappingEntity::getId,mappingId)
                 .last(" LIMIT 1")
                 .one();
     }
@@ -1473,6 +1474,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dictPlatform)
         )){
             throw new ServiceException("来源平台SPU为空");
         }
@@ -1590,6 +1592,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
         ){
             paramDTO.setPlatformSpuNoList(platformSpuList);

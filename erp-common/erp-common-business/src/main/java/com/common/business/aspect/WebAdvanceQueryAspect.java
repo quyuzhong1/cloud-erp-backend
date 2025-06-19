@@ -151,6 +151,8 @@ public class WebAdvanceQueryAspect {
                 sql.append("(" + dto.getField() +" = '' or "+dto.getField()+" is null)").append(" ");
             } else if (QueryConditionEnum.NOT_NULL.equals(condEnum)) {
                 sql.append( dto.getField() +" != ''").append(" ");
+            } else if (QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum) || QueryConditionEnum.CONTAINS.equals(condEnum)) {
+                sql.append("LOWER(").append(dto.getField()).append(")").append(" ");
             } else{
                 sql.append(dto.getField()).append(" ");
             }

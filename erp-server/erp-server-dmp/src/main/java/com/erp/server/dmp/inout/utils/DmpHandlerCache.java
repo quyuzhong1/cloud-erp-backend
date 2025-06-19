@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -20,10 +21,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.alibaba.excel.util.StringUtils;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.EnumMessage;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.dto.CfgSettingDTO.DorisQuerySettingDTO;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpCfgDbEntity;
@@ -36,9 +45,11 @@ import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDataEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpBasicSystemService;
 import com.erp.server.dmp.service.DmpCfgApiService;
 import com.erp.server.dmp.service.DmpCfgDbService;
@@ -101,6 +112,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private List<DmpCfgOutputEntity> dmpCfgOutputEntityCache;
 	
 	private Map<String, DataSource> dmpCfgDbDataSourceMap;
+	
+	private List<Map<String, Object>> dorisQueryCfgSettingEntityCache;
+	
+	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
 
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
@@ -126,6 +141,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgOutputService dmpCfgOutputService;
 	@Autowired
 	private DmpCfgDbService dmpCfgDbService;
+	@Autowired
+	private CfgSettingService cfgSettingService;
 	
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
@@ -233,6 +250,69 @@ public class DmpHandlerCache implements CommandLineRunner{
 			this.initDataSource();
 		}
 		return dmpCfgDbDataSourceMap.get(dbId);
+	}
+	
+	public DynamicDataSourceTypeEnum getDynamicDataSourceType(String requestURI , String requestBody) {
+		if(StringUtils.isBlank(requestURI) || StringUtils.isBlank(requestBody)) {
+			return DynamicDataSourceTypeEnum.POSTGRES;
+		}
+		if(dorisQueryCfgSettingMappingCache == null) {
+			this.initDorisQueryCfgSetting();
+		}
+		if(!requestURI.startsWith("/")) {
+			requestURI = "/" + requestURI;
+		}
+		DorisQuerySettingDTO dorisQuerySettingDTO = dorisQueryCfgSettingMappingCache.get(requestURI);
+		if(dorisQuerySettingDTO == null) {
+			return DynamicDataSourceTypeEnum.POSTGRES;
+		}
+		String dataSourceName = dorisQuerySettingDTO.getDataSourceName();
+		if(StringUtils.isBlank(dataSourceName) || DynamicDataSourceTypeEnum.POSTGRES.getCode().equals(dataSourceName)) {
+			return DynamicDataSourceTypeEnum.POSTGRES;
+		}
+		Map<String, List<String>> cfgField = dorisQuerySettingDTO.getCfgField();
+		if(CollUtil.isNotEmpty(cfgField)) {
+			JSONObject parseObject = JSON.parseObject(requestBody);
+			if(parseObject == null) {
+				return DynamicDataSourceTypeEnum.POSTGRES;
+			}
+			String paramsField = dorisQuerySettingDTO.getParamsField();
+			if(StringUtils.isBlank(paramsField)) {
+				paramsField = "params";
+			}
+			JSONObject paramObject = parseObject.getJSONObject(paramsField);
+			if(paramObject == null) {
+				return DynamicDataSourceTypeEnum.POSTGRES;
+			}
+			
+			String advanceQueryDTOListField = dorisQuerySettingDTO.getAdvanceQueryDTOListField();
+			if(StringUtils.isBlank(advanceQueryDTOListField)) {
+				advanceQueryDTOListField = "advanceQueryDTOList";
+			}
+			JSONArray advanceQueryDTOListFieldList = paramObject.getJSONArray(advanceQueryDTOListField);
+			if(CollUtil.isEmpty(advanceQueryDTOListFieldList)) {
+				return DynamicDataSourceTypeEnum.POSTGRES;
+			}
+			
+			List<AdvanceQueryDTO> advanceQueryDTOList = JSON.parseArray(advanceQueryDTOListFieldList.toJSONString(), AdvanceQueryDTO.class)
+					.stream().filter(a -> {
+						boolean valueFlag = false;
+						Object value = a.getValue();
+						if(value != null && StringUtils.isNotBlank(value.toString())) {
+							valueFlag = true;
+						}
+						return StringUtils.isNotBlank(a.getField()) && StringUtils.isNotBlank(a.getCompare()) && valueFlag;
+					}).collect(Collectors.toList());
+			if(advanceQueryDTOList.stream().anyMatch(a -> {
+				String field = a.getField();
+				List<String> list = cfgField.get(field);
+				return CollUtil.isNotEmpty(list) && (list.contains("all") || list.contains(a.getCompare()));
+			})) {
+				return DynamicDataSourceTypeEnum.POSTGRES;
+			}
+		}
+		
+		return EnumMessage.getByCode(DynamicDataSourceTypeEnum.class , dataSourceName);
 	}
 	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
@@ -353,6 +433,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgOutputEntityCache = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getDisabled, false).list();
+		
+		this.initDorisQueryCfgSetting();
+		
 		
 		try {
 			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
@@ -520,6 +603,16 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 				
 			}, 5, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				LambdaQueryWrapper<CfgSettingEntity> updateQueryWrapper = new LambdaQueryWrapper<>();
+				updateQueryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
+				updateQueryWrapper.gt(CfgSettingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
+				List<Map<String , Object>> cfgSettingEntityFreshList = cfgSettingService.listMaps(updateQueryWrapper);
+				if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
+					this.initDorisQueryCfgSetting();
+				}
+			}, 1, freshCacheTime, TimeUnit.SECONDS);
 		}
 	}
 	
@@ -588,6 +681,31 @@ public class DmpHandlerCache implements CommandLineRunner{
 		this.dealDataSource(dmpCfgDbService.lambdaQuery()
 				.eq(DmpCfgDbEntity::getDisabled, false).list());
 	}
+	
+	private synchronized void initDorisQueryCfgSetting() {
+		LambdaQueryWrapper<CfgSettingEntity> queryWrapper = new LambdaQueryWrapper<>();
+		queryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
+		queryWrapper.eq(CfgSettingEntity::getStatus, true);
+		dorisQueryCfgSettingEntityCache = cfgSettingService.listMaps(queryWrapper);
+		dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityCache.stream().collect(Collectors.toMap(c -> {
+			String key = c.get("key").toString();
+			if(!key.startsWith("/")) {
+				key = "/" + key;
+			}
+			return key;
+		}, c -> {
+			DorisQuerySettingDTO d = new DorisQuerySettingDTO();
+			String value = c.get("value").toString();
+			if(StringUtils.isNotBlank(value)) {
+				try {
+					d = JSON.parseObject(value, DorisQuerySettingDTO.class);
+				} catch (Exception e) {
+					log.error("转换doris配置查询错误" , e);
+				}
+			}
+			return d;
+		} , (c1 , c2) -> c1));
+	}
 
 
 	/**
@@ -604,5 +722,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 						.last("or name_cn = '" + country + "' or name_en = '" + country + "'")
 		);
 		return list;
+	}
+	
+	public List<Map<String, Object>> getDorisQueryCfgSettingEntityCache(){
+		return dorisQueryCfgSettingEntityCache;
 	}
 }

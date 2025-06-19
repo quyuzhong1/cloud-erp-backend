@@ -8,6 +8,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -1425,7 +1426,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
     }
-
+    
     /**
      * 作废
      *
@@ -1535,7 +1536,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
-
+    
     /**
      * 分页列表
      *
@@ -1558,7 +1559,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(list,false);
         return new PagingVO<>(pageData);
     }
-
+    
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
@@ -2599,7 +2600,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
     }
-
+    
     /**
      * 生成销售出库单
      *
