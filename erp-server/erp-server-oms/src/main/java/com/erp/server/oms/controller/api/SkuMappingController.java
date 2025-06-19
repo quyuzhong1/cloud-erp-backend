@@ -188,9 +188,9 @@ public class SkuMappingController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id, id, "映射信息不存在"));
                 continue;
             }
-            ListingInfoEntity listingInfo = listingInfoEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            ListingInfoEntity listingInfo = listingInfoEntityList.stream().filter(e -> e.getId().equals(skuMapping.getListingId())).findFirst().orElse(null);
             if (Objects.isNull(listingInfo)) {
-                resultDTOS.add(BatchResultDTO.fail(id, id, "listing信息不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id, skuMapping.getListingId(), "listing信息不存在"));
                 continue;
             }
             try {
