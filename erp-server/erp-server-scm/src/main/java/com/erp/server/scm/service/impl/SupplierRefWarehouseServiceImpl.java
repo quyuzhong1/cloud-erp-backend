@@ -4,6 +4,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -126,7 +127,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
 
     @Override
     public SupplierRefWarehouseDTO.ViewDTO view(String id) {
-        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到合同管理单数据"));
+        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商关联仓库单数据"));
         SupplierRefWarehouseDTO.ViewDTO data = BeanMapperUtils.map(SupplierRefWarehouseDTO.ViewDTO.class, entity);
         return data;
     }
@@ -162,45 +163,37 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
-        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到合同管理单数据"));
+        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商关联仓库单数据"));
         boolean flag = super.removeById(entity.getId());
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE);
         }
         // 记录操作日志
-        log.info("删除 开始记录合同管理单日志数据，id：【{}】", id);
+        log.info("删除 开始记录供应商关联仓库单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】删除单据 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), entity.getId(), "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getSupplierCode(), OperationTypeEnum.DELETE);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO enable(String id) {
-        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到合同管理单数据"));
-        if (!entity.getDisabled()) {
-            throw new ServiceException(ApiError.ERROR_ENABLE_FAIL);
-        }
-        entity.setDisabled(Boolean.FALSE);
-        super.updateById(entity);
-        // 记录操作日志
-        log.info("启用 开始记录合同管理单日志数据，id：【{}】", id);
-        operateLogService.addModuleOperateLog("启用单据 ", ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), entity.getId(), "启用操作");
-        return BatchResultDTO.success(entity.getId(), entity.getSupplierCode(), OperationTypeEnum.UPDATE_STATUS);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO disable(String id) {
-        SupplierRefWarehouseEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到合同管理单数据"));
-        if (!entity.getDisabled()) {
-            throw new ServiceException(ApiError.ERROR_DISABLE_FAIL);
+    public BatchResultDTO updateDisabled(String id,Boolean disabled) {
+        SupplierRefWarehouseEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST,"仓库绑定数据");
         }
-        entity.setDisabled(Boolean.TRUE);
+        Boolean oldDisabled = entity.getDisabled();
+        if (oldDisabled.equals(disabled)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getSupplierCode(), "状态未变更，无需更新");
+        }
+        entity.setDisabled(disabled);
         super.updateById(entity);
-        // 记录操作日志
-        log.info("禁用 开始记录合同管理单日志数据，id：【{}】", id);
-        operateLogService.addModuleOperateLog("禁用单据 ", ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), entity.getId(), "禁用操作");
+
+        // 操作日志
+        String msg = StrUtil.format("状态由【{}】更新未【{}】",SupplierRefWarehouseTabEnum.getNameByCode(oldDisabled),SupplierRefWarehouseTabEnum.getNameByCode(disabled));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), entity.getId(), "状态更新");
+
         return BatchResultDTO.success(entity.getId(), entity.getSupplierCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 

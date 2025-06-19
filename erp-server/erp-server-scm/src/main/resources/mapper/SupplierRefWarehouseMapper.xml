@@ -37,12 +37,35 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$ListDTO">
-
+        select
+            <include refid="Base_Column_List" />
+        from supplier_ref_warehouse srw
+        left join supplier su on srw.supplier_id = su.id and su.is_deleted = false
+        left join warehouse wh on srw.warehouse_id = wh.id and wh.is_deleted = false
+        left join warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.is_deleted = false
+        <where>
+            ${params.sqlMap.default} and srw.is_deleted = false
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        srw.id desc
+        </where>
     </select>
 
     <!-- 查询tabList -->
     <select id="tabList" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$TabListDTO">
-
+        SELECT
+            disabled AS tabFlag,
+            count(*)  AS count
+        FROM  supplier_ref_warehouse
+        WHERE is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY disabled
     </select>
 
 

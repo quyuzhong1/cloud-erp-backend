@@ -163,20 +163,20 @@ public class SupplierRefWarehouseController extends BaseController {
 
 
     /**
-     * 批量启用
+     * 更新禁用状态
      * @author will
      * @date:  2025-06-16
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @PostMapping("/batchEnable")
+    @PostMapping("/updateDisabled")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplierRefWarehouse:batchEnable",
+            menuCode = "scm:supplierRefWarehouse:updateDisabled",
             serviceClass = SupplierRefWarehouseService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "仓库绑定启用")
-    public ApiResult<List<BatchResultDTO>> batchEnable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated SupplierRefWarehouseDTO.DisabledDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SupplierRefWarehouseEntity> list = supplierRefWarehouseService.lambdaQuery().in(SupplierRefWarehouseEntity::getId, ids).list();
@@ -184,50 +184,12 @@ public class SupplierRefWarehouseController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = supplierRefWarehouseService.enable(id);
+                deleteResult = supplierRefWarehouseService.updateDisabled(id,dto.getDisabled());
             }catch (Exception e){
-                log.error("仓库绑定启用失败",e);
+                log.error("更新禁用状态失败",e);
                 SupplierRefWarehouseEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "仓库绑定不存在, 启用失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSupplierCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 批量启用
-     * @author will
-     * @date:  2025-06-16
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/batchDisable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "scm:supplierRefWarehouse:batchDisable",
-            serviceClass = SupplierRefWarehouseService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "仓库绑定禁用")
-    public ApiResult<List<BatchResultDTO>> batchDisable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SupplierRefWarehouseEntity> list = supplierRefWarehouseService.lambdaQuery().in(SupplierRefWarehouseEntity::getId, ids).list();
-        Map<String, SupplierRefWarehouseEntity> idEntityMap = list.stream().collect(Collectors.toMap(SupplierRefWarehouseEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = supplierRefWarehouseService.disable(id);
-            }catch (Exception e){
-                log.error("仓库绑定禁用失败",e);
-                SupplierRefWarehouseEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "仓库绑定不存在, 禁用失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "仓库绑定不存在, 更新禁用状态失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -240,7 +202,7 @@ public class SupplierRefWarehouseController extends BaseController {
 
 
     /**
-     * 下载模板吗
+     * 下载模板
      * @author will
      * @date 2025/6/18 17:56
      * @param response

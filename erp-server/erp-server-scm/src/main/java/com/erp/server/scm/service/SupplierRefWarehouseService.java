@@ -74,21 +74,13 @@ public interface SupplierRefWarehouseService extends SuperService<SupplierRefWar
      */
     BatchResultDTO delete(String id);
     /**
-     * 启用
+     * 更新禁用状态
      * @author will
      * @date 2025/6/18 17:53
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO enable(String id);
-    /**
-     * 禁用
-     * @author will
-     * @date 2025/6/18 17:54
-     * @param id
-     * @return BatchResultDTO
-     */
-    BatchResultDTO disable(String id);
+    BatchResultDTO updateDisabled(String id,Boolean disabled);
     /**
      * 下载模板
      * @author will
