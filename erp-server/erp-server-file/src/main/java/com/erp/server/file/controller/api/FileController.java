@@ -32,8 +32,10 @@ public class FileController extends BaseController {
      * @return
      */
     @PostMapping("/uploadFile")
-    public ApiResult<String> uploadFile(@RequestParam("multipartFile")MultipartFile file){
-        return success(fileService.uploadFile(file));
+    public ApiResult<SysCommonDTO.AttachmentDTO> uploadFile(@RequestParam("multipartFile")MultipartFile file){
+        String url = fileService.uploadFile(file);
+        String fileName = file.getOriginalFilename();
+        return success(new SysCommonDTO.AttachmentDTO(fileName, url));
     }
 
     /**
@@ -54,18 +56,6 @@ public class FileController extends BaseController {
     public ApiResult deleteBatchFile(@RequestParam("urlList") List<String> urlList){
         fileService.deleteBatchFile(urlList);
         return success();
-    }
-
-    /**
-     * 上传文件-返回文件名称
-     * @param file
-     * @return
-     */
-    @PostMapping("/uploadFileAndName")
-    public ApiResult<SysCommonDTO.AttachmentDTO> uploadFileAndName(@RequestParam("multipartFile")MultipartFile file){
-        String url = fileService.uploadFile(file);
-        String fileName = file.getOriginalFilename();
-        return success(new SysCommonDTO.AttachmentDTO(fileName, url));
     }
 
     /**
