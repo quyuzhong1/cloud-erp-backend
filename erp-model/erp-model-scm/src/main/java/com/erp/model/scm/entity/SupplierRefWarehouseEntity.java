@@ -42,7 +42,7 @@ public class SupplierRefWarehouseEntity extends BaseEntity<SupplierRefWarehouseE
     /**
     * 是否禁用
     */
-    @TableField("disable")
+    @TableField("disabled")
     private Boolean disabled;
     /**
     * 仓位编码

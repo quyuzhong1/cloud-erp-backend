@@ -22,16 +22,16 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        supplier_id, warehouse_id, disabled, warehouse_location_code, index, remark
+        srw.id,
+        srw.create_user_id as createUserId,
+        srw.create_user_name as  createUserName,
+        srw.create_time as createTime,
+        srw.update_user_id as updateUserId,
+        srw.update_user_name as updateUserName ,
+        srw.update_time as updateTime,
+        srw.version,
+        srw.is_deleted as isDeleted,
+        srw.supplier_id as supplierId,supplier_code as supplierCOde, srw.warehouse_id as warehosueId, srw.disabled, srw.warehouse_location_code as warehouseLocationCode, srw.index, srw.remark
     </sql>
 
 
@@ -39,10 +39,11 @@
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
+            , su.name as supplierName,wh.name as warehouseName, wl.name as warehouseLocationName
         from supplier_ref_warehouse srw
         left join supplier su on srw.supplier_id = su.id and su.is_deleted = false
-        left join warehouse wh on srw.warehouse_id = wh.id and wh.is_deleted = false
-        left join warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.is_deleted = false
+        left join foreign_warehouse wh on srw.warehouse_id = wh.id and wh.is_deleted = false
+        left join foreign_warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.is_deleted = false
         <where>
             ${params.sqlMap.default} and srw.is_deleted = false
             order by
