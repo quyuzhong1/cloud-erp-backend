@@ -190,9 +190,9 @@ public class CfgSupplierSalesDTO implements Serializable {
         private String salesRatioType;
 
         /**
-        * 销量比例值
+        * 销量比例值(%)
         */
-        @Digits(integer = 12, fraction = 4, message = "销量比例值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 3, fraction = 2, message = "销量比例值整数位不能超过3位，小数位不能超过2位")
         private BigDecimal salesRatio;
 
         /**

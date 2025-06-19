@@ -78,37 +78,37 @@ public class SalesSharingEntity extends BaseEntity<SalesSharingEntity> {
     * 可销库存
     */
     @TableField("saleable_stock")
-    private BigDecimal saleableStock;
+    private Integer saleableStock;
     /**
     * 原始日均销量
     */
     @TableField("daily_sales")
-    private BigDecimal dailySales;
+    private Integer dailySales;
     /**
     * 近3日销量
     */
     @TableField("sales_last_3_days")
-    private BigDecimal salesLast3Days;
+    private Integer salesLast3Days;
     /**
     * 近7日销量
     */
     @TableField("sales_last_7_days")
-    private BigDecimal salesLast7Days;
+    private Integer salesLast7Days;
     /**
     * 近30日销量
     */
     @TableField("sales_last_30_days")
-    private BigDecimal salesLast30Days;
+    private Integer salesLast30Days;
     /**
     * 近60日销量
     */
     @TableField("sales_last_60_days")
-    private BigDecimal salesLast60Days;
+    private Integer salesLast60Days;
     /**
     * 近90日销量
     */
     @TableField("sales_last_90_days")
-    private BigDecimal salesLast90Days;
+    private Integer salesLast90Days;
     /**
     * 原始销量比例
     */

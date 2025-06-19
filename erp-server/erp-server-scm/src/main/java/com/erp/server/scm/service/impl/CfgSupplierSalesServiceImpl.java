@@ -74,6 +74,16 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgSupplierSalesDTO.CommonDTO addDTO) {
+        String supplierId = addDTO.getSupplierId();
+
+        Integer count = lambdaQuery()
+                .eq(CfgSupplierSalesEntity::getSupplierId, supplierId)
+                .eq(CfgSupplierSalesEntity::getIsDeleted, Boolean.FALSE)
+                .count();
+        if(count > 0){
+            throw new ServiceException("供应商销量设置已存在，请勿重复新增");
+        }
+
         handleData(addDTO);
 
         CfgSupplierSalesEntity cfgSupplierSalesEntity = new CfgSupplierSalesEntity();
@@ -135,6 +145,15 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     public Boolean update(CfgSupplierSalesDTO.CommonDTO addOrUpdateDTO) {
         CfgSupplierSalesEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销量设置"));
+
+        Integer count = lambdaQuery()
+                .eq(CfgSupplierSalesEntity::getSupplierId, addOrUpdateDTO.getSupplierId())
+                .eq(CfgSupplierSalesEntity::getIsDeleted, Boolean.FALSE)
+                .ne(CfgSupplierSalesEntity::getId,addOrUpdateDTO.getId())
+                .count();
+        if(count > 0){
+            throw new ServiceException("供应商销量设置已存在，请勿重复新增");
+        }
 
         // 数据处理
         handleData(addOrUpdateDTO);
@@ -243,8 +262,8 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             if(Objects.isNull(dto.getSalesRatio()) ){
                 throw new ServiceException("请填写销量比例");
             }
-            if(dto.getSalesRatio().compareTo(BigDecimal.ZERO)<=0 || dto.getSalesRatio().compareTo(BigDecimal.ONE)>0){
-                throw new ServiceException("请填写销量比例范围0-1");
+            if(dto.getSalesRatio().compareTo(BigDecimal.ZERO)<=0 || dto.getSalesRatio().compareTo(new BigDecimal(100))>0){
+                throw new ServiceException("请填写销量比例范围0-100");
             }
         }else {
             throw new ServiceException("请选择正确的销量比例类型");

@@ -49,6 +49,17 @@ public class SalesSharingController extends BaseController {
     }
 
     /**
+     * 获取通知内容
+     * @author jack
+     * @date: 2025-06-13
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getNoticeContent")
+    public ApiResult<String> getNoticeContent() {
+        return success(salesSharingService.getNoticeContent());
+    }
+
+    /**
      * 导出Excel数据
      * @author jack
      * @date:  2025-06-13
