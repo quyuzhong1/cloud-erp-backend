@@ -97,6 +97,11 @@ public class DmpOutputSdyRefundHandler extends DmpOutputSdyBaseTaskHandler {
             sdyDTO.setTransaction_type("RMA.退货单");
             sdyDTO.setTransaction_sub_type("退款不退货");
 
+            if (CharSequenceUtil.isNotBlank(dmpSoRefundEntity.getStatus()) && CharSequenceUtil.isNotBlank(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()))) {
+                sdyDTO.setBiz_status(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()));
+            } else {
+                sdyDTO.setBiz_status("成功");
+            }
             sdyDTO.setStatus("已创建");
 
             int qtyTotal = dmpSoRefundDetailEntityList.stream().mapToInt(DmpSoRefundDetailEntity::getQty).sum();
@@ -396,7 +401,14 @@ public class DmpOutputSdyRefundHandler extends DmpOutputSdyBaseTaskHandler {
             if(StringUtils.isNotBlank(platformOrderCode) && platformOrderCodeList.contains(platformOrderCode)) {
             	continue;
             }
-			Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoRefundEntity, dmpSoRefundDetailEntityMap.get(changId) , cacheMap);
+			List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList = dmpSoRefundDetailEntityMap.get(changId);
+			if(CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+				DmpSoRefundDetailEntity dmpSoRefundDetailEntity = new DmpSoRefundDetailEntity();
+				dmpSoRefundDetailEntity.setId(dmpSoRefundEntity.getId());
+				dmpSoRefundDetailEntity.setQty(0);
+				dmpSoRefundDetailEntityList = Arrays.asList(dmpSoRefundDetailEntity);
+			}
+			Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoRefundEntity, dmpSoRefundDetailEntityList , cacheMap);
             if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
