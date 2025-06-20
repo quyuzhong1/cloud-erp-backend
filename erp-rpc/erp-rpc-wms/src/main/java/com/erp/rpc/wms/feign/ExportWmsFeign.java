@@ -307,4 +307,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualAdjust")
     PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出即时库存
+     */
+    @PostMapping("/feign/export/supplierInventory")
+    PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto);
 }

@@ -154,6 +154,9 @@ public enum ModuleTypeEnum {
     SKU_ORG_REF("127", "SKU与采购组织关系"),
     VIRTUAL_ADJUST("126", "虚拟库存调整"),
     CONTRACT_INFO("128", "合同管理"),
+    SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+
+
 
     CFG_SUPPLIER_SALES("130", "销量设置"),
     ;

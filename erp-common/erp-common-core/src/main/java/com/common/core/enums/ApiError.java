@@ -95,6 +95,7 @@ public enum ApiError implements Serializable {
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
+    ERROR_DATA_DELETE(1046, "数据删除失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -118,6 +119,12 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
+
     ERROR_CREATE_UPDATE_WRAPPER_ERROR(1065,"创建UpdateWrapper异常"),
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
@@ -816,6 +823,9 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
+
+    ERROR_SUPPLIER_REF_WAREHOUSE_EXIST(98121,"供应商【{}】仓库【{}】仓位【{}】已存在"),
+
 
     /**
      * WMS 错误

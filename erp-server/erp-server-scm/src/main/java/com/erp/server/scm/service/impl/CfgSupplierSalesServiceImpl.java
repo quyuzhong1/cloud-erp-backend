@@ -96,7 +96,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销量设置" , cfgSupplierSalesEntity.getId());
+        String msg = StrUtil.format("新增-【{}】的配置信息", addDTO.getSupplierName());
 
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(), "新增操作");
 
@@ -234,13 +234,22 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         if(Objects.nonNull(addDTO.getBlackCondition())){
             cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
         }else {
-            cfgSupplierSalesConditionService.lambdaUpdate()
+
+            Integer count = cfgSupplierSalesConditionService.lambdaQuery()
                     .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
                     .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.BLACK.getCode())
-                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                    .update();
+                    .eq(CfgSupplierSalesConditionEntity::getIsDeleted, false)
+                    .count();
 
-            moduleOperateLogService.addModuleOperateLog("删除了黑名单条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+            if(count > 0 ){
+                cfgSupplierSalesConditionService.lambdaUpdate()
+                        .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                        .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.BLACK.getCode())
+                        .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                        .update();
+
+                moduleOperateLogService.addModuleOperateLog("删除了黑名单条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+            }
         }
 
     }
@@ -257,7 +266,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         //处理销量比列
         String salesRatioType = dto.getSalesRatioType();
         if(Objects.equals(salesRatioType,CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
-            //todo 查询供应商的采购比例
+
         }else if(Objects.equals(salesRatioType,CfgSupplierSalesSalesRatioTypeEnum.SALESSTATISTICRATIO.getCode())){
             if(Objects.isNull(dto.getSalesRatio()) ){
                 throw new ServiceException("请填写销量比例");
@@ -394,7 +403,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                     .eq(CfgSupplierSalesEntity::getId, id)
                     .update();
             // 日志
-            String msg = StrUtil.format("用户【{}】操作【{}】单据变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(),  "销量设置",Objects.equals(disabled, Boolean.FALSE) ? "启用" : "停用");
+            String msg = StrUtil.format("启用状态由【{}】改为【{}】 ", Objects.equals(entity.getDisabled(), Boolean.FALSE) ? "启用" : "停用",Objects.equals(disabled, Boolean.FALSE) ? "启用" : "停用");
             moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), entity.getId(), "更新销量设置");
         }
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
