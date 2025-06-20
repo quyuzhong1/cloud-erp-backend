@@ -1054,7 +1054,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
 
     @Override
-    public List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap) {
+    public List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap,Map<String,String> optionMap) {
         // 按照 thirdParentId 或 thirdFieldId 分组字段映射
         Map<String, List<CfgProcessFieldMapEntity>> groupedFieldMaps = fieldMapList.stream()
                 .collect(Collectors.groupingBy(entity -> {

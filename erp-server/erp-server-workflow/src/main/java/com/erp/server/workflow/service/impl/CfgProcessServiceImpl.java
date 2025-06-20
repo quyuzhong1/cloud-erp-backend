@@ -342,12 +342,22 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                             .build())
                     .build();
             String instanceCode = fsService.createInstance(req);
-
+            //飞书明细控件 id:name
+            Map<String, String> resultMap = new HashMap<>();
+            for (int i = 0; i < formArray.size(); i++) {
+                JSONObject obj = formArray.getJSONObject(i);
+                if (CfgQueryOptionFieldTypeEnum.FIELDLIST.equals(obj.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
+                    String id = obj.getStr(FsRequestBodyAttributesEnum.ID.getCode());
+                    String name = obj.getStr(FsRequestBodyAttributesEnum.NAME.getCode());
+                    resultMap.put(id, name);
+                }
+            }
             // 生成三方查询记录
-            List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
+            List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap(),resultMap);
             List<CfgQueryOptionEntity> options = cfgQueryOptionService.list(
                     new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
             );
+            //fieldName
             Map<String, Object> optionMap = new HashMap<>();
             for (CfgQueryOptionEntity option : options) {
                 if ("main".equals(option.getFieldBelongsType())) {
@@ -363,17 +373,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     map.put(option.getConditionField(), option.getConditionFieldName());
                 }
             }
-            //飞书明细控件 id:name
-            Map<String, String> resultMap = new HashMap<>();
-            for (int i = 0; i < formArray.size(); i++) {
-                JSONObject obj = formArray.getJSONObject(i);
-                if (CfgQueryOptionFieldTypeEnum.FIELDLIST.equals(obj.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
-                    String id = obj.getStr(FsRequestBodyAttributesEnum.ID.getCode());
-                    String name = obj.getStr(FsRequestBodyAttributesEnum.NAME.getCode());
-                    resultMap.put(id, name);
-                }
-            }
-
             for (ApproveTaskDetailDTO.AddDTO addDTO : addDTOS) {
                 if (addDTO.getEntityCode()!=null){
                     Map<String, String> codeMap = (Map<String, String>) optionMap.get(addDTO.getEntityCode());

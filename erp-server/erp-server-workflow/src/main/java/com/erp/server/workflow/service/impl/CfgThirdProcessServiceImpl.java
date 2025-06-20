@@ -75,12 +75,11 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdProcessDTO.AddDTO addDTO) {
-//        List<CfgThirdProcessEntity> existList = this.list(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, addDTO.getBussinessKey())
-//                .eq(CfgThirdProcessEntity::getSourcePlatform, addDTO.getSourcePlatform()).eq(CfgThirdProcessEntity::getEnableStatus, true));
-//        if (CollUtil.isNotEmpty(existList)){
-//            throw new ServiceException(ApiError.ERROR_1024);
-//        }
-        //
+        List<CfgThirdProcessEntity> existList = this.list(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, addDTO.getBussinessKey())
+                .eq(CfgThirdProcessEntity::getSourcePlatform, addDTO.getSourcePlatform()).eq(CfgThirdProcessEntity::getEnableStatus, true));
+        if (CollUtil.isNotEmpty(existList)){
+            throw new ServiceException(ApiError.ERROR_1024);
+        }
         CfgThirdProcessEntity cfgThirdProcessEntity = new CfgThirdProcessEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdProcessEntity);
         cfgThirdProcessEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFSC));
