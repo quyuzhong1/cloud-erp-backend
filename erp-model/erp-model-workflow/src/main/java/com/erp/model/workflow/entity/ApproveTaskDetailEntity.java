@@ -94,11 +94,6 @@ public class ApproveTaskDetailEntity extends BaseEntity<ApproveTaskDetailEntity>
      */
     @TableField("entity_code")
     private String entityCode;
-    /**
-     * 上级id
-     */
-    @TableField("parent_id")
-    private String parentId;
 
     public static final String MIAN_ID = "mian_id";
 
@@ -121,6 +116,12 @@ public class ApproveTaskDetailEntity extends BaseEntity<ApproveTaskDetailEntity>
     public static final String SYS_FIELD_REQUIRED = "sys_field_required";
 
     public static final String SYS_FIELD_VALUE = "sys_field_value";
+
+    public static final String INDEX = "index";
+
+    public static final String ENTITY_NAME = "entity_name";
+
+    public static final String ENTITY_CODE = "entity_code";
 
     @Override
     public Serializable pkVal() {

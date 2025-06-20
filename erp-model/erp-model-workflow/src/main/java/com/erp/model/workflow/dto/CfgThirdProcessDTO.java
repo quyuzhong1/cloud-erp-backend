@@ -166,6 +166,7 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 字段映射
          */
+        @NotEmpty
         @Valid
         private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList;
     }

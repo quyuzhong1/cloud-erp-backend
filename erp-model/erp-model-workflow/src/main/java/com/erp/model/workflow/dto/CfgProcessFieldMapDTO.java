@@ -254,7 +254,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段是否是明细控件
          */
-        @NotBlank(message = "第三方字段是否是明细控件")
+        @NotNull
         private Boolean isDetailField;
 
         /**
@@ -266,7 +266,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 排序
          */
-        @Size(max = 255,message = "排序最大长度不能超过255位")
         private int index;
     }
 

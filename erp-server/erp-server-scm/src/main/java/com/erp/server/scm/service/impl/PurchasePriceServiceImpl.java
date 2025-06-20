@@ -139,11 +139,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Lazy
     @Resource
     private PurchaseSkuOrgRefService purchaseSkuOrgRefService;
-    @Resource
-    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     /**
      * 添加采购价目表

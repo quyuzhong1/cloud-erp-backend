@@ -253,6 +253,7 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
     // 流程未完成部署，请先完成流程部署
     PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
+
     PROCESS_DELEGATE_CLOSE(94032,"仅支持运行中/待执行可操作终止"),
     PROCESS_DELEGATE_CLOSE_ERROR(94033,"委托审批单终止失败"),
     PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
