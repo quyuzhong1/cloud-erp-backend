@@ -14,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.SqlUtils;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
@@ -137,13 +138,16 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
             if (shopTableFieldSize == 1) {
-                sqlString.append(" AND string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                sqlString.append(" AND ");
+                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
             } else {
-                sqlString.append(" AND (string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+            	sqlString.append(" AND (");
+            	SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
                 sqlString.append(" OR ");
                 for (int i = 1; i < shopTableFieldSize; i++) {
-                    sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
+                	SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
                 }
+                sqlString.append(" ) ");
             }
         }
         return sqlString.toString();

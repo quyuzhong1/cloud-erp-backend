@@ -127,13 +127,16 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
             if ("part".equals(authType)){
                 if (warehouseTableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
+                	sqlString.append(" AND ");
+                    SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
                 } else {
-                    sqlString.append(" AND (string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
+                	sqlString.append(" AND (");
+                	SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
                     sqlString.append(" OR ");
                     for (int i = 1; i < warehouseTableFieldSize; i++) {
-                        sqlString.append("string_to_array(").append(warehouseTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
+                    	SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
                     }
+                    sqlString.append(" ) ");
                 }
             }
         }
