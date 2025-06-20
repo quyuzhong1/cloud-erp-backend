@@ -6,6 +6,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -116,7 +117,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     }
 
     @Override
-    public String getShopPermissionSql(String shopTableField) {
+    public String getShopPermissionSql(String shopTableField , String dynamicDataSource) {
         if (CharSequenceUtil.isBlank(shopTableField)){
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
@@ -137,18 +138,31 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
         int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
-            if (shopTableFieldSize == 1) {
-                sqlString.append(" AND ");
-                SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-            } else {
-            	sqlString.append(" AND (");
-            	SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                sqlString.append(" OR ");
-                for (int i = 1; i < shopTableFieldSize; i++) {
+        	boolean isDoris = (StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.equals(DynamicDataSourceTypeEnum.DORIS.getCode()));
+        	if(isDoris) {
+        		if (shopTableFieldSize == 1) {
+                    sqlString.append(" AND ");
+                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
+                } else {
+                	sqlString.append(" AND (");
                 	SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
+                    sqlString.append(" OR ");
+                    for (int i = 1; i < shopTableFieldSize; i++) {
+                    	SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
+                    }
+                    sqlString.append(" ) ");
                 }
-                sqlString.append(" ) ");
-            }
+        	}else {
+        		if (shopTableFieldSize == 1) {
+                    sqlString.append(" AND string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                } else {
+                    sqlString.append(" AND (string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                    sqlString.append(" OR ");
+                    for (int i = 1; i < shopTableFieldSize; i++) {
+                        sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
+                    }
+                }
+        	}
         }
         return sqlString.toString();
     }
