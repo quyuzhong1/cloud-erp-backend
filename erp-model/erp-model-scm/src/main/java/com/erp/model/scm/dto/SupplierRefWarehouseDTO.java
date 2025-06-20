@@ -227,7 +227,6 @@ public class SupplierRefWarehouseDTO implements Serializable {
         /**
          * 仓位编码
          */
-        @NotEmpty(message = "仓位编码不能为空")
         private List<String> warehouseLocationCodeList;
 
     }
@@ -272,7 +271,6 @@ public class SupplierRefWarehouseDTO implements Serializable {
         /**
          * 仓位编码
          */
-        @NotBlank(message = "仓位编码不能为空")
         @Size(max = 64,message = "仓位编码最大长度不能超过64位")
         private String warehouseLocationCode;
     }

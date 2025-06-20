@@ -95,8 +95,21 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         return new BaseResultDTO.AddDTO(list.get(0).getId(), list.get(0).getId());
     }
 
-
+    /**
+     * 新增数据处理
+     * @author will
+     * @date 2025/6/20 10:52
+     * @param addDTO
+     * @return List<SupplierRefWarehouseEntity>
+     */
     private List<SupplierRefWarehouseEntity> handleAddData (SupplierRefWarehouseDTO.AddDTO addDTO) {
+        if (CollUtil.isEmpty(addDTO.getWarehouseLocationCodeList())){
+            SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
+            BeanMapperUtils.copy(addDTO, supplierRefWarehouseEntity);
+            // 数据处理
+            handleData(supplierRefWarehouseEntity);
+            return Collections.singletonList(supplierRefWarehouseEntity);
+        }
         List<String> warehouseLocationCodeList = addDTO.getWarehouseLocationCodeList();
         List<SupplierRefWarehouseEntity> list = new ArrayList<>();
         for (String warehouseLocationCode : warehouseLocationCodeList) {
