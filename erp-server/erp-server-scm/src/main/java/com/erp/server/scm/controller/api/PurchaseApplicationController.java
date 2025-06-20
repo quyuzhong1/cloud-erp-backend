@@ -77,6 +77,7 @@ public class PurchaseApplicationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
+            warehouseTableField = "pad.dest_warehouse_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
@@ -94,6 +95,7 @@ public class PurchaseApplicationController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
+            warehouseTableField = "pad.dest_warehouse_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
@@ -111,6 +113,7 @@ public class PurchaseApplicationController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
+            warehouseTableField = "pad.dest_warehouse_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult<List<ListStatusCountDTO.PurchaseApplicationCountDTO>> listCount(@RequestBody PermissionsDTO dto) {

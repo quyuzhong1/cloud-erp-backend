@@ -50,6 +50,7 @@ public class SoReturnNoticeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srn.warehouse_id",
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )
@@ -69,6 +70,7 @@ public class SoReturnNoticeController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srn.warehouse_id",
             menuCode = "wms:soReturnNotice:paging",
             tableAlias = "srn"
     )

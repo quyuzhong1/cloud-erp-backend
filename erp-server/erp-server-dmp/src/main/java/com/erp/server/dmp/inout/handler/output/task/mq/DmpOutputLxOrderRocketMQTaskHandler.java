@@ -264,6 +264,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
             receiverDTO.setFullAddress(dmpSoReceiverEntity.getFullAddress());
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
+            receiverDTO.setIsUpdateError(dmpSoReceiverEntity.getIsUpdateError());
         }
         orderDTO.setReceiver(receiverDTO);
 
@@ -293,6 +294,8 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getPlatformSku());
+        // 平台产品ID
+        detailDTO.setPlatformSkuId(item.getPlatformSkuId());
 
         // 平台产品id
         detailDTO.setPlatformSpuNo(item.getPlatformSpuNo());

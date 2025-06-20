@@ -58,6 +58,7 @@ public class TransferApplicationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )
@@ -77,6 +78,7 @@ public class TransferApplicationController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )

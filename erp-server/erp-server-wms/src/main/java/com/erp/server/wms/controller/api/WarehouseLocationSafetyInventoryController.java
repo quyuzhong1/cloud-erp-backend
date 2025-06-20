@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -37,6 +39,10 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "warehouse_id",
+            menuCode = "wms:warehouseLocationSafetyInventory:paging"
+    )
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> pagingDTO){
         PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> pagingResult = safetyInventoryService.paging(pagingDTO);

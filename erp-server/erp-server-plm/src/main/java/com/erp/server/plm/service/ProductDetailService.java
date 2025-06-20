@@ -827,4 +827,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO, ProductPackEntity oldEntity);
 
     void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList, Boolean isTransaction);
+
+    /**
+     * 根据sku编号获取所有状态的sku信息
+     * @param skuNoList sku编号列表
+     * @return SkuVO
+     */
+    List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
 }

@@ -4,16 +4,15 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.server.tms.service.TmsDeclareBillService;
+import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -25,7 +24,7 @@ public class TmsFirstMileLogisticFeignController {
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
 
     @Resource
-    private TmsDeclareBillService tmsDeclareBillService;
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     /**
      * 根据来源id查询物流单
@@ -55,4 +54,22 @@ public class TmsFirstMileLogisticFeignController {
         return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
     }
 
+    /**
+     * 根据来源id和业务类型查询头程费用分摊记录
+     * @param detailDTO
+     * @return
+     */
+    @PostMapping("/getRecordBySourceIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
+        return firstMileCostAllocationService.getRecordBySourceIdAndCode(detailDTO.getSourceId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
+    }
+    /**
+     * 根据skuId和业务类型查询头程费用分摊记录
+     * @param detailDTO
+     * @return
+     */
+    @PostMapping("/getRecordBySkuIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
+        return firstMileCostAllocationService.getRecordBySkuIdAndCode(detailDTO.getSkuId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
+    }
 }

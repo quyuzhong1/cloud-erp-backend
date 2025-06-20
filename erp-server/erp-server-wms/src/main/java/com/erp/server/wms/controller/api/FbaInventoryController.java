@@ -45,6 +45,7 @@ public class FbaInventoryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "fi.warehouse_id",
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
@@ -64,6 +65,7 @@ public class FbaInventoryController extends BaseController {
     @PostMapping("/summaryNumber")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "fi.warehouse_id",
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
@@ -81,7 +83,6 @@ public class FbaInventoryController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "FBA库存导出Excel数据")
-    @WebAdvanceQuery
     public ApiResult<Boolean> exportList(@RequestBody @Validated FbaInventoryDTO.ExportDTO dto) {
         fbaInventoryService.exportList(dto);
         return success(true);

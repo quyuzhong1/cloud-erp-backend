@@ -6,6 +6,7 @@ package com.erp.server.oms.convert;
  * @date: 2025/4/18 15:08
  */
 
+import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Component;
  * @Description:
  * @Version: 1.0
  */
-@Mapper(componentModel = "spring")
+@Mapper(uses = {ObjectMapperWork.class})
 @Component
 public interface InvoiceSettingConverter {
     InvoiceSettingConverter INSTANCE = Mappers.getMapper(InvoiceSettingConverter.class);
@@ -51,8 +52,9 @@ public interface InvoiceSettingConverter {
             @Mapping(target = "numero", source = "doorplateNo"),
             @Mapping(target = "bairro", source = "district"),
             @Mapping(target = "cep", source = "postCode"),
-            @Mapping(target = "ultimoNumeroNfe", source = "startCode"),
+            @Mapping(target = "ultimoNumeroNfe", source = "startCode", qualifiedByName = "lastNumber"),
             @Mapping(target = "numeroSerieNfe", source = "no"),
+            @Mapping(target = "tokenEmpresa", source = "token"),
     })
     UpdateCompanyDTO invoiceSettinToUpdateCompanyDTOTo(CfgInvoiceSettingEntity cfgVatInvoiceEntity);
 }

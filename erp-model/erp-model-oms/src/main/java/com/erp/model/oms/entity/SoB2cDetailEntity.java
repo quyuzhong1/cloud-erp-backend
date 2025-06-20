@@ -255,6 +255,13 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("variant_property")
     private String variantProperty;
 
+    /**
+     * 当前只有速卖通保存/可能速卖通没返回
+     * 平台SKU ID
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String IMAGE_URL = "image_url";
@@ -320,6 +327,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
                 ", warehouseOrgId='" + warehouseOrgId + '\'' +
                 ", warehouseOrgName='" + warehouseOrgName + '\'' +
                 ", warehouseLocation='" + warehouseLocation + '\'' +
+                ", platformSkuId='" + platformSkuId + '\'' +
                 '}';
     }
 }

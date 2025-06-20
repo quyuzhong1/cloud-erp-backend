@@ -10,6 +10,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
@@ -26,8 +27,10 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.common.core.controller.vo.ApiResult;
+import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
@@ -50,7 +53,7 @@ public class DmpOutputTaskRecordController extends BaseController {
 
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
-
+    
     /**
     * 新增
     * @author shukai
@@ -92,7 +95,7 @@ public class DmpOutputTaskRecordController extends BaseController {
      **/
     @PostMapping("/tabList")
     public ApiResult<List<DmpOutputTaskRecordDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<DmpOutputTaskRecordDTO.TabListDTO> tabList = dmpOutputTaskRecordService.tabList(dto);
+    	List<DmpOutputTaskRecordDTO.TabListDTO> tabList = dmpOutputTaskRecordService.tabList(dto);
         return success(tabList);
     }
 
@@ -106,7 +109,7 @@ public class DmpOutputTaskRecordController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
     public ApiResult<PagingVO<DmpOutputTaskRecordDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
-        PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
+    	PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
         return success(pagingVO);
     }
 

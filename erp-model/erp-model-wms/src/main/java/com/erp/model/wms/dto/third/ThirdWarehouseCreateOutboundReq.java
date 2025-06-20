@@ -21,6 +21,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 订单参考号
      */
     private String referenceNo;
+    /**
+     * 平台
+     */
+    private String platform;
 
     /**
      * 平台订单号
@@ -33,6 +37,15 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String shippingMethod;
 
     /**
+     * 配送方式名称
+     */
+    private String shippingMethodName;
+
+    /**
+     * 配送方式Id
+     */
+    private String shippingMethodId;
+    /**
      * 配送仓库
      */
     private String warehouseCode;
@@ -41,6 +54,20 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 是否审核 默认1
      */
     private Integer verify;
+
+    /**
+     * 是否线上订单
+     */
+    private boolean onlineFlag;
+
+    /**
+     * 线上订单物流单号
+     */
+    private String trackingNo;
+    /**
+     * 线上面单url
+     */
+    private String labelUrl;
 
     //配送商
     private String carrierType;

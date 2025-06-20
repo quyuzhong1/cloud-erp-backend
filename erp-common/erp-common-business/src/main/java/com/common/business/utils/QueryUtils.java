@@ -9,6 +9,10 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -80,8 +84,8 @@ public class QueryUtils {
             throw new ServiceException("数字类型的值必须为数字");
         }
         //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
-        if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
-            sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
+        if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum) || QueryConditionEnum.CONTAINS.equals(condEnum)){
+            sql.append("like").append(" ");
         } else if (!QueryConditionEnum.IS_NULL.equals(condEnum) && !QueryConditionEnum.NOT_NULL.equals(condEnum) &&  !QueryConditionEnum.BETWEEN.equals(condEnum)){
             //日期格式的年月日小于等于 需要修改为小于，因为需要加一天
             String interval = QueryUtils.getDateStr(dto.getValue().toString());
@@ -121,9 +125,11 @@ public class QueryUtils {
                 dto.setValue(dto.getValue().toString().replace("_","\\_"));
             }
             if(QueryConditionEnum.STARTS_WITH.equals(condEnum)){
-                val = "'" + dto.getValue() + "%'";
+                val = "LOWER('" + dto.getValue() + "%')";
             }else if(QueryConditionEnum.ENDS_WITH.equals(condEnum)){
-                val = "'%" + dto.getValue() + "'";
+                val = "LOWER('%" + dto.getValue() + "')";
+            }else if(QueryConditionEnum.CONTAINS.equals(condEnum)){
+                val = "LOWER('%" + dto.getValue() + "%')";
             }else{
                 val = "'%" + dto.getValue() + "%'";
             }
@@ -142,12 +148,10 @@ public class QueryUtils {
             String endDate = list.get(1).toString();
             if(DateUtil.isDateOrTimeValid(list.get(0).toString()) && DateUtil.isDateOrTimeValid(list.get(1).toString())){
                 String interval = QueryUtils.getDateStr(endDate);
-                startDate = "'"+startDate+"'";
-                endDate = "'"+endDate+"'";
                 if(StringUtils.isNotBlank(interval)){
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < (to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1"+ interval+"')  ";
+                    val = " >= '"+formatChineseDateTime(startDate)+"' and " + dto.getField()+" < '"+getAddDate(endDate, interval)+"' ";
                 }else{
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
+                    val = " >= '"+formatChineseDateTime(startDate)+"' and " + dto.getField()+" < '"+formatChineseDateTime(endDate)+"' ";
                 }
             }else{
                 throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
@@ -165,12 +169,12 @@ public class QueryUtils {
         }else if (queryDataTypeEnum.equals(QueryDataTypeEnum.DATE)){
             if(DateUtil.isDateOrTimeValid(fieldVal.toString())){
                 String interval = QueryUtils.getDateStr(result);
-                result = "'"+ fieldVal + "'";
                 if(condEnum.equals(QueryConditionEnum.LE) && StringUtils.isNotBlank(interval)){
-                    result = " (to_timestamp("+ result + ",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1 "+interval+"')";
+                    result = getAddDate(result, interval);
                 }else{
-                    result = "to_timestamp(" + result + ",'yyyy-MM-DD HH24:MI:SS')";
+                    result = formatChineseDateTime(result);
                 }
+                result = "'"+ result + "'";
             }else{
                 throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
             }
@@ -200,6 +204,35 @@ public class QueryUtils {
             }
         }
         return null;
+    }
+    
+    public static String getAddDate(String input , String interval) {
+    	String formatChineseDateTime = formatChineseDateTime(input);
+    	DateTime parse = cn.hutool.core.date.DateUtil.parse(formatChineseDateTime , "yyyy-MM-dd HH:mm:ss");
+    	if("YEAR".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetMonth(parse, 12);
+    	}else if("MONTH".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetMonth(parse, 1);
+    	}else if("DAY".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetDay(parse, 1);
+    	}
+    	return cn.hutool.core.date.DateUtil.format(parse , "yyyy-MM-dd HH:mm:ss");
+    }
+    
+    public static String formatChineseDateTime(String dateTime) {
+    	String[] patterns = {"yyyy-MM-dd HH:mm:ss" , "yyyy-MM-dd" , "yyyy-MM" , "yyyy" };
+
+        for (String pattern : patterns) {
+        	DateTime parse = null;
+            try {
+				parse = cn.hutool.core.date.DateUtil.parse(dateTime , pattern);
+			} catch (Exception e) {
+			}
+            if(parse != null) {
+            	return cn.hutool.core.date.DateUtil.format(parse, "yyyy-MM-dd HH:mm:ss");
+            }
+        }
+        return dateTime;
     }
 
     public static String listToStringValue(List<?> list, QueryDataTypeEnum dataTypeEnum){

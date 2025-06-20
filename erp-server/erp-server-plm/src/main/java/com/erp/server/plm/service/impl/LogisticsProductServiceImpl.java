@@ -643,6 +643,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Override
     public PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(PagingDTO<LogisticsProductDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //列表Tab查询状态处理
         Boolean isFlag = doOpHandleTableParam(dto.getParams());
         if (Boolean.FALSE.equals(isFlag)) {

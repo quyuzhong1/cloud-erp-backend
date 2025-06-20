@@ -165,10 +165,9 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (ObjectUtil.isNotEmpty(dmpSoInfoEntityList.get(0).getPayTime())) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
             orderDTO.setPayTime(dmpSoInfoEntityList.get(0).getPayTime());
-
-            //付款方式
-            orderDTO.setDictPayMethod(dmpSoInfoEntityList.get(0).getPayMethod());
         }
+        //付款方式
+        orderDTO.setDictPayMethod(dmpSoInfoEntityList.get(0).getPayMethod());
 
         //买家备注
         orderDTO.setBuyerRemark(dmpSoInfoEntityList.get(0).getBuyerRemark());

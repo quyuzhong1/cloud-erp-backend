@@ -2,15 +2,13 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -68,6 +66,10 @@ public class CfgSettingDTO implements Serializable {
          * 超时设置
          */
         private CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO;
+        /**
+         * 付款方式设置
+         */
+        private List<CfgSettingDTO.PayMethodDTO> payMethodList;
     }
 
     @Data
@@ -84,5 +86,19 @@ public class CfgSettingDTO implements Serializable {
          * 发送通知人员列表
          */
         private List<String> userIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PayMethodDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * 付款方式
+         */
+        private String payMethod;
     }
 }

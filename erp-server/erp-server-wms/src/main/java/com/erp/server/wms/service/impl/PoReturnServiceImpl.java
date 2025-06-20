@@ -382,11 +382,18 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CharSequenceUtil.isBlank(msg)){
             msg = String.format("新增了一个采购退货单【%s】", code);
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
 
         //保存详情信息
         poReturnDetailService.add(dto, poReturnEntity.getId());
+        //记录明细sku信息日志
+        List<PoReturnDetailEntity> detailEntityList = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
+        String skuMsg = detailEntityList.stream()
+                .map(v->String.format("%s*%d", v.getSkuNo(), v.getReturnQty()))
+                .collect(Collectors.joining(","));
+        msg = msg+","+skuMsg;
+        //操作日志
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
+
         return poReturnEntity;
     }
 
@@ -402,6 +409,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
+
+        PoReturnEntity oldEntity = this.getById(dto.getId());
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getReturnUserId());
         //获取核算公司
@@ -471,8 +480,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         this.updateById(poReturnEntity);
 
         //操作日志
-        PoReturnEntity byId = this.getById(dto.getId());
-        operateLogService.addModuleOperateLogByObj(byId, poReturnEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(oldEntity, poReturnEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "", "");
 
         //更新收货单详情表信息
         return poReturnDetailService.update(dto, poReturnEntity.getId());
@@ -2803,7 +2811,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //操作日志
         String msg = CharSequenceUtil.format("用户【{}】操作单号为【{}】的【{}】退货确认状态为已确认", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "退货确认");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "退货确认");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "退货确认");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "退货确认");
     }
 
@@ -2952,7 +2960,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
@@ -3089,7 +3097,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             List<PurchaseOrderDetailEntity> currentPurchaseDetailList = purchaseOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(pushDownPurchaseView.getDetailId()) && !v.getIsGift()).collect(Collectors.toList());
             Integer alreadyPurchaseQty = currentPurchaseDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(Integer::sum).orElse(0);
-            pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getDeductAmountQty() - alreadyPurchaseQty);
+            if(pushDownPurchaseView.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())){
+                pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getReturnQty() - alreadyPurchaseQty);
+            }else{
+                pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getDeductAmountQty() - alreadyPurchaseQty);
+            }
             pushDownPurchaseView.setTotalTaxAmount(pushDownPurchaseView.getTaxPrice().multiply(new BigDecimal(pushDownPurchaseView.getPurchaseQty())).setScale(4, RoundingMode.HALF_UP));
             pushDownPurchaseView.setPlanDeliveryDate(LocalDate.now());
             pushDownPurchaseView.setOldPurchaseQty(pushDownPurchaseView.getPurchaseQty());

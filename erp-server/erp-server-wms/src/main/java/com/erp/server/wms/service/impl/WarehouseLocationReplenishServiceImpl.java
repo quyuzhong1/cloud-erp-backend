@@ -76,6 +76,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private ProductDetailFeign productDetailFeign;
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WarehouseLocationReplenishEntity> pageResult =  this.baseMapper.paging(page, pagingDTO.getParams());
         List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(pageResult.getRecords());
@@ -645,7 +646,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
         BeanMapper.copy(dto.getParams(), searchParamDto);
         Page<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()),searchParamDto);

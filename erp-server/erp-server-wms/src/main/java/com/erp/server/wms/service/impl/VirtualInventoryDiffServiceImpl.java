@@ -223,6 +223,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //库存差异
         Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {

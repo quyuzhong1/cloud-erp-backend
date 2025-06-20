@@ -63,7 +63,7 @@ public class SysUserInfoController extends BaseController {
      * @return
      */
     @RequestMapping("/paging")
-    public ApiResult list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
+    public ApiResult<PagingVO<UserManageDTO>> list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
         dto.getParams().setUserType(UserTypeEnum.ERP.code);
         PagingVO<UserManageDTO> pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);

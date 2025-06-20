@@ -117,4 +117,11 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * 根据任务id获取箱子内容物详情
      */
     List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId, List<String> fbaShipmentCodes);
+
+    /**
+     * 根据箱子查询装箱内容
+     * @param boxIds
+     * @return
+     */
+    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds);
 }

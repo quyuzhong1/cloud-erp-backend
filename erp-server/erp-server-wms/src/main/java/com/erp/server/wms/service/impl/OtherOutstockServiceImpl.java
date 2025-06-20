@@ -7,6 +7,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -1059,7 +1064,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
 
         // 发货仓库
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse();
+        List<String> warehouseNameList = successList.stream().map(OtherOutStockImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNameList);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
                 .stream()
                 .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
@@ -1131,9 +1137,16 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         List<DictKingdeeDTO.ListDTO> typeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
+        //获取当前操作人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 校验和处理
         for (OtherOutStockImportExcelDTO importExcelDTO : successList) {
-            DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(importExcelDTO.getType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+            DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(importExcelDTO.getType())).findFirst().orElse(null);
+            if (null == typeDTO){
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】业务类型不存在", importExcelDTO.getType()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
             DictKingdeeDTO.ListDTO outTypeDTO = outTypeList.stream().filter(v->v.getName().equals(importExcelDTO.getOutType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
 
             Integer actualQty = Integer.valueOf(importExcelDTO.getActualQtyStr());
@@ -1146,7 +1159,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO){
-                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -1268,7 +1281,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         userDTO,
                         orgDTO,
                         code,
-                        ""
+                        "",
+                        userInfo.getUid(),
+                        userInfo.getUserName()
                 );
                 // 明细
                 OtherOutstockDetailEntity detailEntity = OtherOutStockConverter.INSTANCE.combineDetailEntity(importExcelDTO, skuVO, locationEntity, actualQty);
@@ -1438,7 +1453,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> exportOtherOutStock(PagingDTO<OtherOutstockDTO.SearchParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<OtherOutstockDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             doOpHandleData(page.getRecords());

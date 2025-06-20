@@ -17,9 +17,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.tms.feign.CfgSettingFeign;
-import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,17 +43,7 @@ public class SoOutstockController extends BaseController {
 
     @Resource
     private SoOutstockService soOutstockService;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
-    @Resource
-    private TmsDeclareBillFeign tmsDeclareBillFeign;
-
-
-    @Resource
-    private CfgSettingFeign cfgSettingFeign;
-
+    
 
     /**
      * 获取 tab列表
@@ -64,8 +51,15 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
     public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
+    	List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
     }
 
@@ -79,12 +73,14 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-        PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
         return success(pagingVO);
     }
 
@@ -104,7 +100,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<SoOutstockDTO.PagingTotalDTO> getTotalByQuery(@RequestBody @Validated SoOutstockDTO.PagingParamDTO dto) {
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
+    	SoOutstockDTO.PagingTotalDTO pagingTotalDTO = soOutstockService.getTotalByQuery(dto);
         return success(pagingTotalDTO);
     }
 

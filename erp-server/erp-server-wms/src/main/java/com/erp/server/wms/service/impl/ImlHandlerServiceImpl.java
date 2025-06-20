@@ -4,6 +4,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -119,7 +120,7 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected Boolean hasWarehouse() {
+    protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         ImlResponse<List<ImlWarehouseResp>> response = imlService.getWarehouse(ImlBaseRequest.builder()
                         .pageSize(1)
                         .page(1)

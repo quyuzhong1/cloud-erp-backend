@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
@@ -1270,6 +1271,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.id")
     public String updateSo(SoInfoDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoInfoEntity soInfo = this.getById(id);
@@ -1483,7 +1485,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             // 填入首批上市时间
             setFirstListingTime(Collections.singletonList(entity.getId()));
             //推送同步中台dmp任务
-            syncKingdeeSoService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+//            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+
             //发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
 
@@ -1561,7 +1564,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             // TODO 收款字段需补
 
             //推送同步中台dmp任务
-            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+//            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
@@ -1718,7 +1721,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(syncList)) {
 
                 //推送同步中台dmp任务
-                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+//                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
                 //发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
@@ -2261,9 +2264,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         checkIfPushDown(mainIds);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
-        //获取默认仓库 -- 东莞售后仓库
-        CfgSettingEntity cfgSettingEntity = fgSettingFeign.getByKey(CfgSettingEnum.WAREHOUSE_BY_SO_RETURN.getCode());
-        CfgSettingValueDTO.SoWarehouseDTO soWarehouseDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SoWarehouseDTO.class);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -2271,6 +2271,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //获取出库详情
         List<String> soIds = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        //获取第一个出库单的库粗组织
+        List<SoOutstockEntity> soOutstockEntityList = soOutstockFeign.listBySoIds(soIds);
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         for (SoInfoDTO.GenerateSoReturnView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -2283,11 +2285,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnDate(LocalDate.now());
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
-            //限制销售组织下的
-            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
-                view.setWarehouseId(soWarehouseDTO.getWarehouseId());
-                view.setWarehouseName(soWarehouseDTO.getWarehouseName());
-            }
+            SoOutstockEntity soOutstockEntity = soOutstockEntityList.stream().filter(e -> e.getSoId().equals(view.getSoId())).findFirst().orElse(null);
+            view.setWarehouseOrgId(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseOrgId() : "");
+            view.setWarehouseId(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseId() : "");
+            view.setWarehouseName(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseName() : "");
         }
         return viewList;
     }
@@ -3278,6 +3279,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "id")
     public Boolean unLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
@@ -3303,7 +3305,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
         List<String> fieldList = CollectionUtils.isEmpty(dto.getParams().getAdvanceQueryDTOList()) ? new ArrayList<>() :  dto.getParams().getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
         dto.getParams().setFieldList(fieldList);
@@ -3508,7 +3510,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //金蝶业务员列表
         List<KingdeeOperatorRefPostDTO.OperatorDTO> kingdeeBusinessOperatorList = kingdeeFeign.listBusinessOperatorByUserIdList(new ArrayList<>());
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+        List<String> warehouseNameList = successList.stream().map(B2BSoImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
         //收款账号
         List<String> receiveAccountList = successList.stream().map(B2BSoImportExcelDTO::getReceiveAccount).distinct().collect(Collectors.toList());
         //根据收款账号获取数据
@@ -3638,12 +3641,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setIsCollectShippingFee(isCollectShippingFee);
             //仓库
             String warehouseName = mainInfo.getWarehouseName();
-            WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
+            WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
                     orElse(null);
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add("仓库不存在");
+                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();

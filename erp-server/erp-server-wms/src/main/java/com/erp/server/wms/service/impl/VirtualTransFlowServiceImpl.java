@@ -253,12 +253,17 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
     @Override
     public void handleAddDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        log.warn("开始查询需要处理的数据，参数:{}", dto);
         List<VirtualTransFlowEntity> virtualTransFlowList = this.listApproveFlowDetail(dto);
         if (CollUtil.isEmpty(virtualTransFlowList)) {
+            log.error("为查询到需要处理的虚拟库存流水数据，参数:{}", dto);
             return;
         }
         //清空数据
-        baseMapper.cleanALlData();
+        if(dto.getIsClean()) {
+            baseMapper.cleanALlData();
+        }
+        log.warn("清除数据完成，开始处理虚拟库存流水数据，参数:{}", dto);
         virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
     }
 

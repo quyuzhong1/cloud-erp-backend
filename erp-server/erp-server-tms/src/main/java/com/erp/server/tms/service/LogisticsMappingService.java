@@ -43,7 +43,7 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      *@author yl
      *@date 2023-11-14
      */
-    List<LogisticsMappingDTO.ViewDTO> listByChannelId(String channelId);
+    List<LogisticsMappingDTO.ViewDTO> listByChannelIdAndType(String channelId, String type);
 
     /**
      * 根据渠道id 删除
@@ -81,11 +81,16 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      */
     LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO);
     /**
+     * @param id
+     * @param type
+     * @return List<LogisticsMappingEntity>
      * @description: 根据物流渠道id获取物流映射表
      * @author jack
      * @date: 2024/10/09
-     * @param id
-     * @return List<LogisticsMappingEntity>
      */
-    List<LogisticsMappingEntity> listDbByChannelId(String id);
+    List<LogisticsMappingEntity> listDbByChannelIdAndType(String id, String type);
+
+    void addWarehouseMapping(String channelId, List<LogisticsMappingDTO.AddDTO> warehouseMappingList);
+
+    void warehouseUpdate(String channelId, List<LogisticsMappingDTO.UpdateDTO> mappingList);
 }

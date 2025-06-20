@@ -7,6 +7,7 @@
         select
             count(distinct sc.id)
         FROM so_change sc
+        INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
         and  sc.is_deleted=false

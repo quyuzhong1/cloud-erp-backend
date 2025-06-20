@@ -45,10 +45,6 @@ public class SoReturnInstockController extends BaseController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
-    @Resource
-    private MQProducerService mQProducerService;
-    @Resource
-    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
     /**
      * 列表查询
      * @Author Luo_WG
@@ -59,6 +55,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -78,6 +75,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -405,7 +403,7 @@ public class SoReturnInstockController extends BaseController {
      * 下推物流自发货费用
      * @author Will
      * @date: 2023/8/28 15:26
-     * @param list
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推物流单")

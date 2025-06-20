@@ -11,8 +11,10 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.convert.InventorySkuCostConverter;
 import lombok.Getter;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<InventorySkuCostDetailExcelDTO> {
     private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
-    private final WmsWarehouseFeign wmsWarehouseFeign = SpringUtil.getBean(WmsWarehouseFeign.class);
+    private final WmsTaskFeign wmsTaskFeign = SpringUtil.getBean(WmsTaskFeign.class);
     /**
      * 错误信息
      */
@@ -104,10 +106,10 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
             return;
         }
         List<String> warehouseNameList = allList.stream().map(InventorySkuCostDetailExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntityList = CollUtil.isEmpty(warehouseNameList) ? Collections.emptyList() : wmsWarehouseFeign.listByWarehouseNameList(warehouseNameList);
+        List<WarehouseDTO.ListDTO> warehouseEntityList = CollUtil.isEmpty(warehouseNameList) ? Collections.emptyList() : wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
         //仓库Map
-        Map<String,WarehouseEntity> warehouseEntityHashMap = new HashMap<>();
-        warehouseEntityHashMap = warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+        Map<String,WarehouseDTO.ListDTO> warehouseEntityHashMap = new HashMap<>();
+        warehouseEntityHashMap = warehouseEntityList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
         List<String> skuNoList = allList.stream().map(InventorySkuCostDetailExcelDTO::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.listBySkuNos(skuNoList);
         //产品Map
@@ -115,7 +117,7 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
         productDetailEntityMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo,Function.identity()));
 
         for (InventorySkuCostDetailExcelDTO excelDTO : allList){
-            WarehouseEntity warehouseEntity = warehouseEntityHashMap.getOrDefault(excelDTO.getWarehouseName(), null);
+            WarehouseDTO.ListDTO warehouseEntity = warehouseEntityHashMap.getOrDefault(excelDTO.getWarehouseName(), null);
             if (Objects.isNull(warehouseEntity)){
                 excelDTO.setErrorMsg(CharSequenceUtil.format("仓库【{}】不存在",excelDTO.getWarehouseName()));
                 errorList.add(excelDTO);

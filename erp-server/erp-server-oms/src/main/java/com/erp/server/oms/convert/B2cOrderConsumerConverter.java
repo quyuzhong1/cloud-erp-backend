@@ -126,17 +126,19 @@ public interface B2cOrderConsumerConverter {
 
     @Mappings({
             // 更新的内容
-            @Mapping(target = "platformSkuNo", expression = "java(keepHistory ?  oldEntity.getPlatformSkuNo() : detailDTO.getPlatformSkuNo())"),
+            @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
 //            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
-            @Mapping(target = "warehouseSkuNo", expression = "java(keepHistory ? oldEntity.getWarehouseSkuNo() : detailDTO.getWarehouseSkuNo())"),
-            @Mapping(target = "qty", expression = "java(keepHistory ? oldEntity.getQty() : detailDTO.getQty())"),
+            @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),
+            @Mapping(target = "qty", source = "detailDTO.qty"),
             @Mapping(target = "price", source = "detailDTO.price"),
+            @Mapping(target = "taxRate", source = "detailDTO.taxRate"),
             @Mapping(target = "amount", source = "detailDTO.amount"),
             @Mapping(target = "currency", source = "detailDTO.currency"),
             @Mapping(target = "exchangeRate", source = "detailDTO.exchangeRate"),
             @Mapping(target = "advicePrice", source = "detailDTO.advicePrice"),
             @Mapping(target = "sourcePlatform", source = "detailDTO.sourcePlatform"),
             @Mapping(target = "labelJson", source = "detailDTO.labelJson"),
+            @Mapping(target = "platformSkuId", source = "detailDTO.platformSkuId"),
             // 历史实体
             @Mapping(target = "mainId", source = "oldEntity.mainId"),
             @Mapping(target = "warehouseId", source = "oldEntity.warehouseId"),
@@ -160,7 +162,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
 
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo, boolean keepHistory);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({

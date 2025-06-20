@@ -269,6 +269,12 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("variant_property")
     private String variantProperty;
+    /**
+     * 平台SKU ID
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
 
     public static final String MAIN_ID = "main_id";
 

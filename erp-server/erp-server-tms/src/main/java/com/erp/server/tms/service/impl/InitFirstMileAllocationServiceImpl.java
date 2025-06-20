@@ -213,10 +213,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         log.info("期初头程分摊记录反审核，code=【{}】", entity.getCode());
         //数据是否已经被引用
-        BatchResultDTO batchResultDTO = checkHasUseData(entity);
-        if (!batchResultDTO.getSuccess()){
-            return batchResultDTO;
-        }
+//        BatchResultDTO batchResultDTO = checkHasUseData(entity);
+//        if (!batchResultDTO.getSuccess()){
+//            return batchResultDTO;
+//        }
         //更新单据为待提交
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志

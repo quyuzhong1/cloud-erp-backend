@@ -117,6 +117,13 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Resource
     private SoPriceService soPriceService;
 
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+
+    @Resource
+    @Lazy
+    private SoB2cCoreService soB2cCoreService;
+
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listContainDeleted(ids);
@@ -739,7 +746,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                     if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                             || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                        soB2cService.getLogisticsCode(entity.getId(),  Boolean.TRUE);
+                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId(), logisticsRuleResult.getName());
                     }
 
                 }
@@ -808,6 +815,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         Integer flag = MathUtil.ONE;
         //分组金额
         BigDecimal groupAmount = BigDecimal.ZERO;
+        //速卖通税后分组金额
+        BigDecimal groupAfterTaxAmount = BigDecimal.ZERO;
         //分组预估费用
         BigDecimal groupEstimatedShippingCost = BigDecimal.ZERO;
         //分组实际费用
@@ -818,6 +827,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         BigDecimal groupAccessoriesNw = BigDecimal.ZERO;
         //分组包装重量
         BigDecimal groupWeight = BigDecimal.ZERO;
+        //物流费用
+        BigDecimal groupShippingFee = BigDecimal.ZERO;
 
         // 使用 Set 存储 platformSkuNo 值
         Set<String> platformSkuNoSet = new HashSet<>();
@@ -909,20 +920,28 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             BigDecimal amount = MathUtil.multiplyWithTwo(rate, entity.getAmount());
+            BigDecimal afterTaxAmount = MathUtil.multiplyWithTwo(rate, entity.getAfterTaxAmount());
             BigDecimal estimatedShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getEstimatedShippingCost());
             BigDecimal actualShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesNw());
+            BigDecimal shippingFee = MathUtil.multiplyWithTwo(rate, entity.getShippingFee());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
+                afterTaxAmount = MathUtil.subtract(entity.getAfterTaxAmount(), groupAfterTaxAmount);
                 estimatedShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getEstimatedShippingCost(), groupEstimatedShippingCost);
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
+                shippingFee = MathUtil.subtract(entity.getShippingFee(), groupShippingFee);
             }
             //基本信息金额
             addDTO.setAmount(amount);
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
+                // 速卖通记录分摊的税后金额
+                addDTO.setAfterTaxAmount(afterTaxAmount);
+            }
             //预估费用
             logisticsAddDTO.setEstimatedShippingCost(estimatedShippingCost);
             //实际费用
@@ -937,6 +956,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
+            //财务信息
+            addDTO.setShippingFee(shippingFee);
             addDTO.setRemark( CharSequenceUtil.format("【{}】拆分订单", entity.getCode()));
 
             //操作信息
@@ -968,11 +989,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             splittableGroups.add(groupsBean);
             //计算已生成金额
             groupAmount = MathUtil.add(addDTO.getAmount(), groupAmount);
+            // 计算已已生成的速卖通税后金额
+            groupAfterTaxAmount = MathUtil.add(addDTO.getAfterTaxAmount(), groupAfterTaxAmount);
             groupEstimatedShippingCost = MathUtil.add(logisticsAddDTO.getEstimatedShippingCost(), groupEstimatedShippingCost);
             groupActualShippingCost = MathUtil.add(logisticsAddDTO.getActualShippingCost(), groupActualShippingCost);
             groupAccessoriesCost = MathUtil.add(logisticsAddDTO.getAccessoriesCost(), groupAccessoriesCost);
             groupAccessoriesNw = MathUtil.add(logisticsAddDTO.getAccessoriesNw(), groupAccessoriesNw);
             groupWeight = MathUtil.add(logisticsAddDTO.getWeight(), groupWeight);
+            groupShippingFee = MathUtil.add(add.getShippingFee(), groupShippingFee);
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);
@@ -1044,10 +1068,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //未付款数据不能操作
-        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
-        }
-
+        soB2cCoreService.checkPayMent(entity);
         //查询订单是否是合并订单
         List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {

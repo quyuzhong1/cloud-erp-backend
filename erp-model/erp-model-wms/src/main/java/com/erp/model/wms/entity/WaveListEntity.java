@@ -114,6 +114,16 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     @TableField("is_out_stock")
     private Boolean isOutStock;
     /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
+    /**
      * 是否全托订单 是 true 否 false
      */
     @TableField("is_fully_managed")

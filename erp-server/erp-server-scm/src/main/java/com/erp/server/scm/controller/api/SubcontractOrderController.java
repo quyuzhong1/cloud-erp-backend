@@ -54,6 +54,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sod.warehouse_id",
             menuCode = "scm:subcontractOrder:paging",
             tableAlias = "so"
     )
@@ -71,6 +72,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sod.warehouse_id",
             menuCode = "scm:subcontractOrder:paging",
             tableAlias = "so"
     )
@@ -417,6 +419,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sod.warehouse_id",
             menuCode = "scm:subcontractOrder:export",
             tableAlias = "so"
     )

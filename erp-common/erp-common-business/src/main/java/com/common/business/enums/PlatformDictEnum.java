@@ -67,12 +67,13 @@ public enum PlatformDictEnum implements EnumMessage {
     WDT("wdt", "旺店通", "旺店通", "51"),
     QI_MEN("qimen", "奇门", "奇门", "52"),
     // 拼多多海外版
-    TE_MU("TeMu", "TEMU", "TEMU", "034"),
+    TE_MU("TeMu", "TEMU半托管", "TEMU半托管", "034"),
     ANTU("antu", "安兔", "安兔", "53"),
     LING_XING("lingxing", "领星", "领星", "54"),
     RAKUTEN("Rakuten", "乐天", "乐天", "037"),
     EBAY("eBay", "eBay", "eBay", "036"),
     SPT("spt", "速派通", "速派通", "55"),
+    JIFENG("jifeng", "极风", "极风", "55"),
 
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),

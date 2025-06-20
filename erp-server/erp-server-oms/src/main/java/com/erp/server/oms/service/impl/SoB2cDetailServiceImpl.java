@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -111,6 +112,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -442,8 +445,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (existSplit){
             return oldDetailEntityList;
         }
-        // 是否保留历史数量和sku信息：自发货订单已发货保留历史数量
-        boolean keepHistory = !mainEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus());
+        // 是否保留历史数量和sku信息：自发货订单已发货(待发货)保留历史明细
+        boolean keepHistory = !mainEntity.hasPlatformWarehouseOrder() &&
+                (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus()) );
+        if (keepHistory){
+            return oldDetailEntityList;
+        }
 
         // 来源不为空
         // 历史map
@@ -476,13 +483,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                         .stream()
                         .flatMap(List::stream)
                         .collect(Collectors.toList());;
-            } else {
+            } else if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())){
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSpuNo());
+            }else {
                 // 映射关系
                 mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             }
 
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
+            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform(),detailDTO.getPlatformSkuNo());
 
             String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
             String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
@@ -501,7 +511,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             SoB2cDetailEntity saveOrUpdateEntity;
             if (null != oldEntity) {
                 // 更新指定内容
-                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo, keepHistory);
+                saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo);
             } else {
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
@@ -530,7 +540,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         // 其他处理
         consumerHandleDetailList(saveOrUpdateList, mainEntity, skuList);
-
+        //领星把关联不到的明细数量变更为0
+        if(PlatformDictEnum.LING_XING.getCode().equals(mainEntity.getThirdSystem())){
+            List<String> nowSourceDetailIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getSourceDetailId).collect(Collectors.toList());
+            List<SoB2cDetailEntity> notExist = oldDetailEntityList.stream().filter(v->!nowSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(notExist)){
+                notExist.forEach(v-> v.setQty(0));
+                this.saveOrUpdateBatch(notExist);
+            }
+        }
         // 批量保存和更新
          if (!this.saveOrUpdateBatch(saveOrUpdateList)){
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
@@ -568,7 +586,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuInfoSimpleVO> skuList) {
+        List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+        boolean fullyManagedOrder = soB2cService.isFullyManagedOrder(mainEntity.getDictPlatform());
+        if (fullyManagedOrder){
+            //重算真实售价和金额
+            List<SoPriceDTO.PriceParamDTO> soPriceParams = new ArrayList<>();
 
+            list.forEach(detailEntity -> {
+                SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                priceParamDTO.setSkuId(detailEntity.getSkuId());
+                priceParamDTO.setDate(mainEntity.getPlatformOrderCreateTime().toLocalDate());
+                priceParamDTO.setQty(detailEntity.getQty());
+                priceParamDTO.setShopId(mainEntity.getShopId());
+                soPriceParams.add(priceParamDTO);
+            });
+            priceDTOS = soPriceService.batchGetSoPrice(soPriceParams);
+        }
         for (SoB2cDetailEntity detailEntity :list) {
             //产品信息
             SkuInfoSimpleVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
@@ -587,7 +620,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(),detailEntity.getQty()));
             // 产品图片
             detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
+            if (fullyManagedOrder){
+                SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(priceDTO1 -> priceDTO1.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                detailEntity.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : BigDecimal.ZERO);
+                detailEntity.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : BigDecimal.ZERO);
+            }
         }
+        if (fullyManagedOrder){
+            BigDecimal amount = list.stream().map(detailEntity -> MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            mainEntity.setAmount(amount);//重置主单金额
+            soB2cService.updateAmount(mainEntity.getId(),amount);
+        }
+
     }
 
     @Override

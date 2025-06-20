@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,10 @@ public class PlatformReturnInstockDTO extends UniqueDto {
     private String status;
 
     /**
+     * 退货物流单号
+     */
+    private String returnLogisticCode;
+    /**
      * 退货类型
      */
     private String returnType;
@@ -76,5 +81,8 @@ public class PlatformReturnInstockDTO extends UniqueDto {
 
         //实退数量
         private Integer realQty;
+
+        //明细唯一ID
+        private String thirdId;
     }
 }

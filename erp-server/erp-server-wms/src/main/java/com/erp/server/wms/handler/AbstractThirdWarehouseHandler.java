@@ -3,7 +3,6 @@ package com.erp.server.wms.handler;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -26,13 +25,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
-import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
-import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
-import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
-import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import io.seata.common.util.CollectionUtils;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
@@ -76,11 +69,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         try {
             ThirdWarehouseContext.setAuthMap(dto.getAuthJson());
-            boolean result = hasWarehouse();
-            if (result) {
-                dmpTaskFeign.createThirdWarehouseTask(new ThirdWarehouseTaskDTO.AddDTO(dto.getId(), dto.getAuthJson(), getPlatForm().getCode()));
-            }
-            return result;
+            return warehouseAuthorize(dto);
         } finally {
             ThirdWarehouseContext.remove();
         }
@@ -142,6 +131,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> uploadOrderLabel(uploadOrderLabelReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL,uploadOrderLabelReq.getOrderCode());
     }
 
+    @Override
+    public ApiResult<String> refreshToken(String authId,Map<String,Object> map) {
+        return handleAndRemoveContext(() ->  refreshToken(map), authId,SourceTypeEnum.THIRD_WAREHOUSE_REFRESH_TOKEN,authId);
+    }
+
     protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -154,9 +148,14 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
+    protected  ApiResult<String> refreshToken(Map<String,Object> map){
+        return success();
+    };
+
+
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 
-    protected abstract Boolean hasWarehouse();
+    protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     private <T> ApiResult<T> handleAndRemoveContext(Handler<T> handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
         try {
@@ -171,7 +170,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode, true);
+            pushOperateLog(businessType,2000,erpBusinessCode, false);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local

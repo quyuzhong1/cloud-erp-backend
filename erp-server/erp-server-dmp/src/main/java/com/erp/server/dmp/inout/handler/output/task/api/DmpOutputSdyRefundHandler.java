@@ -59,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
+public class DmpOutputSdyRefundHandler extends DmpOutputSdyBaseTaskHandler {
     @Resource
     private ThirdMappingService thirdMappingService;
     @Resource
@@ -68,52 +68,6 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
     private SysUserFeign sysUserFeign;
     @Resource
     private ThirdShopService thirdShopService;
-
-    @Override
-    protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
-
-        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if (!map.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            int i = 0;
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                String dataId = entry.getKey();
-                String value = entry.getValue();
-                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                dmpOutputTaskRecordEntity.setRequestData(value);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
-            }
-        }
-
-        return dmpOutputTaskRecordEntityList;
-    }
-
-    @Override
-    protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-        String id = dmpOutputTaskRecordEntity.getId();
-        String status = "";
-        String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if (200 == handle.getCode()) {
-            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
-        } else {
-            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-        }
-
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()), handle.getMsg());
-    }
 
     /**
      * 解析订单数据
@@ -316,7 +270,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                     cacheMap.put("subPlatformType", subPlatformTypeMap);
                     
                     if(subPlatformTypeDict != null) {
-                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                    	sdyDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        sdyDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                         sdyDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                     }
                 }
@@ -347,8 +303,6 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
-            sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
-            sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));
             sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoRefundEntity.getPlatformUpdateTime()));
             sdyDTO.setGoods_status("已退货");

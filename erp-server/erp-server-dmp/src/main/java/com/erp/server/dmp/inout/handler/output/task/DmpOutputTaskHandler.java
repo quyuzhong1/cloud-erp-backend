@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 		List<DmpOutputTaskRecordEntity> outputData = this.outputData(dmpRequest, dmpResponse);
 		this.dealDeleteDmpBaseEntity(dmpRequest, dmpResponse, outputData);
+		this.filterBlack(dmpRequest, dmpResponse, outputData);
 		dmpResponse.setOutputData(outputData);
 		if(CollUtil.isNotEmpty(outputData)) {
 			dmpOutputTaskRecordService.saveBatch(outputData);
@@ -165,6 +167,25 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 	}
 	
+	protected void filterBlack(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, List<DmpOutputTaskRecordEntity> outputData) {
+		if(CollUtil.isEmpty(outputData)) {
+			return;
+		}
+		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+		Iterator<DmpOutputTaskRecordEntity> iterator = outputData.iterator();
+		while(iterator.hasNext()) {
+			DmpOutputTaskRecordEntity next = iterator.next();
+			String requestData = next.getRequestData();
+			if(StringUtils.isNotBlank(requestData)) {
+				JSONObject parseObject = JSON.parseObject(requestData);
+				if(this.validateDataBlack(parseObject, cfgOutputId, Boolean.TRUE)) {
+					log.warn("如下单据匹配到黑名单：类型{}，单据编号：{}" , cfgOutputId , next.getSourceCode());
+					iterator.remove();
+				}
+			}
+		}
+	}
+	
 	public void dealDmpOutputTaskRecordEntityList(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
@@ -209,6 +230,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
 						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
 							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+							this.afterPushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
 						}
 					}
 
@@ -233,6 +255,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
+	
+	protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {}
 	
 	public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList , DmpOutputTaskRequest dmpOutputTaskRequest) {
 		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
@@ -269,12 +293,31 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected boolean validateDataBlack(Object object , String cfgOutputId) {
+		return this.validateDataBlack(object, cfgOutputId, Boolean.FALSE);
+	}
+	
+	protected boolean validateDataBlack(Object object , String cfgOutputId , Boolean isWebAdd) {
 		if(object != null) {
-			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityList = dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> d.getMainId().equals(cfgOutputId));
+			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityList = dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> d.getMainId().equals(cfgOutputId) && isWebAdd.equals(d.getIsWebAdd()));
 			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityList)) {
 				JSONObject parseObject = JSON.parseObject(JSON.toJSONString(object));
 				for(DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity : dmpCfgOutputBlackEntityList) {
-					Object value = parseObject.get(dmpCfgOutputBlackEntity.getFieldName());
+					String fieldName = dmpCfgOutputBlackEntity.getFieldName();
+					if(StringUtils.isBlank(fieldName)) {
+						return false;
+					}
+					String[] fieldNameArr = fieldName.split("\\.");
+					if(fieldNameArr.length > 1) {
+						String className = fieldNameArr[0];
+						if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
+							return false;
+						}
+					}
+					String key = fieldNameArr[fieldNameArr.length - 1];
+					if(StringUtils.isBlank(key)) {
+						return false;
+					}
+					Object value = parseObject.get(key);
 					if(this.validate(value, dmpCfgOutputBlackEntity)) {
 						return true;
 					}
@@ -302,6 +345,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				|| DmpCfgOutputBlackCompareSignEnum.LIKE.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.NOTLIKE.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.IN.getCode().equals(compareSign)
+				|| DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)){
 			if(value != null) {
 				String valueString = value.toString();
@@ -333,6 +377,17 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 								return true;
 							}
 						}
+					}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+						String[] fieldValueList = fieldValue.split(",");
+						if(fieldValueList.length == 1) {
+							fieldValueList = fieldValue.split("，");
+						}
+						for(String s : fieldValueList) {
+							if(StringUtils.equals(valueString, s)) {
+								return false;
+							}
+						}
+						return true;
 					}
 				}else if(DmpCfgOutputBlackDataTypeEnum.INT.getCode().equals(dataType)) {
 					Integer intValue = null;
@@ -377,6 +432,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 										}
 									}
 								}
+							}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+								String[] fieldValueList = fieldValue.split(",");
+								if(fieldValueList.length == 1) {
+									fieldValueList = fieldValue.split("，");
+								}
+								for(String s : fieldValueList) {
+									if(StringUtils.isNotBlank(s)) {
+										fieldIntValue = null;
+										try {
+											fieldIntValue = Integer.valueOf(s);
+										} catch (NumberFormatException e) {}
+										if(fieldIntValue != null && (intValue.compareTo(fieldIntValue) == 0)) {
+											return false;
+										}
+									}
+								}
+								return true;
 							}else if(DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)) {
 								String[] fieldValueList = fieldValue.split(",");
 								if(fieldValueList.length == 1) {
@@ -451,6 +523,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 										}
 									}
 								}
+							}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+								String[] fieldValueList = fieldValue.split(",");
+								if(fieldValueList.length == 1) {
+									fieldValueList = fieldValue.split("，");
+								}
+								for(String s : fieldValueList) {
+									if(StringUtils.isNotBlank(s)) {
+										fieldDateValue = null;
+										try {
+											fieldDateValue = DateUtil.parse(s);
+										} catch (NumberFormatException e) {}
+										if(fieldDateValue != null && (dateValue.compareTo(fieldDateValue) == 0)) {
+											return false;
+										}
+									}
+								}
+								return true;
 							}else if(DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)) {
 								String[] fieldValueList = fieldValue.split(",");
 								if(fieldValueList.length == 1) {

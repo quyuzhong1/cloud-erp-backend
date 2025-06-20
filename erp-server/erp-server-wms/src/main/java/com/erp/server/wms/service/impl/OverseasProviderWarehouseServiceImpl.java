@@ -191,7 +191,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         String mainId = overseasProviderService.getByPlatformCode(platform).getId();
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
-                .in(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, warehouseCodeList)
+                .in(CollectionUtils.isNotEmpty(warehouseCodeList),OverseasProviderWarehouseEntity::getPlatformWarehouseCode, warehouseCodeList)
                 .list();
     }
 

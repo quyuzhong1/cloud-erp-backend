@@ -2,24 +2,14 @@ package com.erp.server.sys.query;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
-import com.common.business.vo.PagingVO;
-import com.erp.model.oms.entity.ShopSysUserAuthEntity;
-import com.erp.model.oms.enums.ShopAuthTypeEnum;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
-import com.erp.server.sys.service.KingdeeDepartmentService;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +19,7 @@ import java.util.stream.Collectors;
 public class SysUserInfoQueryHandler extends AbstractQueryHandler {
 
     @Resource
-    private ShopSysUserAuthFeign shopSysUserAuthFeign;
+    private AuthDataFeign authDataFeign;
 
 
     @Override
@@ -42,7 +32,7 @@ public class SysUserInfoQueryHandler extends AbstractQueryHandler {
             } else {
                 shopIdList = Collections.singletonList(value.toString());
             }
-            List<String> userIdList = shopSysUserAuthFeign.listUserIdByShopIdList(shopIdList);
+            List<String> userIdList = authDataFeign.listUserIdByShopIdList(shopIdList);
             if (CollectionUtils.isEmpty(userIdList)) {
                 userIdList.add("-1");
             }

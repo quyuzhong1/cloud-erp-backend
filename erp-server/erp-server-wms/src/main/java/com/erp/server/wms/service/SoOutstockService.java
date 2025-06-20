@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -16,6 +17,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +162,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
      */
     List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto);
-
+    
     
     /**
      * 分页列表
@@ -170,7 +172,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
      */
     PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
-
+    
     
     /**
      * 导出销售出库单
@@ -384,7 +386,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return PagingTotalDTO
      */
     SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO dto);
-
+    
     /**
      * 生成B2C销售出库单
      * @author yl
@@ -393,6 +395,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return 
      */
     Boolean generateB2cSoOutstock(String b2cSoId);
+    /**
+     * 生成B2C销售出库单
+     * 根据传入明细，时间生成
+     */
+    Boolean generateOutstockByDetailAndTime(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList , LocalDateTime outTime,String warehouseId,String trackNo);
 
     /**
      * 生成B2C销售出库单
@@ -506,7 +513,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
                                    SoB2cEntity soB2cEntity,
                                    Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList,
                                    Map<String, SoOutstockEntity> mainEntityMap,
-                                   Map<String, SoOutstockDetailEntity> detailEntityListMap
+                                   Map<String, List<SoOutstockDetailEntity>> detailEntityListMap
     );
 
     /**
@@ -540,8 +547,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
-
-
+    
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
     /**
      * 修复旺店通数据

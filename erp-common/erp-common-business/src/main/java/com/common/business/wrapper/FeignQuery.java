@@ -2,6 +2,7 @@ package com.common.business.wrapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,6 +86,8 @@ public class FeignQuery{
     		idsObject = (List<Object>) idsObject.get(0);
     	}else if (idsObject.get(0) instanceof Set) {
     		idsObject = new ArrayList<>((Set<Object>)idsObject.get(0));
+    	}else if(idsObject.get(0) instanceof Collection) {
+    		idsObject = new ArrayList<>((Collection)idsObject.get(0));
     	}
     	
     	if(CollUtil.isEmpty(idsObject)) {

@@ -618,4 +618,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/projectTask/listTaskFollowerByTaskIds")
     List<TaskFollowerEntity> listTaskFollowerByTaskIds(@RequestBody List<String> preTaskIds);
+
+    /**
+     * 根据sku no 获取所有状态信息
+     */
+    @PostMapping("feign/product/listAllStatusSkuBySkuNos")
+    List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
 }

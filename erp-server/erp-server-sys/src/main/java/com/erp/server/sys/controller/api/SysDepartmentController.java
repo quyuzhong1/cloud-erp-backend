@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -49,6 +50,13 @@ public class SysDepartmentController extends BaseController {
     public ApiResult deptUserTree() {
         List<DeptUserDTO> deptUserList = sysDepartmentService.deptUserTree();
         return success(deptUserList);
+    }
+    /**
+     * 级联下拉
+     */
+    @GetMapping("/cascadeTree")
+    public ApiResult<List<DeptUserDTO.Tree>> cascadeTree() {
+        return success(sysDepartmentService.cascadeTree());
     }
 
 

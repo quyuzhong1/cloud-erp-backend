@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -1024,10 +1025,6 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderCreateTime;
 
         /**
-         * 运费收入
-         */
-        private String shippingFee;
-        /**
          * 扩展字段
          */
         private String extendData;
@@ -1327,6 +1324,16 @@ public class SoB2cDTO implements Serializable {
          * 第三方来源系统
          */
         private String thirdSystem;
+
+        /**
+         * 手动添加速卖通订单
+         */
+        public void checkAndSetAfterTaxAmount() {
+            // 速卖通手动单
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.getDictPlatform())){
+                this.setAfterTaxAmount(this.getAmount());
+            }
+        }
     }
 
 
@@ -1338,6 +1345,8 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RuleResultDTO{
+
+        private String name;
 
         private Boolean isRuleMatch;
 
@@ -1362,6 +1371,20 @@ public class SoB2cDTO implements Serializable {
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InvoiceResult{
+        /**
+         * 销售订单信息
+         */
+        private SoB2cEntity soB2cEntity;
+        /**
+         * 是否通过
+         */
+        private Boolean isPass;
+    }
     /**
      * 修改
      */
@@ -1410,8 +1433,7 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class
-    CommonDTO {
+    public static class CommonDTO {
 
         /**
          * 平台订单号
@@ -1439,6 +1461,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "订单金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
 
         /**
          * 币别（原币）
@@ -1450,7 +1476,6 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款时间
          */
-        @NotNull(message = "付款时间/下单时间不能为空")
         private LocalDateTime payTime;
 
         /**
@@ -1480,6 +1505,12 @@ public class SoB2cDTO implements Serializable {
          * 卖家订单编号
          */
         private String sellerOrderCode;
+
+        /**
+         * 税后订单金额(速卖通)
+         */
+        private BigDecimal afterTaxAmount = BigDecimal.ZERO;
+
     }
 
     @Data

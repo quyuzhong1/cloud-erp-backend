@@ -64,6 +64,7 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "pt.warehouse_id",
             menuCode = "wms:pda:packingTask:paging",
             tableAlias = "pt"
     )
@@ -80,6 +81,7 @@ public class PdaPackingTaskController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "pt.warehouse_id",
             menuCode = "wms:pda:packingTask:paging",
             tableAlias = "pt"
     )
