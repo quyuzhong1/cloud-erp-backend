@@ -706,19 +706,21 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/unLockInventorySave")
     public ApiResult<List<BatchResultDTO>> unLockInventorySave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.InventoryDTO> validList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(validList.size());
-        for (RequisitionApplicationDTO.InventoryDTO dto : validList) {
+        List<String> ids = validList.stream().map(RequisitionApplicationDTO.InventoryDTO::getId).distinct().collect(Collectors.toList());
+        for (String id : ids) {
+            List<RequisitionApplicationDTO.InventoryDTO> inventoryDTOS = validList.stream().filter(v -> v.getId().equals(id)).collect(Collectors.toList());
             BatchResultDTO resultDTO;
             try {
-                resultDTO = requisitionApplicationService.unLockInventorySave(dto);
+                resultDTO = requisitionApplicationService.unLockInventorySave(inventoryDTOS);
             }catch (Exception e){
                 log.error("要货申请释放库存失败",e);
-                RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getId());
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(dto.getCode(), dto.getSkuNo(), "要货申请不存在, 释放库存失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "要货申请不存在, 释放库存失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",entity.getCode(),dto.getSkuNo()), e.getMessage());
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】",entity.getCode()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
