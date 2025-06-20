@@ -145,7 +145,6 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
                 throw new ServiceException("更新合同状态失败：{}",e.getMessage());
             }
         }
-        thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
     @Override
