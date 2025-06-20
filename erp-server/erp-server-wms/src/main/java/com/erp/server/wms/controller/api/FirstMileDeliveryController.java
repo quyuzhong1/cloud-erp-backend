@@ -13,7 +13,10 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
@@ -124,9 +127,30 @@ public class FirstMileDeliveryController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO addDTO = firstMileDeliveryService.addAndSubmit(dto);
-        return success(addDTO);
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> addAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
+        // 新增
+        BaseResultDTO.AddDTO resultAdd;
+        try {
+            resultAdd = firstMileDeliveryService.add(dto);
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1019.msg));
+        }
+        //提审
+        try {
+            firstMileDeliveryService.submit(resultAdd.getId());;
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE,""));
     }
 
     /**

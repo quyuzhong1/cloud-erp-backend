@@ -12,7 +12,9 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
@@ -113,8 +115,33 @@ public class PurchasePriceController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购价目")
     @PostMapping("/addAndSubmit")
     public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        PurchasePriceEntity entity = purchasePriceService.addAndSubmit(dto);
-        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+
+        //新增
+        PurchasePriceEntity entity;
+        try {
+            entity  = purchasePriceService.add(dto);
+            if (null == entity) {
+                return  failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1019.msg));
+            }
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1019.msg));
+        }
+        //提审
+        try {
+            purchasePriceService.submitEntity(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE,""));
     }
 
     /**

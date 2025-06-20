@@ -98,8 +98,8 @@ public class SupplierController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加供应商")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        String supplierId = supplierService.addSupplier(dto);
-        return StringUtils.isNotBlank(supplierId) ? success() : failure();
+        SupplierEntity supplierEntity = supplierService.addSupplier(dto);
+        return Objects.nonNull(supplierEntity) ? success() : failure();
     }
 
 
@@ -112,8 +112,31 @@ public class SupplierController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交供应商")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        Boolean result = supplierService.addAndSubmit(dto);
-        return result == true ? success() : failure();
+        SupplierEntity entity;
+        try {
+            entity = supplierService.addSupplier(dto);
+            if (Objects.isNull(entity)) {
+                return  failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1019.msg));
+            }
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,StringUtils.isBlank(e.getMessage()) ? ApiError.ERROR_1019.msg : e.getMessage()));
+        }
+
+        try {
+            supplierService.submit(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE,StringUtils.isBlank(e.getMessage()) ? ApiError.RETRY_SUBMIT_ERROR.msg : e.getMessage()));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE,""));
     }
 
     /**
