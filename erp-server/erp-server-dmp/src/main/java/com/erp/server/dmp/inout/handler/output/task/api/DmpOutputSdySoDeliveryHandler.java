@@ -172,7 +172,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		if(StringUtils.isBlank(platformCode)) {
 	        	platformCode = thirdDeliveryCode;
 	        }
-    		
+
     		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
     		if(payTime != null) {
@@ -209,7 +209,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        //默认退货入库单
     	        shudiyunB2cOrderDTO.setTransaction_type(transactionType);
     	        shudiyunB2cOrderDTO.setTransaction_sub_type(transactionSubType);
-    	        
+
     	        shudiyunB2cOrderDTO.setBiz_status(deliveryStatus);
     	        shudiyunB2cOrderDTO.setStatus(dmpSoDeliveryDetailEntity.getDataStatus());
 
