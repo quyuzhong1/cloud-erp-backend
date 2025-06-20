@@ -587,17 +587,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
      * @return
      */
     private static List<PickingListsDTO.PrintSkuView> getCombinationList(List<PickingListsDTO.PrintSkuView> printSkuCombinationViewList, String groupName) {
-        Map<String, Integer> deliveryQtyMap = printSkuCombinationViewList.stream()
-                .collect(Collectors.groupingBy(
-                        d -> d.getParentSkuNo() + d.getThirdSku(),  // 复合键分组(
-                        Collectors.collectingAndThen(
-                                Collectors.toMap(
-                                        PickingListsDTO.PrintSkuView::getSourceDetailId,        // 按字段去重
-                                        PickingListsDTO.PrintSkuView::getParentSkuQty,        // 取字段值
-                                        Integer::sum       // 相同的数量值累加
-                                ), map -> map.values().stream().mapToInt(i -> i).sum() // 最终求和
-                        )
-                ));
         return printSkuCombinationViewList.stream()
                 .filter(e -> e.getGroupName().equals(groupName))
                 .collect(Collectors.groupingBy(
@@ -605,8 +594,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                 + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                         Collectors.collectingAndThen(Collectors.toList(), list -> {
                             PickingListsDTO.PrintSkuView view = list.get(0);
-                            String key = view.getParentSkuNo() + "-" + view.getThirdSku();
-                            view.setParentSkuQty(deliveryQtyMap.getOrDefault(key, 0));
+                            view.setParentSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getParentSkuQty).sum());
                             view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
                             return view;
                         })
