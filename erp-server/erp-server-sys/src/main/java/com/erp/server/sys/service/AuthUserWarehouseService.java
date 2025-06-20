@@ -48,7 +48,7 @@ public interface AuthUserWarehouseService extends SuperService<AuthUserWarehouse
      * 获取仓库授权sql
      * @return
      */
-    String getWarehousePermissionSql(String warehouseTableField);
+    String getWarehousePermissionSql(String warehouseTableField , String dynamicDataSource);
 
     /**
      * 更新用户仓库权限
