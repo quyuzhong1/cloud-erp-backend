@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -9,6 +11,8 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
@@ -56,8 +60,8 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         }
         //根据供应商查询仓库配置
         List<SupplierRefWarehouseEntity> supplierRefWarehouseList = FeignQuery.create(SupplierRefWarehouseEntity.class)
-                .eq(SupplierRefWarehouseEntity::getSupplierId, list.get(0)
-                .getSupplierId()).eq(SupplierRefWarehouseEntity::getDisabled, Boolean.FALSE)
+                .eq(SupplierRefWarehouseEntity::getSupplierId, list.get(0).getSupplierId())
+                .eq(SupplierRefWarehouseEntity::getDisabled, Boolean.FALSE)
                 .list();
         if (CollUtil.isEmpty(supplierRefWarehouseList)) {
             return new PagingVO();
@@ -66,19 +70,27 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
-        handelPaging(list);
+        handelPaging(pageData.getRecords(),list.get(0).getSupplierId());
         return new PagingVO(pageData);
     }
 
-    private void handelPaging(List<SupplierRefUserEntity> list) {
+    /**
+     * 分页数据处理
+     * @author will
+     * @date 2025/6/20 14:07
+     * @param list
+     * @param supplierId
+     * @return void
+     */
+    private void handelPaging(List<SupplierInventoryDTO.ListDTO> list,String supplierId) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
-
+        SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, supplierId);
         // 处理分页数据
-        for (SupplierRefUserEntity entity : list) {
-            // 这里可以添加任何需要处理的逻辑
-            // 例如：entity.setSomeField(someValue);
+        for (SupplierInventoryDTO.ListDTO entity : list) {
+            entity.setSupplierName(ObjectUtil.isEmpty(supplierEntity) ? "" :supplierEntity.getName());
+            entity.setImagesUrlPath(CharSequenceUtil.isBlank(entity.getImagesUrl()) ? "" : FastDFSClientUtil.publicUrl + entity.getImagesUrl());
         }
     }
 

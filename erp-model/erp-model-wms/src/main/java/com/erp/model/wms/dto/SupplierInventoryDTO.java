@@ -55,6 +55,10 @@ public class SupplierInventoryDTO implements Serializable {
          */
         private String imagesUrl;
         /**
+         * 产品图片路径【可排序】
+         */
+        private String imagesUrlPath;
+        /**
          * skuId【可排序】
          */
         private String skuId;
