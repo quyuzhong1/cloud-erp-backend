@@ -36,6 +36,9 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
     @Override
     public BaseResultDTO.AddDTO add(List<ApproveTaskDetailDTO.AddDTO> detailList,String mainId) {
         List<ApproveTaskDetailEntity> approveTaskDetailLis  = BeanUtil.copyToList(detailList, ApproveTaskDetailEntity.class);
+        for (ApproveTaskDetailEntity detailLi : approveTaskDetailLis) {
+            detailLi.setMianId(mainId);
+        }
         log.info("开始新增三方生成查询明细");
         boolean save = super.saveBatch(approveTaskDetailLis);
         if(!save) {

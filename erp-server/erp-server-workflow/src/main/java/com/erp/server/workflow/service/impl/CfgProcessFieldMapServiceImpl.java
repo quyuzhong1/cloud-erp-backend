@@ -131,7 +131,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
             return new BaseResultDTO.AddDTO();
         } catch (Exception e) {
-            throw new ServiceException("字段配置新增失败:{}", e.getMessage());
+            log.info("字段配置更新失败："+e);
+            throw new ServiceException("字段配置更新失败:{}", e);
         }
     }
 
@@ -146,9 +147,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 handler = processFormFactory.getAssembleFormHandler(ruleTypeEnum.name());
             }
             if (handler == null) {
-                DictBasicEnum dictEnum = DictBasicEnum.getByCode(type);
-                if (dictEnum != null) {
-                    handler = processFormFactory.getConstructBillHandler(dictEnum.name());
+                ProcessSourcePlatformEnum sourcePlatformEnum = ProcessSourcePlatformEnum.getByCode(type);
+                if (sourcePlatformEnum != null) {
+                    handler = processFormFactory.getConstructBillHandler(sourcePlatformEnum.getCode());
                 }
             }
             if (handler == null) {
@@ -243,6 +244,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
+            if ("main".equals(entity.getSysParentId())) {
+                entity.setSysParentId(null); // 如果是主表字段，则不设置 sysParentId
+            }
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);
         }

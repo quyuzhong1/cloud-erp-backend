@@ -25,10 +25,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -39,6 +36,7 @@ import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.CreateInstanceReq;
 import com.lark.oapi.service.approval.v4.model.InstanceCreate;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,6 +45,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,14 +86,15 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private ProcessFormFactory processFormFactory;
 
     @Resource
-    private FsService  fsService;
+    private FsService fsService;
 
     @Resource
-    private ApproveTaskInfoService  approveTaskInfoService;
+    private ApproveTaskInfoService approveTaskInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
-
+    @Autowired
+    private CfgQueryOptionService cfgQueryOptionService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -102,8 +102,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         //
         List<CfgProcessEntity> list = this.list(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
-        if (CollUtil.isNotEmpty(list) && list.size()>0){
-            throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey())!=null ?  CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey()).getName():dto.getBussinessKey());
+        if (CollUtil.isNotEmpty(list) && list.size() > 0) {
+            throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey()) != null ? CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey()).getName() : dto.getBussinessKey());
         }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
@@ -125,7 +125,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public BaseResultDTO.AddDTO update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
-        if (dto.getId() == null){
+        if (dto.getId() == null) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "流程配置id不能为空");
         }
         CfgProcessEntity old = this.getById(dto.getId());
@@ -290,7 +290,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public CfgProcessEntity getByBusinessKey(String businessKey) {
-        return lambdaQuery().eq(CfgProcessEntity::getBussinessKey,businessKey).last("limit 1").one();
+        return lambdaQuery().eq(CfgProcessEntity::getBussinessKey, businessKey).last("limit 1").one();
     }
 
 
@@ -299,6 +299,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         log.info("开始创建飞书审批实例,启动参数为:{}", dto);
         //查询approvalCode
@@ -307,8 +308,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //
         //查询userid
         List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
-        if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())){
-            throw new ServiceException(ApiError.FS_FOUNDER_NOT_EXIST.msg,  "FS用户不存在");
+        if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())) {
+            throw new ServiceException(ApiError.FS_FOUNDER_NOT_EXIST.msg, "FS用户不存在");
         }
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
@@ -319,45 +320,79 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
-        if (CollUtil.isEmpty(valueMapList)){
+        if (CollUtil.isEmpty(valueMapList)) {
             throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
         }
         //组装form，1、实时获取 2、查询流程定义表
-        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
-        if (ObjectUtil.isEmpty(body)) {
+        ThirdProcessDefinitionEntity processDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        if (ObjectUtil.isEmpty(processDefinition)) {
             throw new ServiceException(ApiError.FS_PROCESS_DEFINITION_NOT_EXIST);
         }
-        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
+        JSONArray formArray = JSONUtil.parseArray(processDefinition.getFormJson());
         //组装Json
         try {
-        ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
-        JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
-        List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
-        //验证addDTOS
-        log.info("三方查询生成明细：",JSONUtil.toJsonStr(addDTOS));
-        //插入记录
-        ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
-        addDTO.setDetailList(addDTOS);
-
-        String form = JSONUtil.toJsonStr(objects);
-        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-                .instanceCreate(InstanceCreate.newBuilder()
-                        .approvalCode(code)
-                        .userId(userId)
-                        .form(form)
-                        .build())
-                .build();
-
+            ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
+            JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+            String form = JSONUtil.toJsonStr(objects);
+            CreateInstanceReq req = CreateInstanceReq.newBuilder()
+                    .instanceCreate(InstanceCreate.newBuilder()
+                            .approvalCode(code)
+                            .userId(userId)
+                            .form(form)
+                            .build())
+                    .build();
             String instanceCode = fsService.createInstance(req);
-            //生成三方查询记录
+
+            // 生成三方查询记录
+            List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
+            List<CfgQueryOptionEntity> options = cfgQueryOptionService.list(
+                    new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
+            );
+            Map<String, Object> optionMap = new HashMap<>();
+            for (CfgQueryOptionEntity option : options) {
+                if ("main".equals(option.getFieldBelongsType())) {
+                    optionMap.put(option.getConditionField(), option.getConditionFieldName());
+                } else {
+                    Map<String, String> map;
+                    if (optionMap.containsKey(option.getFieldBelongsType())) {
+                        map = (Map<String, String>) optionMap.get(option.getFieldBelongsType());
+                    } else {
+                        map = new HashMap<>();
+                        optionMap.put(option.getFieldBelongsType(), map);
+                    }
+                    map.put(option.getConditionField(), option.getConditionFieldName());
+                }
+            }
+            for (ApproveTaskDetailDTO.AddDTO addDTO : addDTOS) {
+                if (addDTO.getEntityCode()!=null){
+                    Map<String, String> codeMap = (Map<String, String>) optionMap.get(addDTO.getEntityCode());
+                    addDTO.setSysFieldName(codeMap.get(addDTO.getSysField()));
+                    continue;
+                }
+                addDTO.setSysFieldName(optionMap.get(addDTO.getSysField()).toString());
+            }
+            //验证addDTOS
+            log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
+            ApproveTaskInfoDTO.AddDTO addDTO = buildApproveTaskInfo(dto, processDefinition);
+            addDTO.setDetailList(addDTOS);
             addDTO.setThirdInstanceId(instanceCode);
-            addDTO.setThirdInstanceId(code);
-            addDTO.setBussinessKey(dto.getBusinessKey());
-            addDTO.setBussinessCode(dto.getBusinessCode());
-            addDTO.setBussinessId(dto.getBusinessId());
+            addDTO.setThirdApprovalCode(code);
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
-            throw new RuntimeException("飞书创建审批实例失败："+e);
+            throw new RuntimeException("飞书创建审批实例失败：" + e);
         }
+    }
+
+    private ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(CfgProcessDTO.StartDTO dto, ThirdProcessDefinitionEntity processDefinition) {
+        ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
+        addDTO.setSourcePlatform(processDefinition.getSourcePlatform());
+        addDTO.setType(processDefinition.getType());
+        addDTO.setThirdDefinniationName(processDefinition.getName());
+        addDTO.setBussinessKey(dto.getBusinessKey());
+        addDTO.setBussinessCode(dto.getBusinessCode());
+        addDTO.setBussinessId(dto.getBusinessId());
+        addDTO.setHappenTime(LocalDateTime.now());
+        addDTO.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
+        return addDTO;
     }
 }

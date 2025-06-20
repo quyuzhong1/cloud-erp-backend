@@ -1797,7 +1797,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date: 2023/7/11 14:11
      */
     private void startProcess(PurchaseOrderEntity entity) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LoginUser userInfo = UserContext.getLoginUser();
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
@@ -1851,6 +1851,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date 2025/5/21 10:51
      */
     private Map<String, Object> getVariablesMap(PurchaseOrderEntity entity) {
+        Map<String, String> typeMap = dictBasicService.getByKey("purchaseOrderType").stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        entity.setType(typeMap.get(entity.getType()));
+        entity.setApproveStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()).getName());
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -1883,6 +1886,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //供应商map
         String accountId = entity.getSupplierAccountId();
+        Map<String, String> payMethod = dictBasicService.getByKey("supplierPayMode").stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+        supplier.setPayMethodId(payMethod.get(supplier.getPayMethodId()));
         Map<String, Object> supplierMap = BeanUtil.beanToMap(supplier);
         supplierMap.put("supplierAccountId", payeeMap.get(accountId));
         log.info("供应商账户,{}",payeeMap.get(accountId));

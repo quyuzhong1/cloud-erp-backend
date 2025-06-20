@@ -26,10 +26,7 @@ import com.erp.model.workflow.entity.ApproveTaskDetailEntity;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
-import com.erp.model.workflow.enums.ApproveTaskStatusEnum;
-import com.erp.model.workflow.enums.ApproveTaskTypeEnum;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
@@ -42,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -83,7 +81,6 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     public BaseResultDTO.AddDTO add(ApproveTaskInfoDTO.AddDTO addDTO) {
         ApproveTaskInfoEntity approveTaskInfoEntity = new ApproveTaskInfoEntity();
         BeanMapperUtils.copy(addDTO, approveTaskInfoEntity);
-
         // 数据处理
         handleData(approveTaskInfoEntity);
 
@@ -201,9 +198,11 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
         }
+        if (entity.getStatus().equals(ApproveTaskStatusEnum.ALL)){
+            throw new ServiceException("三方生成查询已完成，请不要重复生成");
+        }
         List<ApproveTaskDetailEntity> list = approveTaskDetailService.list(new LambdaQueryWrapper<ApproveTaskDetailEntity>().eq(ApproveTaskDetailEntity::getMianId, id).orderByAsc(ApproveTaskDetailEntity::getIndex));
-        //list首先按照entitycode分组，entitycode为空的使用sysfield，entitycode相同，按照index分组，取sysField和sysFieldvalue,组合成list<Map<String,Obejct>>，entitycode取sysField和sysFieldvalue,组合成map,
-        // list最终处理后的结构是Map,entitycode为空的sysField和sysFieldvalue，不为空的entitycode为key，value是List<Map<sysField,sysFieldvalue>>
+        //处理结构
         Map<String, Object> detailMap = new HashMap<>();
         if (CollUtil.isNotEmpty(list)) {
             // 按 entityCode 分组
@@ -252,7 +251,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         }
         for (ApproveTaskInfoDTO.ListDTO listDTO : list) {
             //来源平台
-            listDTO.setSourcePlatformName(CfgProcessRuleTypeEnum.getName(listDTO.getSourcePlatform()));
+            listDTO.setSourcePlatformName(ProcessSourcePlatformEnum.getName(listDTO.getSourcePlatform()));
             //流程类型
             listDTO.setTypeName(ApproveTaskTypeEnum.getName(listDTO.getType()));
             //执行状态

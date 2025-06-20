@@ -1,15 +1,19 @@
 package com.erp.server.workflow.service.mq;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
-import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
-import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
+import com.erp.model.workflow.enums.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.service.*;
@@ -22,9 +26,15 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.ApproveTypeEnum.PASS;
+import static com.common.business.enums.ApproveTypeEnum.REJECT;
 
 /**
  *
@@ -60,7 +70,11 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     @Resource
     ThirdProcessManagementService thirdProcessManagementService;
 
+    @Resource
+    ProcessManagementService processManagementService;
 
+    @Resource
+    SysUserFeign sysUserFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -108,17 +122,29 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         entity.setForm(jsonObject.getStr(FsRequestBodyAttributesEnum.FORM.getCode()));
         entity.setInstanceCode(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
         entity.setApprovalName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
+        entity.setTaskList(jsonObject.getStr(FsRequestBodyAttributesEnum.TASKLIST.getCode()));
         return entity;
     }
 
     private void handleUpdateStatus(JSONObject jsonObject, String sourcePlatform) {
-        //TODO 更新thirdTask
+        //更新或新增thirdProcessMan and taskMan
         thirdProcessManagementService.addOrUpdate(jsonObject,sourcePlatform);
+
+        //回调
+        FSApprovalStatusEnum statusEnum = FSApprovalStatusEnum.getByCode(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        if (statusEnum != FSApprovalStatusEnum.PENDING) {
+            ApproveTaskInfoEntity one = approveTaskInfoService.getOne(
+                    new LambdaQueryWrapper<ApproveTaskInfoEntity>()
+                            .eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()))
+                            .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
+            );
+            handleCallbackLogic(jsonObject, statusEnum, one);
+        }
     }
 
     private void handleAddInstance(JSONObject jsonObject) {
         // 从 jsonObject 中获取 instanceCode
-        CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, jsonObject.getStr("bussinessKey")).eq(CfgThirdProcessEntity::getIsDeleted, false));
+        CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).eq(CfgThirdProcessEntity::getIsDeleted, false));
 
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
 
@@ -126,17 +152,6 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
 
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
-        String instanceCode = jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode());
-        // 根据 instanceCode 查询对应的记录
-        ApproveTaskInfoEntity taskInfo = approveTaskInfoService.getOne(
-                new LambdaQueryWrapper<ApproveTaskInfoEntity>()
-                        .eq(ApproveTaskInfoEntity::getThirdInstanceId, instanceCode)
-        );
-        // 如果记录不存在，记录日志并返回
-        if (taskInfo == null) {
-            log.warn("未找到对应的三方生成查询记录: instanceCode={}", instanceCode);
-            return;
-        }
         // 完成新增数据事务提交之后,异步执行
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -156,5 +171,55 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         } catch (Exception e) {
             throw new ServiceException("创建单据异常");
         }
+    }
+
+
+    /**
+     * 根据流程状态处理最终的回调逻辑。
+     */
+    private void handleCallbackLogic(JSONObject jsonObject, FSApprovalStatusEnum statusEnum, ApproveTaskInfoEntity one) {
+        JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
+        JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
+        String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
+        Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
+        LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
+        switch (statusEnum) {
+            case APPROVED:
+                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+                break;
+            case REJECTED:
+                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
+                break;
+            case CANCELED:
+                ApproveDTO.CancelProcessDTO cancelProcessDTO = new ApproveDTO.CancelProcessDTO();
+                cancelProcessDTO.setBusinessKey(one.getBussinessKey());
+                cancelProcessDTO.setId(one.getBussinessId());
+                processManagementService.cancelProcessFeign(cancelProcessDTO);
+                break;
+            case DELETED:
+                ApproveDTO.DisApproveDTO disApproveDTO = new ApproveDTO.DisApproveDTO();
+                disApproveDTO.setId(one.getBussinessId());
+                disApproveDTO.setBusinessKey(one.getBussinessKey());
+                processManagementService.disApproveFeign(disApproveDTO);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 原始的回调方法，保持不变。
+     */
+    public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime) {
+        EndProcessDTO processDTO = new EndProcessDTO();
+        processDTO.setBusinessKey(entity.getBussinessKey());
+        processDTO.setBusinessId(entity.getBussinessId());
+        processDTO.setApproveStatus(ApproveTypeEnum.getByCode(approveStatus));
+        // 来自第三方系统的用户ID可能需要转换为您系统内部的用户ID
+        SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
+        processDTO.setApproveUserId(user.getUserId());
+        processDTO.setApproveTime(approveTime);
+        processManagementService.callFeign(entity.getBussinessKey(), processDTO);
     }
 }

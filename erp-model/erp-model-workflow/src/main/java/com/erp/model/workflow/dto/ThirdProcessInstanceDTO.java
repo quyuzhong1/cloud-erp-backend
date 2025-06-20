@@ -168,6 +168,11 @@ public class ThirdProcessInstanceDTO implements Serializable {
         @Size(max = 30,message = "审批实例 Code最大长度不能超过30位")
         private String instanceCode;
 
+        /**
+         * 节点集合
+         */
+        @NotBlank(message = "节点集合不能为空")
+        private String taskList;
     }
 
 
