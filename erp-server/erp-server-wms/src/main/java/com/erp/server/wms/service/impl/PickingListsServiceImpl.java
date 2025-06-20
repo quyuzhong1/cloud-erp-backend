@@ -467,8 +467,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())){
                             printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
                         }
-                        printSkuSingleView.setParentSkuNo(requisitionApplicationDetail.getSkuNo());
-                        printSkuSingleView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
                         printSkuSingleView.setIsCombination(Boolean.FALSE);
                         printSkuSingleView.setGroupName(customerPO + "-" + toCountry);
                         groupList.add(customerPO + "-" + toCountry);
@@ -538,8 +536,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
                         printSkuSingleView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
-                        printSkuSingleView.setParentSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
-                        printSkuSingleView.setParentSkuQty(soDeliveryNoticeDetailEntity.getPickingQty());
                         printSkuSingleView.setIsCombination(Boolean.FALSE);
                         printSkuSingleView.setGroupName(customerPO + "-" + toCountry);
                         groupList.add(customerPO + "-" + toCountry);
