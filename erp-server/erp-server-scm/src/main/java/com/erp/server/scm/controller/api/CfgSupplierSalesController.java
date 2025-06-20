@@ -173,20 +173,20 @@ public class CfgSupplierSalesController extends BaseController {
         List<CfgSupplierSalesEntity> list = cfgSupplierSalesService.lambdaQuery().in(CfgSupplierSalesEntity::getId, ids).list();
         Map<String, CfgSupplierSalesEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgSupplierSalesEntity::getId, w -> w));
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
+            BatchResultDTO result;
             try {
-                deleteResult = cfgSupplierSalesService.enable(id,dto.getDisabled());
+                result = cfgSupplierSalesService.enable(id,dto.getDisabled());
             }catch (Exception e){
                 log.error("销量设置更新失败",e);
                 CfgSupplierSalesEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "销量设置不存在, 更新失败");
-                    resultDTOS.add(deleteResult);
+                    result = BatchResultDTO.fail(id, id, "销量设置不存在, 更新失败");
+                    resultDTOS.add(result);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
-            resultDTOS.add(deleteResult);
+            resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
