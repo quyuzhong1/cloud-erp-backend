@@ -2941,6 +2941,103 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = this.listFirstMileDeliveryByTask(sourceIds);
         List<String> deliveryIds = firstMileDeliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
+        //构建装箱数据
+        buildPackingData(records, firstMileDeliveryEntityList, firstMileDeliveryDetailEntityList);
+        //先根据装箱任务进行分组
+        Map<String, List<WmsCartonDetailDTO.ListPackingDetailDTO>> taskMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskCode));
+        LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = new LinkedList<>();
+        for (String taskCode : taskMap.keySet()) {
+            List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailDTOList = taskMap.get(taskCode);
+            //按照箱号进行分组
+            Map<Integer, List<WmsCartonDetailDTO.ListPackingDetailDTO>> boxNoMap = packingDetailDTOList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getBoxNo));
+            Map<String, Integer> boxTotalQtyMap = packingDetailDTOList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
+            //遍历map
+            String currentMd5 = "";
+            HashMap<String, Integer> startBoxNoMap = new HashMap<>();
+            HashMap<String, Integer> endBoxNoMap = new HashMap<>();
+            //总箱数
+            HashMap<String, Integer> boxQtyMap = new HashMap<>();
+            //装箱总数量
+            HashMap<String, Integer> totalQtyMap = new HashMap<>();
+            //箱子包装重量
+            HashMap<String, BigDecimal> boxWeightMap = new HashMap<>();
+            //箱子包装尺长
+            HashMap<String, BigDecimal> boxLengthMap = new HashMap<>();
+            //箱子包装尺宽
+            HashMap<String, BigDecimal> boxWidthMap = new HashMap<>();
+            //箱子包装尺高
+            HashMap<String, BigDecimal> boxHeightMap = new HashMap<>();
+            HashMap<Integer, LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO>> boxMap = new HashMap<>();
+            List<Map.Entry<Integer,List<WmsCartonDetailDTO.ListPackingDetailDTO>>> list = new ArrayList<>(boxNoMap.entrySet());
+            for (int i = 0; i < list.size(); i++) {
+                Map.Entry<Integer, List<WmsCartonDetailDTO.ListPackingDetailDTO>> map = list.get(i);
+                List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = map.getValue();
+                Integer boxNo = map.getKey();
+                //本箱md5
+                String md5Str = detailDTOList.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getMd5).sorted().distinct().collect(Collectors.joining(","));
+                //起始箱号
+                if (!startBoxNoMap.containsKey(md5Str)){
+                    startBoxNoMap.put(md5Str, boxNo);
+                }
+                //装箱总箱数
+                Integer boxQty = boxQtyMap.getOrDefault(md5Str, 0);
+                boxQtyMap.put(md5Str, boxQty + 1);
+                //装箱总数量
+                Integer totalQty = totalQtyMap.getOrDefault(md5Str, 0);
+                Integer boxTotalQty = boxTotalQtyMap.getOrDefault(detailDTOList.get(0).getId(), 0);
+                totalQtyMap.put(md5Str, totalQty + boxTotalQty);
+                endBoxNoMap.put(md5Str, boxNo);
+                //箱子包装重量
+                boxWeightMap.put(md5Str, boxWeightMap.getOrDefault(md5Str, BigDecimal.ZERO).max(detailDTOList.get(0).getPackageWeight()));
+                //箱子包装尺长
+                boxLengthMap.put(md5Str, boxLengthMap.getOrDefault(md5Str, BigDecimal.ZERO).max(detailDTOList.get(0).getLength()));
+                //箱子包装尺宽
+                boxWidthMap.put(md5Str, boxWidthMap.getOrDefault(md5Str, BigDecimal.ZERO).max(detailDTOList.get(0).getWidth()));
+                //箱子包装尺高
+                boxHeightMap.put(md5Str, boxHeightMap.getOrDefault(md5Str, BigDecimal.ZERO).max(detailDTOList.get(0).getHeight()));
+
+                LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = new LinkedList<>();
+                if (CharSequenceUtil.isBlank(currentMd5)){
+                    currentMd5 = md5Str;
+                    //同箱数据置空相同字段
+                    listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
+                }else if (!Objects.equals(currentMd5, md5Str)){
+                    //与上一箱不相同时 赋值上一序列的
+                    Integer startBoxNo = startBoxNoMap.get(currentMd5);
+                    List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS1 = boxMap.get(startBoxNo);
+                    if (CollUtil.isNotEmpty(detailDTOS1)){
+                        LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS2 = new LinkedList<>();
+                        detailDTOS1.forEach(detailDTO ->{
+                            getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap,boxWeightMap,boxLengthMap,boxWidthMap,boxHeightMap);
+                            detailDTOS2.add(detailDTO);
+                        });
+                        boxMap.put(startBoxNo, detailDTOS2);
+                    }
+                    //初始化相同md5的起始箱号
+                    startBoxNoMap.remove(currentMd5);
+                    endBoxNoMap.remove(currentMd5);
+                    boxQtyMap.remove(currentMd5);
+                    currentMd5 = md5Str;
+                    //不同箱数据置空相同字段
+                    listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
+                }
+                //最后一箱需要判断是否要进行赋值
+                if (CollUtil.isNotEmpty(listPackingDetailDTOS)){
+                    listPackingDetailDTOS.forEach(detailDTO ->{
+                        getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap, boxWeightMap, boxLengthMap, boxWidthMap, boxHeightMap);
+                    });
+                    boxMap.put(boxNo,listPackingDetailDTOS);
+                }
+            }
+            boxMap.keySet().stream().sorted().forEach(boxNo ->{
+                LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = boxMap.get(boxNo);
+                detailDTOS.addAll(detailDTOList);
+            });
+        }
+        return detailDTOS;
+    }
+
+    private static void buildPackingData(List<WmsCartonDetailDTO.ListPackingDetailDTO> records, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
         records.forEach(detailDTO ->{
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(detailDTO.getSourceId()) || v.getId().equals(detailDTO.getSourceId())).findFirst().orElse(new FirstMileDeliveryEntity());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId()) && v.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
@@ -2953,79 +3050,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     + detailDTO.getPlatformSku() + "-" + detailDTO.getSkuNo() + "-" + detailDTO.getSku() + "-" + detailDTO.getPackQty());
             detailDTO.setMd5(md5);
         });
-        //按照箱号进行分组
-        Map<Integer, List<WmsCartonDetailDTO.ListPackingDetailDTO>> boxNoMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getBoxNo));
-        Map<String, Integer> boxTotalQtyMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
-        //遍历map
-        String currentMd5 = "";
-        HashMap<String, Integer> startBoxNoMap = new HashMap<>();
-        HashMap<String, Integer> endBoxNoMap = new HashMap<>();
-        //总箱数
-        HashMap<String, Integer> boxQtyMap = new HashMap<>();
-        //装箱总数量
-        HashMap<String, Integer> totalQtyMap = new HashMap<>();
-        HashMap<Integer, LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO>> boxMap = new HashMap<>();
-        LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = new LinkedList<>();
-        List<Map.Entry<Integer,List<WmsCartonDetailDTO.ListPackingDetailDTO>>> list = new ArrayList<>(boxNoMap.entrySet());
-        for (int i = 0; i < list.size(); i++) {
-            Map.Entry<Integer, List<WmsCartonDetailDTO.ListPackingDetailDTO>> map = list.get(i);
-            List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = map.getValue();
-            Integer boxNo = map.getKey();
-            //本箱md5
-            String md5Str = detailDTOList.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getMd5).sorted().distinct().collect(Collectors.joining(","));
-            //起始箱号
-            if (!startBoxNoMap.containsKey(md5Str)){
-                startBoxNoMap.put(md5Str, boxNo);
-            }
-            //装箱总箱数
-            Integer boxQty = boxQtyMap.getOrDefault(md5Str, 0);
-            boxQtyMap.put(md5Str, boxQty + 1);
-            //装箱总数量
-            Integer totalQty = totalQtyMap.getOrDefault(md5Str, 0);
-            Integer boxTotalQty = boxTotalQtyMap.getOrDefault(detailDTOList.get(0).getId(), 0);
-            totalQtyMap.put(md5Str, totalQty + boxTotalQty);
-            endBoxNoMap.put(md5Str, boxNo);
-            LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = new LinkedList<>();
-            if (CharSequenceUtil.isBlank(currentMd5)){
-                currentMd5 = md5Str;
-                //同箱数据置空相同字段
-                listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
-            }else if (!Objects.equals(currentMd5, md5Str)){
-                //与上一箱不相同时 赋值上一序列的
-                Integer startBoxNo = startBoxNoMap.get(currentMd5);
-                List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS1 = boxMap.get(startBoxNo);
-                if (CollUtil.isNotEmpty(detailDTOS1)){
-                    LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS2 = new LinkedList<>();
-                    detailDTOS1.forEach(detailDTO ->{
-                        getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap);
-                        detailDTOS2.add(detailDTO);
-                    });
-                    boxMap.put(startBoxNo, detailDTOS2);
-                }
-                //初始化相同md5的起始箱号
-                startBoxNoMap.remove(currentMd5);
-                endBoxNoMap.remove(currentMd5);
-                boxQtyMap.remove(currentMd5);
-                currentMd5 = md5Str;
-                //不同箱数据置空相同字段
-                listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
-            }
-            //最后一箱需要判断是否要进行赋值
-            if (CollUtil.isNotEmpty(listPackingDetailDTOS)){
-                listPackingDetailDTOS.forEach(detailDTO ->{
-                    getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap);
-                });
-                boxMap.put(boxNo,listPackingDetailDTOS);
-            }
-        }
-        boxMap.keySet().stream().sorted().forEach(boxNo ->{
-            LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = boxMap.get(boxNo);
-            detailDTOS.addAll(detailDTOList);
-        });
-        return detailDTOS;
     }
 
-    private static void getExportBoxNo(WmsCartonDetailDTO.ListPackingDetailDTO detailDTO, HashMap<String, Integer> boxQtyMap, HashMap<String, Integer> totalQtyMap, HashMap<String, Integer> startBoxNoMap, HashMap<String, Integer> endBoxNoMap) {
+    private static void getExportBoxNo(WmsCartonDetailDTO.ListPackingDetailDTO detailDTO, HashMap<String, Integer> boxQtyMap, HashMap<String, Integer> totalQtyMap, HashMap<String, Integer> startBoxNoMap, HashMap<String, Integer> endBoxNoMap, HashMap<String, BigDecimal> boxWeightMap, HashMap<String, BigDecimal> boxLengthMap, HashMap<String, BigDecimal> boxWidthMap, HashMap<String, BigDecimal> boxHeightMap) {
         String md5Str1 = detailDTO.getMd5();
         if (CharSequenceUtil.isNotBlank(md5Str1)){
             detailDTO.setBoxQty(boxQtyMap.getOrDefault(md5Str1, 1));
@@ -3037,6 +3064,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }else {
                 detailDTO.setExportBoxNo(startNo + "-" + endNo);
             }
+            detailDTO.setPackageWeight(boxWeightMap.getOrDefault(md5Str1, BigDecimal.ZERO));
+            detailDTO.setPackageWeightStr(boxWeightMap.getOrDefault(md5Str1, BigDecimal.ZERO).toPlainString());
+            detailDTO.setLength(boxLengthMap.getOrDefault(md5Str1, BigDecimal.ZERO));
+            detailDTO.setWidth(boxWidthMap.getOrDefault(md5Str1, BigDecimal.ZERO));
+            detailDTO.setHeight(boxHeightMap.getOrDefault(md5Str1, BigDecimal.ZERO));
         }
     }
 
