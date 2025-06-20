@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.dmp.enums.LingxingPlatformCodeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -61,7 +62,7 @@ public class DmpInputLxOrderReceiverNextDmpHandler extends DmpInputDoNextDmpHand
                 platformCode = platformInfoMap.getOrDefault("platform_order_no", "").toString();
                 // 解析来源平台
                 String platformCodeStr = platformInfoMap.getOrDefault("platform_code", "").toString();
-                isTemu = platformCodeStr.equals("10024");
+                isTemu = platformCodeStr.equals(LingxingPlatformCodeEnum.TEMU_FBP.getCode());
             }
         }
         // 校验和获取ERP店铺

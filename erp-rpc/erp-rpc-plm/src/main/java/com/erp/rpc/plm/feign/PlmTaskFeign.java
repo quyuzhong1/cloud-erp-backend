@@ -628,4 +628,10 @@ public interface PlmTaskFeign {
 
     @GetMapping("/feign/product/getBrandByQuerySql")
     List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
+
+    /**
+     * 根据sku no 获取所有状态信息
+     */
+    @PostMapping("feign/product/listAllStatusSkuBySkuNos")
+    List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList);
 }

@@ -698,7 +698,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		Map<String , Map<String, Object>> resultList = new HashMap<>();
 		
 		List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<SkuVO> skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
         List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
@@ -762,8 +762,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<SoInfoEntity> soInfoEntityList = new LinkedList();
         // 查询B2B订单
         List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
-        if (CollectionUtils.isEmpty(b2bReturnInstockList)){
-            List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+        if (CollectionUtils.isNotEmpty(b2bReturnInstockList)){
+            List<String> b2bSoIds = b2bReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
                     .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());

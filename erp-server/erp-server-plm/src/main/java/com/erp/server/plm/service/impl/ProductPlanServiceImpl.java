@@ -152,10 +152,21 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
-        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryService.getById(productPlanEntity.getApplicationCategoryId());
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
-        productPlanDTO.setApplicationCategoryName(applicationCategoryEntity.getName());
+        if(StringUtils.isNotBlank(productPlanEntity.getApplicationCategoryId())){
+            List<String> applicationCategoryIdList = Arrays.stream(productPlanEntity.getApplicationCategoryId().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            productPlanDTO.setApplicationCategoryIdList(applicationCategoryIdList);
+            List<ApplicationCategoryEntity> applicationCategory = applicationCategoryService.listByIds(applicationCategoryIdList);
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                List<String> applicationCategoryNameList = applicationCategory.stream()
+                        .map(ApplicationCategoryEntity::getName)
+                        .collect(Collectors.toList());
+                productPlanDTO.setApplicationCategoryNameList(applicationCategoryNameList);
+            }
+        }
         resultDTO.setProductPlanDTO(productPlanDTO);
         //枚举格式化
         productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
@@ -347,7 +358,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isNotEmpty(category)) {
             dto.setCategory(category.getName());
         }
-
+        if(CollectionUtils.isNotEmpty(dto.getApplicationCategoryIdList())){
+            dto.setApplicationCategoryId(String.join(",", dto.getApplicationCategoryIdList()));
+        }
         //根据产品名称判断是否已经存在开发产品
         ProductInfoEntity productInfoEntity = productInfoService.getByName(dto.getName());
         if (ObjectUtils.isEmpty(productInfoEntity)) {

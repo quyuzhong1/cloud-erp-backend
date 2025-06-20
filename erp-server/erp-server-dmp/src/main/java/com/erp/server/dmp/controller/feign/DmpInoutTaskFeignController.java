@@ -20,6 +20,7 @@ import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
 import com.erp.server.dmp.inout.job.DmpInputTaskJob;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -58,6 +60,8 @@ public class DmpInoutTaskFeignController{
 	private ExecutorService dmpInputExecutorPool;
 	@Resource
 	private DmpInputTaskFactory dmpInputTaskFactory;
+	@Resource
+	private CfgSettingService cfgSettingService;
 
 	/**
 	 * @param updateDTO
@@ -167,6 +171,5 @@ public class DmpInoutTaskFeignController{
 				billTypeList,
 				nextLevelIdList);
 	}
-
 
 }

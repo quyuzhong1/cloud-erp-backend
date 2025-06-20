@@ -416,6 +416,7 @@
     </select>
     <select id="pushDownPurchaseView" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PushDownPurchaseView">
         SELECT
+            pro.return_mode as returnMode,
             pro.approve_status as approveStatus,
             pro.id,
             pro.supplier_contact_id as supplierContactId,
@@ -437,7 +438,8 @@
         prod.return_price as taxPrice,
         prod.replenish_qty as replenishQty,
         prod.deduct_amount_qty as deductAmountQty,
-        prod.warehouse_location as warehouseLocation
+        prod.warehouse_location as warehouseLocation,
+        prod.return_qty as returnQty
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
         WHERE  prod.is_deleted = FALSE

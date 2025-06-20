@@ -39,7 +39,8 @@
                kd.kingdee_dept_name       AS kingdeeDepartmentName,
                kp.name                    AS userPostName,
                su.user_name               AS userName,
-               ko.code as operatorCode
+               ko.code as operatorCode,
+               ko.disabled
         FROM kingdee_operator_ref_post ko
                  LEFT JOIN kingdee_user_ref_post krp
                            ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE
@@ -116,6 +117,7 @@
         WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null
           AND ko.type_code = #{params.type}
           AND ko.use_org_id = #{params.orgId}
+        and ko.disabled = false
     </select>
     <select id="listOperatorByUserIdList"
             resultType="com.erp.model.sys.dto.KingdeeOperatorRefPostDTO$OperatorDTO">
