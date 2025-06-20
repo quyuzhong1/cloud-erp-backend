@@ -168,7 +168,7 @@ public class SkuMappingController extends BaseController {
                 BatchResultDTO resultDTO = skuMappingService.updateCustomerLabel(dto);
                 resultDTOS.add(resultDTO);
             }catch (Exception e){
-                resultDTOS.add(BatchResultDTO.fail(dto.getPlatformSkuNo(),dto.getLabelUrl(),e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(dto.getPlatformSkuNo(),dto.getPlatformSkuNo(),e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

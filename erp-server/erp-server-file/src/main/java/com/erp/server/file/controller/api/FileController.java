@@ -19,6 +19,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 文件中心
+ */
 @RestController
 @RequestMapping("/file")
 public class FileController extends BaseController {

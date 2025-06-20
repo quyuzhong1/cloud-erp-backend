@@ -11,14 +11,34 @@ import java.util.List;
 
 @FeignClient(name = "erp-file", contextId = "file")
 public interface FileFeign {
-
+    /**
+     * 上传文件
+     * @param file
+     * @return
+     */
     @PostMapping("/feign/file/uploadFile")
     String uploadFile(@RequestParam("multipartFile") MultipartFile file);
 
+    /**
+     * 上传文件支持定义文件名称
+     * @param file
+     * @param fileName
+     * @return
+     */
     @PostMapping("/feign/file/uploadFile")
     String uploadFile(@RequestParam("file") File file,@RequestParam("fileName") String fileName);
+
+    /**
+     * 删除文件
+     * @param url
+     * @return
+     */
     @PostMapping("/feign/file/deleteFile")
     int deleteFile(@RequestParam("url") String url);
+    /**
+     * 批量删除
+     * @param urlList
+     */
     @PostMapping("/feign/file/deleteBatchFile")
     void deleteBatchFile(@RequestParam("urlList") List<String> urlList);
 }

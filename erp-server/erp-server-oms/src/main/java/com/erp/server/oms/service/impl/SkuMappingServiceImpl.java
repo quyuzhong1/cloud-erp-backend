@@ -1949,7 +1949,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         map.put("dateStr", "");
         InputStream inputStream = new ByteArrayInputStream(content);
         byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
-        return FastDFSClientUtil.uploadFile(bytes, FileTemplateConstant.CUSTOMER_SKU_LABEL,null);
+        return FastDFSClientUtil.uploadFile(bytes, FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf",null);
     }
 
     @Override
@@ -1997,7 +1997,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CharSequenceUtil.isBlank(dto.getLabelUrl())){
             //根据模板生成pdf文件
             existsEntity.setLabelUrl(getLabelUrl(skuVO.getSkuNo(),dto.getPlatformSkuNo()));
-            existsEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+            existsEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
             existsEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
         } else if (!Objects.equals(existsEntity.getLabelUrl(), dto.getLabelUrl())){
             existsEntity.setLabelUrl(dto.getLabelUrl());
@@ -2127,14 +2127,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public BatchResultDTO updateCustomerLabel(SkuMappingDTO.CustomerLabelDTO dto) {
-        List<ListingInfoEntity> entityList = listingInfoService.listByParam(RuleTypeEnum.WAREHOUSE.getCode(), null, Collections.singletonList(dto.getPlatformSkuNo()));
+        String fileName = dto.getPlatformSkuNo();
+        int dotIndex = fileName.lastIndexOf(".pdf");
+        String platformSkuNo = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
+        List<ListingInfoEntity> entityList = listingInfoService.listByParam(RuleTypeEnum.WAREHOUSE.getCode(), null, Collections.singletonList(platformSkuNo));
         if (CollUtil.isEmpty(entityList)){
             throw new ServiceException("文件名匹配不到客户SKU");
         }else  if (entityList.size() > 1){
             throw new ServiceException("存在相同的客户SKU，请手动单个上传");
         }
         ListingInfoEntity listingInfoEntity = entityList.get(0);
-        listingInfoService.updateLabelInfo(listingInfoEntity.getId(), dto.getLabelUrl(),LabelSourceTypeEnum.CUSTOMER.getCode(),dto.getLabelFileName());
+        listingInfoService.updateLabelInfo(listingInfoEntity.getId(), dto.getLabelUrl(),LabelSourceTypeEnum.CUSTOMER.getCode(),CharSequenceUtil.isNotBlank(dto.getLabelFileName())? dto.getLabelFileName() : fileName);
         return BatchResultDTO.success();
     }
 
