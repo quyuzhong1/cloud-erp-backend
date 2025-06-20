@@ -1247,6 +1247,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                     ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
             addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
+            addDTO.setRemark(entity.getReturnRemark());
             addList.add(addDTO);
         }
         srmPoReconciliationFeign.add(addList);
