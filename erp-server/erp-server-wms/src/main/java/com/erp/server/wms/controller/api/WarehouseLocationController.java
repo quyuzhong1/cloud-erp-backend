@@ -62,7 +62,7 @@ public class WarehouseLocationController extends BaseController {
      * @return
      */
     @PostMapping(value = "/select")
-    public ApiResult<List<WarehouseLocationDTO.LocationListDTO>> select(@RequestParam(value = "warehouseId")String warehouseId) {
+    public ApiResult<List<WarehouseLocationDTO.LocationListDTO>> select(@RequestBody String warehouseId) {
         return success(warehouseLocationService.select(warehouseId));
     }
 

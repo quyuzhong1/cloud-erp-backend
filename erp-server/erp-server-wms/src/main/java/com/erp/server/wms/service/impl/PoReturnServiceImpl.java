@@ -1246,7 +1246,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             addDTO.setSourceDetailId(poReturnDetailEntity.getId());
             addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
             addDTO.setBusinessStatus(entity.getConfirmStatus());
-            addDTO.setDate(entity.getConfirmDate());
+            addDTO.setDate(entity.getBillDate());
             addDTO.setSkuId(poReturnDetailEntity.getSkuId());
             addDTO.setQty(poReturnDetailEntity.getReturnQty() * -1);
             addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());

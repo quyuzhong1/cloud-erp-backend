@@ -716,7 +716,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         for (PoInstockDetailEntity poInstockDetailEntity : poInstockDetailList) {
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             //送货单信息
-            WarehouseReceiveDTO.ReceiveSourceDTO receiveSourceDTO = receiveMap.get(poInstockDetailEntity.getId());
+            WarehouseReceiveDTO.ReceiveSourceDTO receiveSourceDTO = receiveMap.get(poInstockDetailEntity.getSourceDetailId());
             if (ObjectUtil.isNotEmpty(receiveSourceDTO) && CharSequenceUtil.equals(receiveSourceDTO.getSourceType(),SourceTypeEnum.DELIVERY_ORDER.getCode())) {
                 addDTO.setDeliveryId(receiveSourceDTO.getSourceId());
                 addDTO.setDeliveryCode(receiveSourceDTO.getSourceCode());
@@ -738,9 +738,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setTaxPrice(poInstockDetailEntity.getTaxPrice());
             addDTO.setSettleOrgId(entity.getReceiveOrgId());
             addDTO.setCurrency(poInstockDetailEntity.getCurrency());
-            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
-                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
-            addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
             addDTO.setRemark(poInstockDetailEntity.getRemark());
             addList.add(addDTO);
         }
@@ -984,11 +981,17 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private void checkPoReconciliation (PoInstockEntity entity) {
       List<PoReconciliationDetailEntity> list =  FeignQuery.create(PoReconciliationDetailEntity.class)
               .eq(PoReconciliationDetailEntity::getSourceId,entity.getId())
-              .ne(PoReconciliationDetailEntity::getMainId,"")
               .list();
-      if (CollUtil.isNotEmpty(list)) {
+         if (CollUtil.isEmpty(list)) {
+              return;
+        }
+        long count = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getMainId())).count();
+        if (count > 0) {
           throw new ServiceException(ApiError.ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION);
-      }
+        }
+        //对账单删除
+        List<String> sourceDetailIdList = list.stream().map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        srmPoReconciliationFeign.deleteDetailBySourceDetailIdList(sourceDetailIdList);
     }
 
     /**
