@@ -7,10 +7,12 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -164,6 +166,7 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 字段映射
          */
+        @Valid
         private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList;
     }
 

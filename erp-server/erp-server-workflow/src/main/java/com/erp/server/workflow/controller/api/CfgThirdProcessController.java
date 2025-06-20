@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -59,7 +60,7 @@ public class CfgThirdProcessController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "三方审批生成新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgThirdProcessDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Valid CfgThirdProcessDTO.AddDTO dto) {
         return success(cfgThirdProcessService.add(dto));
     }
 
