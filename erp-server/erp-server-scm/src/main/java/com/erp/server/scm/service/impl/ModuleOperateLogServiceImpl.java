@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -222,8 +223,6 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        String  oldValue = "";
-        String  newValue = "";
         Class<?> aClass ;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
@@ -234,22 +233,34 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         if (!anEnum) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        if (StringUtils.isNotBlank(valuePair.getKey())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                oldValue = enumObject.getName();
-            } else {
-                oldValue = "";
-            }
-        }
-        if (StringUtils.isNotBlank(valuePair.getValue())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                newValue = enumObject.getName();
-            } else {
-                newValue = "";
-            }
-        }
+        String oldValue = handleEnumVale(valuePair.getKey(), aClass);
+        String newValue = handleEnumVale(valuePair.getValue(), aClass);
         return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * @description: 处理枚举数据
+     * @author Will
+     * @date: 2023/11/24 18:44
+     * @param object
+     * @param aClass
+     * @return String
+     */
+    private String handleEnumVale (String object,Class<?> aClass) {
+        if (CharSequenceUtil.isBlank(object)) {
+            return "";
+        }
+        List<String> resultList = new ArrayList<>();
+        String[] split = object.split(",");
+        for (String value : split) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
+            if (!org.springframework.util.ObjectUtils.isEmpty(enumObject)) {
+                resultList.add(enumObject.getName());
+            }
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
+            return "";
+        }
+        return String.join(",", resultList);
     }
 }

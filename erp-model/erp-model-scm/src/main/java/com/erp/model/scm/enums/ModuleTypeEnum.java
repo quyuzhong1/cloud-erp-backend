@@ -143,15 +143,18 @@ public enum ModuleTypeEnum {
 
     QC_NOTICE("124", "质检通知"),
     FIRST_MILE_CHANGE_RECORD("125", "头程调整记录"),
+    CFG_RULE_INVOICE("126", "开票规则"),
+    SKU_ORG_REF("127", "SKU与采购组织关系"),
     PROCESS_DELEGATE("125", "委托审批"),
     CFG_APPROVE_SYNC("126", "ERP审批同步配置"),
     CFG_PROCESS("127", "流程配置"),
-    CFG_RULE_INVOICE("126", "开票规则"),
     CFG_THIRD_PROCESS("128", "三方审批生成"),
     CFG_THIRD_NOTICE("129", "三方通知配置"),
-    SKU_ORG_REF("127", "SKU与采购组织关系"),
     VIRTUAL_ADJUST("126", "虚拟库存调整"),
     CONTRACT_INFO("128", "合同管理"),
+    SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+
+
 
     CFG_SUPPLIER_SALES("130", "销量设置"),
     ;

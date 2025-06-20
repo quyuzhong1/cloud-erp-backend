@@ -176,6 +176,9 @@ public class ExportWmsFeignController {
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
+    @Resource
+    private SupplierInventoryService supplierInventoryService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1045,5 +1048,18 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
     PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
         return virtualAdjustService.paging(dto);
+    }
+
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2025/6/19 11:03
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/supplierInventory")
+    @WebAdvanceQuery
+    public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
+        return supplierInventoryService.paging(dto);
     }
 }

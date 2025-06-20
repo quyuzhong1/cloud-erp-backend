@@ -1178,9 +1178,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     /**
      * 获取抄送人信息
-     * @author will 
+     * @author will
      * @date 2025/5/20 16:01
-     * @param propertiesDTO 
+     * @param propertiesDTO
      * @return List<FindUserDTO>
      */
     private List<FindUserDTO> getCopyUserList(CamundaDTO.PropertiesDTO propertiesDTO) {

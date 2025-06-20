@@ -88,11 +88,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private String cfgType;
 
         /**
-        * 流程定义code
-        */
-        private String processDefinitionId;
-
-        /**
          * 第三方字段id，唯一标识
          */
         private String thirdFieldId;
@@ -215,7 +210,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 配置id
         */
-        @NotBlank(message = "配置id不能为空")
         @Size(max = 19,message = "配置id最大长度不能超过19位")
         private String cfgId;
 
@@ -238,13 +232,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private String cfgType;
 
         /**
-        * 流程定义code
-        */
-        @NotBlank(message = "流程定义code不能为空")
-        @Size(max = 19,message = "流程定义code最大长度不能超过19位")
-        private String processDefinitionId;
-
-        /**
          * 第三方字段id，唯一标识
          */
         @NotBlank(message = "第三方字段id")
@@ -254,7 +241,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段是否是明细控件
          */
-        @NotBlank(message = "第三方字段是否是明细控件")
+        @NotNull(message = "是否是明细控件不能为空")
         private Boolean isDetailField;
 
         /**
@@ -266,7 +253,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 排序
          */
-        @Size(max = 255,message = "排序最大长度不能超过255位")
         private int index;
     }
 

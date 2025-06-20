@@ -66,7 +66,7 @@ public interface ProcessFormHandler {
      * @param variablesMap
      * @return
      */
-    List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap);
+    List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap,Map<String,String> optionMap);
 
     /**
      * 批量生成taskdetailDto Pull
