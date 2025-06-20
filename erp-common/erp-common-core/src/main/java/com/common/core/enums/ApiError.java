@@ -122,6 +122,7 @@ public enum ApiError implements Serializable {
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
+    RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
     /**
      * 警告信息 从800 开始

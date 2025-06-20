@@ -168,6 +168,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+    @Resource
+    private SupplierService self;
     /**
      * 保存供应商信息
      *
@@ -178,7 +181,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addSupplier(SupplierDTO.AddDTO dto) {
+    public SupplierEntity addSupplier(SupplierDTO.AddDTO dto) {
         checkName(null, dto.getName());
         //供应商联系信息
         List<SupplierContactDTO.AddDTO> contactList = dto.getContactList();
@@ -253,10 +256,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
-            return supplierId;
+            return addEntity;
         }
 
-        return "";
+        return null;
     }
 
     /**
@@ -270,13 +273,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SupplierDTO.AddDTO dto) {
-        String supplierId = this.addSupplier(dto);
-        if (StringUtils.isBlank(supplierId)) {
+        SupplierEntity entity = this.addSupplier(dto);
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_1019);
-        }
-        SupplierEntity entity = this.getById(supplierId);
-        if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98031);
         }
         BatchResultDTO submit = this.submit(entity);
         return submit.getSuccess();
@@ -1457,10 +1456,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public String add(SupplierDTO.InsertDTO addDTO) {
-        String id = addSupplier(addDTO);
+        SupplierEntity supplierEntity = addSupplier(addDTO);
+        if(Objects.isNull(supplierEntity)){
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
         //根据id，更新审核状态
-        updateApproveStatusForDisApprove(Collections.singletonList(id), addDTO.getApprovalStatus());
-        return id;
+        updateApproveStatusForDisApprove(Collections.singletonList(supplierEntity.getId()), addDTO.getApprovalStatus());
+        return supplierEntity.getId();
     }
 
     @Override

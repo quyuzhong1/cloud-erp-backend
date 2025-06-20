@@ -35,7 +35,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-17 15:12
      */
-    String addSupplier(SupplierDTO.AddDTO dto);
+    SupplierEntity addSupplier(SupplierDTO.AddDTO dto);
 
 
     /**
