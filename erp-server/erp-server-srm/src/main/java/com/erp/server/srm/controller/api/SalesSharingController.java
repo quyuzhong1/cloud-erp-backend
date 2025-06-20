@@ -1,29 +1,24 @@
-package com.erp.server.scm.controller.api;
+package com.erp.server.srm.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.scm.service.SalesSharingService;
+import com.erp.server.srm.service.SalesSharingService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.scm.dto.SalesSharingDTO;
+import com.erp.model.srm.dto.SalesSharingDTO;
 
 /**
  * 销量共享表
@@ -40,7 +35,6 @@ public class SalesSharingController extends BaseController {
     @Resource
     private SalesSharingService salesSharingService;
 
-
     /**
      * 列表查询
      * @author jack
@@ -49,14 +43,20 @@ public class SalesSharingController extends BaseController {
      * @return ApiResult<PagingVO<SalesSharingDTO.ListDTO>>
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:salesSharing:paging",
-            tableAlias = "ss"
-    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SalesSharingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO) {
         return success(salesSharingService.paging(pagingParamDTO));
+    }
+
+    /**
+     * 获取通知内容
+     * @author jack
+     * @date: 2025-06-13
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getNoticeContent")
+    public ApiResult<String> getNoticeContent() {
+        return success(salesSharingService.getNoticeContent());
     }
 
     /**
@@ -68,16 +68,14 @@ public class SalesSharingController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:salesSharing:export",
-            tableAlias = "ss"
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     @WebAdvanceQuery
     public ApiResult<Object> exportList(@RequestBody @Validated SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        salesSharingService.exportList(pagingParamDTO, response);
-        return success();
+        String msg = salesSharingService.exportList(pagingParamDTO, response);
+        if(StringUtils.isBlank(msg)){
+            return success();
+        }else {
+            return failure(msg);
+        }
     }
 
 

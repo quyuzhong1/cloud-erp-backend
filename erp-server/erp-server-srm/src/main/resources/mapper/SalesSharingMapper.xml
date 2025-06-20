@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.scm.mapper.SalesSharingMapper">
+<mapper namespace="com.erp.server.srm.mapper.SalesSharingMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SalesSharingEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.SalesSharingEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -19,8 +19,9 @@
        <result column="product_image_url" property="productImageUrl" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="sku_name" property="skuName" />
+       <result column="product_name" property="productName" />
        <result column="sale_state" property="saleState" />
+       <result column="sale_state_name" property="saleStateName" />
        <result column="saleable_stock" property="saleableStock" />
        <result column="daily_sales" property="dailySales" />
        <result column="sales_last_3_days" property="salesLast3Days" />
@@ -50,8 +51,9 @@ ss.product_image AS productImage,
 ss.product_image_url AS productImageUrl,
 ss.sku_id AS skuId,
 ss.sku_no AS skuNo,
-ss.sku_name AS skuName,
+ss.product_name AS productName,
 ss.sale_state AS saleState,
+ss.sale_state_name AS saleStateName,
 ss.saleable_stock AS saleableStock,
 ss.daily_sales AS dailySales,
 ss.sales_last_3_days AS salesLast3Days,
@@ -89,7 +91,11 @@ ss.saleable_days AS saleableDays
         ss.create_time DESC
     </sql>
 
-    <select id="paging" resultType="com.erp.model.scm.dto.SalesSharingDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.srm.dto.SalesSharingDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listByParams" resultType="com.erp.model.srm.dto.SalesSharingDTO$ListDTO">
         <include refid="paging_sql"></include>
     </select>
 

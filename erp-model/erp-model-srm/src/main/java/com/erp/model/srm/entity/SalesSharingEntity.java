@@ -1,4 +1,4 @@
-package com.erp.model.scm.entity;
+package com.erp.model.srm.entity;
 
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -63,48 +62,53 @@ public class SalesSharingEntity extends BaseEntity<SalesSharingEntity> {
     /**
     * 产品名称
     */
-    @TableField("sku_name")
-    private String skuName;
+    @TableField("product_name")
+    private String productName;
     /**
     * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
     */
     @TableField("sale_state")
     private Integer saleState;
     /**
+    * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
+    */
+    @TableField("sale_state")
+    private String saleStateName;
+    /**
     * 可销库存
     */
     @TableField("saleable_stock")
-    private BigDecimal saleableStock;
+    private Integer saleableStock;
     /**
     * 原始日均销量
     */
     @TableField("daily_sales")
-    private BigDecimal dailySales;
+    private Integer dailySales;
     /**
     * 近3日销量
     */
     @TableField("sales_last_3_days")
-    private BigDecimal salesLast3Days;
+    private Integer salesLast3Days;
     /**
     * 近7日销量
     */
     @TableField("sales_last_7_days")
-    private BigDecimal salesLast7Days;
+    private Integer salesLast7Days;
     /**
     * 近30日销量
     */
     @TableField("sales_last_30_days")
-    private BigDecimal salesLast30Days;
+    private Integer salesLast30Days;
     /**
     * 近60日销量
     */
     @TableField("sales_last_60_days")
-    private BigDecimal salesLast60Days;
+    private Integer salesLast60Days;
     /**
     * 近90日销量
     */
     @TableField("sales_last_90_days")
-    private BigDecimal salesLast90Days;
+    private Integer salesLast90Days;
     /**
     * 原始销量比例
     */
