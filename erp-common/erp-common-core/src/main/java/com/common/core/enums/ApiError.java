@@ -1,6 +1,7 @@
 package com.common.core.enums;
 
 
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -120,6 +121,7 @@ public enum ApiError implements Serializable {
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
+    RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
     /**
      * 警告信息 从800 开始
@@ -248,6 +250,9 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
     // 下级节点无审核人，无法提交
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
+    // 流程未完成部署，请先完成流程部署
+    PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
+
     PROCESS_DELEGATE_CLOSE(94032,"仅支持运行中/待执行可操作终止"),
     PROCESS_DELEGATE_CLOSE_ERROR(94033,"委托审批单终止失败"),
     PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
@@ -448,6 +453,7 @@ public enum ApiError implements Serializable {
     ERROR_95160(95160,"文件不可超过{}m"),
     REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
     ERROR_95162(95162, "SKU【{}】记录不存在"),
+    SO_B2C_DETAIL_PRICE_NOT_EXIST(95162, "销售订单【{}】SKU【{}】单价不能为0"),
 
 
 
@@ -1146,7 +1152,7 @@ public enum ApiError implements Serializable {
     ERROR_92264(92264,"目的国家不能为空"),
     ERROR_92265(92265,"重量不能为空"),
     ERROR_92267(92267,"邮编不能为空"),
-
+    WAREHOUSE_NOT_EXIST_NO_PERMISSION(92268,"仓库不存在或没有仓库权限"),
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -1327,11 +1333,13 @@ public enum ApiError implements Serializable {
     ERROR_92056(92056,"同步金蝶B2C销售退货单未找到对应的仓库【{}】"),
     ERROR_92057(92057,"同步金蝶B2C销售退货单未找到对应的sku【{}】"),
     ERROR_92058(92058,"店铺不存在"),
+    SHOP_NOT_EXIST_NO_PERMISSION(92058,"店铺不存在或没有店铺权限"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
     ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),
     ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP(92061,"B2C销售订单【{}】平台和店铺不能为空"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
     ERROR_SO_B2C_EXTEND_NOT_EXIST(92062,"未找到B2C销售订单扩展信息"),
@@ -1391,6 +1399,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
     ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR(92104, "全托管订单【{}】平台状态为已作废不能提交发货"),
+    ERROR_SO_B2C_ORDER_STATUS_ERROR(92104, "订单【{}】已作废不能提交发货"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),
@@ -1717,4 +1726,16 @@ public enum ApiError implements Serializable {
     public Integer code;
     public String msg;
 
+    /**
+     * 检查非 ServiceException 异常是否需要抛出
+     */
+    public static Boolean isNotServiceException(Exception e){
+        if (! (e instanceof ServiceException)){
+            return true;
+        } else {
+            ServiceException serviceException = (ServiceException) e;
+            return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
+                    serviceException.getMsg().contains("Read timed out");
+        }
+    }
 }

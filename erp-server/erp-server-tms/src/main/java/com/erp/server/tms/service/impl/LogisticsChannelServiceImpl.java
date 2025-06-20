@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,19 +13,27 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
+import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -91,6 +100,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Resource
     private LogisticsChannelRemotePostcodeService logisticsChannelRemotePostcodeService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -110,6 +123,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         shippingTemplateRefChannelService.addRef(channelId, templateId);
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
+        // 仓库映射
+        logisticsMappingService.addWarehouseMapping(channelId, addDTO.getWarehouseMappingList());
         //面单设置 打印类型
         logisticsPrintTypeService.add(channelId, addDTO.getPrintTypeList());
         //物流地址
@@ -143,6 +158,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String channelId = updateDTO.getId();
         //平台物流映射
         logisticsMappingService.update(channelId, updateDTO.getMappingList());
+        //仓库物流映射
+        logisticsMappingService.warehouseUpdate(channelId, updateDTO.getWarehouseMappingList());
+
         //面单设置 打印类型
         logisticsPrintTypeService.update(channelId, updateDTO.getPrintTypeList());
         //物流地址
@@ -233,8 +251,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         /**
          * 物流映射列表
          */
-        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(id);
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelIdAndType(id, LogisticsMappingTypeEnum.PLATFORM.getCode());
         mappingListFillData(mappingList);
+
+        /**
+         * 物流映射列表
+         */
+        List<LogisticsMappingDTO.ViewDTO> warehouseMappingList = logisticsMappingService.listByChannelIdAndType(id, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
 
         /**
          * 打印标签类型
@@ -265,12 +288,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
+        view.setWarehouseMappingList(warehouseMappingList);
         view.setPrintTypeList(printTypeList);
         view.setWarehouseDTO(warehouseDTO);
         view.setRemotePostcodeIdList(remotePostcodeDTO.getRemotePostcodeIdList());
         view.setRemotePostcodeNameList(remotePostcodeDTO.getRemotePostcodeNameList());
         return view;
     }
+
 
     /**
      * mappingList 填充数据
@@ -683,7 +708,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(dictPlatform.equals(PlatformDictEnum.TE_MU.getCode()) || dictPlatform.equals(PlatformDictEnum.RAKUTEN.getCode()) || dictPlatform.equals(PlatformDictEnum.EBAY.getCode())){
             return new LogisticsChannelDTO.SignShipDTO();
         }
-        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
         if (CollectionUtils.isEmpty(mappingList)){
             throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
         }
@@ -691,7 +716,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == viewDTO){
             throw new ServiceException("物流渠道关联无对应销售平台物流渠道");
         }
-        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getLogisticsSaleChannelId());
+        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getPlatformLogisticsChannelId());
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
@@ -813,5 +838,89 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String msg = CharSequenceUtil.format("用户【{}】修改渠道【{}】平台标发【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
                 String.format(msgFormat,old.getIsPlatformShip()?"是":"否", dto.getIsPlatformShip()?"是":"否"));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "平台标发");
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel() {
+        //查询所有有匹配系统仓库的海外仓
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class).eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode()).list();
+        if(CollectionUtils.isEmpty(overseasProviderEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> authIds = overseasProviderEntityList.stream().map(OverseasProviderEntity::getId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, authIds)
+                .ne(OverseasProviderWarehouseEntity::getWarehouseId, "")
+                .eq(OverseasProviderWarehouseEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isEmpty(overseasProviderWarehouseEntityList)){
+            return new ArrayList<>();
+        }
+        //查询物流渠道(存在物流-仓库-渠道配置数据)
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel();
+        //查询配置物流平台
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS1 = getDictChannel(overseasProviderEntityList, overseasProviderWarehouseEntityList);
+        if (Objects.isNull(warehouseChannelDTOS)){
+            warehouseChannelDTOS = warehouseChannelDTOS1;
+        }else {
+            warehouseChannelDTOS.addAll(warehouseChannelDTOS1);
+        }
+        if (CollectionUtils.isEmpty(warehouseChannelDTOS)) {
+            return Collections.emptyList();
+        }
+        List<String> warehouseIdList = overseasProviderWarehouseEntityList.stream()
+                .map(OverseasProviderWarehouseEntity::getWarehouseId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (oldValue, newValue) -> oldValue));
+        warehouseChannelDTOS = warehouseChannelDTOS.stream().filter(v->{
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream()
+                    .filter(e -> e.getId().equals(v.getOverseasWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(overseasProviderWarehouseEntity)){
+                return false;
+            }
+            v.setWarehouseId(overseasProviderWarehouseEntity.getWarehouseId());
+            String warehouseName = warehouseMap.get(v.getWarehouseId());
+            if (StringUtils.isBlank(warehouseName)){
+                return false;
+            }
+            v.setWarehouseName(warehouseName);
+            return true;
+        }).collect(Collectors.toList());
+        return warehouseChannelDTOS;
+    }
+
+    private List<LogisticsChannelDTO.WarehouseChannelDTO> getDictChannel(List<OverseasProviderEntity> overseasProviderEntityList, List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList) {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS1 = new ArrayList<>();
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Collections.singletonList("thirdWarehouseChannel"));
+        if (CollUtil.isNotEmpty(dictBasicEntityList)){
+            List<String> platformCodeList = dictBasicEntityList.stream().map(DictBasicEntity::getCode).distinct().collect(Collectors.toList());
+            //根据物流平台查询渠道列表
+            List<LogisticsChannelDTO.PlatformChannelDTO> platformChannelDTOS = logisticsChannelService.listByPlatformCode(platformCodeList);
+            List<OverseasProviderEntity> dictProviderList = overseasProviderEntityList.stream().filter(e -> platformCodeList.contains(e.getCode())).collect(Collectors.toList());
+            dictProviderList.forEach(e ->{
+                //海外仓列表
+                List<OverseasProviderWarehouseEntity> warehouseEntityList = overseasProviderWarehouseEntityList.stream().filter(f -> e.getId().equals(f.getMainId())).collect(Collectors.toList());
+                warehouseEntityList.forEach(f ->{
+                    LogisticsChannelDTO.WarehouseChannelDTO warehouseChannelDTO = new LogisticsChannelDTO.WarehouseChannelDTO();
+                    warehouseChannelDTO.setOverseasWarehouseId(f.getId());
+                    warehouseChannelDTO.setChannelDTOList(platformChannelDTOS.stream().filter(g -> g.getPlatformCode().equals(e.getCode())).collect(Collectors.toList()));
+                    warehouseChannelDTOS1.add(warehouseChannelDTO);
+                });
+            });
+        }
+        return warehouseChannelDTOS1;
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList) {
+        if (CollUtil.isEmpty(platformCodeList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByPlatformCode(platformCodeList);
     }
 }

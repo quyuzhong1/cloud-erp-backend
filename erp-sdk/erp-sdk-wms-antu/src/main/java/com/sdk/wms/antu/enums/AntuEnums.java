@@ -2,7 +2,7 @@ package com.sdk.wms.antu.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import io.seata.common.util.StringUtils;
@@ -169,7 +169,7 @@ public enum AntuEnums {
         IN_TRANSIT("H","暂存", null),
         RECEIVING_DESTINATION_WAREHOUSE("N","异常订单", SoB2cBillStatusEnum.ENUM_EXCEPTION),
         COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("P","问题件", null),
-        ABANDONMENT("X","废弃", null)
+        ABANDONMENT("X","废弃", SoB2cBillStatusEnum.ENUM_EXCEPTION)
         ;
         private final String code;
         private final String name;
@@ -205,15 +205,15 @@ public enum AntuEnums {
      */
     @Getter
     public enum ReturnInstockTypeEnum {
-        BUYER_RETURNS(1,"买家退件", SoB2cReturnTypeEnum.CUSTOMER_RETURNS),
-        LOGISTICS_RETURNS(2,"物流退件", SoB2cReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
-        CLAIM(3,"认领", SoB2cReturnTypeEnum.CLAIM),
+        BUYER_RETURNS(1,"买家退件", ReturnTypeEnum.CUSTOMER_RETURNS),
+        LOGISTICS_RETURNS(2,"物流退件", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        CLAIM(3,"认领", ReturnTypeEnum.CLAIM),
         ;
         private final Integer code;
         private final String name;
-        private final SoB2cReturnTypeEnum erpEnum;
+        private final ReturnTypeEnum erpEnum;
 
-        ReturnInstockTypeEnum(Integer code, String name, SoB2cReturnTypeEnum erpEnum) {
+        ReturnInstockTypeEnum(Integer code, String name, ReturnTypeEnum erpEnum) {
             this.code = code;
             this.name = name;
             this.erpEnum = erpEnum;
@@ -242,7 +242,7 @@ public enum AntuEnums {
                     .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
                     .findFirst()
                     .map(ReturnInstockTypeEnum::getErpEnum)
-                    .map(SoB2cReturnTypeEnum::getCode)
+                    .map(ReturnTypeEnum::getCode)
                     .orElse("");
         }
     }

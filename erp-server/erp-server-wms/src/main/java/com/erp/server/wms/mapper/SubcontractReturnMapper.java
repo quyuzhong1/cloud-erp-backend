@@ -38,13 +38,6 @@ public interface SubcontractReturnMapper extends BaseMapper<SubcontractReturnEnt
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") SubcontractReturnDTO.PagingParamDTO params);
 
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<SubcontractReturnDTO.ListDTO> listExport(@Param("params") SubcontractReturnDTO.PagingParamDTO params);
-
 
     /**
     * 获取状态统计

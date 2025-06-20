@@ -296,6 +296,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         return null;
     }
+
+    @Override
+    public List<RuleLogisticsEntity> getChannelListByAutoSubmitDelivery() {
+        return baseMapper.getChannelListByAutoSubmitDelivery();
+    }
+
     /**
      * 根据优先级 获取到对应物流的信息
      *

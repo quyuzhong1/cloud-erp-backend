@@ -552,7 +552,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds,companyList);
+        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,wmsTaskFeign,skuIds,companyList);
 
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -994,8 +994,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             //数量
             int waitQty = v.getApplyQty() - purchaseQty;
-            if(waitQty == 0 || waitQty >= v.getApplyQty()){
-                throw new ServiceException("只有SKU剩余数量小于申请数量，且不为0时，可以提交关闭");
+            if(waitQty == 0 || waitQty > v.getApplyQty()){
+                throw new ServiceException("只有SKU剩余数量小于等于申请数量，且不为0时，可以提交关闭");
             }
             v.setCloseReason(dto.getCloseReason());
             v.setCreatePoType(CreatePoTypeEnum.CLOSED.getStatus());
@@ -1010,6 +1010,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理

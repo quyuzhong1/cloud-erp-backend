@@ -125,7 +125,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostEntitieList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         //暂估账单
-        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
+//        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
         //对账单明细
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
 
@@ -240,10 +240,10 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                     errorNoSet.add(excelDTO.getNo());
                     continue;
                 }
-                estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
-                    excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
-                    errorNoSet.add(excelDTO.getNo());
-                });
+//                estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
+//                    excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
+//                    errorNoSet.add(excelDTO.getNo());
+//                });
                 if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                     continue;
                 }

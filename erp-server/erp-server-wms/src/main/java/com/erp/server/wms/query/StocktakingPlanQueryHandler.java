@@ -27,19 +27,19 @@ public class StocktakingPlanQueryHandler extends AbstractQueryHandler {
     public String getTabSql(Object value) {
         // 待提交
         if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
-            super.buildDefaultDTO("stocktaking_plan.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
         }
         // 待审核
         if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
-            super.buildDefaultDTO("stocktaking_plan.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
         }
         // 已审核
         if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("stocktaking_plan.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
         if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("stocktaking_plan.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();
     }

@@ -4,7 +4,11 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.dto.PurchaseSkuOrgRefDTO;
+import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.server.scm.service.PurchasePriceService;
+import com.erp.server.scm.service.PurchaseSkuOrgRefService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +28,8 @@ public class PurchasePriceFeignController {
 
     @Resource
     private PurchasePriceService purchasePriceService;
+    @Resource
+    private PurchaseSkuOrgRefService purchaseSkuOrgRefService;
 
     /**
      * 根据供应商Ids查询最新的sku价格信息
@@ -68,4 +74,11 @@ public class PurchasePriceFeignController {
     public void updateApproveStatus(@RequestBody PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         purchasePriceService.updateApproveStatus(updateApprovalStatusDTO);
      }
+    /**
+     * 根据sku获取采购组织关系
+     */
+    @PostMapping("/getBySkuIdList")
+    public List<PurchaseSkuOrgRefEntity> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO) {
+        return purchaseSkuOrgRefService.getBySkuIdList(querySkuDTO.getSkuIdList());
+    }
 }

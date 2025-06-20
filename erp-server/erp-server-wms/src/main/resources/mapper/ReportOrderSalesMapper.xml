@@ -147,6 +147,10 @@
             <if test="params.isVirtualScarce != null and params.isVirtualScarce">
                 and  ros.is_virtual_scarce = true
             </if>
+            <!--权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

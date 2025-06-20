@@ -33,7 +33,6 @@ import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.*;
-import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -163,6 +162,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public PagingVO<WaveListDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
         List<WaveListDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
@@ -211,8 +211,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<WaveListDTO.TabDTO> tabList() {
-        List<WaveListDTO.TabDTO> list = baseMapper.listTab();
+    public List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = baseMapper.listTab(paramDTO);
         Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
 
         List<WaveListDTO.TabDTO> resultList = new ArrayList<>();

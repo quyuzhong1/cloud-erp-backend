@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Will
@@ -194,4 +195,13 @@ public class ProductPlanDTO implements Serializable {
      */
     private String applicationCategoryName;
 
+    /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryIdList;
+
+    /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryNameList;
 }

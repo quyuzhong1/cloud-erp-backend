@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -27,4 +29,6 @@ public interface RuleLogisticsMapper extends BaseMapper<RuleLogisticsEntity> {
      * @return
      */
     IPage<RuleLogisticsDTO.PagingViewDTO> paging(Page query, @Param("params") RuleLogisticsDTO.PagingParamDTO params);
+
+    List<RuleLogisticsEntity> getChannelListByAutoSubmitDelivery();
 }

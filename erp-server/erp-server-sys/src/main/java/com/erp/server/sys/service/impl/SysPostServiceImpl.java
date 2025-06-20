@@ -16,12 +16,14 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.server.sys.mapper.SysPostMapper;
 import com.erp.server.sys.service.SysPostService;
 import com.erp.server.sys.service.SysPostUserService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -156,5 +158,13 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         list.add("创建人");
         list.add("审核人");
         return this.lambdaQuery().in(SysPostEntity::getPostName,list).list();
+    }
+
+    @Override
+    public List<SysPostEntity> listByNameList(List<String> nameList) {
+        if(CollectionUtils.isEmpty(nameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(SysPostEntity::getPostName,nameList).list();
     }
 }

@@ -966,6 +966,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Override
     public PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<LogisticsBillDTO.PagingVO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillPagingDb(page.getRecords());
         return new PagingVO<>(page);
@@ -1296,7 +1297,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 .filter(req -> CharSequenceUtil.isNotBlank(req.getTrackStatus()))
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(detailEntities)) {
-            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum);
+            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum , syncLogisticsBillService.getLogisticInfo(Arrays.asList(entity)) , false , true);
         }
     }
 

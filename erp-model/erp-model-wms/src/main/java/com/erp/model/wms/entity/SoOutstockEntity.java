@@ -285,6 +285,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("batch_no")
     private String batchNo;
+    
+    /**
+     * 物流渠道编码
+     */
+    @TableField("logistics_channel_code")
+    private String logisticsChannelCode;
 
     /**
      * 物流渠道名称
@@ -297,6 +303,11 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("trade_label")
     private String tradeLabel;
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

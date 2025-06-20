@@ -169,6 +169,14 @@ public class LogisticsTrackDTO implements Serializable {
          * 电话
          */
         private String telNumber;
+        /**
+         * 是否推送电话
+         */
+        private Boolean isPushMobile;
+        /**
+         * 第三方物流商编码
+         */
+        private String thirdSupplierCode;
     }
 
     @Data

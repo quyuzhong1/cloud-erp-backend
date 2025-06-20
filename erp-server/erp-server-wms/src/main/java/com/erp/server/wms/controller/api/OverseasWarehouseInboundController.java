@@ -117,16 +117,28 @@ public class OverseasWarehouseInboundController extends BaseController {
      * @date: 2023/11/27
      */
     @PostMapping("/viewList")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasWarehouseInbound:view",
-            serviceClass = OverseasTransferWarehouseService.class,
-            keyIdName = "id")
     public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewListDTO>> view(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
         List<OverseasWarehouseInboundDetailDTO.ViewListDTO> resultList = overseasWarehouseInboundService.viewList(dto);
         return success(resultList);
     }
 
+    /**
+     * 调整详情列表
+     *
+     * @return ApiResult<List < OverseasWarehouseInboundDTO.ViewDTO>>
+     * @author Jim
+     * @date: 2023/11/27
+     */
+    @PostMapping("/viewChangeList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:view",
+            serviceClass = OverseasTransferWarehouseService.class,
+            keyIdName = "id")
+    public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO>> viewChangeList(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> resultList = overseasWarehouseInboundService.viewChangeList(dto);
+        return success(resultList);
+    }
     /**
      * 列表状态数量统计
      *
@@ -137,7 +149,8 @@ public class OverseasWarehouseInboundController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
+            warehouseTableField = "owi.delivery_warehouse_id,owi.to_warehouse_id",
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
@@ -157,6 +170,7 @@ public class OverseasWarehouseInboundController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "owi.delivery_warehouse_id,owi.to_warehouse_id",
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
     )
@@ -239,6 +253,19 @@ public class OverseasWarehouseInboundController extends BaseController {
             keyIdName = "owi")
     public ApiResult manualReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allManualReceived(dtoList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 调整签收
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @PostMapping("/changeReceived")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
+    public ApiResult changeReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allChangeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

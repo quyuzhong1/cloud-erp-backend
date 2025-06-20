@@ -772,8 +772,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setDeliveryWarehouseAddress(warehouseDTO.getAddress());
         exportPdfDTO.setDeliveryWarehouseTel(warehouseDTO.getContactTelNumber());
         exportPdfDTO.setDeliveryWarehouseContract(warehouseDTO.getContacts());
-        DecimalFormat df2 = new DecimalFormat("#,###.00");
-        DecimalFormat df4 = new DecimalFormat("#,###.0000");
+        DecimalFormat df2 = new DecimalFormat("#,##0.00");
+        DecimalFormat df4 = new DecimalFormat("#,##0.0000");
         //明细物料信息
         List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
@@ -812,7 +812,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             currencyName = CurrencyEnum.getNameByCode(currency);
         }
         //将totalNotTaxAmount转换为中文大写
-        String totalNotTaxAmountChinese = Convert.digitToChinese(totalNotTaxAmount.doubleValue());
+        String totalNotTaxAmountChinese = Convert.digitToChinese(totalAmount.doubleValue());
         exportPdfDTO.setTotalNotTaxAmountChinese(currencyName + totalNotTaxAmountChinese);
         exportPdfDTO.setCurrency(currency);
         exportPdfDTO.setDetails(details);
@@ -3253,6 +3253,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseOrderDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理

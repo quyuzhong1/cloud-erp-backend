@@ -1,8 +1,12 @@
 package com.erp.server.mrp.mapper;
+
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface CfgRuleWarehouseDetailMapper extends BaseMapper<CfgRuleWarehouseDetailEntity> {
-
+    List<CfgRuleWarehouseDetailEntity> listByParams(@Param("mainIdList") List<String> mainIdList, @Param("permissionSql") String warehousePermissionSql);
 }

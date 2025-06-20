@@ -1,11 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -92,7 +89,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         if (CollectionUtils.isEmpty(detailIds)){
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).list();
+        return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).orderByDesc(FbaShipmentReceiveEntity::getReceiveDate).list();
     }
 
     @Override
@@ -201,6 +198,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         // 补充关联数据并保存
         fillData(saveList, detailEntityList, fbaShipmentEntity);
+
+        // 检查sku映射关系
+        checkSkuMapping(saveList);
+
         // 查询历史签收记录
         if (CollectionUtils.isEmpty(oldEntityList)){
             // 保存
@@ -280,6 +281,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         return true;
     }
 
+
     /**
      * 补充明细ID和sku信息
      */
@@ -307,7 +309,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         List<FbaShipmentReceiveEntity> oldList = this.lambdaQuery()
                 .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
-                .ne(FbaShipmentReceiveEntity::getSourceType, "erp")
+                .ne(FbaShipmentReceiveEntity::getSourcePlatform, "erp")
                 .list();
         if (CollectionUtils.isEmpty(oldList)){
             return;
@@ -334,7 +336,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     public List<FbaShipmentReceiveEntity> checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> detailEntityList, String sourceType) {
         List<FbaShipmentReceiveEntity> list = this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, entity.getFbaShipmentId())
-                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourceType)
                 .ne(FbaShipmentReceiveEntity::getHandleStatus, FbaReceiveHandleStatusEnum.ALREADY.getCode())
                 .list();
         if (CollectionUtils.isEmpty(list)){
@@ -382,7 +384,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
         return lambdaQuery()
                 .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
-                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourceType)
                 .list();
     }
 
@@ -450,7 +452,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate) {
         return this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, fbaShipmentId)
-                .eq(FbaShipmentReceiveEntity::getSourceType, "lingxing")
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, "lingxing")
                 .and( st -> st.in(FbaShipmentReceiveEntity::getUniqueMd5, md5List)
                     .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
                     ))
@@ -463,5 +465,24 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             return Collections.emptyList();
         }
         return baseMapper.countReceiveQtyByParams(dto);
+    }
+
+    /**
+     * 检查sku映射关系
+     * @param saveList 当前签收记录
+     */
+    private void checkSkuMapping(List<FbaShipmentReceiveEntity> saveList) {
+        List<String> skuMsgList = new LinkedList<>();
+        saveList.stream()
+                .filter(e-> StringUtils.isBlank(e.getSkuId()))
+                .forEach(e-> {
+                    String msg = CharSequenceUtil.format("FBA签收记录数据异常:未找到平台sku映射数据, msku={}, fnSku={}", e.getMsku(), e.getFnSku());
+                    skuMsgList.add(msg);
+                });
+        if (!skuMsgList.isEmpty()) {
+            String msg = String.join(",", skuMsgList);
+            log.warn(msg);
+            throw new ServiceException(msg);
+        }
     }
 }

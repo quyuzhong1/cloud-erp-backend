@@ -6,10 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.server.dmp.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -40,6 +37,16 @@ public class DictBasicController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 获取字典数据 根据属性
+     * @param type
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult list(@RequestParam(value = "type") String type) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(type);
+        return  success(list);
+    }
 
 
 }

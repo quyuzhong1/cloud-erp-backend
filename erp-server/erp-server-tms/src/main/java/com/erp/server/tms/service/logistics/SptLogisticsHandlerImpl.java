@@ -66,7 +66,7 @@ public class SptLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             Map<String, String> warehouseMap = overseasProviderWarehouseEntityList.stream()
                     .collect(Collectors.toMap(OverseasProviderWarehouseEntity::getPlatformWarehouseCode,
-                            OverseasProviderWarehouseEntity::getId));
+                            OverseasProviderWarehouseEntity::getId,(v1,v2)->v1));
 
             antuResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())).setLogisticsPlatform(getPlatForm().getCode()));
 

@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -25,7 +24,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO.LogisticsInfoDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -33,6 +31,7 @@ import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -51,7 +50,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -91,6 +89,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<FirstMileEstimatedBillDTO.View> pageData = baseMapper.paging(query, dto.getParams());
         fillData(pageData.getRecords());
@@ -113,6 +112,12 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<String> currencyIds = estimatedCostList.stream().map(FirstMileEstimatedBillDTO.EstimatedCost::getCurrency).collect(Collectors.toList());
 		Map<String, String> idSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class, currencyIds)
         	.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+
+        List<String> outStockIds = records.stream().map(FirstMileEstimatedBillDTO.View::getOutStockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+        reqDto.setIds(outStockIds);
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
+
 		Map<String, BigDecimal> rateMap = new HashMap<>();
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
@@ -239,12 +244,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             }
 
             //预计重量
-            FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-            reqDto.setIds(Arrays.asList(item.getOutStockId()));
-            List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
-            List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
-            if(CollectionUtils.isNotEmpty(deliveryDTOList)){
-                TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
+            FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDTO = generateLogisticDTO.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getOutstockId())).findFirst().orElse(null);
+            if(Objects.nonNull(deliveryDTO)){
                 if(CollectionUtils.isNotEmpty(deliveryDTO.getPackingDTOList())){
                     LogisticsChannelEntity channelEntity = logisticsChannelService.getById(item.getLogisticsChannelId());
                     if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() != null && channelEntity.getVolumeSetting() > 0){
@@ -252,8 +253,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                             v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                         });
                     }
-                    List<TmsFirstMileLogisticDTO.PackingDTO> packingDTOList = deliveryDTO.getPackingDTOList();
-                    BigDecimal actualWeight = packingDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getPackageWeight())).map(v ->  new BigDecimal(v.getPackageWeight()).setScale(BigDecimal.ROUND_DOWN, RoundingMode.CEILING)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDTOList = deliveryDTO.getPackingDTOList();
+                    BigDecimal actualWeight = packingDTOList.stream().filter(v -> Objects.nonNull(v.getPackageWeight())).map(v ->  v.getPackageWeight().setScale(BigDecimal.ROUND_DOWN, RoundingMode.CEILING)).reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal volumeWeight = packingDTOList.stream().map(v -> v.getVolumeWeight() == null ? BigDecimal.ZERO : v.getVolumeWeight()).reduce(BigDecimal.ZERO, BigDecimal::add);
                     item.setActualWeight(actualWeight);
                     item.setVolumeWeight(volumeWeight);
@@ -288,20 +289,20 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     @Override
-    public List<FirstMileEstimatedBillDTO.Tab> tabList() {
+    public List<FirstMileEstimatedBillDTO.Tab> tabList(FirstMileEstimatedBillDTO.PagingParam dto) {
         List<FirstMileEstimatedBillDTO.Tab> list = new ArrayList<>();
-        list.add(getTabCount(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), "物流商待确认"));
-        list.add(getTabCount(ConfirmStatusEnum.CONFIRM.getCode(), "物流商已确认"));
+        list.add(getTabCount(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), "物流商待确认", dto.getPermissionSql()));
+        list.add(getTabCount(ConfirmStatusEnum.CONFIRM.getCode(), "物流商已确认", dto.getPermissionSql()));
         return list;
     }
 
-    private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName) {
+    private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName, String permissionSql) {
         int count = 0;
         if(ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            count = this.baseMapper.countByParam(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),permissionSql);
         }
         if(ConfirmStatusEnum.CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(null, ReconciliationStatusEnum.CONFIRMED.getCode());
+            count = this.baseMapper.countByParam(null, ReconciliationStatusEnum.CONFIRMED.getCode(), permissionSql);
         }
 
         return new FirstMileEstimatedBillDTO.Tab(status, tabFlagName, count);

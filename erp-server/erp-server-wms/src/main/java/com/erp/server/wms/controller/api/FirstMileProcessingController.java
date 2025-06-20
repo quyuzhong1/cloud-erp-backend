@@ -1,13 +1,16 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.server.wms.query.FirstMileProcessingQueryHandler;
 import com.erp.server.wms.service.FirstMileProcessingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -41,7 +44,11 @@ public class FirstMileProcessingController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "fmp.warehouse_id",
+            menuCode = "wms:firstMileProcessing:paging"
+    )
+    @WebAdvanceQuery(handler = FirstMileProcessingQueryHandler.class)
     public ApiResult<PagingVO<FirstMileProcessingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto) {
         return success(firstMileProcessingService.paging(dto));
     }

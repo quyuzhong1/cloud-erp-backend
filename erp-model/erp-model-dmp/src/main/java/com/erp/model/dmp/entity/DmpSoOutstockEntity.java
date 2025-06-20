@@ -229,6 +229,21 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
      */
     @TableField(value = "transport_no")
     private String transportNo;
+    /**
+     * 财务组织代码
+     */
+    @TableField(value = "financial_company_id")
+    private String financialCompanyId;
+    /**    
+    * 物流信息链接
+     */
+    @TableField(value = "tracking_url")
+    private String trackingUrl = "";
+    /**
+     * 来源类型
+     */
+    @TableField(value = "source_type")
+    private String sourceType;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

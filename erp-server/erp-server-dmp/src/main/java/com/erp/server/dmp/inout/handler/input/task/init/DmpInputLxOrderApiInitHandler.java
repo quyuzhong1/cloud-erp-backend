@@ -14,9 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.*;
 
 /**
@@ -47,7 +45,7 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
         }
 
         // 明细扩展参数
-        String detailExtendJson = dmpCfgInputDetailEntity.getExtendJson();
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
         if (StringUtils.isNotBlank(detailExtendJson)){
             TreeMap<String, Object> detailTreeMap = JSON.parseObject(detailExtendJson, TreeMap.class);
             requestMap.putAll(detailTreeMap);
@@ -70,15 +68,19 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
         requestMap.put("length", pageSize);
         // 首次请求
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
-
         Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
         Object totalObj = dataResultMap.get("total");
         int total =  Integer.parseInt(totalObj.toString());
         Object listObj = dataResultMap.get("list");
-        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(listObj));
+        String data = JSON.toJSONString(listObj);
+//        data = data.replace("103532145800142442","303532145800142442");
+//        data = data.replace("PO-211-18380728085032203","PO-211-13090935383591954");
+//        data = data.replace("110522176760639488","110521466365329499");
+        JSONArray jsonArray = JSONArray.parseArray(data);
         if (CollectionUtils.isEmpty(jsonArray) || 0 == total) {
             return Collections.emptyList();
         }
+
         resultList.addAll(jsonArray);
 
         if (500 <= total){

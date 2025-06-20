@@ -37,7 +37,7 @@ public class PlatformOrderDetailDTO {
     /**
      * 平台skuId
      */
-    private String platformSkuId;
+    private String platformSkuId = "";
 
     /**
      * 平台产品id
@@ -63,6 +63,10 @@ public class PlatformOrderDetailDTO {
      * 单价
      */
     private BigDecimal price;
+    /**
+     * 税率
+     */
+    private BigDecimal taxRate;
     /**
      * 金额
      */

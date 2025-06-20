@@ -85,6 +85,34 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
             }
             return " pi.pirate_risk " + compareCodeSplicingValueSql;
         }
+        if("pi.application_category_id".equals(field)){
+            List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            StringBuilder sb = new StringBuilder();
+            //是否是第一个，否则需要加连接符
+            boolean isFirst = true;
+            sb.append(" ( ");
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" or ");
+                    }
+                    isFirst = false;
+                    sb.append(" pi.application_category_id = '").append(valueStr).append("'");
+                }
+            }
+
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
+                for(String valueStr : valueList) {
+                    if (!isFirst) {
+                        sb.append(" and ");
+                    }
+                    isFirst = false;
+                    sb.append(" pi.application_category_id != '").append(valueStr).append("'");
+                }
+            }
+            sb.append(" ) ");
+            return sb.toString();
+        }
         return null;
     }
 

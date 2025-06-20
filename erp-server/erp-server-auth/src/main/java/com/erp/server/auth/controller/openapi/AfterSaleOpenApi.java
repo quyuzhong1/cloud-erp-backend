@@ -11,6 +11,7 @@ import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -80,10 +81,10 @@ public class AfterSaleOpenApi {
      */
     @OpenApi("add")
     public ApiResult<BaseResultDTO.AddDTO> add( @Valid AfterSaleDTO.AddDTO dto){
-        if(CollUtil.isEmpty(dto.getDetailList())){
-            return  ApiResult.error(500, "寄修申请单明细不能为空");
-        }
         dto.setType("wx");
+        if(CollUtil.isEmpty(dto.getDetailList()) && CollUtil.isEmpty(dto.getAttachmentList())){
+            return  ApiResult.error(500, "sku明细或图片附件至少填写一种");
+        }
         return afterSaleFeign.add(dto);
     }
 
@@ -114,7 +115,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getNodeList")
-    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
+    public ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
         return afterSaleFeign.getNodeList();
     }
 
@@ -125,7 +126,7 @@ public class AfterSaleOpenApi {
      * @return ApiResult
      */
     @OpenApi("udpateTrackNo")
-    ApiResult<Boolean> udpateTrackNo(@Valid AfterSaleDTO.UpdateTrackNoDTO dto){
+    public ApiResult<Boolean> udpateTrackNo(@Valid AfterSaleDTO.UpdateTrackNoDTO dto){
         return afterSaleFeign.udpateTrackNo(dto);
     }
 
@@ -136,10 +137,18 @@ public class AfterSaleOpenApi {
      * @return ApiResult
      */
     @OpenApi("invalidByCode")
-    ApiResult<BatchResultDTO> invalidByCode(@Valid AfterSaleDTO.OpenApiCommonDTO dto){
+    public ApiResult<BatchResultDTO> invalidByCode(@Valid AfterSaleDTO.OpenApiCommonDTO dto){
         return afterSaleFeign.invalidByCode(dto.getCode());
     }
 
-
+    /**
+     * 寄修申请详情
+     * @Author jack
+     * @since 2025-05-13
+     */
+    @OpenApi("view")
+    public ApiResult<AfterSaleDTO.ViewDTO> view(@Valid AfterSaleDTO.OpenApiCommonDTO dto) {
+        return afterSaleFeign.view(dto.getId());
+    }
 
 }

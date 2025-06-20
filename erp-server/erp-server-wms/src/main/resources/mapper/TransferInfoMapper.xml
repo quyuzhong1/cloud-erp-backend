@@ -54,6 +54,7 @@
             tid.out_warehouse_name as outWarehouseName,
             tid.remark,
             ti.approve_user_name as approveUserName,
+        ti.approve_time as approveTime,
             ti.create_user_name as createUserName,
             ti.create_time as createTime,
             tid.in_warehouse_location as inWarehouseLocation,
@@ -146,8 +147,8 @@
         DISTINCT
         ti.id,
         ti.code,
-        ti.in_warehouse_name,
-        ti.out_warehouse_name,
+        tid.in_warehouse_name,
+        tid.out_warehouse_name,
         ti.approve_status,
         ti.create_time
         FROM transfer_info ti

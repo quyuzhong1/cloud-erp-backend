@@ -16,6 +16,7 @@ public enum DmpCfgOutputBlackCompareSignEnum implements EnumMessage {
 	EQ("eq", "等于"),
 	NE("ne", "不等于"),
 	IN("in", "包含"),
+	NOTIN("notin", "不包含"),
 	GT("gt", "大于"),
 	GE("ge", "大于等于"),
 	LT("lt", "小于"),

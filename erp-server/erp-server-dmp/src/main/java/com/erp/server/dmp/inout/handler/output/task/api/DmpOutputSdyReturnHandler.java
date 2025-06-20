@@ -45,57 +45,13 @@ import java.util.*;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
+public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
     @Resource
     private ThirdMappingService thirdMappingService;
     @Resource
     private SdyDeliveryOrderConsumer sdyDeliveryOrderConsumer;
     @Resource
     private SysUserFeign sysUserFeign;
-
-    @Override
-    protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
-        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if(!map.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            int i = 0;
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                String dataId = entry.getKey();
-                String value = entry.getValue();
-                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                dmpOutputTaskRecordEntity.setRequestData(value);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
-            }
-        }
-        return dmpOutputTaskRecordEntityList;
-    }
-
-    @Override
-    protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-        String id = dmpOutputTaskRecordEntity.getId();
-        String status = "";
-        String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if (200 == handle.getCode()) {
-            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
-        } else {
-            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-        }
-
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
-    }
 
     /**
      * 解析订单数据
@@ -119,8 +75,12 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            LocalDateTime returnTime = dmpSoReturnEntity.getReturnTime();
+            if("WDT".equals(dmpSoReturnEntity.getSourceSystem()) && returnTime == null) {
+            	returnTime = dmpSoReturnEntity.getPlatformCreateTime();
+            }
+			if (returnTime != null) {
+                sdyDTO.setBiz_time(localDateTime.format(returnTime));
             } else {
                 return result;
             }
@@ -152,6 +112,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
             sdyDTO.setGoods_transaction_quantity(dmpSoReturnDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
+            BigDecimal totalAmount = dmpSoReturnDetailEntity.getTotalAmount();
+            if(totalAmount != null) {
+            	sdyDTO.setTotal_goods_transaction_amount(totalAmount);
+            }
 
             int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
@@ -185,10 +149,6 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                     return result;
                 }
             	
-            	if("10".equals(dmpSoReturnEntity.getStatus())) {
-            		sdyDTO.setStatus("已删除");
-            	}
-
                 sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
@@ -318,7 +278,9 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                     cacheMap.put("subPlatformType", subPlatformTypeMap);
                     
                     if(subPlatformTypeDict != null) {
-                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                        sdyDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        sdyDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                         sdyDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                     }
                 }
@@ -349,20 +311,22 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
-            sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
-            sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
             if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformOrderCode());
             } else {
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            if (returnTime != null) {
+                sdyDTO.setRoot_node_create_time(localDateTime.format(returnTime));
             }
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
 
-            sdyDTO.setGoods_status("已退货");
+            if("10".equals(dmpSoReturnEntity.getStatus())) {
+            	sdyDTO.setGoods_status("已取消");
+        	}else {
+        		sdyDTO.setGoods_status("已退货");
+        	}
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
             if (CharSequenceUtil.isBlank(dmpSoReturnDetailEntity.getSkuName())) {
                 sdyDTO.setMsku_name(dmpSoReturnDetailEntity.getSkuNo());

@@ -288,6 +288,30 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      */
     @TableField("nfe_invoice_status")
     private String nfeInvoiceStatus;
+    /**
+     * (速卖通)买家视角订单金额
+     */
+    @TableField("actual_amount")
+    private BigDecimal actualAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    @TableField("actual_currency")
+    private String actualCurrency = "";
+
+    /**
+     * (旺店通)订单类型
+     * 1、网店销售
+     * 2、线下订单
+     * 3、售后换货
+     * 4、批发业务
+     * 7、现款销售
+     * 8、分销订单
+     */
+    @TableField("order_type")
+    private String orderType;
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

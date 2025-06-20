@@ -94,4 +94,8 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     Boolean estimateIsOutOfRangeDelivery(@Param("logisticsChannelId")String logisticsChannelId, @Param("country")String country, @Param("postCode")String postCode);
 
     IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
+
+    List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
+
+    List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(@Param("platformCodeList") List<String> platformCodeList);
 }

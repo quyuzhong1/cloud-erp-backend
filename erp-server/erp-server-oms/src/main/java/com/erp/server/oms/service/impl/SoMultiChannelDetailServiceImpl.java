@@ -91,9 +91,16 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
             // 历史记录
             SoMultiChannelDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
             // 映射关系
-            List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList;
+
+            if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())){
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSpuNo());
+            }else{
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
+            }
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
+            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform(),detailDTO.getPlatformSkuNo());
 
             String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
             String skuNO = null == oldEntity ? "" : oldEntity.getSkuNo();

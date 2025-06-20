@@ -107,11 +107,6 @@ public class WmsDeliveryPlanController extends BaseController {
     * @return ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasDeliveryPlan:paging",
-            tableAlias = "odp"
-    )
     @WebAdvanceQuery(handler = WmsDeliveryPlanQueryHandler.class)
     public ApiResult<PagingVO<WmsDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto) {
         return success(wmsDeliveryPlanService.paging(dto));

@@ -45,6 +45,7 @@ public class ExportScmFeignController {
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
+            warehouseTableField = "pad.dest_warehouse_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     @WebAdvanceQuery(handler = PurchaseApplicationQueryHandler.class)
@@ -55,6 +56,7 @@ public class ExportScmFeignController {
     @PostMapping("/purchaseChange")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "change_user_id",
+            warehouseTableField = "pc.delivery_warehouse_id",
             menuCode = "scm:purchaseChange:exportExcel",
             tableAlias = "pc")
     @WebAdvanceQuery
@@ -70,6 +72,7 @@ public class ExportScmFeignController {
     @PostMapping("/purchaseOrder")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
@@ -100,6 +103,8 @@ public class ExportScmFeignController {
     @PostMapping("/salesDemand")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "sdd.dest_warehouse_id",
+            shopTableField = "sd.shop_id",
             menuCode = "scm:salesDemand:paging",
             tableAlias = "sd")
     @WebAdvanceQuery

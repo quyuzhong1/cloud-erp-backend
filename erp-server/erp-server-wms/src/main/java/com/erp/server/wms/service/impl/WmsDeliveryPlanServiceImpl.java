@@ -49,6 +49,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.DeliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -128,6 +129,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Resource
     private FbaInventoryService fbaInventoryService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -195,7 +198,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public PagingVO<WmsDeliveryPlanDTO.ListDTO> paging(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql((pagingParamDTO.getPermissionSql())));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<WmsDeliveryPlanDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -206,10 +209,27 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return new PagingVO(pageData);
     }
 
+    /**
+     *  warehouseTableField = "odp.warehouse_id",
+     *             shopTableField = "odp.shop_id",
+     * @param permissionSql
+     * @return
+     */
+    private String getPermissionSql(String permissionSql) {
+        permissionSql = CharSequenceUtil.isBlank(permissionSql) ? " AND 1=1 " : permissionSql;
+        // 店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("odp.shop_id");
+        shopPermissionSql = CharSequenceUtil.isBlank(shopPermissionSql)? " AND 1=1 " : shopPermissionSql;
+        // 仓库权限
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
+        warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
+        return CharSequenceUtil.format("{} and ((odp.type = 'fba' {}) or (odp.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+    }
+
     @Override
     public List<WmsDeliveryPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
         WmsDeliveryPlanDTO.PagingParamDTO searchParam = new WmsDeliveryPlanDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
+        searchParam.setPermissionSql(getPermissionSql(param.getPermissionSql()));
         List<WmsDeliveryPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
@@ -891,6 +911,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public PagingVO<WmsDeliveryPlanDTO.ListDTO> exportOverseasDeliveryPlan(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(getPermissionSql((dto.getPermissionSql())));
         Page<WmsDeliveryPlanDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理

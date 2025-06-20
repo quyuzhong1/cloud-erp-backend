@@ -134,6 +134,7 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
 
     @Override
     public PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FbaHistoryInventoryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理

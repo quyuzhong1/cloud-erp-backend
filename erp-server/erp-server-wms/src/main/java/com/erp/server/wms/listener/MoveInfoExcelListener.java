@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -120,9 +121,9 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             errorMsgList.add("仓库名称不能为空");
         }
 
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(moveInfoExcelDTO.getWarehouseName()));
-        if (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) {
-            errorMsgList.add("仓库名称不存在");
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(moveInfoExcelDTO.getWarehouseName()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
         }else {
             //根据仓库获取仓位
             List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = warehouseLocationService.select(warehouseList.get(0).getId());

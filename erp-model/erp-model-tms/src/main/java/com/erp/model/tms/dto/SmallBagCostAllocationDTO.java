@@ -441,6 +441,10 @@ public class SmallBagCostAllocationDTO implements Serializable {
          * 核算状态 http://172.16.100.11:3002/project/128/interface/api/25522 key=reportStatus
          */
         private String reportStatus;
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
 
     }
 

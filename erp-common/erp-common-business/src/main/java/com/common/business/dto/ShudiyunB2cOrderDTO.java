@@ -602,6 +602,11 @@ public class ShudiyunB2cOrderDTO {
      */
     private String department_name;
 
+    /**
+     * 发货类型
+     */
+    private String fulfillment_type;
+
 
     public String sdyStatusHandle(String operateEnum, int mainVersion, int detailVersion) {
         int version = 0;

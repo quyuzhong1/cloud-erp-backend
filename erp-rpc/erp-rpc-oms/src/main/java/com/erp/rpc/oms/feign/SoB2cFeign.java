@@ -625,7 +625,7 @@ public interface SoB2cFeign {
      * @param soId
      * @param trackNo
      */
-    @PostMapping("/feign/soB2c/updateLogisticsBySoId")
+    @GetMapping("/feign/soB2c/updateLogisticsBySoId")
     void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
 
     /**
@@ -710,4 +710,14 @@ public interface SoB2cFeign {
      **/
     @PostMapping("feign/soB2c/getSplitCombination")
     SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId);
+
+    @PostMapping("feign/soB2c/listWaitShipByWarehouseIds")
+    List<SoB2cEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseId);
+
+
+    @PostMapping("feign/soB2c/updateDetail")
+    Boolean updateDetail(@RequestBody List<SoB2cDetailEntity> soB2cDetailEntityList);
+
+    @PostMapping("feign/soB2c/clearOutDateBySoIds")
+    void clearOutDateBySoIds(@RequestBody List<String> clearOutDateSoIds);
 }

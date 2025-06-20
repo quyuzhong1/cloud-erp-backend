@@ -87,7 +87,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     * 箱号
     */
     @TableField("box_no")
-    private String boxNo;
+    private Integer boxNo;
     /**
     * 发货量
     */

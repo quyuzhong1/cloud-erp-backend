@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
+public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHandler {
     @Resource
     private ThirdMappingService thirdMappingService;
     @Resource
@@ -61,52 +61,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     private SysUserFeign sysUserFeign;
     @Resource
     private ThirdShopService thirdShopService;
-
-
-    @Override
-    protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-    	Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
-        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if (!map.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            int i = 0;
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                String dataId = entry.getKey();
-                String value = entry.getValue();
-                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                dmpOutputTaskRecordEntity.setRequestData(value);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
-            }
-        }
-
-        return dmpOutputTaskRecordEntityList;
-    }
-
-    @Override
-    protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-        String id = dmpOutputTaskRecordEntity.getId();
-        String status = "";
-        String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if (200 == handle.getCode()) {
-            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
-        } else {
-            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-        }
-
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()), handle.getMsg());
-    }
 
     /**
      * 解析订单数据
@@ -313,7 +267,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                             cacheMap.put("subPlatformType", subPlatformTypeMap);
                             
                             if(subPlatformTypeDict != null) {
-                                shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                            	shudiyunB2cOrderDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                            	shudiyunB2cOrderDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                                shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                                 shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                             }
                         }
@@ -342,14 +298,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
-            String sourcePlatformName = dmpSoInfoEntity.getSourcePlatform();
-			shudiyunB2cOrderDTO.setPlatform_id(sourcePlatform);
-            WdtSourcePlatformEnum wdtSourcePlatformEnum = WdtSourcePlatformEnum.getByCode(sourcePlatform);
-            if(wdtSourcePlatformEnum != null) {
-            	sourcePlatformName = wdtSourcePlatformEnum.getName();
-            }
-            shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             if (dmpSoDetailEntity.getPrice().compareTo(BigDecimal.ZERO) == 0) {

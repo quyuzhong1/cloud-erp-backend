@@ -111,7 +111,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -199,15 +203,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
 
-        //走过订单规则审核的不需要重复推送DMP，规则审核时已经推送过
-        Integer count = operateLogService.lambdaQuery()
-                .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
-                .eq(OperateLogEntity::getOperation, "审核操作")
-                .count();
-        if (0 == count) {
-            //推送到DMP
-            soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
-        }
+//        //走过订单规则审核的不需要重复推送DMP，规则审核时已经推送过
+//        Integer count = operateLogService.lambdaQuery()
+//                .eq(OperateLogEntity::getBusinessId, mainEntity.getId())
+//                .eq(OperateLogEntity::getOperation, "审核操作")
+//                .count();
+//        if (0 == count) {
+//            //推送到DMP
+//            soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
+//        }
 
         // 退货单处理
         if (CollectionUtils.isNotEmpty(dto.getReturnDTOList())){
@@ -234,30 +238,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         //生成nf-e发票
-        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
-    }
-
-    /**
-     * 生成NF-e发票
-     * @author will
-     * @date 2025/4/14 15:52
-     * @param soB2cEntity
-     * @param type
-     * @return void
-     */
-    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
-        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
-            return;
-        }
-        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
-        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
-            return;
-        }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
-            return;
-        }
-        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
-            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+        SoB2cEntity entity = CharSequenceUtil.isNotBlank(mainEntity.getId()) ? soB2cService.getById(mainEntity.getId()) : null;
+        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
+            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
         }
     }
 
@@ -291,9 +274,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String payStatus = mainEntity.getPayStatus();
         //已付款
         String paid = SoB2cPayStatusEnum.ENUM_PAID.getCode();
+
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(mainEntity);
+
         //自动匹配订单规则 待配貨和已付款 就要订单规则
         if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)
-                && paid.equalsIgnoreCase(payStatus)
+                && (paid.equalsIgnoreCase(payStatus) || isFlag)
                 && !mainEntity.getInvalidStatus()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
@@ -320,6 +307,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }
@@ -360,16 +348,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
-
-        Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
+        Boolean isWarehouseEmpty = detailList.stream().anyMatch(d -> StringUtils.isBlank(d.getWarehouseId()));
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
-        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
-
         if (CollectionUtils.isEmpty(detailList)){
             // 拆分后无平台来源明细不更新
             log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
             return resultDTO;
         }
+        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
         //查询b2c error信息
         SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         resultDTO.setSoB2cError(soB2cError);
@@ -416,6 +402,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
             receiverEntity.setCustomerId(customerB2cEntity.getId());
             soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
+            if(PlatformDictEnum.TE_MU.getCode().equals(dto.getDictPlatform()) && StringUtils.isBlank(receiverEntity.getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
+                receiverEntity.setCountry(shopInfo.getDictCountryCode());
+            }
             soB2cReceiverService.saveOrUpdate(receiverEntity);
         }
 
@@ -436,8 +425,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //校验发票开票规则
+        cfgRuleInvoiceService.invoiceCfgRule(mainEntity,detailList,new HashMap<>());
         //生成Nf-e发票
-        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
+        cfgInvoiceSettingDetailService.generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 
@@ -621,6 +612,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.aliExpressNotPlatformOrderNotExistAddress(dto);
         }
+        if (PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.temuPlatformOrderNotExistAddress(dto);
+        }
         return false;
     }
 
@@ -642,5 +636,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return false;
     }
 
+
+    /**
+     * 速卖通自发货订单未解密地址
+     */
+    private boolean temuPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            Boolean isTemuPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+            if (isTemuPlatformWarehouseOrder){
+                return false;
+            }
+            return null != dto.getReceiver().getIsUpdateError() && dto.getReceiver().getIsUpdateError();
+        }
+        return false;
+    }
 
 }

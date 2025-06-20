@@ -8,17 +8,14 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.InvoiceTaxDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.ListingSourceTypeEnum;
@@ -26,10 +23,7 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.oms.service.InvoiceTaxService;
-import com.erp.server.oms.service.ListingInfoService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +51,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     /**
      * 店铺信息
      */
-    private List<ShopInfoEntity> shopList;
+    private ShopInfoService shopInfoService;
 
     /**
      * sku 映射信息
@@ -129,7 +123,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                                    List<ProductUnitEntity> unitList,
                                    List<DictBasicDTO.ViewDTO> originList,
                                    List<SkuVO> skuList,
-                                   List<ShopInfoEntity> shopList, List<SkuMappingEntity> skuMappingList,
+                                   ShopInfoService shopInfoService, List<SkuMappingEntity> skuMappingList,
                                    List<DictBasicDTO.ViewDTO> dictBasicList,
                                    List<ListingInfoEntity> listingInfoEntityList,
                                    ListingInfoService listingInfoService,
@@ -139,7 +133,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         this.unitList = unitList;
         this.originList = originList;
         this.skuList = skuList;
-        this.shopList = shopList;
+        this.shopInfoService = shopInfoService;
         this.skuMappingList = skuMappingList;
         this.dictBasicList = dictBasicList;
         this.listingInfoEntityList = listingInfoEntityList;
@@ -202,13 +196,14 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         //店铺名称
         String shopName = skuMappingImportExcelDTO.getShopName();
-        ShopInfoEntity shop = shopList.stream()
+        List<ShopInfoDTO.ListDTO> shopList = shopInfoService.listShopByName(Collections.singletonList(shopName));
+        ShopInfoDTO.ListDTO shop = shopList.stream()
                 .filter(s -> s.getName().equals(shopName))
                 .filter(s -> s.getDictPlatform().equalsIgnoreCase(platform.getValue()))
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(shop)) {
-            errorMsgList.add("店铺在该平台不存在");
+            errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;

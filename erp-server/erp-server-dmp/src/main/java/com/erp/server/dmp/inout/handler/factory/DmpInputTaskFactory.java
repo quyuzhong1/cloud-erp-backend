@@ -105,7 +105,7 @@ public class DmpInputTaskFactory{
 			bean.addDmpHandler(dmpInputTaskStatusHandler);
 			bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 		} catch (Exception e) {
-			log.error("{}任务执行报错，执行状态{}, 异常类型={}" , inputTaskId , code, ExceptionUtil.stacktraceToString(e));
+			log.error("{}任务执行报错，执行状态{}, 异常类型={}" , inputTaskId , code, ExceptionUtil.stacktraceToString(e) , e);
 			Integer maxRetryCount = 3;
 			DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
 			if(dmpCfgInputDetailEntity != null) {

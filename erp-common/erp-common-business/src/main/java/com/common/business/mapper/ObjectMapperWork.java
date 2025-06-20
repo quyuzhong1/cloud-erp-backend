@@ -1,5 +1,6 @@
 package com.common.business.mapper;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
@@ -31,4 +32,13 @@ public class ObjectMapperWork {
         }
         return bigDecimal;
     }
+    @Named("lastNumber")
+    public String lastNumber(String startNo) {
+        if (CharSequenceUtil.isBlank(startNo)){
+            return "0";
+        }
+        Integer integer = Integer.parseInt(startNo);
+        return String.valueOf(integer - 1);
+    }
+
 }

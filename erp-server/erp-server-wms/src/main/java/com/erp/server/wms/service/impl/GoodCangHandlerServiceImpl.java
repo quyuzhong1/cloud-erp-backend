@@ -7,6 +7,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -189,7 +190,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected Boolean hasWarehouse() {
+    protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();
         if(!isSuccess(response.getAsk(), "")){
             throw new ServiceException("授权失败,"+response.getMessage());
