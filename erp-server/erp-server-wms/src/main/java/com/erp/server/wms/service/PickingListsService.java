@@ -113,6 +113,12 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
     List<PickingDetailDTO.ChangeQtyView> generateRequisitionChange(PickingListsDTO.UpdateDTO dto);
 
     void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> sourceDetailIds, boolean isFromRequisition);
+    /**
+     * 批量打印 b2b拣货单
+     *
+     * @param ids ids
+     */
+    List<PickingListsDTO.PrintView> b2bPrint(List<String> ids);
 
     /**
      * 打印组合品清单
