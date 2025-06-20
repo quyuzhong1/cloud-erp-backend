@@ -72,7 +72,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "shopId",source = "dto.shopId"),
             @Mapping(target = "platformOrderCreateTime",source = "dto.platformOrderCreateTime"),
             @Mapping(target = "platformOrderStatus", source = "dto.platformOrderStatus"),
-            @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
+            @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) || \"延迟发货\".equals(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
             @Mapping(target = "isCancel", source = "dto.isCancel"),
             @Mapping(target = "totalTaxFee", source = "dto.totalTaxFee"),
             @Mapping(target = "afterTaxAmount", source = "dto.afterTaxAmount"),

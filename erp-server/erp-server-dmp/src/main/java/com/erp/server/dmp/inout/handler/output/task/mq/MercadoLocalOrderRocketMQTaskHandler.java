@@ -174,6 +174,8 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         //买家备注
         orderDTO.setBuyerRemark(dmpSoInfoEntityList.get(0).getBuyerRemark());
 
+        orderDTO.setRemark(dmpSoInfoEntityList.get(0).getSellRemark());
+
         // 是否拦截
         orderDTO.setIsIntercept(false);
 
