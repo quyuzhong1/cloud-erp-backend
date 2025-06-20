@@ -3051,10 +3051,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //要货申请未关联审核通过的发货单时，不允许操作库存释放
         List<String> ids = dto.getIds();
         List<RequisitionApplicationEntity> entityList = this.listByIds(ids);
+        if (CollUtil.isEmpty(entityList)){
+            throw new ServiceException("要货申请不存在");
+        }
         //过滤三方仓数据
         entityList = entityList.stream().filter(v -> !RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(v.getType())).collect(Collectors.toList());
         if (CollUtil.isEmpty(entityList)){
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,"要货申请单");
+            throw new ServiceException("第三方仓要货单不允许操作库存释放");
         }
         List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(ids);
         List<FirstMileDeliveryEntity> deliveryEntityList = firstMileDeliveryService.listBySourceIds(ids);
@@ -3098,70 +3101,72 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO unLockInventorySave(RequisitionApplicationDTO.InventoryDTO dto) {
-        RequisitionApplicationEntity entity = this.getById(dto.getId());
+    public BatchResultDTO unLockInventorySave(List<RequisitionApplicationDTO.InventoryDTO> dtoList) {
+        RequisitionApplicationEntity entity = this.getById(dtoList.get(0).getId());
         if (Objects.isNull(entity)){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单不存在");
         }
-        RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.getById(dto.getDetailId());
-        if (Objects.isNull(detailEntity)){
-            return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"要货申请单明细不存在");
+        List<String> detailIds = dtoList.stream().map(RequisitionApplicationDTO.InventoryDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByIds(detailIds);
+        if (CollUtil.isEmpty(detailEntityList)){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单明细不存在");
         }
-        //头程发货单
-//        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(dto.getDeliveryId());
-//        if (Objects.isNull(deliveryEntity)){
-//            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单未生成发货单");
-//        }
-//        if (!ApproveStatusEnum.APPROVE.getStatus().equals(deliveryEntity.getApproveStatus())){
-//            return BatchResultDTO.fail(deliveryEntity.getId(),deliveryEntity.getCode(),"要货申请单生成的发货单未审核通过");
-//        }
-//        FirstMileDeliveryDetailEntity deliveryDetailEntity = firstMileDeliveryDetailService.getById(dto.getDeliveryDetailId());
-//        if (Objects.isNull(deliveryDetailEntity)){
-//            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细不存在");
-//        }
-//        if (CharSequenceUtil.isNotBlank(deliveryDetailEntity.getFbaShipmentCode())){
-//            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细已绑定FBA发货单");
-//        }
-        //释放数量不能大于冻结数量
-        if (dto.getVirtualFrozenQty() > detailEntity.getVirtualFrozenQty()){
-            return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"释放数量不能大于冻结数量");
-        }
-        //更新要货申请释放标识，并更新明细冻结数量
-        updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
+        dtoList.forEach(dto ->{
+            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equals(dto.getDetailId())).findFirst().orElse(null);
+            if (Objects.isNull(detailEntity)){
+                throw new ServiceException("要货申请单明细不存在");
+            }
+            //释放数量不能大于冻结数量
+            if (dto.getVirtualFrozenQty() > detailEntity.getVirtualFrozenQty()){
+                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】明细不存在", entity.getCode(), detailEntity.getSkuNo()));
+            }
+            //更新要货申请释放标识，并更新明细冻结数量
+            updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
+        });
         //虚拟仓库存释放
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-        stockParamDTO.setParamList(lockVirtualInventory(entity,detailEntity,dto.getVirtualFrozenQty()));
+        stockParamDTO.setParamList(lockVirtualInventory(entity,detailEntityList,dtoList));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
         virtualInventoryTransCoreService.approve(stockParamDTO);
         //实体库存释放
         InventoryInOutStockDTO busiParam = new InventoryInOutStockDTO();
         busiParam.setBusinessType(InventoryBusinessTypeEnum.REQUISITION_APPLICATION_RELEASE.getCode());
-        busiParam.setParamList(listInventory(entity,detailEntity,dto.getVirtualFrozenQty()));
+        busiParam.setParamList(listInventory(entity,detailEntityList,dtoList));
         inventoryTransCoreService.approveByType(busiParam);
         return null;
     }
 
-    private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
-        //获取仓库暂存仓位
-        CfgRulePickingStagingEntity stagingEntity = cfgRulePickingStagingService.getByWarehouseId(detailEntity.getFromWarehouseId(),"FBA");
-        if (Objects.isNull(stagingEntity)){
-            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NO_STAGING, detailEntity.getFromWarehouseName());
-        }
-        InOutStockDTO inOutStockDTO = new InOutStockDTO();
-        inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
-        inOutStockDTO.setWarehouseLocation(stagingEntity.getWarehouseLocation());
-        inOutStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-        inOutStockDTO.setSourceId(entity.getId());
-        inOutStockDTO.setSourceCode(entity.getCode());
-        inOutStockDTO.setBillDate(LocalDate.now());
-        inOutStockDTO.setSourceDetailId(detailEntity.getId());
-        inOutStockDTO.setSkuId(detailEntity.getSkuId());
-        inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
-        inOutStockDTO.setQty(virtualFrozenQty);
-        return Collections.singletonList(inOutStockDTO);
+    private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, List<RequisitionApplicationDetailEntity> detailEntityList, List<RequisitionApplicationDTO.InventoryDTO> dtoList) {
+        List<InOutStockDTO> inOutStockDTOList = new ArrayList<>();
+        dtoList.forEach(dto -> {
+            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equals(dto.getDetailId())).findFirst().orElse(null);
+            if (Objects.isNull(detailEntity)) {
+                throw new ServiceException("要货申请单明细不存在");
+            }
+            //获取仓库暂存仓位
+            CfgRulePickingStagingEntity stagingEntity = cfgRulePickingStagingService.getByWarehouseId(detailEntity.getFromWarehouseId(),"FBA");
+            if (Objects.isNull(stagingEntity)){
+                throw new ServiceException(ApiError.ERROR_WAREHOUSE_NO_STAGING, detailEntity.getFromWarehouseName());
+            }
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
+            inOutStockDTO.setWarehouseLocation(stagingEntity.getWarehouseLocation());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setBillDate(LocalDate.now());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(dto.getVirtualFrozenQty());
+            inOutStockDTOList.add(inOutStockDTO);
+        });
+
+        return inOutStockDTOList;
     }
 
-    private void updateEntityLockStatus(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
+    @Transactional(rollbackFor = Exception.class)
+    public void updateEntityLockStatus(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
         if (Objects.isNull(entity.getIsUnlockInventory()) || !entity.getIsUnlockInventory()){
             this.lambdaUpdate().eq(RequisitionApplicationEntity::getId,entity.getId())
                     .set(RequisitionApplicationEntity::getIsUnlockInventory,true)
@@ -3172,18 +3177,26 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,detailEntity.getVirtualFrozenQty() - virtualFrozenQty).update();
     }
 
-    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
-        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-        outInStockDTO.setBillDate(LocalDate.now());
-        outInStockDTO.setSourceId(entity.getId());
-        outInStockDTO.setSourceCode(entity.getCode());
-        outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-        outInStockDTO.setSourceDetailId(detailEntity.getId());
-        outInStockDTO.setSkuId(detailEntity.getSkuId());
-        outInStockDTO.setSkuNo(detailEntity.getSkuNo());
-        outInStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
-        outInStockDTO.setVirtualWarehouseId(detailEntity.getFromVirtualWarehouseId());
-        outInStockDTO.setQty(virtualFrozenQty);
-        return Collections.singletonList(outInStockDTO);
+    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(RequisitionApplicationEntity entity, List<RequisitionApplicationDetailEntity> detailEntityList, List<RequisitionApplicationDTO.InventoryDTO> dtoList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> inStockDTOS = new ArrayList<>();
+        dtoList.forEach(dto ->{
+            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equals(dto.getDetailId())).findFirst().orElse(null);
+            if (Objects.isNull(detailEntity)){
+                throw new ServiceException("要货申请单明细不存在");
+            }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailEntity.getFromVirtualWarehouseId());
+            outInStockDTO.setQty(dto.getVirtualFrozenQty());
+            inStockDTOS.add(outInStockDTO);
+        });
+        return inStockDTOS;
     }
 }
