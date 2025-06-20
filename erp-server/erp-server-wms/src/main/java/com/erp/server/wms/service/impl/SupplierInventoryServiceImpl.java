@@ -66,9 +66,21 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
+        handelPaging(list);
         return new PagingVO(pageData);
     }
 
+    private void handelPaging(List<SupplierRefUserEntity> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        // 处理分页数据
+        for (SupplierRefUserEntity entity : list) {
+            // 这里可以添加任何需要处理的逻辑
+            // 例如：entity.setSomeField(someValue);
+        }
+    }
 
     @Override
     public Boolean exportExcel(SupplierInventoryDTO.PagingParamDTO params) {

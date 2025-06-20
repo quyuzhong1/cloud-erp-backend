@@ -30,6 +30,11 @@ public class SupplierInventoryDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 是否隐藏0库存
+         */
+        private Boolean hideZeroInventory;
+
     }
     /**
      * 分页列表
@@ -46,23 +51,23 @@ public class SupplierInventoryDTO implements Serializable {
          */
         private String supplierName;
         /**
-         * 产品图片
+         * 产品图片【可排序】
          */
         private String imagesUrl;
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
         /**
-         * SKU编码
+         * SKU编码【可排序】
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
         /**
-         * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
+         * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架【可排序】
          */
         private Integer saleState;
         /**
@@ -70,27 +75,27 @@ public class SupplierInventoryDTO implements Serializable {
          */
         private String saleStateName;
         /**
-         * 仓库Id
+         * 仓库Id【可排序】
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
-         * 实际库存
+         * 实际库存【可排序】
          */
         private Integer realQty;
         /**
-         * 可用库存
+         * 可用库存【可排序】
          */
         private Integer useQty;
         /**
-         * 冻结库存
+         * 冻结库存【可排序】
          */
         private Integer freezeQty;
         /**
-         * 在途库存
+         * 在途库存【可排序】
          */
         private Integer inTransitQty;
     }
