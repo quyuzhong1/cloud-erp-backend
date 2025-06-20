@@ -43,7 +43,7 @@
         from supplier_ref_warehouse srw
         left join supplier su on srw.supplier_id = su.id and su.is_deleted = false
         left join foreign_warehouse wh on srw.warehouse_id = wh.id and wh.is_deleted = false
-        left join foreign_warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.is_deleted = false
+        left join foreign_warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.type = 'location' and wl.is_deleted = false
         <where>
             ${params.sqlMap.default} and srw.is_deleted = false
             order by

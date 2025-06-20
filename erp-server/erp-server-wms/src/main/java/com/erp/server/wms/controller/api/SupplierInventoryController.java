@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 仓库绑定
+ * 即时库存
  *
  * @author will
  * @since 2025-06-18
  */
 @Slf4j
 @RestController
-@LogSystemModule("供应商关联仓库表")
+@LogSystemModule("即时库存")
 @RequestMapping("/supplierInventory")
 public class SupplierInventoryController extends BaseController {
 
