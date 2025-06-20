@@ -50,6 +50,7 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -137,6 +138,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private AuthUserShopService authUserShopService;
     @Resource
     private AuthUserWarehouseService authUserWarehouseService;
+    @Resource
+    private FileFeign filefeign;
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
@@ -1548,7 +1551,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
 
-        String headPhotoUrl = FastDFSClientUtil.uploadFile(headPhotoFile);
+        String headPhotoUrl = filefeign.uploadFile(headPhotoFile);
         if (StringUtils.isNotBlank(headPhotoUrl)) {
             userInfo.setHeadIcon(headPhotoUrl);
             return this.updateById(userInfo);

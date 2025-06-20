@@ -663,4 +663,49 @@ public class SoDeliveryNoticeDTO {
         @Size(min = 1,message = "至少存在一条明细,才可生成拣货单")
         private List<String> detailIds;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintSkuLabelDTO {
+        private String id;
+        private String detailId;
+        private String soId;
+        /**
+         * 销售订单号
+         */
+        private String soCode;
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 打印数量
+         */
+        private Integer printNum;
+        /**
+         * 是否显示日期
+         */
+        private Boolean showDate;
+        private String labelUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintSkuLabelConfirmDTO {
+        //打印尺寸
+        private String size;
+        /**
+         * 打印明细
+         */
+        private List<PrintSkuLabelDTO> detailList;
+    }
 }

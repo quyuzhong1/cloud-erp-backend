@@ -36,6 +36,7 @@ import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
 import com.erp.server.plm.mapper.ProductPlanMapper;
@@ -111,7 +112,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Resource
     private ApplicationCategoryService applicationCategoryService;
-
+    @Resource
+    private FileFeign filefeign;
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -629,7 +631,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
-        String filePath = FastDFSClientUtil.uploadFile(multipartFiles);
+        String filePath = filefeign.uploadFile(multipartFiles);
         productPlanEntity.setImageUrl(filePath);
         return this.updateById(productPlanEntity);
     }

@@ -27,6 +27,7 @@ import com.erp.model.plm.enums.ProductCertificateProjectEnum;
 import com.erp.model.plm.enums.ProductCertificateTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -82,6 +83,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
     @Override
     public PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> pagingDTO) {
         ProductCertificateDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -256,7 +259,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         plmAttachmentService.removeByIds(removeFileIdList);
         for (PlmAttachmentEntity entity : removeFileList) {
             //fastdfs删除附件
-            FastDFSClientUtil.deleteFile(entity.getAttachUrl());
+            fileFeign.deleteFile(entity.getAttachUrl());
         }
         //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
@@ -333,7 +336,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         plmAttachmentService.removeByIds(attachmentIdList);
         for (PlmAttachmentEntity entity : attachmentList) {
             //fastdfs删除附件
-            FastDFSClientUtil.deleteFile(entity.getAttachUrl());
+            fileFeign.deleteFile(entity.getAttachUrl());
         }
         return Boolean.TRUE;
     }
@@ -829,7 +832,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             } else {
                 file = map.get(entity.getDictProject());
             }
-            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            String fileUrl = fileFeign.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }

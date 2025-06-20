@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -301,4 +302,8 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
+
+    List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(List<String> ids);
+
+    void printSkuLabelConfirm(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto, HttpServletResponse response);
 }

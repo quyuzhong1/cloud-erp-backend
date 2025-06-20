@@ -40,6 +40,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -121,6 +122,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     private SettingForecastService settingForecastService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private FileFeign filefeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -499,7 +502,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             String fileName = "报关对账单错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, DeclareReconciliationStandardExcelDTO.class);
             if (file != null && !file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+                url = filefeign.uploadFile(file, fileName);
             }
         }
         fillImportList(successImortList);
@@ -690,7 +693,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             List<List<Object>> exportList = errorList.stream().map(obj -> obj.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList())).collect(Collectors.toList());
             File file = ExcelUtil.exportFile(fileName, "error", exportList, headList);
             if (file != null && !file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+                url = filefeign.uploadFile(file, fileName);
             }
         }
         fillImportList(successImortList);
