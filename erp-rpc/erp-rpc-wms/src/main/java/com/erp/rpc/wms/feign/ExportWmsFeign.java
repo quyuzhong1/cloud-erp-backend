@@ -298,4 +298,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportQcNotice")
     PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(PagingDTO<QcNoticeDTO.ExportDTO> dto);
+
+    /**
+     * 导出即时库存
+     */
+    @PostMapping("/feign/export/supplierInventory")
+    PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto);
 }

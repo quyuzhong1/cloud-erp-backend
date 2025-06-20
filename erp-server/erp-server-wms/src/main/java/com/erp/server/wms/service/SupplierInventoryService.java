@@ -1,8 +1,8 @@
-package com.erp.server.scm.service;
+package com.erp.server.wms.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.SupplierInventoryDTO;
+import com.erp.model.wms.dto.SupplierInventoryDTO;
 
 /**
  * 即时库存

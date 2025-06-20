@@ -1,4 +1,4 @@
-package com.erp.model.scm.dto;
+package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;

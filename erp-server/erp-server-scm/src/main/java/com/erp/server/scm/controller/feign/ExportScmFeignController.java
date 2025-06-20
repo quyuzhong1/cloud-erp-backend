@@ -46,6 +46,9 @@ public class ExportScmFeignController {
     @Resource
     private SupplierRefWarehouseService supplierRefWarehouseService;
 
+
+
+
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
@@ -166,5 +169,6 @@ public class ExportScmFeignController {
     public PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(@RequestBody PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto) {
         return supplierRefWarehouseService.paging(dto);
     }
+
 
 }

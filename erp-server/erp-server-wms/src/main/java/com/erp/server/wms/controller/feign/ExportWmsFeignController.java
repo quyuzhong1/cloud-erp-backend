@@ -170,6 +170,9 @@ public class ExportWmsFeignController {
     @Resource
     private QcNoticeService qcNoticeService;
 
+    @Resource
+    private SupplierInventoryService supplierInventoryService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1018,5 +1021,18 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
         return qcNoticeService.exportList(dto);
+    }
+
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2025/6/19 11:03
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/supplierInventory")
+    @WebAdvanceQuery
+    public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
+        return supplierInventoryService.paging(dto);
     }
 }
