@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -564,13 +563,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }
             }
             groupList.stream().sorted().forEach(v -> {
-                PickingListsDTO.PrintCombinationView printView1 = new PickingListsDTO.PrintCombinationView();
-                BeanUtil.copyProperties(printView,printView1);
                 //单品
-                printView1.setPrintSkuSingleViewList(getSingleList(printSkuSingleViewList,v));
+                printView.setPrintSkuSingleViewList(getSingleList(printSkuSingleViewList,v));
                 //组合品
-                printView1.setPrintSkuCombinationViewList(getCombinationList(printSkuCombinationViewList,v));
-                printViews.add(printView1);
+                printView.setPrintSkuCombinationViewList(getCombinationList(printSkuCombinationViewList,v));
+                printViews.add(printView);
             });
         }
         return printViews;
