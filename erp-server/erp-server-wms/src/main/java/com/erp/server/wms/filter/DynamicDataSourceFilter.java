@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.wrapper.FeignQuery;
 
 import lombok.extern.slf4j.Slf4j;
@@ -67,10 +68,12 @@ public class DynamicDataSourceFilter implements Filter {
                 	chain.doFilter(requestWrapper, response);
                 }else {
                 	try {
+                		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
         	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
         	            chain.doFilter(requestWrapper, response);
                     } finally {
                         DynamicDataSourceContextHolder.poll();
+                        DynamicDataSourceThreadLocal.remove();
                     }
                 }
             }

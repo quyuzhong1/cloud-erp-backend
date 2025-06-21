@@ -1,8 +1,12 @@
 package com.common.core.utils;
 
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import cn.hutool.core.collection.CollUtil;
 
 public class SqlUtils {
 
@@ -16,5 +20,15 @@ public class SqlUtils {
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(input);
         return !matcher.find();
+    }
+    
+    public static void appendPermissionSql(StringBuilder sqlString , String tableAliaField , List<String> permissionDataList) {
+    	if(CollUtil.isNotEmpty(permissionDataList)) {
+    		sqlString.append(" ( ");
+    		sqlString.append(tableAliaField);
+    		sqlString.append(" in (");
+    		sqlString.append(permissionDataList.stream().collect(Collectors.joining("','", "'", "'")));
+    		sqlString.append(" )) ");
+    	}
     }
 }
