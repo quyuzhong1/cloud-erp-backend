@@ -29,11 +29,7 @@ public class CfgSupplierSalesConditionEntity extends BaseEntity<CfgSupplierSales
     */
     @TableField("sales_setting_id")
     private String salesSettingId;
-    /**
-    * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓  枚举：CfgSupplierSalesConditionWarehouseTypeEnum
-    */
-    @TableField("warehouse_type")
-    private String warehouseType;
+
     /**
     * 左括号
     */
@@ -87,12 +83,16 @@ public class CfgSupplierSalesConditionEntity extends BaseEntity<CfgSupplierSales
     @TableField("value_type")
     private String valueType;
 
+    /**
+     * 值名称
+     */
+    @TableField("value_name")
+    private String valueName;
+
 
     public static final String SALES_SETTING_ID = "sales_setting_id";
 
     public static final String TYPE = "type";
-
-    public static final String WAREHOUSE_TYPE = "warehouse_type";
 
     public static final String LEFT_BRACKET = "left_bracket";
 

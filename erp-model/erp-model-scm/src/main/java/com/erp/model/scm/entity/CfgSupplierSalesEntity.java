@@ -81,6 +81,12 @@ public class CfgSupplierSalesEntity extends BaseEntity<CfgSupplierSalesEntity> {
     @TableField("display_field")
     private String displayField;
 
+    /**
+     * 仓库类型：virtualWarehouse=虚拟仓,physicalWarehouse=实体仓  枚举：CfgSupplierSalesConditionWarehouseTypeEnum
+     */
+    @TableField("warehouse_type")
+    private String warehouseType;
+
 
     public static final String SUPPLIER_ID = "supplier_id";
 
@@ -103,6 +109,8 @@ public class CfgSupplierSalesEntity extends BaseEntity<CfgSupplierSalesEntity> {
     public static final String DISABLED = "disabled";
 
     public static final String DISPLAY_FIELD = "display_field";
+
+    public static final String WAREHOUSE_TYPE = "warehouse_type";
 
     @Override
     public Serializable pkVal() {

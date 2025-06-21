@@ -234,8 +234,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * sku查看配置
          */
-        @NotEmpty(message = "sku查看配置不能为空")
-        private List<CfgSupplierSalesConditionDTO. @Valid ConditionDTO> skuList;
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> skuList;
 
         /**
          * 仓库类型
@@ -253,8 +252,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * 通知配置执行条件
          */
-        @NotEmpty(message = "通知配置不能为空")
-        private List<CfgSupplierSalesConditionDTO. @Valid ConditionDTO> noticeList;
+        private List<CfgSupplierSalesConditionDTO.ConditionDTO> noticeList;
 
     }
 
@@ -302,6 +300,7 @@ public class CfgSupplierSalesDTO implements Serializable {
          * 销量比例值
          */
         private BigDecimal salesRatio;
+        private String salesRatioStr ;
 
         /**
          * 是否启用通知

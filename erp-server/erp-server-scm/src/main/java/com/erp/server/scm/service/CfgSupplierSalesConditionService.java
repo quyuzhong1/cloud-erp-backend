@@ -18,7 +18,7 @@ import java.util.List;
 public interface CfgSupplierSalesConditionService extends SuperService<CfgSupplierSalesConditionEntity> {
 
 
-    void saveRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String sourceType, String warehouseType);
+    void saveRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String sourceType);
 
-    void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType, String warehouseType);
+    void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType);
 }

@@ -43,6 +43,9 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT;
 
 /**
@@ -69,6 +72,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private Validator validator;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -108,32 +114,63 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     private void saveCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
         //sku配置
-        if(CollUtil.isNotEmpty(addDTO.getSkuList())){
-            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSkuList(), RuleTypeEnum.SKU.getCode(),"");
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> skuList = addDTO.getSkuList();
+        handleAddConditionList(skuList);
+        if(CollUtil.isNotEmpty(skuList)){
+            cfgSupplierSalesConditionService.saveRuleCondition(id, skuList, RuleTypeEnum.SKU.getCode());
+        }else{
+            throw new ServiceException("SKU查看配置不能为空");
         }
 
         //可销库存配置
-        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList()) ){
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList = addDTO.getSaleableStockList();
+        handleAddConditionList(saleableStockList);
+        if(CollUtil.isNotEmpty(saleableStockList)){
             if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode())){
-                cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(), addDTO.getWarehouseType());
+                cfgSupplierSalesConditionService.saveRuleCondition(id, saleableStockList, RuleTypeEnum.PHYSICALWAREHOUSE.getCode());
             }
             if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
-                cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSaleableStockList(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), addDTO.getWarehouseType());
+                cfgSupplierSalesConditionService.saveRuleCondition(id, saleableStockList, RuleTypeEnum.VIRTUALWAREHOUSE.getCode());
             }
         }
 
         //销量统计配置
-        if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
-            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getSalesStatisticList(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> salesStatisticList = addDTO.getSalesStatisticList();
+        handleAddConditionList(salesStatisticList);
+        if(CollUtil.isNotEmpty(salesStatisticList)){
+            cfgSupplierSalesConditionService.saveRuleCondition(id, salesStatisticList, RuleTypeEnum.SALESSTATISTIC.getCode());
         }
 
         //通知配置
-        if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
-            cfgSupplierSalesConditionService.saveRuleCondition(id, addDTO.getNoticeList(), RuleTypeEnum.NOTICE.getCode(),"");
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> noticeList = addDTO.getNoticeList();
+        handleAddConditionList(noticeList);
+        if(CollUtil.isNotEmpty(noticeList)){
+            cfgSupplierSalesConditionService.saveRuleCondition(id, noticeList, RuleTypeEnum.NOTICE.getCode());
         }
 
         if(Objects.nonNull(addDTO.getBlackCondition())){
-            cfgSupplierSalesConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), RuleTypeEnum.BLACK.getCode(),"");
+            cfgSupplierSalesConditionService.saveRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), RuleTypeEnum.BLACK.getCode());
+        }
+    }
+
+
+    private void handleAddConditionList(List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList) {
+        if(CollUtil.isEmpty(conditionList)){
+            return ;
+        }
+        CfgSupplierSalesConditionDTO.ConditionDTO conditionDTO = conditionList.stream().filter(e -> StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+        if(Objects.nonNull(conditionDTO)){
+            conditionList.remove(conditionDTO);
+        }
+        if(CollUtil.isNotEmpty(conditionList)){
+            for (CfgSupplierSalesConditionDTO.ConditionDTO condition : conditionList) {
+                Set<ConstraintViolation<CfgSupplierSalesConditionDTO.ConditionDTO>> violations = validator.validate(condition);
+                if (!violations.isEmpty()) {
+                    ConstraintViolation<CfgSupplierSalesConditionDTO.ConditionDTO> firstViolation = violations.iterator().next();
+                    String message = firstViolation.getMessage();
+                    throw new ServiceException(message); // 或者自定义异常处理
+                }
+            }
         }
     }
 
@@ -167,7 +204,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         }
         // 记录主单操作日志
         log.info("编辑 开始记录销量设置日志数据，id：【{}】", cfgSupplierSalesEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSupplierSalesEntity.getId(), "销量设置");
+        String msg = StrUtil.format("用户【{}】编辑了【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), "销量设置");
         moduleOperateLogService.addModuleOperateLogByObj(old, cfgSupplierSalesEntity, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), cfgSupplierSalesEntity.getId(),"", msg);
 
         //处理配置条件
@@ -177,81 +214,129 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
 
     private void updateCondition(CfgSupplierSalesDTO.CommonDTO addDTO, String id) {
-        //sku配置
-        if(CollUtil.isNotEmpty(addDTO.getSkuList())) {
-            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSkuList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode(), "");
-        }else {
-            cfgSupplierSalesConditionService.lambdaUpdate()
-                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.SKU.getCode())
-                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                    .update();
-
-            moduleOperateLogService.addModuleOperateLog("删除了SKU配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        // 参数校验
+        if (addDTO == null) {
+            throw new ServiceException("参数不能为空");
         }
-        //可销库存配置
-        if(CollUtil.isNotEmpty(addDTO.getSaleableStockList()) ){
-            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode())){
-                cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+
+        // SKU配置
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> skuList = addDTO.getSkuList();
+        handleUpdateConditionList(skuList);
+        if (CollUtil.isNotEmpty(skuList)) {
+            cfgSupplierSalesConditionService.updateRuleCondition(id, skuList, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SKU.getCode());
+        } else {
+            throw new ServiceException("SKU查看配置不能为空");
+        }
+
+        // 可销库存配置
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList = addDTO.getSaleableStockList();
+        handleUpdateConditionList(saleableStockList);
+        if (CollUtil.isNotEmpty(saleableStockList)) {
+            if (Objects.equals(addDTO.getWarehouseType(), CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ||
+                    Objects.equals(addDTO.getWarehouseType(), CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())) {
+                String sourceType = addDTO.getWarehouseType();
+                String logDescDelete = Objects.equals(sourceType, CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ?
+                        "删除了可销库存配置虚拟仓条件" : "删除了可销库存配置实体仓条件";
+
+                String otherSourceType = Objects.equals(sourceType, CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ?
+                        RuleTypeEnum.VIRTUALWAREHOUSE.getCode() : RuleTypeEnum.PHYSICALWAREHOUSE.getCode();
+
+                deleteExistingConditions(id, Arrays.asList(sourceType, otherSourceType), logDescDelete);
+
+                cfgSupplierSalesConditionService.updateRuleCondition(id, saleableStockList, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), sourceType);
             }
-            if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
-                cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSaleableStockList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),addDTO.getWarehouseType());
+        } else {
+            deleteExistingConditions(id,
+                    Arrays.asList(RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode()),
+                    "删除了可销库存配置条件");
+        }
+
+        // 销量统计配置
+        processAndSaveCondition(addDTO.getSalesStatisticList(), id, RuleTypeEnum.SALESSTATISTIC.getCode(), "销量统计配置条件");
+
+        // 通知配置
+        processAndSaveCondition(addDTO.getNoticeList(), id, RuleTypeEnum.NOTICE.getCode(), "删除了通知配置条件");
+
+        // 黑名单配置
+        if (Objects.nonNull(addDTO.getBlackCondition())) {
+            cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode());
+        } else {
+            deleteExistingCondition(id, RuleTypeEnum.BLACK.getCode(), "删除了黑名单条件");
+        }
+    }
+
+    // 封装通用处理逻辑
+    private void processAndSaveCondition(List<CfgSupplierSalesConditionDTO.ConditionDTO> list, String id, String ruleType, String logDesc) {
+        handleUpdateConditionList(list);
+        if (CollUtil.isNotEmpty(list)) {
+            cfgSupplierSalesConditionService.updateRuleCondition(id, list, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), ruleType);
+        } else {
+            deleteExistingCondition(id, ruleType, logDesc);
+        }
+    }
+
+    // 删除单个类型条件
+    private void deleteExistingCondition(String id, String sourceType, String logDesc) {
+        Integer count = cfgSupplierSalesConditionService.lambdaQuery()
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                .eq(CfgSupplierSalesConditionEntity::getSourceType, sourceType)
+                .eq(CfgSupplierSalesConditionEntity::getIsDeleted, false)
+                .count();
+        if (count > 0) {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .eq(CfgSupplierSalesConditionEntity::getSourceType, sourceType)
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
+            moduleOperateLogService.addModuleOperateLog(logDesc, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
+    }
+
+    // 删除多个类型条件
+    private void deleteExistingConditions(String id, List<String> sourceTypes, String logDesc) {
+        Integer count = cfgSupplierSalesConditionService.lambdaQuery()
+                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                .in(CfgSupplierSalesConditionEntity::getSourceType, sourceTypes)
+                .eq(CfgSupplierSalesConditionEntity::getIsDeleted, false)
+                .count();
+        if (count > 0) {
+            cfgSupplierSalesConditionService.lambdaUpdate()
+                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
+                    .in(CfgSupplierSalesConditionEntity::getSourceType, sourceTypes)
+                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
+                    .update();
+            moduleOperateLogService.addModuleOperateLog(logDesc, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        }
+    }
+
+
+    private void handleUpdateConditionList(List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList) {
+        if(CollUtil.isEmpty(conditionList)){
+            return ;
+        }
+
+        CfgSupplierSalesConditionDTO.ConditionDTO conditionDTO = conditionList.stream().filter(e ->StringUtils.isBlank(e.getId()) && StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+        if(Objects.nonNull(conditionDTO)){
+            conditionList.remove(conditionDTO);
+        }
+
+        if(conditionList.size() == 1 ){ //表示只有一条，需要判断是需要删除
+            conditionDTO = conditionList.stream().filter(e ->StringUtils.isNotBlank(e.getId()) && StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+            if(Objects.nonNull(conditionDTO)){
+                conditionList.remove(conditionDTO);
             }
-        }else {
-            cfgSupplierSalesConditionService.lambdaUpdate()
-                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                    .in(CfgSupplierSalesConditionEntity::getSourceType, Arrays.asList(RuleTypeEnum.VIRTUALWAREHOUSE.getCode(),RuleTypeEnum.PHYSICALWAREHOUSE.getCode()))
-                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                    .update();
-            moduleOperateLogService.addModuleOperateLog("删除了可销库存配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
         }
 
-        //销量统计配置
-        if(CollUtil.isNotEmpty(addDTO.getSalesStatisticList())){
-            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getSalesStatisticList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.SALESSTATISTIC.getCode(),"");
-        }else {
-            cfgSupplierSalesConditionService.lambdaUpdate()
-                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.SALESSTATISTIC.getCode())
-                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                    .update();
-            moduleOperateLogService.addModuleOperateLog("删除了销量统计配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
-        }
-
-        //通知配置
-        if(CollUtil.isNotEmpty(addDTO.getNoticeList())){
-            cfgSupplierSalesConditionService.updateRuleCondition(id, addDTO.getNoticeList(), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.NOTICE.getCode(),"");
-        }else {
-            cfgSupplierSalesConditionService.lambdaUpdate()
-                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.NOTICE.getCode())
-                    .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                    .update();
-
-            moduleOperateLogService.addModuleOperateLog("删除了通知配置条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
-        }
-
-        if(Objects.nonNull(addDTO.getBlackCondition())){
-            cfgSupplierSalesConditionService.updateRuleCondition(id, Arrays.asList(addDTO.getBlackCondition()), ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), RuleTypeEnum.BLACK.getCode(),"");
-        }else {
-
-            Integer count = cfgSupplierSalesConditionService.lambdaQuery()
-                    .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                    .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.BLACK.getCode())
-                    .eq(CfgSupplierSalesConditionEntity::getIsDeleted, false)
-                    .count();
-
-            if(count > 0 ){
-                cfgSupplierSalesConditionService.lambdaUpdate()
-                        .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, id)
-                        .eq(CfgSupplierSalesConditionEntity::getSourceType, RuleTypeEnum.BLACK.getCode())
-                        .set(CfgSupplierSalesConditionEntity::getIsDeleted, true)
-                        .update();
-
-                moduleOperateLogService.addModuleOperateLog("删除了黑名单条件", ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), id, "编辑操作");
+        if(CollUtil.isNotEmpty(conditionList)){
+            for (CfgSupplierSalesConditionDTO.ConditionDTO condition : conditionList) {
+                Set<ConstraintViolation<CfgSupplierSalesConditionDTO.ConditionDTO>> violations = validator.validate(condition);
+                if (!violations.isEmpty()) {
+                    ConstraintViolation<CfgSupplierSalesConditionDTO.ConditionDTO> firstViolation = violations.iterator().next();
+                    String message = firstViolation.getMessage();
+                    throw new ServiceException(message); // 或者自定义异常处理
+                }
             }
         }
-
     }
 
     /**
@@ -271,8 +356,11 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             if(Objects.isNull(dto.getSalesRatio()) ){
                 throw new ServiceException("请填写销量比例");
             }
-            if(dto.getSalesRatio().compareTo(BigDecimal.ZERO)<=0 || dto.getSalesRatio().compareTo(new BigDecimal(100))>0){
-                throw new ServiceException("请填写销量比例范围0-100");
+            if(dto.getSalesRatio().compareTo(BigDecimal.ZERO)<=0 ){
+                throw new ServiceException("请填写销量比例大于0");
+            }
+            if(dto.getSalesRatio().compareTo(new BigDecimal(100))>0){
+                throw new ServiceException("请填写销量比例范围小于等于100");
             }
         }else {
             throw new ServiceException("请选择正确的销量比例类型");
@@ -297,7 +385,17 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             dto.setBlackCondition(black);
         }
 
+        List<CfgSupplierSalesConditionDTO.ConditionDTO> noticeList = dto.getNoticeList();
+        handleUpdateConditionList(noticeList);
+        //通知配置校验
+        if(Boolean.TRUE.equals(dto.getNoticeEnabled())){
+            if(CollUtil.isEmpty(noticeList)){
+                throw new ServiceException("勾选通知配置，则通知配置规则条件不能为空");
+            }
+        }
     }
+
+
 
     @Override
     public CfgSupplierSalesDTO.ViewDTO view(String id) {
@@ -318,6 +416,8 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
         data.setDimensionName(CfgSupplierSalesDimensionEnum.getName(data.getDimension()));
 
+        data.setWarehouseTypeName(CfgSupplierSalesConditionWarehouseTypeEnum.getName(data.getWarehouseType()));
+
         //字段显示
         if(StringUtils.isNotBlank(entity.getDisplayField())){
             List<String> displayFieldList = Arrays.asList(entity.getDisplayField().split(","));
@@ -337,42 +437,63 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
         Map<String, List<CfgSupplierSalesConditionEntity>> map = list.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSourceType));
 
-        for (Map.Entry<String, List<CfgSupplierSalesConditionEntity>> entry : map.entrySet()) {
-            String key = entry.getKey();
-            List<CfgSupplierSalesConditionEntity> value = entry.getValue();
-
+        //仓库配置
+        String warehouseType = entity.getWarehouseType();
+        if(map.containsKey(warehouseType)){
+            List<CfgSupplierSalesConditionEntity> value = map.get(warehouseType);
             List<CfgSupplierSalesConditionDTO.View> conditionList = value.stream()
                     .sorted(Comparator.comparingInt(CfgSupplierSalesConditionEntity::getIndex))
                     .map(e -> BeanMapperUtils.map(CfgSupplierSalesConditionDTO.View.class, e))
                     .collect(Collectors.toList());
-
-            if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
-                data.setSkuList(conditionList);
-            }
-            if(Objects.equals(key,RuleTypeEnum.PHYSICALWAREHOUSE.getCode()) || Objects.equals(key,RuleTypeEnum.VIRTUALWAREHOUSE.getCode())){
-                data.setWarehouseType(value.get(0).getWarehouseType());
-                data.setWarehouseTypeName(CfgSupplierSalesConditionWarehouseTypeEnum.getName(value.get(0).getWarehouseType()));
-                data.setSaleableStockList(conditionList);
-            }
-            if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
-                data.setSalesStatisticList(conditionList);
-            }
-            if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
-                data.setNoticeList(conditionList);
-            }
-            if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
-                data.setIsBlack(Boolean.TRUE);
-
-                String sku = conditionList.get(0).getValue();
-                List<String> skuNoList = Arrays.asList(sku.split(","));
-                List<SkuVO> productDetailEntities = plmTaskFeign.listBySkuNoList(skuNoList);
-                List<String> blackList = productDetailEntities.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
-                List<String> blackNameList = productDetailEntities.stream().map(SkuVO::getSkuName).collect(Collectors.toList());
-                data.setBlackList(blackList);
-                data.setBlackNameList(blackNameList);
-            }
+            data.setSaleableStockList(conditionList);
+        }else{
+            data.setSaleableStockList(Arrays.asList(new CfgSupplierSalesConditionDTO.View()));
         }
 
+        RuleTypeEnum[] values = RuleTypeEnum.values();
+        for (RuleTypeEnum ruleTypeEnum : values) {
+            String key = ruleTypeEnum.getCode();
+            if(map.containsKey(key)){
+                List<CfgSupplierSalesConditionEntity> value = map.get(key);
+
+                List<CfgSupplierSalesConditionDTO.View> conditionList = value.stream()
+                        .sorted(Comparator.comparingInt(CfgSupplierSalesConditionEntity::getIndex))
+                        .map(e -> BeanMapperUtils.map(CfgSupplierSalesConditionDTO.View.class, e))
+                        .collect(Collectors.toList());
+
+                if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
+                    data.setSkuList(conditionList);
+                }
+                if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
+                    data.setSalesStatisticList(conditionList);
+                }
+                if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
+                    data.setNoticeList(conditionList);
+                }
+                if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
+                    data.setIsBlack(Boolean.TRUE);
+
+                    String sku = conditionList.get(0).getValue();
+                    List<String> skuNoList = Arrays.asList(sku.split(","));
+                    List<SkuVO> productDetailEntities = plmTaskFeign.listBySkuNoList(skuNoList);
+                    List<String> blackList = productDetailEntities.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+                    List<String> blackNameList = productDetailEntities.stream().map(SkuVO::getSkuName).collect(Collectors.toList());
+                    data.setBlackList(blackList);
+                    data.setBlackNameList(blackNameList);
+                }
+            }else {
+                List<CfgSupplierSalesConditionDTO.View> conditionList = Arrays.asList(new CfgSupplierSalesConditionDTO.View());
+                if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
+                    data.setSkuList(conditionList);
+                }
+                if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
+                    data.setSalesStatisticList(conditionList);
+                }
+                if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
+                    data.setNoticeList(conditionList);
+                }
+            }
+        }
         return data;
     }
 
@@ -425,6 +546,8 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     private void fillList(List<CfgSupplierSalesDTO.ListDTO> records) {
         for (CfgSupplierSalesDTO.ListDTO record : records) {
+
+
             record.setPermissionName(CfgSupplierSalesPermissionEnum.getName(record.getPermission()));
 
             record.setDailySalesTypeName(CfgSupplierSalesDailySalesTypeEnum.getName(record.getDailySalesType()));
@@ -436,6 +559,12 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             record.setDimensionName(CfgSupplierSalesDimensionEnum.getName(record.getDimension()));
 
             record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
+
+            if(Objects.equals(record.getSalesRatioType(), CfgSupplierSalesSalesRatioTypeEnum.SALESSTATISTICRATIO.getCode())){
+                record.setSalesRatioStr(CfgSupplierSalesSalesRatioTypeEnum.SALESSTATISTICRATIO.getName()+record.getSalesRatio().setScale(2).toString() + "%");
+            }else {
+                record.setSalesRatioStr(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getName());
+            }
         }
     }
 
