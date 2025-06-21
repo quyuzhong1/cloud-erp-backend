@@ -4,6 +4,7 @@ package com.common.core.utils;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -23,20 +24,11 @@ public class SqlUtils {
     
     public static void appendPermissionSql(StringBuilder sqlString , String tableAliaField , List<String> permissionDataList) {
     	if(CollUtil.isNotEmpty(permissionDataList)) {
-    		sqlString.append(" (");
-    		int i = 0;
-    		int size = permissionDataList.size();
-    		for(String permissionData : permissionDataList) {
-    			sqlString.append(tableAliaField);
-    			sqlString.append(" LIKE '%");
-    			sqlString.append(permissionData);
-    			sqlString.append("%' ");
-    			i = i + 1;
-    			if(i < size) {
-    				sqlString.append(" OR ");
-    			}
-    		}
-    		sqlString.append(" ) ");
+    		sqlString.append(" ( ");
+    		sqlString.append(tableAliaField);
+    		sqlString.append(" in (");
+    		sqlString.append(permissionDataList.stream().collect(Collectors.joining("','", "'", "'")));
+    		sqlString.append(" )) ");
     	}
     }
 }
