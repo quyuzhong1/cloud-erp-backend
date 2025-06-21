@@ -23,6 +23,7 @@
        <result column="dimension" property="dimension" />
        <result column="disabled" property="disabled" />
        <result column="display_field" property="displayField" />
+       <result column="warehouse_type" property="warehouseType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -46,7 +47,8 @@
         css.notice_enabled AS noticeEnabled,
         css.dimension AS dimension,
         css.disabled AS disabled,
-        css.display_field AS displayField
+        css.display_field AS displayField,
+        css.warehouse_type AS warehouseType
     </sql>
 
     <sql id="paging_sql">

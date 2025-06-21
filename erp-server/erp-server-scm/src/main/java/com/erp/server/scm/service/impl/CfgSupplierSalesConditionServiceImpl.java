@@ -57,7 +57,7 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void saveRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String sourceType, String warehouseType) {
+    public void saveRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String sourceType) {
         checkRuleCondition(conditionList);
         AtomicInteger index = new AtomicInteger(0);
         List<CfgSupplierSalesConditionEntity> ruleConditionEntities = conditionList.stream()
@@ -65,7 +65,6 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
                     CfgSupplierSalesConditionEntity entity = BeanMapperUtils.map(CfgSupplierSalesConditionEntity.class, action);
                     entity.setSalesSettingId(salesSettingId);
                     entity.setSourceType(sourceType);
-                    entity.setWarehouseType(warehouseType);
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
@@ -76,13 +75,11 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType, String warehouseType) {
+    public void updateRuleCondition(String salesSettingId, List<CfgSupplierSalesConditionDTO.ConditionDTO> conditionList, String moduleType, String sourceType) {
         if(CollUtil.isNotEmpty(conditionList)){
             checkRuleCondition(conditionList);
         }
         //查询规则条件
-//        List<CfgSupplierSalesConditionEntity> oleConditions = list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
-//                .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId));
         List<CfgSupplierSalesConditionEntity> oleConditions = lambdaQuery()
                 .eq(CfgSupplierSalesConditionEntity::getSalesSettingId, salesSettingId)
                 .eq(CfgSupplierSalesConditionEntity::getSourceType, sourceType)
@@ -111,7 +108,6 @@ public class CfgSupplierSalesConditionServiceImpl extends SuperServiceImpl<CfgSu
                     entity.setIndex(index.incrementAndGet());
                     entity.setSourceType(sourceType);
                     entity.setSalesSettingId(salesSettingId);
-                    entity.setWarehouseType(warehouseType);
                     return entity;
                 }).collect(Collectors.toList());
 
