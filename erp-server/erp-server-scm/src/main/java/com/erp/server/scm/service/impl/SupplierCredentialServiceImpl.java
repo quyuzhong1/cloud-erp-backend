@@ -3,7 +3,12 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -23,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -292,6 +298,46 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             addList.add(credential);
         }
         return addList;
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean update(SupplierCredentialDTO.UpdateDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<SupplierCredentialDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PagingVO<SupplierCredentialDTO.ListDTO> paging(PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public SupplierCredentialDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        return null;
+    }
+
+    @Override
+    public void exportList(SupplierCredentialDTO.PagingParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public BatchResultDTO updateStatus(String id) {
+        return null;
     }
 
 
