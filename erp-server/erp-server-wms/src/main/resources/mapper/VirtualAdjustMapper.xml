@@ -46,6 +46,7 @@
             va.remark,
             va.create_time AS createTime,
             va.create_user_name AS createUserName,
+            vad.id AS detailId,
             vad.sku_id AS skuId,
             vad.sku_no AS skuNo,
             vad.product_name AS productName,

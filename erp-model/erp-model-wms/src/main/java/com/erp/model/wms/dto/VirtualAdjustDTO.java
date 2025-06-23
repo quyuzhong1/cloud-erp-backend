@@ -87,6 +87,7 @@ public class VirtualAdjustDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        private String  detailId;
 
         /**
         * 单据编号【可排序】
