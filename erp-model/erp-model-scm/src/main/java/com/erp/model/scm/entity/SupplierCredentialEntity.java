@@ -25,12 +25,15 @@ import java.time.LocalDate;
 public class SupplierCredentialEntity extends BaseEntity<SupplierCredentialEntity> {
 
     /**
+     * 资质编码
+     */
+    @TableField("code")
+    private String code;
+    /**
      * 名称
      */
     @TableField("name")
     private String name;
-
-
 
     /**
      * 有效开始时间
@@ -55,6 +58,13 @@ public class SupplierCredentialEntity extends BaseEntity<SupplierCredentialEntit
      */
     @TableField("remark")
     private String remark;
+
+
+    /**
+     * SupplierCredentialStatusEnum 生效状态：notEffective=未生效,effective=生效中,expired=失效
+     */
+    @TableField("status")
+    private String status;
 
 
 

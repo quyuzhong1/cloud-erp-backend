@@ -58,7 +58,9 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      */
     List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
 
-    
+
+    List<AttachmentDTO.UpdateDTO> getByBusinessIdAndType(List<String> businessIds, String type);
+
     /**
      * 删除附件
      * @author yl
