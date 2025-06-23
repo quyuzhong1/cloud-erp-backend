@@ -515,9 +515,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     @Override
     public List<SupplierCredentialDTO.ViewDTO> view(List<String> ids) {
-        List<SupplierCredentialEntity> list = getList(ids);
-        List<SupplierCredentialDTO.ViewDTO> resultList = new ArrayList<>();
-        BeanMapper.copy(list, resultList);
+        List<SupplierCredentialEntity> list = this.listByIds(ids);
+        List<SupplierCredentialDTO.ViewDTO> resultList = BeanMapper.copyList(list, SupplierCredentialDTO.ViewDTO.class);
 
         // 数据填充处理
         fillOne(resultList);
@@ -525,6 +524,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     }
 
     private void fillOne(List<SupplierCredentialDTO.ViewDTO> resultList) {
+        if(CollUtil.isEmpty(resultList)){
+            return ;
+        }
         List<String> ids = resultList.stream().map(SupplierCredentialDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
 
         Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
