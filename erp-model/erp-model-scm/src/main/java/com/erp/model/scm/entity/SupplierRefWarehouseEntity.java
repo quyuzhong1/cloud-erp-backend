@@ -60,6 +60,17 @@ public class SupplierRefWarehouseEntity extends BaseEntity<SupplierRefWarehouseE
     @TableField("remark")
     private String remark;
 
+    /**
+     * 供应商名称
+     */
+    @TableField(exist = false)
+    private String supplierName;
+
+    /**
+     * 仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
 
     public static final String SUPPLIER_ID = "supplier_id";
 

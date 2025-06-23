@@ -111,6 +111,9 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             return Collections.singletonList(supplierRefWarehouseEntity);
         }
         List<String> warehouseLocationCodeList = addDTO.getWarehouseLocationCodeList();
+
+
+
         List<SupplierRefWarehouseEntity> list = new ArrayList<>();
         for (String warehouseLocationCode : warehouseLocationCodeList) {
             SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
@@ -134,17 +137,44 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         SupplierRefWarehouseEntity supplierRefWarehouseEntity =  BeanMapperUtils.map(SupplierRefWarehouseEntity.class, addOrUpdateDTO);
 
         // 数据处理
+        supplierRefWarehouseEntity.setWarehouseLocationCode(ObjectUtil.isEmpty(supplierRefWarehouseEntity.getWarehouseLocationCode()) ? "" : supplierRefWarehouseEntity.getWarehouseLocationCode());
         handleData(supplierRefWarehouseEntity);
         log.info("编辑 开始修改供应商关联仓库单数据，id：【{}】", old.getId());
         boolean save = super.updateById(supplierRefWarehouseEntity);
         if(!save) {
             throw new ServiceException("供应商关联仓库单保存失败");
         }
+        handleLogData(old,supplierRefWarehouseEntity);
         // 记录主单操作日志
         log.info("编辑 开始记录供应商关联仓库单日志数据，id：【{}】", supplierRefWarehouseEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), supplierRefWarehouseEntity.getId(), "供应商关联仓库单");
         operateLogService.addModuleOperateLogByObj(old, supplierRefWarehouseEntity, ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), supplierRefWarehouseEntity.getId(),"", msg);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 日志数据处理
+     * @author will
+     * @date 2025/6/23 16:55
+     * @param old
+     * @param entity
+     * @return void
+     */
+    private void handleLogData (SupplierRefWarehouseEntity old, SupplierRefWarehouseEntity entity) {
+        //供应商名称
+        if (!CharSequenceUtil.equals(old.getSupplierId(), entity.getSupplierId())) {
+            List<SupplierEntity> supplierList =supplierService.listByIds( Arrays.asList(old.getWarehouseId(), entity.getWarehouseId()));
+            Map<String, String> supplierMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName));
+            old.setSupplierName(supplierMap.get(old.getSupplierId()));
+            entity.setSupplierName(supplierMap.get(entity.getSupplierId()));
+        }
+        //仓库名称
+        if (!CharSequenceUtil.equals(old.getWarehouseId(), entity.getWarehouseId())) {
+            List<WarehouseEntity> warehosueList = FeignQuery.getByIds(WarehouseEntity.class, Arrays.asList(old.getWarehouseId(), entity.getWarehouseId()));
+            Map<String, String> warehouseMap = warehosueList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+            old.setWarehouseName(warehouseMap.get(old.getWarehouseId()));
+            entity.setWarehouseName(warehouseMap.get(entity.getWarehouseId()));
+        }
     }
 
     @Override
@@ -178,6 +208,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         }
         for (SupplierRefWarehouseDTO.ListDTO listDTO : list) {
             listDTO.setDisabledName(SupplierRefWarehouseTabEnum.getNameByCode(listDTO.getDisabled()));
+            listDTO.setWarehouseLocationName(CharSequenceUtil.isBlank(listDTO.getWarehouseLocationCode()) ? "" : listDTO.getWarehouseLocationCode());
         }
     }
 
@@ -357,24 +388,112 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             if (ObjUtil.isNotEmpty(oldEntity)) {
                 entity.setId(oldEntity.getId());
             }
+            try {
+                handleData(entity);
+            } catch (Exception e) {
+                log.error("导入数据异常，供应商名称：{}，仓库名称：{}，仓位名称：{}，错误信息：{}", excelDTO.getSupplierName(), excelDTO.getWarehouseName(), excelDTO.getWarehouseLocationName(), e.getMessage());
+                errorMsgList.add(e.getMessage());
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
             super.saveOrUpdate(entity);
         }
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(SupplierRefWarehouseEntity entity) {
-        //更新供应商编码
+        // 更新供应商编码
         if (CharSequenceUtil.isBlank(entity.getSupplierCode())) {
             SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
             entity.setSupplierCode(supplierEntity.getCode());
         }
-        SupplierRefWarehouseEntity oldEntity = getByOne(entity.getSupplierId(), entity.getWarehouseId(), entity.getWarehouseLocationCode());
-        if (ObjUtil.isNotEmpty(oldEntity) && !CharSequenceUtil.equals(entity.getId(),oldEntity.getId())) {
-            //仓库信息
-            WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class, oldEntity.getWarehouseId());
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_EXIST,oldEntity.getSupplierCode(),warehouseEntity.getName(),oldEntity.getWarehouseLocationCode());
+        // 检查是否存在冲突记录
+        checkConflictRecords(entity);
+    }
+
+    /**
+     * 检查冲突记录
+     */
+    private void checkConflictRecords(SupplierRefWarehouseEntity entity) {
+        String warehouseLocationCode = entity.getWarehouseLocationCode();
+        boolean isGlobalLocation = CharSequenceUtil.isBlank(warehouseLocationCode);
+
+        // 情况1：当前记录是全局仓位（仓位为空）
+        if (isGlobalLocation) {
+            checkGlobalLocationConflict(entity);
+        }
+        // 情况2：当前记录是具体仓位
+        else {
+            checkSpecificLocationConflict(entity);
+        }
+    }
+
+    /**
+     * 检查全局仓位冲突
+     */
+    private void checkGlobalLocationConflict(SupplierRefWarehouseEntity entity) {
+        // 查找该供应商在该仓库下的所有记录
+        List<SupplierRefWarehouseEntity> existingRecords = lambdaQuery()
+                .eq(SupplierRefWarehouseEntity::getSupplierId, entity.getSupplierId())
+                .eq(SupplierRefWarehouseEntity::getWarehouseId, entity.getWarehouseId())
+                .list();
+
+        // 排除当前记录自身（更新时）
+        List<SupplierRefWarehouseEntity> conflictRecords = existingRecords.stream()
+                .filter(record -> !record.getId().equals(entity.getId()))
+                .collect(Collectors.toList());
+
+        // 如果存在其他记录（无论是全局还是具体仓位）
+        if (!conflictRecords.isEmpty()) {
+            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
+            throw new ServiceException(
+                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
+                    entity.getSupplierCode(),
+                    warehouse.getName()
+            );
+        }
+    }
+
+    /**
+     * 检查具体仓位冲突
+     */
+    private void checkSpecificLocationConflict(SupplierRefWarehouseEntity entity) {
+        // 1. 检查是否已存在全局仓位记录
+        SupplierRefWarehouseEntity globalRecord = lambdaQuery()
+                .eq(SupplierRefWarehouseEntity::getSupplierId, entity.getSupplierId())
+                .eq(SupplierRefWarehouseEntity::getWarehouseId, entity.getWarehouseId())
+                .isNull(SupplierRefWarehouseEntity::getWarehouseLocationCode)
+                .ne(entity.getId() != null, SupplierRefWarehouseEntity::getId, entity.getId())
+                .one();
+
+        if (globalRecord != null) {
+            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
+            throw new ServiceException(
+                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS,
+                    entity.getSupplierCode(),
+                    warehouse.getName()
+            );
+        }
+
+        // 2. 检查是否已存在相同仓位的记录
+        SupplierRefWarehouseEntity sameLocationRecord = lambdaQuery()
+                .eq(SupplierRefWarehouseEntity::getSupplierId, entity.getSupplierId())
+                .eq(SupplierRefWarehouseEntity::getWarehouseId, entity.getWarehouseId())
+                .eq(SupplierRefWarehouseEntity::getWarehouseLocationCode, entity.getWarehouseLocationCode())
+                .ne(entity.getId() != null, SupplierRefWarehouseEntity::getId, entity.getId())
+                .one();
+
+        if (sameLocationRecord != null) {
+            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, entity.getWarehouseId());
+            throw new ServiceException(
+                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_EXIST,
+                    entity.getSupplierCode(),
+                    warehouse.getName(),
+                    entity.getWarehouseLocationCode()
+            );
         }
     }
 
@@ -388,7 +507,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
      * @return SupplierRefWarehouseEntity
      */
     private SupplierRefWarehouseEntity getByOne(String supplierId, String warehouseId, String warehouseLocationCode) {
-       return lambdaQuery().eq(SupplierRefWarehouseEntity::getSupplierId,supplierId)
+        return lambdaQuery().eq(SupplierRefWarehouseEntity::getSupplierId,supplierId)
                 .eq(SupplierRefWarehouseEntity::getWarehouseId,warehouseId)
                 .eq(SupplierRefWarehouseEntity::getWarehouseLocationCode,warehouseLocationCode)
                 .last("limit 1").one();

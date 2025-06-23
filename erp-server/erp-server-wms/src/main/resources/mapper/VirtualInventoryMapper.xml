@@ -778,6 +778,15 @@
         <if test="params.hideZeroInventory">
             and  inv.realQty != 0
         </if>
+        <if test="supplierRefWarehouseList != null and supplierRefWarehouseList.size > 0">
+            and
+            <foreach collection="supplierRefWarehouseList" item="item" open="(" close=")" separator="or">
+                (inv.warehouse_id = #{item.warehouseId}
+                <if test="item.warehouseLocationCode != null and item.warehouseLocationCode != ''">
+                    and inv.warehouse_location = #{item.warehouseLocationCode}
+                </if>)
+            </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
