@@ -245,6 +245,13 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean isDetailField;
 
         /**
+         * 第三方字段父id
+         */
+        @NotBlank(message = "第三方字段父id")
+        @Size(max = 255,message = "第三方字段父id最大长度不能超过255位")
+        private String thirdParentId;
+
+        /**
          * 第三方字段所属明细控件id
          */
         @Size(max = 255,message = "父控件id最大长度不能超过255位")
