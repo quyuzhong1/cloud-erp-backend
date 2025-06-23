@@ -404,7 +404,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(dto.getIsProductSync() && StringUtils.isBlank(dto.getOwnerCode())){
             throw new ServiceException("API推送开启时，货主编码不能为空");
         }
-        overseasProviderEntity.setProductPushEnabled(dto.getIsProductSync());
+        overseasProviderEntity.setIsProductSync(dto.getIsProductSync());
         overseasProviderEntity.setOwnerCode(dto.getOwnerCode());
         this.updateById(overseasProviderEntity);
     }
