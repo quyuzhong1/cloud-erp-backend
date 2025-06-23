@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +238,7 @@ public class PickingListsDTO {
     }
     @Data
     @NoArgsConstructor
-    public static class PrintCombinationView {
+    public static class PrintCombinationView implements Serializable {
 
         /**
          * 单据编号
@@ -332,7 +333,15 @@ public class PickingListsDTO {
          * 客户PO
          */
         private String customerPO;
-        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO) {
+        /**
+         * 目的地
+         */
+        private String toCountry;
+        /**
+         * 分组字段
+         */
+        private String groupName;
+        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO, String toCountry) {
             this.parentSkuNo = detail.getSkuNo();
             this.productName = productName;
             this.sourceCode = entity.getSourceCode();
@@ -342,6 +351,7 @@ public class PickingListsDTO {
             this.warehouseLocation = detail.getWarehouseLocation();
             this.sourceDetailId = detail.getSourceDetailId();
             this.customerPO = customerPO;
+            this.toCountry = toCountry;
         }
     }
 
