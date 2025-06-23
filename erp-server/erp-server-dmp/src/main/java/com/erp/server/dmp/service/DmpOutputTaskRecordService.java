@@ -154,4 +154,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
 
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);
+
+    PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 }

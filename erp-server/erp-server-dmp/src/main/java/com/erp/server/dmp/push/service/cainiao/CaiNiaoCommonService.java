@@ -8,6 +8,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.wms.aliexpress.model.ApiResponseDTO;

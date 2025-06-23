@@ -34,6 +34,8 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
@@ -67,6 +69,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, ListingInfoEntity> implements ListingInfoService {
+
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -596,11 +601,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             return null;
         }
         Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
+        String shopId = authMap.get("shopId").toString();
+        AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
         AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
         aliexpressAuthDTO.setUrl(authMap.get("baseUrl").toString());
         aliexpressAuthDTO.setAppKey(authMap.get("clientId").toString());
         aliexpressAuthDTO.setAppSecret(authMap.get("clientSecret").toString());
         aliexpressAuthDTO.setShopId(authMap.get("shopId").toString());
+        aliexpressAuthDTO.setAccessToken(shopInfoDTO.getToken());
         aliexpressAuthDTO.setOwnerCode(overseasProviderEntity.getOwnerCode());
 
         AliexpressProductDTO aliexpressProductDTO = new AliexpressProductDTO();

@@ -3,6 +3,8 @@ package com.erp.rpc.dmp.feign;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -295,4 +297,11 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/removeThirdWarehouseTask")
     void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity);
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("feign/pagingOutLatest")
+    PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
+
 }

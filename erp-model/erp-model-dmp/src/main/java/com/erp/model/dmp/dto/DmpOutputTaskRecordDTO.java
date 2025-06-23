@@ -30,6 +30,22 @@ import javax.validation.constraints.Size;
 public class DmpOutputTaskRecordDTO implements Serializable {
 
     /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+        private String sourceId;
+
+        private String status;
+
+        private String statusName;
+
+        private LocalDateTime createTime;
+
+    }
+    /**
     * 详情
     */
     @Data
@@ -218,6 +234,20 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 目标平台
+         */
+        private List<String> targetPlatformCodeList;
+
+        /**
+         * 目标平台
+         */
+        private List<String> typeList;
+        /**
+         * 来源Id
+         */
+        private List<String> sourceIdList;
 
     }
 

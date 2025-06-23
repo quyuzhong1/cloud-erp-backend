@@ -307,6 +307,15 @@ public class OverseasProviderDTO implements Serializable {
         private LocalDateTime authExpireTime;
 
         private Map<String,Object> authJson;
+        /**
+         * 开启API推送
+         */
+        private Boolean isProductSync;
+
+        /**
+         * 货主编码
+         */
+        private String ownerCode;
     }
 
     /**
