@@ -103,6 +103,12 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
      * @return List<SupplierRefWarehouseEntity>
      */
     private List<SupplierRefWarehouseEntity> handleAddData (SupplierRefWarehouseDTO.AddDTO addDTO) {
+        // 更新供应商编码
+        if (CharSequenceUtil.isBlank(addDTO.getSupplierCode())) {
+            SupplierEntity supplierEntity = supplierService.getById(addDTO.getSupplierId());
+            addDTO.setSupplierCode(supplierEntity.getCode());
+        }
+        //空仓位处理
         if (CollUtil.isEmpty(addDTO.getWarehouseLocationCodeList())){
             SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
             BeanMapperUtils.copy(addDTO, supplierRefWarehouseEntity);
@@ -112,8 +118,16 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         }
         List<String> warehouseLocationCodeList = addDTO.getWarehouseLocationCodeList();
 
-
-
+        //验证新增是否全局仓位和正常仓位同时存在
+        long count = warehouseLocationCodeList.stream().filter(CharSequenceUtil::isBlank).count();
+        if (warehouseLocationCodeList.size() > MathUtil.ONE && count > MathUtil.ZERO) {
+            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, addDTO.getWarehouseId());
+            throw new ServiceException(
+                    ApiError.ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT,
+                    addDTO.getSupplierCode(),
+                    warehouse.getName()
+            );
+        }
         List<SupplierRefWarehouseEntity> list = new ArrayList<>();
         for (String warehouseLocationCode : warehouseLocationCodeList) {
             SupplierRefWarehouseEntity supplierRefWarehouseEntity = new SupplierRefWarehouseEntity();
@@ -465,7 +479,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         SupplierRefWarehouseEntity globalRecord = lambdaQuery()
                 .eq(SupplierRefWarehouseEntity::getSupplierId, entity.getSupplierId())
                 .eq(SupplierRefWarehouseEntity::getWarehouseId, entity.getWarehouseId())
-                .isNull(SupplierRefWarehouseEntity::getWarehouseLocationCode)
+                .eq(SupplierRefWarehouseEntity::getWarehouseLocationCode,"")
                 .ne(entity.getId() != null, SupplierRefWarehouseEntity::getId, entity.getId())
                 .one();
 
