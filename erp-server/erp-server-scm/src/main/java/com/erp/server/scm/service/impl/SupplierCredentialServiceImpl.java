@@ -189,6 +189,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         //校验有效期
         checkDate(entity);
 
+        self.updateById(entity);
+
         //删除附件
         attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         //附件集合
@@ -400,7 +402,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
      */
     @Override
     public void checkDate(SupplierCredentialEntity supplierCredentialEntity) {
-        if (Objects.isNull(supplierCredentialEntity)) {
+        if (Objects.nonNull(supplierCredentialEntity)) {
             LocalDate effectiveDate = supplierCredentialEntity.getEffectiveDate();
             LocalDate expireDate = supplierCredentialEntity.getExpireDate();
             if(Objects.isNull(effectiveDate) || Objects.isNull(expireDate)){
@@ -494,7 +496,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         Map<String, List<AttachmentDTO.UpdateDTO>> attachmentMap = attachmentService.getByBusinessIdAndType(ids, type).stream().collect(Collectors.groupingBy(AttachmentDTO.UpdateDTO::getBusinessId));
 
         for (SupplierCredentialDTO.ListDTO record : records) {
-            record.setStatus(SupplierCredentialStatusEnum.getName(record.getStatus()));
+            record.setStatusName(SupplierCredentialStatusEnum.getName(record.getStatus()));
             record.setSupplierStatusName(ApproveStatusEnum.getName(record.getSupplierStatus()));
 
             List<AttachmentDTO.UpdateDTO> attachmentList = attachmentMap.get(record.getId());

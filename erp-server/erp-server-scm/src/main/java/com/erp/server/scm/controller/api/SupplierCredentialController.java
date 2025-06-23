@@ -11,6 +11,7 @@ import com.erp.server.scm.service.SupplierCredentialService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -53,14 +54,14 @@ public class SupplierCredentialController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "供应商证照新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<SupplierCredentialDTO.AddDTO> dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody  @Validated SupplierCredentialDTO. AddListDTO dto) {
 
-        SupplierCredentialDTO.AddDTO addDTO = dto.stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
+        SupplierCredentialDTO.AddDTO addDTO = dto.getList().stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
         if(Objects.isNull(addDTO)){
             return failure();
         }
         String supplierId = addDTO.getSupplierId();
-        supplierCredentialService.saveBatchCredential(supplierId,dto);
+        supplierCredentialService.saveBatchCredential(supplierId,dto.getList());
         return success();
     }
 
@@ -78,13 +79,13 @@ public class SupplierCredentialController extends BaseController {
         menuCode = "scm:supplierCredential:update",
         serviceClass = SupplierCredentialService.class,
         keyIdName = "id")
-    public ApiResult<Object> update(@RequestBody @Validated List<SupplierCredentialDTO.UpdateDTO> dto) {
-        SupplierCredentialDTO.UpdateDTO updateDTO = dto.stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
+    public ApiResult<Object> update(@RequestBody  @Validated SupplierCredentialDTO. UpdateListDTO dto) {
+        SupplierCredentialDTO.UpdateDTO updateDTO = dto.getList().stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
         if(Objects.isNull(updateDTO)){
             return failure();
         }
         String supplierId = updateDTO.getSupplierId();
-        supplierCredentialService.updateBatchCredential(supplierId,dto);
+        supplierCredentialService.updateBatchCredential(supplierId,dto.getList());
         return success();
     }
 
@@ -125,7 +126,6 @@ public class SupplierCredentialController extends BaseController {
      * 详情
      * @author jack
      * @date:  2025-06-21
-     * @param IdsDTO dto
      * @return ApiResult<SupplierCredentialDTO.ViewDTO>>
      */
     @PostMapping("/view")
@@ -226,7 +226,7 @@ public class SupplierCredentialController extends BaseController {
             tableAlias = "sc"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated SupplierCredentialDTO.PagingParamDTO dto, HttpServletResponse response) {
         supplierCredentialService.exportList(dto, response);
         return success();

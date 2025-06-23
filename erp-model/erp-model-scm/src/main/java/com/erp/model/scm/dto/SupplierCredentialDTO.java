@@ -6,8 +6,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -51,6 +54,18 @@ public class SupplierCredentialDTO  implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class AddListDTO {
+
+        @NotEmpty(message = "新增列表不能为空")
+        List<SupplierCredentialDTO. @Valid AddDTO> list;
+
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
@@ -58,6 +73,18 @@ public class SupplierCredentialDTO  implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateListDTO {
+
+        @NotEmpty(message = "修改列表不能为空")
+        List<SupplierCredentialDTO. @Valid UpdateDTO> list;
 
     }
 

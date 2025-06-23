@@ -159,7 +159,7 @@ public class ExportScmFeignController {
 
     @PostMapping("/exportSupplierCredential")
     @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
-    public PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
+    public PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(@RequestBody PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
         return supplierCredentialService.paging(dto);
     }
 
