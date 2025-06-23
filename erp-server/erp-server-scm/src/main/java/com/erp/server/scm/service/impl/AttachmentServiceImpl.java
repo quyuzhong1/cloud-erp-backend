@@ -115,6 +115,26 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     }
 
     /**
+     * 根据业务表id和type 获取附件信息
+     *
+     * @param businessIds
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author jack
+     * @date 2026-06-23
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessIdAndType(List<String> businessIds, String type) {
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        queryWrapper.eq(AttachmentEntity::getType, type);
+        List<AttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    /**
      * 删除附件
      *
      * @param dto

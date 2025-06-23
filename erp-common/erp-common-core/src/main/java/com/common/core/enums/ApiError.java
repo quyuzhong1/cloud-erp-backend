@@ -775,6 +775,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
+    ERROR_98121(98121,"资质有效期不能为空"),
 
     /**
      * WMS 错误

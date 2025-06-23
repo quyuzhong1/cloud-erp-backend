@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 供应商资质表
+ * 供应商证照表
  *
  * @author jack
  * @since 2025-06-21
@@ -48,7 +48,7 @@ public class SupplierCredentialController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "供应商资质新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "供应商证照新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SupplierCredentialDTO.AddDTO dto) {
         return success(supplierCredentialService.add(dto));
     }
@@ -61,7 +61,7 @@ public class SupplierCredentialController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "供应商资质修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "供应商证照修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "scm:supplierCredential:update",
@@ -136,7 +136,7 @@ public class SupplierCredentialController extends BaseController {
             menuCode = "scm:supplierCredential:delete",
             serviceClass = SupplierCredentialService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "供应商资质删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "供应商证照删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -147,10 +147,10 @@ public class SupplierCredentialController extends BaseController {
             try {
                 deleteResult = supplierCredentialService.delete(id);
             }catch (Exception e){
-                log.error("供应商资质删除失败",e);
+                log.error("供应商证照删除失败",e);
                 SupplierCredentialEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "供应商资质不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "供应商证照不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -169,27 +169,27 @@ public class SupplierCredentialController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateStatus")
-    @LogAction(value = LogActionEnum.DELETE, desc = "供应商资质更新时间")
+    @LogAction(value = LogActionEnum.DELETE, desc = "供应商证照更新时间")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SupplierCredentialEntity> list = supplierCredentialService.lambdaQuery().in(SupplierCredentialEntity::getId, ids).list();
         Map<String, SupplierCredentialEntity> idEntityMap = list.stream().collect(Collectors.toMap(SupplierCredentialEntity::getId, w -> w));
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
+            BatchResultDTO result;
             try {
-                deleteResult = supplierCredentialService.updateStatus(id);
+                result = supplierCredentialService.updateStatus(id);
             }catch (Exception e){
-                log.error("供应商资质更新失败",e);
+                log.error("供应商证照更新失败",e);
                 SupplierCredentialEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "供应商资质不存在, 更新失败");
-                    resultDTOS.add(deleteResult);
+                    result = BatchResultDTO.fail(id, id, "供应商证照不存在, 更新失败");
+                    resultDTOS.add(result);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
-            resultDTOS.add(deleteResult);
+            resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

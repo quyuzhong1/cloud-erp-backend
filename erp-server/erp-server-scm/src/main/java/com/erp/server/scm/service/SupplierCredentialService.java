@@ -67,7 +67,9 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * @param credentialList
      * @return void
      */
-    void checkDate(List<SupplierCredentialDTO.AddDTO> credentialList);
+    void checkListDate(List<SupplierCredentialDTO.AddDTO> credentialList);
+
+    void checkDate(SupplierCredentialEntity supplierCredentialEntity);
 
     /**
      * 转化 导入的数据
