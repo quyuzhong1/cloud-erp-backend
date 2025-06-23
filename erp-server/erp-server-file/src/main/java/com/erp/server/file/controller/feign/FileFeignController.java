@@ -22,7 +22,7 @@ public class FileFeignController {
      * @return
      */
     @PostMapping("/uploadFile")
-    String uploadFile(@RequestParam("multipartFile")MultipartFile multipartFile){
+    public String uploadFile(@RequestPart("multipartFile")MultipartFile multipartFile){
         return fileService.uploadFile(multipartFile);
     }
 
@@ -35,7 +35,7 @@ public class FileFeignController {
         fileService.deleteBatchFile(urlList);
     }
     @PostMapping("/uploadFileAndName")
-    String uploadFileAndName(@RequestParam("file") File file, @RequestParam("fileName") String fileName){
+    public String uploadFileAndName(@RequestPart("file") File file, @RequestParam("fileName") String fileName){
         return fileService.uploadFile(file, fileName);
     }
 }
