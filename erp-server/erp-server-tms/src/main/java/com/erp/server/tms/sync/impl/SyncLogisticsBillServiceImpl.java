@@ -6,37 +6,17 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
 import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-
-import com.alibaba.fastjson.JSON;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.TmsPushMsgEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.tms.service.LogisticsChannelService;
@@ -44,14 +24,14 @@ import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsPushMsgService;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
-
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Pair;
-import cn.hutool.core.text.CharSequenceUtil;
-import lombok.extern.slf4j.Slf4j;
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -70,7 +50,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public Map<String, Object> syncDataToSdyFieldHandler(LogisticsBillEntity entity,
                                                          LogisticsBillDetailEntity logisticsBillDetailEntity,
                                                          String operate,
-                                                         Map<String, Pair<String, String>> logisticInfoMaps) {
+                                                         Map<String, Map<String, String>> logisticInfoMaps) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -108,10 +88,14 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
         String logisticCompanyCode = "";
         String logisticCompany = "";
-        Pair<String, String> pair = logisticInfoMaps.get(entity.getId());
-        if(pair != null) {
-        	logisticCompanyCode = pair.getKey();
-        	logisticCompany = pair.getValue();
+        Map<String, String> infoMap = logisticInfoMaps.get(entity.getId());
+        if(!CollUtil.isEmpty(infoMap)) {
+            logisticCompanyCode = infoMap.getOrDefault("logisticCompanyCode","");
+            logisticCompany = infoMap.getOrDefault("logisticCompany","");
+
+            shudiyunB2cOrderDTO.setShop_no(infoMap.getOrDefault("shopNo","无"));
+            shudiyunB2cOrderDTO.setShop_name(infoMap.getOrDefault("shopName","无"));
+            shudiyunB2cOrderDTO.setRoot_node_no(infoMap.getOrDefault("orderPlatformCode","无"));
         }
         
         if (CharSequenceUtil.isBlank(logisticCompanyCode)) {
@@ -138,7 +122,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
                                                          LogisticsBillDetailEntity logisticsBillDetailEntity,
                                                          String operate,
-                                                         Map<String, Pair<String, String>> logisticInfoMaps) {
+                                                         Map<String, Map<String, String>> logisticInfoMaps) {
 
         DmpSoLogisticsDTO.ViewDTO viewDto = new DmpSoLogisticsDTO.ViewDTO();
 
@@ -154,10 +138,15 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
         String logisticCompanyCode = "";
         String logisticCompany = "";
-        Pair<String, String> pair = logisticInfoMaps.get(entity.getId());
-        if(pair != null) {
-        	logisticCompanyCode = pair.getKey();
-        	logisticCompany = pair.getValue();
+        Map<String, String> infoMap = logisticInfoMaps.get(entity.getId());
+        if(!CollUtil.isEmpty(infoMap)) {
+        	logisticCompanyCode = infoMap.getOrDefault("logisticCompanyCode","");
+        	logisticCompany = infoMap.getOrDefault("logisticCompany","");
+
+            viewDto.setShopNo(infoMap.getOrDefault("shopNo","无"));
+            viewDto.setShopName(infoMap.getOrDefault("shopName","无"));
+            viewDto.setPlatformType(infoMap.getOrDefault("platformType","无"));
+            viewDto.setOrderPlatformCode(infoMap.getOrDefault("orderPlatformCode","无"));
         }
         
         if (CharSequenceUtil.isBlank(logisticCompanyCode)) {
@@ -188,7 +177,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public void syncDataToSdy(LogisticsBillEntity entity,
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate,
-                              Map<String, Pair<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync) {
+                              Map<String, Map<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync) {
 
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
@@ -220,8 +209,8 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
 
 	@Override
-	public Map<String, Pair<String, String>> getLogisticInfo(List<LogisticsBillEntity> entitys) {
-		Map<String, Pair<String, String>> result = new HashMap<>();
+	public Map<String, Map<String, String>> getLogisticInfo(List<LogisticsBillEntity> entitys) {
+		Map<String, Map<String, String>> result = new HashMap<>();
 		if(CollUtil.isNotEmpty(entitys)) {
 			Map<String, String> channelMaps = entitys.stream().filter(e -> StringUtils.isNotBlank(e.getChannelId())).collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getChannelId));
 			if(CollUtil.isNotEmpty(channelMaps)) {
@@ -240,20 +229,74 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 						if(StringUtils.isNotBlank(mainId)) {
 							LogisticsSupplierEntity logisticsSupplierEntity = idSupplierMaps.get(mainId);
 							String supplierCode = supplierIdCodeMaps.get(logisticsSupplierEntity.getSupplierId());
-							result.put(channelMap.getKey(), Pair.of(supplierCode, logisticsSupplierEntity.getSupplierName()));
+                            Map<String, String> curInfoMap = result.get(channelMap.getKey());
+                            if (CollUtil.isEmpty(curInfoMap)) {
+                                curInfoMap = new HashMap<>();
+                            }
+                            curInfoMap.put("logisticCompanyCode", supplierCode);
+                            curInfoMap.put("logisticCompany", logisticsSupplierEntity.getSupplierName());
+							result.put(channelMap.getKey(), curInfoMap);
 						}
 					}
 				}
 			}
-			Map<String, String> notChannelMaps = entitys.stream().filter(e -> StringUtils.isBlank(e.getChannelId()) && StringUtils.isNotBlank(e.getOutstockId())).collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getOutstockId));
-			if(CollUtil.isNotEmpty(notChannelMaps)) {
-				Map<String, SoOutstockEntity> idSoOutMaps = FeignQuery.getByIds(SoOutstockEntity.class, notChannelMaps.values()).stream().collect(Collectors.toMap(SoOutstockEntity::getId, s -> s));
-				for(Map.Entry<String, String> notChannelMap : notChannelMaps.entrySet()) {
-					SoOutstockEntity soOutstockEntity = idSoOutMaps.get(notChannelMap.getValue());
-					if(soOutstockEntity != null) {
-						result.put(notChannelMap.getKey(), Pair.of(soOutstockEntity.getLogisticsChannelCode(), soOutstockEntity.getLogisticsChannelName()));
-					}
-				}
+            List<String> soOutstockIds = entitys.stream()
+                    .map(LogisticsBillEntity::getOutstockId)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toList());
+            if(CollUtil.isEmpty(soOutstockIds)) {
+                return result;
+            }
+			Map<String, SoOutstockEntity> idSoOutMaps = FeignQuery.getByIds(SoOutstockEntity.class, soOutstockIds).stream().collect(Collectors.toMap(SoOutstockEntity::getId, s -> s));
+            if (CollUtil.isEmpty(idSoOutMaps)) {
+                return result;
+            }
+            Map<String, SoB2cEntity> idSoB2cMaps = new HashMap<>();
+
+            List<String> soIdList = idSoOutMaps.values().stream().map(SoOutstockEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(soIdList)) {
+                idSoB2cMaps = FeignQuery.getByIds(SoB2cEntity.class, soIdList)
+                        .stream()
+                        .collect(Collectors.toMap(SoB2cEntity::getId, s -> s));
+            }
+            Map<String, CustomerInfoEntity> idCustomerInfoMaps = new HashMap<>();
+            List<String> customerIdList = idSoOutMaps.values().stream().map(SoOutstockEntity::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(customerIdList)) {
+                idCustomerInfoMaps = FeignQuery.getByIds(CustomerInfoEntity.class, customerIdList)
+                        .stream()
+                        .collect(Collectors.toMap(CustomerInfoEntity::getId, s -> s));
+            }
+            for (LogisticsBillEntity entity : entitys) {
+                SoOutstockEntity soOutstockEntity = idSoOutMaps.get(entity.getOutstockId());
+                if (null == soOutstockEntity) {
+                    continue;
+                }
+                Map<String, String> curInfoMap = result.get(entity.getId());
+                if (CollUtil.isEmpty(curInfoMap)) {
+                    curInfoMap = new HashMap<>();
+                }
+                if (StringUtils.isBlank(entity.getChannelId())) {
+                    curInfoMap.put("logisticCompanyCode", soOutstockEntity.getLogisticsChannelCode());
+                    curInfoMap.put("logisticCompany", soOutstockEntity.getLogisticsChannelName());
+                }
+                String orderPlatformCode = soOutstockEntity.getSoCode();
+                if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+                    SoB2cEntity soB2cEntity = idSoB2cMaps.get(soOutstockEntity.getSoId());
+                    if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                        if (CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode())) {
+                            orderPlatformCode = soB2cEntity.getPlatformCode();
+                        }
+                    }
+                }
+                curInfoMap.put("orderPlatformCode", orderPlatformCode);
+                CustomerInfoEntity customerInfo = idCustomerInfoMaps.get(soOutstockEntity.getCustomerId());
+                if (null != customerInfo) {
+                    curInfoMap.put("shopNo", customerInfo.getCode());
+                    curInfoMap.put("shopName", customerInfo.getName());
+                    curInfoMap.put("platformType", customerInfo.getPlatformType());
+                }
+
+                result.put(entity.getId(), curInfoMap);
 			}
 		}
 		return result;

@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -54,6 +55,7 @@ public class SysDepartmentUserController extends BaseController {
     }
 
     @RequestMapping("/list")
+    @WebAdvanceQuery
     public ApiResult list(@RequestBody @Validated PagingDTO<DepartmentSearchDTO> dto) {
         PagingVO pagingVO = sysDepartmentUserService.findDepartmentUser(dto);
         return success(pagingVO);

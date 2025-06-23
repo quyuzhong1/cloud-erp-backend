@@ -416,11 +416,11 @@ public class NfeInvoiceService {
             valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
         createDTO.setItens(itens);
-        createDTO.setValorTotal(valorTotal);
-
         //查询运费
         BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail);
-        createDTO.setFinalTotal(MathUtil.add(valorTotal,shipCost));
+        BigDecimal total = MathUtil.add(valorTotal, shipCost);
+        createDTO.setValorTotal(total);
+        createDTO.setFinalTotal(total);
     }
 
     /**

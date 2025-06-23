@@ -1,6 +1,9 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -39,4 +42,21 @@ public class DeptUserDTO implements Serializable {
 
     @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private List<DeptUserDTO> childrenList;
+
+    @Data
+    @NoArgsConstructor
+    public static class Tree {
+        /**
+         * 编码
+         */
+        private String code;
+        private String type;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
+        private List<DeptUserDTO.Tree> childTreeList;
+    }
+
 }

@@ -589,4 +589,10 @@ public class ProductSkuFeignController {
     public void uploadSkuImage(@RequestBody UploadSkuDTO dto){
         productDetailService.uploadSkuImage(dto);
     }
+
+
+    @PostMapping("/listAllStatusSkuBySkuNos")
+    public List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList) {
+        return productDetailService.listAllStatusSkuBySkuNos(skuNoList);
+    }
 }

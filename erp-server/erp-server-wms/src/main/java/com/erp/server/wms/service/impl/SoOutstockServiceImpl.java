@@ -23,6 +23,7 @@ import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -1562,7 +1563,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+        	dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+		String shopPermissionSql = authDataFeign.getShopPermissionSqlByDynamicDataSource("so.shop_id" , dynamicDataSource);
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
             permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
@@ -2848,6 +2854,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (ApiError.isNotServiceException(e)){
+                    throw e;
+                }
                 // 记录明细(事务分开)
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
@@ -3015,7 +3025,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<PlatformSoOutStockDetailDTO> existSourceDetailList = new LinkedList<>();
 
         // 销售订单明细
-        Map<String, SoOutstockDetailEntity> detailEntityListMap = new HashMap<>();
+        Map<String, List<SoOutstockDetailEntity>> detailEntityListMap = new HashMap<>();
 
         // 销售出库单主体
         Map<String, SoOutstockEntity> mainEntityMap = new HashMap<>();
@@ -3031,7 +3041,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> mainIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             detailEntityListMap = soOutstockDetailService.listByMainIds(mainIds)
                     .stream()
-                    .collect(Collectors.toMap(SoOutstockDetailEntity::getPlatformDetailId, Function.identity()));
+                    .collect(Collectors.groupingBy(SoOutstockDetailEntity::getPlatformDetailId));
         }
 
         // 判断明细处理
@@ -3046,9 +3056,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     continue;
                 }
                 // 明细已存在
-                SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
-                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
-                if (Objects.equals(detailEntity.getActualQty(), detailDTO.getQtyShipped())
+                List<SoOutstockDetailEntity> detailEntityList = detailEntityListMap.get(detailDTO.getPlatformDetailId());
+                // 兼容多个历史sku映射出库判断
+                int allQty = detailEntityList.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum();
+                SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntityList.get(0).getMainId());
+                if (Objects.equals(allQty, detailDTO.getQtyShipped())
                         && soOutstockEntity.getBillDate().isEqual(detailDTO.convertPlatformDeliveryDateTime())){
                     // 3, 明细已存在且信息未变更
                     existSourceDetailList.add(detailDTO);
@@ -3070,8 +3082,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean updateResult = soOutstockService.updatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList, mainEntityMap, detailEntityListMap);
 
         if (addResult && updateResult){
+            List<SoOutstockDetailEntity> collect = detailEntityListMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
             // 检查清理历史异常信息
-            soOutstockService.checkAndDeletePlatformB2cOutStock(existSourceDetailList, soB2cEntity, detailEntityListMap.values());
+            soOutstockService.checkAndDeletePlatformB2cOutStock(existSourceDetailList, soB2cEntity, collect);
         }
 
         return true;
@@ -3136,6 +3149,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             } catch (Exception e) {
                 log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (ApiError.isNotServiceException(e)){
+                    throw e;
+                }
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson(JSONUtil.toJsonStr(genDTO));
@@ -3550,19 +3567,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList, Map<String, SoOutstockEntity> mainEntityMap, Map<String, SoOutstockDetailEntity> detailEntityListMap) {
+    public Boolean updatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> updateGenerateSourceDetailList, Map<String, SoOutstockEntity> mainEntityMap, Map<String, List<SoOutstockDetailEntity>> detailEntityListMap) {
         if (CollectionUtils.isEmpty(updateGenerateSourceDetailList)){
             // 无新增
             return true;
         }
         // 需要检查清除异常的明细IDS
-        List<String> checkErrorDetailIds = new LinkedList<>();
+//        List<String> checkErrorDetailIds = new LinkedList<>();
 
         boolean result = true;
 
         for (PlatformSoOutStockDetailDTO detailDTO : updateGenerateSourceDetailList) {
-            SoOutstockDetailEntity detailEntity = detailEntityListMap.get(detailDTO.getPlatformDetailId());
-            SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntity.getMainId());
+            List<SoOutstockDetailEntity> detailEntityList = detailEntityListMap.get(detailDTO.getPlatformDetailId());
+            SoOutstockEntity soOutstockEntity = mainEntityMap.get(detailEntityList.get(0).getMainId());
             try {
                 // 反审核(独立事务)
                 if (ApproveStatusEnum.APPROVE.equals(soOutstockEntity.getApproveStatus())){
@@ -3580,19 +3597,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 重新新增(独立事务)
                 soOutstockService.generatePlatformB2cOutStock(generateB2cDTO, dto, soB2cEntity, updateGenerateSourceDetailList);
 
-                checkErrorDetailIds.add(detailEntity.getId());
+//                checkErrorDetailIds.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {
                 log.error("【平台销售出库单生成失败】dto={},error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
-                // 记录信息(独立事务)
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                addError.setParamJson(JSONUtil.toJsonStr(generateB2cDTO));
-                addError.setReturnJson("");
-                addError.setMainId(soB2cEntity.getId());
-                addError.setDetailId(detailEntity.getId());
-                addError.setMessage(CharSequenceUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
-                soB2cFeign.addSoB2cError(addError);
-                result = false;
+                // 非ServiceException 异常，直接抛出由中台重试
+                if (! (e instanceof ServiceException)){
+                    throw e;
+                }
+                List<String> existSoDetailIds = detailEntityList.stream().map(SoOutstockDetailEntity::getSoDetailId).distinct().collect(Collectors.toList());
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                deleteDTO.setMainId(soB2cEntity.getId());
+                deleteDTO.setType(type);
+                deleteDTO.setDetailIdList(existSoDetailIds);
+                soB2cFeign.checkAndDeleteAllError(deleteDTO);
             }
         }
 

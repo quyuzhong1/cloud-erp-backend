@@ -92,7 +92,7 @@ public class SyncSdyJob {
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<LogisticsBillDetailEntity> billDetailEntities = logisticsBillDetailService.listByMainIds(ids);
 
-            Map<String, Pair<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(list);
+            Map<String, Map<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(list);
             for (LogisticsBillEntity entity : list) {
                 List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream()
                         .filter(req -> req.getMainId().equals(entity.getId()) && CharSequenceUtil.isNotBlank(req.getTrackStatus()))

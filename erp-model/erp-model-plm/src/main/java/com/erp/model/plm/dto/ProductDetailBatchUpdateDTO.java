@@ -32,4 +32,9 @@ public class ProductDetailBatchUpdateDTO implements Serializable {
      * 字段内容
      */
     private Object values;
+    /**
+     * 字段显示值
+     */
+    private String name;
+
 }

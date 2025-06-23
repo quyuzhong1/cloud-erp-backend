@@ -139,4 +139,13 @@ public class KingdeeOperatorRefPostController extends BaseController {
         List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeOperatorRefPostService.listInfo(dto);
         return success(list);
     }
+
+    /**
+     * 批量启用/停用
+     */
+    @PostMapping("/updateState")
+    public ApiResult updateState (@RequestBody @Validated KingdeeBusinessOperatorDTO.BatchUpdateDTO dto) {
+        kingdeeOperatorRefPostService.updateState(dto);
+        return success();
+    }
 }

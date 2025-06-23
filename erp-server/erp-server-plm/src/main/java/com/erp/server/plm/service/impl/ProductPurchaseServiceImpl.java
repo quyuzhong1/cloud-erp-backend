@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -88,7 +90,24 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         BeanMapper.copy(purchaseDTO, purchaseEntity);
         //验证数据
         checkProductPurchase(purchaseEntity);
+        //处理数据
+        handleSaveOrUpdate(purchaseEntity);
         return this.saveOrUpdate(purchaseEntity);
+    }
+
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/5/13 15:11
+     * @param entity
+     * @return void
+     */
+    private void handleSaveOrUpdate (ProductPurchaseEntity entity) {
+        ProductPurchaseEntity oldEntity = this.getBySkuId(entity.getSkuId());
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        entity.setId(oldEntity.getId());
     }
 
     /**
@@ -102,16 +121,25 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     public Boolean saveOrUpdateBatch(List<ProductPurchaseDTO> purchaseList) {
         List<ProductPurchaseEntity> list = BeanMapper.copyList(purchaseList, ProductPurchaseEntity.class);
 
-        Map<String, List<ProductPurchaseEntity>> map = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getEan())).collect(Collectors.groupingBy(ProductPurchaseEntity::getEan));
-        for (Map.Entry<String, List<ProductPurchaseEntity>> entry : map.entrySet()) {
-            String ean = entry.getKey();
-            List<ProductPurchaseEntity> eanList = entry.getValue();
-            if (StringUtils.isNotBlank(ean) && eanList.size() > 1) {
-                throw new ServiceException(ApiError.ERROR_95164);
+        //根据sku查询
+        List<String> skuIdList = list.stream().map(ProductPurchaseEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductPurchaseEntity> oldList = this.listBySkuIds(skuIdList);
+        Map<String, String> map = oldList.stream().collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, ProductPurchaseEntity::getId));
+        Map<String, List<ProductPurchaseEntity>> eanMap = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getEan())).collect(Collectors.groupingBy(ProductPurchaseEntity::getEan));
 
+        for (ProductPurchaseEntity entity : list) {
+            //Id赋值
+            entity.setId(map.get(entity.getSkuId()));
+
+            //验证ean
+            if (CharSequenceUtil.isNotBlank(entity.getEan())) {
+                List<ProductPurchaseEntity> eanList = eanMap.get(entity.getEan());
+                if (eanList.size() > 1) {
+                    throw new ServiceException(ApiError.ERROR_95164);
+                }
+                //验证数据
+                checkProductPurchase(eanList.get(0));
             }
-            //验证数据
-            checkProductPurchase(eanList.get(0));
         }
         return this.saveOrUpdateBatch(list);
     }
