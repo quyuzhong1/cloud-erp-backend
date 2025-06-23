@@ -19,7 +19,7 @@ public class VirtualAdjustDetailExcelDTO implements Serializable {
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 0)
-    @FieldValid(fieldName = "sku", isNotBlank = true)
+    @FieldValid(fieldName = "sku", isNotBlank = true,maxLength = 32)
     private String skuNo;
     @ExcelIgnore
     private String skuId;
@@ -37,7 +37,7 @@ public class VirtualAdjustDetailExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "*虚拟仓库", index = 2)
-    @FieldValid(fieldName = "虚拟仓库", isNotBlank = true)
+    @FieldValid(fieldName = "虚拟仓库", isNotBlank = true,maxLength = 50)
     private String virtualWarehouseName;
     @ExcelIgnore
     private String virtualWarehouseId;
@@ -47,7 +47,7 @@ public class VirtualAdjustDetailExcelDTO implements Serializable {
      */
     @ColumnWidth(25)
     @ExcelProperty(value = "*库存状态", index = 3)
-    @FieldValid(fieldName = "库存状态", isNotBlank = true)
+    @FieldValid(fieldName = "库存状态", isNotBlank = true, maxLength = 30)
     private String inventoryStatusName;
     @ExcelIgnore
     private String inventoryStatus;
@@ -57,7 +57,7 @@ public class VirtualAdjustDetailExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*调整数量", index = 4)
-    @FieldValid(fieldName = "调整数量", isNotBlank = true)
+    @FieldValid(fieldName = "调整数量", isNotBlank = true, maxLength = 30)
     private String qtyStr;
     @ExcelIgnore
     private Integer qty;
@@ -67,7 +67,7 @@ public class VirtualAdjustDetailExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "备注", index = 5)
-    @FieldValid(fieldName = "备注")
+    @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
     /**
      * 错误信息

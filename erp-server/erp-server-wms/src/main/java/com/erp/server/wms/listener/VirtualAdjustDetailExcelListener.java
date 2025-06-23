@@ -67,7 +67,6 @@ public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<Virt
     @Transactional(rollbackFor = Exception.class)
     public void invoke(VirtualAdjustDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
-        allList.add(excelDTO);
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         List<String> errorMsgList = new ArrayList<>(msgList);
         if (CollectionUtils.isNotEmpty(msgList)){
@@ -95,8 +94,8 @@ public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<Virt
         if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
-            return;
         }
+        allList.add(excelDTO);
     }
 
 
