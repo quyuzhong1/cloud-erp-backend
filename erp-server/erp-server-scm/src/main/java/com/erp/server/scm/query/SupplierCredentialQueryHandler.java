@@ -64,6 +64,6 @@ public class SupplierCredentialQueryHandler extends AbstractQueryHandler {
         if(value.equals("all") || value.equals("")){
             return "";
         }
-        return "sc.status ="+ value;
+        return "sc.status ='"+ value+"'";
     }
 }

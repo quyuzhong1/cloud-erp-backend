@@ -128,7 +128,7 @@ public class SupplierCredentialController extends BaseController {
      * @param IdsDTO dto
      * @return ApiResult<SupplierCredentialDTO.ViewDTO>>
      */
-    @GetMapping("/view")
+    @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "scm:supplierCredential:view",
