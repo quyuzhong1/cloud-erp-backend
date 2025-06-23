@@ -26,5 +26,6 @@ public class FileTemplateConstant {
      */
     public static final String CFG_VAT_INVOICE = "VAT发票";
     public static final String CUSTOMER_SKU_LABEL = "客户sku标签";
+    public static final String COMPANY_LABEL = "公司标签";
 
 }

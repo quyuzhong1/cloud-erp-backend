@@ -7,10 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.file.service.FileService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -31,13 +28,13 @@ public class FileController extends BaseController {
     /**
      * 上传文件
      *
-     * @param file
+     * @param multipartFile
      * @return
      */
     @PostMapping("/uploadFile")
-    public ApiResult<SysCommonDTO.AttachmentDTO> uploadFile(@RequestParam("multipartFile")MultipartFile file){
-        String url = fileService.uploadFile(file);
-        String fileName = file.getOriginalFilename();
+    public ApiResult<SysCommonDTO.AttachmentDTO> uploadFile(@RequestParam("multipartFile")MultipartFile multipartFile){
+        String url = fileService.uploadFile(multipartFile);
+        String fileName = multipartFile.getOriginalFilename();
         return success(new SysCommonDTO.AttachmentDTO(fileName, url));
     }
 

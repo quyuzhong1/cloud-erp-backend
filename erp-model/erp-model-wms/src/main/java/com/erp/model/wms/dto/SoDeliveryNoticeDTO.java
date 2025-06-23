@@ -680,6 +680,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * 客户sku
          */
         private String platformSkuNo;
@@ -703,6 +707,16 @@ public class SoDeliveryNoticeDTO {
     public static class PrintSkuLabelConfirmDTO {
         //打印尺寸
         private String size;
+        /**
+         * 生产厂名
+         */
+        @NotBlank(message = "生产厂名不能为空")
+        private String companyName;
+        /**
+         * 生产地址
+         */
+        @NotBlank(message = "生产地址不能为空")
+        private String companyAddress;
         /**
          * 打印明细
          */
