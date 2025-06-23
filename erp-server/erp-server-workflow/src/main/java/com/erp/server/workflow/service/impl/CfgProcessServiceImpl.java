@@ -17,6 +17,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -118,7 +119,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //保存执行条件
         cfgProcessRuleService.add(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
         // 操作日志
-        String msg = StrUtil.format("新增【{}】配置编码为【{}】", "流程配置", cfgProcessEntity.getCode());
+        String msg = StrUtil.format("新增-{}-{}", cfgProcessEntity.getName(), cfgProcessEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), code);
     }
@@ -133,7 +134,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         //code不能修改
         cfgProcessEntity.setCode(old.getCode());
-        log.info("开始新增流程配置");
+        log.info("开始编辑流程配置");
         boolean save = super.updateById(cfgProcessEntity);
         if (!save) {
             throw new ServiceException("流程配置保存失败");
@@ -141,7 +142,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //保存执行条件
         cfgProcessRuleService.update(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
         // 操作日志
-        operateLogService.addModuleOperateLogByObj(old, cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "编辑信息");
+        operateLogService.addModuleOperateLogByObj(old, cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "流程配置");
         return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), dto.getCode());
     }
 
@@ -233,15 +234,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                 .filter(id -> !remainingProcessIds.contains(id))
                 .collect(Collectors.toList());
 
-        if (!processesToDelete.isEmpty()) {
+        if (CollUtil.isNotEmpty(processesToDelete)) {
             super.removeByIds(processesToDelete);
+            List<CfgProcessEntity> cfgProcessEntities = this.listByIds(processesToDelete);
             // 添加操作日志
-            operateLogService.addModuleOperateLog(
-                    String.format("删除流程配置，ID：%s", String.join(",", processesToDelete)),
-                    ModuleTypeEnum.CFG_PROCESS.getCode(),
-                    null,
-                    "删除操作"
-            );
+            for (int i = 0; i < cfgProcessEntities.size(); i++) {
+                operateLogService.addModuleOperateLog(
+                        String.format("删除{}-{}", cfgProcessEntities.get(i).getName(), cfgProcessEntities.get(i).getCode()),
+                        ModuleTypeEnum.CFG_PROCESS.getCode(),
+                        cfgProcessEntities.get(i).getId(),
+                        "删除操作"
+                );
+            }
         }
     }
 
@@ -341,7 +345,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                             .form(form)
                             .build())
                     .build();
-//            String instanceCode = fsService.createInstance(req);
+            String instanceCode = fsService.createInstance(req);
             //飞书明细控件 id:name
             Map<String, String> resultMap = new HashMap<>();
             for (int i = 0; i < formArray.size(); i++) {
@@ -385,10 +389,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
             ApproveTaskInfoDTO.AddDTO addDTO = buildApproveTaskInfo(dto, processDefinition);
             addDTO.setDetailList(addDTOS);
-            addDTO.setThirdInstanceId("instanceCode");
+            addDTO.setThirdInstanceId(instanceCode);
             addDTO.setThirdApprovalCode(code);
-            throw new ServiceException("");
-//            approveTaskInfoService.add(addDTO);
+            approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
             throw new RuntimeException("飞书创建审批实例失败：" + e);
         }

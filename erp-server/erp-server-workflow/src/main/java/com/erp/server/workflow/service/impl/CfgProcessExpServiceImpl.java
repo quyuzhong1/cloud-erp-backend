@@ -55,8 +55,8 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         processExpEntities.forEach(entity -> entity.setRuleId(ruleId));
         this.saveBatch(processExpEntities);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置审核条件", "");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+        String msg = StrUtil.format("新增流程设置审核条件");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId,msg);
         return new BaseResultDTO.AddDTO();
     }
 
@@ -115,7 +115,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         existingEntities.forEach(existingEntity -> {
             CfgProcessExpEntity updateEntity = expEntityMap.get(existingEntity.getId());
             if (ObjectUtil.isNotEmpty(updateEntity)) {
-//                operateLogService.addModuleOperateLogByObj(existingEntity, updateEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+                operateLogService.addModuleOperateLogByObj(existingEntity, updateEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "编辑审核条件");
             }
         });
 
@@ -165,7 +165,6 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
      * 新增修改处理数据
      */
     private void handleData(CfgProcessExpEntity cfgProcessExpEntity) {
-        // TODO 验证数据 & 数据赋值
 
     }
 
