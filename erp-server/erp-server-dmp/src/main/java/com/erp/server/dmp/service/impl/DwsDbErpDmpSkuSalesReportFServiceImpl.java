@@ -35,11 +35,12 @@ public class DwsDbErpDmpSkuSalesReportFServiceImpl extends SuperServiceImpl<DwsD
                 .in(CollectionUtils.isNotEmpty(dto.getFirstCategoryIdList()), DwsDbErpDmpSkuSalesReportFEntity::getFirstCategoryId, dto.getFirstCategoryIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getSecondCategoryIdList()), DwsDbErpDmpSkuSalesReportFEntity::getSecondCategoryId, dto.getSecondCategoryIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getDictPlatformList()), DwsDbErpDmpSkuSalesReportFEntity::getDictPlatform, dto.getDictPlatformList())
-                .in(CollectionUtils.isNotEmpty(dto.getShopIdList()), DwsDbErpDmpSkuSalesReportFEntity::getShopId, dto.getShopIdList())
+                .in(CollectionUtils.isNotEmpty(dto.getCustomerIdList()), DwsDbErpDmpSkuSalesReportFEntity::getCustomerId, dto.getCustomerIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getCountryIdList()), DwsDbErpDmpSkuSalesReportFEntity::getCountryId, dto.getCountryIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getPartitionIdList()), DwsDbErpDmpSkuSalesReportFEntity::getPartitionId, dto.getPartitionIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getDailySalesType()), DwsDbErpDmpSkuSalesReportFEntity::getDailySalesType, dto.getDailySalesType())
                 .in(CollectionUtils.isNotEmpty(dto.getDimension()), DwsDbErpDmpSkuSalesReportFEntity::getDimension, dto.getDimension())
+                .in(CollectionUtils.isNotEmpty(dto.getApplicationCategoryIdList()), DwsDbErpDmpSkuSalesReportFEntity::getApplicationCategoryId, dto.getApplicationCategoryIdList())
                 .list();
     }
 }

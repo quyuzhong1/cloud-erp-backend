@@ -25,8 +25,8 @@
        <result column="second_category_name" property="secondCategoryName" />
        <result column="dict_platform" property="dictPlatform" />
        <result column="platform_name" property="platformName" />
-       <result column="shop_id" property="shopId" />
-       <result column="shop_name" property="shopName" />
+       <result column="shop_id" property="customerId" />
+       <result column="shop_name" property="customerName" />
        <result column="country_id" property="countryId" />
        <result column="country_name" property="countryName" />
        <result column="partition_id" property="partitionId" />

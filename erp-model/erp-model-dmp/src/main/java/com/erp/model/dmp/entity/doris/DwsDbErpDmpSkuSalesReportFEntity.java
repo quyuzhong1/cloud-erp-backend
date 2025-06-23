@@ -102,15 +102,15 @@ public class DwsDbErpDmpSkuSalesReportFEntity extends BaseEntity<DwsDbErpDmpSkuS
     @TableField("platform_name")
     private String platformName;
     /**
-    * 店铺ID
+    * 客户ID
     */
-    @TableField("shop_id")
-    private String shopId;
+    @TableField("customer_id")
+    private String customerId;
     /**
-    * 店铺名称
+    * 客户名称
     */
-    @TableField("shop_name")
-    private String shopName;
+    @TableField("customer_name")
+    private String customerName;
     /**
     * 国家ID
     */
@@ -161,6 +161,16 @@ public class DwsDbErpDmpSkuSalesReportFEntity extends BaseEntity<DwsDbErpDmpSkuS
     */
     @TableField("stat_date")
     private LocalDate statDate;
+    /**
+     * 应用分类ID
+     */
+    @TableField("application_category_id")
+    private String applicationCategoryId;
+    /**
+     * 应用分类名称
+     */
+    @TableField("application_category_name")
+    private String applicationCategoryName;
 
 
     public static final String DAILY_SALES_TYPE = "daily_sales_type";

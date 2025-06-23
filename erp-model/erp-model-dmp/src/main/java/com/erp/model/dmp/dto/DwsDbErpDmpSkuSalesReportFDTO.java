@@ -392,14 +392,19 @@ public class DwsDbErpDmpSkuSalesReportFDTO implements Serializable {
         private List<String> secondCategoryIdList;
 
         /**
+         * 应用分类ID列表
+         */
+        private List<String> applicationCategoryIdList;
+
+        /**
          * 销售平台编码列表
          */
         private List<String> dictPlatformList;
 
         /**
-         * 店铺ID列表
+         * 客户ID列表
          */
-        private List<String> shopIdList;
+        private List<String> customerIdList;
 
         /**
          * 国家ID
