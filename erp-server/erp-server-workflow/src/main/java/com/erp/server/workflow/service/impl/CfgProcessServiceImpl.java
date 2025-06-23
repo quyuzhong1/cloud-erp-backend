@@ -345,7 +345,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                             .form(form)
                             .build())
                     .build();
-//            String instanceCode = fsService.createInstance(req);
+            String instanceCode = fsService.createInstance(req);
             //飞书明细控件 id:name
             Map<String, String> resultMap = new HashMap<>();
             for (int i = 0; i < formArray.size(); i++) {
@@ -389,7 +389,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
             ApproveTaskInfoDTO.AddDTO addDTO = buildApproveTaskInfo(dto, processDefinition);
             addDTO.setDetailList(addDTOS);
-            addDTO.setThirdInstanceId("instanceCode");
+            addDTO.setThirdInstanceId(instanceCode);
             addDTO.setThirdApprovalCode(code);
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
