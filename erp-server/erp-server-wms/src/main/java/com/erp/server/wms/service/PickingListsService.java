@@ -60,7 +60,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      *
      * @param ids ids
      */
-    List<PickingListsDTO.PrintView> print(List<String> ids);
+    List<PickingListsDTO.PrintCombinationView> print(List<String> ids);
     /**
      * 修改
      *
