@@ -164,7 +164,7 @@ public class CfgProcessDTO implements Serializable {
          */
         private Boolean disabled;
         /**
-         * ruleId
+         * 配置id
          */
         private String mainId;
         /**
