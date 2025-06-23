@@ -76,15 +76,27 @@ public class SkuMappingWarehouseImportExcelDTO {
     private String skuNo;
 
     /**
+     * 账号
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "account", index = 7)
+    private String account;
+
+    /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 7)
+    @ExcelProperty(value = "错误数据", index = 8)
     private String errorMsg;
 
     @ExcelIgnore
     private String warehouseId;
 
+    @ExcelIgnore
+    private String dictPlatform = "";
+
+    @ExcelIgnore
+    private String dictPlatformName = "";
 
     public Boolean convertHasMappingAllStr() {
         if (null == this.getHasMappingAllStr()){

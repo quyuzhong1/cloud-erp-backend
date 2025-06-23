@@ -6,6 +6,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -13,10 +14,12 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.ListingInfoService;
@@ -122,7 +125,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 errorMsgList.add("[对照关系适用于该服务商所有仓库]请输入'是'或'否'");
             }
         }
-
+        importExcelDTO.setDictPlatform("");
+        importExcelDTO.setDictPlatformName("");
         String warehouseId = "";
         String warehouseName = importExcelDTO.getWarehouseName();
         List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(warehouseName));
@@ -133,6 +137,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                     findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");
         }
+        if(StringUtils.isNotBlank(importExcelDTO.getAccount()) && StringUtils.isBlank(importExcelDTO.getPlatformName())){
+            errorMsgList.add("填写账号需要填写服务商");
+        }
         // 服务商校验
         OmsPlatformEnum platformEnum;
         if (StringUtils.isNotBlank(importExcelDTO.getPlatformName())){
@@ -141,8 +148,11 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                     .findFirst().orElse(null);
             if (null == platformEnum){
                 errorMsgList.add("服务商不存在");
+            }else if(StringUtils.isBlank(importExcelDTO.getAccount())){
+                errorMsgList.add("填写API对接的服务商需要填写账号");
             }else{
-                errorMsgList.add("有API对接的服务商不允许导入");
+                importExcelDTO.setDictPlatform(platformEnum.getCode());
+                importExcelDTO.setDictPlatformName(platformEnum.getName());
             }
         } else {
             platformEnum = null;
@@ -178,12 +188,18 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         Set<String> handleSkuSet = new HashSet<>();
         List<String> warehouseSkuList = allList.stream().map(SkuMappingWarehouseImportExcelDTO::getWarehouseSkuNo).distinct().collect(Collectors.toList());
         List<String> erpSkuNoList = allList.stream().map(SkuMappingWarehouseImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> accountList = allList.stream().map(SkuMappingWarehouseImportExcelDTO::getAccount).distinct().collect(Collectors.toList());
+        List<OverseasProviderEntity> allOverseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+                .in(OverseasProviderEntity::getPlatformAccount, accountList)
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .list();
+
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(erpSkuNoList);
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform("");
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setPlatformSkuNoList(warehouseSkuList);
-        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.WAREHOUSE.getCode(),"",warehouseSkuList);
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.WAREHOUSE.getCode(),null,warehouseSkuList);
         List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
         List<SkuMappingEntity> skuMappingEntityList = skuMappingService.listByListingIds(listingIdList);
         for (SkuMappingWarehouseImportExcelDTO dto : allList) {
@@ -196,8 +212,25 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             if(handleSkuSet.contains(dto.getWarehouseSkuNo()+dto.getWarehouseName())){
                 continue;
             }
+            String authId = "";
+            if(StringUtils.isNotBlank(dto.getAccount())){
+                List<OverseasProviderEntity> overseasProviderEntityList = allOverseasProviderEntityList.stream().filter(v -> v.getPlatformAccount().equals(dto.getAccount()) && v.getCode().equals(dto.getDictPlatform())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(overseasProviderEntityList)) {
+                    dto.setErrorMsg("服务商账号不存在");
+                    errorList.add(dto);
+                    continue;
+                }
+                OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+                if(!overseasProviderEntity.getIsProductSync()){
+                    dto.setErrorMsg("服务商账号未开启产品同步");
+                    errorList.add(dto);
+                    continue;
+
+                }
+                authId = overseasProviderEntity.getId();
+            }
             handleSkuSet.add(dto.getWarehouseSkuNo()+dto.getWarehouseName());
-            ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(v->v.getPlatformSkuNo().equals(dto.getWarehouseSkuNo())).findFirst().orElse(null);
+            ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(v->v.getPlatformSkuNo().equals(dto.getWarehouseSkuNo()) && v.getPlatform().equals(dto.getDictPlatform())).findFirst().orElse(null);
             String listingId;
             //为空，则新增
             if(Objects.isNull(listingInfoEntity)){
@@ -207,9 +240,10 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addListingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
                 addListingInfoEntity.setPlatformSkuNo(dto.getWarehouseSkuNo());
                 addListingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
-                addListingInfoEntity.setPlatform("");
+                addListingInfoEntity.setPlatform(dto.getDictPlatform());
                 addListingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
                 addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                addListingInfoEntity.setAuthId(authId);
                 addListingInfoEntityList.add(addListingInfoEntity);
                 //封装新增skuMapping
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
@@ -219,8 +253,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setProductSkuId(skuVO.getSkuId());
                 addSkuMapping.setProductSkuNo(skuVO.getSkuNo());
                 addSkuMapping.setListingId(listingId);
-                addSkuMapping.setDictPlatform("");
-                addSkuMapping.setPlatformName("");
+                addSkuMapping.setDictPlatform(dto.getDictPlatform());
+                addSkuMapping.setPlatformName(dto.getDictPlatformName());
                 addSkuMapping.setHasMappingAll(false);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());
@@ -252,8 +286,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setProductSkuId(skuVO.getSkuId());
                 addSkuMapping.setProductSkuNo(skuVO.getSkuNo());
                 addSkuMapping.setListingId(listingId);
-                addSkuMapping.setDictPlatform("");
-                addSkuMapping.setPlatformName("");
+                addSkuMapping.setDictPlatform(dto.getDictPlatform());
+                addSkuMapping.setPlatformName(dto.getDictPlatformName());
                 addSkuMapping.setHasMappingAll(false);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());

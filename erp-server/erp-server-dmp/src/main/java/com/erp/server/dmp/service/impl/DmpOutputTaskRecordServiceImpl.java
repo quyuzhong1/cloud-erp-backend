@@ -757,4 +757,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 	public List<String> outputErrorCountMsg() {
 		return baseMapper.outputErrorCountMsg();
 	}
+
+    @Override
+    public DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO) {
+        return baseMapper.getSuccessData(oneDTO);
+    }
 }

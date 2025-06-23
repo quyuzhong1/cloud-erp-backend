@@ -409,6 +409,17 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         this.updateById(overseasProviderEntity);
     }
 
+    @Override
+    public List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse() {
+        List<OverseasProviderEntity> entities = this.lambdaQuery()
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .list();
+        if (CollUtil.isEmpty(entities)) {
+            return new ArrayList<>();
+        }
+        return BeanUtil.copyToList(entities,OverseasProviderDTO.ListDTO.class);
+    }
+
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
             //邮政编码不能为空

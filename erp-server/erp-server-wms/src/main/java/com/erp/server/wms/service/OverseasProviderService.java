@@ -119,4 +119,6 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     List<ShippingCalculationDTO.ListDTO> getCalculateFeeBatch(ShippingCalculationDTO.PagingParamDTO params);
 
     void productPushSettings(OverseasProviderDTO.ProductPushSettingDTO dto);
+
+    List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse();
 }

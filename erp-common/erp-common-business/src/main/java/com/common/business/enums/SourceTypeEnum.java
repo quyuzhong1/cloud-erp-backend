@@ -104,6 +104,8 @@ public enum SourceTypeEnum {
     SO_PRICE( "soPrice", "销售价目表","so_price"),
     SO_PRICE_CHANGE( "soPriceChange", "销售调价表","so_price_change"),
 
+    CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
+
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
 

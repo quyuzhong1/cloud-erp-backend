@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -27,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
@@ -111,6 +113,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private ShopInfoService shopInfoService;
 
     @Resource
+    private OmsPushMsgService omsPushMsgService;
+
+    @Resource
     private DictBasicService dictBasicService;
 
     @Resource
@@ -132,9 +137,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private OmsPushMsgService omsPushMsgService;
 
     @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
@@ -568,6 +570,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String addWarehouseSku(SkuMappingDTO.AddWarehouseSkuDTO dto) {
+        if(StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isBlank(dto.getAuthId())){
+            throw new ServiceException("仓库和三方仓账号不能同时为空");
+        }
         String skuId = dto.getProductSkuId();
         String warehouseSkuNo = dto.getWarehouseSkuNo();
         String warehouseId = dto.getWarehouseId();
@@ -577,14 +582,27 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 //        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         // 查询当前仓库的平台类型
         List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
-        if (CollectionUtils.isEmpty(warehouseList)) {
+        if (CollectionUtils.isEmpty(warehouseList) && StringUtils.isBlank(dto.getAuthId())) {
             throw new ServiceException("仓库不存在");
         }
-        WarehouseDTO.ListDTO currenWareHouse = warehouseList.stream().findFirst().orElse(null);
-        OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(currenWareHouse.getDictPlatform());
-        if (null != platformEnum) {
-            throw new ServiceException(platformEnum.getName() + "服务商仓库不允许新增");
+        String platform = "";
+        if(StringUtils.isBlank(dto.getAuthId())){
+            WarehouseDTO.ListDTO currenWareHouse = warehouseList.stream().findFirst().orElse(null);
+            OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(currenWareHouse.getDictPlatform());
+            if (null != platformEnum) {
+                throw new ServiceException(platformEnum.getName() + "服务商仓库不允许新增");
+            }
+        }else{
+            OverseasProviderEntity overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class,dto.getAuthId());
+            if (Objects.isNull(overseasProviderEntity)) {
+                throw new ServiceException("三方仓账号不存在");
+            }
+            if(!overseasProviderEntity.getIsProductSync()){
+                throw new ServiceException("该服务商未开启API推送，请开启后操作");
+            }
+            platform = overseasProviderEntity.getCode();
         }
+
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Arrays.asList(skuId));
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException("sku不存在");
@@ -592,7 +610,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo, "");
         String listingId;
         if(null == existEntity){
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName,thirdBarcode);
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName,thirdBarcode, dto.getAuthId(), platform);
         }else{
             listingId = existEntity.getId();
         }
@@ -608,7 +626,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
-        skuMappingEntity.setDictPlatform("");
+        skuMappingEntity.setDictPlatform(platform);
         skuMappingEntity.setHasMappingAll(false);
 //        LocalDateTime now = LocalDateTime.now();
         //生效时间
@@ -677,6 +695,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
         }
 
+        String platform = "";
+        if(StringUtils.isNotBlank(dto.getAuthId())){
+            OverseasProviderEntity overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class,dto.getAuthId());
+            if (Objects.isNull(overseasProviderEntity)) {
+                throw new ServiceException("三方仓账号不存在");
+            }
+            if(!overseasProviderEntity.getIsProductSync()){
+                throw new ServiceException("该服务商未开启API推送，请开启后操作");
+            }
+            platform = overseasProviderEntity.getCode();
+        }
+
         ListingInfoEntity listingInfo = listingInfoService.getById(skuMapping.getListingId());
         String listingId = "";
         if (Objects.nonNull(listingInfo)) {
@@ -685,12 +715,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             listingInfo.setRemark("");
             listingInfo.setThirdBarcode(thirdBarcode);
+            if(StringUtils.isNotBlank(dto.getAuthId())){
+                listingInfo.setAuthId(dto.getAuthId());
+                listingInfo.setPlatform(platform);
+            }
+            listingInfo.setAuthId(dto.getAuthId());
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
         } else {
             String warehouseProductName = dto.getWarehouseProductName();
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName, thirdBarcode);
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName, thirdBarcode, dto.getAuthId(), platform);
         }
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
@@ -2052,6 +2087,73 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             customerInventorySkuInfoDTO.setInnerCustomerInventorySkuInfoDTOS(innerCustomerInventorySkuInfoDTOSList);
         }
         return innerCustomerInventorySkuInfoDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> pushProduct(List<String> ids) {
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(ids);
+        List<String> authIds = listingInfoEntityList.stream()
+                .map(ListingInfoEntity::getAuthId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.getByIds(OverseasProviderEntity.class, authIds);
+        List<ListingInfoEntity> syncList = new ArrayList<>();
+        for (String id : ids) {
+            ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
+                    .filter(v -> v.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(listingInfoEntity)){
+                batchResultDTOList.add(BatchResultDTO.fail(id,id,"listing不存在"));
+                continue;
+            }
+            OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+                    .filter(v -> v.getId().equals(listingInfoEntity.getAuthId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(overseasProviderEntity)){
+                batchResultDTOList.add(BatchResultDTO.fail(id,listingInfoEntity.getPlatformSkuNo(),"三方仓不存在"));
+                continue;
+            }
+            if(!overseasProviderEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                batchResultDTOList.add(BatchResultDTO.fail(id,listingInfoEntity.getPlatformSkuNo(),"三方仓未授权"));
+                continue;
+            }
+            if(!overseasProviderEntity.getIsProductSync()){
+                batchResultDTOList.add(BatchResultDTO.fail(id,listingInfoEntity.getPlatformSkuNo(),"三方仓未开启产品同步"));
+                continue;
+            }
+            syncList.add(listingInfoEntity);
+        }
+
+        this.syncProductToWarehouse(syncList);
+        return batchResultDTOList;
+    }
+
+    private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {
+        List<OmsPushMsgEntity> msgList = entityList.stream()
+                .map(this::createOmsPushMsgEntity)
+                .collect(Collectors.toList());
+        boolean save = omsPushMsgService.saveBatch(msgList);
+        if (!save){
+            ServiceException.runError("保存本地消息失败:{}", JSONUtil.toJsonStr(msgList));
+        }
+    }
+
+    private OmsPushMsgEntity createOmsPushMsgEntity(ListingInfoEntity listingInfoEntity) {
+        OmsPushMsgEntity omsPushEntity = new OmsPushMsgEntity();
+        omsPushEntity.setTargetPlatform(listingInfoEntity.getPlatform());
+        if(listingInfoEntity.getPlatform().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+            omsPushEntity.setSourceType(SourceTypeEnum.CAINIAO_LISTING.getCode());
+        }else{
+            throw new ServiceException("不支持的推送平台:{}", listingInfoEntity.getPlatform());
+        }
+        omsPushEntity.setSourceId(listingInfoEntity.getId());
+        omsPushEntity.setSourceCode(listingInfoEntity.getPlatformSkuNo());
+        omsPushEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        omsPushEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        return omsPushEntity;
     }
 
 //    @Override
