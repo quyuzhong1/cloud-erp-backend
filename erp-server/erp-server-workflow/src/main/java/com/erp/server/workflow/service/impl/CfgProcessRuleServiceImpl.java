@@ -98,10 +98,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("新增【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("新增流程设置执行条件");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, msg);
         return new BaseResultDTO.AddDTO();
     }
 
@@ -176,7 +174,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         old.forEach(entity -> {
             CfgProcessRuleEntity ruleEntity = entityMap.get(entity.getId());
             if (ObjectUtil.isNotEmpty(ruleEntity)) {
-                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "");
             }
         });
         return new BaseResultDTO.UpdateDTO();
@@ -254,8 +252,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         }
         processRuleEntityList.forEach(processRuleEntity -> {
             // 操作日志
-            String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), "删除操作");
+            String msg = StrUtil.format("删除流程设置执行条件-{}", processRuleEntity.getId());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), msg);
         });
         return false;
     }

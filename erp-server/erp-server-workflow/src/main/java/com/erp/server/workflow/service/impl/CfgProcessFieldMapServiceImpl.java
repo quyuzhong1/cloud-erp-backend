@@ -66,9 +66,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Resource
     private ProcessFormFactory processFormFactory;
 
-    @Resource
-    private CfgProcessRuleService cfgProcessRuleService;
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId, String type) {

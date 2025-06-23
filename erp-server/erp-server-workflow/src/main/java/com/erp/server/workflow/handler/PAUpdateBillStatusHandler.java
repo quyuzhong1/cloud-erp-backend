@@ -106,48 +106,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
         //值映射
         ObjectMapper mapper = new ObjectMapper();
-        if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
-        }
-
-        //获取【供应商导入审批】字段---映射到数大臣的【供应商列表】新增物流商单据--并更新审核状态【注意附件名称与拉取名称一致】
-        if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum) && status.equals(FSApprovalStatusEnum.APPROVED.getCode())) {
-            //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
-            //值映射
-            PurchaseApplicationDTO.AddDTO addDTO = mapper.convertValue(map, PurchaseApplicationDTO.AddDTO.class);
-            //查询三方生成查询
-            ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
-            if (ObjectUtil.isEmpty(taskInfoEntity)){
-                //构建三方生成查询主、明细数据
-                List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
-                //构建三方生成查询主表数据
-                ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
-                taskInfo.setStatus(ApproveTaskStatusEnum.FAIL.getCode());
-                //保存三方生成查询
-                BaseResultDTO.AddDTO add = taskInfoService.add(taskInfo);
-                taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
-                //主键id
-                taskInfoEntity.setId(add.getId());
-            }
-            try {
-                //添加供应商
-                BatchResultDTO batchResultDTO = purchaseApplicationFeign.add(addDTO);
-                //更新三方生成查询
-                taskInfoEntity.setBussinessKey(thirdProcessEntity.getBussinessKey());
-                taskInfoEntity.setBussinessCode(batchResultDTO.getCode());
-                taskInfoEntity.setBussinessId(batchResultDTO.getId());
-                taskInfoEntity.setHappenTime(LocalDateTime.now());
-                taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                boolean b = approveTaskInfoService.updateById(taskInfoEntity);
-                if (!b) {
-                    throw new ServiceException("更新三方生成查询失败");
-                }
-            } catch (Exception e) {
-                throw new ServiceException("创建采购申请单失败错误信息：{}", e.getMessage());
-            }
-        }
-
-        //先创建，审批通过后审核通过
+        //先创建，审批通过后修改单据审核状态
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
