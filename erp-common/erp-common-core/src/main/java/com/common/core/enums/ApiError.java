@@ -828,6 +828,8 @@ public enum ApiError implements Serializable {
 
 
     ERROR_SUPPLIER_REF_WAREHOUSE_EXIST(98121,"供应商【{}】仓库【{}】仓位【{}】已存在"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS(98122,"供应商【{}】在仓库【{}】已存在全局仓位"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT(98123,"供应商【{}】仓库【{}】全局仓位不能与其他仓位共存"),
 
 
     /**

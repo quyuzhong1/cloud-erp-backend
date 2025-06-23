@@ -1235,6 +1235,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (ObjectUtils.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_99008);
             }
+            if (Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode())) {
+                //质检退货单不生成对账明细
+                continue;
+            }
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             addDTO.setPoId(entity.getPurchaseOrderId());
             addDTO.setPoCode(entity.getPurchaseOrderCode());
@@ -1255,7 +1259,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                     ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
             addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
-            addDTO.setRemark(entity.getReturnRemark());
+            addDTO.setRemark(poReturnDetailEntity.getRemark());
             addList.add(addDTO);
         }
         srmPoReconciliationFeign.add(addList);
