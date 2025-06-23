@@ -32,7 +32,7 @@
     </sql>
 
     <resultMap id="flatProcessWithRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessViewDTO">
-        <id property="id" column="process_id"/>
+        <id property="id" column="rule_id"/>
         <result property="code" column="process_code"/>
         <result property="name" column="process_name"/>
         <result property="bussinessKey" column="process_bussiness_key"/>
@@ -42,7 +42,7 @@
         <result property="processDefinitionName" column="process_definition_name"/>
         <result property="ruleDesc" column="aggregated_exp_desc"/> <!-- 聚合后的表达式描述 -->
         <result property="disabled" column="rule_disabled"/>
-        <result property="ruleId" column="rule_id"/>
+        <result property="mainId" column="process_id"/>
         <result property="createTime" column="rule_create_time"/>
         <result property="createUserName" column="rule_create_user_name"/>
         <result property="updateTime" column="rule_update_time"/>

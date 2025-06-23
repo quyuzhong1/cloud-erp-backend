@@ -87,7 +87,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         }
         ;
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置值映射");
+        String msg = StrUtil.format("新增流程设置值映射");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
 
         return new BaseResultDTO.AddDTO();
@@ -194,6 +194,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         }
         List<String> ids = cfgProcessValueMapEntities.stream().map(CfgProcessValueMapEntity::getId).collect(Collectors.toList());
         removeByIds(ids);
+        //TODO 日志
     }
 
 

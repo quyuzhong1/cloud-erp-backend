@@ -166,7 +166,7 @@ public class CfgProcessDTO implements Serializable {
         /**
          * ruleId
          */
-        private String ruleId;
+        private String mainId;
         /**
          * 创建时间
          */
