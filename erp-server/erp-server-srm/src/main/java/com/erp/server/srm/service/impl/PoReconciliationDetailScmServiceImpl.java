@@ -835,7 +835,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //新增不需要添加新增SKU的日志
-        List<String> addIdList = list.stream().filter(obj -> StrUtil.isBlank(obj.getMainId())).map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<String> idList = list.stream().map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
+        List<String> addIdList = poReconciliationDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getMainId()) && idList.contains(obj.getId())).map(PoReconciliationDetailEntity::getId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(addIdList)) {
             List<Pair<String, String>> addPairList = poReconciliationDetailList.stream().filter(obj -> addIdList.contains(obj.getId())).map(obj -> new Pair<>(mainId, CharSequenceUtil.format("单号【{}】SKU【{}】",obj.getSourceCode(),obj.getSkuNo()))).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增%s", ModuleTypeEnum.PO_RECONCILIATION.getCode(), addPairList, "编辑操作");
@@ -856,7 +857,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             entity.setTaxRate(taxRate);
 
             //折扣
-            BigDecimal discountRate = MathUtil.compareTo(entity.getDiscountRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100);
+            BigDecimal discountRate = MathUtil.compareTo(entity.getDiscountRate(), MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(entity.getDiscountRate(), MathUtil.BigDecimal_100);
             entity.setDiscountRate(discountRate);
 
             //价税合计
