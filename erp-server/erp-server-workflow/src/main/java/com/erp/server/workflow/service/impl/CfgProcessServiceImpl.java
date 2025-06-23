@@ -309,7 +309,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询userid
         List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
         if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())) {
-            throw new ServiceException(ApiError.FS_FOUNDER_NOT_EXIST.msg, "FS用户不存在");
+            throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_NOT_EXIST);
         }
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
@@ -341,7 +341,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                             .form(form)
                             .build())
                     .build();
-            String instanceCode = fsService.createInstance(req);
+//            String instanceCode = fsService.createInstance(req);
             //飞书明细控件 id:name
             Map<String, String> resultMap = new HashMap<>();
             for (int i = 0; i < formArray.size(); i++) {
@@ -385,9 +385,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
             ApproveTaskInfoDTO.AddDTO addDTO = buildApproveTaskInfo(dto, processDefinition);
             addDTO.setDetailList(addDTOS);
-            addDTO.setThirdInstanceId(instanceCode);
+            addDTO.setThirdInstanceId("instanceCode");
             addDTO.setThirdApprovalCode(code);
-            approveTaskInfoService.add(addDTO);
+            throw new ServiceException("");
+//            approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
             throw new RuntimeException("飞书创建审批实例失败：" + e);
         }

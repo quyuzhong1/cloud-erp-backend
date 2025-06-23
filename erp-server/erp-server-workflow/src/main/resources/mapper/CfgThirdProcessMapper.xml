@@ -98,7 +98,6 @@
         <result property="defaultValue" column="field_map_default_value"/>
         <result property="isUnique" column="field_map_is_unique"/>
         <result property="cfgType" column="field_map_cfg_type"/>
-        <result property="processDefinitionId" column="field_map_process_definition_id"/>
         <result property="thirdFieldId" column="field_map_third_field_id"/>
         <result property="isDetailField" column="field_map_is_detail_field"/>
         <result property="thirdParentId" column="field_map_parent_id"/>
@@ -149,7 +148,6 @@
             fm.default_value AS field_map_default_value,
             fm.is_unique AS field_map_is_unique,
             fm.cfg_type AS field_map_cfg_type,
-            fm.process_definition_id AS field_map_process_definition_id,
             fm.third_field_id AS field_map_third_field_id,
             fm.is_detail_field AS field_map_is_detail_field,
             fm.third_parent_id AS field_map_parent_id,

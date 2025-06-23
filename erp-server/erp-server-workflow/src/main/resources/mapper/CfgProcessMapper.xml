@@ -177,7 +177,6 @@
         <result property="defaultValue" column="field_default_value"/>
         <result property="isUnique" column="is_unique"/>
         <result property="cfgType" column="cfg_type"/>
-        <result property="processDefinitionId" column="fm_process_definition_id"/>
         <result property="thirdFieldId" column="third_field_id"/>
         <result property="isDetailField" column="is_detail_field"/>
         <result property="thirdParentId" column="thirdParentId"/>
@@ -261,7 +260,6 @@
                fm.default_value                 AS field_default_value,
                fm.is_unique                     AS is_unique,
                fm.cfg_type                      AS cfg_type,
-               fm.process_definition_id         AS fm_process_definition_id,
                fm.third_field_id                AS third_field_id,
                fm.is_detail_field               AS is_detail_field,
                fm.third_parent_id               AS third_parent_id,
@@ -279,18 +277,6 @@
                  r.create_time ASC, r.id ASC,
                  e.index ASC, e.id ASC,
                  fm.id ASC
-    </select>
-
-    <select id="listValueMapByFieldMapId" resultMap="valueViewDTOResultMap">
-        SELECT
-            vm.id            AS value_map_id,
-            vm.field_map_id  AS value_field_map_id,
-            vm.third_value   AS third_value,
-            vm.sys_value     AS sys_value,
-            vm.default_value AS map_defaultValue
-        FROM public.cfg_process_value_map vm
-        WHERE vm.field_map_id = #{fieldMapId}
-          AND vm.is_deleted = false
     </select>
 
     <select id="tabList" resultType="com.erp.model.workflow.dto.CfgProcessDTO$TabListDTO">
