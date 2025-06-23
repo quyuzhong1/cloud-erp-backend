@@ -556,6 +556,8 @@
             fs.code as shipmentCode,
             ra.code,
             wc.box_no as boxNo,
+            wc.is_release_inventory as isReleaseInventory,
+            wc.packing_status as packingStatus,
             wcd.sku_id as skuId,
             wcd.sku_no as skuNo,
             wcd.fn_sku as fnSku,
@@ -566,7 +568,7 @@
                  INNER JOIN wms_carton_detail wcd ON wcd.main_id = wc.id AND wcd.is_deleted=false
                 LEFT JOIN fba_shipment_packing fsp on fsp.carton_id= wc.id and fsp.is_deleted=false
                 LEFT JOIN fba_shipment fs on fs.id = fsp.main_id and fs.is_deleted=false
-        WHERE ra.is_deleted=false
+        WHERE ra.is_deleted=false and wc.packing_status = 'completed'
           AND ra.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}

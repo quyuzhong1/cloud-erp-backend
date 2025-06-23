@@ -1736,6 +1736,14 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer boxNo;
         /**
+         * 装箱状态
+         */
+        private String packingStatus;
+        /**
+         * 是否释放库存
+         */
+        private Boolean isReleaseInventory;
+        /**
          * skuid
          */
         @NotBlank(message = "skuid不能为空")

@@ -220,6 +220,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private AuthDataFeign authDataFeign;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private WmsCartonService wmsCartonService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -3122,6 +3124,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             //更新要货申请释放标识，并更新明细冻结数量
             updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
+            //记录日志
+            String msg = CharSequenceUtil.format("处理了【{}】号箱【{}】库存释放，释放数量【{}】", dto.getBoxNo(), detailEntity.getSkuNo(), dto.getVirtualFrozenQty());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(),"编辑操作");
         });
         //虚拟仓库存释放
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
@@ -3133,6 +3138,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         busiParam.setBusinessType(InventoryBusinessTypeEnum.REQUISITION_APPLICATION_RELEASE.getCode());
         busiParam.setParamList(listInventory(entity,detailEntityList,dtoList));
         inventoryTransCoreService.approveByType(busiParam);
+        //更新装箱释放库存标识
+        List<String> cartonIds = dtoList.stream().map(RequisitionApplicationDTO.InventoryDTO::getCartonId).distinct().collect(Collectors.toList());
+        wmsCartonService.updateReleaseInventory(cartonIds, Boolean.TRUE);
         return BatchResultDTO.success();
     }
 
