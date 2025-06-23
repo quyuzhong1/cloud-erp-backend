@@ -102,6 +102,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(id);
+        //获取状态
+        self.getCredentialStatuses(addEntity);
         self.save(addEntity);
 
         //校验有效期
@@ -135,6 +137,22 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         return new BaseResultDTO.AddDTO(id, id);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void getCredentialStatuses(SupplierCredentialEntity addEntity) {
+        // 判断当前时间是否在资质有效期之间
+        LocalDate effectiveDate = addEntity.getEffectiveDate();
+        LocalDate expireDate = addEntity.getExpireDate();
+        SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
+        LocalDate now = LocalDate.now();
+        if(now.isBefore(effectiveDate)){
+            status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
+        }else if(now.isAfter(effectiveDate) && now.isBefore(expireDate)){
+            status = SupplierCredentialStatusEnum.EFFECTIVE;
+        }
+        addEntity.setStatus(status.getCode());
+    }
+
     /**
      * 保存 供应商资质信息
      *
@@ -166,6 +184,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         SupplierCredentialEntity entity = new SupplierCredentialEntity();
         BeanMapper.copy(dto, entity);
+        //获取状态
+        self.getCredentialStatuses(entity);
         //校验有效期
         checkDate(entity);
 
@@ -441,10 +461,13 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         SupplierCredentialDTO.PagingParamDTO searchParam = new SupplierCredentialDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<SupplierCredentialDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        list.stream().forEach(item -> item.setTabFlagName(SupplierCredentialStatusEnum.getName(item.getTabFlagName())));
+
+        Map<String, SupplierCredentialDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(SupplierCredentialDTO.TabListDTO::getTabFlag, t -> t));
         List<SupplierCredentialDTO.TabListDTO> result = new ArrayList<>();
         result.add(new SupplierCredentialDTO.TabListDTO("all", "全部" , 0));
-        result.addAll(list);
+        result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode(), SupplierCredentialStatusEnum.NOT_EFFECTIVE.getName() , map.containsKey(SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode()) ? map.get(SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode()).getCount() : 0   ));
+        result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.EFFECTIVE.getCode(), SupplierCredentialStatusEnum.EFFECTIVE.getName() , map.containsKey(SupplierCredentialStatusEnum.EFFECTIVE.getCode()) ? map.get(SupplierCredentialStatusEnum.EFFECTIVE.getCode()).getCount() : 0   ));
+        result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.EXPIRED.getCode(), SupplierCredentialStatusEnum.EXPIRED.getName() , map.containsKey(SupplierCredentialStatusEnum.EXPIRED.getCode()) ? map.get(SupplierCredentialStatusEnum.EXPIRED.getCode()).getCount() : 0   ));
         return result;
     }
 

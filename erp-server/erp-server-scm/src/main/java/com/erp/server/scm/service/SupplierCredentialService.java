@@ -85,6 +85,9 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
     BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto);
 
     @Transactional(rollbackFor = Exception.class)
+    void getCredentialStatuses(SupplierCredentialEntity addEntity);
+
+    @Transactional(rollbackFor = Exception.class)
     void updateBatchCredential(String supplierId, List<SupplierCredentialDTO.UpdateDTO> credentialList);
 
     Boolean update(SupplierCredentialDTO.UpdateDTO dto);
