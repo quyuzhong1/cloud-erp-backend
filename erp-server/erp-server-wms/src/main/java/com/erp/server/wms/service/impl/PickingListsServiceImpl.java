@@ -592,15 +592,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 skuKey.add(key);
             }
         });
-        Map<String, Integer> deliveryQtyMap = new HashMap<>();
-        for (String key : skuKey) {
-            List<String> deliveryDetailIds = printSkuCombinationViewList.stream().filter(e -> (e.getParentSkuNo() + "-" + e.getThirdSku()).equals(key)).map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(deliveryDetailIds)) {
-                deliveryQtyMap.put(key, deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
-            }else {
-                deliveryQtyMap.put(key,0);
-            }
-        }
         return printSkuCombinationViewList.stream()
                 .filter(e -> e.getGroupName().equals(groupName))
                 .collect(Collectors.groupingBy(
@@ -608,8 +599,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                 + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                         Collectors.collectingAndThen(Collectors.toList(), list -> {
                             PickingListsDTO.PrintSkuView view = list.get(0);
-                            String key = view.getParentSkuNo() + "-" + view.getThirdSku();
-                            view.setParentSkuQty(deliveryQtyMap.getOrDefault(key, 0));
+                            List<String> deliveryDetailIds = list.stream().map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
+                            view.setParentSkuQty(deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
                             view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
                             return view;
                         })
