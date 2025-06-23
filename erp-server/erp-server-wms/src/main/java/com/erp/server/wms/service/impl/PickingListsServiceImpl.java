@@ -589,7 +589,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     private static List<PickingListsDTO.PrintSkuView> getCombinationList(List<PickingListsDTO.PrintSkuView> printSkuCombinationViewList, String groupName) {
         Map<String, Integer> deliveryQtyMap = printSkuCombinationViewList.stream()
                 .collect(Collectors.groupingBy(
-                        d -> d.getParentSkuNo() + d.getThirdSku(),  // 复合键分组(
+                        d -> d.getParentSkuNo() + "-" + d.getThirdSku(),  // 复合键分组(
                         Collectors.collectingAndThen(
                                 Collectors.toMap(
                                         PickingListsDTO.PrintSkuView::getSourceDetailId,        // 按字段去重
@@ -947,6 +947,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())){
                             printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
                         }
+                        printSkuSingleView.setParentSkuNo(requisitionApplicationDetail.getSkuNo());
+                        printSkuSingleView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
                         printSkuSingleView.setIsCombination(Boolean.FALSE);
                         printSkuSingleViewList.add(printSkuSingleView);
                     }else {
