@@ -1068,10 +1068,11 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             JSONObject jsonObject = formArray.getJSONObject(i);
             String id = jsonObject.getStr("id");
             String type = jsonObject.getStr("type");
-            String name = jsonObject.getStr("name");
+
 
             // 处理明细表格
             if (type.equals(CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode())) {
+                String name = optionMap.get(id);
                 // 获取明细表格数据
                 JSONArray detailValue = jsonObject.getJSONArray("value");
                 if (detailValue == null || detailValue.isEmpty()) {
