@@ -239,7 +239,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     }
 
     @Override
-    public Boolean exportList(VirtualAdjustDTO.ExportDTO param, HttpServletResponse response) {
+    public Boolean exportList(VirtualAdjustDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("虚拟仓库存调整", EXPORT_WMS_VIRTUAL_ADJUST_REPORT.getCode(), param);
         return Boolean.TRUE;
     }

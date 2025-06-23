@@ -400,7 +400,7 @@ public class VirtualAdjustController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟仓调整单主表导出Excel数据")
-    public ApiResult<Object> exportList(@RequestBody @Validated VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated VirtualAdjustDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean result = virtualAdjustService.exportList(dto, response);
         return Boolean.TRUE.equals(result) ? success() : failure();
     }

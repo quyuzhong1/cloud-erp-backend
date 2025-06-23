@@ -20,6 +20,7 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -301,12 +302,12 @@ public interface ExportWmsFeign {
      * 导出质检通知单
      */
     @PostMapping("/feign/export/exportQcNotice")
-    PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(PagingDTO<QcNoticeDTO.ExportDTO> dto);
+    PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto);
     /**
      * 导出虚拟库存调整
      */
     @PostMapping("/feign/export/exportVirtualAdjust")
-    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto);
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(@RequestBody PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto);
 
     /**
      * 导出即时库存

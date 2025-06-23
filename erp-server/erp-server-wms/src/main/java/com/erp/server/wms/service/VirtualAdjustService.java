@@ -145,7 +145,7 @@ public interface VirtualAdjustService extends SuperService<VirtualAdjustEntity> 
     * @param response
     * @return
     */
-    Boolean exportList(VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(VirtualAdjustDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

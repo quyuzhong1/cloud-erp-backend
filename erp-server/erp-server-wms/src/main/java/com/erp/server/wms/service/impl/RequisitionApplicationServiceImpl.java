@@ -3133,7 +3133,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         busiParam.setBusinessType(InventoryBusinessTypeEnum.REQUISITION_APPLICATION_RELEASE.getCode());
         busiParam.setParamList(listInventory(entity,detailEntityList,dtoList));
         inventoryTransCoreService.approveByType(busiParam);
-        return null;
+        return BatchResultDTO.success();
     }
 
     private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, List<RequisitionApplicationDetailEntity> detailEntityList, List<RequisitionApplicationDTO.InventoryDTO> dtoList) {
@@ -3152,8 +3152,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
             inOutStockDTO.setWarehouseLocation(stagingEntity.getWarehouseLocation());
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
-            inOutStockDTO.setSourceId(entity.getId());
-            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceId(dto.getCartonId());
+            inOutStockDTO.setSourceCode(entity.getCode() + "-" + dto.getBoxNo());
             inOutStockDTO.setBillDate(LocalDate.now());
             inOutStockDTO.setSourceDetailId(detailEntity.getId());
             inOutStockDTO.setSkuId(detailEntity.getSkuId());
@@ -3186,8 +3186,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setSourceId(entity.getId());
-            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceId(dto.getCartonId());
+            outInStockDTO.setSourceCode(entity.getCode() + "-" + dto.getBoxNo());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
             outInStockDTO.setSourceDetailId(detailEntity.getId());
             outInStockDTO.setSkuId(detailEntity.getSkuId());

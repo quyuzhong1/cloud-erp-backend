@@ -2997,11 +2997,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 boxHeightMap.put(md5Str, boxHeightMap.getOrDefault(md5Str, BigDecimal.ZERO).max(detailDTOList.get(0).getHeight()));
 
                 LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = new LinkedList<>();
+                Boolean isLast = i == list.size() - 1;
                 if (CharSequenceUtil.isBlank(currentMd5)){
                     currentMd5 = md5Str;
                     //同箱数据置空相同字段
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
-                }else if (!Objects.equals(currentMd5, md5Str)){
+                }else if (!Objects.equals(currentMd5, md5Str) || isLast){
                     //与上一箱不相同时 赋值上一序列的
                     Integer startBoxNo = startBoxNoMap.get(currentMd5);
                     List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS1 = boxMap.get(startBoxNo);
@@ -3022,7 +3023,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
                 }
                 //最后一箱需要判断是否要进行赋值
-                if (CollUtil.isNotEmpty(listPackingDetailDTOS)){
+                if (CollUtil.isNotEmpty(listPackingDetailDTOS) && !isLast){
                     listPackingDetailDTOS.forEach(detailDTO ->{
                         getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap, boxWeightMap, boxLengthMap, boxWidthMap, boxHeightMap);
                     });

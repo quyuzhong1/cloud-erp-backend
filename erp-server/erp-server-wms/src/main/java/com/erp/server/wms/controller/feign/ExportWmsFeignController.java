@@ -25,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -1046,7 +1047,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/exportVirtualAdjust")
     @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
-    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(@RequestBody PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
         return virtualAdjustService.paging(dto);
     }
 
