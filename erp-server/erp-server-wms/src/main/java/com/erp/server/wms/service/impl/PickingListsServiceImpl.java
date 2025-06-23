@@ -587,17 +587,24 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
      * @return
      */
     private static List<PickingListsDTO.PrintSkuView> getCombinationList(List<PickingListsDTO.PrintSkuView> printSkuCombinationViewList, String groupName) {
-        Map<String, Integer> deliveryQtyMap = printSkuCombinationViewList.stream()
-                .collect(Collectors.groupingBy(
-                        d -> d.getParentSkuNo() + "-" + d.getThirdSku(),  // 复合键分组(
-                        Collectors.collectingAndThen(
-                                Collectors.toMap(
-                                        PickingListsDTO.PrintSkuView::getSourceDetailId,        // 按字段去重
-                                        PickingListsDTO.PrintSkuView::getParentSkuQty,        // 取字段值
-                                        Integer::sum       // 相同的数量值累加
-                                ), map -> map.values().stream().mapToInt(i -> i).sum() // 最终求和
-                        )
-                ));
+        HashMap<String, Integer> deliveryDetailIdMap = new HashMap<>();
+        List<String> skuKey = new ArrayList<>();
+        printSkuCombinationViewList.stream().forEach(e -> {
+            deliveryDetailIdMap.put(e.getSourceDetailId(), e.getParentSkuQty());
+            String key = e.getParentSkuNo() + "-" + e.getThirdSku();
+            if (!skuKey.contains(key)){
+                skuKey.add(key);
+            }
+        });
+        Map<String, Integer> deliveryQtyMap = new HashMap<>();
+        for (String key : skuKey) {
+            List<String> deliveryDetailIds = printSkuCombinationViewList.stream().filter(e -> (e.getParentSkuNo() + "-" + e.getThirdSku()).equals(key)).map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(deliveryDetailIds)) {
+                deliveryQtyMap.put(key, deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
+            }else {
+                deliveryQtyMap.put(key,0);
+            }
+        }
         return printSkuCombinationViewList.stream()
                 .filter(e -> e.getGroupName().equals(groupName))
                 .collect(Collectors.groupingBy(
