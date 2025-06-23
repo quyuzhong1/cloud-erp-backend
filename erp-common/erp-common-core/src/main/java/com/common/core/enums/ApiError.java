@@ -283,6 +283,7 @@ public enum ApiError implements Serializable {
 
     PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
     PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
+    PROCESS_QUERY_THIRD_SUER_NOT_EXIST(94060,"未找到提审用户的飞书账号，请切换账号"),
     /**
      * PLM 错误
      * 从95000 开始  以端口号
