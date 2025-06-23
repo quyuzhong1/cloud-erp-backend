@@ -40,6 +40,6 @@ public class ExportSupplierInventoryHandler extends AbstractPageFileEventHandler
 
     @Override
     public String getExcelPath() {
-        return "excel/scm/supplierInventory.xlsx";
+        return "excel/wms/supplierInventory.xlsx";
     }
 }
