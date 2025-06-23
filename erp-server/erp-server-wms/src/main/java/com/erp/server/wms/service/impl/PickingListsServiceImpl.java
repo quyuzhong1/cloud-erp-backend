@@ -536,8 +536,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
                         printSkuSingleView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
-                        printSkuSingleView.setParentSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
-                        printSkuSingleView.setParentSkuQty(soDeliveryNoticeDetailEntity.getPickingQty());
                         printSkuSingleView.setIsCombination(Boolean.FALSE);
                         printSkuSingleView.setGroupName(customerPO + "-" + toCountry);
                         groupList.add(customerPO + "-" + toCountry);
