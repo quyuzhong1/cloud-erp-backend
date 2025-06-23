@@ -464,7 +464,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         Map<String, SupplierCredentialDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(SupplierCredentialDTO.TabListDTO::getTabFlag, t -> t));
         List<SupplierCredentialDTO.TabListDTO> result = new ArrayList<>();
-        result.add(new SupplierCredentialDTO.TabListDTO("all", "全部" , 0));
         result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode(), SupplierCredentialStatusEnum.NOT_EFFECTIVE.getName() , map.containsKey(SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode()) ? map.get(SupplierCredentialStatusEnum.NOT_EFFECTIVE.getCode()).getCount() : 0   ));
         result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.EFFECTIVE.getCode(), SupplierCredentialStatusEnum.EFFECTIVE.getName() , map.containsKey(SupplierCredentialStatusEnum.EFFECTIVE.getCode()) ? map.get(SupplierCredentialStatusEnum.EFFECTIVE.getCode()).getCount() : 0   ));
         result.add(new SupplierCredentialDTO.TabListDTO( SupplierCredentialStatusEnum.EXPIRED.getCode(), SupplierCredentialStatusEnum.EXPIRED.getName() , map.containsKey(SupplierCredentialStatusEnum.EXPIRED.getCode()) ? map.get(SupplierCredentialStatusEnum.EXPIRED.getCode()).getCount() : 0   ));
@@ -515,45 +514,41 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     }
 
     @Override
-    public SupplierCredentialDTO.ViewDTO view(String id) {
-        SupplierCredentialEntity supplierCredentialEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
+    public List<SupplierCredentialDTO.ViewDTO> view(List<String> ids) {
+        List<SupplierCredentialEntity> list = getList(ids);
+        List<SupplierCredentialDTO.ViewDTO> resultList = new ArrayList<>();
+        BeanMapper.copy(list, resultList);
+
         // 数据填充处理
-        return fillOne(supplierCredentialEntity);
+        fillOne(resultList);
+        return resultList;
     }
 
-    private SupplierCredentialDTO.ViewDTO fillOne(SupplierCredentialEntity supplierCredentialEntity) {
-        SupplierCredentialDTO.ViewDTO data = new SupplierCredentialDTO.ViewDTO();
-        BeanMapper.copy(supplierCredentialEntity,data);
-        data.setStatus(SupplierCredentialStatusEnum.getName(data.getStatus()));
-
-        //供应商信息
-        String supplierId = supplierCredentialEntity.getSupplierId();
-        if(StringUtils.isNotBlank(supplierId)){
-            SupplierEntity supplierEntity = supplierService.getByIdOpt(supplierId).orElseThrow(()->new ServiceException("未找到供应商数据"));
-            data.setSupplierCode(supplierEntity.getCode());
-            data.setSupplierName(supplierEntity.getName());
-            data.setSupplierStatusName(supplierEntity.getApproveStatus().getName());
-        }
+    private void fillOne(List<SupplierCredentialDTO.ViewDTO> resultList) {
+        List<String> ids = resultList.stream().map(SupplierCredentialDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
 
         Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
         //获取到表名
         String type = tableName.value();
         //附件信息
-        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(supplierCredentialEntity.getId()), type);
-        if(CollUtil.isNotEmpty(attachmentList)){
-            List<String> attachmentUrlList = attachmentList.stream().
-                    filter(a -> a.getBusinessId().equals(supplierCredentialEntity.getId())).
-                    map(AttachmentDTO.UpdateDTO::getAttachUrl).
-                    collect(Collectors.toList());
-            List<String> attachmentNameList = attachmentList.stream().
-                    filter(a -> a.getBusinessId().equals(supplierCredentialEntity.getId())).
-                    map(AttachmentDTO.UpdateDTO::getAttachName).
-                    collect(Collectors.toList());
-            data.setAttachmentUrlList(attachmentUrlList);
-            data.setAttachmentNameList(attachmentNameList);
+        Map<String, List<AttachmentDTO.UpdateDTO>> attachmentMap = attachmentService.getByBusinessIdAndType(ids, type).stream().collect(Collectors.groupingBy(AttachmentDTO.UpdateDTO::getBusinessId));
+
+        for (SupplierCredentialDTO.ViewDTO record : resultList) {
+            List<AttachmentDTO.UpdateDTO> attachmentList = attachmentMap.get(record.getId());
+            if(CollUtil.isNotEmpty(attachmentList)){
+                List<String> attachmentUrlList = attachmentList.stream().
+                        filter(a -> a.getBusinessId().equals(record.getId())).
+                        map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                        collect(Collectors.toList());
+                List<String> attachmentNameList = attachmentList.stream().
+                        filter(a -> a.getBusinessId().equals(record.getId())).
+                        map(AttachmentDTO.UpdateDTO::getAttachName).
+                        collect(Collectors.toList());
+                record.setAttachmentUrlList(attachmentUrlList);
+                record.setAttachmentNameList(attachmentNameList);
+            }
         }
-        return data;
     }
 
     @Transactional(rollbackFor = Exception.class)

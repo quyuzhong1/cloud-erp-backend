@@ -125,7 +125,7 @@ public class SupplierCredentialController extends BaseController {
      * 详情
      * @author jack
      * @date:  2025-06-21
-     * @param id
+     * @param IdsDTO dto
      * @return ApiResult<SupplierCredentialDTO.ViewDTO>>
      */
     @GetMapping("/view")
@@ -135,8 +135,8 @@ public class SupplierCredentialController extends BaseController {
             serviceClass = SupplierCredentialService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<SupplierCredentialDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(supplierCredentialService.view(id));
+    public ApiResult<List<SupplierCredentialDTO.ViewDTO>> view(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(supplierCredentialService.view(dto.getIds()));
     }
 
 

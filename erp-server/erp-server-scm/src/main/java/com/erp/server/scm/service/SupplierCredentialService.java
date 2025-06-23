@@ -93,7 +93,7 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
 
     PagingVO<SupplierCredentialDTO.ListDTO> paging(PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto);
 
-    SupplierCredentialDTO.ViewDTO view(String id);
+    List<SupplierCredentialDTO.ViewDTO> view(List<String> ids);
 
     BatchResultDTO delete(String id);
 

@@ -34,9 +34,6 @@ public class SupplierCredentialDTO  implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO extends CommonDTO {
         private String id;
-        private String supplierCode;
-        private String supplierName;
-        private String supplierStatusName;
     }
 
     /**
