@@ -345,7 +345,7 @@ public class PickingListsDTO {
             this.parentSkuNo = detail.getSkuNo();
             this.productName = productName;
             this.sourceCode = entity.getSourceCode();
-//            this.parentSkuQty = detail.getQty();
+            this.parentSkuQty = detail.getQty();
             this.warehouseId = entity.getWarehouseId();
             this.warehouseName = entity.getWarehouseName();
             this.warehouseLocation = detail.getWarehouseLocation();
