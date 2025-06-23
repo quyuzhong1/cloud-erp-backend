@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -82,6 +83,9 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
     List<SupplierCredentialEntity> transform(String supplierId, List<SupplierCredentialDTO.ImportAddDTO> credentialList);
 
     BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto);
+
+    @Transactional(rollbackFor = Exception.class)
+    void updateBatchCredential(String supplierId, List<SupplierCredentialDTO.UpdateDTO> credentialList);
 
     Boolean update(SupplierCredentialDTO.UpdateDTO dto);
 

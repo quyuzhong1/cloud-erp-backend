@@ -6,10 +6,13 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
+import com.erp.server.scm.query.SupplierCredentialQueryHandler;
 import com.erp.server.scm.service.SupplierCredentialService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -24,6 +27,7 @@ import com.common.business.enums.DataAttributeEnum;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -49,8 +53,15 @@ public class SupplierCredentialController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "供应商证照新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SupplierCredentialDTO.AddDTO dto) {
-        return success(supplierCredentialService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<SupplierCredentialDTO.AddDTO> dto) {
+
+        SupplierCredentialDTO.AddDTO addDTO = dto.stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
+        if(Objects.isNull(addDTO)){
+            return failure();
+        }
+        String supplierId = addDTO.getSupplierId();
+        supplierCredentialService.saveBatchCredential(supplierId,dto);
+        return success();
     }
 
     /**
@@ -67,8 +78,14 @@ public class SupplierCredentialController extends BaseController {
         menuCode = "scm:supplierCredential:update",
         serviceClass = SupplierCredentialService.class,
         keyIdName = "id")
-    public ApiResult<Object> update(@RequestBody @Validated SupplierCredentialDTO.UpdateDTO dto) {
-        return success(supplierCredentialService.update(dto));
+    public ApiResult<Object> update(@RequestBody @Validated List<SupplierCredentialDTO.UpdateDTO> dto) {
+        SupplierCredentialDTO.UpdateDTO updateDTO = dto.stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
+        if(Objects.isNull(updateDTO)){
+            return failure();
+        }
+        String supplierId = updateDTO.getSupplierId();
+        supplierCredentialService.updateBatchCredential(supplierId,dto);
+        return success();
     }
 
     /**
@@ -98,7 +115,7 @@ public class SupplierCredentialController extends BaseController {
             menuCode = "scm:supplierCredential:paging",
             tableAlias = "sc"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
     public ApiResult<PagingVO<SupplierCredentialDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
         return success(supplierCredentialService.paging(dto));
     }

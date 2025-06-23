@@ -80,8 +80,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
      * @author yl
      * @date 2023-03-17 16:14
      */
-    @Override
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public void saveBatchCredential(String supplierId, List<SupplierCredentialDTO.AddDTO> credentialList) {
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
@@ -90,6 +90,112 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             item.setSupplierId(supplierId);
             self.add(item);
         }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto) {
+        SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
+
+        SupplierCredentialEntity addEntity = new SupplierCredentialEntity();
+        String id = IdWorker.getIdStr();
+        BeanMapper.copy(dto, addEntity);
+        addEntity.setId(id);
+        self.save(addEntity);
+
+        //校验有效期
+        self.checkDate(addEntity);
+
+        //附件集合
+        List<String> attachmentUrlList = dto.getAttachmentUrlList();
+        //附件名
+        List<String> attachmentNameList = dto.getAttachmentNameList();
+        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                AttachmentEntity attachment = new AttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(id);
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】供应商证照【{}】", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName() , dto.getName());
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER.getCode(), supplierEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(id, id);
+    }
+
+    /**
+     * 保存 供应商资质信息
+     *
+     * @param supplierId
+     * @param credentialList
+     * @return void
+     * @author yl
+     * @date 2023-03-17 16:14
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateBatchCredential(String supplierId, List<SupplierCredentialDTO.UpdateDTO> credentialList) {
+        if (CollectionUtils.isEmpty(credentialList)) {
+            return;
+        }
+        for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
+            item.setSupplierId(supplierId);
+            self.update(item);
+        }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(SupplierCredentialDTO.UpdateDTO dto) {
+        SupplierCredentialEntity old = super.getByIdOpt(dto.getId()).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
+
+        SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
+
+        SupplierCredentialEntity entity = new SupplierCredentialEntity();
+        BeanMapper.copy(dto, entity);
+        //校验有效期
+        checkDate(entity);
+
+        //删除附件
+        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+        //附件集合
+        List<String> attachmentUrlList = dto.getAttachmentUrlList();
+        List<String> attachmentNameList = dto.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                AttachmentEntity addAttachment = new AttachmentEntity();
+                addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                addAttachment.setAttachName(attachmentNameList.get(i));
+                addAttachment.setBusinessId(entity.getId());
+                addAttachment.setType(type);
+                batchAttachmentList.add(addAttachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
+        //操作日志
+        String msg = StrUtil.format("用户【{}】更新【{}】供应商证照", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName());
+        moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
+        return Boolean.TRUE;
     }
 
     /**
@@ -328,90 +434,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         return list(queryWrapper);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto) {
-        SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
-
-        SupplierCredentialEntity addEntity = new SupplierCredentialEntity();
-        String id = IdWorker.getIdStr();
-        BeanMapper.copy(dto, addEntity);
-        addEntity.setId(id);
-        self.save(addEntity);
-
-        //校验有效期
-        self.checkDate(addEntity);
-
-        //附件集合
-        List<String> attachmentUrlList = dto.getAttachmentUrlList();
-        //附件名
-        List<String> attachmentNameList = dto.getAttachmentNameList();
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
-        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
-            Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
-                attachment.setAttachUrl(attachmentUrlList.get(i));
-                attachment.setAttachName(attachmentNameList.get(i));
-                attachment.setBusinessId(id);
-                attachment.setType(type);
-                batchAttachmentList.add(attachment);
-            }
-            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
-                attachmentService.saveBatch(batchAttachmentList);
-            }
-        }
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】供应商证照【{}】", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName() , dto.getName());
-        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER.getCode(), supplierEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(id, id);
-    }
-
-
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean update(SupplierCredentialDTO.UpdateDTO dto) {
-        SupplierCredentialEntity old = super.getByIdOpt(dto.getId()).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
-
-        SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
-
-        SupplierCredentialEntity entity = new SupplierCredentialEntity();
-        BeanMapper.copy(dto, entity);
-        //校验有效期
-        checkDate(entity);
-
-        //删除附件
-        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
-        //附件集合
-        List<String> attachmentUrlList = dto.getAttachmentUrlList();
-        List<String> attachmentNameList = dto.getAttachmentNameList();
-        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
-            Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
-            for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity addAttachment = new AttachmentEntity();
-                addAttachment.setAttachUrl(attachmentUrlList.get(i));
-                addAttachment.setAttachName(attachmentNameList.get(i));
-                addAttachment.setBusinessId(entity.getId());
-                addAttachment.setType(type);
-                batchAttachmentList.add(addAttachment);
-            }
-            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
-                attachmentService.saveBatch(batchAttachmentList);
-            }
-        }
-        //操作日志
-        String msg = StrUtil.format("用户【{}】更新【{}】供应商证照", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName());
-        moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
-        return Boolean.TRUE;
-    }
 
 
     @Override
@@ -511,8 +533,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         return data;
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public BatchResultDTO delete(String id) {
         SupplierCredentialEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
 
@@ -537,8 +559,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         downloadTaskFeign.saveDownloadTask("供应商证照管理导出", EXPORT_SCM_SUPPLIER_CREDENTIAL_REPORT.getCode(), param);
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
+    @Override
     public BatchResultDTO updateStatus(String id) {
         SupplierCredentialEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
 
