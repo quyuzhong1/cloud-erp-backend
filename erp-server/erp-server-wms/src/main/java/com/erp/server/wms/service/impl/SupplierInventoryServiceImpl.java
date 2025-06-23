@@ -12,13 +12,14 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
 import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.wms.mapper.SupplierInventoryMapper;
 import com.erp.server.wms.service.SupplierInventoryService;
+import com.erp.server.wms.service.VirtualInventoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,7 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private SupplierInventoryMapper supplierInventoryMapper;
+    private VirtualInventoryService virtualInventoryService;
 
 
 
@@ -66,7 +67,7 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         if (CollUtil.isEmpty(supplierRefWarehouseList)) {
             return new PagingVO();
         }
-        IPage<SupplierInventoryDTO.ListDTO> pageData = supplierInventoryMapper.paging(query,pagingParamDTO.getParams(),supplierRefWarehouseList);
+        IPage<SupplierInventoryDTO.ListDTO> pageData = virtualInventoryService.supplierInventoryPaging(query,pagingParamDTO.getParams(),supplierRefWarehouseList);
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
@@ -91,6 +92,7 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
         for (SupplierInventoryDTO.ListDTO entity : list) {
             entity.setSupplierName(ObjectUtil.isEmpty(supplierEntity) ? "" :supplierEntity.getName());
             entity.setImagesUrlPath(CharSequenceUtil.isBlank(entity.getImagesUrl()) ? "" : FastDFSClientUtil.publicUrl + entity.getImagesUrl());
+            entity.setSaleStateName(SaleStateEnum.getNameByCode(entity.getSaleState()));
         }
     }
 
