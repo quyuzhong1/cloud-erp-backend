@@ -279,6 +279,18 @@
                  fm.id ASC
     </select>
 
+    <select id="listValueMapByFieldMapId" resultMap="valueViewDTOResultMap">
+        SELECT
+            vm.id            AS value_map_id,
+            vm.field_map_id  AS value_field_map_id,
+            vm.third_value   AS third_value,
+            vm.sys_value     AS sys_value,
+            vm.default_value AS map_defaultValue
+        FROM public.cfg_process_value_map vm
+        WHERE vm.field_map_id = #{fieldMapId}
+          AND vm.is_deleted = false
+    </select>
+
     <select id="tabList" resultType="com.erp.model.workflow.dto.CfgProcessDTO$TabListDTO">
         SELECT
         cpr.disabled AS tabFlag,
