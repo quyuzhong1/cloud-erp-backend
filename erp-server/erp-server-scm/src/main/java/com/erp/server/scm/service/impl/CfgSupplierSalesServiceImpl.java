@@ -228,31 +228,21 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             throw new ServiceException("SKU查看配置不能为空");
         }
 
-        // 可销库存配置
-        List<CfgSupplierSalesConditionDTO.ConditionDTO> saleableStockList = addDTO.getSaleableStockList();
-        handleUpdateConditionList(saleableStockList);
-        if (CollUtil.isNotEmpty(saleableStockList)) {
-            if (Objects.equals(addDTO.getWarehouseType(), CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ||
-                    Objects.equals(addDTO.getWarehouseType(), CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())) {
-                String sourceType = addDTO.getWarehouseType();
-                String logDescDelete = Objects.equals(sourceType, CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ?
-                        "删除了可销库存配置虚拟仓条件" : "删除了可销库存配置实体仓条件";
 
-                String otherSourceType = Objects.equals(sourceType, CfgSupplierSalesConditionWarehouseTypeEnum.PHYSICALWAREHOUSE.getCode()) ?
-                        RuleTypeEnum.VIRTUALWAREHOUSE.getCode() : RuleTypeEnum.PHYSICALWAREHOUSE.getCode();
+        if(Objects.equals(addDTO.getWarehouseType(),CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
+            // 可销库存配置--虚拟仓
+            processAndSaveCondition(addDTO.getSaleableStockList(), id, RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), "删除了可销库存配置虚拟仓条件");
 
-                deleteExistingConditions(id, Arrays.asList(sourceType, otherSourceType), logDescDelete);
+            deleteExistingCondition(id, RuleTypeEnum.PHYSICALWAREHOUSE.getCode(), "删除了可销库存配置实体仓条件");
+        }else {
+            // 可销库存配置--实体仓
+            processAndSaveCondition(addDTO.getSaleableStockList(), id, RuleTypeEnum.PHYSICALWAREHOUSE.getCode(), "删除了可销库存配置实体仓条件");
 
-                cfgSupplierSalesConditionService.updateRuleCondition(id, saleableStockList, ModuleTypeEnum.CFG_SUPPLIER_SALES.getCode(), sourceType);
-            }
-        } else {
-            deleteExistingConditions(id,
-                    Arrays.asList(RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), RuleTypeEnum.PHYSICALWAREHOUSE.getCode()),
-                    "删除了可销库存配置条件");
+            deleteExistingCondition(id, RuleTypeEnum.VIRTUALWAREHOUSE.getCode(), "删除了可销库存配置虚拟仓条件");
         }
 
         // 销量统计配置
-        processAndSaveCondition(addDTO.getSalesStatisticList(), id, RuleTypeEnum.SALESSTATISTIC.getCode(), "销量统计配置条件");
+        processAndSaveCondition(addDTO.getSalesStatisticList(), id, RuleTypeEnum.SALESSTATISTIC.getCode(), "删除了销量统计配置条件");
 
         // 通知配置
         processAndSaveCondition(addDTO.getNoticeList(), id, RuleTypeEnum.NOTICE.getCode(), "删除了通知配置条件");
