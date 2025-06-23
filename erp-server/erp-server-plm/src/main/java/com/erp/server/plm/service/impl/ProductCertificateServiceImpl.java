@@ -832,7 +832,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             } else {
                 file = map.get(entity.getDictProject());
             }
-            String fileUrl = fileFeign.uploadFile(file, fileName);
+            String fileUrl = fileFeign.uploadFileAndName(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }

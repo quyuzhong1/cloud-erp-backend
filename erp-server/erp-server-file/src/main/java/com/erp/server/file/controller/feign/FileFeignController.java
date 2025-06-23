@@ -2,7 +2,6 @@ package com.erp.server.file.controller.feign;
 
 
 import com.erp.server.file.service.FileService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,12 +18,12 @@ public class FileFeignController {
     /**
      * 上传文件
      *
-     * @param file
+     * @param multipartFile
      * @return
      */
     @PostMapping("/uploadFile")
-    String uploadFile(@RequestParam("multipartFile")MultipartFile file){
-        return fileService.uploadFile(file);
+    String uploadFile(@RequestParam("multipartFile")MultipartFile multipartFile){
+        return fileService.uploadFile(multipartFile);
     }
 
     @PostMapping("/deleteFile")

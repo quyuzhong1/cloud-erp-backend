@@ -1949,7 +1949,18 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(List<String> ids) {
-        return baseMapper.printSkuLabelView(ids);
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelDTOS = baseMapper.printSkuLabelView(ids);
+        if (CollUtil.isEmpty(printSkuLabelDTOS)){
+            return printSkuLabelDTOS;
+        }
+        //补充产品名称
+        List<String> skuIds = printSkuLabelDTOS.stream().map(SoDeliveryNoticeDTO.PrintSkuLabelDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(skuIds);
+        Map<String, String> productNameMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO printSkuLabelDTO : printSkuLabelDTOS) {
+            printSkuLabelDTO.setProductName(productNameMap.get(printSkuLabelDTO.getSkuId()));
+        }
+        return printSkuLabelDTOS;
     }
 
     @Override
@@ -1961,7 +1972,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         int totalPrintNum = details.stream()
                 .mapToInt(detail -> Optional.ofNullable(detail.getPrintNum()).orElse(0))
                 .sum();
-        if(totalPrintNum > 10000){
+        if(totalPrintNum > 5000){
             throw new ServiceException("打印数量合计超过10000，建议减少打印数量后在预览页面下载pdf单独打印");
         }
         List<String> base64List = new ArrayList<>();
@@ -1990,6 +2001,59 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList = dto.getDetailList();
         //查询标签链接
         buildSkuLabel(detailList);
+        //组装标签数据
+        buildLabelData(base64List, detailList);
+        //组装公司数据
+        buildCompanyData(base64List, dto);
+    }
+
+    private void buildCompanyData(List<String> base64List, SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto) {
+        //模板查询
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.COMPANY_LABEL);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        byte[] content = null;
+        try {
+            content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+            InputStream inputStream = new ByteArrayInputStream(content);
+            if (inputStream == null) {
+                log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                throw new ServiceException("公司标签模板不存在");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList = dto.getDetailList();
+        String companyAddress = dto.getCompanyAddress();
+        String companyName = dto.getCompanyName();
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO dtoDetail : detailList) {
+            Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
+            Map<String, Object> map = new HashMap<>();
+            map.put("companyAddress", "生产地址：" + companyAddress);
+            map.put("companyName", "生产厂名：" + companyName);
+            map.put("productName", "产品名称：" + maskString(dtoDetail.getProductName()));
+            InputStream inputStream = new ByteArrayInputStream(content);
+            byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
+            String base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
+            for (int i = 1; i <= printNum; i++) {
+                base64List.add(base);
+            }
+        }
+    }
+
+    private String maskString(String input) {
+        if (input == null || input.length() <= 13) {
+            return input;
+        }
+        String prefix = input.substring(0, 5);
+        String suffix = input.substring(input.length() - 5);
+        return prefix + "***" + suffix;
+    }
+
+    private void buildLabelData(List<String> base64List, List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList) {
         //模板查询
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
@@ -2003,7 +2067,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             InputStream inputStream = new ByteArrayInputStream(content);
             if (inputStream == null) {
                 log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
-                return;
+                throw new ServiceException("客户sku标签模板不存在");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

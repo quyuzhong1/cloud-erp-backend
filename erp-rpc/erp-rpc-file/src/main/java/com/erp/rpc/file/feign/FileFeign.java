@@ -2,7 +2,6 @@ package com.erp.rpc.file.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,11 +12,11 @@ import java.util.List;
 public interface FileFeign {
     /**
      * 上传文件
-     * @param file
+     * @param multipartFile
      * @return
      */
     @PostMapping("/feign/file/uploadFile")
-    String uploadFile(@RequestParam("multipartFile") MultipartFile file);
+    String uploadFile(@RequestParam("multipartFile") MultipartFile multipartFile);
 
     /**
      * 上传文件支持定义文件名称
@@ -25,8 +24,8 @@ public interface FileFeign {
      * @param fileName
      * @return
      */
-    @PostMapping("/feign/file/uploadFile")
-    String uploadFile(@RequestParam("file") File file,@RequestParam("fileName") String fileName);
+    @PostMapping("/feign/file/uploadFileAndName")
+    String uploadFileAndName(@RequestParam("file") File file, @RequestParam("fileName") String fileName);
 
     /**
      * 删除文件

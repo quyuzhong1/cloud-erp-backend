@@ -111,7 +111,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             throw new ServiceException(ApiError.ERROR_1018);
         }
         File file = FileUtil.multiToFile(multipartFile);
-        String fileUrl = fileFeign.uploadFile(file, fileName);
+        String fileUrl = fileFeign.uploadFileAndName(file, fileName);
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.ERROR_95018);
         }
