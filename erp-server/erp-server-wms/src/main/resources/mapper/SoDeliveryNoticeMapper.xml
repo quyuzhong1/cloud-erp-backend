@@ -369,8 +369,8 @@
         SELECT
             sdn.id,
             sdnd.id as detailId,
-            sdn.so_id as soId,
-            sdn.so_code as soCode,
+            sdn.source_id as soId,
+            sdn.source_code as soCode,
             sdnd.sku_id as skuId,
             sdnd.sku_no as skuNo,
             sdnd.platform_sku_no as platformSkuNo,
@@ -378,8 +378,8 @@
         from so_delivery_notice sdn
                  LEFT JOIN so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id
         where sdn.is_deleted = false and sdnd.is_deleted = false
-          and sdn.id in
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
+          and sdnd.id in
+        <foreach collection="detailIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
     </select>

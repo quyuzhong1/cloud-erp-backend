@@ -700,6 +700,11 @@ public class SoDeliveryNoticeDTO {
          */
         private Boolean showDate;
         private String labelUrl;
+        /**
+         * 标签来源类型
+         * LabelSourceTypeEnum
+         */
+        private String labelSourceType;
     }
 
     @Data
@@ -708,14 +713,19 @@ public class SoDeliveryNoticeDTO {
         //打印尺寸
         private String size;
         /**
+         * 打印样式
+         */
+        @NotBlank(message = "打印样式不能为空")
+        private String skuPrintType;
+        /**
          * 生产厂名
          */
-        @NotBlank(message = "生产厂名不能为空")
+//        @NotBlank(message = "生产厂名不能为空")
         private String companyName;
         /**
          * 生产地址
          */
-        @NotBlank(message = "生产地址不能为空")
+//        @NotBlank(message = "生产地址不能为空")
         private String companyAddress;
         /**
          * 打印明细

@@ -1271,6 +1271,7 @@ public enum ApiError implements Serializable {
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
+    ERROR_CUSTOMER_SKU_PRINT(92249,"打印客户SKU标签失败"),
     ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
     WAREHOUSE_AREA_NOT_EXIST(92251, "库区信息不存在"),
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
