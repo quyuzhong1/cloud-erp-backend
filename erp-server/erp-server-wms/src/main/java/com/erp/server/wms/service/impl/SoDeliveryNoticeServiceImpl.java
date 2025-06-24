@@ -2002,7 +2002,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_92249);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_SKU_PRINT);
         }
     }
     private void generateBase64ByFnskuBill(List<String> base64List, SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto){
@@ -2036,7 +2036,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             String base = "";
             if ((Objects.isNull(showDate) || Boolean.FALSE.equals(showDate)) && CharSequenceUtil.isNotBlank(labelUrl)){
                 try {
-                    byte[] content2 = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+                    byte[] content2 = FastDFSClientUtil.getStorageClient().download_file1(labelUrl);
                     base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(content2);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
