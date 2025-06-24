@@ -7,6 +7,7 @@ import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * <p>
@@ -46,4 +47,6 @@ public interface CfgSupplierSalesService extends SuperService<CfgSupplierSalesEn
     void exportList(CfgSupplierSalesDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
     CfgSupplierSalesDTO.ViewDTO view(String id);
+
+    List<CfgSupplierSalesDTO.ListAllDTO> listAll();
 }

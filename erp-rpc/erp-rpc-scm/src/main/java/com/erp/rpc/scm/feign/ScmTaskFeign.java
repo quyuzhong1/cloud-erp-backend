@@ -459,4 +459,9 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchasePrice/getBySkuIdList")
     public List<PurchaseSkuOrgRefEntity> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO);
+    /**
+     * @return
+     */
+    @PostMapping("feign/cfgSupplierSales/listAll")
+    List<CfgSupplierSalesDTO.ListAllDTO> listAll();
 }
