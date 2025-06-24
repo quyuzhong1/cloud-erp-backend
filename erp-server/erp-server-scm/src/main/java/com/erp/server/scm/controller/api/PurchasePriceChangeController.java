@@ -237,10 +237,40 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:update",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
-        Boolean result = purchasePriceChangeService.updateAndSubmit(dto);
-        purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
-        return result == true ? success() : failure();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+        String id="";
+        try {
+            id = purchasePriceChangeService.updatePurchasePriceChange(dto);
+            if (StringUtils.isBlank(id)) {
+                return  failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1020.msg));
+            }
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1020.msg));
+        }
+        //提审
+        try {
+            purchasePriceChangeService.submitApprove(Arrays.asList(id), Boolean.TRUE);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", id, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(id,"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", id, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(id,"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+
+        //发送消息
+        try {
+            //消息发送
+            purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
+        } catch (Exception e) {
+            log.error("发送消息失败，ID: {}", id, e);
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
     }
 
 

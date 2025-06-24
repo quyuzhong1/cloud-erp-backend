@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -17,6 +18,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
@@ -29,6 +31,7 @@ import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -175,9 +178,28 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:updateAndSubmit",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
-        firstMileDeliveryService.updateAndSubmit(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
+        try {
+            firstMileDeliveryService.update(dto);
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+        }
+        //提审
+        try {
+            firstMileDeliveryService.submit(dto.getId());
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
     }
 
     /**
