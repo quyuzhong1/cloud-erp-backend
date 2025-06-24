@@ -191,16 +191,30 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         self.updateById(entity);
 
-        //删除附件
-        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+
         //附件集合
         List<String> attachmentUrlList = dto.getAttachmentUrlList();
         List<String> attachmentNameList = dto.getAttachmentNameList();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+
             Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
+            //附件信息
+            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(entity.getId()), type);
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 删除旧的附件
+                List<AttachmentDTO.UpdateDTO> removeList = oldAttachmentList.stream().filter(r -> !attachmentUrlList.contains(r.getAttachUrl())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(removeList)){
+                    List<String> urlList = removeList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    attachmentService.deleteByUrlList(urlList);
+                }
+
+                List<String> ids = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getId).collect(Collectors.toList());
+                attachmentService.removeByIds(ids);
+            }
+
             List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
             for (int i = 0; i < attachmentUrlList.size(); i++) {
                 AttachmentEntity addAttachment = new AttachmentEntity();
@@ -210,9 +224,13 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 addAttachment.setType(type);
                 batchAttachmentList.add(addAttachment);
             }
+
             if(CollectionUtils.isNotEmpty(batchAttachmentList)){
                 attachmentService.saveBatch(batchAttachmentList);
             }
+        }else {
+            //删除附件
+            attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         }
         //操作日志
         String msg = StrUtil.format("用户【{}】更新【{}】供应商证照", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName());
