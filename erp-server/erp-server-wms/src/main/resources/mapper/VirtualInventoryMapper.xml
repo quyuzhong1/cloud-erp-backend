@@ -764,10 +764,10 @@
         ps.sale_state as saleState,
         inv.warehouse_id as warehouseId,
         wh.name as warehouseName,
-        inv.realQty,
-        inv.useQty,
-        inv.freezeQty,
-        inv.inTransitQty
+        sum(inv.realQty) as realQty,
+        sum(inv.useQty) as useQty,
+        sum(inv.freezeQty) as freezeQty,
+        sum(inv.inTransitQty) as inTransitQty
         from totalInventory inv
         left join product_detail pd on inv.sku_id = pd.id and pd.is_deleted = false
         left join product_sale ps  on inv.sku_id = ps.sku_id and ps.is_deleted = false
@@ -787,13 +787,14 @@
                 </if>)
             </foreach>
         </if>
+        group by pd.id,pd.sku_no,pd.images_url,pd.name,ps.sale_state,inv.warehouse_id,wh.name
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        inv.warehouse_id,inv.sku_id
+        inv.warehouse_id,pd.id
     </select>
 
 </mapper>
