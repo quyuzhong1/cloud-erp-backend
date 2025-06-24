@@ -21,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -67,10 +70,34 @@ public class AliexpressWarehouseService {
         aliexpressAuthDTO.setAppKey("503630");
         aliexpressAuthDTO.setAppSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ");
         aliexpressAuthDTO.setAccessToken("50000701530cnHtbirhzrd7ijPeou2emiSIajwwCg118389611msriNQyROLyoVZ1y1j");
-        AliexpressCancelOrderDTO aliexpressCancelOrderDTO = new AliexpressCancelOrderDTO();
+        AliexpressOrderDTO aliexpressCancelOrderDTO = new AliexpressOrderDTO();
         aliexpressCancelOrderDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
-        aliexpressCancelOrderDTO.setOrderCode("123");
-        ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOutbound(aliexpressCancelOrderDTO);
+        aliexpressCancelOrderDTO.setDeliveryOrder(AliexpressOrderDTO.DeliveryOrder.builder()
+                        .orderType("JYCK")
+                        .ownerCode("17379911544")
+                        .receiverInfo(AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO.builder()
+                                .countryCode("US")
+                                .build())
+                        .deliveryOrderCode("TEST123456")
+                        .warehouseCode("STB")
+                        .shopNick("测试店铺")
+                        .logisticsCode("other")
+                        .createTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                        .sourcePlatformCode("AE")
+                        .expressCode("test123456")
+                .build());
+        aliexpressCancelOrderDTO.setOrderLines(Arrays.asList(AliexpressOrderDTO.OrderLines.builder()
+                        .inventoryType("1")
+                        .planQty(1)
+                        .ownerCode("17379911544")
+                        .itemCode("2028")
+                        .itemId(1129930008)
+                .build()));
+        aliexpressCancelOrderDTO.setExtendProps(AliexpressOrderDTO.ExtendProps.builder()
+                        .merchantType("POP")
+                        .printInfo("123")
+                .build());
+        ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressCancelOrderDTO);
         System.out.println(apiOrderResponseDTO);
     }
 
@@ -105,9 +132,9 @@ public class AliexpressWarehouseService {
         log.warn("菜鸟仓创建出库单,{}",JSONUtil.toJsonStr(aliexpressOrderDTO));
         AliexpressAuthDTO aliexpressAuthDTO = aliexpressOrderDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
-        if (!BusinessCommonConstants.hasProfile("prod")) {
-            url = url + "/sandbox";
-        }
+//        if (!BusinessCommonConstants.hasProfile("prod")) {
+//            url = url + "/sandbox";
+//        }
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
@@ -119,6 +146,7 @@ public class AliexpressWarehouseService {
         request.addApiParameter("extend_props", JSONUtil.toJsonStr(aliexpressOrderDTO.getExtendProps()));
         request.addApiParameter("delivery_order", JSONUtil.toJsonStr(aliexpressOrderDTO.getDeliveryOrder()));
         IopResponse response = client.execute(request, accessToken, Protocol.TOP);
+        log.warn("菜鸟仓出库单回参{}",JSONUtil.toJsonStr(response.getBody()));
         return JSON.parseObject(response.getBody(),new TypeReference<ApiOrderResponseDTO>() {}.getType());
     }
 

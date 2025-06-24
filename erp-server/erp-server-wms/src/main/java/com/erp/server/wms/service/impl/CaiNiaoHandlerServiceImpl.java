@@ -17,8 +17,6 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
@@ -26,17 +24,13 @@ import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
 import com.erp.wms.aliexpress.service.AliexpressWarehouseService;
 import com.erp.wms.aliexpress.util.ApiException;
-import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,6 +127,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         deliveryOrder.setShopNick(createOutboundReq.getShopName());
         deliveryOrder.setLogisticsCode(createOutboundReq.getShippingMethod());
         deliveryOrder.setSourcePlatformCode("AE");
+        deliveryOrder.setExpressCode(createOutboundReq.getTrackingNo());
 
         AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO receiverInfoDTO = AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO.builder()
                 .countryCode(createOutboundReq.getReceiverInfo().getCountryCode())

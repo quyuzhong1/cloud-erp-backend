@@ -23,6 +23,8 @@ public class AliexpressOrderDTO {
 
     @NoArgsConstructor
     @Data
+    @AllArgsConstructor
+    @Builder
     public static class ExtendProps {
         @Alias("laneCode")
         private String laneCode;
@@ -30,12 +32,14 @@ public class AliexpressOrderDTO {
         private String pickUpResCode;
         @Alias("merchantType")
         private String merchantType;
-        @Alias("print_info")
+        @Alias("printInfo")
         private String printInfo;
     }
 
     @NoArgsConstructor
     @Data
+    @AllArgsConstructor
+    @Builder
     public static class DeliveryOrder {
 
         @Alias("warehouse_code")
