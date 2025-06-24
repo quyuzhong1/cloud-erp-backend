@@ -563,6 +563,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         downloadTaskFeign.saveDownloadTask("销量设置导出", EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT.getCode(), pagingParamDTO);
     }
 
+    //查询所有的启动未删除的销量设置
     @Override
     public List<CfgSupplierSalesDTO.ListAllDTO> listAll() {
         List<CfgSupplierSalesEntity> list = lambdaQuery().eq(CfgSupplierSalesEntity::getDisabled,Boolean.FALSE).eq(CfgSupplierSalesEntity::getIsDeleted,Boolean.FALSE).list();
@@ -584,12 +585,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             //仓库配置
             String warehouseType = data.getWarehouseType();
             if(map.containsKey(warehouseType)){
-                List<CfgSupplierSalesConditionEntity> value = map.get(warehouseType);
-                List<CfgSupplierSalesConditionDTO.View> conditionViewList = value.stream()
-                        .sorted(Comparator.comparingInt(CfgSupplierSalesConditionEntity::getIndex))
-                        .map(e -> BeanMapperUtils.map(CfgSupplierSalesConditionDTO.View.class, e))
-                        .collect(Collectors.toList());
-                data.setSaleableStockList(conditionViewList);
+                data.setSaleableStockList(map.get(warehouseType));
             }
 
             //其余配置（包括sku黑名单）
@@ -599,24 +595,19 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                 if(map.containsKey(key)){
                     List<CfgSupplierSalesConditionEntity> value = map.get(key);
 
-                    List<CfgSupplierSalesConditionDTO.View> conditionViewList = value.stream()
-                            .sorted(Comparator.comparingInt(CfgSupplierSalesConditionEntity::getIndex))
-                            .map(e -> BeanMapperUtils.map(CfgSupplierSalesConditionDTO.View.class, e))
-                            .collect(Collectors.toList());
-
                     if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
-                        data.setSkuList(conditionViewList);
+                        data.setSkuList(value);
                     }
                     if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
-                        data.setSalesStatisticList(conditionViewList);
+                        data.setSalesStatisticList(value);
                     }
                     if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
-                        data.setNoticeList(conditionViewList);
+                        data.setNoticeList(value);
                     }
                     if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
                         data.setIsBlack(Boolean.TRUE);
 
-                        data.setBlackList(conditionViewList);
+                        data.setBlackList(value);
                     }
                 }
             }

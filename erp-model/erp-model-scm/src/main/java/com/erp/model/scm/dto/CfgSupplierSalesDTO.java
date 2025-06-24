@@ -42,6 +42,8 @@ public class CfgSupplierSalesDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+        private String supplierCode;
+        private String supplierName;
 
         /**
          * 页面权限：view=仅查看,download=查看并下载
@@ -90,12 +92,12 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * sku黑名单集合
          */
-        private List<CfgSupplierSalesConditionDTO.View> blackList;
+        private List<CfgSupplierSalesConditionEntity> blackList;
 
         /**
          * sku查看配置
          */
-        private List<CfgSupplierSalesConditionDTO.View> skuList;
+        private List<CfgSupplierSalesConditionEntity> skuList;
 
         /**
          * 仓库类型
@@ -104,16 +106,16 @@ public class CfgSupplierSalesDTO implements Serializable {
         /**
          * 可销库存配置
          */
-        private List<CfgSupplierSalesConditionDTO.View> saleableStockList ;
+        private List<CfgSupplierSalesConditionEntity> saleableStockList ;
 
         /**
          * 销量统计配置
          */
-        private List<CfgSupplierSalesConditionDTO.View> salesStatisticList ;
+        private List<CfgSupplierSalesConditionEntity> salesStatisticList ;
         /**
          * 通知配置执行条件
          */
-        private List<CfgSupplierSalesConditionDTO.View> noticeList;
+        private List<CfgSupplierSalesConditionEntity> noticeList;
 
 
 

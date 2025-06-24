@@ -213,4 +213,7 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@Param("skuIdList") List<String> skuIdList,@Param("supplierIdList") List<String> supplierIdList);
 
     List<SupplierPurchaseQuantityEntity> listSupplierPurchaseQty();
+
+
+    List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@Param("supplierIds") List<String> supplierIds);
 }

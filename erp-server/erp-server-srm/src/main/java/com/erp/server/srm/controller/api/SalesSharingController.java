@@ -78,5 +78,17 @@ public class SalesSharingController extends BaseController {
         }
     }
 
+    /**
+     * 根据销量设置进行统计销量共享数据
+     * @author jack
+     * @date: 2025-06-24
+     * @return ApiResult<String>
+     */
+    @GetMapping("/calSalesSharing")
+    public ApiResult<String> calSalesSharing() {
+        salesSharingService.calSalesSharing();
+        return success();
+    }
+
 
 }

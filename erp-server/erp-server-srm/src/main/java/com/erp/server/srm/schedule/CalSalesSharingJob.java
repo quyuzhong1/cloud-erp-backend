@@ -36,11 +36,6 @@ import java.util.List;
 @EnableScheduling
 public class CalSalesSharingJob {
 
-    @Resource
-    private DmpSkuSaleReportFeign dmpSkuSaleReportFeign;
-
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private SalesSharingService salesSharingService;
@@ -51,17 +46,12 @@ public class CalSalesSharingJob {
      * @return
      */
     @XxlJob("CalSalesSharingJob")
-    public ReturnT autoGeneratePoReconciliation() {
+    public ReturnT calSalesSharingJob() {
         XxlJobHelper.log("====CalSalesSharingJob 开始=====");
         long start = System.currentTimeMillis();
 
-        List<CfgSupplierSalesDTO.ListAllDTO> listAllDTOS = scmTaskFeign.listAll();
-        if(CollUtil.isNotEmpty(listAllDTOS)){
+        salesSharingService.calSalesSharing();
 
-
-
-
-        }
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("====CalSalesSharingJob 结束=====");
