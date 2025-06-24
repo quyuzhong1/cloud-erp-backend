@@ -87,7 +87,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "字段配置");
+        String msg = StrUtil.format("新增流程设置字段映射");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
         return new BaseResultDTO.AddDTO();
     }
@@ -179,6 +179,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         List<String> ids = cfgProcessFieldMapEntityList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         removeByIds(ids);
         //删除选项条件设置
+        //TODO 日志
         cfgProcessValueMapService.delete(ids);
     }
 

@@ -139,7 +139,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
                 }
                 boolean b = taskInfoService.updateById(taskInfoEntity);
                 if (!b){
-                    throw new ServiceException("更新三方生成查询失败：{}");
+                    throw new ServiceException("更新三方生成查询失败");
                 }
             }catch (Exception e) {
                 throw new ServiceException("更新合同状态失败：{}",e.getMessage());

@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -17,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -205,7 +207,7 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
-    public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         //增加校验
         SupplierEntity supplier = supplierService.getById(dto.getId());
         if (Objects.isNull(supplier)) {
@@ -219,8 +221,35 @@ public class SupplierController extends BaseController {
                 msg = "SRM协同开启后，下月生效";
             }
         }
-        Boolean result = supplierService.updateAndSubmit(dto);
-        return result == true ? successMsg(msg) : failure();
+
+        String supplierId="";
+        try {
+            supplierId = supplierService.updateSupplier(dto);
+            if (StringUtils.isBlank(supplierId)) {
+                return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+            }
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+        }
+        //提审
+        try {
+            SupplierEntity entity = supplierService.getById(supplierId);
+            if (ObjUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98031);
+            }
+            supplierService.submit(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,msg));
     }
 
 
