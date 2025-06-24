@@ -233,7 +233,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setType(thirdProcessDefinition.getType());
         addDTO.setThirdDefinniationName(thirdProcessDefinition.getName());
         addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCE_CODE.getCode()));
-        addDTO.setThirdApprovalCode(thirdProcessDefinition.getCode());
+        addDTO.setThirdApprovalCode(thirdProcessDefinition.getApprovalCode());
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
         return addDTO;
     }
