@@ -117,7 +117,7 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 供应商表id
          */
-        @NotBlank(message = "供应商不能为空")
+//        @NotBlank(message = "供应商不能为空")
         private String supplierId;
 
         /**
