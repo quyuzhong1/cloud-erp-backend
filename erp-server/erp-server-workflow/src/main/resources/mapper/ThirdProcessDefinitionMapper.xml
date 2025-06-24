@@ -33,11 +33,11 @@
         update_time,
         version,
         is_deleted,
-        approval_code, enable_status, name, source_platform, form_json, dict_approval_group, type,code
+        approval_code, enable_status, name, source_platform, form_json, dict_approval_group, type
     </sql>
     <select id="paging" resultType="com.erp.model.workflow.dto.ThirdProcessDefinitionDTO$ListDTO">
         select
-        tpd.code,
+        tpd.approval_code,
         tpd.id,
         tpd.name,
         tpd.dict_approval_group,

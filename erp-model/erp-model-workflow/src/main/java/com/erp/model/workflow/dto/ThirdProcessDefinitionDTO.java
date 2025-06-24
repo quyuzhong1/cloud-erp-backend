@@ -72,11 +72,6 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         * 审批定义类型：发起/拉取
         */
         private String type;
-
-        /**
-         * 单据编码
-         */
-        private String code;
     }
 
     /**
@@ -186,7 +181,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
          * 单据编码
          */
-        private String code;
+        private String approvalCode;
 
         /**
          * 主键id

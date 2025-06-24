@@ -309,12 +309,13 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询approvalCode
         CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getRuleId());
         String code = cfgProcessRuleEntity.getProcessDefinitionId();
-        //
+
         //查询userid
         List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
         if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())) {
             throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_NOT_EXIST);
         }
+        //
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getRuleId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
