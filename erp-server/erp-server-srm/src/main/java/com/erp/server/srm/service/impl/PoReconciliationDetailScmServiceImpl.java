@@ -444,10 +444,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (paramDTO.getCode().startsWith(BusinessNoConstant.CGTH)) {
             //采购退货
             addReturnPoReconciliationDetail(paramDTO);
-        }
-        if (paramDTO.getCode().startsWith(BusinessNoConstant.CGRK)) {
+        } else if (paramDTO.getCode().startsWith(BusinessNoConstant.CGRK)) {
             //采购入库
             addInstockPoReconciliationDetail(paramDTO);
+        } else {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_MANUAL_GENERATE);
         }
         return BatchResultDTO.success(paramDTO.getCode(), paramDTO.getCode(), OperationTypeEnum.MANUAL_GENERATE);
     }

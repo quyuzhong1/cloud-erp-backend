@@ -1643,7 +1643,7 @@ public enum ApiError implements Serializable {
 
     ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL(94103,"单据未审核不支持生成待对账明细"),
     ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL(94104,"质检退货不支持生成待对账明细"),
-
+    ERROR_PO_RECONCILIATION_MANUAL_GENERATE(94105,"单据不支持生成对账明细"),
 
     /**
      * MRP 错误
