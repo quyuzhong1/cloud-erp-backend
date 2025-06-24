@@ -96,6 +96,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SupplierCredentialDTO.AddDTO dto) {
+        if(StringUtils.isBlank(dto.getSupplierId())){
+            throw new ServiceException("供应商不能为空");
+        }
         SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
 
         SupplierCredentialEntity addEntity = new SupplierCredentialEntity();
@@ -178,6 +181,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(SupplierCredentialDTO.UpdateDTO dto) {
+        if(StringUtils.isBlank(dto.getSupplierId())){
+            throw new ServiceException("供应商不能为空");
+        }
         SupplierCredentialEntity old = super.getByIdOpt(dto.getId()).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
 
         SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));

@@ -252,6 +252,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //供应商联系人信息
             supplierContactService.saveBatchContact(supplierId, contactList);
 
+            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
             supplierCredentialService.saveBatchCredential(supplierId, credentialList);
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
@@ -447,6 +448,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.updateAccount(bankAccountList, supplierId);
             //资质的
+            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
             supplierCredentialService.updateCredential(credentialList, supplierId);
             return supplierId;
         }
