@@ -107,14 +107,14 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         * 单据编码
         */
         @NotBlank(message = "单据编码不能为空")
-        @Size(max = 255,message = "单据编码最大长度不能超过30位")
+        @Size(max = 50,message = "单据编码最大长度不能超过30位")
         private String approvalCode;
 
         /**
         * 单据名称
         */
         @NotBlank(message = "单据名称不能为空")
-        @Size(max = 30,message = "单据名称最大长度不能超过30位")
+        @Size(max = 50,message = "单据名称最大长度不能超过30位")
         private String name;
 
 
