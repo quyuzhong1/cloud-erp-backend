@@ -114,8 +114,8 @@
         po_reconciliation_detail prd
         <where>
             prd.is_deleted = false and prd.main_id = '' and prd.business_status = 'confirm' and prd.status = 'waitReconciliation'
-            and prd.confirm_date >= #{startDate}
-            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.confirm_date
+            and prd.date >= #{startDate}
+            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.date
         </where>
     </select>
 
