@@ -190,6 +190,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			thirdUpdateTimeFormat = localDateTime.format(thirdUpdateTime);
     		}
     		
+    		boolean selfAdd = isSelfAdd();
     		for(DmpSoDeliveryDetailEntity dmpSoDeliveryDetailEntity : dmpSoDeliveryDetailEntityList) {
     			if(validateDataBlack(dmpSoDeliveryDetailEntity, cfgOutputId)) {
     				continue;
@@ -198,7 +199,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			String detailId = dmpSoDeliveryDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
-    			if(isSelfAdd()) {
+				if(selfAdd) {
     				shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoDeliveryDetailEntity.getSoId() + dmpSoDeliveryDetailEntity.getSoDetailId());
     			}else {
     				shudiyunB2cOrderDTO.setBiz_uni_key(thirdDeliveryId + dmpSoDeliveryDetailEntity.getThirdDeliveryDetailId());
@@ -207,7 +208,11 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setBiz_no(thirdDeliveryCode);
     	        shudiyunB2cOrderDTO.setBiz_time(payTimeFormat);
     	        //默认退货入库单
-    	        shudiyunB2cOrderDTO.setTransaction_type(transactionType);
+    	        if(selfAdd) {
+    	        	shudiyunB2cOrderDTO.setTransaction_type("线下订单");
+    	        }else {
+    	        	shudiyunB2cOrderDTO.setTransaction_type(transactionType);
+    	        }
     	        shudiyunB2cOrderDTO.setTransaction_sub_type(transactionSubType);
     	        
     	        shudiyunB2cOrderDTO.setBiz_status(deliveryStatus);
