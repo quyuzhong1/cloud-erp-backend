@@ -95,20 +95,18 @@ public class BaseResultDTO implements Serializable {
     @AllArgsConstructor
     public static class AddAndSubmmitDTO {
         /**
-         * 数据id
+         * 表 id
          */
         private String id;
+
         /**
-         * 操作单号
+         * 编码
          */
         private String code;
+
         /**
-         * 新增成功与否 (默认失败)
+         * 新增或编辑页面，是否关闭当前页面
          */
-        private Boolean success = Boolean.FALSE;
-        /**
-         * 操作提示
-         */
-        private String msg;
+        private Boolean isClose = Boolean.TRUE;
     }
 }

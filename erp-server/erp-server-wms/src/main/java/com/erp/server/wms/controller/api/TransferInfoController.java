@@ -127,14 +127,14 @@ public class TransferInfoController extends BaseController {
             String id = transferInfoService.add(dto);
             entity = transferInfoService.getById(id);
             if (ObjUtil.isNull(entity)) {
-                return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1019.msg));
+                return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1019.msg));
+            return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         //提审
@@ -142,13 +142,13 @@ public class TransferInfoController extends BaseController {
             transferInfoService.submit(entity, Boolean.FALSE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
 
-        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
     }
 
     /**
@@ -189,10 +189,10 @@ public class TransferInfoController extends BaseController {
             transferInfoService.update(dto);
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
@@ -204,12 +204,12 @@ public class TransferInfoController extends BaseController {
             BatchResultDTO submit = transferInfoService.submit(entity, Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
-        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
     /**
