@@ -59,14 +59,14 @@
     <!-- 查询tabList -->
     <select id="tabList" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$TabListDTO">
         SELECT
-            disabled AS tabFlag,
-            count(*)  AS count
-        FROM  supplier_ref_warehouse
-        WHERE is_deleted = false
+            srw.disabled AS tabFlag,
+            count(0)  AS count
+        FROM  supplier_ref_warehouse srw
+        WHERE srw.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY disabled
+        GROUP BY srw.disabled
     </select>
 
 

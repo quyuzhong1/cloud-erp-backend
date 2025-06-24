@@ -384,7 +384,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             //仓位
             warehouseEntity = ObjUtil.isEmpty(warehouseEntity) ? new WarehouseEntity() :warehouseEntity;
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(StrUtil.format("{}-{}", warehouseEntity.getId(), excelDTO.getWarehouseLocationName()));
-            if (ObjUtil.isEmpty(warehouseLocationEntity)) {
+            if (ObjUtil.isEmpty(warehouseLocationEntity) && CharSequenceUtil.isNotBlank(excelDTO.getWarehouseLocationName())) {
                 errorMsgList.add("仓位信息未找到");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -396,7 +396,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
             entity.setSupplierId(supplierEntity.getId());
             entity.setSupplierCode(supplierEntity.getCode());
             entity.setWarehouseId(warehouseEntity.getId());
-            entity.setWarehouseLocationCode(warehouseLocationEntity.getCode());
+            entity.setWarehouseLocationCode(ObjectUtil.isEmpty(warehouseLocationEntity) ? "" : warehouseLocationEntity.getCode());
             entity.setDisabled(SupplierRefWarehouseTabEnum.getCodeByName(excelDTO.getDisabledName()));
             SupplierRefWarehouseEntity oldEntity = getByOne(entity.getSupplierId(), entity.getWarehouseId(), entity.getWarehouseLocationCode());
             if (ObjUtil.isNotEmpty(oldEntity)) {
@@ -420,9 +420,10 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
      */
     private void handleData(SupplierRefWarehouseEntity entity) {
         // 更新供应商编码
-        if (CharSequenceUtil.isBlank(entity.getSupplierCode())) {
-            SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
-            entity.setSupplierCode(supplierEntity.getCode());
+        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
+        entity.setSupplierCode(supplierEntity.getCode());
+        if (supplierEntity.getSrmDisabled()) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_SRM_DISABLE);
         }
         // 检查是否存在冲突记录
         checkConflictRecords(entity);
