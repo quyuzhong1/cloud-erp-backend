@@ -91,7 +91,7 @@ public class ThirdProcessDefinitionController extends BaseController {
     /**
      * 分页
      *
-     * @param dto
+     * @param
      * @return ApiResult
      * @author hcg
      * @date: 2025-05-12
@@ -150,7 +150,7 @@ public class ThirdProcessDefinitionController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -189,7 +189,7 @@ public class ThirdProcessDefinitionController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
