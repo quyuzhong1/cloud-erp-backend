@@ -13,6 +13,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.TableNameEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
@@ -69,6 +70,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
                 });
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessDefinitionEntity);
+        thirdProcessDefinitionEntity.setSourcePlatform(ProcessSourcePlatformEnum.FS.getCode());
+        thirdProcessDefinitionEntity.setStatus(ThirdProcessDefinitionStatusEnum.ACTIVE.getCode());
         // 数据处理
         handleData(thirdProcessDefinitionEntity);
         log.info("开始新增三方审批定义");
