@@ -131,6 +131,7 @@ public class SupplierCredentialDTO  implements Serializable {
          * SupplierCredentialStatusEnum 生效状态：notEffective=未生效,effective=生效中,expired=失效
          */
         private String status;
+        private String statusName;
 
         private List<String> attachmentUrlList;
 
