@@ -29,6 +29,7 @@ import com.erp.model.dmp.enums.*;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.srm.feign.SrmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -92,6 +93,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private OmsTaskFeign omsTaskFeign;
+
+    @Resource
+    private SrmTaskFeign srmTaskFeign;
 
     @Resource
     private CfgSettingService cfgSettingService;
@@ -523,6 +527,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             wmsTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
         if (SystemConstants.OMS.equals(system)) {
+            omsTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.SRM.equals(system)) {
             omsTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
     }
