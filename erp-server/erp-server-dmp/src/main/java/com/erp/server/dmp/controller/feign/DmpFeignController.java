@@ -331,7 +331,7 @@ public class DmpFeignController extends BaseController {
     /**
      * 查询最新推送记录
      */
-    @PostMapping("/removeThirdWarehouseTask")
+    @PostMapping("/pagingOutLatest")
     public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
        return dmpOutputTaskRecordService.pagingOutLatest(dto);
     }
