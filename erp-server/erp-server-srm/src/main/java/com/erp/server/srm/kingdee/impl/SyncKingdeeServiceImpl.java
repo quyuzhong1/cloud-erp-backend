@@ -6,23 +6,18 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
 import com.erp.server.srm.kingdee.SyncKingdeeService;
 import com.erp.server.srm.service.PoReconciliationDetailScmService;
 import com.erp.server.srm.service.PoReconciliationService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +74,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
             log.error("syncPoReconciliation >>>> 未找到数据！");
             return resultList;
         }
+        //明细信息
+        List<PoReconciliationDetailEntity> detailList = poReconciliationDetailScmService.listMainIdList(sourceIdList);
+        Map<String, List<PoReconciliationDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PoReconciliationDetailEntity::getMainId));
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             PoReconciliationEntity entity = list.stream().filter(obj -> {
@@ -87,7 +86,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            Map<String, Object> newSyncDataToKingdee = syncKingdeePoReconciliationService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            Map<String, Object> newSyncDataToKingdee = syncKingdeePoReconciliationService.newSyncDataToKingdee(entity,map.get(sourceId), syncParamDetailDTO.getSyncOperate());
             if(newSyncDataToKingdee == null) {
                 continue;
             }
