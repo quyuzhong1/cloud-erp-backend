@@ -79,8 +79,8 @@ public class CfgSettingController extends BaseController {
      * @param key
      * @return List<ViewDTO>
      */
-    @PostMapping("/listByKey")
-    public List<CfgSettingDTO.ViewDTO> listByKey(@RequestBody String key) {
+    @GetMapping("/listByKey")
+    public List<CfgSettingDTO.ViewDTO> listByKey(@RequestParam("key") String key) {
         return cfgSettingService.listByKey(key);
     }
 }
