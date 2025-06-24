@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;
@@ -175,7 +176,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
             this.remove(queryWrapper);
             //批量删除fastdfs 数据
-            FastDFSClientUtil.deleteBatchFile(urlList);
+            fileFeign.deleteBatchFile(urlList);
         }
     }
 }
