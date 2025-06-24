@@ -1969,6 +1969,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if(CollUtil.isEmpty(details)){
             throw new ServiceException(ApiError.ERROR_1041,"客户SKU标签");
         }
+        if (SkuPrintTypeEnum.BARCODE_INFO.getCode().equals(dto.getSkuPrintType()) && (CharSequenceUtil.isBlank(dto.getCompanyAddress()) || CharSequenceUtil.isBlank(dto.getCompanyName()))){
+            throw new ServiceException("公司名称和公司地址不能为空");
+        }
         //校验客户sku是否存在空值
         List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> collect = details.stream().filter(v -> StrUtil.isBlank(v.getPlatformSkuNo()) || StrUtil.isBlank(v.getSkuNo())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(collect)){

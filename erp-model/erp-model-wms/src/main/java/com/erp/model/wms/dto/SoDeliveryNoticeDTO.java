@@ -715,12 +715,12 @@ public class SoDeliveryNoticeDTO {
         /**
          * 生产厂名
          */
-        @NotBlank(message = "生产厂名不能为空")
+//        @NotBlank(message = "生产厂名不能为空")
         private String companyName;
         /**
          * 生产地址
          */
-        @NotBlank(message = "生产地址不能为空")
+//        @NotBlank(message = "生产地址不能为空")
         private String companyAddress;
         /**
          * 打印明细
