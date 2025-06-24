@@ -254,6 +254,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         List<String> businessIds = resultList.stream().map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(businessIds);
         for (SupplierCredentialDTO.UpdateDTO item : resultList) {
+            item.setStatusName(SupplierCredentialStatusEnum.getName(item.getStatus()));
+
             List<String> attachmentUrlList = attachmentList.stream().
                     filter(a -> a.getBusinessId().equals(item.getId())).
                     map(AttachmentDTO.UpdateDTO::getAttachUrl).
