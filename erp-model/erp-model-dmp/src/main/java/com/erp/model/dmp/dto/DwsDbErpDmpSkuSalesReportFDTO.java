@@ -361,59 +361,8 @@ public class DwsDbErpDmpSkuSalesReportFDTO implements Serializable {
     public static class RequestListDTO implements Serializable {
 
         /**
-         * 日均销量类型：dailyAvg3Days、dailyAvg7Days、dailyAvg30Days、dailyAvg60Days、dailyAvg90Days
+         * 子字查询sql
          */
-        private List<String> dailySalesType;
-
-
-        /**
-         * 统计维度：deliveryTime=出库时间，paymentTime=付款时间
-         */
-        private List<String> dimension;
-
-        /**
-         * SKU ID 列表
-         */
-        private List<String> skuIdList;
-
-        /**
-         * SKU代号列表
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 一级分类ID列表
-         */
-        private List<String> firstCategoryIdList;
-
-        /**
-         * 二级分类ID列表
-         */
-        private List<String> secondCategoryIdList;
-
-        /**
-         * 应用分类ID列表
-         */
-        private List<String> applicationCategoryIdList;
-
-        /**
-         * 销售平台编码列表
-         */
-        private List<String> dictPlatformList;
-
-        /**
-         * 客户ID列表
-         */
-        private List<String> customerIdList;
-
-        /**
-         * 国家ID
-         */
-        private List<String> countryIdList;
-
-        /**
-         * 军区ID
-         */
-        private List<String> partitionIdList;
+        private String conditionSql;
     }
 }
