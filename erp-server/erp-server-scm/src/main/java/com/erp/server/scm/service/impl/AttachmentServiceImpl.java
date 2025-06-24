@@ -163,4 +163,16 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
         return this.list(queryWrapper);
     }
+
+
+    @Override
+    public void deleteByUrlList(List<String> urlList) {
+        if (CollectionUtils.isNotEmpty(urlList)) {
+            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
+            this.remove(queryWrapper);
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+        }
+    }
 }

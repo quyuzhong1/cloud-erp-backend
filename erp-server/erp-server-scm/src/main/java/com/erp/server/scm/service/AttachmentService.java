@@ -69,4 +69,6 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @return void
      */
     void removeAttachment(AttachmentDTO.DeleteDTO dto);
+
+    void deleteByUrlList(List<String> urlList);
 }
