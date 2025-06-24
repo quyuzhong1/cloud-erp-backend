@@ -156,24 +156,24 @@ public class PurchasePriceChangeController extends BaseController {
         try {
             entity  = purchasePriceChangeService.add(dto);
             if (null == entity) {
-                return  failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1019.msg));
+                return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1019.msg));
+            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
         //提审
         try {
             purchasePriceChangeService.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
         }
         //发送消息
         try {
@@ -183,7 +183,7 @@ public class PurchasePriceChangeController extends BaseController {
             log.error("发送消息失败，ID: {}", entity.getId(), e);
         }
 
-        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
     }
 
 
@@ -242,24 +242,24 @@ public class PurchasePriceChangeController extends BaseController {
         try {
             id = purchasePriceChangeService.updatePurchasePriceChange(dto);
             if (StringUtils.isBlank(id)) {
-                return  failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, ApiError.ERROR_1020.msg));
+                return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
             }
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1020.msg));
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
         //提审
         try {
             purchasePriceChangeService.submitApprove(Arrays.asList(id), Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", id, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(id,"",Boolean.FALSE, e.getMessage()));
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", id, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(id,"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
 
         //发送消息
@@ -269,8 +269,7 @@ public class PurchasePriceChangeController extends BaseController {
         } catch (Exception e) {
             log.error("发送消息失败，ID: {}", id, e);
         }
-
-        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
 

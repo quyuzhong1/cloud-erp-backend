@@ -130,10 +130,10 @@ public class PilotApplicationController extends BaseController {
             add = pilotApplicationService.add(dto);
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         } catch (Exception e) {
             log.error("新增失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE,ApiError.ERROR_1019.msg));
+            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
         }
 
         //提审
@@ -141,10 +141,10 @@ public class PilotApplicationController extends BaseController {
             pilotApplicationService.submit(add.getId());
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", add.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", add.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE));
         }
         //发送消息
         try {
@@ -152,7 +152,7 @@ public class PilotApplicationController extends BaseController {
         } catch (Exception e) {
             log.error("发送消息失败，ID: {}", add.getId(), e);
         }
-        return success(new BaseResultDTO.AddAndSubmmitDTO(add.getId(),add.getCode(),Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(add.getId(), add.getCode(),Boolean.TRUE));
     }
 
     /**
@@ -174,10 +174,10 @@ public class PilotApplicationController extends BaseController {
             pilotApplicationService.update(dto);
         } catch (ServiceException e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         } catch (Exception e) {
             log.error("更新失败，dto: {}", dto, e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
         }
 
         //提审
@@ -185,10 +185,10 @@ public class PilotApplicationController extends BaseController {
             pilotApplicationService.submit(dto.getId());
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         } catch (Exception e) {
             log.error("提交审批失败，ID: {}", dto.getId(), e);
-            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
         }
         //发送消息
         try {
@@ -196,7 +196,7 @@ public class PilotApplicationController extends BaseController {
         } catch (Exception e) {
             log.error("试产量产发送消息失败，ID: {}", dto.getId(), e);
         }
-        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
     /**
