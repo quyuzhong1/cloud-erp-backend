@@ -1385,6 +1385,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 resultDTO.setPlatformSpuNo(listingEntity.getPlatformSpuNo());
                 resultDTO.setPlatformSpuName(listingEntity.getPlatformSpuName());
                 resultDTO.setDictPlatform(dictPlatform);
+                resultDTO.setPlatformSkuId(listingEntity.getPlatformSkuId());
                 resultList.add(resultDTO);
             }
         }

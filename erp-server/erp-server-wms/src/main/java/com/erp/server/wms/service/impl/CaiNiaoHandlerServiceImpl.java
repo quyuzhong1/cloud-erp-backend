@@ -15,10 +15,17 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
+import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
+import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
+import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
+import com.erp.wms.aliexpress.service.AliexpressWarehouseService;
+import com.erp.wms.aliexpress.util.ApiException;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
@@ -31,6 +38,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +53,11 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private AliexpressWarehouseService aliexpressWarehouseService;
+
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -89,12 +102,110 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return success();
+        AliexpressOrderDTO aliexpressOrderDTO = convertToOrderDto(createOutboundReq);
+        try {
+            ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressOrderDTO);
+            if(!apiOrderResponseDTO.isSuccess()){
+                log.error("创建菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
+                return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
+            }
+            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+        }catch (Exception e){
+            log.error("创建菜鸟仓出库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(createOutboundReq), e);
+            throw new ServiceException("创建菜鸟仓出库单失败：" + e.getMessage());
+        }
+    }
+
+    private AliexpressOrderDTO convertToOrderDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        AliexpressOrderDTO aliexpressOrderDTO = new AliexpressOrderDTO();
+
+        //授权信息
+        AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO(createOutboundReq.getShopId(),createOutboundReq.getOwnerCode());
+        aliexpressOrderDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+
+        //发货信息
+        AliexpressOrderDTO.DeliveryOrder deliveryOrder = new AliexpressOrderDTO.DeliveryOrder();
+        deliveryOrder.setOrderType("JYCK");
+        deliveryOrder.setOwnerCode(createOutboundReq.getOwnerCode());
+        deliveryOrder.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        deliveryOrder.setDeliveryOrderCode(createOutboundReq.getReferenceNo());
+        deliveryOrder.setWarehouseCode(createOutboundReq.getWarehouseCode());
+        deliveryOrder.setShopNick(createOutboundReq.getShopName());
+        deliveryOrder.setLogisticsCode(createOutboundReq.getShippingMethod());
+        deliveryOrder.setSourcePlatformCode("AE");
+
+        AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO receiverInfoDTO = AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO.builder()
+                .countryCode(createOutboundReq.getReceiverInfo().getCountryCode())
+                .province(createOutboundReq.getReceiverInfo().getProvince())
+                .city(createOutboundReq.getReceiverInfo().getCity())
+                .area(createOutboundReq.getReceiverInfo().getDistrict())
+                .zipCode(createOutboundReq.getReceiverInfo().getZipCode())
+                .mobile(createOutboundReq.getReceiverInfo().getPhone())
+                .detailAddress(createOutboundReq.getReceiverInfo().getAddress1())
+                .email(createOutboundReq.getReceiverInfo().getEmail())
+                .build();
+
+        deliveryOrder.setReceiverInfo(receiverInfoDTO);
+        aliexpressOrderDTO.setDeliveryOrder(deliveryOrder);
+
+        //明细信息
+        List<AliexpressOrderDTO.OrderLines> OrderLines = new ArrayList<>();
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
+            AliexpressOrderDTO.OrderLines orderLines = AliexpressOrderDTO.OrderLines.builder()
+                    .orderLineNo(item.getPlatformDetailId())
+                    .inventoryType("1")
+                    .planQty(item.getQuantity())
+                    .ownerCode(createOutboundReq.getOwnerCode())
+                    .itemCode(item.getProductSku())
+                    .subSourceOrderCode(item.getPlatformDetailId())
+                    .itemId(Integer.valueOf(item.getProductSkuId()))
+                    .sourceOrderCode(createOutboundReq.getPlatformCode())
+                    .build();
+            OrderLines.add(orderLines);
+        }
+        aliexpressOrderDTO.setOrderLines(OrderLines);
+
+        //扩展字段
+        AliexpressOrderDTO.ExtendProps extendProps = new AliexpressOrderDTO.ExtendProps();
+        extendProps.setMerchantType("POP");
+        extendProps.setPrintInfo(createOutboundReq.getLabelUrl());
+        aliexpressOrderDTO.setExtendProps(extendProps);
+
+        return aliexpressOrderDTO;
+    }
+
+    private AliexpressAuthDTO buildAuthDTO(String shopId,String ownerCode) {
+        AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
+        AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
+        aliexpressAuthDTO.setUrl(shopInfoDTO.getBaseUrl());
+        aliexpressAuthDTO.setAccessToken(shopInfoDTO.getToken());
+        aliexpressAuthDTO.setAppKey(shopInfoDTO.getClientId());
+        aliexpressAuthDTO.setAppSecret(shopInfoDTO.getClientSecret());
+        aliexpressAuthDTO.setOwnerCode(ownerCode);
+        return aliexpressAuthDTO;
     }
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return success();
+        AliexpressCancelOrderDTO aliexpressCancelOrderDTO = new AliexpressCancelOrderDTO();
+        AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO(cancelOutboundReq.getShopId(),cancelOutboundReq.getOwnerCode());
+        aliexpressCancelOrderDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+        aliexpressCancelOrderDTO.setOrderId(cancelOutboundReq.getOrderCode());
+        aliexpressCancelOrderDTO.setOrderType("JYCK");
+        aliexpressCancelOrderDTO.setOwnerCode(cancelOutboundReq.getOwnerCode());
+        aliexpressCancelOrderDTO.setOrderCode(cancelOutboundReq.getOrderCode());
+        aliexpressCancelOrderDTO.setWarehouseCode(cancelOutboundReq.getWarehouseCode());
+        try {
+            ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOutbound(aliexpressCancelOrderDTO);
+            if(!apiOrderResponseDTO.isSuccess()){
+                log.error("取消菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
+                return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
+            }
+            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+        } catch (ApiException e) {
+            log.error("取消菜鸟仓出库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(cancelOutboundReq), e);
+            throw new ServiceException("取消菜鸟仓出库单失败：" + e.getMessage());
+        }
     }
 
     @Override

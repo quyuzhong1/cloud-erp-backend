@@ -2645,6 +2645,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         deliverySku.setPlatformSkuNo(platformSkuNo);
                         deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                         deliverySku.setDetailId(detailEntity.getId());
+                        deliverySku.setPlatformDetailId(detailEntity.getSourceDetailId());
                         resultList.add(deliverySku);
                     }
                 } else {
@@ -2658,6 +2659,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     deliverySku.setPlatformSkuNo(platformSkuNo);
                     deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                     deliverySku.setDetailId(detailEntity.getId());
+                    deliverySku.setPlatformDetailId(detailEntity.getSourceDetailId());
                     resultList.add(deliverySku);
                 }
             } else {
@@ -2670,6 +2672,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 deliverySku.setSourceSkuNo(detailEntity.getSkuNo());
                 deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                 deliverySku.setDetailId(detailEntity.getId());
+                deliverySku.setPlatformDetailId(detailEntity.getSourceDetailId());
                 resultList.add(deliverySku);
             }
         }
@@ -2792,6 +2795,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
              */
             String platformSku = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
                     map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuNo).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
+            /**
+             * 海外仓产品SKU id
+             */
+            String platformSkuId = platformSkuList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).
+                    map(SkuMappingDTO.ListSkuResultDTO::getPlatformSkuId).findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("{}未配置海外仓sku", deliverySkuDTO.getSkuNo())));
 
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
@@ -2800,6 +2808,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             outboundReqItem.setSkuNo(deliverySkuDTO.getSkuNo());
             outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
             outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
+            outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
+            outboundReqItem.setProductSkuId(platformSkuId);
             SoB2cDeclareProductEntity soB2cDeclareProductEntity = soB2cDeclareProductEntityList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
             if(Objects.nonNull(soB2cDeclareProductEntity)){
                 outboundReqItem.setHsCode(soB2cDeclareProductEntity.getToCustomsCode());
@@ -2811,6 +2821,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setReferenceNo(entity.getCode());
+        createOutboundReq.setShopId(entity.getShopId());
+        createOutboundReq.setShopName(entity.getShopName());
+        createOutboundReq.setOwnerCode(overseasProviderWarehouse.getOwnerCode());
         createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
@@ -2843,7 +2856,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             createOutboundReq.setAttach(Collections.singletonList(attach));
             createOutboundReq.setOnlineFlag(true);
             //极风需要在线url
-            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())){
+            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
                 String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")),entity.getCode(),new HashMap<>());
                 String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
                 createOutboundReq.setLabelUrl(domain+path);
@@ -3031,7 +3045,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isApi) {
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(overseasWarehouseList.get(0).getProviderCode());
             //API海外物流拦截
-            BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, detailList.get(0).getWarehouseId(), remark);
+            BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, overseasWarehouseList.get(0), remark);
             if (resultDTO.getSuccess()){
                 resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity),Collections.singletonList(logisticsEntity), false);
             }
@@ -3081,17 +3095,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
-     * @param warehouseId
      * @param remark
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2024/1/19 11:23
      **/
-    private BatchResultDTO overseasProviderIntercept(SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, String warehouseId, String remark) {
+    private BatchResultDTO overseasProviderIntercept(SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, OverseasProviderWarehouseDTO.ViewDTO viewDTO, String remark) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
         req.setOrderCode(soB2cEntity.getShippingOrderNo());
         req.setThirdWarehouseProvideCode(platformEnum.getCode());
-        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(warehouseId);
+        req.setShopId(soB2cEntity.getShopId());
+        req.setOwnerCode(viewDTO.getOwnerCode());
+        req.setErpOrderCode(soB2cEntity.getCode());
+        req.setWarehouseCode(viewDTO.getPlatformWarehouseCode());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(viewDTO.getWarehouseId());
         if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
             req.setAuthId(overseasProviderEntity.getId());
         }
