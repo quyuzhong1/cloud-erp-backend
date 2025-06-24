@@ -46,7 +46,8 @@
         tpd.create_time,
         tpd.create_user_name,
         tpd.update_time,
-        tpd.update_user_name
+        tpd.update_user_name,
+        tpd.type
         from public.third_process_definition as tpd
         left join public.dict_basic as db on tpd.dict_approval_group = db.value and db.is_deleted = false
         where ${params.sqlMap.default}

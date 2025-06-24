@@ -19,8 +19,8 @@ import java.util.Arrays;
  */
 public enum ThirdProcessDefinitionTypeEnum {
     //plm
-    PULL("pull", "拉取"),
-    PUSH("push", "发起"),
+    PULL("pull", "三方审批生成"),
+    PUSH("push", "发起原生审批"),
     ;
 
     @EnumValue
@@ -50,8 +50,8 @@ public enum ThirdProcessDefinitionTypeEnum {
         return "";
     }
 
-    public static TableNameEnum getByCode(String code) {
-        return Arrays.stream(TableNameEnum.values())
+    public static ThirdProcessDefinitionTypeEnum getByCode(String code) {
+        return Arrays.stream(ThirdProcessDefinitionTypeEnum.values())
                 .filter(e -> e.getCode().equals(code))
                 .findFirst()
                 .orElse(null);

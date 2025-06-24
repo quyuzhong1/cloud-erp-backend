@@ -46,7 +46,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
         * 启用状态
         */
-        private String enableStatus;
+        private Boolean enableStatus;
 
         /**
         * 单据名称
@@ -206,7 +206,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
          * 状态
          */
-        private String enableStatus;
+        private Boolean enableStatus;
 
         /**
          * 创建时间
@@ -232,5 +232,10 @@ public class ThirdProcessDefinitionDTO implements Serializable {
          * 定义类型 pull or push
          */
         private String type;
+
+        /**
+         * 定义类型 pull or push
+         */
+        private String typeName;
     }
 }
