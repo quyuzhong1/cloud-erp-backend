@@ -708,6 +708,11 @@ public class SoDeliveryNoticeDTO {
         //打印尺寸
         private String size;
         /**
+         * 打印样式
+         */
+        @NotBlank(message = "打印样式不能为空")
+        private String skuPrintType;
+        /**
          * 生产厂名
          */
         @NotBlank(message = "生产厂名不能为空")
