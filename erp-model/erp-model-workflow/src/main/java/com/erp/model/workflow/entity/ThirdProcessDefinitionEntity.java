@@ -60,11 +60,6 @@ public class ThirdProcessDefinitionEntity extends BaseEntity<ThirdProcessDefinit
     @TableField("type")
     private String type;
     /**
-     * 单据编码
-     */
-    @TableField("code")
-    private String code;
-    /**
      * 启用状态
      */
     @TableField("enable_status")
@@ -83,8 +78,6 @@ public class ThirdProcessDefinitionEntity extends BaseEntity<ThirdProcessDefinit
     public static final String DICT_APPROVAL_GROUP = "dict_approval_group";
 
     public static final String TYPE = "type";
-
-    public static final String CODE = "code";
 
     public static final String ENABLE_STATUS = "enable_status";
 

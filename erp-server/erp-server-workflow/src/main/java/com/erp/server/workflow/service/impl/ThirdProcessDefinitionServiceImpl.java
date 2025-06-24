@@ -9,6 +9,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
@@ -59,11 +60,16 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdProcessDefinitionDTO.AddDTO addDTO) {
+        Optional.ofNullable(this.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>()
+                        .eq(ThirdProcessDefinitionEntity::getApprovalCode, addDTO.getApprovalCode())
+                        .eq(ThirdProcessDefinitionEntity::getIsDeleted, false)))
+                .ifPresent(exists -> {
+                    throw new ServiceException("审批定义code {} 已存在",addDTO.getApprovalCode());
+                });
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessDefinitionEntity);
         // 数据处理
         handleData(thirdProcessDefinitionEntity);
-
         log.info("开始新增三方审批定义");
         boolean save = super.save(thirdProcessDefinitionEntity);
         if(!save) {
@@ -129,7 +135,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     public BatchResultDTO delete(String id) {
         ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
         super.removeById(id);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -140,7 +146,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
                     .eq(ThirdProcessDefinitionEntity::getId, id)
                     .update();
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
     }
 
     @Override

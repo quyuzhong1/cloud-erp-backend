@@ -941,7 +941,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     if (thirdUsers.size() > 1){
                         throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_MULTIPLE);
                     }
-                    if (thirdUsers.size() == 0){
+                    if (thirdUsers.size() == 0 || StrUtil.isEmpty(thirdUsers.get(0).getThirdUserId())){
                         throw new ServiceException(ApiError.PROCESS_QUERY_THIRD_SUER_NOT_EXIST);
                     }
                     for (ThirdUnionDTO thirdUser : thirdUsers) {
