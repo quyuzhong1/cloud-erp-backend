@@ -82,5 +82,36 @@
         when li.platform_sku_no ILIKE concat('%',#{params.searchKey}::text,'%') THEN 3
         end , li.platform_sku_no
     </select>
+    <select id="pagingListingPush" resultType="com.erp.model.oms.dto.ListingPushRecordDTO$PagingViewDTO">
+        SELECT
+        li.id AS listingId,
+        sm.product_sku_id as skuId,
+        sm.product_sku_no as skuNo,
+        li.platform_sku_no AS platformSkuNo,
+        li.platform_sku_name AS platformSkuName,
+        li.platform as platform,
+        op.owner_code as ownerCode,
+        li.create_time as createTime
+        FROM sku_mapping sm
+        INNER JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
+        WHERE
+        ${sqlMap.default}
+         and   sm.is_deleted=FALSE
+        AND sm.is_expire = FALSE
+        <if test="sourceIds !=null and sourceIds.size>0">
+            AND li.id IN
+            <foreach collection="sourceIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="platformList !=null and platformList.size>0">
+            AND li.platform IN
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

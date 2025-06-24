@@ -21,6 +21,7 @@ public enum OmsPlatformEnum {
     OMS_SPT("spt","速派通"),
     OMS_ECCANG("eccang","易仓"),
     JIFENG("jifeng","极风"),
+    CAI_NIAO("cainiao","菜鸟仓"),
     ;
 
     @EnumValue

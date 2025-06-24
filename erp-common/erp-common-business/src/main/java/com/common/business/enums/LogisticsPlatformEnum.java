@@ -39,6 +39,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     SPT(OmsPlatformEnum.OMS_SPT.getCode(), OmsPlatformEnum.OMS_SPT.getName(), "速派通", "","",""),
     JIFENG(OmsPlatformEnum.JIFENG.getCode(), OmsPlatformEnum.JIFENG.getName(), "极风", "","",""),
 
+    CAINIAO(OmsPlatformEnum.CAI_NIAO.getCode(), OmsPlatformEnum.CAI_NIAO.getName(), "菜鸟仓", "","",""),
 
     ;
 

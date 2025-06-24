@@ -365,4 +365,65 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 				and l.id is not null and i.id is not null and k.id is not null
 				group by l."name",i.name,k.name order by k.name,i.name,count(*) desc
     </select>
+    <select id="getSuccessData" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$SyncInfoDTO">
+        SELECT
+        t.id,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE  t.is_deleted = false and t.status in('finish')
+        <if test="params.sourceId != null and params.sourceId != ''">
+            and m.source_id = #{params.sourceId}
+        </if>
+        <if test="params.targetPlatform != null and params.targetPlatform != ''">
+            and i.code = #{params.targetPlatform}
+        </if>
+        order by t.id asc limit 1
+    </select>
+    <select id="pagingOutLatest" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingViewDTO">
+        SELECT
+            DISTINCT ON (m.source_id)
+            m.source_id as sourceId,
+            t.create_time as createTime,
+            t.status
+        FROM dmp_output_task_record t
+                 LEFT JOIN dmp_output_task g ON t.main_id = g.id
+                 LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+                 LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+                 LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+                 LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+                 LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+                 LEFT JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE  ${params.sqlMap.dmp}
+          and t.is_deleted = false
+          and i.code in
+        <foreach collection="params.targetPlatformCodeList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+          and k.code in
+        <foreach collection="params.type" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="params.sourceIdList !=null and params.sourceIdList.size > 0">
+            and m.source_id in
+            <foreach collection="params.sourceIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY m.source_id, t.create_time DESC
+    </select>
 </mapper>

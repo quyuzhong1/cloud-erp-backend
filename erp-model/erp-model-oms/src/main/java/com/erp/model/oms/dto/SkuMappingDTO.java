@@ -97,7 +97,6 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddWarehouseSkuDTO extends BaseMapping {
 
-        @NotBlank(message = "仓库id不能为空")
         private String warehouseId;
 
         @NotBlank(message = "库存SKU不能为空")
@@ -115,12 +114,10 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotNull(message = "生效时间不能为空")
         private LocalDateTime effectiveTime;
-//        /**
-//         * 平台类型: goodcang=谷仓，iml=艾姆勒
-//         */
-//        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
-//        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
-//        private String dictPlatform;
+        /**
+         * 授权Id
+         */
+        private String authId;
         /**
          * 产品条码（三方仓商品条码）
          */
@@ -459,6 +456,10 @@ public class SkuMappingDTO implements Serializable {
          * 产品条码（三方仓商品条码）
          */
         private String thirdBarcode;
+        /**
+         * 授权Id
+         */
+        private String authId;
 
     }
 
@@ -830,10 +831,14 @@ public class SkuMappingDTO implements Serializable {
         private String listingId;
 
         /**
+         * 库存产品id
+         */
+        private String platformSkuId;
+
+        /**
          * 仓库id
          */
         private String warehouseId;
-
 
         /**
          * 仓库名称
@@ -1162,6 +1167,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformSkuNo;
 
+        /**
+         * 平台产品sku id
+         */
+        private String platformSkuId;
         /**
          * 平台产品sku
          */

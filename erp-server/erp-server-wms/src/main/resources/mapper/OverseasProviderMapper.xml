@@ -30,6 +30,9 @@
         <result column="updateTime" property="updateTime"/>
         <result column="updateUserName" property="updateUserName"/>
         <result column="updateUserId" property="updateUserId"/>
+        <result column="updateUserId" property="updateUserId"/>
+        <result column="isProductSync" property="isProductSync"/>
+        <result column="ownerCode" property="ownerCode"/>
         <result column="authJson" property="authJson"
                 typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
@@ -60,7 +63,9 @@
             auth_time AS authTime,
             update_time AS updateTime,
             update_user_name AS updateUserName,
-            update_user_id AS updateUserId
+            update_user_id AS updateUserId,
+        is_product_sync as isProductSync,
+        owner_code as ownerCode
         FROM overseas_provider
         WHERE  ${params.sqlMap.default}
         and is_deleted = FALSE

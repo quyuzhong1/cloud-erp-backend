@@ -151,4 +151,9 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass);
     
     List<String> outputErrorCountMsg();
+
+
+    DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);
+
+    PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 }

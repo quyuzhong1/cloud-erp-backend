@@ -4,6 +4,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -323,5 +325,14 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/removeThirdWarehouseTask")
     public void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity){
         tbTaskTypeService.removeThirdWarehouseTask(overseasProviderEntity);
+    }
+
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("/pagingOutLatest")
+    public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
+       return dmpOutputTaskRecordService.pagingOutLatest(dto);
     }
 }

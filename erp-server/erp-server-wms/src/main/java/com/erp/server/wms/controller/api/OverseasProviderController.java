@@ -213,4 +213,21 @@ public class OverseasProviderController extends BaseController {
         return success(overseasProviderService.getShortName(platformCode));
     }
 
+    /**
+     * 商品推送设置
+     */
+    @PostMapping("/productPushSettings")
+    public ApiResult productPushSettings(@RequestBody @Validated OverseasProviderDTO.ProductPushSettingDTO dto) {
+        overseasProviderService.productPushSettings(dto);
+        return success();
+    }
+
+    /**
+     * 下拉已授权的三方仓
+     */
+    @PostMapping("/listAuthorizedThirdWarehouse")
+    public ApiResult<List<OverseasProviderDTO.ListDTO>> listAuthorizedThirdWarehouse() {
+        List<OverseasProviderDTO.ListDTO> list = overseasProviderService.listAuthorizedThirdWarehouse();
+        return success(list);
+    }
 }

@@ -329,5 +329,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     BatchResultDTO generateCustomerLabel(ListingInfoEntity entity, SkuMappingEntity skuMapping);
 
+    List<BatchResultDTO> pushProduct(List<String> ids);
+
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }
