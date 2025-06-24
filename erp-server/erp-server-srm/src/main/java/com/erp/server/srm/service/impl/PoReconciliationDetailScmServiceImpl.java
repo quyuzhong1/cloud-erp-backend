@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -43,10 +45,7 @@ import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -632,6 +631,24 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 .eq(PoReconciliationDetailEntity::getMainId,"")
                 .list();
     }
+
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PoReconciliationDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PoReconciliationDetailEntity::getId, detailId)
+                    .update();
+        }
+    }
+
 
     /**
      * 新生成对账单

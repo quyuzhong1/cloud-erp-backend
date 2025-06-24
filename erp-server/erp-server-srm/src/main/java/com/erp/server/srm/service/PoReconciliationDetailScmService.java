@@ -1,5 +1,6 @@
 package com.erp.server.srm.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -183,4 +184,13 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return List<PoReconciliationDetailEntity>
      */
     List<PoReconciliationDetailEntity> listBySourceCodeAndSku(List<String> sourceCodeList, List<String> skuNOList);
+
+    /**
+     * 更新明细金蝶id
+     * @author will
+     * @date 2025/4/23 17:44
+     * @param list
+     * @return void
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }

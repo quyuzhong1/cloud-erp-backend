@@ -212,6 +212,12 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("remark")
     private String remark;
 
+    /**
+     * 金蝶详情Id
+     */
+    @TableField("kingdee_detail_id")
+    private String KingdeeDetailId;
+
     public static final String SUPPLIER_ID = "supplier_id";
 
     public static final String SUPPLIER_NAME = "supplier_name";

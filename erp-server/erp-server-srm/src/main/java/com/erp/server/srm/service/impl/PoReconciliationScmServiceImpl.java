@@ -21,6 +21,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -30,6 +31,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.PoReconciliationDetailImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
@@ -46,9 +48,11 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
 import com.erp.server.srm.listener.PoReconciliationDetailExcelListener;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
@@ -118,6 +122,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     private ScmDictFeign scmDictFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SyncKingdeePoReconciliationService syncKingdeePoReconciliationService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -457,6 +466,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirm(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -474,6 +484,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId, userInfo.getUid())
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
                 .update();
+
+        //推送金蝶
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
@@ -481,6 +494,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelConfirm(String id) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -501,6 +515,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserId,"")
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName,"")
                 .update();
+        //推送金蝶
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
@@ -525,10 +541,13 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         this.removeById(id);
         //清除明细主表信息
         poReconciliationDetailScmService.cleanDetailByMainId(id);
+        //推送金蝶
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DELETE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO receive(String id, LocalDate date) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -681,5 +700,28 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         String type = tableName.value();
         //保存附件
         attachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, updateDTO.getId());
+    }
+
+    /**
+     * 推送金蝶
+     * @author will
+     * @date 2025/4/22 16:34
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncApproveInfoToKingdee(PoReconciliationEntity entity, SyncOperateEnum syncOperateEnum) {
+
+        //直接调拨单明细
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(entity.getId()));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        poReconciliationDetailList = CollUtil.isNotEmpty(poReconciliationDetailList) ? poReconciliationDetailList.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+        //删除或者非服务sku不为空时推金蝶
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperateEnum.getCode()) || CollUtil.isNotEmpty(poReconciliationDetailList)){
+            syncKingdeePoReconciliationService.syncDataToKingdee(entity,poReconciliationDetailList, syncOperateEnum.getCode());
+        }
     }
 }

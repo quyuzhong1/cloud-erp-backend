@@ -188,7 +188,13 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 
-
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(PoReconciliationEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),PoReconciliationEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
 
     /**
      * @description: 添加文件信息
