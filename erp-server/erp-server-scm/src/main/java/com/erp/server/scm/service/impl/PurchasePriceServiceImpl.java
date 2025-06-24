@@ -1223,7 +1223,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (CollectionUtils.isEmpty(productDetailList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        String skuNos = productDetailList.stream().filter(obj -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
+        String skuNos = productDetailList.stream().filter(obj -> !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
         if  (CharSequenceUtil.isNotBlank(skuNos)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE,skuNos);
         }
