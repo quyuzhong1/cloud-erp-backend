@@ -2127,8 +2127,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             syncList.add(listingInfoEntity);
         }
-
-        this.syncProductToWarehouse(syncList);
+        if(CollectionUtils.isNotEmpty(syncList)){
+            this.syncProductToWarehouse(syncList);
+        }
         return batchResultDTOList;
     }
 
