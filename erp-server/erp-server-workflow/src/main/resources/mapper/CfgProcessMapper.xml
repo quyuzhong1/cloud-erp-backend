@@ -271,7 +271,7 @@
                  LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
                  LEFT JOIN public.cfg_process_field_map fm ON r.id = fm.cfg_id AND fm.is_deleted = false
                  LEFT JOIN public.process_definition pd ON r.process_definition_id = pd.id AND pd.is_deleted = false AND pd.is_deploy = true
-        WHERE r.id = #{id}
+        WHERE p.id = #{id}
           AND p.is_deleted = false
         ORDER BY p.id ASC,
                  r.create_time ASC, r.id ASC,
