@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 系统配置管理
@@ -69,5 +70,17 @@ public class CfgSettingController extends BaseController {
     public ApiResult<CfgSettingDTO.ViewDTO> view() {
         CfgSettingDTO.ViewDTO viewDTO = cfgSettingService.view();
         return success(viewDTO);
+    }
+
+    /**
+     *根据key值查询所有配置信息
+     * @author Will
+     * @date: 2024/1/17 10:49
+     * @param key
+     * @return List<ViewDTO>
+     */
+    @PostMapping("/listByKey")
+    public List<CfgSettingDTO.ViewDTO> listByKey(@RequestBody String key) {
+        return cfgSettingService.listByKey(key);
     }
 }
