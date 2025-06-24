@@ -635,9 +635,10 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getInventoryStatus()));
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String userName = org.apache.commons.lang3.StringUtils.join(curApproveName, ",");
-            data.setApproveUserName(userName);
+            String curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.joining(","));
+            if (CharSequenceUtil.isNotBlank(curApproveName)) {
+                data.setApproveUserName(curApproveName);
+            }
         }
     }
     /**

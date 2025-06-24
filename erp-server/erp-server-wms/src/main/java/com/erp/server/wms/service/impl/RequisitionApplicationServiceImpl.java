@@ -3126,8 +3126,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             //释放数量不能大于冻结数量
             Integer releaseQty = Objects.nonNull(dto.getReleaseQty()) ? dto.getReleaseQty() : 0;
-            if (dto.getVirtualFrozenQty() > (detailEntity.getVirtualFrozenQty() + releaseQty)){
-                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】冻结数量【{}】已释放【{}】小于剩余可释放数量【{}】", entity.getCode(), detailEntity.getSkuNo()),detailEntity.getVirtualFrozenQty(),releaseQty,dto.getVirtualFrozenQty());
+            if (dto.getVirtualFrozenQty() != dto.getPackQty()){
+                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】释放数量【{}】需要和装箱数量【{}】相等", entity.getCode(), detailEntity.getSkuNo()),dto.getVirtualFrozenQty(),releaseQty,dto.getPackQty());
             }
             //更新要货申请释放标识，并更新明细冻结数量
             updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
