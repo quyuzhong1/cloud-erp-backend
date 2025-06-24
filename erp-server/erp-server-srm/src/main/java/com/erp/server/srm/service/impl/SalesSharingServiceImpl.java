@@ -10,24 +10,27 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.enums.SaleStateEnum;
-import com.erp.model.scm.entity.CfgConditionEntity;
-import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
-import com.erp.model.scm.entity.SupplierRefUserEntity;
-import com.erp.model.scm.enums.CfgSupplierSalesDisplayFieldEnum;
-import com.erp.model.scm.enums.CfgSupplierSalesPermissionEnum;
-import com.erp.model.scm.enums.RuleTypeEnum;
+import com.erp.model.dmp.dto.DwsDbErpDmpSkuSalesReportFDTO;
+import com.erp.model.dmp.entity.doris.DwsDbErpDmpSkuSalesReportFEntity;
+import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
+import com.erp.model.scm.dto.CfgSupplierSalesDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.entity.SalesSharingEntity;
-import com.erp.model.sys.vo.SupplierUserVO;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.VirtualInventoryEntity;
+import com.erp.rpc.dmp.feign.DmpSkuSaleReportFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.VirtualInventoryFeign;
+import com.erp.server.srm.handler.SupplierSalesConditionHandler;
 import com.erp.server.srm.mapper.SalesSharingMapper;
 import com.erp.server.srm.service.SalesSharingService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,13 +42,12 @@ import com.erp.model.srm.dto.SalesSharingDTO;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_SALES_SHARING_REPORT;
 
 /**
  * <p>
@@ -59,9 +61,18 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_SALES_SHARI
 @Service
 public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper, SalesSharingEntity> implements SalesSharingService {
 
+    @Resource
+    private DmpSkuSaleReportFeign dmpSkuSaleReportFeign;
 
     @Resource
-    private SpElServer spElServer;
+    private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private SupplierSalesConditionHandler supplierSalesConditionHandler;
+    @Resource
+    private InventoryFeign inventoryFeign;
+    @Resource
+    private VirtualInventoryFeign virtualInventoryFeign;
 
     @Override
     public PagingVO<SalesSharingDTO.ListDTO> paging(PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO) {
@@ -364,9 +375,180 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
     }
 
 
+    /**
+     *
+     * 根据销量设置的配置，去拉取中台的销量数据，并且销量共享数据
+     */
+    @Override
+    public void calSalesSharing(){
+        //拉取销量设置的配置
+        List<CfgSupplierSalesDTO.ListAllDTO> listAllDTOS = scmTaskFeign.listAll();
+        if(CollUtil.isNotEmpty(listAllDTOS)){
+            List<String> supplierIds = listAllDTOS.stream().map(CfgSupplierSalesDTO.ListAllDTO::getSupplierId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            //查询供应商下的skuNo集合
+            List<PurchaseOrderDTO.SupplierSkuDTO> supplierSkuDTOS = scmTaskFeign.listSkuBySupplierIds(supplierIds);
+            Map<String, List<PurchaseOrderDTO.SupplierSkuDTO>> listSkuBySupplierIds = supplierSkuDTOS.stream().collect(Collectors.groupingBy(PurchaseOrderDTO.SupplierSkuDTO::getSupplierId));
 
+            //查询供应商采购比例
+            Map<String, BigDecimal> supplierPurchaseRatioMap = new HashMap<>();
+            List<String> supplierIdsWithPurchaseRatio = listAllDTOS.stream().filter(e -> e.getSalesRatioType().equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())).map(CfgSupplierSalesDTO.ListAllDTO::getSupplierId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(supplierIdsWithPurchaseRatio)){
+                List<SupplierPurchaseQuantityEntity> supplierPurchaseQuantityList = FeignQuery.create(SupplierPurchaseQuantityEntity.class)
+                        .in(SupplierPurchaseQuantityEntity::getSupplierId, supplierIdsWithPurchaseRatio)
+                        .list();
 
+                supplierPurchaseRatioMap = supplierPurchaseQuantityList.stream().collect(Collectors.toMap(SupplierPurchaseQuantityEntity::getSupplierId, SupplierPurchaseQuantityEntity::getPurchaseRatio, (o1, o2) -> o1));
+            }
 
+            for (CfgSupplierSalesDTO.ListAllDTO listAllDTO : listAllDTOS) {
+                StringBuffer sb = new StringBuffer();
+                sb.append(" and ( ");
+                //供应商
+                String supplierId = listAllDTO.getSupplierId();
+                String supplierCode = listAllDTO.getSupplierCode();
+                String supplierName = listAllDTO.getSupplierName();
+                //日均销量类型
+                String dailySalesType = listAllDTO.getDailySalesType();
+                //统计维度
+                String dimension = listAllDTO.getDimension();
+                //销量比例类型
+                String salesRatioType = listAllDTO.getSalesRatioType();
+                //销量比例
+                BigDecimal salesRatio = listAllDTO.getSalesRatio();
+                if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
+                    salesRatio = listAllDTO.getSalesRatio();
+                }
+                //sku查看配置
+                List<CfgSupplierSalesConditionEntity> skuList = listAllDTO.getSkuList();
+                //可销库存配置
+                String warehouseType = listAllDTO.getWarehouseType();
+                List<CfgSupplierSalesConditionEntity> saleableStockList = listAllDTO.getSaleableStockList();
+                //销量统计配置
+                List<CfgSupplierSalesConditionEntity> salesStatisticList = listAllDTO.getSalesStatisticList();
 
+                //设置sku相关的配置条件
+                if(CollUtil.isNotEmpty(skuList)){
+                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(skuList);
+                    if(StringUtils.isNotBlank(sqlWhere)){
+                        sb.append(sqlWhere);
+                        sb.append(" and ");
+                    }
+                }
+                //设置销量统计相关的配置条件
+                if(CollUtil.isNotEmpty(salesStatisticList)){
+                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(salesStatisticList);
+                    if(StringUtils.isNotBlank(sqlWhere)){
+                        sb.append(sqlWhere);
+                        sb.append(" and ");
+                    }
+                }
 
+                //设置日均销量类型 和 统计维度
+                sb.append(" daily_sales_type = '");
+                sb.append(dailySalesType);
+                sb.append("' and dimension = '");
+                sb.append(dimension);
+                sb.append("' )");
+
+                DwsDbErpDmpSkuSalesReportFDTO.RequestListDTO dto = new DwsDbErpDmpSkuSalesReportFDTO.RequestListDTO();
+                dto.setConditionSql(sb.toString());
+                List<DwsDbErpDmpSkuSalesReportFEntity> reportList = dmpSkuSaleReportFeign.reportList(dto);
+
+                if(CollUtil.isNotEmpty(reportList)){
+                    //判断是否有设置sku黑名单，并排除指定的sku
+                    if(Boolean.TRUE.equals(listAllDTO.getIsBlack()) && CollUtil.isNotEmpty(listAllDTO.getBlackList())){
+                        List<CfgSupplierSalesConditionEntity> blackList = listAllDTO.getBlackList();
+                        CfgSupplierSalesConditionEntity cfgSupplierSalesConditionEntity = blackList.get(0);
+                        if(StringUtils.isNotBlank(cfgSupplierSalesConditionEntity.getValue())){
+                            List<String> skuNoList = Arrays.asList(cfgSupplierSalesConditionEntity.getValue().split(","));
+
+                            //过滤sku黑名单
+                            reportList = reportList.stream().filter(e -> !skuNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+                        }
+                    }
+
+                    //过滤是否该供应商采购过
+                    CfgSupplierSalesConditionEntity isPurchaseEntity = skuList.stream().filter(e -> e.getField().contains("isPurchase")).findFirst().orElse(null);
+                    if(Objects.nonNull(isPurchaseEntity) && StringUtils.isNotBlank(isPurchaseEntity.getValue())){
+                        //采购过的sku集合
+                        List<String> purchaseSkuList = listSkuBySupplierIds.get(supplierId).stream().map(PurchaseOrderDTO.SupplierSkuDTO::getSkuNo).collect(Collectors.toList());
+                        if(Objects.equals(isPurchaseEntity.getValue(), "true")){//采购过的
+                            reportList = reportList.stream().filter(e -> purchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
+                        }else {//没采购过的
+                            reportList = reportList.stream().filter(e -> !purchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
+                        }
+                    }
+                }
+
+                //过滤完之后剩余的数据
+                if(CollUtil.isNotEmpty(reportList)){
+                    //根据可销库存配置查询即时存储数据
+                    Map<String, Integer> skuQtyMap = new HashMap<>();
+                    StringBuffer stringBuffer = new StringBuffer();
+                    List<String> skuIds = reportList.stream().map(DwsDbErpDmpSkuSalesReportFEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                    if(CollUtil.isNotEmpty(skuIds)){
+                        stringBuffer.append(" sku_id in (’");
+                        stringBuffer.append(String.join("','", skuIds));
+                        stringBuffer.append("‘) ");
+                    }
+                    if(CollUtil.isNotEmpty(saleableStockList)){
+                        String sqlWhere = supplierSalesConditionHandler.buildWhereClause(saleableStockList);
+                        if(StringUtils.isNotBlank(sqlWhere)){
+                            stringBuffer.append(" and ");
+                            stringBuffer.append(sqlWhere);
+                        }
+                    }
+                    String inventorySqlCondition = stringBuffer.toString();
+                    if(StringUtils.isNotBlank(inventorySqlCondition)){
+                        if(Objects.equals(warehouseType, CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
+                            //虚拟仓
+                            List<VirtualInventoryEntity> inventoryList = FeignQuery.create(VirtualInventoryEntity.class).last(inventorySqlCondition).list();
+
+                            skuQtyMap = inventoryList.stream()
+                                    .collect(Collectors.groupingBy(
+                                            VirtualInventoryEntity::getSkuId, // 按 skuId 分组
+                                            Collectors.summingInt(VirtualInventoryEntity::getQty) // 对 qty 进行合计
+                                    ));
+
+                        }else {
+                            //实体仓
+                            List<InventoryEntity> inventoryList = FeignQuery.create(InventoryEntity.class).last(inventorySqlCondition).list();
+
+                            skuQtyMap = inventoryList.stream()
+                                    .collect(Collectors.groupingBy(
+                                            InventoryEntity::getSkuId, // 按 skuId 分组
+                                            Collectors.summingInt(InventoryEntity::getQty) // 对 qty 进行合计
+                                    ));
+                        }
+                    }
+
+                    List<SalesSharingEntity> salesSharingList = BeanMapper.copyList(reportList, SalesSharingEntity.class);
+                    for (SalesSharingEntity salesSharingEntity : salesSharingList) {
+                        salesSharingEntity.setSupplierCode(supplierCode);
+                        salesSharingEntity.setSupplierName(supplierName);
+
+                        //原始比例
+                        salesSharingEntity.setSalesRatio(salesRatio);
+
+                        //即时库存
+                        Integer saleableStock = skuQtyMap.getOrDefault(salesSharingEntity.getSkuId(), 0);
+                        salesSharingEntity.setSaleableStock(saleableStock);
+
+                        //计算可销天数
+                        Integer dailySales = salesSharingEntity.getDailySales();
+                        if(Objects.nonNull(dailySales) && Objects.nonNull(saleableStock) && dailySales > 0 && saleableStock > 0){
+
+                            BigDecimal divide = salesRatio.divide(new BigDecimal(100), 2, RoundingMode.DOWN);
+                            BigDecimal saleableDays = new BigDecimal(dailySales).multiply(divide).setScale(0);
+                            salesSharingEntity.setSaleableDays(saleableDays.intValue());
+                        }else {
+                            salesSharingEntity.setSaleableDays(saleableStock);
+                        }
+                    }
+                    //批量保存
+                    saveBatch(salesSharingList);
+                }
+            }
+        }
+    }
 }

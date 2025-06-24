@@ -506,4 +506,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 定时任务 ： (供应商 + 采购订单 + sku )采购数量计算
      */
     void calSupplierPurchaseQty();
+
+    List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(List<String> supplierIds);
 }

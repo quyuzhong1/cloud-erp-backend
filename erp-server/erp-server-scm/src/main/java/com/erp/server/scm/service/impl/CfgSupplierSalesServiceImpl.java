@@ -17,18 +17,16 @@ import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierPurchaseQuantityEntity;
 import com.erp.model.scm.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
-import com.erp.server.scm.service.CfgSupplierSalesConditionService;
-import com.erp.server.scm.service.CfgSupplierSalesService;
+import com.erp.server.scm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +73,8 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     @Resource
     private Validator validator;
+    @Resource
+    private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -563,5 +563,55 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         downloadTaskFeign.saveDownloadTask("销量设置导出", EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT.getCode(), pagingParamDTO);
     }
 
+    //查询所有的启动未删除的销量设置
+    @Override
+    public List<CfgSupplierSalesDTO.ListAllDTO> listAll() {
+        List<CfgSupplierSalesEntity> list = lambdaQuery().eq(CfgSupplierSalesEntity::getDisabled,Boolean.FALSE).eq(CfgSupplierSalesEntity::getIsDeleted,Boolean.FALSE).list();
+        if(CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
 
+        List<String> ids = list.stream().map(CfgSupplierSalesEntity::getId).collect(Collectors.toList());
+
+        List<CfgSupplierSalesDTO.ListAllDTO> datas = BeanMapper.copyList(list, CfgSupplierSalesDTO.ListAllDTO.class);
+
+        //查询配置
+        List<CfgSupplierSalesConditionEntity> conditionList = cfgSupplierSalesConditionService.list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
+                .in(CfgSupplierSalesConditionEntity::getSalesSettingId, ids));
+
+        Map<String, List<CfgSupplierSalesConditionEntity>> map = conditionList.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSourceType));
+
+        for (CfgSupplierSalesDTO.ListAllDTO data : datas) {
+            //仓库配置
+            String warehouseType = data.getWarehouseType();
+            if(map.containsKey(warehouseType)){
+                data.setSaleableStockList(map.get(warehouseType));
+            }
+
+            //其余配置（包括sku黑名单）
+            RuleTypeEnum[] values = RuleTypeEnum.values();
+            for (RuleTypeEnum ruleTypeEnum : values) {
+                String key = ruleTypeEnum.getCode();
+                if(map.containsKey(key)){
+                    List<CfgSupplierSalesConditionEntity> value = map.get(key);
+
+                    if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
+                        data.setSkuList(value);
+                    }
+                    if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
+                        data.setSalesStatisticList(value);
+                    }
+                    if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
+                        data.setNoticeList(value);
+                    }
+                    if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
+                        data.setIsBlack(Boolean.TRUE);
+
+                        data.setBlackList(value);
+                    }
+                }
+            }
+        }
+        return datas;
+    }
 }

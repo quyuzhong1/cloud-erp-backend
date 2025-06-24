@@ -27,7 +27,99 @@ import javax.validation.constraints.*;
 @NoArgsConstructor
 public class CfgSupplierSalesDTO implements Serializable {
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListAllDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        private String supplierCode;
+        private String supplierName;
+
+        /**
+         * 页面权限：view=仅查看,download=查看并下载
+         */
+        private String permission;
+
+        /**
+         * 日均销量类型：dailyAvg3Days=按3天日均计算,dailyAvg7Days=按7天日均计算,dailyAvg30Days=按30天日均计算,dailyAvg60Days=按60天日均计算,dailyAvg90Days=按90天日均计算
+         */
+        private String dailySalesType;
+
+        /**
+         * 销量比例类型：purchaseRatio=按照供应商采购比例,salesStatisticRatio=按照销量统计比例
+         */
+        private String salesRatioType;
+
+        /**
+         * 销量比例值
+         */
+        private BigDecimal salesRatio;
+
+        /**
+         * 是否启用通知
+         */
+        private Boolean noticeEnabled;
+
+        /**
+         * 统计维度：deliveryTime=按照出库时间,paymentTime=按照付款时间
+         */
+        private String dimension;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+        /**
+         * 字段显示
+         */
+        private String displayField;
+
+        /**
+         * 是否启用sku黑名单
+         */
+        private Boolean isBlack = Boolean.FALSE;
+        /**
+         * sku黑名单集合
+         */
+        private List<CfgSupplierSalesConditionEntity> blackList;
+
+        /**
+         * sku查看配置
+         */
+        private List<CfgSupplierSalesConditionEntity> skuList;
+
+        /**
+         * 仓库类型
+         */
+        private String warehouseType;
+        /**
+         * 可销库存配置
+         */
+        private List<CfgSupplierSalesConditionEntity> saleableStockList ;
+
+        /**
+         * 销量统计配置
+         */
+        private List<CfgSupplierSalesConditionEntity> salesStatisticList ;
+        /**
+         * 通知配置执行条件
+         */
+        private List<CfgSupplierSalesConditionEntity> noticeList;
+
+
+
+    }
 
 
     /**

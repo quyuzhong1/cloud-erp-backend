@@ -1907,4 +1907,18 @@ public class PurchaseOrderDTO implements Serializable {
         private PurchaseOrderEntity purchaseOrderEntity;
         private String approveStatus;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SupplierSkuDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * skuN
+         */
+        private String skuNo;
+    }
+
 }

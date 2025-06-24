@@ -23,4 +23,6 @@ public interface SalesSharingService extends SuperService<SalesSharingEntity> {
     String exportList(SalesSharingDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
     String getNoticeContent();
+
+    void calSalesSharing();
 }
