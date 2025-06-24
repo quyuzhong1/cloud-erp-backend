@@ -2108,11 +2108,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     private String maskString(String input) {
-        if (input == null || input.length() <= 13) {
+        if (input == null || input.length() <= 23) {
             return input;
         }
-        String prefix = input.substring(0, 5);
-        String suffix = input.substring(input.length() - 5);
+        String prefix = input.substring(0, 10);
+        String suffix = input.substring(input.length() - 10);
         return prefix + "***" + suffix;
     }
 
