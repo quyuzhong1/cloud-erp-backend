@@ -25,6 +25,7 @@ import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -193,9 +194,31 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:update",
             serviceClass = PurchasePriceService.class,
             keyIdName = "id")
-    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
-        PurchasePriceEntity entity = purchasePriceService.updateAndSubmit(dto);
-        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
+        PurchasePriceEntity entity;
+        try {
+            entity = purchasePriceService.updatePurchasePrice(dto);
+            if (null == entity) {
+                return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+            }
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+        }
+        //提审
+        try {
+            purchasePriceService.submitEntity(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
     }
 
 

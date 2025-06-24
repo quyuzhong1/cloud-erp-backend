@@ -168,10 +168,35 @@ public class PilotApplicationController extends BaseController {
             menuCode = "plm:pilotApplication:updateAndSubmit",
             serviceClass = PilotApplicationService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
-        pilotApplicationService.updateAndSubmit(dto);
-        pilotApplicationService.approvePilotApplicationNotice(dto.getId());
-        return success();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
+        //更新
+        try {
+            pilotApplicationService.update(dto);
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure( new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.ERROR_1020.msg));
+        }
+
+        //提审
+        try {
+            pilotApplicationService.submit(dto.getId());
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE, e.getMessage()));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE,ApiError.RETRY_SUBMIT_ERROR.msg));
+        }
+        //发送消息
+        try {
+            pilotApplicationService.approvePilotApplicationNotice(dto.getId());
+        } catch (Exception e) {
+            log.error("试产量产发送消息失败，ID: {}", dto.getId(), e);
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE,""));
     }
 
     /**
