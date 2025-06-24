@@ -556,12 +556,11 @@
             fs.code as shipmentCode,
             ra.code,
             wc.box_no as boxNo,
-            wc.is_release_inventory as isReleaseInventory,
-            wc.packing_status as packingStatus,
             wcd.sku_id as skuId,
             wcd.sku_no as skuNo,
             wcd.fn_sku as fnSku,
-            sum(wcd.pack_qty) as packQty
+            sum(wcd.pack_qty) as packQty,
+            sum(wcd.release_qty) as releaseQty
         FROM requisition_application ra
                  INNER JOIN packing_task pt ON ra.id = pt.source_id AND pt.is_deleted=false
                  INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted=false
@@ -573,7 +572,7 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        GROUP BY ra.id, pt.id, wc.id, fs.code, ra.code, wc.box_no, wcd.sku_id, wcd.sku_no,wcd.fn_sku
+        GROUP BY ra.id, pt.id, wc.id, fs.code, ra.code, wc.box_no,wc.is_release_inventory,wc.packing_status, wcd.sku_id, wcd.sku_no,wcd.fn_sku
         ORDER BY ra.id,wc.box_no,wcd.sku_no,wcd.fn_sku
 
     </select>

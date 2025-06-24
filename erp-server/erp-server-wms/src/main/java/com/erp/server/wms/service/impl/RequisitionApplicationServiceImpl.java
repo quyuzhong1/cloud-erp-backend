@@ -222,6 +222,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private InventoryTransCoreService inventoryTransCoreService;
     @Resource
     private WmsCartonService wmsCartonService;
+    @Resource
+    private WmsCartonDetailService wmsCartonDetailService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1414,9 +1416,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 .orElseThrow(() -> new ServiceException("装箱数据为空"));
 
         List<String> cartonIds = cartonEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> resultList = baseMapper.fbaBindShipmentView(cartonIds);
-        resultList.forEach(v->v.setId(id));
+        resultList.forEach(v->{
+            v.setId(id);
+            cartonEntityList.stream().filter(e -> e.getId().equals(v.getCartonId())).findFirst().ifPresent(c -> {
+                v.setIsReleaseInventory(c.getIsReleaseInventory());
+            });
+        });
         if(resultList.stream().noneMatch(v->CharSequenceUtil.isBlank(v.getFbaShipmentId()))){
             throw new ServiceException("要货申请所有装箱已关联货件，无法再次绑定");
         }
@@ -3119,8 +3125,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 throw new ServiceException("要货申请单明细不存在");
             }
             //释放数量不能大于冻结数量
-            if (dto.getVirtualFrozenQty() > detailEntity.getVirtualFrozenQty()){
-                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】明细不存在", entity.getCode(), detailEntity.getSkuNo()));
+            Integer releaseQty = Objects.nonNull(dto.getReleaseQty()) ? dto.getReleaseQty() : 0;
+            if (dto.getVirtualFrozenQty() > (detailEntity.getVirtualFrozenQty() + releaseQty)){
+                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】冻结数量【{}】已释放【{}】小于剩余可释放数量【{}】", entity.getCode(), detailEntity.getSkuNo()),detailEntity.getVirtualFrozenQty(),releaseQty,dto.getVirtualFrozenQty());
             }
             //更新要货申请释放标识，并更新明细冻结数量
             updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
@@ -3138,10 +3145,38 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         busiParam.setBusinessType(InventoryBusinessTypeEnum.REQUISITION_APPLICATION_RELEASE.getCode());
         busiParam.setParamList(listInventory(entity,detailEntityList,dtoList));
         inventoryTransCoreService.approveByType(busiParam);
+        //更新箱子释放库存标识
+        updateReleaseInventory(dtoList);
+        return BatchResultDTO.success();
+    }
+
+    private void updateReleaseInventory(List<RequisitionApplicationDTO.InventoryDTO> dtoList) {
         //更新装箱释放库存标识
         List<String> cartonIds = dtoList.stream().map(RequisitionApplicationDTO.InventoryDTO::getCartonId).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(cartonIds)){
+            return;
+        }
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(cartonIds);
+        List<WmsCartonDetailEntity> updateList = new ArrayList<>();
+        dtoList.forEach(dto ->{
+            List<WmsCartonDetailEntity> cartonDetailEntityList = detailEntityList.stream().filter(e -> e.getMainId().equals(dto.getCartonId()) && e.getSkuId().equals(dto.getSkuId()) && e.getFnSku().equals(dto.getFnSku())).collect(Collectors.toList());
+            Integer virtualFrozenQty = dto.getVirtualFrozenQty();
+            for (WmsCartonDetailEntity detailEntity : cartonDetailEntityList){
+                if ((virtualFrozenQty + detailEntity.getReleaseQty()) > detailEntity.getPackQty()){
+                    detailEntity.setReleaseQty(detailEntity.getPackQty());
+                    virtualFrozenQty = virtualFrozenQty + detailEntity.getReleaseQty() - detailEntity.getPackQty();
+                    updateList.add(detailEntity);
+                }else {
+                    detailEntity.setReleaseQty(detailEntity.getReleaseQty() + virtualFrozenQty);
+                    virtualFrozenQty = 0;
+                    updateList.add(detailEntity);
+                }
+            }
+        });
         wmsCartonService.updateReleaseInventory(cartonIds, Boolean.TRUE);
-        return BatchResultDTO.success();
+        if (CollUtil.isNotEmpty(updateList)){
+            wmsCartonDetailService.updateBatchById(updateList);
+        }
     }
 
     private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, List<RequisitionApplicationDetailEntity> detailEntityList, List<RequisitionApplicationDTO.InventoryDTO> dtoList) {

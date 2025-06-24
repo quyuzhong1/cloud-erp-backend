@@ -228,6 +228,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 装箱箱号
          */
         private String boxNo;
+        /**
+         * 是否释放库存
+         */
+        private Boolean isReleaseInventory;
 
         /**
          * 装箱sku
@@ -1736,14 +1740,6 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer boxNo;
         /**
-         * 装箱状态
-         */
-        private String packingStatus;
-        /**
-         * 是否释放库存
-         */
-        private Boolean isReleaseInventory;
-        /**
          * skuid
          */
         @NotBlank(message = "skuid不能为空")
@@ -1754,6 +1750,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 已装数量
          */
         private Integer packQty;
+        /**
+         * 已释放数量
+         */
+        private Integer releaseQty;
         /**
          * 虚拟仓冻结数量
          */
