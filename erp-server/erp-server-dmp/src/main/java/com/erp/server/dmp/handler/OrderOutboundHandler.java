@@ -5,6 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.common.core.security.HmacSHA256Utils;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import java.util.Map;
  */
 public class OrderOutboundHandler implements WebhookHandler{
 
+    private static final Logger log = LoggerFactory.getLogger(OrderOutboundHandler.class);
     private final LogisticsFeign logisticsFeign = SpringUtil.getBean(LogisticsFeign.class);
     @Override
     public void verify(String data, Map<String, String> headers, String serviceFlag) {
@@ -34,8 +37,7 @@ public class OrderOutboundHandler implements WebhookHandler{
 
     @Override
     public String process(String data, Map<String, String> headers, String serviceFlag) {
-        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
-        logisticsFeign.webhookByTrack123(trackWebHookDTO);
+        log.warn("webhook 获取出库单数据,{}",data);
         return null;
     }
 

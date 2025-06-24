@@ -78,20 +78,20 @@ public class AliexpressWarehouseService {
                         .receiverInfo(AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO.builder()
                                 .countryCode("US")
                                 .build())
-                        .deliveryOrderCode("TEST123456")
+                        .deliveryOrderCode("TESTWJ123456")
                         .warehouseCode("STB")
                         .shopNick("测试店铺")
                         .logisticsCode("other")
                         .createTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .sourcePlatformCode("AE")
-                        .expressCode("test123456")
+                        .expressCode("test-WJ123456")
                 .build());
         aliexpressCancelOrderDTO.setOrderLines(Arrays.asList(AliexpressOrderDTO.OrderLines.builder()
                         .inventoryType("1")
-                        .planQty(1)
+                        .planQty(2)
                         .ownerCode("17379911544")
-                        .itemCode("2028")
-                        .itemId(1129930008)
+                        .itemCode("12000043163694871")
+//                        .itemId(1129930008)
                 .build()));
         aliexpressCancelOrderDTO.setExtendProps(AliexpressOrderDTO.ExtendProps.builder()
                         .merchantType("POP")
@@ -100,6 +100,24 @@ public class AliexpressWarehouseService {
         ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressCancelOrderDTO);
         System.out.println(apiOrderResponseDTO);
     }
+
+//        public static void main(String[] args) throws ApiException, JsonProcessingException {
+//        AliexpressWarehouseService aliexpressWarehouseService = new AliexpressWarehouseService();
+//        AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
+//        aliexpressAuthDTO.setUrl("https://api-sg.aliexpress.com/sandbox");
+//        aliexpressAuthDTO.setAppKey("503630");
+//        aliexpressAuthDTO.setAppSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ");
+//        aliexpressAuthDTO.setAccessToken("50000701530cnHtbirhzrd7ijPeou2emiSIajwwCg118389611msriNQyROLyoVZ1y1j");
+//        AliexpressCancelOrderDTO aliexpressCancelOrderDTO = new AliexpressCancelOrderDTO();
+//        aliexpressCancelOrderDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+//            aliexpressCancelOrderDTO.setOrderId("LBX0395442105096030");
+//            aliexpressCancelOrderDTO.setOwnerCode("17379911544");
+//            aliexpressCancelOrderDTO.setWarehouseCode("STB");
+//            aliexpressCancelOrderDTO.setOrderType("JYCK");
+//            aliexpressCancelOrderDTO.setOrderCode("TEST13456");
+//        ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOutbound(aliexpressCancelOrderDTO);
+//        System.out.println(apiOrderResponseDTO);
+//    }
 
     public ApiResponseDTO pushListing(AliexpressProductDTO aliexpressProductDTO) throws ApiException {
         log.warn("菜鸟仓推送货品,{}",JSONUtil.toJsonStr(aliexpressProductDTO));
@@ -132,9 +150,9 @@ public class AliexpressWarehouseService {
         log.warn("菜鸟仓创建出库单,{}",JSONUtil.toJsonStr(aliexpressOrderDTO));
         AliexpressAuthDTO aliexpressAuthDTO = aliexpressOrderDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
-//        if (!BusinessCommonConstants.hasProfile("prod")) {
-//            url = url + "/sandbox";
-//        }
+        if (!BusinessCommonConstants.hasProfile("prod")) {
+            url = url + "/sandbox";
+        }
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
