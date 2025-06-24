@@ -13,6 +13,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.TableNameEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -121,6 +122,11 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<ThirdProcessDefinitionDTO.ListDTO> pageData = baseMapper.paging(query,  pagingParamDTO.getParams());
+        for (int i = 0; i < pageData.getRecords().size(); i++) {
+            ThirdProcessDefinitionDTO.ListDTO dto = pageData.getRecords().get(i);
+            ThirdProcessDefinitionTypeEnum byCode = ThirdProcessDefinitionTypeEnum.getByCode(dto.getType());
+            dto.setTypeName(byCode.getName());
+        }
         return new PagingVO<>(pageData);
     }
 

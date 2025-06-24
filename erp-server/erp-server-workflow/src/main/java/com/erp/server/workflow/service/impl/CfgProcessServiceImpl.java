@@ -158,7 +158,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public CfgProcessDTO.ViewDTO view(String settingId) {
         CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
-
+        if (viewDTO == null){
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
         for (CfgProcessRuleDTO.ViewDTO ruleDto : viewDTO.getProcessRuleDTOList()) {
             if (ObjectUtil.isEmpty(ruleDto.getProcessFieldMapDTOList())) {
                 continue;
