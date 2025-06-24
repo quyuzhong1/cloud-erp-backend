@@ -854,8 +854,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Map<String, List<QcResultDTO.StockInDTO>> map = stockInList.stream().collect(Collectors.groupingBy(QcResultDTO.StockInDTO::getMainId));
         List<PoInstockDTO.AddDTO> addList = new ArrayList<>(map.size());
 
-        List<String> mainIdList = stockInList.stream().map(QcResultDTO.StockInDTO::getMainId).collect(Collectors.toList());
-        List<QcInfoEntity> qcInfoList = this.listByIds(mainIdList);
+        List<QcInfoEntity> qcInfoList = this.listByIds(idList);
         Map<String, QcInfoEntity> qcMap = qcInfoList.stream().collect(Collectors.toMap(QcInfoEntity::getId, Function.identity()));
 
         for (Map.Entry<String, List<QcResultDTO.StockInDTO>> entry : map.entrySet()) {
