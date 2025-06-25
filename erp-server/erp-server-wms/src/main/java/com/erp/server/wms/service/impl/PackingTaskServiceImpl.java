@@ -2946,7 +2946,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //先根据装箱任务进行分组
         Map<String, List<WmsCartonDetailDTO.ListPackingDetailDTO>> taskMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskCode));
         LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = new LinkedList<>();
-        for (String taskCode : taskMap.keySet()) {
+        for (String taskCode : taskMap.keySet().stream().sorted().collect(Collectors.toList())) {
             List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailDTOList = taskMap.get(taskCode);
             //按照箱号进行分组
             Map<Integer, List<WmsCartonDetailDTO.ListPackingDetailDTO>> boxNoMap = packingDetailDTOList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getBoxNo));
@@ -2998,11 +2998,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
                 LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS = new LinkedList<>();
                 Boolean isLast = i == list.size() - 1;
+                Boolean isInit = Boolean.FALSE;
                 if (CharSequenceUtil.isBlank(currentMd5)){
                     currentMd5 = md5Str;
                     //同箱数据置空相同字段
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
-                }else if (!Objects.equals(currentMd5, md5Str) || isLast){
+                }else if (!Objects.equals(currentMd5, md5Str)){
                     //与上一箱不相同时 赋值上一序列的
                     Integer startBoxNo = startBoxNoMap.get(currentMd5);
                     List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS1 = boxMap.get(startBoxNo);
@@ -3014,25 +3015,33 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         });
                         boxMap.put(startBoxNo, detailDTOS2);
                     }
-                    //初始化相同md5的起始箱号
-                    boxQtyMap.remove(currentMd5);
-                    totalQtyMap.remove(currentMd5);
-                    startBoxNoMap.remove(currentMd5);
-                    endBoxNoMap.remove(currentMd5);
-                    boxWeightMap.remove(currentMd5);
-                    boxLengthMap.remove(currentMd5);
-                    boxWidthMap.remove(currentMd5);
-                    boxHeightMap.remove(currentMd5);
-                    currentMd5 = md5Str;
                     //不同箱数据置空相同字段
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
+                    isInit = Boolean.TRUE;
+                }else if (isLast){
+                    //同箱数据
+                    Integer startBoxNo = startBoxNoMap.get(md5Str);
+                    List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS1 = boxMap.get(startBoxNo);
+                    if (CollUtil.isNotEmpty(detailDTOS1)){
+                        LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS2 = new LinkedList<>();
+                        detailDTOS1.forEach(detailDTO ->{
+                            getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap,boxWeightMap,boxLengthMap,boxWidthMap,boxHeightMap);
+                            detailDTOS2.add(detailDTO);
+                        });
+                        boxMap.put(startBoxNo, detailDTOS2);
+                    }else {
+                        listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
+                    }
                 }
                 //最后一箱需要判断是否要进行赋值
-                if (CollUtil.isNotEmpty(listPackingDetailDTOS) || isLast){
+                if (CollUtil.isNotEmpty(listPackingDetailDTOS)){
                     listPackingDetailDTOS.forEach(detailDTO ->{
                         getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap, boxWeightMap, boxLengthMap, boxWidthMap, boxHeightMap);
                     });
                     boxMap.put(boxNo,listPackingDetailDTOS);
+                }
+                if (isInit){
+                    currentMd5 = initMap(boxQtyMap, currentMd5, totalQtyMap, startBoxNoMap, endBoxNoMap, boxWeightMap, boxLengthMap, boxWidthMap, boxHeightMap, md5Str);
                 }
             }
             boxMap.keySet().stream().sorted().forEach(boxNo ->{
@@ -3041,6 +3050,20 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             });
         }
         return detailDTOS;
+    }
+
+    private static String initMap(HashMap<String, Integer> boxQtyMap, String currentMd5, HashMap<String, Integer> totalQtyMap, HashMap<String, Integer> startBoxNoMap, HashMap<String, Integer> endBoxNoMap, HashMap<String, BigDecimal> boxWeightMap, HashMap<String, BigDecimal> boxLengthMap, HashMap<String, BigDecimal> boxWidthMap, HashMap<String, BigDecimal> boxHeightMap, String md5Str) {
+        //初始化相同md5的起始箱号
+        boxQtyMap.remove(currentMd5);
+        totalQtyMap.remove(currentMd5);
+        startBoxNoMap.remove(currentMd5);
+        endBoxNoMap.remove(currentMd5);
+        boxWeightMap.remove(currentMd5);
+        boxLengthMap.remove(currentMd5);
+        boxWidthMap.remove(currentMd5);
+        boxHeightMap.remove(currentMd5);
+        currentMd5 = md5Str;
+        return currentMd5;
     }
 
     private static void buildPackingData(List<WmsCartonDetailDTO.ListPackingDetailDTO> records, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList) {
