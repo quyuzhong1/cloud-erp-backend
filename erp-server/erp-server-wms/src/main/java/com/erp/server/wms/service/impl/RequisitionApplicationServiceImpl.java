@@ -184,6 +184,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Lazy
     private WmsDeliveryPlanService wmsDeliveryPlanService;
     @Resource
+    @Lazy
+    private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
+    @Resource
     private CfgRulePickingStagingService cfgRulePickingStagingService;
 
     @Resource
@@ -3055,7 +3058,36 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generateRequisition(String id) {
+        if (CharSequenceUtil.isBlank(id)){
+            return;
+        }
+        //根据发货计划生成
+        WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(id);
+        if (!ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(planEntity.getDeliveryType())){
+            return;
+        }
+        RequisitionApplicationEntity entity = RequisitionApplicationConverter.INSTANCE.wmsDeliveryPlanToRequisitionApplication(planEntity);
+        entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ));
+        this.save(entity);
+        List<WmsDeliveryPlanDetailEntity> planDetailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Collections.singletonList(id));
+        List<RequisitionApplicationDetailEntity> detailEntityList = RequisitionApplicationConverter.INSTANCE.wmsDeliveryPlanDetailToRequisitionApplicationDetail(planDetailEntityList);
+        detailEntityList.forEach(e -> {
+            e.setMainId(entity.getId());
+        });
+        requisitionApplicationDetailService.saveBatch(detailEntityList);
+    }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)){
+            return;
+        }
+        List<RequisitionApplicationEntity> list = this.lambdaQuery().in(RequisitionApplicationEntity::getSourceId, sourceIds).list();
+        List<String> ids = list.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        this.removeByIds(ids);
+        requisitionApplicationDetailService.removeByMainIds(ids);
     }
 }

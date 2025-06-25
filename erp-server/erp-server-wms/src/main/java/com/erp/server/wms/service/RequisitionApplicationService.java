@@ -287,4 +287,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param id
      */
     void generateRequisition(String id);
+
+    void removeBySourceIds(List<String> sourceIds);
 }

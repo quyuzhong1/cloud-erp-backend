@@ -60,6 +60,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -103,6 +104,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
@@ -355,6 +357,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(requisitionApplicationEntities)) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
+        }
+        if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
+            requisitionApplicationService.removeBySourceIds(Collections.singletonList(id));
         }
 
         // 更新审核信息
