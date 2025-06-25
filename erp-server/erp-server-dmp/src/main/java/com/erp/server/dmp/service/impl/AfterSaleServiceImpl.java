@@ -1081,6 +1081,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(afterSaleStatus)) {
             throw new ServiceException("未找到单据状态信息");
         }
+        //变更为已完成的，需要校验商家寄出快递单号不能为空
+        if(Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TO_BE_SHIPPED) && !StringUtil.isNotBlank(dto.getTrackNo())){
+            throw new ServiceException(" 单据状态修改为完成时商家寄出快递单号不能为空");
+        }
 
         Map<String, AfterSaleDTO.NodeDTO> nodeMap = getNodeList().stream().collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
         AfterSaleDTO.NodeDTO newNodeDTO = nodeMap.get(dto.getNode());
@@ -1104,9 +1108,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), dto.getNode());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                     if (StringUtils.isNotBlank(dto.getTrackNo())) {
-                        if (!afterSaleProgressEntity.getTrackNo().equals(dto.getTrackNo())) {
-                            String msg = StrUtil.format("用户【{}】编辑买家寄出快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), dto.getTrackNo());
-                            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "编辑信息");
+                        //客户寄件
+                        if(Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TO_BE_RETURNED)){
+                            if (!afterSaleProgressEntity.getTrackNo().equals(dto.getTrackNo())) {
+                                String msg = StrUtil.format("用户【{}】编辑买家寄出快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), dto.getTrackNo());
+                                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "编辑信息");
+                            }
+                        }
+                        //已完成节点
+                        if(Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TO_BE_SHIPPED)){
+                            if (!afterSaleProgressEntity.getTrackNo().equals(dto.getTrackNo())) {
+                                String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), dto.getTrackNo());
+                                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "编辑信息");
+                            }
                         }
                         afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                     }
