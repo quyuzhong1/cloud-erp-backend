@@ -582,35 +582,40 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
         List<CfgSupplierSalesConditionEntity> conditionList = cfgSupplierSalesConditionService.list(Wrappers.<CfgSupplierSalesConditionEntity>lambdaQuery()
                 .in(CfgSupplierSalesConditionEntity::getSalesSettingId, ids));
 
-        Map<String, List<CfgSupplierSalesConditionEntity>> map = conditionList.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSourceType));
-
+        Map<String, List<CfgSupplierSalesConditionEntity>> conditionMap = conditionList.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSalesSettingId));
         for (CfgSupplierSalesDTO.ListAllDTO data : datas) {
-            //仓库配置
-            String warehouseType = data.getWarehouseType();
-            if(map.containsKey(warehouseType)){
-                data.setSaleableStockList(map.get(warehouseType));
-            }
 
-            //其余配置（包括sku黑名单）
-            RuleTypeEnum[] values = RuleTypeEnum.values();
-            for (RuleTypeEnum ruleTypeEnum : values) {
-                String key = ruleTypeEnum.getCode();
-                if(map.containsKey(key)){
-                    List<CfgSupplierSalesConditionEntity> value = map.get(key);
+            List<CfgSupplierSalesConditionEntity> salesConditionEntities = conditionMap.get(data.getId());
+            if(CollUtil.isNotEmpty(salesConditionEntities)){
+                Map<String, List<CfgSupplierSalesConditionEntity>> map = salesConditionEntities.stream().collect(Collectors.groupingBy(CfgSupplierSalesConditionEntity::getSourceType));
 
-                    if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
-                        data.setSkuList(value);
-                    }
-                    if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
-                        data.setSalesStatisticList(value);
-                    }
-                    if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
-                        data.setNoticeList(value);
-                    }
-                    if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
-                        data.setIsBlack(Boolean.TRUE);
+                //仓库配置
+                String warehouseType = data.getWarehouseType();
+                if(map.containsKey(warehouseType)){
+                    data.setSaleableStockList(map.get(warehouseType));
+                }
 
-                        data.setBlackList(value);
+                //其余配置（包括sku黑名单）
+                RuleTypeEnum[] values = RuleTypeEnum.values();
+                for (RuleTypeEnum ruleTypeEnum : values) {
+                    String key = ruleTypeEnum.getCode();
+                    if(map.containsKey(key)){
+                        List<CfgSupplierSalesConditionEntity> value = map.get(key);
+
+                        if(Objects.equals(key,RuleTypeEnum.SKU.getCode())){
+                            data.setSkuList(value);
+                        }
+                        if(Objects.equals(key,RuleTypeEnum.SALESSTATISTIC.getCode())){
+                            data.setSalesStatisticList(value);
+                        }
+                        if(Objects.equals(key,RuleTypeEnum.NOTICE.getCode())){
+                            data.setNoticeList(value);
+                        }
+                        if(Objects.equals(key,RuleTypeEnum.BLACK.getCode())){
+                            data.setIsBlack(Boolean.TRUE);
+
+                            data.setBlackList(value);
+                        }
                     }
                 }
             }
