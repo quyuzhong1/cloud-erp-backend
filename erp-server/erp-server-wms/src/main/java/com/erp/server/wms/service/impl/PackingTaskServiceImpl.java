@@ -3028,7 +3028,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);
                 }
                 //最后一箱需要判断是否要进行赋值
-                if (CollUtil.isNotEmpty(listPackingDetailDTOS) && !isLast){
+                if (CollUtil.isNotEmpty(listPackingDetailDTOS) || isLast){
                     listPackingDetailDTOS.forEach(detailDTO ->{
                         getExportBoxNo(detailDTO, boxQtyMap, totalQtyMap, startBoxNoMap, endBoxNoMap, boxWeightMap, boxLengthMap, boxWidthMap, boxHeightMap);
                     });
