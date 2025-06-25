@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -129,6 +130,10 @@ public class SupplierController extends BaseController {
         }
 
         try {
+            entity = supplierService.getById(entity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"供应商");
+            }
             supplierService.submit(entity);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);

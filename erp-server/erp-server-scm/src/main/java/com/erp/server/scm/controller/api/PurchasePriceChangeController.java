@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -167,6 +168,10 @@ public class PurchasePriceChangeController extends BaseController {
         }
         //提审
         try {
+            entity = purchasePriceChangeService.getById(entity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购价目变更");
+            }
             purchasePriceChangeService.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);

@@ -127,7 +127,7 @@ public class TransferInfoController extends BaseController {
             String id = transferInfoService.add(dto);
             entity = transferInfoService.getById(id);
             if (ObjUtil.isNull(entity)) {
-                return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"直接调拨单");
             }
         } catch (ServiceException e) {
             log.error("新增失败，dto: {}", dto, e);
