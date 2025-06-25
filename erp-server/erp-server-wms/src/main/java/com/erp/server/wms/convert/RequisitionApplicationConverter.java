@@ -156,7 +156,6 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "updateUserName", ignore = true),
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
-            @Mapping(target = "code", ignore = true),
             @Mapping(target = "approveQty", ignore = true),
             @Mapping(target = "bomVersion", ignore = true),
             @Mapping(target = "changeBeforeQty", ignore = true),
