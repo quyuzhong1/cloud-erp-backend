@@ -400,7 +400,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         .in(SupplierPurchaseQuantityEntity::getSupplierId, supplierIdsWithPurchaseRatio)
                         .list();
 
-                supplierPurchaseRatioMap = supplierPurchaseQuantityList.stream().collect(Collectors.toMap(SupplierPurchaseQuantityEntity::getSupplierId, SupplierPurchaseQuantityEntity::getPurchaseRatio, (o1, o2) -> o1));
+                supplierPurchaseRatioMap = supplierPurchaseQuantityList.stream().collect(Collectors.toMap(e -> e.getSupplierId()+":"+e.getSkuId(), SupplierPurchaseQuantityEntity::getPurchaseRatio, (o1, o2) -> o1));
             }
 
             for (CfgSupplierSalesDTO.ListAllDTO listAllDTO : listAllDTOS) {
@@ -424,9 +424,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                 String salesRatioType = listAllDTO.getSalesRatioType();
                 //销量比例
                 BigDecimal salesRatio = listAllDTO.getSalesRatio().divide(new BigDecimal(100), 2, RoundingMode.DOWN);
-                if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
-                    salesRatio = supplierPurchaseRatioMap.getOrDefault(supplierId,BigDecimal.ZERO);
-                }
+
                 //sku查看配置
                 List<CfgSupplierSalesConditionEntity> skuList = listAllDTO.getSkuList();
                 //可销库存配置
@@ -540,6 +538,9 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                     List<SalesSharingEntity> salesSharingList = new ArrayList<>();
                     Map<String, List<DwsDbErpDmpSkuSalesReportFEntity>> map = reportList.stream().collect(Collectors.groupingBy(DwsDbErpDmpSkuSalesReportFEntity::getSkuId));
                     for (Map.Entry<String, List<DwsDbErpDmpSkuSalesReportFEntity>> entry : map.entrySet()) {
+                        if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
+                            salesRatio = supplierPurchaseRatioMap.getOrDefault(supplierId+":"+entry.getValue(),BigDecimal.ZERO);
+                        }
                         List<DwsDbErpDmpSkuSalesReportFEntity> value = entry.getValue();
                         SalesSharingEntity salesSharingEntity = new SalesSharingEntity();
                         BeanMapper.copy(value.get(0), salesSharingEntity);
