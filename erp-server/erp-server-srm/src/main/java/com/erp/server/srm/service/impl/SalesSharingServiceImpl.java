@@ -592,9 +592,10 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         //计算可销天数
                         Integer dailySales = salesSharingEntity.getDailySales();
                         if(Objects.nonNull(dailySales) && Objects.nonNull(saleableStock) && dailySales > 0 && saleableStock > 0){
-
+                            //即时库存数量 / 日均销量 * （ 销售比例 /100 ）
                             BigDecimal divide = salesRatio.divide(new BigDecimal(100), 2, RoundingMode.DOWN);
-                            BigDecimal saleableDays = new BigDecimal(dailySales).multiply(divide).setScale(0,RoundingMode.DOWN);
+
+                            BigDecimal saleableDays = new BigDecimal(saleableStock).divide(new BigDecimal(dailySales), 2, RoundingMode.DOWN).multiply(divide).setScale(0,RoundingMode.DOWN);
                             salesSharingEntity.setSaleableDays(saleableDays.intValue());
                         }else {
                             salesSharingEntity.setSaleableDays(saleableStock);
