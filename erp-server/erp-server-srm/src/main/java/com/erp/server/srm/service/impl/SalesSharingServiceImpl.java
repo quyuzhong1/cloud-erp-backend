@@ -407,6 +407,13 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                 //供应商
                 String supplierId = listAllDTO.getSupplierId();
 
+
+                //批量删除
+                lambdaUpdate()
+                        .eq(SalesSharingEntity::getSupplierId,supplierId)
+                        .set(SalesSharingEntity::getIsDeleted,true)
+                        .update();
+
                 if(StringUtils.isBlank(supplierId)){
                     continue;
                 }
@@ -605,11 +612,6 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         salesSharingList.add(salesSharingEntity);
                     }
 
-                    //批量删除
-                    lambdaUpdate()
-                            .eq(SalesSharingEntity::getSupplierId,supplierId)
-                            .set(SalesSharingEntity::getIsDeleted,true)
-                            .update();
 
                     //批量保存
                     saveBatch(salesSharingList);
