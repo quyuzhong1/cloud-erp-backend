@@ -11,14 +11,13 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
-import com.erp.model.scm.entity.CfgSupplierSalesConditionEntity;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.entity.SupplierPurchaseQuantityEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -74,6 +73,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     @Resource
     private Validator validator;
+    @Resource
+    private SupplierRefUserService supplierRefUserService;
+
     @Resource
     private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
 
@@ -617,9 +619,20 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     }
 
     @Override
-    public List<String> getDisplayField(String supplierId) {
-        if(StringUtils.isNotBlank(supplierId)){
-            CfgSupplierSalesEntity cfgSupplierSalesEntity = lambdaQuery().eq(CfgSupplierSalesEntity::getSupplierId, supplierId).last(" limit 1").one();
+    public List<String> getDisplayField() {
+        LoginUser login = UserContext.getDefaultLoginUser();
+
+        String uid = login.getUid();
+
+        SupplierRefUserEntity supplierRefUser = supplierRefUserService.lambdaQuery()
+                .eq(SupplierRefUserEntity::getUid, uid)
+                .eq(SupplierRefUserEntity::getDisabled, Boolean.FALSE)
+                .eq(SupplierRefUserEntity::getIsDeleted, Boolean.FALSE)
+                .last(" limit 1 ")
+                .one();
+
+        if(Objects.nonNull(supplierRefUser) && StringUtils.isNotBlank(supplierRefUser.getSupplierId())){
+            CfgSupplierSalesEntity cfgSupplierSalesEntity = lambdaQuery().eq(CfgSupplierSalesEntity::getSupplierId, supplierRefUser.getSupplierId()).last(" limit 1").one();
             if(Objects.nonNull(cfgSupplierSalesEntity)){
                 List<CfgSupplierSalesDisplayFieldEnum> list = Arrays.asList(CfgSupplierSalesDisplayFieldEnum.values());
 
@@ -638,6 +651,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
                 return diffFieldList;
             }
         }
+
         return Collections.emptyList();
     }
 }

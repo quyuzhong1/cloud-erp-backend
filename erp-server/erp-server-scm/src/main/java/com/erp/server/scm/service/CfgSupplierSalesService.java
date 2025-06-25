@@ -50,5 +50,5 @@ public interface CfgSupplierSalesService extends SuperService<CfgSupplierSalesEn
 
     List<CfgSupplierSalesDTO.ListAllDTO> listAll();
 
-    List<String> getDisplayField(String supplierId);
+    List<String> getDisplayField();
 }
