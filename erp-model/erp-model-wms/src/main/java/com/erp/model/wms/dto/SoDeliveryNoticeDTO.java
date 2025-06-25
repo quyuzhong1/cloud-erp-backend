@@ -700,6 +700,11 @@ public class SoDeliveryNoticeDTO {
          */
         private Boolean showDate;
         private String labelUrl;
+        /**
+         * 标签来源类型
+         * LabelSourceTypeEnum
+         */
+        private String labelSourceType;
     }
 
     @Data

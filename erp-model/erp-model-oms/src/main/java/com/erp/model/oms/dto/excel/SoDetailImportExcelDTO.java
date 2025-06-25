@@ -90,13 +90,19 @@ public class SoDetailImportExcelDTO {
     @ExcelProperty(value = "客户PO号", index = 8)
     @FieldValid(fieldName = "客户PO号",maxLength=30)
     private String customerPO;
-
+    /**
+     * 目的地
+     */
+    @ColumnWidth(40)
+    @ExcelProperty(value = "目的地", index = 9)
+    @FieldValid(fieldName = "目的地",maxLength=100)
+    private String toCountry;
 
     /**
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 9)
+    @ExcelProperty(value = "备注", index = 10)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String remark;
 
@@ -106,7 +112,7 @@ public class SoDetailImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 10)
+    @ExcelProperty(value = "错误数据", index = 11)
     private String errorMsg;
 
 

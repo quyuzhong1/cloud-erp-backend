@@ -34,6 +34,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.oms.enums.LabelSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -2002,7 +2003,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_92249);
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_SKU_PRINT);
         }
     }
     private void generateBase64ByFnskuBill(List<String> base64List, SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto){
@@ -2033,10 +2034,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
             String labelUrl = dtoDetail.getLabelUrl();
             Boolean showDate = dtoDetail.getShowDate();
+            String labelSourceType = dtoDetail.getLabelSourceType();
             String base = "";
-            if ((Objects.isNull(showDate) || Boolean.FALSE.equals(showDate)) && CharSequenceUtil.isNotBlank(labelUrl)){
+            //如果存在客户上传标签，以上传标签为准
+            if ((Objects.isNull(showDate) || Boolean.FALSE.equals(showDate) || LabelSourceTypeEnum.CUSTOMER.getCode().equals(labelSourceType)) && CharSequenceUtil.isNotBlank(labelUrl)){
                 try {
-                    byte[] content2 = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+                    byte[] content2 = FastDFSClientUtil.getStorageClient().download_file1(labelUrl);
                     base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(content2);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -2192,6 +2195,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailList.forEach(e -> {
             ListingInfoEntity listingInfoEntity = infoEntityList.stream().filter(obj -> obj.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
             e.setLabelUrl(Objects.nonNull(listingInfoEntity) ? listingInfoEntity.getLabelUrl() : "");
+            e.setLabelSourceType(Objects.nonNull(listingInfoEntity)? listingInfoEntity.getLabelSourceType() : "");
         });
     }
 }
