@@ -392,31 +392,23 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
             List<PurchaseOrderDTO.SupplierSkuDTO> supplierSkuDTOS = scmTaskFeign.listSkuBySupplierIds(supplierIds);
             Map<String, List<PurchaseOrderDTO.SupplierSkuDTO>> listSkuBySupplierIds = supplierSkuDTOS.stream().collect(Collectors.groupingBy(PurchaseOrderDTO.SupplierSkuDTO::getSupplierId));
 
-            //查询供应商采购比例
-            Map<String, BigDecimal> supplierPurchaseRatioMap = new HashMap<>();
-            List<String> supplierIdsWithPurchaseRatio = listAllDTOS.stream().filter(e -> e.getSalesRatioType().equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())).map(CfgSupplierSalesDTO.ListAllDTO::getSupplierId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(supplierIdsWithPurchaseRatio)){
-                List<SupplierPurchaseQuantityEntity> supplierPurchaseQuantityList = FeignQuery.create(SupplierPurchaseQuantityEntity.class)
-                        .in(SupplierPurchaseQuantityEntity::getSupplierId, supplierIdsWithPurchaseRatio)
-                        .list();
-
-                supplierPurchaseRatioMap = supplierPurchaseQuantityList.stream().collect(Collectors.toMap(e -> e.getSupplierId()+":"+e.getSkuId(), SupplierPurchaseQuantityEntity::getPurchaseRatio, (o1, o2) -> o1));
-            }
-
             for (CfgSupplierSalesDTO.ListAllDTO listAllDTO : listAllDTOS) {
                 //供应商
                 String supplierId = listAllDTO.getSupplierId();
-
-
+                if(StringUtils.isBlank(supplierId)){
+                    continue;
+                }
                 //批量删除
                 lambdaUpdate()
                         .eq(SalesSharingEntity::getSupplierId,supplierId)
                         .set(SalesSharingEntity::getIsDeleted,true)
                         .update();
 
-                if(StringUtils.isBlank(supplierId)){
-                    continue;
-                }
+                //查询供应商采购比例
+                List<SupplierPurchaseQuantityEntity> supplierPurchaseQuantityList = FeignQuery.create(SupplierPurchaseQuantityEntity.class)
+                        .eq(SupplierPurchaseQuantityEntity::getSupplierId, supplierId)
+                        .list();
+
                 String supplierCode = listAllDTO.getSupplierCode();
                 String supplierName = listAllDTO.getSupplierName();
 
@@ -430,7 +422,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                 //销量比例类型
                 String salesRatioType = listAllDTO.getSalesRatioType();
                 //销量比例
-                BigDecimal salesRatio = listAllDTO.getSalesRatio().divide(new BigDecimal(100), 2, RoundingMode.DOWN);
+                BigDecimal salesRatio = listAllDTO.getSalesRatio().divide(new BigDecimal(100), 4, RoundingMode.DOWN);
 
                 //sku查看配置
                 List<CfgSupplierSalesConditionEntity> skuList = listAllDTO.getSkuList();
@@ -546,7 +538,12 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                     Map<String, List<DwsDbErpDmpSkuSalesReportFEntity>> map = reportList.stream().collect(Collectors.groupingBy(DwsDbErpDmpSkuSalesReportFEntity::getSkuId));
                     for (Map.Entry<String, List<DwsDbErpDmpSkuSalesReportFEntity>> entry : map.entrySet()) {
                         if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
-                            salesRatio = supplierPurchaseRatioMap.getOrDefault(supplierId+":"+entry.getValue(),BigDecimal.ZERO);
+                            SupplierPurchaseQuantityEntity supplierPurchaseQuantityEntity = supplierPurchaseQuantityList.stream().filter(e -> Objects.equals(e.getSkuId(), entry.getKey())).findFirst().orElse(null);
+                            if(Objects.nonNull(supplierPurchaseQuantityEntity)){
+                                salesRatio = supplierPurchaseQuantityEntity.getPurchaseRatio();
+                            }else {
+                                salesRatio = BigDecimal.ZERO;
+                            }
                         }
                         List<DwsDbErpDmpSkuSalesReportFEntity> value = entry.getValue();
                         SalesSharingEntity salesSharingEntity = new SalesSharingEntity();
