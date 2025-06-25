@@ -239,7 +239,6 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             jsonObject.set("poCode", detail.getPoCode());
 
             jsonObject.set("sourceCode", detail.getSourceCode());
-
             //明细id
             jsonObject.set("detailId", detail.getId());
 
@@ -265,6 +264,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             }
             refJsonObject.set("refKingdeeId",refKingdeeId);
             refJsonObject.set("refDetailKingdeeId",refDetailKingdeeId);
+            refJsonObject.set("sourceType", detail.getSourceType());
             refList.add(refJsonObject);
             jsonObject.set("refList",refList);
             list.add(jsonObject);
