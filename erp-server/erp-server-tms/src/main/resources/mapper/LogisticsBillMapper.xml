@@ -230,48 +230,51 @@
     </select>
 
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
-        SELECT lb.id,
-        lb.shop_id as  shopId,
-        lb.outstock_id as outstockId,
-        lb.transport_no as transportNo,
-        lb.counter_no as counterNo,
-        lb.carrier_id as carrierId,
-        lb.outstock_code as outstockCode,
-        lb.business_code as businessCode,
-        lbd.id as detailId,
-        lbd.track_no as trackNo,
-        lbd.track_status as logisticsStatus,
-        lbd.track_content  as logisticsTrack ,
-        lb.invoices_status as invoicesStatus,
-        lb.shipping_method as shippingMethod,
-        lb.channel_id as logisticsChannelId,
-        lb.logistics_supplier_id as logisticsSupplierId,
-        lb.shop_name as shopName,
-        lb.to_country as country,
-        lb.order_time as orderTime,
-        lbd.sign_time as  signTime,
-        lb.ship_time as  shipTime,
-        lb.remark,
-		lb.create_time as createTime,
-        fpt.packing_status as packingStatus,
-        fmb.status as estimatedStatus,
-        case when (exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id limit 1)) then 'done' else 'toDo' end as weightAllocationStatus,
-        case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
-        else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
-        from
-        logistics_bill lb
-        inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
-        inner join wms_first_mile_delivery fmd on lb.outstock_id = fmd.id and fmd.is_deleted = false
-        left join first_mile_estimated_bill fmb on fmb.logistics_bill_id = lb.id and fmb.is_deleted = false
-        left join foreign_packing_task fpt on (fpt.source_id = lb.outstock_id or fpt.source_id = lb.source_id) and fpt.is_deleted = false
-        where ${params.sqlMap.default}
-        and lb.order_type = #{params.orderType}
-        and lb.is_deleted =false
+        SELECT
+            lb.id,
+            lb.shop_id AS shopId,
+            lb.outstock_id AS outstockId,
+            lb.transport_no AS transportNo,
+            lb.counter_no AS counterNo,
+            lb.carrier_id AS carrierId,
+            lb.outstock_code AS outstockCode,
+            lb.business_code AS businessCode,
+            lbd.id AS detailId,
+            lbd.track_no AS trackNo,
+            lbd.track_status AS logisticsStatus,
+            lbd.track_content AS logisticsTrack,
+            lb.invoices_status AS invoicesStatus,
+            lb.shipping_method AS shippingMethod,
+            lb.channel_id AS logisticsChannelId,
+            lb.logistics_supplier_id AS logisticsSupplierId,
+            lb.shop_name AS shopName,
+            lb.to_country AS country,
+            lb.order_time AS orderTime,
+            lbd.sign_time AS signTime,
+            lb.ship_time AS shipTime,
+            lb.remark,
+            lb.create_time AS createTime,
+            COALESCE(fpt1.packing_status, fpt2.packing_status) AS packingStatus,
+            fmb.status AS estimatedStatus,
+            CASE WHEN fmwa.logistics_bill_id IS NOT NULL THEN 'done' ELSE 'toDo' END AS weightAllocationStatus,
+            CASE WHEN lb.ship_time IS NOT NULL THEN FLOOR(EXTRACT(EPOCH FROM (NOW() - lb.ship_time)) / 3600) ELSE FLOOR(EXTRACT(EPOCH FROM (NOW() - lb.order_time)) / 3600) END AS actualHour
+        FROM logistics_bill lb
+        INNER JOIN wms_first_mile_delivery fmd ON lb.outstock_id = fmd.id AND fmd.is_deleted = FALSE
+        INNER JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = FALSE
+        LEFT JOIN first_mile_estimated_bill fmb ON fmb.logistics_bill_id = lb.id AND fmb.is_deleted = FALSE
+        -- 拆分OR条件为两个LEFT JOIN
+        LEFT JOIN foreign_packing_task fpt1 ON fpt1.source_id = lb.outstock_id AND fpt1.is_deleted = FALSE
+        LEFT JOIN foreign_packing_task fpt2 ON fpt2.source_id = lb.source_id AND fpt2.is_deleted = FALSE
+        -- 消除相关子查询
+        LEFT JOIN ( SELECT DISTINCT logistics_bill_id FROM first_mile_weight_allocation WHERE is_deleted = FALSE ) fmwa ON fmwa.logistics_bill_id = lb.id
+        WHERE ${params.sqlMap.default}
+        AND lb.order_type = #{params.orderType}
+        AND lb.is_deleted = FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by lb.create_time desc
+        ORDER BY lb.create_time DESC
     </select>
     <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
         SELECT lb.id,
