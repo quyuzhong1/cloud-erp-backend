@@ -3,6 +3,7 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -536,8 +537,45 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         }
                     }
 
-                    List<SalesSharingEntity> salesSharingList = BeanMapper.copyList(reportList, SalesSharingEntity.class);
-                    for (SalesSharingEntity salesSharingEntity : salesSharingList) {
+                    List<SalesSharingEntity> salesSharingList = new ArrayList<>();
+                    Map<String, List<DwsDbErpDmpSkuSalesReportFEntity>> map = reportList.stream().collect(Collectors.groupingBy(DwsDbErpDmpSkuSalesReportFEntity::getSkuId));
+                    for (Map.Entry<String, List<DwsDbErpDmpSkuSalesReportFEntity>> entry : map.entrySet()) {
+                        List<DwsDbErpDmpSkuSalesReportFEntity> value = entry.getValue();
+                        SalesSharingEntity salesSharingEntity = new SalesSharingEntity();
+                        BeanMapper.copy(value.get(0), salesSharingEntity);
+                        // 使用Stream API进行聚合计算
+                        DwsDbErpDmpSkuSalesReportFEntity aggregatedReport = value.stream()
+                                .reduce((report1, report2) -> {
+                                    report1.setSalesLast3Days(report1.getSalesLast3Days() + report2.getSalesLast3Days());
+                                    report1.setSalesLast7Days(report1.getSalesLast7Days() + report2.getSalesLast7Days());
+                                    report1.setSalesLast30Days(report1.getSalesLast30Days() + report2.getSalesLast30Days());
+                                    report1.setSalesLast60Days(report1.getSalesLast60Days() + report2.getSalesLast60Days());
+                                    report1.setSalesLast90Days(report1.getSalesLast90Days() + report2.getSalesLast90Days());
+                                    return report1;
+                                }).orElseThrow(() -> new IllegalStateException("至少需要一个销售报告实体"));
+
+                        salesSharingEntity.setSalesLast3Days(aggregatedReport.getSalesLast3Days());
+                        salesSharingEntity.setSalesLast7Days(aggregatedReport.getSalesLast7Days());
+                        salesSharingEntity.setSalesLast30Days(aggregatedReport.getSalesLast30Days());
+                        salesSharingEntity.setSalesLast60Days(aggregatedReport.getSalesLast60Days());
+                        salesSharingEntity.setSalesLast90Days(aggregatedReport.getSalesLast90Days());
+
+                        if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG3DAYS.getCode())){
+                            salesSharingEntity.setDailySales(aggregatedReport.getSalesLast3Days() / 3);
+                        }
+                        if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG7DAYS.getCode())){
+                            salesSharingEntity.setDailySales(aggregatedReport.getSalesLast7Days() / 7);
+                        }
+                        if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG30DAYS.getCode())){
+                            salesSharingEntity.setDailySales(aggregatedReport.getSalesLast30Days() / 30);
+                        }
+                        if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG60DAYS.getCode())){
+                            salesSharingEntity.setDailySales(aggregatedReport.getSalesLast60Days() / 60);
+                        }
+                        if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG90DAYS.getCode())){
+                            salesSharingEntity.setDailySales(aggregatedReport.getSalesLast90Days() / 90);
+                        }
+
                         String idStr = IdWorker.getIdStr();
                         salesSharingEntity.setId(idStr);
                         salesSharingEntity.setSupplierId(supplierId);
@@ -561,7 +599,10 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         }else {
                             salesSharingEntity.setSaleableDays(saleableStock);
                         }
+
+                        salesSharingList.add(salesSharingEntity);
                     }
+
                     //批量删除
                     lambdaUpdate()
                             .eq(SalesSharingEntity::getSupplierId,supplierId)

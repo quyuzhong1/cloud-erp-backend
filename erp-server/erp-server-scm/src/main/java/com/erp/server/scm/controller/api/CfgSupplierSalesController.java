@@ -219,8 +219,8 @@ public class CfgSupplierSalesController extends BaseController {
      * @date: 2025-06-25
      */
     @GetMapping("/getDisplayField")
-    public ApiResult<List<String>> getDisplayField(@RequestParam("supplierId") String supplierId) {
-        return success(cfgSupplierSalesService.getDisplayField(supplierId));
+    public ApiResult<List<String>> getDisplayField() {
+        return success(cfgSupplierSalesService.getDisplayField());
     }
 
 }
