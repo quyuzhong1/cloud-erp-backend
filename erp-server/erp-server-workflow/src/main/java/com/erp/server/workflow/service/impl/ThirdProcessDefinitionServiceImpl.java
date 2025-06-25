@@ -12,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.workflow.entity.DictBasicEntity;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.TableNameEnum;
@@ -19,6 +20,7 @@ import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
+import com.erp.server.workflow.service.DictBasicService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -57,6 +59,8 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -106,6 +110,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     @Override
     public List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown(String type) {
         //1、定时拉取获取定义状态
+        Map<String, String> valueToNameMap = dictBasicService.getByType("approveGroup").stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
         //2、保存启动条件时验证定义状态
         List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntities = this.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
                 .eq(ThirdProcessDefinitionEntity::getType, type).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
@@ -114,7 +119,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             ThirdProcessDefinitionDTO.DropDownDTO dropDownDTO = new ThirdProcessDefinitionDTO.DropDownDTO();
             BeanMapperUtils.copy(thirdProcessDefinitionEntity, dropDownDTO);
             dropDownDTO.setCode(thirdProcessDefinitionEntity.getApprovalCode());
-            dropDownDTO.setName(thirdProcessDefinitionEntity.getDictApprovalGroup()+thirdProcessDefinitionEntity.getName());
+            dropDownDTO.setName(valueToNameMap.get(thirdProcessDefinitionEntity.getDictApprovalGroup())+thirdProcessDefinitionEntity.getName());
             return dropDownDTO;
         }).collect(Collectors.toList());
         return dropDownDTOS;

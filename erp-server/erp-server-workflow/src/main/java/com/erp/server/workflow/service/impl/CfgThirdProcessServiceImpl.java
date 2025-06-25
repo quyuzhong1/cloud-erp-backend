@@ -88,7 +88,6 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         handleData(cfgThirdProcessEntity);
         log.info("开始新增三方审批生成");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         boolean save = super.save(cfgThirdProcessEntity);
         if (!save) {
             throw new ServiceException("三方审批生成保存失败");
@@ -97,7 +96,6 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         cfgProcessFieldMapService.add(addDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addDTO.getFieldMapList(), cfgThirdProcessEntity.getThirdProcessDefinitionCode(), cfgThirdProcessEntity.getSourcePlatform());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方审批生成", cfgThirdProcessEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_PROCESS.getCode(), cfgThirdProcessEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getCode());
     }
@@ -116,7 +114,6 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         if (!save) {
             throw new ServiceException("三方审批生成保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         cfgProcessFieldMapService.addOrUpdate(addOrUpdateDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addOrUpdateDTO.getFieldMapList(), cfgThirdProcessEntity.getThirdProcessDefinitionCode(), cfgThirdProcessEntity.getSourcePlatform());
         // 记录主单操作日志
         log.info("编辑 开始记录三方审批生成日志数据，单号：【{}】", cfgThirdProcessEntity.getCode());
@@ -202,6 +199,5 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
      * 新增修改处理数据
      */
     private void handleData(CfgThirdProcessEntity cfgThirdProcessEntity) {
-        // TODO 验证数据 & 数据赋值
     }
 }

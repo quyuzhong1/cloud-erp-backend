@@ -53,7 +53,7 @@
         SELECT condition_field,
                case
                    when field_belongs_type = 'main' then '基础信息-' || condition_field_name
-                   else db.name || '-' || condition_field_name
+                   else table_cn_name || '-' || condition_field_name
                    end AS condition_field_name,
                request_method,
                controls,
@@ -71,7 +71,6 @@
                bussiness_key,
                field_belongs_type
         FROM public.cfg_query_option cqo
-        LEFT JOIN public.dict_basic AS db on db.is_deleted = false and db.type = 'tableName' and cqo.field_belongs_type = db.value
         WHERE cqo.is_deleted = FALSE
           AND bussiness_key = #{businessKey} and use_type = #{useType}
     </select>

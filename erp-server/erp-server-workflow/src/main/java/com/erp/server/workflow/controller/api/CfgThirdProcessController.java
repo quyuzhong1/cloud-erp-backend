@@ -80,8 +80,7 @@ public class CfgThirdProcessController extends BaseController {
             serviceClass = CfgThirdProcessService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgThirdProcessDTO.UpdateDTO dto) {
-        cfgThirdProcessService.update(dto);
-        return success();
+        return success(cfgThirdProcessService.update(dto));
     }
 
     /**
@@ -110,6 +109,7 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/tabList")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "三方审批生成修改")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgThirdProcess:paging",
