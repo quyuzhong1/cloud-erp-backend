@@ -1181,7 +1181,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileCostAllocationDTO.PagingVO beforeVO = null;
         if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //本月开始有实际账单，则之前为暂估账单
-            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+            beforeVO = beforeList.stream().filter(e -> reconciliationMonth.equals(e.getReconciliationMonth()) || Objects.isNull(e.getReconciliationMonth())).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
         } else if (judgeReconciliationDTO.isLastMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //上月开始有实际账单，则之前为实际账单
             beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
