@@ -111,7 +111,8 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
         		continue;
         	}
         	String sourceType = dmpSoDeliveryEntity.getSourceType();
-        	if(selfAddFlag && !selftAdd.equals(sourceType)) {
+        	String thirdDeliveryCode = dmpSoDeliveryEntity.getThirdDeliveryCode();
+        	if(selfAddFlag && !selftAdd.equals(sourceType) && thirdDeliveryCode.contains("_")) {
         		continue;
         	}
         	String platformCode = dmpSoDeliveryEntity.getPlatformCode();
