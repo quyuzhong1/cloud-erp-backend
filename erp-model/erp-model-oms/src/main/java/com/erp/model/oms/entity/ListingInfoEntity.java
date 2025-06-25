@@ -41,6 +41,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("platform_spu_no")
     private String platformSpuNo;
+    /*
+     * SKU
+     */
+    @TableField(exist = false)
+    private String productSkuNo;
 
     /**
      * 平台产品SPU名称

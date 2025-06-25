@@ -311,6 +311,8 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
+    String getLabelUrl(String skuNo, String platformSkuNo);
+
     String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
     Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
