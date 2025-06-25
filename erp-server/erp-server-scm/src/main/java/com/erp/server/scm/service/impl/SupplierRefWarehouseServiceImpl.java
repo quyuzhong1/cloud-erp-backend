@@ -274,7 +274,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         super.updateById(entity);
 
         // 操作日志
-        String msg = StrUtil.format("状态由【{}】更新未【{}】",SupplierRefWarehouseTabEnum.getNameByCode(oldDisabled),SupplierRefWarehouseTabEnum.getNameByCode(disabled));
+        String msg = StrUtil.format("状态由【{}】更新为【{}】",SupplierRefWarehouseTabEnum.getNameByCode(oldDisabled),SupplierRefWarehouseTabEnum.getNameByCode(disabled));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_WAREHOUSE.getCode(), entity.getId(), "状态更新");
 
         return BatchResultDTO.success(entity.getId(), entity.getSupplierCode(), OperationTypeEnum.UPDATE_STATUS);
