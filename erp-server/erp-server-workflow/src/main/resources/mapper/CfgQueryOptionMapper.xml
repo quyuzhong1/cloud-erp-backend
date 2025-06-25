@@ -46,7 +46,7 @@
                select_value as remoteLabel,
                value_type as valueType
         FROM cfg_query_option
-        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
+        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey} and use_type = #{useType}
 
     </select>
     <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
@@ -73,7 +73,7 @@
         FROM public.cfg_query_option cqo
         LEFT JOIN public.dict_basic AS db on db.is_deleted = false and db.type = 'tableName' and cqo.field_belongs_type = db.value
         WHERE cqo.is_deleted = FALSE
-          AND bussiness_key = #{businessKey}
+          AND bussiness_key = #{businessKey} and use_type = #{useType}
     </select>
     <select id="listByMqParams" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
         SELECT
@@ -81,8 +81,8 @@
         FROM
             cfg_query_option
         WHERE
-            is_deleted = FALSE
-          AND( bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify } LIMIT 1 ) or field_belongs_type = 'common')
+            is_deleted = FALSE and use_type = #{useType}
+          AND( bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE and use_type = #{useType} AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify } LIMIT 1 ) or field_belongs_type = 'common')
     </select>
     <select id="proDropDownByMain" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
         SELECT condition_field,
@@ -97,7 +97,7 @@
                select_value as remoteLabel,
                value_type as valueType
         FROM cfg_query_option
-        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
+        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey} and use_type = #{useType}
             AND field_belongs_type = 'main'
         ORDER BY create_time
     </select>

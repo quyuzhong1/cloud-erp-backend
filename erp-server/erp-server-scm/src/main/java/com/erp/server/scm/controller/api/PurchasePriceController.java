@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -15,6 +16,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
@@ -132,6 +134,10 @@ public class PurchasePriceController extends BaseController {
         }
         //提审
         try {
+            entity = purchasePriceService.getById(entity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购价目");
+            }
             purchasePriceService.submitEntity(entity);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);

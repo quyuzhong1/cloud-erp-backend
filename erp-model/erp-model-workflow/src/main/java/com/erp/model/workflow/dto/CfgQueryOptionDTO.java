@@ -3,15 +3,13 @@ package com.erp.model.workflow.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -342,6 +340,10 @@ public class CfgQueryOptionDTO implements Serializable {
 
         private String sysClassify;
 
+        /**
+         * 使用类型，CfgQueryOptionUseTypeEnum枚举
+         */
+        private String useType = "allData";
     }
     /**
      *
@@ -353,7 +355,10 @@ public class CfgQueryOptionDTO implements Serializable {
         private Map<String, Object> variablesMap;
 
         private String businessKey;
-
+        /**
+         * 使用类型，CfgQueryOptionUseTypeEnum枚举
+         */
+        private String useType = "allData";
     }
 
     /**
@@ -371,7 +376,10 @@ public class CfgQueryOptionDTO implements Serializable {
         private String bussinessKey;
         //字段所属单据类型
         private String fieldBelongsType;
-
+        /**
+         * 使用类型，CfgQueryOptionUseTypeEnum枚举
+         */
+        private String useType = "allData";
     }
     /**
      *

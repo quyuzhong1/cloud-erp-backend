@@ -108,7 +108,7 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("value_type")
     private String valueType;
     /**
-     * 使用类型
+     * 使用类型,CfgQueryOptionUseTypeEnum枚举
      */
     @TableField("use_type")
     private String useType;

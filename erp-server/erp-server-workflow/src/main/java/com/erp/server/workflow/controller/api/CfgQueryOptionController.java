@@ -1,16 +1,14 @@
 package com.erp.server.workflow.controller.api;
 
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogSystemModule;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.server.workflow.service.CfgQueryOptionService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -29,12 +27,12 @@ public class CfgQueryOptionController extends BaseController {
     private CfgQueryOptionService cfgQueryOptionService;
 
     /**
-     * 查询option配置表下拉
+     * 查询option配置表下拉,useType,cfgProcess流程配置,allData全量数据
      * @return
      */
     @GetMapping("/drop/down")
-    public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDown(@RequestParam(value = "bussinessKey") String bussinessKey) {
-        return success(cfgQueryOptionService.proDropDown(bussinessKey));
+    public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDown(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "useType") String useType) {
+        return success(cfgQueryOptionService.proDropDown(bussinessKey,useType));
     }
 
     /**
@@ -42,8 +40,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return
      */
     @GetMapping("/drop/downByMain")
-    public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDownByMain(@RequestParam(value = "bussinessKey") String bussinessKey) {
-        return success(cfgQueryOptionService.proDropDownByMain(bussinessKey));
+    public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDownByMain(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "useType") String useType) {
+        return success(cfgQueryOptionService.proDropDownByMain(bussinessKey,useType));
     }
 
     /**
@@ -51,8 +49,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return
      */
     @GetMapping("/drop/down/sysField")
-    public ApiResult<List<CfgQueryOptionDTO.ViewDTO>> getSystenfield(@RequestParam(value = "bussinessKey") String bussinessKey) {
-        return success(cfgQueryOptionService.getSystemfield(bussinessKey));
+    public ApiResult<List<CfgQueryOptionDTO.ViewDTO>> getSystenfield(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "useType") String useType) {
+        return success(cfgQueryOptionService.getSystemfield(bussinessKey,useType));
     }
 
     /**
@@ -60,8 +58,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return
      */
     @GetMapping("/cfgApproveSync/drop/cfgApproveSyncDropDown")
-    public ApiResult<List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO>> cfgApproveSyncDropDown(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "fieldBelongsType") String fieldBelongsType) {
-        return success(cfgQueryOptionService.cfgApproveSyncDropDown(bussinessKey,fieldBelongsType));
+    public ApiResult<List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO>> cfgApproveSyncDropDown(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "useType") String useType,@RequestParam(value = "fieldBelongsType") String fieldBelongsType) {
+        return success(cfgQueryOptionService.cfgApproveSyncDropDown(bussinessKey,useType,fieldBelongsType));
     }
 
     /**
@@ -72,8 +70,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>>
      */
     @GetMapping("/tree")
-    public ApiResult<List<CfgQueryOptionDTO.TreeDTO>> tree(String bussinessKey) {
-        List<CfgQueryOptionDTO.TreeDTO> result = cfgQueryOptionService.tree(bussinessKey);
+    public ApiResult<List<CfgQueryOptionDTO.TreeDTO>> tree(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "useType") String useType) {
+        List<CfgQueryOptionDTO.TreeDTO> result = cfgQueryOptionService.tree(bussinessKey,useType);
         return success(result);
     }
     /**

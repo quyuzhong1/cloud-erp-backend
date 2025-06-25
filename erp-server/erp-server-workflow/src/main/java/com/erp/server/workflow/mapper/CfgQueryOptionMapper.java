@@ -20,11 +20,11 @@ import java.util.List;
 @Mapper
 public interface CfgQueryOptionMapper extends BaseMapper<CfgQueryOptionEntity> {
 
-    List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
+    List<CfgQueryOptionDTO.ListDTO> proDropDown(@Param("bussinessKey")String bussinessKey,@Param("useType") String useType);
 
-    List<CfgQueryOptionEntity> getSystemfield(String bussinessKey);
+    List<CfgQueryOptionEntity> getSystemfield(@Param("bussinessKey")String bussinessKey,@Param("useType")String useType);
 
     List<CfgQueryOptionEntity> listByMqParams(@Param("params") CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
 
-    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey);
+    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(@Param("bussinessKey")String bussinessKey,@Param("useType")String useType);
 }
