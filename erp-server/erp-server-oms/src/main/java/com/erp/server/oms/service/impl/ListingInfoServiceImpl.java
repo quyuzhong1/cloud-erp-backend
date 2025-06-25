@@ -592,7 +592,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .set(ListingInfoEntity::getLabelFileName,labelFileName)
                 .set(ListingInfoEntity::getLabelSourceType,labelSourceType)
                 .update();
-        operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑产品标签链接",UserContext.getDefaultLoginUser().getUserName()), ModuleTypeEnum.LISTING_INFO.getCode(), id,"更新标签链接");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑产品标签【{}】链接【{}】",UserContext.getDefaultLoginUser().getUserName(),labelFileName,labelUrl), ModuleTypeEnum.LISTING_INFO.getCode(), id,"更新标签链接");
     }
 
     @Override

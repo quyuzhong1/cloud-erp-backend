@@ -1153,8 +1153,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             if (CharSequenceUtil.isNotBlank(item.getLabelUrl()) && LabelSourceTypeEnum.CUSTOMER.getCode().equals(item.getLabelSourceType())){
                 item.setIsUploadLabel(Boolean.TRUE);
+                item.setUploadLabelStr("是");
+                item.setLabelUrlStr(FastDFSClientUtil.publicUrl + "/" + item.getLabelUrl());
             }else {
                 item.setIsUploadLabel(Boolean.FALSE);
+                item.setUploadLabelStr("否");
+                if (CharSequenceUtil.isNotBlank(item.getLabelUrl())){
+                    item.setLabelUrlStr(FastDFSClientUtil.publicUrl + "/" + item.getLabelUrl());
+                }
             }
         }
 
@@ -1915,13 +1921,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CharSequenceUtil.isBlank(dto.getLabelUrl())){
                 //根据模板生成pdf文件
                 existsEntity.setLabelUrl(getLabelUrl(skuVO.getSkuNo(),dto.getPlatformSkuNo()));
-                existsEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+                existsEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
                 existsEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
             } else if (!Objects.equals(existsEntity.getLabelUrl(), dto.getLabelUrl())){
                 existsEntity.setLabelUrl(dto.getLabelUrl());
                 existsEntity.setLabelFileName(dto.getLabelFileName());
                 existsEntity.setLabelSourceType(LabelSourceTypeEnum.CUSTOMER.getCode());
-                String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelUrl());
+                String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelFileName(),dto.getLabelUrl());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "新增操作");
             }
             //存在客户sku，将历史映射关系失效，新增映射关系
@@ -1979,7 +1985,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CharSequenceUtil.isBlank(dto.getLabelUrl())){
                 //根据模板生成pdf文件
                 listingInfoEntity.setLabelUrl(getLabelUrl(skuVO.getSkuNo(),dto.getPlatformSkuNo()));
-                listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+                listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
                 listingInfoEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
             } else{
                 listingInfoEntity.setLabelUrl(dto.getLabelUrl());
@@ -2085,7 +2091,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             existsEntity.setLabelUrl(dto.getLabelUrl());
             existsEntity.setLabelFileName(dto.getLabelFileName());
             existsEntity.setLabelSourceType(LabelSourceTypeEnum.CUSTOMER.getCode());
-            String msg1 =  CharSequenceUtil.format("用户【{}】编辑【{}】为【{}】产品标签【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelUrl());
+            String msg1 =  CharSequenceUtil.format("用户【{}】编辑【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelFileName(),dto.getLabelUrl());
             operateLogService.addModuleOperateLog(msg1, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "编辑操作");
         }
         listingInfoService.updateById(existsEntity);
@@ -2220,7 +2226,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         ListingInfoEntity listingInfoEntity = entityList.get(0);
         listingInfoService.updateLabelInfo(listingInfoEntity.getId(), dto.getLabelUrl(),LabelSourceTypeEnum.CUSTOMER.getCode(),CharSequenceUtil.isNotBlank(dto.getLabelFileName())? dto.getLabelFileName() : fileName);
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(dto.getPlatformSkuNo(),dto.getPlatformSkuNo(),"更新客户SKU标签成功");
     }
 
     @Override

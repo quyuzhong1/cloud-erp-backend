@@ -185,9 +185,9 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 if (CharSequenceUtil.isNotBlank(labelUrl)){
                     //根据模板生成pdf文件
                     listingInfoEntity.setLabelUrl(labelUrl);
-                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
                     listingInfoEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
-                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelUrl());
+                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelFileName(),listingInfoEntity.getLabelUrl());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
                 }
             }
@@ -206,9 +206,9 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 if (CharSequenceUtil.isNotBlank(labelUrl)){
                     //根据模板生成pdf文件
                     listingInfoEntity.setLabelUrl(labelUrl);
-                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
                     listingInfoEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
-                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelUrl());
+                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelFileName(),listingInfoEntity.getLabelUrl());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
                 }
             }
