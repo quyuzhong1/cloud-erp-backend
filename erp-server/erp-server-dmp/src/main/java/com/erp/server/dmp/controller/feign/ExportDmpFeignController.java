@@ -7,7 +7,7 @@ import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
@@ -70,7 +70,7 @@ public class ExportDmpFeignController {
 
     @PostMapping("/exportAfterSale")
     @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
-    public PagingVO<DmpAfterSaleExcekDTO> exportAfterSale(@RequestBody PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
+    public PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
         return afterSaleService.exportList(dto);
     }
 }

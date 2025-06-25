@@ -20,12 +20,12 @@ public class AfterSaleQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         LoginUser user = UserContext.getNonLoginUser();
-        //客户寄回快递单号
+        //客户买家寄出快递单号
         if(field.equals("customer_track_no")){
             return " afs.id in (select main_id from after_sale_progress where node ='toBeReturned' and track_no "+compareCodeSplicingValueSql+")";
 
         }
-        //寄出快递单号
+        //商家寄出快递单号
         if(field.equals("send_track_no")){
             return " afs.id in (select main_id from after_sale_progress where node ='toBeShipped' and track_no "+compareCodeSplicingValueSql+")";
         }

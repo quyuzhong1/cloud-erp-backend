@@ -1,6 +1,6 @@
 package com.erp.server.dmp.mapper;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
-import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -45,7 +45,7 @@ public interface AfterSaleMapper extends BaseMapper<AfterSaleEntity> {
     * @param params
     * @return
     */
-    IPage<DmpAfterSaleExcekDTO> listExport(Page query, @Param("params") AfterSaleDTO.PagingParamDTO params);
+    IPage<DmpAfterSaleExcelDTO> listExport(Page query, @Param("params") AfterSaleDTO.PagingParamDTO params);
 
 
     /**
