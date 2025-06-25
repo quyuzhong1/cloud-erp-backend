@@ -4,6 +4,7 @@ package com.erp.server.srm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
@@ -402,12 +403,18 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
             }
 
             for (CfgSupplierSalesDTO.ListAllDTO listAllDTO : listAllDTOS) {
-                StringBuffer sb = new StringBuffer();
-                sb.append(" and ( ");
                 //供应商
                 String supplierId = listAllDTO.getSupplierId();
+
+                if(StringUtils.isBlank(supplierId)){
+                    continue;
+                }
                 String supplierCode = listAllDTO.getSupplierCode();
                 String supplierName = listAllDTO.getSupplierName();
+
+                StringBuffer sb = new StringBuffer();
+                sb.append(" and ( ");
+
                 //日均销量类型
                 String dailySalesType = listAllDTO.getDailySalesType();
                 //统计维度
@@ -531,6 +538,9 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
 
                     List<SalesSharingEntity> salesSharingList = BeanMapper.copyList(reportList, SalesSharingEntity.class);
                     for (SalesSharingEntity salesSharingEntity : salesSharingList) {
+                        String idStr = IdWorker.getIdStr();
+                        salesSharingEntity.setId(idStr);
+                        salesSharingEntity.setSupplierId(supplierId);
                         salesSharingEntity.setSupplierCode(supplierCode);
                         salesSharingEntity.setSupplierName(supplierName);
 
@@ -552,6 +562,12 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                             salesSharingEntity.setSaleableDays(saleableStock);
                         }
                     }
+                    //批量删除
+                    lambdaUpdate()
+                            .eq(SalesSharingEntity::getSupplierId,supplierId)
+                            .set(SalesSharingEntity::getIsDeleted,true)
+                            .update();
+
                     //批量保存
                     saveBatch(salesSharingList);
                 }
