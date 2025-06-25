@@ -19,7 +19,7 @@ public class PoInStockQueryHandler extends AbstractQueryHandler {
             this.buildSplicingSQLDTO("psi.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         if("deliveryCode".equals(field)) {
-            return "exists (select 1 from warehouse_receive where is_deleted = false and id = pis.source_id  and source_code "+compareCodeSplicingValueSql +")";
+            return "exists (select 1 from po_receive where is_deleted = false and id = psi.source_id  and source_code "+compareCodeSplicingValueSql +")";
         }
         return null;
     }
