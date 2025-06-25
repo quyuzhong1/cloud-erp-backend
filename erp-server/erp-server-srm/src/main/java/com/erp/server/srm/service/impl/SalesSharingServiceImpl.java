@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -128,7 +129,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
 
         String permission = cfgSupplierSalesList.get(0).getPermission();
         if(!Objects.equals(permission, CfgSupplierSalesPermissionEnum.DOWNLOAD.getCode())){
-            return "仅查看数据";
+            return ApiError.NO_PERMISSION.msg;
         }
 
         List<SalesSharingDTO.ListDTO> list = this.baseMapper.listByParams( pagingDTO);
@@ -416,7 +417,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                 //销量比例
                 BigDecimal salesRatio = listAllDTO.getSalesRatio();
                 if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
-                    salesRatio = listAllDTO.getSalesRatio();
+                    salesRatio = supplierPurchaseRatioMap.getOrDefault(supplierId,BigDecimal.ZERO);
                 }
                 //sku查看配置
                 List<CfgSupplierSalesConditionEntity> skuList = listAllDTO.getSkuList();
@@ -428,18 +429,18 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
 
                 //设置sku相关的配置条件
                 if(CollUtil.isNotEmpty(skuList)){
-                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(skuList);
+                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(skuList,Boolean.TRUE);
                     if(StringUtils.isNotBlank(sqlWhere)){
+                        sb.append(" ");
                         sb.append(sqlWhere);
-                        sb.append(" and ");
                     }
                 }
                 //设置销量统计相关的配置条件
                 if(CollUtil.isNotEmpty(salesStatisticList)){
-                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(salesStatisticList);
+                    String sqlWhere = supplierSalesConditionHandler.buildWhereClause(salesStatisticList,Boolean.TRUE);
                     if(StringUtils.isNotBlank(sqlWhere)){
+                        sb.append(" ");
                         sb.append(sqlWhere);
-                        sb.append(" and ");
                     }
                 }
 
@@ -471,11 +472,16 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                     CfgSupplierSalesConditionEntity isPurchaseEntity = skuList.stream().filter(e -> e.getField().contains("isPurchase")).findFirst().orElse(null);
                     if(Objects.nonNull(isPurchaseEntity) && StringUtils.isNotBlank(isPurchaseEntity.getValue())){
                         //采购过的sku集合
-                        List<String> purchaseSkuList = listSkuBySupplierIds.get(supplierId).stream().map(PurchaseOrderDTO.SupplierSkuDTO::getSkuNo).collect(Collectors.toList());
+                        List<PurchaseOrderDTO.SupplierSkuDTO> supplierSku = listSkuBySupplierIds.get(supplierId);
+                        List<String> purchaseSkuList = new ArrayList<>();
+                        if(CollUtil.isNotEmpty(supplierSku)) {
+                            purchaseSkuList = supplierSku.stream().map(PurchaseOrderDTO.SupplierSkuDTO::getSkuNo).collect(Collectors.toList());
+                        }
+                        List<String> finalPurchaseSkuList = purchaseSkuList;
                         if(Objects.equals(isPurchaseEntity.getValue(), "true")){//采购过的
-                            reportList = reportList.stream().filter(e -> purchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
+                            reportList = reportList.stream().filter(e -> finalPurchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
                         }else {//没采购过的
-                            reportList = reportList.stream().filter(e -> !purchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
+                            reportList = reportList.stream().filter(e -> !finalPurchaseSkuList.contains(e.getSkuNo())).collect(Collectors.toList());
                         }
                     }
                 }
@@ -487,17 +493,18 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                     StringBuffer stringBuffer = new StringBuffer();
                     List<String> skuIds = reportList.stream().map(DwsDbErpDmpSkuSalesReportFEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
                     if(CollUtil.isNotEmpty(skuIds)){
-                        stringBuffer.append(" sku_id in (’");
+                        stringBuffer.append(" and sku_id in ('");
                         stringBuffer.append(String.join("','", skuIds));
-                        stringBuffer.append("‘) ");
+                        stringBuffer.append("') and ");
                     }
                     if(CollUtil.isNotEmpty(saleableStockList)){
-                        String sqlWhere = supplierSalesConditionHandler.buildWhereClause(saleableStockList);
+                        String sqlWhere = supplierSalesConditionHandler.buildWhereClause(saleableStockList,Boolean.TRUE);
                         if(StringUtils.isNotBlank(sqlWhere)){
-                            stringBuffer.append(" and ");
+                            stringBuffer.append(" ");
                             stringBuffer.append(sqlWhere);
                         }
                     }
+                    stringBuffer.append(" 1 = 1 ");
                     String inventorySqlCondition = stringBuffer.toString();
                     if(StringUtils.isNotBlank(inventorySqlCondition)){
                         if(Objects.equals(warehouseType, CfgSupplierSalesConditionWarehouseTypeEnum.VIRTUALWAREHOUSE.getCode())){
@@ -539,7 +546,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         if(Objects.nonNull(dailySales) && Objects.nonNull(saleableStock) && dailySales > 0 && saleableStock > 0){
 
                             BigDecimal divide = salesRatio.divide(new BigDecimal(100), 2, RoundingMode.DOWN);
-                            BigDecimal saleableDays = new BigDecimal(dailySales).multiply(divide).setScale(0);
+                            BigDecimal saleableDays = new BigDecimal(dailySales).multiply(divide).setScale(0,RoundingMode.DOWN);
                             salesSharingEntity.setSaleableDays(saleableDays.intValue());
                         }else {
                             salesSharingEntity.setSaleableDays(saleableStock);
