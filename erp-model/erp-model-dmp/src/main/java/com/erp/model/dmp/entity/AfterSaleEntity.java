@@ -144,6 +144,18 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     @TableField("phone_number")
     private String phoneNumber;
 
+    /**
+     * 客服备注
+     */
+    @TableField("csr_remark")
+    private String csrRemark;
+
+    /**
+     * 维修备注
+     */
+    @TableField("rma_remark")
+    private String rmaRemark;
+
 
     public static final String CODE = "code";
 
