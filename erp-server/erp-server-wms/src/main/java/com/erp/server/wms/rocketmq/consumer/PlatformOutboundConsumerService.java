@@ -17,23 +17,30 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 下载平台入库数据消费服务
@@ -63,6 +70,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Lazy
     @Resource
     private AsyncService asyncService;
+
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+    @Resource
+    private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -163,6 +176,32 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 return ApiResult.success();
             }
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+            //查询三方仓发货明细，重新赋值明细数据
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryDetailService.listByMainId(thirdWarehouseDeliveryEntity.getId());
+                if(CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntityList)){
+                    LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
+                    List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Arrays.asList(mainEntity.getId()));
+                    for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntityList) {
+                        //表示有啊
+                        SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
+                        // 明细记录平台单号
+                        addDTO.setPlatformCode(mainEntity.getPlatformCode());
+                        addDTO.setSkuId(thirdWarehouseDeliveryDetailEntity.getSkuId());
+                        addDTO.setSkuNo(thirdWarehouseDeliveryDetailEntity.getSkuNo());
+                        SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getSkuId().equals(thirdWarehouseDeliveryDetailEntity.getSourceSkuId())).findFirst().orElse(new SoB2cDetailEntity());
+                        addDTO.setSourceDetailId(soB2cDetailEntity.getSourceDetailId());
+                        addDTO.setSoDetailId(soB2cDetailEntity.getId());
+                        addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
+                        addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
+                        addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                        addDTO.setRemark("三方仓出库自动生成");
+                        wantDetailList.add(addDTO);
+                    }
+                    generateB2cDTO.setDetailList(wantDetailList);
+                }
+            }
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         }
