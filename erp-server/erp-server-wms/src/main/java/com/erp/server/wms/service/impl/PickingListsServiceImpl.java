@@ -592,25 +592,54 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 skuKey.add(key);
             }
         });
-        return printSkuCombinationViewList.stream()
-                .filter(e -> e.getGroupName().equals(groupName))
-                .collect(Collectors.groupingBy(
-                        v -> v.getThirdSku() + ":" + v.getParentSkuNo() + ":" + v.getChildSkuNo()
-                                + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
-                        Collectors.collectingAndThen(Collectors.toList(), list -> {
-                            PickingListsDTO.PrintSkuView view = list.get(0);
-                            List<String> deliveryDetailIds = list.stream().map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
-                            view.setParentSkuQty(deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
-                            view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
-                            return view;
-                        })
-                ))
-                .values().stream()
-                .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
-                        .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
-                        .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
-                )
-                .collect(Collectors.toList());
+        //先过滤集合数据
+        Map<String, List<PickingListsDTO.PrintSkuView>> groupMap = printSkuCombinationViewList.stream().filter(e -> e.getGroupName().equals(groupName)).collect(Collectors.groupingBy(v -> v.getThirdSku() + ":" + v.getParentSkuNo()));
+        //遍历集合重新整合打印参数
+        LinkedList<PickingListsDTO.PrintSkuView> printSkuViewList = new LinkedList<>();
+        for (String key : groupMap.keySet()){
+            LinkedList<PickingListsDTO.PrintSkuView> groupSkuViewList = new LinkedList<>();
+            List<PickingListsDTO.PrintSkuView> printSkuViews = groupMap.get(key);
+            //先根据计算这批数据的父级sku数量
+            List<String> deliveryDetailIds = printSkuViews.stream().map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
+            Integer parentSkuQty = deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact);
+            //然后再根据仓位维度进行分组
+            Map<String, List<PickingListsDTO.PrintSkuView>> detailMap = printSkuCombinationViewList.stream().filter(e -> e.getGroupName().equals(groupName)).collect(Collectors.groupingBy(v -> v.getThirdSku() + ":" + v.getParentSkuNo() + ":" + v.getChildSkuNo()));
+            //根据明细整合打印数据
+            for (String detailKey : detailMap.keySet()){
+                List<PickingListsDTO.PrintSkuView> detailPrintSkuViews = detailMap.get(detailKey);
+                PickingListsDTO.PrintSkuView printSkuView = new PickingListsDTO.PrintSkuView();
+                //获取第一个元素
+                printSkuView = detailPrintSkuViews.get(0);
+                printSkuView.setParentSkuQty(parentSkuQty);
+                printSkuView.setChildSkuQty(detailPrintSkuViews.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
+                groupSkuViewList.add(printSkuView);
+            }
+            //排序
+            printSkuViewList.addAll(groupSkuViewList.stream().sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)).collect(Collectors.toList()));
+        }
+        return printSkuViewList;
+
+//        return printSkuCombinationViewList.stream()
+//                .filter(e -> e.getGroupName().equals(groupName))
+//                .collect(Collectors.groupingBy(
+//                        v -> v.getThirdSku() + ":" + v.getParentSkuNo() + ":" + v.getChildSkuNo()
+//                                + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+//                        Collectors.collectingAndThen(Collectors.toList(), list -> {
+//                            PickingListsDTO.PrintSkuView view = list.get(0);
+//                            List<String> deliveryDetailIds = list.stream().map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
+//                            view.setParentSkuQty(deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
+//                            view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
+//                            return view;
+//                        })
+//                ))
+//                .values().stream()
+//                .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+//                        .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
+//                        .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
+//                )
+//                .collect(Collectors.toList());
 
     }
 
