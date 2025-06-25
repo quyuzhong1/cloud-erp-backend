@@ -1016,17 +1016,20 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //初始分摊（实际+暂估）可以判断期初费用分摊
                 if (judgeReconciliationDTO.isLastHasCostAllocation()){
                     if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                        //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                        //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                         //期初不等于0时，期初在途费用-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                    }else {
+                        //期初等于0时，头程分摊金额-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }
                 }else if (Objects.isNull(initEntity)){
                     //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                    //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                    //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                     //期初不等于0时，期初在途费用-冲期初-本期分摊费用
