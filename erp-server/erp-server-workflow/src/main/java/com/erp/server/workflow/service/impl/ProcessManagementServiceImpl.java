@@ -69,6 +69,7 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.common.business.annotation.DistributeLocker;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
