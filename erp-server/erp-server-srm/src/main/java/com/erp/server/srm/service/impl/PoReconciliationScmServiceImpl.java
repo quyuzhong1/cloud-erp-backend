@@ -34,7 +34,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.PoReconciliationDetailImportExcelDTO;
-import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -189,7 +188,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
         }
-        BigDecimal amount = detailList.stream().map(PoReconciliationDetailEntity::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal amount = detailList.stream().map(PoReconciliationDetailEntity::getDiscountTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         //更新主表对账金额
         lambdaUpdate().eq(PoReconciliationEntity::getId,id)
                 .set(PoReconciliationEntity::getAmount,amount)
@@ -240,8 +239,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "采购订单错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchaseOrderImportExcelDTO.class);
+            String fileName = "采购对账单错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, PoReconciliationDetailImportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
