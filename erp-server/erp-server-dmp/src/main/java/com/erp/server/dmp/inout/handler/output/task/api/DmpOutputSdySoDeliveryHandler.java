@@ -200,7 +200,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
 				if(selfAdd) {
-    				shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoDeliveryDetailEntity.getSoId() + dmpSoDeliveryDetailEntity.getSoDetailId());
+    				shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoDeliveryDetailEntity.getSoId() + dmpSoDeliveryDetailEntity.getSoDetailId() + "_1");
     			}else {
     				shudiyunB2cOrderDTO.setBiz_uni_key(thirdDeliveryId + dmpSoDeliveryDetailEntity.getThirdDeliveryDetailId());
     			}
