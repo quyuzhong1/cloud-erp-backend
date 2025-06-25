@@ -2007,7 +2007,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return "";
     }
 
-    private String getLabelUrl(String skuNo, String platformSkuNo) {
+    @Override
+    public String getLabelUrl(String skuNo, String platformSkuNo) {
+        if (CharSequenceUtil.isBlank(skuNo) || CharSequenceUtil.isBlank(platformSkuNo)){
+            return "";
+        }
         //模板查询
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
@@ -2208,7 +2212,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         String fileName = dto.getPlatformSkuNo();
         int dotIndex = fileName.lastIndexOf(".pdf");
         String platformSkuNo = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
-        List<ListingInfoEntity> entityList = listingInfoService.listByParam(RuleTypeEnum.WAREHOUSE.getCode(), null, Collections.singletonList(platformSkuNo));
+        List<ListingInfoEntity> entityList = listingInfoService.listByParam(RuleTypeEnum.CUSTOMER.getCode(), null, Collections.singletonList(platformSkuNo));
         if (CollUtil.isEmpty(entityList)){
             throw new ServiceException("文件名匹配不到客户SKU");
         }else  if (entityList.size() > 1){
