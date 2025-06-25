@@ -2,9 +2,11 @@ package com.erp.server.dmp.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.core.security.HmacSHA256Utils;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.wms.aliexpress.model.order.AliexpressOrderConfirmDTO;
+import io.seata.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +18,9 @@ import java.util.Map;
 public class OrderOutboundHandler implements WebhookHandler{
 
     private static final Logger log = LoggerFactory.getLogger(OrderOutboundHandler.class);
-    private final LogisticsFeign logisticsFeign = SpringUtil.getBean(LogisticsFeign.class);
+
+    private final DmpInputCreateFactory dmpInputCreateFactory = SpringUtil.getBean(DmpInputCreateFactory.class);
+
     @Override
     public void verify(String data, Map<String, String> headers, String serviceFlag) {
         return;
@@ -37,8 +41,19 @@ public class OrderOutboundHandler implements WebhookHandler{
 
     @Override
     public String process(String data, Map<String, String> headers, String serviceFlag) {
+        if(StringUtils.isBlank(data)){
+            return "";
+        }
         log.warn("webhook 获取出库单数据,{}",data);
-        return null;
+        try {
+            ThirdWarehouseContext.setData(data);
+            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+            dmpInputHotfixCreateRequest.setCfgInputId("1937771436038967500");
+            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+        }finally {
+            ThirdWarehouseContext.remove();
+        }
+        return "success";
     }
 
 //    private boolean verifySignature(String data, String signature) {
