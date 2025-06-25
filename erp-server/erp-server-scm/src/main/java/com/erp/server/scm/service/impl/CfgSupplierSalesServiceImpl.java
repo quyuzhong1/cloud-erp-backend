@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -613,5 +614,30 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
             }
         }
         return datas;
+    }
+
+    @Override
+    public List<String> getDisplayField(String supplierId) {
+        if(StringUtils.isNotBlank(supplierId)){
+            CfgSupplierSalesEntity cfgSupplierSalesEntity = lambdaQuery().eq(CfgSupplierSalesEntity::getSupplierId, supplierId).last(" limit 1").one();
+            if(Objects.nonNull(cfgSupplierSalesEntity)){
+                List<CfgSupplierSalesDisplayFieldEnum> list = Arrays.asList(CfgSupplierSalesDisplayFieldEnum.values());
+
+                List<String> allFieldList = list.stream().map(CfgSupplierSalesDisplayFieldEnum::getCode).collect(Collectors.toList());
+
+                List<String> existFieldList = Arrays.asList(cfgSupplierSalesEntity.getDisplayField().split(","));
+
+                // 差集 = allFieldList - existFieldList
+                List<String> diffFieldList = allFieldList.stream()
+                        .filter(field -> !existFieldList.contains(field))
+                        .collect(Collectors.toList());
+
+                if(diffFieldList.contains(CfgSupplierSalesDisplayFieldEnum.SALE_STATE.getCode())){
+                    diffFieldList.add("saleStateName");
+                }
+                return diffFieldList;
+            }
+        }
+        return Collections.emptyList();
     }
 }
