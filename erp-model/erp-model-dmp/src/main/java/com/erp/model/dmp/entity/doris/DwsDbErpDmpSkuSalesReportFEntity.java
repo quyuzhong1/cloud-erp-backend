@@ -54,8 +54,8 @@ public class DwsDbErpDmpSkuSalesReportFEntity extends BaseEntity<DwsDbErpDmpSkuS
     /**
     * SKU名称
     */
-    @TableField("sku_name")
-    private String skuName;
+    @TableField("product_name")
+    private String productName;
     /**
     * 销售状态编码
     */
