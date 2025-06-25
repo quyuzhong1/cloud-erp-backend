@@ -196,6 +196,11 @@ public class CfgProcessController extends BaseController {
      * @date: 2025-05-12
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgProcess:update",
+            serviceClass = CfgThirdProcessService.class,
+            keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE, desc = "流程配置更新")
     public ApiResult<BaseResultDTO.AddDTO> update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         return success(cfgProcessService.update(dto));

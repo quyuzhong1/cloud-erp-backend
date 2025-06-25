@@ -32,6 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -825,9 +826,22 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 JSONArray fileArray = field.getJSONArray("value");
                 String[] names = field.getStr("ext").split(",");
                 for (int i = 0; i < names.length; i++) {
-                    nameToUrl.put(names[i], fileArray.get(i).toString());
+                    String fileUrl = fileArray.get(i).toString();
+                    String fileName = names[i];
+                    try {
+                        // 1.下载第三方文件
+                        byte[] fileByte = FastDFSClientUtil.getFileByte(fileUrl);
+                        //fileByte转为file
+                        File file = new File(fileName);
+                        FileUtils.writeByteArrayToFile(file, fileByte);
+                        // 2.将文件上传到文件服务器
+                        String uploadUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                        // 3.更新url
+                        nameToUrl.put(fileName, uploadUrl);
+                    } catch (Exception e) {
+                        throw new RuntimeException("文件下载处理失败"+e);
+                    }
                 }
-                //TODO 先进行上传，得到url
                 return nameToUrl;
             case "department":
                 JSONArray deptValues = field.getJSONArray("value");
