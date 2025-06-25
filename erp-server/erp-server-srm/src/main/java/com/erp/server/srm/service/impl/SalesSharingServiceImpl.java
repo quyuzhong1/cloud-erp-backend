@@ -423,7 +423,7 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                 //销量比例类型
                 String salesRatioType = listAllDTO.getSalesRatioType();
                 //销量比例
-                BigDecimal salesRatio = listAllDTO.getSalesRatio();
+                BigDecimal salesRatio = listAllDTO.getSalesRatio().divide(new BigDecimal(100), 2, RoundingMode.DOWN);
                 if(salesRatioType.equals(CfgSupplierSalesSalesRatioTypeEnum.PURCHASERATIO.getCode())){
                     salesRatio = supplierPurchaseRatioMap.getOrDefault(supplierId,BigDecimal.ZERO);
                 }
@@ -554,11 +554,13 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                                     return report1;
                                 }).orElseThrow(() -> new IllegalStateException("至少需要一个销售报告实体"));
 
-                        salesSharingEntity.setSalesLast3Days(aggregatedReport.getSalesLast3Days());
-                        salesSharingEntity.setSalesLast7Days(aggregatedReport.getSalesLast7Days());
-                        salesSharingEntity.setSalesLast30Days(aggregatedReport.getSalesLast30Days());
-                        salesSharingEntity.setSalesLast60Days(aggregatedReport.getSalesLast60Days());
-                        salesSharingEntity.setSalesLast90Days(aggregatedReport.getSalesLast90Days());
+
+                        //销量 * 销量比例
+                        salesSharingEntity.setSalesLast3Days(new BigDecimal(aggregatedReport.getSalesLast3Days()).multiply(salesRatio).setScale(0, RoundingMode.DOWN).intValue());
+                        salesSharingEntity.setSalesLast7Days(new BigDecimal(aggregatedReport.getSalesLast7Days()).multiply(salesRatio).setScale(0, RoundingMode.DOWN).intValue());
+                        salesSharingEntity.setSalesLast30Days(new BigDecimal(aggregatedReport.getSalesLast30Days()).multiply(salesRatio).setScale(0, RoundingMode.DOWN).intValue());
+                        salesSharingEntity.setSalesLast60Days(new BigDecimal(aggregatedReport.getSalesLast60Days()).multiply(salesRatio).setScale(0, RoundingMode.DOWN).intValue());
+                        salesSharingEntity.setSalesLast90Days(new BigDecimal(aggregatedReport.getSalesLast90Days()).multiply(salesRatio).setScale(0, RoundingMode.DOWN).intValue());
 
                         if(Objects.equals(dailySalesType,CfgSupplierSalesDailySalesTypeEnum.DAILYAVG3DAYS.getCode())){
                             salesSharingEntity.setDailySales(aggregatedReport.getSalesLast3Days() / 3);
@@ -592,10 +594,8 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
                         //计算可销天数
                         Integer dailySales = salesSharingEntity.getDailySales();
                         if(Objects.nonNull(dailySales) && Objects.nonNull(saleableStock) && dailySales > 0 && saleableStock > 0){
-                            //即时库存数量 / 日均销量 * （ 销售比例 /100 ）
-                            BigDecimal divide = salesRatio.divide(new BigDecimal(100), 2, RoundingMode.DOWN);
-
-                            BigDecimal saleableDays = new BigDecimal(saleableStock).divide(new BigDecimal(dailySales), 2, RoundingMode.DOWN).multiply(divide).setScale(0,RoundingMode.DOWN);
+                            //即时库存数量 / 日均销量
+                            BigDecimal saleableDays = new BigDecimal(saleableStock).divide(new BigDecimal(dailySales), 0, RoundingMode.DOWN);
                             salesSharingEntity.setSaleableDays(saleableDays.intValue());
                         }else {
                             salesSharingEntity.setSaleableDays(saleableStock);
