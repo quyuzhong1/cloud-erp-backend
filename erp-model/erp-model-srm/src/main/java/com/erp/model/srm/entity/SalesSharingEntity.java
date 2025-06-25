@@ -72,7 +72,7 @@ public class SalesSharingEntity extends BaseEntity<SalesSharingEntity> {
     /**
     * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
     */
-    @TableField("sale_state")
+    @TableField("sale_state_name")
     private String saleStateName;
     /**
     * 可销库存

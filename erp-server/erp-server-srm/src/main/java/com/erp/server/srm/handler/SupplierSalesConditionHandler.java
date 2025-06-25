@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Component
 public class SupplierSalesConditionHandler {
 
-    public static String buildWhereClause(List<CfgSupplierSalesConditionEntity> conditionList) {
+    public static String buildWhereClause(List<CfgSupplierSalesConditionEntity> conditionList,Boolean toUnderlineCase) {
         if (conditionList == null || conditionList.isEmpty()) {
             return "";
         }
@@ -30,26 +30,29 @@ public class SupplierSalesConditionHandler {
             String compare = cond.getCompare();
             String value = cond.getValue();
             String valueType = cond.getValueType();
-            String left = cond.getLeftBracket() != null ? cond.getLeftBracket() : "";
-            String right = cond.getRightBracket() != null ? cond.getRightBracket() : "";
-            String logic = cond.getLogic();
+            String left = StringUtils.isNotBlank(cond.getLeftBracket()) ? cond.getLeftBracket() : "";
+            String right = StringUtils.isNotBlank(cond.getRightBracket()) ? cond.getRightBracket() : "";
+            String logic =  StringUtils.isNotBlank(cond.getLogic()) ? cond.getLogic() : " and ";
 
             String expression;
             if ("isPurchase".equals(field)) {
                 // isPurchase 特殊处理
-                expression = "1 = 1";
+                expression = " 1 = 1 ";
             } else if ("categoryId".equals(field)) {
                 // categoryId 特殊处理
                 expression = buildCategoryIdCondition(compare, value, valueType);
             } else {
                 // 普通字段
-                field = StrUtil.toUnderlineCase(field);
+                //转下划线
+                if(Boolean.TRUE.equals(toUnderlineCase)){
+                    field = StrUtil.toUnderlineCase(field);
+                }
                 expression = buildSingleCondition(field, compare, value, valueType);
             }
 
-            sqlBuilder.append(" ").append(left).append(expression).append(right);
+            sqlBuilder.append(" ").append(left).append(expression).append(right).append(" ");
 
-            sqlBuilder.append(" ").append(logic);
+            sqlBuilder.append(" ").append(logic).append(" ");
         }
 
         return sqlBuilder.toString().trim();
@@ -91,9 +94,9 @@ public class SupplierSalesConditionHandler {
             formatValue = isStringType ? ("'" + value.trim() + "'") : value.trim();
         }
 
-        return "first_category_id " + sqlOp + " " + formatValue
+        return "( first_category_id " + sqlOp + " " + formatValue
                 + joiner +
-                "second_category_id " + sqlOp + " " + formatValue;
+                "second_category_id " + sqlOp + " " + formatValue +" )";
     }
 
     private static String buildSingleCondition(String field, String compare, String value, String valueType) {
