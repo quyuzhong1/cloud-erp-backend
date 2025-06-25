@@ -24,6 +24,8 @@ public class SupplierSalesConditionHandler {
 
         StringBuilder sqlBuilder = new StringBuilder();
         boolean isFirstCondition = true;
+        int i = 0; // 循环计数器
+        int size = sorted.size(); // 条件数量
 
         for (CfgSupplierSalesConditionEntity cond : sorted) {
             String field = cond.getField();
@@ -52,10 +54,13 @@ public class SupplierSalesConditionHandler {
 
             sqlBuilder.append(" ").append(left).append(expression).append(right).append(" ");
 
-            sqlBuilder.append(" ").append(logic).append(" ");
+            if (i < size - 1) {
+                sqlBuilder.append(" ").append(logic).append(" ");
+            }
+            i++;
         }
 
-        return sqlBuilder.toString().trim();
+        return " ( "+sqlBuilder.toString().trim()+" ) and";
     }
 
     private static String buildCategoryIdCondition(String compare, String value, String valueType) {
