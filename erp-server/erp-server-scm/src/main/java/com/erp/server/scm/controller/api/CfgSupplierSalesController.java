@@ -213,4 +213,14 @@ public class CfgSupplierSalesController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据供应商id查询 字段显示
+     * @author jack
+     * @date: 2025-06-25
+     */
+    @GetMapping("/getDisplayField")
+    public ApiResult<List<String>> getDisplayField(@RequestParam("supplierId") String supplierId) {
+        return success(cfgSupplierSalesService.getDisplayField(supplierId));
+    }
+
 }
