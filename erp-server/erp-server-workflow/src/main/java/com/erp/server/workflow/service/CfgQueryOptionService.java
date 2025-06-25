@@ -3,7 +3,6 @@ package com.erp.server.workflow.service;
 import com.common.business.service.SuperService;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -19,16 +18,16 @@ import java.util.Map;
 public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity> {
 
 
-    List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
+    List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey,String useType);
 
-    List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType);
+    List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String useType,String fieldBelongsType);
 
 
-    List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey);
+    List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey,String useType);
 
     void genBySql(List<CfgQueryOptionDTO.GenListDTO>list);
 
-    List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey);
+    List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey,String useType);
 
     /**
      * 根据单据和字段查询
@@ -38,11 +37,11 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
      * @param sysFieldList
      * @return List<CfgQueryOptionEntity>
      */
-    List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,List<String> sysFieldList);
+    List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,String useType,List<String> sysFieldList);
 
     List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
 
     Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto);
 
-    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey);
+    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType);
 }

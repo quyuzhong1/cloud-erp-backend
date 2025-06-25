@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -39,7 +40,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -172,8 +172,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
 
         List<String> sysFieldList = approveTaskDetailList.stream().map(ApproveTaskDetailEntity::getSysField).distinct().collect(Collectors.toList());
-        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listBySysFieldList(entity.getBussinessKey(), sysFieldList);
-        Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, Function.identity()));
+        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listBySysFieldList(entity.getBussinessKey(),CfgQueryOptionUseTypeEnum.ALL_DATA.getCode(), sysFieldList);
+        Map<String, List<CfgQueryOptionEntity>> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getFieldBelongsType(),obj.getConditionField())));
 
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
             //第三方类型名称
@@ -181,7 +181,11 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //数大臣类型名称
             detailDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getSysFieldType()));
             //数大臣单据字段信息
-            detailDTO.setCfgQueryOptionEntity(cfgQueryOptionMap.get(detailDTO.getSysField()));
+            List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",detailDTO.getEntityCode(),detailDTO.getSysField()));
+            if (CollUtil.isEmpty(fieldList)) {
+                throw new ServiceException("数大臣单据字段配置不存在");
+            }
+            detailDTO.setCfgQueryOptionEntity(fieldList.get(0));
         }
         viewDTO.setDetailList(viewDetailList);
         return viewDTO;

@@ -43,17 +43,17 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     private WorkMenuService workMenuService;
 
     @Override
-    public List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey) {
-        return baseMapper.proDropDown(bussinessKey);
+    public List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey,String useType) {
+        return baseMapper.proDropDown(bussinessKey,useType);
     }
 
     @Override
-    public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey) {
-        return baseMapper.proDropDownByMain(bussinessKey);
+    public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType) {
+        return baseMapper.proDropDownByMain(bussinessKey,useType);
     }
 
     @Override
-    public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType) {
+    public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String useType,String fieldBelongsType) {
         //公共字段
         LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
@@ -86,7 +86,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
-    public List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey) {
+    public List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey,String useType) {
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = this.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
         List<CfgQueryOptionDTO.TreeDTO> resultList = new ArrayList<>(cfgQueryOptionEntities.size());
         Map<String, String> map = new HashMap<>();
@@ -114,8 +114,8 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
-    public List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey) {
-        List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.getSystemfield(bussinessKey);
+    public List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey,String useType) {
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.getSystemfield(bussinessKey,useType);
         //field_belongs_type字段我想手动的放到viewDTO里面的字段，怎么处理
 
         List<CfgQueryOptionDTO.ViewDTO> viewDTOS = cfgQueryOptionEntities.stream().map(item -> {
@@ -133,8 +133,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
-    public List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey, List<String> sysFieldList) {
+    public List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,String useType, List<String> sysFieldList) {
         return lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey,bussinessKey)
+                .eq(CfgQueryOptionEntity::getUseType,useType)
                 .in(CfgQueryOptionEntity::getConditionField,sysFieldList)
                 .list();
     }
@@ -153,6 +154,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         Map<String, Object> variablesMap = dto.getVariablesMap();
         //获取配置明细
         List<CfgQueryOptionEntity> cfgQueryOptionList = lambdaQuery()
+                .eq(CfgQueryOptionEntity::getUseType,dto.getUseType())
                 .in(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
                 .list();
         if(CollUtil.isNotEmpty(cfgQueryOptionList)){
