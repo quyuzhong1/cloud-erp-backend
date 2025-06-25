@@ -11,7 +11,11 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierRefUserEntity;
@@ -24,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.List;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_INVENTORY;
 
 /**
  * 即时库存
@@ -97,8 +101,23 @@ public class SupplierInventoryServiceImpl  implements SupplierInventoryService {
     }
 
     @Override
-    public Boolean exportExcel(SupplierInventoryDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("即时库存", EXPORT_SCM_SUPPLIER_INVENTORY.getCode(), params);
+    public Boolean exportExcel(SupplierInventoryDTO.PagingParamDTO params, HttpServletResponse response) {
+        PagingDTO<SupplierInventoryDTO.PagingParamDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(params);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<SupplierInventoryDTO.ListDTO> resultList = this.paging(pagingParamDTO);
+        List<SupplierInventoryDTO.ListDTO> list = (List<SupplierInventoryDTO.ListDTO>) resultList.getList();
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/supplierInventory.xlsx";
+        String name = "即时库存导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
         return Boolean.TRUE;
     }
 

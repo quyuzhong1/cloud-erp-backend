@@ -4,6 +4,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * 即时库存
  * @author will
@@ -27,5 +29,5 @@ public interface SupplierInventoryService {
      * @param dto
      * @return Boolean
      */
-    Boolean exportExcel(SupplierInventoryDTO.PagingParamDTO dto);
+    Boolean exportExcel(SupplierInventoryDTO.PagingParamDTO dto, HttpServletResponse response);
 }

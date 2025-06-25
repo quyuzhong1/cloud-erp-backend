@@ -662,7 +662,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     /**
      * 分页查询、导出 数据处理
      */
-    private void fillList(List<PoReconciliationDTO.ListDTO> list) {
+    @Override
+    public void fillList(List<PoReconciliationDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
         }

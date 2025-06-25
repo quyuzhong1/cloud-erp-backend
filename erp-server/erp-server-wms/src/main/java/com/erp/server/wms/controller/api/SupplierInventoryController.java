@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 即时库存
@@ -56,8 +57,8 @@ public class SupplierInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
-    public ApiResult exportExcel(@RequestBody SupplierInventoryDTO.PagingParamDTO dto) {
-        Boolean flag = supplierInventoryService.exportExcel(dto);
+    public ApiResult exportExcel(@RequestBody SupplierInventoryDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = supplierInventoryService.exportExcel(dto,response);
         return flag ? success() : failure();
     }
 }
