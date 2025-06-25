@@ -763,6 +763,7 @@ public class SkuMappingDTO implements Serializable {
          * 标签链接
          */
         private String labelUrl;
+        private String labelUrlStr;
         /**
          * 标签文件名称
          */
@@ -776,6 +777,10 @@ public class SkuMappingDTO implements Serializable {
          * 是否 上传附件 true 是 false 否
          */
         private Boolean isUploadLabel;
+        /**
+         * 上传附件
+         */
+        private String uploadLabelStr;
 
         /**
          * 创建人名称
