@@ -139,7 +139,7 @@ public class TransferInfoController extends BaseController {
 
         //提审
         try {
-            transferInfoService.submit(entity, Boolean.FALSE);
+            transferInfoService.submit(entity, Boolean.TRUE);
         } catch (ServiceException e) {
             log.error("提交审批失败，ID: {}", entity.getId(), e);
             return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
