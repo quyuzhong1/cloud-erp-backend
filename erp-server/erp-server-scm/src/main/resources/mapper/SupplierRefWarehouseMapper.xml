@@ -46,6 +46,9 @@
         left join foreign_warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.type = 'location' and wl.is_deleted = false
         <where>
             ${params.sqlMap.default} and srw.is_deleted = false
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
             order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">
