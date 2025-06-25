@@ -3015,9 +3015,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         boxMap.put(startBoxNo, detailDTOS2);
                     }
                     //初始化相同md5的起始箱号
+                    boxQtyMap.remove(currentMd5);
+                    totalQtyMap.remove(currentMd5);
                     startBoxNoMap.remove(currentMd5);
                     endBoxNoMap.remove(currentMd5);
-                    boxQtyMap.remove(currentMd5);
+                    boxWeightMap.remove(currentMd5);
+                    boxLengthMap.remove(currentMd5);
+                    boxWidthMap.remove(currentMd5);
+                    boxHeightMap.remove(currentMd5);
                     currentMd5 = md5Str;
                     //不同箱数据置空相同字段
                     listPackingDetailDTOS = removeSameField(detailDTOList, md5Str);

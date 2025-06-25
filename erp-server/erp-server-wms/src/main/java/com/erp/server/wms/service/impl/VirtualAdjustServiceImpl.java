@@ -14,9 +14,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
-import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
-import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.VirtualAdjustDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -48,7 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualAdjustDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -107,6 +104,8 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     private VirtualInventoryService virtualInventoryService;
     @Resource
     private InventoryService inventoryService;
+    @Resource
+    private DictBasicService dictBasicService;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualAdjustDTO.AddDTO addDTO) {
@@ -636,9 +635,10 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getInventoryStatus()));
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String userName = org.apache.commons.lang3.StringUtils.join(curApproveName, ",");
-            data.setApproveUserName(userName);
+            String curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.joining(","));
+            if (CharSequenceUtil.isNotBlank(curApproveName)) {
+                data.setApproveUserName(curApproveName);
+            }
         }
     }
     /**
@@ -664,6 +664,11 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
 
     private void checkInventory(List<VirtualAdjustDetailEntity> detailList) {
         if (CollUtil.isEmpty(detailList)){
+            return;
+        }
+        //获取字典配置是否校验
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("virtualAdjustCheck");
+        if (CollUtil.isEmpty(dictList) || "false".equals(dictList.get(0).getValue())){
             return;
         }
         List<String> skuIds = detailList.stream().map(VirtualAdjustDetailEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
