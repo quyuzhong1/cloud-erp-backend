@@ -1,6 +1,7 @@
 package com.erp.server.srm.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -80,7 +81,8 @@ public class CfgSettingController extends BaseController {
      * @return List<ViewDTO>
      */
     @GetMapping("/listByKey")
-    public List<CfgSettingDTO.ViewDTO> listByKey(@RequestParam("key") String key) {
-        return cfgSettingService.listByKey(key);
+    public ApiResult<CfgSettingDTO.ViewDTO> listByKey(@RequestParam("key") String key) {
+        List<CfgSettingDTO.ViewDTO> list = cfgSettingService.listByKey(key);
+        return success(CollUtil.isEmpty(list) ? new CfgSettingDTO.ViewDTO() : list.get(0));
     }
 }

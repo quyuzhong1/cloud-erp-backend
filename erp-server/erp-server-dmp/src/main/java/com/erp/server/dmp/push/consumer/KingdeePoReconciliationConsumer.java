@@ -1,4 +1,4 @@
-package com.erp.server.dmp.push;
+package com.erp.server.dmp.push.consumer;
 
 
 import cn.hutool.json.JSONUtil;

@@ -1,7 +1,7 @@
 package com.erp.server.srm.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.server.srm.kingdee.SyncKingdeeService;
+import com.erp.server.srm.service.SyncTaskService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,11 +15,11 @@ import java.util.Map;
 public class SrmSyncKingdeeFeignController {
 
     @Resource
-    private SyncKingdeeService syncKingdeeService;
+    private SyncTaskService syncTaskService;
 
     @PostMapping("/updateBusinessSyncKingdeeStatus")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
-        syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
+        syncTaskService.updateBusinessSyncKingdeeStatus(params);
     }
 
     /**
@@ -29,6 +29,6 @@ public class SrmSyncKingdeeFeignController {
      */
     @PostMapping("/newFindDataSendSyncTask")
     public Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
-        return syncKingdeeService.newFindDataSendSyncTask(syncParamDTO);
+        return syncTaskService.newFindDataSendSyncTask(syncParamDTO);
     }
 }

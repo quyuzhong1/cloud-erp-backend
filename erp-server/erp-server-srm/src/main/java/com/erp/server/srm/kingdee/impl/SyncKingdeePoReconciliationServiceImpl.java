@@ -36,6 +36,7 @@ import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
 import com.erp.server.srm.service.SrmPushMsgService;
@@ -73,6 +74,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -146,8 +150,8 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         }
 
         //供应商名称
-        SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, entity.getId());
-        resultMap.put("supplierName", supplierEntity.getName());
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
+        resultMap.put("supplierCode", supplierEntity.getCode());
 
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getSettleOrgId()));
