@@ -487,7 +487,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         for (PoInstockDetailEntity poInstockDetailEntity : poInstockDetailList) {
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             //送货单信息
-            WarehouseReceiveDTO.ReceiveSourceDTO receiveSourceDTO = receiveMap.get(poInstockDetailEntity.getId());
+            WarehouseReceiveDTO.ReceiveSourceDTO receiveSourceDTO = receiveMap.get(poInstockDetailEntity.getSourceDetailId());
             if (ObjectUtil.isNotEmpty(receiveSourceDTO) && CharSequenceUtil.equals(receiveSourceDTO.getSourceType(),SourceTypeEnum.DELIVERY_ORDER.getCode())) {
                 addDTO.setDeliveryId(receiveSourceDTO.getSourceId());
                 addDTO.setDeliveryCode(receiveSourceDTO.getSourceCode());
