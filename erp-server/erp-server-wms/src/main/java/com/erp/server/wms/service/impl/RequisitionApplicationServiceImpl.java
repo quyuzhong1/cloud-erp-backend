@@ -3083,6 +3083,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
         //查询要货申请单的库存信息
         List<RequisitionApplicationDTO.InventoryDTO> inventoryDTOList = baseMapper.unLockInventoryView(ids);
+        if (CollUtil.isEmpty(inventoryDTOList)){
+            throw new ServiceException("已完成装箱数据才能进行释放库存");
+        }
         //构造明细数据
         List<RequisitionApplicationDTO.InventoryDTO> result = new ArrayList<>();
         inventoryDTOList.stream().filter(e -> CharSequenceUtil.isBlank(e.getShipmentCode())).forEach(h ->{
