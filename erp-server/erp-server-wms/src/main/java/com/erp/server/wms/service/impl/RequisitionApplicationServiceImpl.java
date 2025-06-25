@@ -1505,6 +1505,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList = dto.getFbaBindShipmentViewDTOS();
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> releaseList = detailList.stream().filter(e -> Objects.nonNull(e.getIsReleaseInventory()) && e.getIsReleaseInventory()).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(releaseList)){
+            throw new ServiceException("存在已释放库存的装箱，请重新选择");
+        }
         detailList = detailList.stream().filter(v->CharSequenceUtil.isBlank(v.getDeliveryCode()) && CharSequenceUtil.isNotBlank(v.getFbaShipmentId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(detailList)){
             throw new ServiceException("请先绑定货件再下推");
