@@ -1354,6 +1354,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         entity.setSubcontractType(getOneDTO.getSubcontractType());
         //采购订单类型
         entity.setPurchaseType(getOneDTO.getType());
+
+        //来源编码
+        if (CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.PURCHASE_ORDER.getCode())) {
+            entity.setSourceCode(getOneDTO.getCode());
+        } else if (CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.PO_RECEIVE.getCode())) {
+            WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(receiveEntity)) {
+                entity.setSourceCode(receiveEntity.getSourceCode());
+            }
+        }
     }
 
     /**
