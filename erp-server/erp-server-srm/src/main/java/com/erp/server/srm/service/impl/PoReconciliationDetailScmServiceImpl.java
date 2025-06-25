@@ -605,7 +605,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         ApplicationContextUtils.getBean(PoReconciliationDetailScmServiceImpl.class).updateById(entity);
 
         // 操作日志
-        String msg = StrUtil.format("状态由【{}】更新未【{}】",oldStatus,status);
+        String msg = StrUtil.format("状态由【{}】更新为【{}】",oldStatus,status);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), entity.getId(), "状态更新");
 
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.UPDATE_STATUS);
