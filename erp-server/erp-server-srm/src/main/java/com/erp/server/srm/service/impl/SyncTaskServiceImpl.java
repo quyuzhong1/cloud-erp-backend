@@ -1,4 +1,4 @@
-package com.erp.server.srm.kingdee.impl;
+package com.erp.server.srm.service.impl;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -10,7 +10,7 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.srm.kingdee.SyncKingdeePoReconciliationService;
-import com.erp.server.srm.kingdee.SyncKingdeeService;
+import com.erp.server.srm.service.SyncTaskService;
 import com.erp.server.srm.service.PoReconciliationDetailScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  **/
 @Service
 @Slf4j
-public class SyncKingdeeServiceImpl implements SyncKingdeeService {
+public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private PoReconciliationDetailScmService poReconciliationDetailScmService;
