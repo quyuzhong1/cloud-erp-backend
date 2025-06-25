@@ -415,7 +415,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
             #{item}
         </foreach>
           and k.code in
-        <foreach collection="params.type" item="item" open="(" separator="," close=")">
+        <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
         <if test="params.sourceIdList !=null and params.sourceIdList.size > 0">

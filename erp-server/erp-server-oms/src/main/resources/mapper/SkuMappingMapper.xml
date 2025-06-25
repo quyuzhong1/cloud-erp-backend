@@ -217,7 +217,8 @@
         sm.dict_platform,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name
+        op.short_name,
+        li.auth_id as authId
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

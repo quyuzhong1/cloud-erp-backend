@@ -88,6 +88,9 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
 
     @Override
     public PagingVO<ListingPushRecordDTO.PagingViewDTO> paging(PagingDTO<ListingPushRecordDTO.PagingParamDTO> dto) {
+        if(!dto.getParams().getSqlMap().containsKey("dmp")){
+            dto.getParams().getSqlMap().put("dmp","1 = 1");
+        }
         //如果高级查询选择了listing相关 先查询出id再查dmp
         List<String> listingIds = new ArrayList<>();
         List<ListingPushRecordDTO.PagingViewDTO> pagingViewDTOS = baseMapper.pagingListingPush(dto.getParams().getSqlMap(),new ArrayList<>(),Arrays.asList(OmsPlatformEnum.CAI_NIAO.getCode()));

@@ -78,13 +78,13 @@ public class AliexpressWarehouseService {
                         .receiverInfo(AliexpressOrderDTO.DeliveryOrder.ReceiverInfoDTO.builder()
                                 .countryCode("US")
                                 .build())
-                        .deliveryOrderCode("TESTWJ123456")
+                        .deliveryOrderCode("TESTWJ062504")
                         .warehouseCode("STB")
                         .shopNick("测试店铺")
                         .logisticsCode("other")
                         .createTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .sourcePlatformCode("AE")
-                        .expressCode("test-WJ123456")
+                        .expressCode("test-062504")
                 .build());
         aliexpressCancelOrderDTO.setOrderLines(Arrays.asList(AliexpressOrderDTO.OrderLines.builder()
                         .inventoryType("1")
@@ -95,7 +95,7 @@ public class AliexpressWarehouseService {
                 .build()));
         aliexpressCancelOrderDTO.setExtendProps(AliexpressOrderDTO.ExtendProps.builder()
                         .merchantType("POP")
-                        .printInfo("123")
+                        .printInfo("https://cno-oss.oss-cn-zhangjiakou.aliyuncs.com/aePopDeliveryFlag/FB1046000016902640596-20250619143440995.pdf?Expires=1752906881&OSSAccessKeyId=LTAI5tLxwRuzKhwK2qzxjuCE&Signature=W%2BcwRRR5QpVHiI1MUCTS87ZVz6M%3D")
                 .build());
         ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createOutbound(aliexpressCancelOrderDTO);
         System.out.println(apiOrderResponseDTO);
@@ -150,9 +150,9 @@ public class AliexpressWarehouseService {
         log.warn("菜鸟仓创建出库单,{}",JSONUtil.toJsonStr(aliexpressOrderDTO));
         AliexpressAuthDTO aliexpressAuthDTO = aliexpressOrderDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
-        if (!BusinessCommonConstants.hasProfile("prod")) {
-            url = url + "/sandbox";
-        }
+//        if (!BusinessCommonConstants.hasProfile("prod")) {
+//            url = url + "/sandbox";
+//        }
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();

@@ -821,6 +821,12 @@ public class SkuMappingDTO implements Serializable {
          */
         private String id;
 
+
+        /**
+         * authId
+         */
+        private String authId;
+
         /**
          * 备注
          */

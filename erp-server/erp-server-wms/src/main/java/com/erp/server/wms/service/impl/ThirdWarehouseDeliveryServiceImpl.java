@@ -15,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,14 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         });
         detailService.saveBatch(entity.getDetailEntityList());
         return entity.getId();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getByCodeAndSoId(String outCode, String soId) {
+        if(StringUtils.isBlank(outCode) || StringUtils.isBlank(soId)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode,outCode).eq(ThirdWarehouseDeliveryEntity::getSoId,soId).last("LIMIT 1").one();
     }
 
 }
