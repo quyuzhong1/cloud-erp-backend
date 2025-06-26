@@ -208,7 +208,6 @@ public class SupplierVisitDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    @Valid
     public static class ListDTO extends BaseDTO {
         /**
          * 供应商名
