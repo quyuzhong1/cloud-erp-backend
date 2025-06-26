@@ -1,13 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
@@ -40,8 +35,7 @@ import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -95,7 +89,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import com.common.business.annotation.DistributeLocker;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -176,6 +170,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private FsService fsService;
 
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessId")
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);
