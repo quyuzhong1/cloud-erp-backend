@@ -73,8 +73,66 @@ public class SupplierVisitDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends CommonDTO {
+    public static class ViewDTO{
         private String id;
+        /**
+         * 供应商名
+         */
+        private String  supplierId;
+        /**
+         * 供应商名
+         */
+        private String  supplierCode;
+        /**
+         * 供应商名
+         */
+        private String  supplierName;
+
+        /**
+         * 类型
+         */
+        private String visitType;
+        private String visitTypeName;
+
+        /**
+         * 拜访时间
+         */
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人 集合
+         */
+        private List<String> peopleList;
+        private List<String> peopleNameList;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+
+        /**
+         * 结果
+         */
+        private String result;
+        private String resultName;
+
+        /**
+         * 附件url
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 物料sku 集合
+         */
+        private List<String> skuIdList;
+
+        private List<String> skuNoList;
     }
 
     @Data
@@ -110,6 +168,7 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 内容
          */
+        @NotBlank(message = "拜访记录不能为空")
         private String content;
 
 

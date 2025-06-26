@@ -1,6 +1,8 @@
 package com.erp.model.scm.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.ApproveStatusEnum;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
@@ -40,6 +42,17 @@ public enum SupplierVisitEnum {
     public static SupplierVisitEnum getByStatus(String type){
         return Arrays.stream(values()).filter(a -> a.getType().equals(type))
                 .findFirst().orElse(null);
+    }
+
+    public static String getName(String state) {
+        if (StringUtils.isNotBlank(state)) {
+            for (SupplierVisitEnum item : SupplierVisitEnum.values()) {
+                if (state.equals(item.getType())) {
+                    return item.getName();
+                }
+            }
+        }
+        return "";
     }
 
 }

@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -9,30 +11,45 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.entity.SupplierVisitEntity;
-import com.erp.model.scm.entity.SupplierVisitSkuEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_CREDENTIAL_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_VISIT_REPORT;
 
 /**
  * <p>
@@ -59,6 +76,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -124,13 +143,67 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             //添加日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), id, "现场考察");
         }
-
         return result;
     }
 
     @Override
     public Boolean update(SupplierVisitDTO.UpdateDTO dto) {
-        return null;
+        if(StringUtils.isBlank(dto.getSupplierId())){
+            throw new ServiceException("供应商不能为空");
+        }
+        SupplierEntity supplier = supplierService.getById(dto.getSupplierId());
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+
+        SupplierVisitEntity oldEntity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        SupplierVisitEntity entity = new SupplierVisitEntity();
+        BeanMapper.copy(dto, entity);
+
+        List<String> peopleList = dto.getPeopleList();
+        entity.setPeople(String.join(",", peopleList));
+
+        //附件集合
+        List<String> attachmentUrlList = dto.getAttachmentUrlList();
+        List<String> attachmentNameList = dto.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            //处理附件
+            Class<SupplierVisitEntity> credentialClass = SupplierVisitEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(dto.getId()), type);
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 删除旧的附件
+                List<AttachmentDTO.UpdateDTO> removeList = oldAttachmentList.stream().filter(r -> !attachmentUrlList.contains(r.getAttachUrl())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(removeList)){
+                    List<String> urlList = removeList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    attachmentService.deleteByUrlList(urlList);
+                }
+
+                List<String> ids = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getId).collect(Collectors.toList());
+                attachmentService.removeByIds(ids);
+            }
+            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                AttachmentEntity addAttachment = new AttachmentEntity();
+                addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                addAttachment.setAttachName(attachmentNameList.get(i));
+                addAttachment.setBusinessId(entity.getId());
+                addAttachment.setType(type);
+                batchAttachmentList.add(addAttachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }else {
+            //删除附件
+            attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+        }
+        //操作日志
+        String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
+        moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
+        return Boolean.TRUE;
     }
 
 
@@ -156,6 +229,38 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SupplierCredentialDTO.PagingParamDTO searchParam = new SupplierCredentialDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SupplierVisitDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        Map<String, SupplierVisitDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(SupplierVisitDTO.TabListDTO::getTabFlag, t -> t));
+        List<SupplierVisitDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.CONFORMITY.getCode(), SupplierVisitResultEnum.CONFORMITY.getName() , map.containsKey(SupplierVisitResultEnum.CONFORMITY.getCode()) ? map.get(SupplierVisitResultEnum.CONFORMITY.getCode()).getCount() : 0   ));
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.PENDING.getCode(), SupplierVisitResultEnum.PENDING.getName() , map.containsKey(SupplierVisitResultEnum.PENDING.getCode()) ? map.get(SupplierVisitResultEnum.PENDING.getCode()).getCount() : 0   ));
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.NONCONFORMITY.getCode(), SupplierVisitResultEnum.NONCONFORMITY.getName() , map.containsKey(SupplierVisitResultEnum.NONCONFORMITY.getCode()) ? map.get(SupplierVisitResultEnum.NONCONFORMITY.getCode()).getCount() : 0   ));
+        return result;
+    }
+
+    @Override
+    public PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SupplierVisitDTO.ListDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<SupplierVisitDTO.ListDTO> list) {
         List<String> ids = list.stream().map(SupplierVisitDTO.ListDTO::getId).collect(Collectors.toList());
         List<String> peopleIdList = new ArrayList<>(5);
 
@@ -188,9 +293,6 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
 
             item.setPeopleName(userName);
-            item.setSupplierName(supplier.getName());
-
-
             //附件地址
             List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
@@ -207,25 +309,68 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                     collect(Collectors.toList());
             String skuInfo = skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
             item.setSkuInfo(skuInfo);
+        }
+    }
 
+    @Override
+    public SupplierVisitDTO.ViewDTO view(String id) {
+        SupplierVisitEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        // 数据填充处理
+        SupplierVisitDTO.ViewDTO view = fillOne(entity);
+        return view;
+    }
+
+    private SupplierVisitDTO.ViewDTO fillOne(SupplierVisitEntity entity) {
+        SupplierVisitDTO.ViewDTO view = new SupplierVisitDTO.ViewDTO();
+        BeanMapper.copy(entity,view);
+
+        //拜访类型
+        String visitType = view.getVisitType();
+        view.setVisitTypeName(SupplierVisitEnum.getName(visitType));
+        //拜访结果
+        String result = view.getResult();
+        view.setResultName(SupplierVisitResultEnum.getName(result));
+
+        String people = entity.getPeople();
+        if(StringUtils.isNotBlank(people)){
+            List<String> userIdList = Arrays.asList(people.split(","));
+            //获取用户信息
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+            List<String> userNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+            view.setPeopleList(userIdList);
+            view.setPeopleNameList(userNameList);
         }
 
-        return new PagingVO<>(pageData);
+        List<String> ids =Arrays.asList(entity.getId());
+        //获取到附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
+        //sku id
+        List<SupplierVisitSkuEntity> visitSkuList = supplierVisitSkuService.getByVisitIds(ids);
+
+        //附件地址
+        List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(view.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                collect(Collectors.toList());
+
+        //附件地址
+        List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(view.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+                collect(Collectors.toList());
+        view.setAttachmentUrlList(attachmentUrlList);
+        view.setAttachmentNameList(attachmentNameList);
+
+        if(CollUtil.isNotEmpty(visitSkuList)){
+            List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+            //sku信息
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+            List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+            view.setSkuIdList(skuIds);
+            view.setSkuNoList(skuNoList);
+        }
+        return view;
     }
 
     @Override
-    public List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<SupplierVisitDTO.ViewDTO> view(String id) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void exportList(SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response) {
-
+    public void exportList(SupplierVisitDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
     }
 
     @Override
@@ -234,7 +379,26 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     }
 
     @Override
-    public PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
-        return null;
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/supplierVisit.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
+
 }

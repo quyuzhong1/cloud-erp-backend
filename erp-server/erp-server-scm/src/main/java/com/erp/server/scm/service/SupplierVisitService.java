@@ -53,11 +53,13 @@ public interface SupplierVisitService extends SuperService<SupplierVisitEntity> 
 
     List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto);
 
-    List<SupplierVisitDTO.ViewDTO> view(String id);
+    SupplierVisitDTO.ViewDTO view(String id);
 
     void exportList(SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto);
+
+    void downloadTemplate(HttpServletResponse response);
 }

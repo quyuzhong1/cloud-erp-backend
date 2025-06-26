@@ -5,12 +5,15 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class SupplierCredentialQueryHandler extends AbstractQueryHandler {
+public class SupplierVisitQueryHandler extends AbstractQueryHandler {
 
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
+            return getTabSql(value);
+        }
+        if("people".equals(field)){
             return getTabSql(value);
         }
         return null;
@@ -28,6 +31,6 @@ public class SupplierCredentialQueryHandler extends AbstractQueryHandler {
         if(value.equals("all") || value.equals("")){
             return "";
         }
-        return "sc.status ='"+ value+"'";
+        return "sv.result ='"+value+"'";
     }
 }

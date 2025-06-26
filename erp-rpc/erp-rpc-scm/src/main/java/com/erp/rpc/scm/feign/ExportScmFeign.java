@@ -41,4 +41,6 @@ public interface ExportScmFeign {
     PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(@RequestBody PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportSupplierCredential")
     PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(@RequestBody PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportSupplierVisit")
+    PagingVO<SupplierVisitDTO.ListDTO> exportSupplierVisit(@RequestBody PagingDTO<SupplierVisitDTO.PagingParamDTO> dto);
 }

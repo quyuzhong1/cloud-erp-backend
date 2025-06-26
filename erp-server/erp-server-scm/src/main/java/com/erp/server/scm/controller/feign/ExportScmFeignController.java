@@ -46,6 +46,8 @@ public class ExportScmFeignController {
     private CfgSupplierSalesService cfgSupplierSalesService;
     @Resource
     private SupplierCredentialService supplierCredentialService;
+    @Resource
+    private SupplierVisitService supplierVisitService;
 
     
     @PostMapping("/purchaseApplication")
@@ -161,6 +163,12 @@ public class ExportScmFeignController {
     @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
     public PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(@RequestBody PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
         return supplierCredentialService.paging(dto);
+    }
+
+    @PostMapping("/exportSupplierCredential")
+    @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
+    public PagingVO<SupplierVisitDTO.ListDTO> exportSupplierVisit(@RequestBody PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
+        return supplierVisitService.pagingList(dto);
     }
 
 
