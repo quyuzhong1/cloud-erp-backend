@@ -286,6 +286,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             //折扣率
             if (CharSequenceUtil.isNotBlank(excelDTO.getDiscountRate())) {
                 entity.setDiscountRate(MathUtil.valueOf(excelDTO.getDiscountRate()));
+            } else {
+                entity.setDiscountRate(MathUtil.multiplyWithFour(MathUtil.valueOf(excelDTO.getDiscountRate()),MathUtil.BigDecimal_100));
             }
             //单价
             if (CharSequenceUtil.isNotBlank(excelDTO.getTaxPrice())) {
@@ -294,6 +296,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             //税率
             if (CharSequenceUtil.isNotBlank(excelDTO.getTaxRate())) {
                 entity.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
+            } else {
+                entity.setDiscountRate(MathUtil.multiplyWithFour(MathUtil.valueOf(excelDTO.getTaxRate()),MathUtil.BigDecimal_100));
             }
             //预付金额
             if (CharSequenceUtil.isNotBlank(excelDTO.getPrepayAmount())) {
