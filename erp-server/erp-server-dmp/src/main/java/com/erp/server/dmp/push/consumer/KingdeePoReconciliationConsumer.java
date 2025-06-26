@@ -42,7 +42,7 @@ public class KingdeePoReconciliationConsumer<T extends DmpSyncTaskIdDTO> extends
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "AP00004279"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FSourceBillNo,FSOURCETYPE,FEntityDetail_Link_FSTableName,FEntityDetail_Link_FRuleId";
+        String fieldKeys = "FEntityPlan_FEntryID,FENDDATE,FPAYAMOUNTFOR,FPAYRATE,FPURCHASEORDERID,FPRICE_P";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 

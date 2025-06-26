@@ -62,7 +62,7 @@ public class PoReconciliationDetailImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "预付金额", index = 5)
-    @FieldValid(fieldName = "预付金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "预付金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
     private String prepayAmount;
 
     /**
