@@ -52,7 +52,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -416,6 +415,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		viewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		viewDto.setThirdCreateTime(entity.getCreateTime());
 		viewDto.setThirdUpdateTime(entity.getUpdateTime());
+        if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())){
+            viewDto.setThirdCode(entity.getThirdCode());
+        } else {
+            viewDto.setThirdCode("");
+        }
 		detailViewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		detailViewDto.setThirdDetailCreateTime(detailEntity.getCreateTime());
 		detailViewDto.setThirdDetailUpdateTime(detailEntity.getUpdateTime());

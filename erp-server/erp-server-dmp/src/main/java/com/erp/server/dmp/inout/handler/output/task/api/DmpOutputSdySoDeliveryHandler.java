@@ -262,7 +262,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setSpec_no(spuNo);
 	            shudiyunB2cOrderDTO.setSpec_name(spuName);
 
-    	        shudiyunB2cOrderDTO.setIs_gift(dmpSoDeliveryDetailEntity.getIsGift());
+//    	        shudiyunB2cOrderDTO.setIs_gift(dmpSoDeliveryDetailEntity.getIsGift());
     	        shudiyunB2cOrderDTO.setIs_comb(dmpSoDeliveryDetailEntity.getIsComb());
 	            shudiyunB2cOrderDTO.setSuite_no(dmpSoDeliveryDetailEntity.getSuiteNo());
 	            shudiyunB2cOrderDTO.setSuite_name(dmpSoDeliveryDetailEntity.getSuiteName());
