@@ -103,6 +103,10 @@ public class OverseasProviderDTO implements Serializable {
          * OMS授权token
          */
         private String token;
+        /**
+         * shopAccount
+         */
+        private String shopAccount;
     }
     /**
     * 详情
