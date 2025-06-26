@@ -156,7 +156,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @param response
      * @return ImportDTO
      */
-    PoReconciliationDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    PoReconciliationDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, HttpServletResponse response);
     /**
      * 取消签收
      * @author will
