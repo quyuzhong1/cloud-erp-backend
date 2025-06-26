@@ -376,6 +376,11 @@ public class PackingTaskDTO implements Serializable {
          * 勾选的id集合
          */
         private List<String> ids;
+
+        /***
+         * 是否合并同箱规格
+         */
+        private Boolean mergeCarton;
     }
 
     @Data

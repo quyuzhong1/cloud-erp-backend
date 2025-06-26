@@ -25,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -171,6 +172,8 @@ public class ExportWmsFeignController {
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private QcNoticeService qcNoticeService;
+    @Resource
+    private VirtualAdjustService virtualAdjustService;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
@@ -477,6 +480,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
+    }
+    @PostMapping("/exportPackingTaskDetailMerge")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "pt.warehouse_id",
+            menuCode = "wms:packingTask:exportPackingDetail",
+            tableAlias = "pt"
+    )
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.exportPackingTaskDetailMerge(dto);
     }
     @PostMapping("/unPackingTaskDetail")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1024,5 +1038,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
         return qcNoticeService.exportList(dto);
+    }
+
+    /**
+     * 导出虚拟库存调整
+     */
+    @PostMapping("/exportVirtualAdjust")
+    @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(@RequestBody PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
+        return virtualAdjustService.paging(dto);
     }
 }

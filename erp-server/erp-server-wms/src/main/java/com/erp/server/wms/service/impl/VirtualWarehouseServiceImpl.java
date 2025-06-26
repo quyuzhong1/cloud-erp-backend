@@ -574,6 +574,22 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public List<VirtualWarehouseDTO.ViewWarehouseDTO> listWarehouseInfoByIds(List<String> virtualWarehouseIdList) {
+        if (CollUtil.isEmpty(virtualWarehouseIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWarehouseInfoByIds(virtualWarehouseIdList);
+    }
+
+    @Override
+    public List<VirtualWarehouseEntity> listByNameList(List<String> virtualWarehouseNameList) {
+        if (CollUtil.isEmpty(virtualWarehouseNameList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(VirtualWarehouseEntity::getName, virtualWarehouseNameList).list();
+    }
+
     /**
      * 导出数据处理
      * @param list

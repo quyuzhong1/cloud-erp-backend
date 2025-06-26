@@ -216,21 +216,21 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
         String billId = dto.getId();
-        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
-        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
-        if (ObjectUtils.isNotEmpty(qcProduct)) {
-            String skuNo = qcProduct.getSkuNo();
-            if(StringUtils.isNotBlank(skuNo)){
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-            }else {
-                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-            }
-
-        }
+//        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+//        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
+//        if (ObjectUtils.isNotEmpty(qcProduct)) {
+//            String skuNo = qcProduct.getSkuNo();
+//            if(StringUtils.isNotBlank(skuNo)){
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+//            }else {
+//                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+//            }
+//
+//        }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
             billId = IdWorker.getIdStr();
@@ -2058,6 +2058,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
             view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setExchangeRate(soReturnReceiveDetailEntity.getExchangeRate());
             if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());

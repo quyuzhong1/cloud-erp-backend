@@ -167,6 +167,7 @@ public class SoB2cRetryJob {
                                 .update();
                         XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功：{}, 重新记录数量结果={}", JSONUtil.toJsonStr(resultDTOS), update);
                     } catch (Exception e) {
+
                         log.error("SoB2cRetryJob 当前任务执行成功异常：soId={}, error={}",
                                 soB2cErrorEntity.getMainId(),
                                 ExceptionUtil.stacktraceToString(e)

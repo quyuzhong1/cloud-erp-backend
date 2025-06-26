@@ -143,6 +143,7 @@ public enum ModuleTypeEnum {
     FIRST_MILE_CHANGE_RECORD("125", "头程调整记录"),
     CFG_RULE_INVOICE("126", "开票规则"),
     SKU_ORG_REF("127", "SKU与采购组织关系"),
+    VIRTUAL_ADJUST("126", "虚拟库存调整"),
     ;
 
 
