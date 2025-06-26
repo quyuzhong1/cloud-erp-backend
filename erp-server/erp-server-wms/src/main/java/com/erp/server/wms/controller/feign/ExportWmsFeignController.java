@@ -1041,7 +1041,7 @@ public class ExportWmsFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/supplierInventory")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierInventoryQueryHandler.class)
     public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
         return supplierInventoryService.paging(dto);
     }
