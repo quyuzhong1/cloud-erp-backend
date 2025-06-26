@@ -3403,4 +3403,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
     }
+
+    @Override
+    public List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(List<String> supplierIds) {
+        if(CollUtil.isEmpty(supplierIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuBySupplierIds(supplierIds);
+    }
 }

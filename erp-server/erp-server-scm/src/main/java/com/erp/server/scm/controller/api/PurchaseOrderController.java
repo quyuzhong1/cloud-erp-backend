@@ -884,4 +884,16 @@ public class PurchaseOrderController extends BaseController {
         purchaseOrderService.exportPurchaseContractPdf(dto.getId(),response);
     }
 
+    /**
+     * (供应商 + 采购订单 + sku )采购数量计算
+     * @author jack
+     * @date: 2025-06-24
+     * @return ApiResult<String>
+     */
+    @GetMapping("/calSupplierPurchaseQty")
+    public ApiResult<String> calSupplierPurchaseQty() {
+        purchaseOrderService.calSupplierPurchaseQty();
+        return success();
+    }
+
 }
