@@ -49,7 +49,7 @@ public interface SupplierVisitService extends SuperService<SupplierVisitEntity> 
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierVisitDTO.PagingViewDTO>
      */
-    PagingVO<SupplierVisitDTO.ListDTO> paging(PagingDTO<BaseIdDTO> dto);
+    PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto);
 
     List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto);
 

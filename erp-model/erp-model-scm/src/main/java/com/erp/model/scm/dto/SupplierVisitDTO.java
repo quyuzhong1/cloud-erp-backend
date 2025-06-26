@@ -281,6 +281,84 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 表id
          */
+        private String visitType;
+
+
+        /**
+         * 类型名称
+         */
+        private String visitTypeName;
+
+        /**
+         * 拜访时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人
+         */
+        private String people;
+
+        /**
+         * 拜访人
+         */
+        private String peopleName;
+
+
+        /**
+         * 物料信息
+         */
+        private String skuInfo;
+
+        /**
+         * 结果
+         */
+        private String result;
+
+        /**
+         * 结果
+         */
+        private String resultName;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+        /**
+         * 附件地址
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+    }
+
+    /**
+     * 供应商拜访分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class PagingViewDTO {
+        /**
+         * 表id
+         */
+        private String id;
+
+
+        /**
+         * 供应商名
+         */
+        private String  supplierName;
+
+
+        /**
+         * 表id
+         */
         private SupplierVisitEnum visitType;
 
 

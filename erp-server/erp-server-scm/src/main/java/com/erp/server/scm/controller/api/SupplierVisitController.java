@@ -65,8 +65,8 @@ public class SupplierVisitController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SupplierVisitDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
-        PagingVO<SupplierVisitDTO.ListDTO> pagingVO = supplierVisitService.paging(dto);
+    public ApiResult<PagingVO<SupplierVisitDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<SupplierVisitDTO.PagingViewDTO> pagingVO = supplierVisitService.paging(dto);
         return success(pagingVO);
     }
 

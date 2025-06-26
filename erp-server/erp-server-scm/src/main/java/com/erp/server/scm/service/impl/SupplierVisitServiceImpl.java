@@ -111,12 +111,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         visit.setSupplierId(supplierId);
         visit.setVisitTime(dto.getVisitTime());
         //拜访类型
-        String visitType = dto.getVisitType();
-        SupplierVisitEnum visitTypeEnum = SupplierVisitEnum.getByStatus(visitType);
-        visit.setVisitType(visitTypeEnum);
-        String visitResult = dto.getResult();
-        SupplierVisitResultEnum visitResultEnum = SupplierVisitResultEnum.getByStatus(visitResult);
-        visit.setResult(visitResultEnum);
+        visit.setVisitType(dto.getVisitType());
+        visit.setResult(dto.getResult());
         String id = IdWorker.getIdStr();
         visit.setId(id);
         List<String> peopleList = dto.getPeopleList();
@@ -216,7 +212,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
      * @date 2023-03-21 11:32
      */
     @Override
-    public PagingVO<SupplierVisitDTO.ListDTO> paging(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto) {
         //供应商id
         String supplierId = dto.getParams().getId();
         SupplierEntity supplier = supplierService.getById(supplierId);
@@ -225,12 +221,66 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, supplierId);
-        List<SupplierVisitDTO.ListDTO> list = pageData.getRecords();
+        List<SupplierVisitDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        // 数据处理
-        fillList(pageData.getRecords());
+        List<String> ids = list.stream().map(SupplierVisitDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<String> peopleIdList = new ArrayList<>(5);
+
+        List<String> peopleList = list.stream().map(SupplierVisitDTO.PagingViewDTO::getPeople).collect(Collectors.toList());
+        for (String people : peopleList) {
+            String peopleStr[] = people.split(",");
+            for (String str : peopleStr) {
+                peopleIdList.add(str);
+            }
+        }
+        //获取用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(peopleIdList);
+
+        //获取到附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
+        //sku id
+        List<SupplierVisitSkuEntity> visitSkuList = supplierVisitSkuService.getByVisitIds(ids);
+        List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        for (SupplierVisitDTO.PagingViewDTO item : list) {
+            //拜访类型
+            SupplierVisitEnum visitEnum = item.getVisitType();
+            item.setVisitTypeName(visitEnum.getName());
+
+            SupplierVisitResultEnum visitResultEnum = item.getResult();
+            item.setResultName(visitResultEnum.getName());
+
+            String people = item.getPeople();
+            List<String> userIdList = Arrays.asList(people.split(","));
+            String userName = userList.stream().filter(u -> userIdList.contains(u.getUserId())).
+                    map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+
+            item.setPeopleName(userName);
+            item.setSupplierName(supplier.getName());
+
+
+            //附件地址
+            List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+
+            //附件地址
+            List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            item.setAttachmentUrlList(attachmentUrlList);
+            item.setAttachmentNameList(attachmentNameList);
+            List<String> skuIdList = visitSkuList.stream().filter(s -> s.getSupplierVisitId().
+                    equals(item.getId())).map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
+            //获取到sku 信息
+            List<SkuVO> skuInfoList = skuList.stream().filter(sku -> skuIdList.contains(sku.getSkuId())).
+                    collect(Collectors.toList());
+            String skuInfo = skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
+            item.setSkuInfo(skuInfo);
+
+        }
+
         return new PagingVO<>(pageData);
     }
 
@@ -283,10 +333,10 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         for (SupplierVisitDTO.ListDTO item : list) {
             //拜访类型
-            SupplierVisitEnum visitEnum = item.getVisitType();
-            item.setVisitTypeName(visitEnum.getName());
-            SupplierVisitResultEnum visitResultEnum = item.getResult();
-            item.setResultName(visitResultEnum.getName());
+            String visitType = item.getVisitType();
+            item.setVisitTypeName(SupplierVisitEnum.getName(visitType));
+            String result = item.getResult();
+            item.setResultName(SupplierVisitResultEnum.getName(result));
             String people = item.getPeople();
             List<String> userIdList = Arrays.asList(people.split(","));
             String userName = userList.stream().filter(u -> userIdList.contains(u.getUserId())).
@@ -323,7 +373,6 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     private SupplierVisitDTO.ViewDTO fillOne(SupplierVisitEntity entity) {
         SupplierVisitDTO.ViewDTO view = new SupplierVisitDTO.ViewDTO();
         BeanMapper.copy(entity,view);
-
         //拜访类型
         String visitType = view.getVisitType();
         view.setVisitTypeName(SupplierVisitEnum.getName(visitType));
