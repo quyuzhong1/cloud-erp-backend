@@ -88,7 +88,7 @@ public class CfgSupplierSalesController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:cfgSupplierSales:view",
+            menuCode = "scm:cfgSupplierSales:update",
             serviceClass = CfgSupplierSalesService.class,
             keyIdName = "id")
     @LogViewService
