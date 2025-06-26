@@ -46,7 +46,14 @@ public class ExportScmFeignController {
     @Resource
     private CfgSupplierSalesService cfgSupplierSalesService;
 
-    
+
+
+    @Resource
+    private SupplierRefWarehouseService supplierRefWarehouseService;
+
+
+
+
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
@@ -154,6 +161,25 @@ public class ExportScmFeignController {
     @WebAdvanceQuery
     public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(@RequestBody PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
         return cfgSupplierSalesService.paging(dto);
+    }
+
+
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2025/6/19 11:03
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/supplierRefWarehouse")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplierRefWarehouse:paging",
+            tableAlias = "sc"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(@RequestBody PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto) {
+        return supplierRefWarehouseService.paging(dto);
     }
 
 

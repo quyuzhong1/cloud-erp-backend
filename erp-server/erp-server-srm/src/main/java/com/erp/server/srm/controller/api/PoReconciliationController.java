@@ -118,8 +118,8 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购对账单导出Excel数据")
-    public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto) {
-        poReconciliationService.exportList(dto);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        poReconciliationService.exportList(dto,response);
         return success(true);
     }
 

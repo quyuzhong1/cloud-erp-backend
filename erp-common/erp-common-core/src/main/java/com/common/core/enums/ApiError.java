@@ -95,6 +95,7 @@ public enum ApiError implements Serializable {
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
+    ERROR_DATA_DELETE(1046, "数据删除失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -118,6 +119,12 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
+
     /**
      * 警告信息 从800 开始
      */
@@ -777,6 +784,11 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
 
+    ERROR_SUPPLIER_REF_WAREHOUSE_EXIST(98121,"供应商【{}】仓库【{}】仓位【{}】已存在"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS(98122,"供应商【{}】在仓库【{}】已存在全局仓位"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT(98123,"供应商【{}】仓库【{}】全局仓位不能与其他仓位共存"),
+
+
     /**
      * WMS 错误
      * 从99000 开始  以端口号
@@ -1232,6 +1244,8 @@ public enum ApiError implements Serializable {
     ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
     ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
     ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
+    ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1611,6 +1625,7 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
     ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
     CONTENT_96018(96018,"系统配置管理"),
+    ERROR_PO_RECONCILIATION_CANCAL_RECEIVE(96007,"仅【已收单据】支持取消单据签收"),
 
 
 
@@ -1630,7 +1645,9 @@ public enum ApiError implements Serializable {
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
-
+    ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL(94103,"单据未审核不支持生成待对账明细"),
+    ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL(94104,"质检退货不支持生成待对账明细"),
+    ERROR_PO_RECONCILIATION_MANUAL_GENERATE(94105,"单据不支持生成对账明细"),
 
     /**
      * MRP 错误

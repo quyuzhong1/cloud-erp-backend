@@ -2,6 +2,7 @@ package com.erp.model.srm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.utils.MathUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -117,9 +118,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String businessStatusName;
 
         /**
-         * 确认日期【可排序】
+         * 单据日期【可排序】
          */
-        private LocalDate confirmDate;
+        private LocalDate date;
 
         /**
          * SKUId【可排序】
@@ -137,17 +138,7 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String productName;
 
         /**
-         * 送货数量【可排序】
-         */
-        private Integer deliveryQty;
-
-        /**
-         * 收货数量【可排序】
-         */
-        private Integer receiveQty;
-
-        /**
-         * 数量（根据单据显示对应数量）
+         * 数量【可排序】
          */
         private Integer qty;
 
@@ -212,16 +203,6 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String paymentConditionName;
 
         /**
-         * 是否加入账单(true是，flase否)【可排序】
-         */
-        private Boolean isAddAccount;
-
-        /**
-         * 是否加入账单(是，否)
-         */
-        private String isAddAccountStr;
-
-        /**
          * 供应商备注
          */
         private String supplierRemark;
@@ -232,7 +213,7 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String purchaseRemark;
 
         /**
-         * 供应商备注 + 采购备注
+         * 单据备注
          */
         private String remark;
 
@@ -240,6 +221,39 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 对账状态，poReconciliationDetailStatus字典
+         */
+        private String status;
+        /**
+         * 对账状态名称
+         */
+        private String statusName;
+        /**
+         * 送货单id
+         */
+        private String deliveryId;
+        /**
+         * 送货单明细id
+         */
+        private String deliveryDetailId;
+        /**
+         * 送货编码
+         */
+        private String deliveryCode;
+        /**
+         * 折扣税率
+         */
+        private BigDecimal discountRate;
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+        /**
+         * 税价合计（折扣）
+         */
+        private BigDecimal discountTaxAmount;
     }
 
 
@@ -307,9 +321,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String poId;
 
         /**
-        * 确认日期
+        * 单据日期
         */
-        private LocalDate confirmDate;
+        private LocalDate date;
 
         /**
         * skuId
@@ -327,14 +341,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String productName;
 
         /**
-        * 送货数量
+        * 数量
         */
-        private Integer deliveryQty;
-
-        /**
-        * 收货数量
-        */
-        private Integer receiveQty;
+        private Integer qty;
 
         /**
         * 税率
@@ -422,14 +431,48 @@ public class PoReconciliationDetailDTO implements Serializable {
         private BigDecimal exchangeRate;
 
         /**
-        * 是否加入账单
-        */
-        private Boolean isAddAccount;
+         * 对账状态，poReconciliationDetailStatus字典
+         */
+        private String status;
+        /**
+         * 送货单id
+         */
+        private String deliveryId;
+        /**
+         * 送货单明细id
+         */
+        private String deliveryDetailId;
+        /**
+         * 送货编码
+         */
+        private String deliveryCode;
+        /**
+         * 折扣税率
+         */
+        private BigDecimal discountRate;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+        /**
+         * 税价合计（折扣）
+         */
+        private BigDecimal discountTaxAmount;
+        /**
+         * 单据备注
+         */
+        private String remark;
 
         /**
-         * 是否加入账单(是，否)
+         * 折扣额
          */
-        private String isAddAccountStr;
+        public BigDecimal getDiscountAmount () {
+            return MathUtil.multiplyWithFour(discountRate,discountRate);
+        }
     }
 
     /**
@@ -473,6 +516,26 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 折扣率
+         */
+        private BigDecimal discountRate;
+
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
 
         /**
          * 采方备注
@@ -546,9 +609,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String poDetailId;
 
         /**
-        * 确认日期
+        * 单据日期
         */
-        private LocalDate confirmDate;
+        private LocalDate date;
 
         /**
         * skuId
@@ -557,14 +620,9 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String skuId;
 
         /**
-        * 送货数量
+        * 数量
         */
-        private Integer deliveryQty;
-
-        /**
-        * 收货数量
-        */
-        private Integer receiveQty;
+        private Integer qty;
 
         /**
         * 含税单价
@@ -595,6 +653,23 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 退货来源
          */
         private String returnSourceType;
+        /**
+         * 送货单id
+         */
+        private String deliveryId;
+        /**
+         * 送货明细id
+         */
+        private String deliveryDetailId;
+        /**
+         * 送货单编码
+         */
+        private String deliveryCode;
+
+        /**
+         * 单据备注
+         */
+        private String remark;
     }
 
     @Data
@@ -659,4 +734,69 @@ public class PoReconciliationDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CodeDTO {
+
+        /**
+         * 入库/退货单号
+         */
+        @NotEmpty(message = "入库/退货单号不能为空")
+        private List<String> codeList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateParamDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        public GenerateParamDTO (String code) {
+            this.code = code;
+        }
+    }
+
+
+        /**
+     * 添加设置
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddSettingDTO {
+
+        /**
+         * 付款条件集合
+         */
+        @NotEmpty(message = "付款条件不能为空")
+        private List<String> paymentConditionList;
+
+    }
+
+
+    /**
+     * 导入质
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         * 成功返回数据
+         */
+        private List<PoReconciliationDetailDTO.ViewDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
 }

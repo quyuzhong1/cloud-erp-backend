@@ -1,6 +1,7 @@
 package com.erp.server.srm.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -14,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 系统配置管理
@@ -69,5 +71,18 @@ public class CfgSettingController extends BaseController {
     public ApiResult<CfgSettingDTO.ViewDTO> view() {
         CfgSettingDTO.ViewDTO viewDTO = cfgSettingService.view();
         return success(viewDTO);
+    }
+
+    /**
+     *根据key值查询所有配置信息
+     * @author Will
+     * @date: 2024/1/17 10:49
+     * @param key
+     * @return List<ViewDTO>
+     */
+    @GetMapping("/listByKey")
+    public ApiResult<CfgSettingDTO.ViewDTO> listByKey(@RequestParam("key") String key) {
+        List<CfgSettingDTO.ViewDTO> list = cfgSettingService.listByKey(key);
+        return success(CollUtil.isEmpty(list) ? new CfgSettingDTO.ViewDTO() : list.get(0));
     }
 }

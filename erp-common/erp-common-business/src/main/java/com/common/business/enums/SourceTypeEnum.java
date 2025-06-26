@@ -26,6 +26,8 @@ public enum SourceTypeEnum {
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
     SUPPLIER("supplier", "供应商列表","supplier"),
     CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
+    CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
+
 
 
     //WMS
@@ -108,6 +110,7 @@ public enum SourceTypeEnum {
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
+    PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
 
 
 
