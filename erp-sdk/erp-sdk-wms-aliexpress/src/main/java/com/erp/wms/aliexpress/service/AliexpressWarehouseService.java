@@ -11,6 +11,7 @@ import com.erp.wms.aliexpress.domain.Protocol;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
 import com.erp.wms.aliexpress.model.inbound.AliexpressInboundDTO;
 import com.erp.wms.aliexpress.model.inbound.ApiInboundResponseDTO;
+import com.erp.wms.aliexpress.model.inventory.ApiInventoryResponseDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
@@ -154,4 +155,22 @@ public class AliexpressWarehouseService {
         return JSON.parseObject(response.getBody(),new TypeReference<ApiInboundResponseDTO>() {}.getType());
     }
 
+    public ApiInventoryResponseDTO getInventory(AliexpressAuthDTO aliexpressAuthDTO) throws ApiException {
+        String url = aliexpressAuthDTO.getUrl();
+        if (!BusinessCommonConstants.hasProfile("prod")) {
+            url = url + "/sandbox";
+        }
+        String appKey = aliexpressAuthDTO.getAppKey();
+        String appSecret = aliexpressAuthDTO.getAppSecret();
+        String accessToken = aliexpressAuthDTO.getAccessToken();
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.cnap.stock.query");
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("owner_code", aliexpressAuthDTO.getOwnerCode());
+        request.addApiParameter("page_size", "20");
+        request.addApiParameter("page", "1");
+        IopResponse response = client.execute(request, accessToken, Protocol.TOP);
+        return JSON.parseObject(response.getBody(),new TypeReference<ApiInventoryResponseDTO>() {}.getType());
+    }
 }

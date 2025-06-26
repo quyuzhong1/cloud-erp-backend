@@ -4,6 +4,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
 import com.erp.wms.aliexpress.model.inbound.AliexpressInboundDTO;
 import com.erp.wms.aliexpress.model.inbound.ApiInboundResponseDTO;
+import com.erp.wms.aliexpress.model.inventory.ApiInventoryResponseDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
@@ -120,6 +121,12 @@ public class AliexpressWarehouseServiceTest {
                 ))
                 .build();
         ApiInboundResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createInbound(aliexpressInboundDTO);
+        System.out.println(apiOrderResponseDTO);
+    }
+
+    @Test
+    public void getInventory() throws ApiException{
+        ApiInventoryResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.getInventory(buildAuthDTO());
         System.out.println(apiOrderResponseDTO);
     }
 
