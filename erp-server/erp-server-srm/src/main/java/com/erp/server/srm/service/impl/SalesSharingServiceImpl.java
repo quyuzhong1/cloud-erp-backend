@@ -161,13 +161,13 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         //获取供应商id
         List<String> supplierIds = getSupplierIds();
         if(CollUtil.isEmpty(supplierIds)){
-            throw new ServiceException("供应商信息不存在");
+            return "";
         }
 
         //获取供应商的销量设置信息
         List<CfgSupplierSalesEntity> cfgSupplierSalesList = getCfgSupplierSalesEntities(supplierIds);
         if(CollUtil.isEmpty(cfgSupplierSalesList)){
-            throw new ServiceException("供应商的销量设置信息不存在");
+            return "";
         }
         CfgSupplierSalesEntity cfgSupplierSalesEntity = cfgSupplierSalesList.get(0);
 
