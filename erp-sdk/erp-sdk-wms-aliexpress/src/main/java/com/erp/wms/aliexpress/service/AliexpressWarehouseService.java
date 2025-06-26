@@ -150,9 +150,9 @@ public class AliexpressWarehouseService {
         log.warn("菜鸟仓创建出库单,{}",JSONUtil.toJsonStr(aliexpressOrderDTO));
         AliexpressAuthDTO aliexpressAuthDTO = aliexpressOrderDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
-//        if (!BusinessCommonConstants.hasProfile("prod")) {
-//            url = url + "/sandbox";
-//        }
+        if (!BusinessCommonConstants.hasProfile("prod")) {
+            url = url + "/sandbox";
+        }
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
