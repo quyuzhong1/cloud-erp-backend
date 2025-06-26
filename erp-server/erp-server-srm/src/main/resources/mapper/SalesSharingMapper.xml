@@ -79,6 +79,9 @@ ss.saleable_days AS saleableDays
                 #{id}
             </foreach>
         </if>
+        <if test="params.supplierId!=null and params.supplierId!=''">
+            and ss.supplier_id = #{params.supplierId}
+        </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
