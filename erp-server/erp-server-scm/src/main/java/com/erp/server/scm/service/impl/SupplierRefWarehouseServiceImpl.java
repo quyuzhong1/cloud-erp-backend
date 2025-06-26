@@ -222,7 +222,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
         }
         for (SupplierRefWarehouseDTO.ListDTO listDTO : list) {
             listDTO.setDisabledName(SupplierRefWarehouseTabEnum.getNameByCode(listDTO.getDisabled()));
-            listDTO.setWarehouseLocationName(CharSequenceUtil.isBlank(listDTO.getWarehouseLocationCode()) ? "" : listDTO.getWarehouseLocationCode());
+            listDTO.setWarehouseLocationName(CharSequenceUtil.isBlank(listDTO.getWarehouseLocationCode()) ? "" : listDTO.getWarehouseLocationName());
         }
     }
 
