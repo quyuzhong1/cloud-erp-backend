@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
 import com.erp.server.scm.query.SupplierCredentialQueryHandler;
@@ -230,6 +231,18 @@ public class SupplierCredentialController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated SupplierCredentialDTO.PagingParamDTO dto, HttpServletResponse response) {
         supplierCredentialService.exportList(dto, response);
         return success();
+    }
+
+
+    /**
+     * 保存拜访管理字典
+     * @param dto
+     * @return DictBasicDTO
+     */
+    @PostMapping("/addDictCredential")
+    public ApiResult<DictBasicDTO> addDictCredential(@RequestBody @Validated SupplierCredentialDTO.DictCredentialDTO dto) {
+        DictBasicDTO dictBasicDTO = supplierCredentialService.addDictCredential(dto.getCredentialName());
+        return Objects.nonNull(dictBasicDTO) ? success(dictBasicDTO) : failure();
     }
 
 

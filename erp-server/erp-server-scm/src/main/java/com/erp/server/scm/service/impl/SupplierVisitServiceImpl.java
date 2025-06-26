@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -26,17 +27,16 @@ import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- * 供应商拜访表 服务实现类
+ * 现场考察 服务实现类
  * </p>
  *
  * @author admin
@@ -67,7 +67,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     private ModuleOperateLogService moduleOperateLogService;
 
     /**
-     * 添加供应商拜访记录
+     * 添加供应商现场考察
      *
      * @param dto
      * @return java.lang.Boolean
@@ -122,15 +122,20 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
             //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条拜访记录"), ModuleTypeEnum.SUPPLIER.getCode(), id, "新增拜访");
+            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), id, "现场考察");
         }
 
         return result;
     }
 
+    @Override
+    public Boolean update(SupplierVisitDTO.UpdateDTO dto) {
+        return null;
+    }
+
 
     /**
-     * 获取到供应商拜访信息
+     * 获取到供应商现场考察
      *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierVisitDTO.PagingViewDTO>
@@ -138,7 +143,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
      * @date 2023-03-21 11:32
      */
     @Override
-    public PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<SupplierVisitDTO.ListDTO> paging(PagingDTO<BaseIdDTO> dto) {
         //供应商id
         String supplierId = dto.getParams().getId();
         SupplierEntity supplier = supplierService.getById(supplierId);
@@ -147,14 +152,14 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, supplierId);
-        List<SupplierVisitDTO.PagingViewDTO> list = pageData.getRecords();
+        List<SupplierVisitDTO.ListDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        List<String> ids = list.stream().map(SupplierVisitDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<String> ids = list.stream().map(SupplierVisitDTO.ListDTO::getId).collect(Collectors.toList());
         List<String> peopleIdList = new ArrayList<>(5);
 
-        List<String> peopleList = list.stream().map(SupplierVisitDTO.PagingViewDTO::getPeople).collect(Collectors.toList());
+        List<String> peopleList = list.stream().map(SupplierVisitDTO.ListDTO::getPeople).collect(Collectors.toList());
         for (String people : peopleList) {
             String peopleStr[] = people.split(",");
             for (String str : peopleStr) {
@@ -171,7 +176,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        for (SupplierVisitDTO.PagingViewDTO item : list) {
+        for (SupplierVisitDTO.ListDTO item : list) {
             //拜访类型
             SupplierVisitEnum visitEnum = item.getVisitType();
             item.setVisitTypeName(visitEnum.getName());
@@ -206,5 +211,30 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
 
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SupplierVisitDTO.ViewDTO> view(String id) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void exportList(SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
+        return null;
     }
 }
