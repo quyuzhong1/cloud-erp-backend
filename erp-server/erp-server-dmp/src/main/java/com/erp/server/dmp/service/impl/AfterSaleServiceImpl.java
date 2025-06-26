@@ -140,7 +140,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //第三方用户id为空的情况下，则新增用户
         if (addDTO.getType().equals("wx")
                 && StringUtils.isBlank(addDTO.getThridUserId())) {
-            throw new ServiceException("第三方用户id不能为空");
+            throw new ServiceException("登录异常，请退出小程序重新授权登录");
         } else if (addDTO.getType().equals("selfAdd")
                 && StringUtils.isBlank(addDTO.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
@@ -1083,7 +1083,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         //变更为已完成的，需要校验商家寄出快递单号不能为空
         if(Objects.equals(afterSaleStatus, AfterSaleStatusEnum.TO_BE_SHIPPED) && !StringUtil.isNotBlank(dto.getTrackNo())){
-            throw new ServiceException(" 单据状态修改为完成时商家寄出快递单号不能为空");
+            throw new ServiceException("单据状态修改为完成时商家寄出快递单号不能为空");
         }
 
         Map<String, AfterSaleDTO.NodeDTO> nodeMap = getNodeList().stream().collect(Collectors.toMap(AfterSaleDTO.NodeDTO::getNode, w -> w));
