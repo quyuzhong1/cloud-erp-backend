@@ -125,7 +125,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
             throw new ServiceException("虚拟仓调整单主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓调整单主单" , virtualAdjustEntity.getCode());
+        String msg = StrUtil.format("新增【{}】单据单号为【{}】", "虚拟仓调整单主单" , virtualAdjustEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), virtualAdjustEntity.getId(), "新增操作");
         //新增明细
         virtualAdjustDetailService.updateDetail(virtualAdjustEntity.getId(), detailEntityList);
@@ -198,7 +198,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         virtualAdjustDetailService.updateDetail(virtualAdjustEntity.getId(), detailEntityList);
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓调整单主单日志数据，单号：【{}】", virtualAdjustEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualAdjustEntity.getCode(), "虚拟仓调整单主单");
+        String msg = StrUtil.format("编辑单号为【{}】的【{}】单据 ", virtualAdjustEntity.getCode(), "虚拟仓调整单主单");
         operateLogService.addModuleOperateLogByObj(old, virtualAdjustEntity, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), virtualAdjustEntity.getId(), msg);
         return Boolean.TRUE;
     }
