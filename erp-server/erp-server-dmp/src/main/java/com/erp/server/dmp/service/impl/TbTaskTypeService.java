@@ -349,7 +349,7 @@ public class TbTaskTypeService {
      */
     private void addInputDetail(OverseasProviderEntity overseasProviderEntity, DmpCfgInputEntity dmpCfgInputEntity) {
 
-        boolean isCaiNiaoOutbound = overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode()) && dmpCfgInputEntity.getCode().equals("outbound");
+        boolean isCaiNiaoOutbound = overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode()) && (dmpCfgInputEntity.getCode().equals("outbound") || dmpCfgInputEntity.getCode().equals("inbound"));
         //添加基础任务
         DmpCfgInputDetailDTO.AddDTO addDTO = new DmpCfgInputDetailDTO.AddDTO();
         addDTO.setMainId(dmpCfgInputEntity.getId());

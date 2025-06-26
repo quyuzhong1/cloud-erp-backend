@@ -45,9 +45,9 @@ public class InboundHandler implements WebhookHandler{
         log.warn("webhook 获取入库单数据,{}",data);
         try {
             ThirdWarehouseContext.setData(data);
-//            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-//            dmpInputHotfixCreateRequest.setCfgInputId("1937771436038967500");
-//            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+            dmpInputHotfixCreateRequest.setCfgInputId("1938157629872296175");
+            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         }finally {
             ThirdWarehouseContext.remove();
         }

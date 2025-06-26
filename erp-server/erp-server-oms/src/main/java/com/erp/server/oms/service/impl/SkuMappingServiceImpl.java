@@ -620,7 +620,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         checkWarehouseSkuExist("", listingId, warehouseId, skuId);
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setWarehouseId(warehouseId);
-        skuMappingEntity.setWarehouseName(warehouseList.get(0).getName());
+        skuMappingEntity.setWarehouseName(CollectionUtils.isNotEmpty(warehouseList)?warehouseList.get(0).getName():"");
         skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
         skuMappingEntity.setProductSkuId(skuId);
         skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
