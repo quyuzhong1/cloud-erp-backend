@@ -629,7 +629,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public List<PoReconciliationDetailEntity> listBySourceCodeAndSku(List<String> sourceCodeList, List<String> skuNOList) {
         return lambdaQuery().in(PoReconciliationDetailEntity::getSourceCode,sourceCodeList)
                 .in(PoReconciliationDetailEntity::getSkuNo,skuNOList)
-                .eq(PoReconciliationDetailEntity::getMainId,"")
                 .list();
     }
 

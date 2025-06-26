@@ -212,7 +212,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public PoReconciliationDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public PoReconciliationDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, HttpServletResponse response) {
         PoReconciliationDetailExcelListener excelListenerUtil = new PoReconciliationDetailExcelListener();
 
         try {
@@ -235,7 +235,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         //导出错误数据
         List<PoReconciliationDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理成功数据
-        List<PoReconciliationDetailDTO.ViewDTO> reustList = handleImportPoReconciliation(successList, errorList);
+        List<PoReconciliationDetailDTO.ViewDTO> reustList = handleImportPoReconciliation(successList, errorList,id);
 
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
@@ -258,7 +258,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
      * @param errorList
      * @return List<ViewDTO>
      */
-    private List<PoReconciliationDetailDTO.ViewDTO> handleImportPoReconciliation(List<PoReconciliationDetailImportExcelDTO> successList, List<PoReconciliationDetailImportExcelDTO> errorList) {
+    private List<PoReconciliationDetailDTO.ViewDTO> handleImportPoReconciliation(List<PoReconciliationDetailImportExcelDTO> successList, List<PoReconciliationDetailImportExcelDTO> errorList,String id) {
         if (CollUtil.isEmpty(successList)) {
             return Collections.emptyList();
         }
@@ -270,9 +270,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         for (PoReconciliationDetailImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
             //待对账明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSourceCode()) && CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(id,obj.getMainId()) && CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSourceCode()) && CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).collect(Collectors.toList());
             if (CollUtil.isEmpty(detailList)) {
-                errorMsgList.add("待对账数据未找到或已加入对账");
+                errorMsgList.add("对账单下未找到该对账明细信息");
             }
             if (detailList.size() > 1) {
                 errorMsgList.add("单号+SKU存在多条数据，请在页面直接编辑修改");

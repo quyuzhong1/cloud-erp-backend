@@ -372,8 +372,8 @@ public class PoReconciliationScmController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "新增明细导入")
     @PostMapping("/importFile")
-    public ApiResult<PoReconciliationDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        PoReconciliationDetailDTO.ImportDTO result = poReconciliationScmService.importFile(excelFile, response);
+    public ApiResult<PoReconciliationDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "id") String id, HttpServletResponse response) {
+        PoReconciliationDetailDTO.ImportDTO result = poReconciliationScmService.importFile(excelFile,id, response);
         return success(result);
     }
 }
