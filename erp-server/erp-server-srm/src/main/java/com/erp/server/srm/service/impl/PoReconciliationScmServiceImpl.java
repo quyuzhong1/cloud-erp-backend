@@ -291,8 +291,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             //价税合计（折后）
             BigDecimal discountTaxAmount = MathUtil.subtract(MathUtil.subtract(entity.getTaxAmount(), entity.getPrepayAmount()), MathUtil.multiplyWithFour(entity.getTaxAmount(), entity.getDiscountRate()));
             entity.setDiscountTaxAmount(discountTaxAmount);
-            entity.setMainId(entity.getMainId());
-            entity.setId(entity.getId());
             list.add(entity);
         }
         if (CollUtil.isEmpty(list)) {
