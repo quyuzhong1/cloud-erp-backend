@@ -193,15 +193,22 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
         }
+        //校验确认状态
         String confirmSourceCodes = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getBusinessStatus(), ConfirmStatusEnum.CONFIRM.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(confirmSourceCodes)) {
+        if (CharSequenceUtil.isNotBlank(confirmSourceCodes)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_GENERATE,confirmSourceCodes);
         }
-
-        String generateSourceCodes = poReconciliationDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getMainId()))
+        //校验对账状态
+        String statusCodes = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), PoReconciliationDetailEnum.StatusEnum.NOT_NEED_RECONCILIATION.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(generateSourceCodes)) {
+        if (CharSequenceUtil.isNotBlank(statusCodes)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION,statusCodes);
+        }
+        //校验是否已经加入对账
+        String generateSourceCodes = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getMainId()))
+                .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(generateSourceCodes)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_HAS_GENERATE,generateSourceCodes);
         }
         if (PoReconciliationEnum.GenerateTypeEnum.CREATE_NEW.getCode().equals(dto.getGenerateType())) {
@@ -515,8 +522,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             addDTO.setRemark(poInstockDetailEntity.getRemark());
             addList.add(addDTO);
         }
-        this.add(addList);
-
+        BaseResultDTO.AddDTO add = ApplicationContextUtils.getBean(PoReconciliationDetailScmServiceImpl.class).add(addList);
+        if (ObjectUtil.isEmpty(add) || CharSequenceUtil.isBlank(add.getId())) {
+            throw new ServiceException("单据不支持生成对账明细");
+        }
     }
 
 
@@ -573,7 +582,10 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             addDTO.setRemark(poReturnDetailEntity.getRemark());
             addList.add(addDTO);
         }
-        this.add(addList);
+        BaseResultDTO.AddDTO add = ApplicationContextUtils.getBean(PoReconciliationDetailScmServiceImpl.class).add(addList);
+        if (ObjectUtil.isEmpty(add) || CharSequenceUtil.isBlank(add.getId())) {
+            throw new ServiceException("单据不支持生成对账明细");
+        }
     }
 
     /**
