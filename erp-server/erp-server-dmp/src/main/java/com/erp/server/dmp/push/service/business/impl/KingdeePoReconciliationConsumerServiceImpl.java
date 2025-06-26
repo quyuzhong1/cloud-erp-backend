@@ -149,7 +149,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
             return;
         }
         //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
+        String documentStatus = (String)model.get("DOCUMENTSTATUS");
         String id = String.valueOf(model.get("Id")) ;
         //查找到数据后，判断其审核状态
         Boolean flag = Boolean.FALSE;
@@ -160,9 +160,8 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
-            KingdeeUtils.makeFieldJson(json, "FId", ".", id);
+            KingdeeUtils.makeFieldJson(json, "FID", ".", id);
             //更新数据不能传入库组织
-            json.remove("FStockOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

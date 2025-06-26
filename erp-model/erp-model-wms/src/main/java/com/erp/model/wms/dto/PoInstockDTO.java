@@ -464,7 +464,6 @@ public class PoInstockDTO implements Serializable {
         /**
          * 来源编码
          */
-        @NotBlank(message = "来源编码不能为空")
         private String sourceCode;
 
 

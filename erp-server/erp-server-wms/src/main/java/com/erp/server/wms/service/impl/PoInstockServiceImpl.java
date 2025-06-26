@@ -1361,7 +1361,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         } else if (CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.PO_RECEIVE.getCode())) {
             WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(receiveEntity)) {
-                entity.setSourceCode(receiveEntity.getSourceCode());
+                entity.setSourceCode(receiveEntity.getCode());
             }
         }
     }
