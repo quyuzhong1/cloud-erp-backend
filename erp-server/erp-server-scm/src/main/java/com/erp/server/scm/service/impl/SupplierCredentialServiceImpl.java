@@ -20,18 +20,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierCredentialStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.scm.mapper.SupplierCredentialMapper;
-import com.erp.server.scm.service.AttachmentService;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.SupplierCredentialService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -70,6 +69,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     @Resource
     private SupplierCredentialService self;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 保存 供应商资质信息
@@ -639,6 +641,22 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    @Override
+    public DictBasicDTO addDictCredential(String credentialName) {
+        DictBasicEntity dictBasicEntity = new DictBasicEntity();
+        dictBasicEntity.setValue(IdWorker.getIdStr());
+        dictBasicEntity.setName(credentialName);
+        dictBasicEntity.setType("credentialType");
+        dictBasicEntity.setTypeName("证照字典");
+        dictBasicEntity.setStatus(Boolean.TRUE);
+        boolean save = dictBasicService.save(dictBasicEntity);
+        if(!save){
+            return null;
+        }
+        DictBasicDTO dto = new DictBasicDTO();
+        BeanMapper.copy(dictBasicEntity, dto);
+        return dto;
+    }
 
 
 }

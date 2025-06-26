@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
 
@@ -100,4 +101,6 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
     void exportList(SupplierCredentialDTO.PagingParamDTO dto, HttpServletResponse response);
 
     BatchResultDTO updateStatus(String id);
+
+    DictBasicDTO addDictCredential(String credentialName);
 }

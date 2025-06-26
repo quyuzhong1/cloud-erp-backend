@@ -1,9 +1,12 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,7 +16,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -26,6 +31,16 @@ import java.util.List;
 @NoArgsConstructor
 public class SupplierVisitDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+        private String tabFlag;
+
+        private String tabFlagName;
+
+        private Integer count;
+    }
 
     /**
      * 供应商拜访信息
@@ -33,7 +48,38 @@ public class SupplierVisitDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @Valid
-    public static class AddDTO {
+    public static class AddDTO extends CommonDTO{
+
+
+    }
+
+    /**
+     * 供应商拜访信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class UpdateDTO extends CommonDTO{
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends CommonDTO {
+        private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
 
         /**
          * 供应商id
@@ -89,23 +135,84 @@ public class SupplierVisitDTO implements Serializable {
          * 物料sku 集合
          */
         private List<String> skuIdList;
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+
+        private String id;
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+    }
 
     /**
      * 供应商拜访分页信息
      */
     @Data
     @NoArgsConstructor
-    @Valid
-    public static class PagingViewDTO {
+    public static class ListDTO extends BaseDTO {
         /**
-         * 表id
+         * 供应商名
          */
-        private String id;
-
-
+        private String  supplierCode;
         /**
          * 供应商名
          */

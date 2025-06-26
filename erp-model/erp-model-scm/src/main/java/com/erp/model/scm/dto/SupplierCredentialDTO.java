@@ -306,4 +306,16 @@ public class SupplierCredentialDTO  implements Serializable {
     }
 
 
+    /**
+     * 资质字典dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DictCredentialDTO  {
+
+        @NotBlank(message = "自定义资质名称不能为空")
+        @Size(max = 50,message = "自定义资质名称最大50字符")
+        private String credentialName;
+    }
+
 }

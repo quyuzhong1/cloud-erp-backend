@@ -27,5 +27,5 @@ public interface SupplierVisitMapper extends BaseMapper<SupplierVisitEntity> {
      * @param supplierId
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      */
-    IPage<SupplierVisitDTO.PagingViewDTO> paging(Page query, @Param("supplierId") String supplierId);
+    IPage<SupplierVisitDTO.ListDTO> paging(Page query, @Param("supplierId") String supplierId);
 }

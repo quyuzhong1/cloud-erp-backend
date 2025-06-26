@@ -3,6 +3,7 @@ package com.erp.model.dmp.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -163,6 +164,11 @@ public class DmpReturnInstockDTO implements Serializable {
         * 下一层级id
         */
         private String nextLevelId;
+
+        /**
+         * 平台退换单号
+         */
+        private String platformSoReturnCode;
 
         private List<DmpReturnInstockDetailDTO.ViewDTO> detailList;
     }

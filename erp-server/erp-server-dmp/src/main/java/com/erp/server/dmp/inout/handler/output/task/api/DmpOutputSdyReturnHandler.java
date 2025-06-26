@@ -148,7 +148,9 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             }
 
             String shopId = "";
+            String parentNodeNo = "";
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                parentNodeNo = dmpSoReturnEntity.getPlatformCode();
                 //RMA.退货单
             	if ("2".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
                     sdyDTO.setTransaction_type("RMA.退货单");
@@ -200,6 +202,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     shopId = dmpSoReturnEntity.getShopId();
                 }
             }
+            //退换单号
+            sdyDTO.setParent_node_no(parentNodeNo);
             
             Map<String, Object> shopInfoMap = cacheMap.get("shopInfo");
             if(shopInfoMap == null) {
