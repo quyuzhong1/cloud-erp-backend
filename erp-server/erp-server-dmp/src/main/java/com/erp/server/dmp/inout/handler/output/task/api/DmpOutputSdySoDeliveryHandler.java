@@ -116,10 +116,10 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
         		if(!selftAdd.equals(sourceType) || thirdDeliveryCode.contains("_")) {
         			continue;
         		}
-        	}
-        	String platformCode = dmpSoDeliveryEntity.getPlatformCode();
-			if(selftAdd.equals(sourceType) && StringUtils.isNotBlank(platformCode) && selfAddPlatformCodes.contains(platformCode)) {
-				continue;
+        		String platformCode = dmpSoDeliveryEntity.getPlatformCode();
+    			if(selftAdd.equals(sourceType) && StringUtils.isNotBlank(platformCode) && selfAddPlatformCodes.contains(platformCode)) {
+    				continue;
+            	}
         	}
 			List<DmpSoDeliveryDetailEntity> dmpSoDeliveryDetailEntityList = dmpSoDeliveryDetailEntityMap.get(changId);
 			Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoDeliveryEntity, dmpSoDeliveryDetailEntityList , cfgOutputId, cacheMap);
