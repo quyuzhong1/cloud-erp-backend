@@ -467,34 +467,16 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/packingTaskDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            warehouseTableField = "pt.warehouse_id",
-            menuCode = "wms:packingTask:exportPackingDetail",
-            tableAlias = "pt"
-    )
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
     }
     @PostMapping("/exportPackingTaskDetailMerge")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            warehouseTableField = "pt.warehouse_id",
-            menuCode = "wms:packingTask:exportPackingDetail",
-            tableAlias = "pt"
-    )
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetailMerge(dto);
     }
     @PostMapping("/unPackingTaskDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            warehouseTableField = "pt.warehouse_id",
-            menuCode = "wms:packingTask:unPackingTaskDetail",
-            tableAlias = "pt"
-    )
     public PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.unPackingTaskDetail(dto);
     }

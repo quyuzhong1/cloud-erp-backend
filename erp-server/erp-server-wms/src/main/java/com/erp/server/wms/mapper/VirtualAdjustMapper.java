@@ -31,20 +31,6 @@ public interface VirtualAdjustMapper extends BaseMapper<VirtualAdjustEntity> {
     */
     IPage<VirtualAdjustDTO.ListDTO> paging(Page query, @Param("params") VirtualAdjustDTO.PagingParamDTO params);
 
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") VirtualAdjustDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<VirtualAdjustDTO.ListDTO> listExport(@Param("params") VirtualAdjustDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计
