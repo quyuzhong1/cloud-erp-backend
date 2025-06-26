@@ -199,6 +199,13 @@ public class SalesSharingDTO implements Serializable {
          */
         private List<String> ids;
 
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+
+
     }
 
 }
