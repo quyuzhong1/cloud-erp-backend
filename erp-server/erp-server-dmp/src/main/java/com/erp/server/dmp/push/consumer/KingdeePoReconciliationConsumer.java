@@ -40,7 +40,7 @@ public class KingdeePoReconciliationConsumer<T extends DmpSyncTaskIdDTO> extends
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.AP_PAYABLE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "AP00004279"));
+        queryFilters.add(String.format("FBillNo = '%s'", "DZD250625000007"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FEntityPlan_FEntryID,FENDDATE,FPAYAMOUNTFOR,FPAYRATE,FPURCHASEORDERID,FPRICE_P";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
