@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -1058,10 +1059,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @GlobalTransactional(rollbackFor = Exception.class)
     public ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto) {
         boolean changeFlag = Boolean.FALSE;
+        if(StringUtils.isBlank(dto.getReceivingCode()) && StringUtils.isBlank(dto.getSourceCode())){
+            return ApiResult.success();
+        }
         //根据sku汇总数量
         this.groupBySku(dto);
         //通过单号查询主表记录
-        OverseasWarehouseInboundEntity mainEntity = this.getByCode(dto.getReceivingCode(), null);
+        OverseasWarehouseInboundEntity mainEntity;
+        if(StringUtils.isBlank(dto.getReceivingCode())){
+            mainEntity = this.getBySourceCode(dto.getSourceCode());
+        }else{
+            mainEntity = this.getByCode(dto.getReceivingCode(), null);
+        }
         if (Objects.isNull(mainEntity)) {
             return ApiResult.success();
         }
@@ -1193,6 +1202,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             this.updateById(mainEntity);
         }
         return ApiResult.success();
+    }
+
+    private OverseasWarehouseInboundEntity getBySourceCode(String sourceCode) {
+        return lambdaQuery()
+                .eq(OverseasWarehouseInboundEntity::getSourceCode, sourceCode)
+                .orderByDesc(OverseasWarehouseInboundEntity::getCreateTime)
+                .last("LIMIT 1")
+                .one();
     }
 
     @Override

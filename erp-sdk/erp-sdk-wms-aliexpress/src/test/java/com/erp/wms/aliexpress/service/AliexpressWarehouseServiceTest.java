@@ -105,7 +105,7 @@ public class AliexpressWarehouseServiceTest {
                 .aliexpressAuthDTO(buildAuthDTO())
                 .entryOrder(AliexpressInboundDTO.EntryOrder.builder()
                         .orderType("SCRK")
-                        .entryOrderCode("TEST-WJ062601")
+                        .entryOrderCode("TEST-WJ062602")
                         .ownerCode("17379911544")
                         .orderCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                         .warehouseCode("STB")
@@ -119,7 +119,6 @@ public class AliexpressWarehouseServiceTest {
                                 .build()
                 ))
                 .build();
-
         ApiInboundResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createInbound(aliexpressInboundDTO);
         System.out.println(apiOrderResponseDTO);
     }
