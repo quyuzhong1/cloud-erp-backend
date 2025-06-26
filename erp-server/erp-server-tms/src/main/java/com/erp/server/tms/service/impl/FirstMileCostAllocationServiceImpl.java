@@ -945,7 +945,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     private void setRemark(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, FirstMileSkuCostAllocationDetailEntity detailEntity) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(),entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setRemark(changeRecordEntity.getNewValue());
         }
@@ -963,7 +963,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setEndPeriodEstimatedCost(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, BigDecimal productAllocatedAmount, int receiveQty, Integer deliveryQty) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_ESTIMATED_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_ESTIMATED_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(), entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setEndPeriodEstimatedCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -995,7 +995,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setEndPeriodTransitCost(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO, InitFirstMileAllocationDetailEntity initEntity, BigDecimal allocatedAmount) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(), entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setEndPeriodTransitCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -1043,7 +1043,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setCurrentPeriodAllocatedCost(CurrentPeriodAllocatedCostDTO currentPeriodAllocatedCostDTO) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),currentPeriodAllocatedCostDTO.getEntity().getSourceId(),currentPeriodAllocatedCostDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.CURRENT_PERIOD_ALLOCATED_COST.getCode(),currentPeriodAllocatedCostDTO.getDetailEntity().getSkuId(),currentPeriodAllocatedCostDTO.getDetailEntity().getPlatformSkuNo(),currentPeriodAllocatedCostDTO.getDetailEntity().getFeeType(),currentPeriodAllocatedCostDTO.getEntity().getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),currentPeriodAllocatedCostDTO.getEntity().getSourceId(),currentPeriodAllocatedCostDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.CURRENT_PERIOD_ALLOCATED_COST.getCode(),currentPeriodAllocatedCostDTO.getDetailEntity().getSkuId(),currentPeriodAllocatedCostDTO.getDetailEntity().getPlatformSkuNo(),currentPeriodAllocatedCostDTO.getDetailEntity().getFeeType(),currentPeriodAllocatedCostDTO.getEntity().getReportPeriodId(), currentPeriodAllocatedCostDTO.getEntity().getId());
         if (Objects.nonNull(changeRecordEntity)){
             currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -1098,7 +1098,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setMidPeriodTransitCost(FirstMileCostAllocationParamDTO firstMileCostAllocationParamDTO) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),firstMileCostAllocationParamDTO.getEntity().getSourceId(),firstMileCostAllocationParamDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.MID_PERIOD_TRANSIT_COST.getCode(),firstMileCostAllocationParamDTO.getDetailEntity().getSkuId(),firstMileCostAllocationParamDTO.getDetailEntity().getPlatformSkuNo(),firstMileCostAllocationParamDTO.getDetailEntity().getFeeType(),firstMileCostAllocationParamDTO.getEntity().getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),firstMileCostAllocationParamDTO.getEntity().getSourceId(),firstMileCostAllocationParamDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.MID_PERIOD_TRANSIT_COST.getCode(),firstMileCostAllocationParamDTO.getDetailEntity().getSkuId(),firstMileCostAllocationParamDTO.getDetailEntity().getPlatformSkuNo(),firstMileCostAllocationParamDTO.getDetailEntity().getFeeType(),firstMileCostAllocationParamDTO.getEntity().getReportPeriodId(), firstMileCostAllocationParamDTO.getEntity().getId());
         if (Objects.nonNull(changeRecordEntity)){
             firstMileCostAllocationParamDTO.getDetailEntity().setMidPeriodTransitCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
