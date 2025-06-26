@@ -283,14 +283,16 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 continue;
             }
             PoReconciliationDetailEntity entity = detailList.get(0);
-            entity.setDiscountRate(MathUtil.divide(MathUtil.valueOf(excelDTO.getDiscountRate()),MathUtil.BigDecimal_100));
+            entity.setDiscountRate(MathUtil.valueOf(excelDTO.getDiscountRate()));
             entity.setTaxPrice(MathUtil.valueOf(excelDTO.getTaxPrice()));
-            entity.setTaxRate(MathUtil.divide(MathUtil.valueOf(excelDTO.getTaxRate()),MathUtil.BigDecimal_100));
+            entity.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
             entity.setTaxAmount(MathUtil.multiplyWithFour(entity.getTaxPrice(),MathUtil.valueOf(entity.getQty())));
             entity.setPrepayAmount(MathUtil.valueOf(excelDTO.getPrepayAmount()));
             //价税合计（折后）
             BigDecimal discountTaxAmount = MathUtil.subtract(MathUtil.subtract(entity.getTaxAmount(), entity.getPrepayAmount()), MathUtil.multiplyWithFour(entity.getTaxAmount(), entity.getDiscountRate()));
             entity.setDiscountTaxAmount(discountTaxAmount);
+            entity.setMainId(entity.getMainId());
+            entity.setId(entity.getId());
             list.add(entity);
         }
         if (CollUtil.isEmpty(list)) {
