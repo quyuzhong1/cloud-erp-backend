@@ -120,20 +120,21 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         //获取供应商id
         List<String> supplierIds = getSupplierIds();
         if(CollUtil.isEmpty(supplierIds)){
-            return "供应商信息不存在";
+            return "下载失败";
         }
 
         //获取供应商的销量设置信息
         List<CfgSupplierSalesEntity> cfgSupplierSalesList = getCfgSupplierSalesEntities(supplierIds);
         if(CollUtil.isEmpty(cfgSupplierSalesList)){
-            return "销量设置信息不存在";
+            return "下载失败";
         }
 
         String permission = cfgSupplierSalesList.get(0).getPermission();
         if(!Objects.equals(permission, CfgSupplierSalesPermissionEnum.DOWNLOAD.getCode())){
             return ApiError.NO_PERMISSION.msg;
         }
-
+        //供应商id
+        pagingDTO.setSupplierId(supplierIds.get(0));
         List<SalesSharingDTO.ListDTO> list = this.baseMapper.listByParams( pagingDTO);
 
         //处理字段显示
