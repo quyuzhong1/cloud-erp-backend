@@ -39,4 +39,6 @@ public interface BasicCategoryMapper extends BaseMapper<BasicCategoryEntity> {
     List<BasicCategoryTreeDTO> categoryGradeDown();
 
     List<BasicCategoryDTO> getCategoryByPid(@Param("pid") String pid);
+
+    List<BasicCategoryDTO.DropdownDTO> getCategoryDropdown();
 }

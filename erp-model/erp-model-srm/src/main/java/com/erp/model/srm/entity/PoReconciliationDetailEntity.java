@@ -1,15 +1,15 @@
 package com.erp.model.srm.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -78,10 +78,10 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("po_detail_id")
     private String poDetailId;
     /**
-    * 确认日期
+    * 日期
     */
-    @TableField("confirm_date")
-    private LocalDate confirmDate;
+    @TableField("date")
+    private LocalDate date;
     /**
     * skuId
     */
@@ -92,16 +92,12 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     */
     @TableField("sku_no")
     private String skuNo;
+
     /**
-    * 送货数量
+    * 数量
     */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-    /**
-    * 收货数量
-    */
-    @TableField("receive_qty")
-    private Integer receiveQty;
+    @TableField("qty")
+    private Integer qty;
     /**
     * 税率
     */
@@ -163,18 +159,64 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
     /**
-    * 是否加入账单
-    */
-    @TableField("is_add_account")
-    private Boolean isAddAccount;
-
-    /**
      * 退货来源类型
      */
     @TableField("return_source_type")
     private String returnSourceType;
 
+    /**
+     * 对账状态，poReconciliationDetailStatus字典
+     */
+    @TableField("status")
+    private String status;
 
+    /**
+     * 送货单id
+     */
+    @TableField("delivery_id")
+    private String deliveryId;
+
+    /**
+     * 送货单明细id
+     */
+    @TableField("delivery_detail_id")
+    private String deliveryDetailId;
+
+    /**
+     * 送货单号
+     */
+    @TableField("delivery_code")
+    private String deliveryCode;
+
+    /**
+     * 折扣率
+     */
+    @TableField("discount_rate")
+    private BigDecimal discountRate;
+
+    /**
+     * 预付金额
+     */
+    @TableField("prepay_amount")
+    private BigDecimal prepayAmount;
+
+    /**
+     * 价税合计（折扣后）
+     */
+    @TableField("discount_tax_amount")
+    private BigDecimal discountTaxAmount;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 金蝶详情Id
+     */
+    @TableField("kingdee_detail_id")
+    private String KingdeeDetailId;
 
     public static final String SUPPLIER_ID = "supplier_id";
 
@@ -194,15 +236,13 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
 
     public static final String PO_ID = "po_id";
 
-    public static final String CONFIRM_DATE = "confirm_date";
+    public static final String DATE = "date";
 
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String DELIVERY_QTY = "delivery_qty";
-
-    public static final String RECEIVE_QTY = "receive_qty";
+    public static final String QTY = "qty";
 
     public static final String TAX_RATE = "tax_rate";
 

@@ -1,45 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.srm.mapper.PoReconciliationDetailMapper">
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.PoReconciliationDetailEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="supplier_id" property="supplierId" />
-       <result column="supplier_name" property="supplierName" />
-       <result column="main_id" property="mainId" />
-       <result column="source_detail_id" property="sourceDetailId" />
-       <result column="source_id" property="sourceId" />
-       <result column="source_code" property="sourceCode" />
-       <result column="source_type" property="sourceType" />
-       <result column="po_code" property="poCode" />
-       <result column="po_id" property="poId" />
-       <result column="confirm_date" property="confirmDate" />
-       <result column="sku_id" property="skuId" />
-       <result column="sku_no" property="skuNo" />
-       <result column="delivery_qty" property="deliveryQty" />
-       <result column="receive_qty" property="receiveQty" />
-       <result column="tax_rate" property="taxRate" />
-       <result column="tax_price" property="taxPrice" />
-       <result column="tax_amount" property="taxAmount" />
-       <result column="settle_org_id" property="settleOrgId" />
-       <result column="settle_org_Name" property="settleOrgName" />
-       <result column="settle_dict" property="settleDict" />
-       <result column="payment_condition" property="paymentCondition" />
-       <result column="business_status" property="businessStatus" />
-       <result column="supplier_remark" property="supplierRemark" />
-       <result column="purchase_remark" property="purchaseRemark" />
-       <result column="currency" property="currency" />
-       <result column="exchange_rate" property="exchangeRate" />
-       <result column="is_add_account" property="isAddAccount" />
-    </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
@@ -51,11 +12,10 @@
         prd.source_type as sourceType,
         prd.return_source_type as returnSourceType,
         prd.po_code as poCode,
-        prd.confirm_date as confirmDate,
+        prd.date as date,
         prd.sku_id as skuId,
         prd.sku_no as skuNo,
-        prd.delivery_qty as deliveryQty,
-        prd.receive_qty as receiveQty,
+        prd.qty,
         prd.tax_rate as taxRate,
         prd.tax_price as taxPrice,
         prd.tax_amount as taxAmount,
@@ -67,8 +27,15 @@
         prd.supplier_remark as supplierRemark,
         prd.purchase_remark as purchaseRemark,
         prd.currency,
-        prd.is_add_account as isAddAccount,
-        prd.create_time as createTime
+        prd.create_time as createTime,
+        prd.status,
+        prd.delivery_id as deliveryId,
+        prd.delivery_detail_id as deliveryDetailId,
+        prd.delivery_code as deliveryCode,
+        prd.discount_rate as discountRate,
+        prd.prepay_amount as prepayAmount,
+        prd.discount_tax_amount as discountTaxAmount,
+        prd.remark
     </sql>
 
     <!-- 分页查询 -->
@@ -146,9 +113,9 @@
         from
         po_reconciliation_detail prd
         <where>
-            prd.is_deleted = false and prd.main_id = '' and prd.business_status = 'confirm' and prd.is_add_account = true
-            and prd.confirm_date >= #{startDate}
-            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.confirm_date
+            prd.is_deleted = false and prd.main_id = '' and prd.business_status = 'confirm' and prd.status = 'waitReconciliation'
+            and prd.date >= #{startDate}
+            and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > prd.date
         </where>
     </select>
 

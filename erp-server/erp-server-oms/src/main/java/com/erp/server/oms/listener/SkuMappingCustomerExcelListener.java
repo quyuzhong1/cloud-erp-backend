@@ -1,10 +1,13 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.FileTemplateConstant;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
@@ -14,6 +17,7 @@ import com.erp.model.oms.dto.excel.SkuMappingCustomerImportExcelDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.LabelSourceTypeEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -141,6 +145,7 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 }
                 operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("通过导入修改客户sku，客户sku名称从【{}】修改为【{}】，产品sku从【{}】修改为【{}】", existEntity.getPlatformSkuName(), excelDTO.getPlatformSkuName(), skuMapping.getProductSkuNo(), excelDTO.getPlatformSkuNo()),ModuleTypeEnum.LISTING_INFO.getCode(), existEntity.getId(), "导入更新"));
                 existEntity.setPlatformSkuName(excelDTO.getPlatformSkuName());
+                existEntity.setProductSkuNo(excelDTO.getSkuNo());
                 updateListingList.add(existEntity);
 
                 LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime());
@@ -175,12 +180,38 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
 
     public void submit(List<ListingInfoEntity> addListingList, List<SkuMappingEntity> addSkuMappingList, List<ListingInfoEntity> updateListingList, List<SkuMappingEntity> updateSkuMappingList,List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
         if(CollectionUtils.isNotEmpty(addListingList)){
+            for (ListingInfoEntity listingInfoEntity : addListingList) {
+                String labelUrl = skuMappingService.getLabelUrl(listingInfoEntity.getProductSkuNo(), listingInfoEntity.getPlatformSkuNo());
+                if (CharSequenceUtil.isNotBlank(labelUrl)){
+                    //根据模板生成pdf文件
+                    listingInfoEntity.setLabelUrl(labelUrl);
+                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
+                    listingInfoEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
+                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelFileName(),listingInfoEntity.getLabelUrl());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
+                }
+            }
             listingInfoService.saveBatch(addListingList);
         }
         if(CollectionUtils.isNotEmpty(addSkuMappingList)){
             skuMappingService.saveBatch(addSkuMappingList);
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
+            for (ListingInfoEntity listingInfoEntity : updateListingList){
+                String labelUrl = listingInfoEntity.getLabelUrl();
+                if (CharSequenceUtil.isNotBlank(labelUrl)){
+                    continue;
+                }
+               labelUrl = skuMappingService.getLabelUrl(listingInfoEntity.getProductSkuNo(), listingInfoEntity.getPlatformSkuNo());
+                if (CharSequenceUtil.isNotBlank(labelUrl)){
+                    //根据模板生成pdf文件
+                    listingInfoEntity.setLabelUrl(labelUrl);
+                    listingInfoEntity.setLabelFileName(FileTemplateConstant.CUSTOMER_SKU_LABEL + ".pdf");
+                    listingInfoEntity.setLabelSourceType(LabelSourceTypeEnum.SYSTEM.getCode());
+                    String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo(),listingInfoEntity.getLabelFileName(),listingInfoEntity.getLabelUrl());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
+                }
+            }
             listingInfoService.updateBatchById(updateListingList);
         }
         if(CollectionUtils.isNotEmpty(updateSkuMappingList)){
@@ -197,6 +228,7 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         listingInfoEntity.setType(RuleTypeEnum.CUSTOMER.getCode());
         listingInfoEntity.setAuthId(customerInfo.getId());
         listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        listingInfoEntity.setProductSkuNo(skuVO.getSkuNo());
         addListingList.add(listingInfoEntity);
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setType(RuleTypeEnum.CUSTOMER);

@@ -66,7 +66,9 @@
 	afs.invalid_status,
 	afs.invalid_remark,
 	afs.invalid_time,
-	afs.remark
+	afs.remark,
+    afs.csr_remark,
+    afs.rma_remark
     </sql>
     <sql id="paging_sql">
         SELECT
@@ -105,6 +107,8 @@
         afs.invalid_remark AS invalidRemark,
         afs.invalid_time AS invalidTime,
         afs.remark AS remark,
+        afs.csr_remark AS csrRemark,
+        afs.rma_remark AS rmaRemark,
         afsd.id AS detailId,
         afsd.main_id AS mainId,
         afsd.price AS price,
@@ -156,7 +160,7 @@
         select afs.approve_status, count(1) from after_sale as afs where afs.is_deleted = false group by afs.approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO">
+    <select id="listExport" resultType="com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO">
         <include refid="paging_sql"></include>
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AfterSaleDTO$TabListDTO">

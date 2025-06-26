@@ -4,9 +4,9 @@ package com.erp.server.dmp.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AttachmentDTO;
 import com.erp.model.dmp.entity.AttachmentEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.mapper.AttachmentMapper;
 import com.erp.server.dmp.service.AttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +32,8 @@ import java.util.stream.Collectors;
 @Service
 public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
 
+    @Resource
+    private FileFeign fileFeign;
 
     /**
      * 根据业务表id获取附件信息
@@ -63,7 +66,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             List<AttachmentEntity> list = this.list(queryWrapper);
             List<String> urlList = list.stream().map(AttachmentEntity::getAttachUrl).collect(Collectors.toList());
             //批量删除fastdfs 数据
-            FastDFSClientUtil.deleteBatchFile(urlList);
+            fileFeign.deleteBatchFile(urlList);
             this.removeByIds(list.stream().map(AttachmentEntity::getId).collect(Collectors.toList()));
         }
     }
@@ -133,7 +136,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
 
         }
         this.remove(queryWrapper);
-        FastDFSClientUtil.deleteFile(dto.getAttachUrl());
+        fileFeign.deleteFile(dto.getAttachUrl());
     }
 
 

@@ -6605,9 +6605,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if(Objects.isNull(productPackEntity)){
             throw new ServiceException("包装信息不存在");
         }
-        BigDecimal length = LengthConverterUtil.cmToMm(dto.getLength());
-        BigDecimal width = LengthConverterUtil.cmToMm(dto.getWidth());
-        BigDecimal height = LengthConverterUtil.cmToMm(dto.getHeight());
+        BigDecimal length = productPackEntity.getBoxLength().max(LengthConverterUtil.cmToMm(dto.getLength()));
+        BigDecimal width = productPackEntity.getBoxWidth().max(LengthConverterUtil.cmToMm(dto.getWidth()));
+        BigDecimal height = productPackEntity.getBoxHeight().max(LengthConverterUtil.cmToMm(dto.getHeight()));
         BigDecimal weight = dto.getWeight().multiply(new BigDecimal("1000"));
         String logContent = format("对SKU【{}】更新【包装尺寸长】从{}更新为{}，【包装尺寸宽】从{}更新为{}，【包装尺寸高】从{}更新为{}，【毛重】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getProductLength(),length,productPackEntity.getProductWidth(),width,productPackEntity.getProductHeight(),height,productPackEntity.getGrossWeight(),weight);
         productPackEntity.setProductLength(length);

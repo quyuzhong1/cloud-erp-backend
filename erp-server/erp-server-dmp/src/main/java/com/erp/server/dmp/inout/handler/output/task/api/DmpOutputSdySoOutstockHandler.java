@@ -358,12 +358,12 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        }
     	        shudiyunB2cOrderDTO.setSku_code(skuNo);
     	        shudiyunB2cOrderDTO.setSku_name(skuName);
-    	        Boolean isGift = dmpSoOutstockDetailEntity.getIsGift();
-    	        if(isGift != null && isGift) {
-    	        	shudiyunB2cOrderDTO.setIs_gift(1);
-    	        }else {
-    	        	shudiyunB2cOrderDTO.setIs_gift(0);
-    	        }
+//    	        Boolean isGift = dmpSoOutstockDetailEntity.getIsGift();
+//    	        if(isGift != null && isGift) {
+//    	        	shudiyunB2cOrderDTO.setIs_gift(1);
+//    	        }else {
+//    	        	shudiyunB2cOrderDTO.setIs_gift(0);
+//    	        }
     	        
     	        Integer isComb = dmpSoOutstockDetailEntity.getIsComb();
     	        if(isComb == null) {

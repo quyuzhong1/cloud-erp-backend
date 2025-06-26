@@ -3,7 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
 import com.erp.server.scm.mapper.CfgModuleOperateLogFieldMapper;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
 import org.springframework.stereotype.Service;
@@ -32,24 +32,12 @@ public class CfgModuleOperateLogFieldServiceImpl extends SuperServiceImpl<CfgMod
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String  classPath = String.valueOf(SubcontractOrderDetailEntity.class);
+        String  classPath = String.valueOf(SupplierRefWarehouseEntity.class);
         List<CfgModuleOperateLogFieldEntity> logFields =  Arrays.asList(
-                new CfgModuleOperateLogFieldEntity().setField("supplierId").setFieldName("供应商").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("qty").setFieldName("采购数量").setClassPath(classPath).setType(0) .setEnumClass(""),
-
-                new CfgModuleOperateLogFieldEntity().setField("deliveryQty").setFieldName("领料数量").setClassPath(classPath).setType(0) .setEnumClass(""),
-
-                new CfgModuleOperateLogFieldEntity().setField("price").setFieldName("含税单价").setClassPath(classPath).setType(0) .setEnumClass(""),
-
-                new CfgModuleOperateLogFieldEntity().setField("warehouseName").setFieldName("出库名称").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("warehouseLocation").setFieldName("仓位").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("planDeliveryDate").setFieldName("预计交货日期").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("isGift").setFieldName("是否赠品").setClassPath(classPath).setType(1) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("isUrgent").setFieldName("是否加急").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("isGeneratePo").setFieldName("是否生成采购订单").setClassPath(classPath).setType(1) .setEnumClass("")
-
-
+                new CfgModuleOperateLogFieldEntity().setField("supplierName").setFieldName("供应商名称").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("warehouseName").setFieldName("仓库名称").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("warehouseLocationCode").setFieldName("仓位编码").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("isDisabled").setFieldName("启用状态").setClassPath(classPath).setType(1) .setEnumClass("").setBooleanValue("禁用|启用")
                 );
         return this.saveBatch(logFields);
     }

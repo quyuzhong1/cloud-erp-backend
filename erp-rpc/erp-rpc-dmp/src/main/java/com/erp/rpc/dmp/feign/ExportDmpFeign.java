@@ -7,7 +7,7 @@ import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
-import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,5 +30,5 @@ public interface ExportDmpFeign {
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
 
     @PostMapping("/feign/export/exportAfterSale")
-    PagingVO<DmpAfterSaleExcekDTO> exportAfterSale(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto);
+    PagingVO<DmpAfterSaleExcelDTO> exportAfterSale(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto);
 }

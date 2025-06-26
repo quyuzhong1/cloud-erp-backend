@@ -12,11 +12,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductOperateRecordService;
@@ -55,7 +55,8 @@ public class CommonController extends BaseController {
 
     @Resource
     private CommonService commonService;
-
+    @Resource
+    private FileFeign filefeign;
     /**
      * 获取用户
      *
@@ -113,7 +114,7 @@ public class CommonController extends BaseController {
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
-            String filePath = FastDFSClientUtil.uploadFile(file);
+            String filePath = filefeign.uploadFile(file);
             list.add(filePath);
         }
         return this.success(list);

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SupplierRefWarehouseMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SupplierRefWarehouseEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="disabled" property="disabled" />
+       <result column="warehouse_location_code" property="warehouseLocationCode" />
+       <result column="index" property="index" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        srw.id,
+        srw.create_user_id as createUserId,
+        srw.create_user_name as  createUserName,
+        srw.create_time as createTime,
+        srw.update_user_id as updateUserId,
+        srw.update_user_name as updateUserName ,
+        srw.update_time as updateTime,
+        srw.version,
+        srw.is_deleted as isDeleted,
+        srw.supplier_id as supplierId,supplier_code as supplierCOde, srw.warehouse_id as warehosueId, srw.disabled, srw.warehouse_location_code as warehouseLocationCode, srw.index, srw.remark
+    </sql>
+
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+            , su.name as supplierName,wh.name as warehouseName, wl.name as warehouseLocationName
+        from supplier_ref_warehouse srw
+        left join supplier su on srw.supplier_id = su.id and su.is_deleted = false
+        left join foreign_warehouse wh on srw.warehouse_id = wh.id and wh.is_deleted = false
+        left join foreign_warehouse_location wl on srw.warehouse_id = wl.warehouse_id and srw.warehouse_location_code = wl.code and wl.type = 'location' and wl.is_deleted = false
+        <where>
+            ${params.sqlMap.default} and srw.is_deleted = false
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        srw.id desc
+        </where>
+    </select>
+
+    <!-- 查询tabList -->
+    <select id="tabList" resultType="com.erp.model.scm.dto.SupplierRefWarehouseDTO$TabListDTO">
+        SELECT
+            srw.disabled AS tabFlag,
+            count(0)  AS count
+        FROM  supplier_ref_warehouse srw
+        WHERE srw.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY srw.disabled
+    </select>
+
+
+</mapper>

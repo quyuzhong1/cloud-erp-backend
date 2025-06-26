@@ -25,6 +25,9 @@ public enum SourceTypeEnum {
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
     SUPPLIER("supplier", "供应商列表","supplier"),
+    CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
+    CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
+
 
 
     //WMS
@@ -82,6 +85,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
+    VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -106,6 +110,7 @@ public enum SourceTypeEnum {
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
+    PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
 
 
 

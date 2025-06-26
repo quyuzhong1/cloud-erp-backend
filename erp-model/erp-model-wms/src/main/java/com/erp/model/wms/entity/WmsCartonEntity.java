@@ -68,6 +68,12 @@ public class WmsCartonEntity extends BaseEntity<WmsCartonEntity> {
      */
     @TableField("packing_user_name")
     private String packingUserName;
+    /**
+     * 是否释放库存
+     */
+    @TableField("is_release_inventory")
+    private Boolean isReleaseInventory;
+
 
     public static final String CARTON_ID = "carton_id";
 
