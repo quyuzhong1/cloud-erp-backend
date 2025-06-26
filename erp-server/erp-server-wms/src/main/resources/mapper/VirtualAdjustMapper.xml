@@ -75,23 +75,16 @@
         va.create_time desc
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from virtual_adjust where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.VirtualAdjustDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.VirtualAdjustDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  virtual_adjust
-        WHERE is_deleted=FALSE
+        va.approve_status AS tabFlag,
+        count(1)  AS count
+        FROM  virtual_adjust va
+        WHERE va.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY va.approve_status
     </select>
 
 </mapper>
