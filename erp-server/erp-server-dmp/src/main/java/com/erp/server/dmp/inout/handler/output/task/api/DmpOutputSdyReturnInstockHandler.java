@@ -229,7 +229,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(platformOrderCode);
-    	        shudiyunB2cOrderDTO.setParent_node_no(platformReturnInstockCode);
+    	        shudiyunB2cOrderDTO.setParent_node_no(dmpReturnInstockEntity.getPlatformReturnInstockCode());
 
     	        
     	        // 国家编码

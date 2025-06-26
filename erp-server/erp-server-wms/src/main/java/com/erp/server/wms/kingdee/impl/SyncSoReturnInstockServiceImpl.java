@@ -416,6 +416,10 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		viewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		viewDto.setThirdCreateTime(entity.getCreateTime());
 		viewDto.setThirdUpdateTime(entity.getUpdateTime());
+        if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())){
+            viewDto.setPlatformReturnInstockCode(entity.getThirdCode());
+        }
+        viewDto.setPlatformReturnInstockCode(entity.getThirdCode());
 		detailViewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		detailViewDto.setThirdDetailCreateTime(detailEntity.getCreateTime());
 		detailViewDto.setThirdDetailUpdateTime(detailEntity.getUpdateTime());
