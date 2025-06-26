@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -16,7 +17,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.srm.feign.SrmTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeePoReconciliationConsumerService;
@@ -42,7 +43,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
+    private SrmTaskFeign srmTaskFeign;
 
 
     @Override
@@ -129,6 +130,9 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         //模块类型
         Integer type = ApiModuleTypeEnum.PO_RECONCILIATION.getCode();
 
+        //数据处理
+        handlePoReconciliationData(map);
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
 
@@ -165,6 +169,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
+
             //更新数据
             saveOrUpdate( apiUtils, platformEntity, map,json, param);
         }
@@ -238,6 +243,49 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         return list;
     }
 
+    /**
+     * 查询采购订单财务信息
+     */
+    private void handlePoReconciliationData (Map<String, Object> map) {
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.AP_PAYABLE.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", map.get("code")));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FEntityPlan_FEntryID,FENDDATE,FPAYAMOUNTFOR,FPAYRATE,FPURCHASEORDERID,FPRICE_P,FQTY_P,FPURCHASEORDERNO,FMATERIALSEQ,FRELATEHADPAYQTY,FNOTVERIFICATEAMOUNT";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
+        if (CollectionUtils.isEmpty(queryList)) {
+            throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("code").toString()));
+        }
+
+        /**
+         * 编辑时需要付款计划信息
+         */
+        List<JSONObject> fIinstallmentList = new ArrayList<>();
+        Map<Object, List<Map<String, Object>>> resultMap = queryList.stream().collect(Collectors.groupingBy(obj -> obj.get("FEntityPlan_FEntryID")));
+        for (Map.Entry<Object, List<Map<String, Object>>> entry : resultMap.entrySet()) {
+            Map<String, Object> stringObjectMap = entry.getValue().get(0);
+            JSONObject actualPayJson = new JSONObject();
+            //付款计划id
+            actualPayJson.set("FEntryID",entry.getKey());
+            //表头计划 - 到期日
+            actualPayJson.set("FENDDATE",stringObjectMap.get("FENDDATE"));
+            //应付金额
+            actualPayJson.set("FPAYAMOUNTFOR",stringObjectMap.get("FPAYAMOUNTFOR"));
+            //应付比例(%)
+            actualPayJson.set("FPAYRATE",stringObjectMap.get("FPAYRATE"));
+            //采购订单ID
+            actualPayJson.set("FPURCHASEORDERID",stringObjectMap.get("FPURCHASEORDERID"));
+            actualPayJson.set("FPRICE_P",stringObjectMap.get("FPRICE_P"));
+            actualPayJson.set("FQTY_P",stringObjectMap.get("FQTY_P"));
+            actualPayJson.set("FPURCHASEORDERNO",stringObjectMap.get("FPURCHASEORDERNO"));
+            actualPayJson.set("FMATERIALSEQ",stringObjectMap.get("FMATERIALSEQ"));
+            actualPayJson.set("FRELATEHADPAYQTY",stringObjectMap.get("FRELATEHADPAYQTY"));
+            actualPayJson.set("FNOTVERIFICATEAMOUNT",stringObjectMap.get("FNOTVERIFICATEAMOUNT"));
+            fIinstallmentList.add(actualPayJson);
+        }
+        map.put("FEntityPlan",fIinstallmentList);
+    }
+
 
     /**
      * 更新明细id
@@ -247,6 +295,6 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         Map<String,Object> params = new HashMap<>(MathUtil.THREE);
         params.put("code",ApiModuleTypeEnum.PO_RECONCILIATION.getCode().toString());
         params.put("details",jsonArray);
-        wmsTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        srmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 }
