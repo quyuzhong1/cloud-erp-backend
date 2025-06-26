@@ -684,6 +684,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String productName;
         /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
          * 客户sku
          */
         private String platformSkuNo;

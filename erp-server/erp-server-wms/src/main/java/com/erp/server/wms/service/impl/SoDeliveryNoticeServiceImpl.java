@@ -1957,9 +1957,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //补充产品名称
         List<String> skuIds = printSkuLabelDTOS.stream().map(SoDeliveryNoticeDTO.PrintSkuLabelDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(skuIds);
+        //判断sku是否组合品
+        //子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         Map<String, String> productNameMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
         for (SoDeliveryNoticeDTO.PrintSkuLabelDTO printSkuLabelDTO : printSkuLabelDTOS) {
             printSkuLabelDTO.setProductName(productNameMap.get(printSkuLabelDTO.getSkuId()));
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(printSkuLabelDTO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                printSkuLabelDTO.setIsCombination(Boolean.TRUE);
+                printSkuLabelDTO.setShowDate(Boolean.FALSE);
+            } else {
+                printSkuLabelDTO.setIsCombination(Boolean.FALSE);
+                printSkuLabelDTO.setShowDate(Boolean.TRUE);
+            }
         }
         return printSkuLabelDTOS;
     }
