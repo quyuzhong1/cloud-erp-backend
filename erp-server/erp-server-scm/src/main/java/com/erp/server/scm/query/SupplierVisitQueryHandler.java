@@ -16,6 +16,9 @@ public class SupplierVisitQueryHandler extends AbstractQueryHandler {
         if("people".equals(field)){
             return getTabSql(value);
         }
+        if("sku_id".equals(field)){
+            return " sv.id in (select DISTINCT supplier_visit_id from supplier_visit_sku where sku_id " + compareCodeSplicingValueSql+" ";
+        }
         return null;
     }
 
