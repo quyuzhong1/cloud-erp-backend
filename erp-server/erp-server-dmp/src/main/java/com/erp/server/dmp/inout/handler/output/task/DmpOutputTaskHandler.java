@@ -50,9 +50,11 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputResponse;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.handler.DmpHandler;
 import com.erp.server.dmp.inout.handler.chain.DmpHandlerChain;
 import com.erp.server.dmp.inout.handler.output.DmpOutputHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
@@ -113,7 +115,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		if(CollUtil.isNotEmpty(outputData)) {
 			dmpOutputTaskRecordService.saveBatch(outputData);
 		}
-		DmpOutputTaskHandler bean = ApplicationContextUtils.getBean(this.getClass());
+		DmpOutputTaskHandler bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()) , DmpOutputTaskHandler.class);
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
 		    @Override
 		    public void afterCommit() {

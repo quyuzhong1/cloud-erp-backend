@@ -57,6 +57,8 @@ public class ShopifyRefundOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
                 jsonObject.put("platformUpdateTime", shopifyRefund.getProcessedAt());
                 jsonObject.put("qty", refundLineItem.getQuantity());
                 jsonObject.put("taxAmount", refundLineItem.getTotalTax());
+                jsonObject.put("amount", refundLineItem.getSubtotal());
+                jsonObject.put("totalAmount", refundLineItem.getSubtotal());
 
                 jsonObject.put("buyerUserId", shopifyRefund.getUserId());
                 jsonObject.put("reason", shopifyRefund.getNote());
