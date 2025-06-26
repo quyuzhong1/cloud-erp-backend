@@ -29,6 +29,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.entity.SrmPushMsgEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -211,6 +212,10 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             poDetailMap = poDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
         }
 
+        //获取币别信息
+        List<String> currencyCodeList = detailList.stream().map(PoReconciliationDetailEntity::getCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+
         List<JSONObject> list = new ArrayList<>();
         for (PoReconciliationDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -233,7 +238,11 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             jsonObject.set("taxAmount", detail.getTaxAmount());
             //价税合计
             jsonObject.set("discountTaxAmount", detail.getDiscountTaxAmount());
-            //是否赠品
+
+            //结算币别
+            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detail.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+            jsonObject.put("currencyCode", viewDTO.getKingdeeCode());
+
 
             //采购订单号
             jsonObject.set("poCode", detail.getPoCode());
