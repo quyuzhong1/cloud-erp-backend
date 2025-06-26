@@ -19,6 +19,8 @@ import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
+import com.erp.wms.aliexpress.model.inbound.AliexpressInboundDTO;
+import com.erp.wms.aliexpress.model.inbound.ApiInboundResponseDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
@@ -32,10 +34,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author liuruipeng
@@ -66,7 +65,47 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return success();
+        AliexpressInboundDTO aliexpressInboundDTO = convertToInboundDto(createInboundReq);
+        try {
+            ApiInboundResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createInbound(aliexpressInboundDTO);
+            if(!apiOrderResponseDTO.isSuccess()){
+                log.error("创建菜鸟仓入库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
+                return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
+            }
+            return success(apiOrderResponseDTO.getResult().getData().getEntryOrderId());
+        }catch (Exception e){
+            log.error("创建菜鸟仓入库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(aliexpressInboundDTO), e);
+            throw new ServiceException("创建菜鸟仓出库单失败：" + e.getMessage());
+        }
+    }
+
+    private AliexpressInboundDTO convertToInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+        //授权信息
+        AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO(createInboundReq.getShopId(),createInboundReq.getOwnerCode());
+
+        List<AliexpressInboundDTO.OrderLines> orderLines = new ArrayList<>();
+        for (ThirdWarehouseCreateInboundReq.Item item : createInboundReq.getItems()) {
+            AliexpressInboundDTO.OrderLines orderLine = AliexpressInboundDTO.OrderLines.builder()
+                    .itemCode(item.getProductSku())
+                    .itemId(item.getProductSkuId())
+                    .planQty(item.getQuantity())
+                    .inventoryType("1")
+                    .ownerCode(createInboundReq.getOwnerCode())
+                    .build();
+            orderLines.add(orderLine);
+        }
+
+        return AliexpressInboundDTO.builder()
+                .aliexpressAuthDTO(aliexpressAuthDTO)
+                .entryOrder(AliexpressInboundDTO.EntryOrder.builder()
+                        .orderType("SCRK")
+                        .entryOrderCode(createInboundReq.getReferenceNo())
+                        .ownerCode(createInboundReq.getOwnerCode())
+                        .orderCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                        .warehouseCode(createInboundReq.getWarehouseCode())
+                        .build())
+                .OrderLines(orderLines)
+                .build();
     }
 
     @Override
@@ -76,7 +115,25 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        return success();
+        AliexpressCancelOrderDTO aliexpressCancelOrderDTO = new AliexpressCancelOrderDTO();
+        AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO(cancelInboundReq.getShopId(),cancelInboundReq.getOwnerCode());
+        aliexpressCancelOrderDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+        aliexpressCancelOrderDTO.setOrderId(cancelInboundReq.getReceivingCode());
+        aliexpressCancelOrderDTO.setOwnerCode(cancelInboundReq.getOwnerCode());
+        aliexpressCancelOrderDTO.setWarehouseCode(cancelInboundReq.getWarehouseCode());
+        aliexpressCancelOrderDTO.setOrderType("SCRK");
+        aliexpressCancelOrderDTO.setOrderCode(cancelInboundReq.getSourceCode());
+        try {
+            ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOrder(aliexpressCancelOrderDTO);
+            if(!apiOrderResponseDTO.isSuccess()){
+                log.error("取消菜鸟仓入库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
+                return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
+            }
+            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+        } catch (ApiException e) {
+            log.error("取消菜鸟仓入库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(aliexpressCancelOrderDTO), e);
+            throw new ServiceException("取消菜鸟仓入库单失败：" + e.getMessage());
+        }
     }
 
     @Override
@@ -191,7 +248,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         aliexpressCancelOrderDTO.setOrderCode(cancelOutboundReq.getOrderCode());
         aliexpressCancelOrderDTO.setWarehouseCode(cancelOutboundReq.getWarehouseCode());
         try {
-            ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOutbound(aliexpressCancelOrderDTO);
+            ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOrder(aliexpressCancelOrderDTO);
             if(!apiOrderResponseDTO.isSuccess()){
                 log.error("取消菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
