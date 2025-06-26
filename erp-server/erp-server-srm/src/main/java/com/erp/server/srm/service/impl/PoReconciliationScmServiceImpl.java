@@ -297,7 +297,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             if (CharSequenceUtil.isNotBlank(excelDTO.getTaxRate())) {
                 entity.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
             } else {
-                entity.setDiscountRate(MathUtil.multiplyWithFour(MathUtil.valueOf(entity.getTaxRate()),MathUtil.BigDecimal_100));
+                entity.setTaxRate(MathUtil.multiplyWithFour(MathUtil.valueOf(entity.getTaxRate()),MathUtil.BigDecimal_100));
             }
             //预付金额
             if (CharSequenceUtil.isNotBlank(excelDTO.getPrepayAmount())) {
