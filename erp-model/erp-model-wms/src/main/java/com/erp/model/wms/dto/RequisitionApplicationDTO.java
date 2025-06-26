@@ -1755,6 +1755,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer releaseQty;
         /**
+         * 是否释放库存
+         */
+        private Boolean isReleaseInventory;
+        /**
          * 虚拟仓冻结数量
          */
         @Min(value = 1, message = "释放数量不能小于1")
