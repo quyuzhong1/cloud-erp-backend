@@ -535,7 +535,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             omsTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
         if (SystemConstants.SRM.equals(system)) {
-            omsTaskFeign.updateBusinessSyncKingdeeStatus(params);
+            srmTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
     }
 
