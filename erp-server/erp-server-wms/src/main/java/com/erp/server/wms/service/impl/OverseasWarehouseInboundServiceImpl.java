@@ -224,7 +224,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                                                                      Map<SettingEnum, String> shipperInfo,
                                                                      String verifyCode,
                                                                      String code,
-                                                                     List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList
+                                                                     List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
+                                                                     OverseasProviderEntity providerEntity
     ) {
 
         // 交货方式
@@ -264,11 +265,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String cityName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_CITY_NAME);
         String region = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_DISTRICT_NAME);
         String address1 = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_COUNTRY_CODE);
+        String shopId = providerEntity.getAuthJson().getOrDefault("shopId","").toString();
 
 
         ThirdWarehouseCreateInboundReq inboundReq = ThirdWarehouseCreateInboundReq.builder()
                 // 发货单号
                 .referenceNo(mainEntity.getSourceCode())
+                .shopId(shopId)
+                .ownerCode(providerEntity.getOwnerCode())
                 // 交货方式，0自送，1揽收
                 .incomeType(collectingService)
                 .receivingType(inStockType)
@@ -807,10 +811,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             if (CharSequenceUtil.isBlank(mainEntity.getCode())) {
                 throw new ServiceException("数据异常：历史入库单未有单号");
             }
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(mainEntity.getToWarehouseId());
             // 请求第三方
             ThirdWarehouseCancelInboundReq cancelInboundReq = new ThirdWarehouseCancelInboundReq();
             cancelInboundReq.setReceivingCode(mainEntity.getCode());
             cancelInboundReq.setSourceCode(mainEntity.getSourceCode());
+            cancelInboundReq.setOwnerCode(providerEntity.getOwnerCode());
+            String shopId = providerEntity.getAuthJson().getOrDefault("shopId","").toString();
+
+            cancelInboundReq.setShopId(shopId);
+            cancelInboundReq.setWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
             ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
             log.info("取消海外入库单推送第三方仓库: dto={}", JSONUtil.toJsonStr(cancelInboundReq));
             ApiResult<String> resultInfo = handlerService.cancelInboundBill(cancelInboundReq, providerEntity.getId());
@@ -1015,7 +1025,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String code = mainEntity.getCode();
 
         // 请求第三方
-        ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList);
+        ThirdWarehouseCreateInboundReq createInboundReq = entityToCreateInboundBill(mainEntity, packingQtyDTOS, shipperInfo, verityCode, code,deliveryDetailEntityList,providerEntity);
         ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
         log.info("推送第三方仓库: dto={}", JSONUtil.toJsonStr(createInboundReq));
         if (CharSequenceUtil.isBlank(code)){
