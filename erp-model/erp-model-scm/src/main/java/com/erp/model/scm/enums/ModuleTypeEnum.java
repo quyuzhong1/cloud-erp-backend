@@ -144,6 +144,7 @@ public enum ModuleTypeEnum {
     CFG_RULE_INVOICE("126", "开票规则"),
     SKU_ORG_REF("127", "SKU与采购组织关系"),
     VIRTUAL_ADJUST("126", "虚拟库存调整"),
+    CFG_SUPPLIER_SALES("130", "销量设置"),
     ;
 
 

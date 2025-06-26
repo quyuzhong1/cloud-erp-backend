@@ -538,4 +538,11 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
         return purchaseOrderService.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO);
     }
+
+    /**
+     */
+    @PostMapping("/listSkuBySupplierIds")
+    public List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds) {
+        return purchaseOrderService.listSkuBySupplierIds(supplierIds);
+    }
 }

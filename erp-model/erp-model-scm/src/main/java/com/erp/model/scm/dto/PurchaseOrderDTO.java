@@ -1840,4 +1840,18 @@ public class PurchaseOrderDTO implements Serializable {
         private List<String> supplierIdList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SupplierSkuDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * skuN
+         */
+        private String skuNo;
+    }
+
 }
