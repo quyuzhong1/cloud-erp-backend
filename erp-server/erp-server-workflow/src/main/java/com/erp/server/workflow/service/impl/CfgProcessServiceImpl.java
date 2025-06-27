@@ -152,7 +152,24 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<CfgProcessDTO.ProcessViewDTO> pageData = baseMapper.getProcessWithRuleAndAggregatedExps(query, params);
+        handlePaging(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 处理分页数据
+     * @author will
+     * @date 2025/6/27 14:58
+     * @param list
+     * @return void
+     */
+    private void handlePaging (List<CfgProcessDTO.ProcessViewDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (CfgProcessDTO.ProcessViewDTO viewDTO : list) {
+            viewDTO.setDisabledName(viewDTO.getDisabled() ? "禁用" : "启用");
+        }
     }
 
     @Override
