@@ -59,7 +59,7 @@ public class CaiNiaoCommonService {
                 return ApiResult.success("推送菜鸟仓listing成功，itemId：" + itemId, apiResponseDTO.getResult().getData());
             } else {
                 // 处理失败逻辑
-                String errorMsg = apiResponseDTO.getErrorResponse().getSubMsg();
+                String errorMsg = apiResponseDTO.getErrorResponse().getMsg() + apiResponseDTO.getErrorResponse().getSubMsg();
                 log.error("推送菜鸟仓listing失败，参数：{}，错误信息：{}", JSON.toJSONString(aliexpressProductDTO), JSON.toJSONString(apiResponseDTO));
                 return ApiResult.error("推送菜鸟仓listing失败，异常：" + errorMsg);
             }

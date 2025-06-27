@@ -1,5 +1,7 @@
 package com.erp.wms.aliexpress.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
 import com.erp.wms.aliexpress.model.inbound.AliexpressInboundDTO;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
 
 
 @RunWith(SpringRunner.class)
@@ -34,20 +37,21 @@ public class AliexpressWarehouseServiceTest {
     @Test
     public void pushListing() throws ApiException{
         AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO();
-        AliexpressProductDTO.ProductDTO productDTO = new AliexpressProductDTO.ProductDTO();
-        productDTO.setItemCode("2028");
-        productDTO.setItemName("YN50MM F1.8 C");
-        productDTO.setBarCode("2028");
-        productDTO.setItemType("ZC");
-        productDTO.setHeight(new BigDecimal("1.1"));
-        productDTO.setWidth(new BigDecimal("3.3"));
-        productDTO.setLength(new BigDecimal("2.2"));
-        productDTO.setNetWeight(new BigDecimal("1.11"));
-        productDTO.setGrossWeight(new BigDecimal("0.1"));
-        AliexpressProductDTO aliexpressProductDTO = new AliexpressProductDTO();
-        aliexpressProductDTO.setActionType("add");
-        aliexpressProductDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
-        aliexpressProductDTO.setProductDTO(productDTO);
+        String a = "{\"aliexpressAuthDTO\":{\"url\":\"https://api-sg.aliexpress.com\",\"appKey\":\"503630\",\"appSecret\":\"PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ\",\"shopId\":\"1735117862084808706\",\"ownerCode\":\"17379911544\",\"accessToken\":\"50000701530cnHtbirhzrd7ijPeou2emiSIajwwCg118389611msriNQyROLyoVZ1y1j\"},\"productDTO\":{\"item_code\":\"test062606\",\"item_type\":\"ZC\",\"net_weight\":0.551,\"gross_weight\":0.551,\"height\":90,\"length\":112,\"item_name\":\"test062606名称\",\"bar_code\":\"test062606\",\"width\":112},\"actionType\":\"add\",\"listingId\":\"1938486948294311937\"}";
+//        AliexpressProductDTO.ProductDTO productDTO =  JSON.parseObject(a,new TypeReference<AliexpressProductDTO>() {}.getType());
+//        productDTO.setItemCode("2028");
+//        productDTO.setItemName("YN50MM F1.8 C");
+//        productDTO.setBarCode("2028");
+//        productDTO.setItemType("ZC");
+//        productDTO.setHeight(new BigDecimal("1.1"));
+//        productDTO.setWidth(new BigDecimal("3.3"));
+//        productDTO.setLength(new BigDecimal("2.2"));
+//        productDTO.setNetWeight(new BigDecimal("1.11"));
+//        productDTO.setGrossWeight(new BigDecimal("0.1"));
+        AliexpressProductDTO aliexpressProductDTO = JSON.parseObject(a,new TypeReference<AliexpressProductDTO>() {}.getType());
+//        aliexpressProductDTO.setActionType("add");
+//        aliexpressProductDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+//        aliexpressProductDTO.setProductDTO(productDTO);
         aliexpressWarehouseService.pushListing(aliexpressProductDTO);
 
     }
