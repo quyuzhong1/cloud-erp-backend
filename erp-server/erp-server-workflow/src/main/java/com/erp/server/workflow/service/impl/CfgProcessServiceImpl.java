@@ -8,16 +8,16 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,7 +31,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
-import com.erp.server.workflow.handler.FsProcessFormHandler;
 import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
@@ -194,61 +193,32 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(List<String> ids) {
-        if (ObjectUtil.isEmpty(ids)) {
-            return;
+    public BatchResultDTO delete(CfgProcessRuleEntity entity) {
+
+        CfgProcessEntity cfgProcessEntity = this.getById(entity.getCfgProcessId());
+        if (ObjectUtil.isEmpty(cfgProcessEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程配置");
         }
 
-        // 获取规则列表
-        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(
-                new LambdaQueryWrapper<CfgProcessRuleEntity>()
-                        .in(CfgProcessRuleEntity::getId, ids)
-                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
-        );
-
-        if (ObjectUtil.isEmpty(processRuleEntityList)) {
-            return;
-        }
-
+        boolean delete = cfgProcessRuleService.delete(Collections.singletonList(entity.getId()));
         // 删除规则
-        if (!cfgProcessRuleService.delete(ids)) {
+        if (!delete) {
             throw new ServiceException("删除规则失败");
         }
-
-        // 获取需要删除的流程配置ID
-        List<String> processIds = processRuleEntityList.stream()
-                .map(CfgProcessRuleEntity::getCfgProcessId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        // 检查哪些流程配置没有规则了
-        List<CfgProcessRuleEntity> remainingRules = cfgProcessRuleService.list(
-                new LambdaQueryWrapper<CfgProcessRuleEntity>()
-                        .in(CfgProcessRuleEntity::getCfgProcessId, processIds)
-                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
+        //添加操作日志
+        operateLogService.addModuleOperateLog(
+                String.format("删除{}-{}", cfgProcessEntity.getName(),cfgProcessEntity.getCode()),
+                ModuleTypeEnum.CFG_PROCESS.getCode(),
+                cfgProcessEntity.getId(),
+                "删除操作"
         );
-
-        Set<String> remainingProcessIds = remainingRules.stream()
-                .map(CfgProcessRuleEntity::getCfgProcessId)
-                .collect(Collectors.toSet());
-
-        List<String> processesToDelete = processIds.stream()
-                .filter(id -> !remainingProcessIds.contains(id))
-                .collect(Collectors.toList());
-
-        if (CollUtil.isNotEmpty(processesToDelete)) {
-            super.removeByIds(processesToDelete);
-            List<CfgProcessEntity> cfgProcessEntities = this.listByIds(processesToDelete);
-            // 添加操作日志
-            for (int i = 0; i < cfgProcessEntities.size(); i++) {
-                operateLogService.addModuleOperateLog(
-                        String.format("删除{}-{}", cfgProcessEntities.get(i).getName(), cfgProcessEntities.get(i).getCode()),
-                        ModuleTypeEnum.CFG_PROCESS.getCode(),
-                        cfgProcessEntities.get(i).getId(),
-                        "删除操作"
-                );
-            }
+        //流程下没了规则，则删除流程
+        List<CfgProcessRuleEntity> remainingRules = cfgProcessRuleService.listAllByProcessId(entity.getCfgProcessId());
+        if (CollUtil.isNotEmpty(remainingRules)) {
+            return BatchResultDTO.success(entity.getId(), cfgProcessEntity.getCode(), OperationTypeEnum.DELETE);
         }
+        super.removeById(cfgProcessEntity.getId());
+        return BatchResultDTO.success(entity.getId(), cfgProcessEntity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override

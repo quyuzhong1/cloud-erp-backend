@@ -75,6 +75,15 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
     List<CfgProcessRuleEntity> listByProcessId(String id,String type);
 
     /**
+     * 根据流程id查询
+     * @author will
+     * @date 2025/5/19 15:34
+     * @param id
+     * @return CfgProcessRuleEntity
+     */
+    List<CfgProcessRuleEntity> listAllByProcessId(String id);
+
+    /**
      * 获取ERP流程定义版本
      * @author hcg
      * @date: 2025-05-12
