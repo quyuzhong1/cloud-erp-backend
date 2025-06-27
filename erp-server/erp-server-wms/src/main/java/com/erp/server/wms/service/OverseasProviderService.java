@@ -121,4 +121,6 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     void productPushSettings(OverseasProviderDTO.ProductPushSettingDTO dto);
 
     List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse();
+
+    OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName);
 }

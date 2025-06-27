@@ -110,4 +110,6 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @return
      */
     List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO);
+
+    BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO);
 }
