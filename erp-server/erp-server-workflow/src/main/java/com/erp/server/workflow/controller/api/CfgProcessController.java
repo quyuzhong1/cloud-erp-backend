@@ -230,7 +230,7 @@ public class CfgProcessController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgProcess:paging",
-            tableAlias = "p"
+            tableAlias = "cp"
     )
     public ApiResult<List<CfgProcessDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(cfgProcessService.tabList(dto));

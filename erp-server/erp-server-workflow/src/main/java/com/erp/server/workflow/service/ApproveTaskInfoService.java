@@ -79,4 +79,13 @@ public interface ApproveTaskInfoService extends SuperService<ApproveTaskInfoEnti
      * @return BatchResultDTO
      */
     BatchResultDTO afreshGenerate(String id);
+    /**
+     * 根据业务id和业务key查询
+     * @author will
+     * @date 2025/6/27 17:48
+     * @param businessId
+     * @param businessKey
+     * @return ApproveTaskInfoEntity
+     */
+    ApproveTaskInfoEntity getByBusinessIdAndKey( String businessId,  String businessKey);
 }

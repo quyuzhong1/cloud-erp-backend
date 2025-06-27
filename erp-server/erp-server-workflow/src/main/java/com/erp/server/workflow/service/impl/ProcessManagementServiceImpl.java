@@ -169,6 +169,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ApproveTaskInfoService approveTaskInfoService;
     @Resource
     private FsService fsService;
+    @Resource
+    private ThirdProcessManagementService thirdProcessManagementService;
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -424,6 +428,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
+        //判断是否走飞书流程
+       Boolean isFsApprove = isFsApprovePass(dto);
+       if (isFsApprove) {
+           throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
+       }
+
         log.info("流程审批：{}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtils.isEmpty(processManagementList)) {
@@ -500,6 +510,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         });
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
+    }
+
+    /**
+     * 判断单据是否走飞书审批
+     * @author will
+     * @date 2025/6/27 17:40
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean isFsApprovePass (ProcessManagementDTO.ApproveDTO dto) {
+        //查询三方审批生成记录
+        ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.getByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
+        if (ObjectUtil.isEmpty(approveTaskInfo)) {
+            return  Boolean.FALSE;
+        }
+        //查询最后一条第三方流程管理记录，如果已结束则返回false
+        ThirdProcessManagementEntity managementEntity = thirdProcessManagementService.getLastByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
+        if (ObjectUtil.isNotEmpty(managementEntity) && ObjectUtil.isNotEmpty(managementEntity.getEndTime())) {
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     /**

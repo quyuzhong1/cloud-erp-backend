@@ -2,52 +2,43 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.workflow.dto.EndProcessDTO;
+import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
 import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
-import com.erp.model.workflow.entity.ThirdProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
-import com.erp.server.workflow.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.workflow.service.ApproveTaskInfoService;
+import com.erp.server.workflow.service.ProcessManagementService;
+import com.erp.server.workflow.service.ThirdProcessManagementService;
+import com.erp.server.workflow.service.ThirdProcessTaskManagementService;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-
-import static com.common.business.enums.ApproveTypeEnum.PASS;
-import static com.common.business.enums.ApproveTypeEnum.REJECT;
 
 /**
  * <p>
@@ -149,6 +140,15 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
             // 这是新增操作
             this.add(addDTO);
         }
+    }
+
+    @Override
+    public ThirdProcessManagementEntity getLastByBusinessIdAndKey(String businessId, String businessKey) {
+        return lambdaQuery().eq(ThirdProcessManagementEntity::getBusinessKey,businessKey)
+                .eq(ThirdProcessManagementEntity::getBusinessId,businessId)
+                .orderByDesc(ThirdProcessManagementEntity::getStartTime)
+                .last("limit 1")
+                .one();
     }
 
     /**

@@ -1,12 +1,10 @@
 package com.erp.server.workflow.service;
-import cn.hutool.json.JSONObject;
-import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
-import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
 
-import java.time.LocalDateTime;
+import cn.hutool.json.JSONObject;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.SuperService;
+import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
+import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 
 /**
  * <p>
@@ -42,4 +40,13 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
      * @param jsonObject
      */
     void addOrUpdate(JSONObject jsonObject, String sourcePlatform);
+    /**
+     * 业务id和业务key
+     * @author will
+     * @date 2025/6/27 17:57
+     * @param businessId
+     * @param businessKey
+     * @return ThirdProcessManagementEntity
+     */
+    ThirdProcessManagementEntity getLastByBusinessIdAndKey(String businessId, String businessKey);
 }
