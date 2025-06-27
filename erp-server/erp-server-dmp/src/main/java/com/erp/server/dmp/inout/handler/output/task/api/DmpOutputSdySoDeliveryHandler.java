@@ -272,8 +272,18 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoDeliveryDetailEntity.getCurrencyCode());
 
 	            if(!isB2B) {
-	            	shudiyunB2cOrderDTO.setMsku_code(dmpSoDeliveryDetailEntity.getPlatformSkuNo());
-	            	shudiyunB2cOrderDTO.setMsku_name(dmpSoDeliveryDetailEntity.getPlatformSkuName());
+	            	String platformSkuNo = dmpSoDeliveryDetailEntity.getPlatformSkuNo();
+	            	String platformSkuName = dmpSoDeliveryDetailEntity.getPlatformSkuName();
+	            	if(selfAdd) {
+	            		if(StringUtils.isBlank(platformSkuNo)) {
+	            			platformSkuNo = skuNo;
+	            		}
+	            		if(StringUtils.isBlank(platformSkuName)) {
+	            			platformSkuName = skuName;
+	            		}
+	            	}
+	            	shudiyunB2cOrderDTO.setMsku_code(platformSkuNo);
+	            	shudiyunB2cOrderDTO.setMsku_name(platformSkuName);
 					// 配置指定平台税金为0
 					Map<String, Object> dmpDictBasticMap = queryAndCacheDmpDictBasicEntity(cacheMap);
 					List<com.erp.model.dmp.entity.DictBasicEntity> tax0PlatformTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("tax0PlatformType");
