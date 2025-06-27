@@ -105,19 +105,16 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 资质有效期起
          */
-        @NotNull(message = "资质有效期起不能为空")
         private LocalDate effectiveDate;
 
         /**
          * 失效日期
          */
-        @NotNull(message = "资质有效期止不能为空")
         private LocalDate expireDate;
 
         /**
          * 供应商表id
          */
-//        @NotBlank(message = "供应商不能为空")
         private String supplierId;
 
         /**

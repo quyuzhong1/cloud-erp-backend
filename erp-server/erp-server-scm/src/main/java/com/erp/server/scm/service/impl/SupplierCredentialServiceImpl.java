@@ -107,12 +107,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(id);
-        //获取状态
-        self.getCredentialStatuses(addEntity);
-        self.save(addEntity);
-
         //校验有效期
         self.checkDate(addEntity);
+        //获取状态
+        self.getCredentialStatuses(addEntity);
+        boolean save = self.save(addEntity);
+        if(!save){
+            throw new ServiceException("供应商证照新增失败");
+        }
 
         //附件集合
         List<String> attachmentUrlList = dto.getAttachmentUrlList();
@@ -148,14 +150,19 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         // 判断当前时间是否在资质有效期之间
         LocalDate effectiveDate = addEntity.getEffectiveDate();
         LocalDate expireDate = addEntity.getExpireDate();
-        SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
-        LocalDate now = LocalDate.now();
-        if(now.isBefore(effectiveDate)){
-            status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
-        }else if(now.isAfter(effectiveDate) && now.isBefore(expireDate)){
-            status = SupplierCredentialStatusEnum.EFFECTIVE;
+        //有效日期不为空
+        if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate)){
+            SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
+            LocalDate now = LocalDate.now();
+            if(now.isBefore(effectiveDate)){
+                status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
+            }else if(now.isAfter(effectiveDate) && now.isBefore(expireDate)){
+                status = SupplierCredentialStatusEnum.EFFECTIVE;
+            }
+            addEntity.setStatus(status.getCode());
+        }else {
+            addEntity.setStatus("");
         }
-        addEntity.setStatus(status.getCode());
     }
 
     /**
@@ -192,12 +199,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         SupplierCredentialEntity entity = new SupplierCredentialEntity();
         BeanMapper.copy(dto, entity);
-        //获取状态
-        self.getCredentialStatuses(entity);
         //校验有效期
         checkDate(entity);
-
-        self.updateById(entity);
+        //获取状态
+        self.getCredentialStatuses(entity);
+        boolean save = self.updateById(entity);
+        if(!save){
+            throw new ServiceException("供应商证照更新失败");
+        }
 
         //删除附件
         attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
@@ -417,10 +426,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if (Objects.nonNull(supplierCredentialEntity)) {
             LocalDate effectiveDate = supplierCredentialEntity.getEffectiveDate();
             LocalDate expireDate = supplierCredentialEntity.getExpireDate();
-            if(Objects.isNull(effectiveDate) || Objects.isNull(expireDate)){
-                throw new ServiceException(ApiError.ERROR_98121);
-            }
-            if(expireDate.compareTo(effectiveDate) < 0){
+            if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0){
                 throw new ServiceException(ApiError.ERROR_98037);
             }
         }
