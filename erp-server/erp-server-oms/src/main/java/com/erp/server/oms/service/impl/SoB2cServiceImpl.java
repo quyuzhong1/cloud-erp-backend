@@ -2833,7 +2833,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setReferenceNo(entity.getCode());
         createOutboundReq.setShopId(entity.getShopId());
-        createOutboundReq.setShopName(entity.getShopName());
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
+        createOutboundReq.setShopName(shopInfoEntity.getName());
         createOutboundReq.setOwnerCode(overseasProviderWarehouse.getOwnerCode());
         createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
