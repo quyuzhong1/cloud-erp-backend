@@ -242,6 +242,11 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
 
+    @Override
+    public ApproveTaskInfoEntity getByBusinessIdAndKey(String businessId, String businessKey) {
+        return lambdaQuery().eq(ApproveTaskInfoEntity::getBussinessKey,businessKey).eq(ApproveTaskInfoEntity::getBussinessId,businessId).last("limit 1").one();
+    }
+
     /**
      * 分页查询数据处理
      * @author will
