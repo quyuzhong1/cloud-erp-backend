@@ -2,43 +2,47 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
-import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.*;
+import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessFieldMapMapper;
-import com.erp.server.workflow.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
+import com.erp.server.workflow.service.CfgProcessFieldMapService;
+import com.erp.server.workflow.service.CfgProcessValueMapService;
+import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
 import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -129,7 +133,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             return new BaseResultDTO.AddDTO();
         } catch (Exception e) {
             log.info("字段配置更新失败："+e);
-            throw new ServiceException("字段配置更新失败:{}", e);
+            throw new ServiceException("字段配置更新失败:{}", e.getMessage());
         }
     }
 
@@ -233,7 +237,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && thirdFieldType==CfgQueryOptionFieldTypeEnum.FIELDLIST) {
+            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && (CharSequenceUtil.equals(dto.getSysParentId(), "main") || CharSequenceUtil.equals(dto.getSysParentId(), "common"))) {
                 throw new ServiceException("明细只能对应明细");
             }
             // 校验通过后，进行保存或更新操作
