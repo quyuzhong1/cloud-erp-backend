@@ -3132,7 +3132,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 throw new ServiceException("要货申请单明细不存在");
             }
             //释放数量不能大于冻结数量
-            if (Objects.equals(dto.getVirtualFrozenQty(), dto.getPackQty())){
+            if (!Objects.equals(dto.getVirtualFrozenQty(), dto.getPackQty())){
                 throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】释放数量【{}】需要和装箱数量【{}】相等", entity.getCode(), detailEntity.getSkuNo()),dto.getVirtualFrozenQty(),dto.getPackQty());
             }
             //更新要货申请释放标识，并更新明细冻结数量
