@@ -12,6 +12,7 @@ import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.enums.FileTaskStatusEnum;
 import com.erp.server.file.enums.FileTaskTypeEnum;
 import com.erp.server.file.repository.IFileTaskRepository;
+import com.erp.server.file.service.FileService;
 import com.erp.server.file.utils.ExceptionUtils;
 import com.erp.server.file.vo.FileTaskVO;
 import com.fasterxml.jackson.core.JsonProcessingException;

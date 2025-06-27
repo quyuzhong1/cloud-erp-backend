@@ -133,6 +133,11 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
     @TableField("delivery_type")
     private String deliveryType;
 
+    /**
+     * 是否释放库存
+     */
+    @TableField("is_unlock_inventory")
+    private Boolean isUnlockInventory;
     
 
     public static final String SOURCE_ID = "source_id";

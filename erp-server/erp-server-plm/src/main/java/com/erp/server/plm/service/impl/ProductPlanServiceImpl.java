@@ -22,7 +22,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -34,8 +33,8 @@ import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
 import com.erp.server.plm.mapper.ProductPlanMapper;
@@ -111,7 +110,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Resource
     private ApplicationCategoryService applicationCategoryService;
-
+    @Resource
+    private FileFeign filefeign;
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -152,10 +152,21 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
-        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryService.getById(productPlanEntity.getApplicationCategoryId());
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
-        productPlanDTO.setApplicationCategoryName(applicationCategoryEntity.getName());
+        if(StringUtils.isNotBlank(productPlanEntity.getApplicationCategoryId())){
+            List<String> applicationCategoryIdList = Arrays.stream(productPlanEntity.getApplicationCategoryId().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            productPlanDTO.setApplicationCategoryIdList(applicationCategoryIdList);
+            List<ApplicationCategoryEntity> applicationCategory = applicationCategoryService.listByIds(applicationCategoryIdList);
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                List<String> applicationCategoryNameList = applicationCategory.stream()
+                        .map(ApplicationCategoryEntity::getName)
+                        .collect(Collectors.toList());
+                productPlanDTO.setApplicationCategoryNameList(applicationCategoryNameList);
+            }
+        }
         resultDTO.setProductPlanDTO(productPlanDTO);
         //枚举格式化
         productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
@@ -347,7 +358,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isNotEmpty(category)) {
             dto.setCategory(category.getName());
         }
-
+        if(CollectionUtils.isNotEmpty(dto.getApplicationCategoryIdList())){
+            dto.setApplicationCategoryId(String.join(",", dto.getApplicationCategoryIdList()));
+        }
         //根据产品名称判断是否已经存在开发产品
         ProductInfoEntity productInfoEntity = productInfoService.getByName(dto.getName());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
@@ -616,7 +629,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
-        String filePath = FastDFSClientUtil.uploadFile(multipartFiles);
+        String filePath = filefeign.uploadFile(multipartFiles);
         productPlanEntity.setImageUrl(filePath);
         return this.updateById(productPlanEntity);
     }

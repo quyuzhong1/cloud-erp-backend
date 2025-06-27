@@ -737,7 +737,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportUpdateTemplate")
     public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/productUpdateTemplate.xlsx";
+        String path = "excel/productUpdateTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1235,7 +1235,8 @@ public class ProductDetailController extends BaseController {
                 Boolean flag = productDetailService.updateBatchFiled(new ProductDetailBatchUpdateDTO(
                         Collections.singletonList(id),
                         dto.getUpdateFiledCode(),
-                        dto.getValues()
+                        dto.getValues(),
+                        dto.getName()
                 ));
                 if (flag){
                     resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"产品详情批量更新成功"));

@@ -126,10 +126,10 @@ public interface B2cOrderConsumerConverter {
 
     @Mappings({
             // 更新的内容
-            @Mapping(target = "platformSkuNo", expression = "java(keepHistory ?  oldEntity.getPlatformSkuNo() : detailDTO.getPlatformSkuNo())"),
+            @Mapping(target = "platformSkuNo", source = "detailDTO.platformSkuNo"),
 //            @Mapping(target = "platformSpuNo", source = "detailDTO.platformSpuNo"),
-            @Mapping(target = "warehouseSkuNo", expression = "java(keepHistory ? oldEntity.getWarehouseSkuNo() : detailDTO.getWarehouseSkuNo())"),
-            @Mapping(target = "qty", expression = "java(keepHistory ? oldEntity.getQty() : detailDTO.getQty())"),
+            @Mapping(target = "warehouseSkuNo", source = "detailDTO.warehouseSkuNo"),
+            @Mapping(target = "qty", source = "detailDTO.qty"),
             @Mapping(target = "price", source = "detailDTO.price"),
             @Mapping(target = "taxRate", source = "detailDTO.taxRate"),
             @Mapping(target = "amount", source = "detailDTO.amount"),
@@ -162,7 +162,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
 
     })
-    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo, boolean keepHistory);
+    SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
 
     @Mappings({

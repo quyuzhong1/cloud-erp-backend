@@ -51,4 +51,12 @@ public enum ReconciliationTypeEnum implements EnumMessage {
                 .findFirst()
                 .orElse(null);
     }
+    public static String getNameByCode(String code) {
+        for (ReconciliationTypeEnum e : ReconciliationTypeEnum.values()) {
+            if (e.getCode().equals(code)) {
+                return e.getName();
+            }
+        }
+        return "";
+    }
 }

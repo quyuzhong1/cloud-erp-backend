@@ -9,10 +9,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.srm.dto.CfgSettingDTO;
-import com.erp.model.srm.dto.DictBasicDTO;
-import com.erp.model.srm.dto.OrderAcceptDTO;
-import com.erp.model.srm.dto.ReturnConfirmDTO;
+import com.erp.model.srm.dto.*;
 import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DictBasicEnum;
@@ -214,12 +211,21 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                     ReturnConfirmDTO returnConfirmDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
                     viewDTO.setReturnConfirmDTO(returnConfirmDTO);
                     break;
+                case PO_RECONCILIATION:
+                    PoReconciliationDetailDTO.AddSettingDTO addSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), PoReconciliationDetailDTO.AddSettingDTO.class);
+                    viewDTO.setSetDTO(addSettingDTO);
+                    break;
                 default:
                     throw new ServiceException(ApiError.ERROR_CFG_SETTING_KEY,key);
             }
             configList.add(viewDTO);
         }
         return configList;
+    }
+
+    @Override
+    public CfgSettingEntity getByKey(String key) {
+        return lambdaQuery().eq(CfgSettingEntity::getKey,key).last("limit 1").one();
     }
 
     private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {

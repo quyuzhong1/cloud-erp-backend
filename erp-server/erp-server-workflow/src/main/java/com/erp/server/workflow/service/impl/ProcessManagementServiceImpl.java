@@ -1,8 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,6 +20,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -65,10 +66,10 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.common.business.annotation.DistributeLocker;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -129,6 +130,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
 
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessId")
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
         // 查询业务数据和关联流程定义

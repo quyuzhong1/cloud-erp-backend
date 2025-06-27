@@ -191,6 +191,11 @@ public class DmpSoOriginalInfoEntity extends BaseEntity<DmpSoOriginalInfoEntity>
     */
     @TableField("next_level_id")
     private String nextLevelId;
+    /**
+     * 运费收入
+     */
+    @TableField("shipping_amount")
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

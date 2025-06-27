@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -129,6 +130,7 @@ public class PurchaseReturnOrderDTO {
          * 报价明细
          */
         @Valid
+        @NotEmpty(message = "退货明细不能为空")
         private List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList;
 
     }
@@ -218,6 +220,7 @@ public class PurchaseReturnOrderDTO {
          * 签收单明细
          */
         @Valid
+        @NotEmpty(message = "采购退货单明细不能为空")
         private List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList;
 
     }

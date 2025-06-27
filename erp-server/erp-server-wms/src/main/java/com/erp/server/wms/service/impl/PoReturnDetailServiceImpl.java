@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -38,7 +38,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.PoReturnDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -200,12 +199,36 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         } else {
             notProductOrderAdd(dto, id, listDetail);
         }
+        //校验数量
+        checkReturnQty(dto.getReturnMode(),listDetail);
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
         //更新是否组合品标识
         updateIsCombination(listDetail);
         //保存详情信息
         return this.saveBatch(listDetail);
+    }
+
+    /**
+     * 校验数量
+     * @author will
+     * @date 2025/6/27 10:37
+     * @param returnMode
+     * @param listDetail
+     * @return void
+     */
+    private void checkReturnQty (String returnMode,List<PoReturnDetailEntity> listDetail) {
+        if (CollUtil.isEmpty(listDetail)) {
+            return;
+        }
+        for (PoReturnDetailEntity detailEntity : listDetail) {
+            if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.REPLENISHMENT.getCode()) && MathUtil.compareTo(detailEntity.getReplenishQty(),MathUtil.ZERO)  <= 0) {
+                throw new ServiceException(ApiError.ERROR_PO_RETURN_REPLENISH_QTY_CHECK, detailEntity.getSkuNo());
+            }
+            if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.DEDUCTION.getCode()) && MathUtil.compareTo(detailEntity.getDeductAmountQty(),MathUtil.ZERO)  <= 0) {
+                throw new ServiceException(ApiError.ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK, detailEntity.getSkuNo());
+            }
+        }
     }
 
     /**
@@ -257,7 +280,6 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
         PoReturnEntity entity = poReturnService.getById(id);
 
-        List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         //原明细数据
         List<PoReturnDetailEntity> oldList = this.getDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getPurchasePriceDetailList(), oldList);
@@ -273,6 +295,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         if (ObjectUtils.isEmpty(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
+        List<PoReturnDetailEntity> addList = new ArrayList<>();
         Integer returnQty = 0;
         //创建保存详情的集合
         List<PoReturnDetailEntity> listDetail = new ArrayList<>();
@@ -295,7 +318,6 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
 
             List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
             List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
-
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
                 BeanMapperUtils.copy(updateDTO, poReturnDetailEntity);
@@ -353,12 +375,18 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                 if (CharSequenceUtil.isNotBlank(poReturnDetailEntity.getId())) {
                     PoReturnDetailEntity old = this.getById(poReturnDetailEntity.getId());
                     operateLogService.addModuleOperateLogByObj(old, poReturnDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                }else{
+                    addList.add(poReturnDetailEntity);
                 }
                 listDetail.add(poReturnDetailEntity);
             }
         } else {
-            notProductOrderUpdate(dto, id, listDetail);
+            notProductOrderUpdate(dto, id, listDetail,addList);
         }
+
+        //校验数量
+        checkReturnQty(dto.getReturnMode(),listDetail);
+
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
 
@@ -368,8 +396,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<PoReturnDetailEntity> returnOrderDetailEntities = this.listByIds(addList);
-            List<Pair<String, String>> addPairList = returnOrderDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), addPairList, "编辑操作");
         }
         return flag;
@@ -391,7 +418,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
      * @Author Luo_WG
      * @Date 2023/4/25 14:39
      **/
-    private List<PoReturnDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PoReturnDetailEntity> listDetail) {
+    private List<PoReturnDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PoReturnDetailEntity> listDetail,List<PoReturnDetailEntity> addList) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
@@ -428,6 +455,8 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             if (CharSequenceUtil.isNotBlank(poReturnDetailEntity.getId())) {
                 PoReturnDetailEntity old = this.getById(poReturnDetailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old, poReturnDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+            }else{
+                addList.add(poReturnDetailEntity);
             }
         }
         return listDetail;

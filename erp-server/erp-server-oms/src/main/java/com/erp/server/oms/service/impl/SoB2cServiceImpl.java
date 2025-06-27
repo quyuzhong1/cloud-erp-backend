@@ -2381,7 +2381,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
         }
         Integer attachId = uploadFileResponse.getData().getAttachId();
-        List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : createOutboundReq.getAttach();
+        List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : new ArrayList<>(createOutboundReq.getAttach());
         ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
         attach.setFileType(FileTypeEnum.PDF.getCode());
         attach.setAttachId(attachId);
@@ -6451,6 +6451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
                 PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
                 PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
+                PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
                 PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
             listingInfoParamDTO.setPlatformSpuNoList(Collections.singletonList(detailEntity.getPlatformSpuNo()));
         }
@@ -8099,6 +8100,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
             platformSpuList = detailList.stream()
                     .map(SoB2cDetailEntity::getPlatformSpuNo)

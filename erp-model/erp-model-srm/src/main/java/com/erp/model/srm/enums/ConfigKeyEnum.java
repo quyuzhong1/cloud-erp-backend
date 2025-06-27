@@ -9,7 +9,8 @@ package com.erp.model.srm.enums;
 public enum ConfigKeyEnum {
 
     ORDER_AUTO_ACCEPT("orderAutoAccept", "订单自动接受"),
-    RETURN_AUTO_CONFIRM("returnAutoConfirm", "退货自动确认")
+    RETURN_AUTO_CONFIRM("returnAutoConfirm", "退货自动确认"),
+    PO_RECONCILIATION("poReconciliation","对账设置")
     ;
 
     private String code;

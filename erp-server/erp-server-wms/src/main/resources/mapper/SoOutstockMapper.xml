@@ -202,7 +202,7 @@
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
             so.approve_status,
-	        count(distinct so.id)
+	        count(distinct so.id) count
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
 	     WHERE so.is_deleted=FALSE AND sod.is_deleted=FALSE and so.invalid_status=false

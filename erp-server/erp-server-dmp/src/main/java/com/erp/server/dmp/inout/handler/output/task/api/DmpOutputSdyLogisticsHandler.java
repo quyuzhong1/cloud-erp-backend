@@ -1,30 +1,29 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
+import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoOutstockService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSON;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
-import com.common.core.entity.BaseEntity;
-import com.common.core.utils.Tools;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoLogisticsDetailEntity;
-import com.erp.model.dmp.entity.DmpSoLogisticsEntity;
-import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
-import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-
-import cn.hutool.core.collection.CollUtil;
-import lombok.extern.slf4j.Slf4j;
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -34,6 +33,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
+
+    @Resource
+    private DmpSoOutstockService dmpSoOutstockService;
+    @Resource
+    private DmpSoOutstockDetailService dmpSoOutstockDetailService;
+
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -83,10 +88,15 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
 
+        // 字典信息
+        List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                .list();
+
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId) , cfgOutputId);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId), dictList, cfgOutputId);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -96,7 +106,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , String cfgOutputId){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , List<DictBasicEntity> dictList, String cfgOutputId){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpSoLogisticsEntity != null && CollUtil.isNotEmpty(dmpSoLogisticsDetailEntityList)) {
     		if(validateDataBlack(dmpSoLogisticsEntity, cfgOutputId)) {
@@ -146,8 +156,25 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setWaybill_number(bizNo);
     	        shudiyunB2cOrderDTO.setForeign_waybill_number(bizNo);
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
-    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(bizNo);
-    			
+    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoLogisticsEntity.getOrderPlatformCode());
+
+                shudiyunB2cOrderDTO.setShop_no(dmpSoLogisticsEntity.getShopNo());
+                shudiyunB2cOrderDTO.setShop_name(dmpSoLogisticsEntity.getShopName());
+                shudiyunB2cOrderDTO.setRoot_node_no(dmpSoLogisticsEntity.getOrderPlatformCode());
+
+                String platformType = dmpSoLogisticsEntity.getPlatformType();
+                if (StringUtils.isNotBlank(platformType)) {
+                    DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(platformType)).findFirst().orElse(null);
+                    if (null != dictBasicEntity) {
+                        shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                        shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                        shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                        shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
+                    }
+                }
+
+                shudiyunB2cOrderDTO.setParent_node_no(dmpSoLogisticsEntity.getOutstockCode());
+
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}

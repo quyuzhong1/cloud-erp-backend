@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.SupplierPurchaseQuantityEntity;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -210,4 +211,9 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * 通过sku 供应商查询所有采购订单
      */
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@Param("skuIdList") List<String> skuIdList,@Param("supplierIdList") List<String> supplierIdList);
+
+    List<SupplierPurchaseQuantityEntity> listSupplierPurchaseQty();
+
+
+    List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@Param("supplierIds") List<String> supplierIds);
 }

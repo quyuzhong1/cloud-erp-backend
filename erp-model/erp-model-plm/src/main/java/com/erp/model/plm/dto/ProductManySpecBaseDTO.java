@@ -172,4 +172,13 @@ public class ProductManySpecBaseDTO implements Serializable{
      * 应用分类名
      */
     private String applicationCategoryName;
+    /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryIdList;
+
+    /**
+     * 应用分类id List
+     */
+    private List<String> applicationCategoryNameList;
 }

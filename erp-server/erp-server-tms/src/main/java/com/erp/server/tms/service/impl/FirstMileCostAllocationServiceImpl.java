@@ -550,7 +550,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                             && CharSequenceUtil.isNotBlank(e.getSkuId()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
                             && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                             && Objects.equals(e.getReportPeriodMonth(), lastMonth)
-                            && ((CharSequenceUtil.isNotBlank(entity.getReconciliationId()) && Objects.equals(e.getReconciliationId(), entity.getReconciliationId()))) || (CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()) && Objects.equals(e.getEstimatedBillId(), entity.getEstimatedBillId()))
+                            && ((CharSequenceUtil.isNotBlank(entity.getReconciliationId()) && Objects.equals(e.getReconciliationId(), entity.getReconciliationId())) || (CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()) && Objects.equals(e.getEstimatedBillId(), entity.getEstimatedBillId())))
                             && Objects.equals(e.getBillSourceType(), finalBillSourceType))
                     .findFirst().orElse(null);
             FirstMileSkuCostAllocationEntity lastAllocation = null;
@@ -1016,17 +1016,20 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //初始分摊（实际+暂估）可以判断期初费用分摊
                 if (judgeReconciliationDTO.isLastHasCostAllocation()){
                     if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                        //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                        //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                         //期初不等于0时，期初在途费用-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                    }else {
+                        //期初等于0时，头程分摊金额-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }
                 }else if (Objects.isNull(initEntity)){
                     //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                    //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                    //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                     //期初不等于0时，期初在途费用-冲期初-本期分摊费用
@@ -1178,7 +1181,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileCostAllocationDTO.PagingVO beforeVO = null;
         if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //本月开始有实际账单，则之前为暂估账单
-            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+            beforeVO = beforeList.stream().filter(e -> reconciliationMonth.equals(e.getReconciliationMonth()) || Objects.isNull(e.getReconciliationMonth())).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
         } else if (judgeReconciliationDTO.isLastMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //上月开始有实际账单，则之前为实际账单
             beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);

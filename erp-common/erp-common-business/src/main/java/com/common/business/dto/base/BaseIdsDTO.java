@@ -48,6 +48,18 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class StatusDTO extends IdsDTO{
+        /**
+         * 状态
+         */
+        @NotBlank(message = "状态不能为空")
+        @Size(max = 32,message = "状态不能超过32字符")
+        private String status;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class RemarkDTO extends IdsDTO{
 
         @NotBlank(message = "填写信息不能为空")

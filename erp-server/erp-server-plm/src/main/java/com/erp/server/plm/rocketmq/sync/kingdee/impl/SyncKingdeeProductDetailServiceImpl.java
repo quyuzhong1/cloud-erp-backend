@@ -221,11 +221,19 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
                 }
             }
         }
-        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(productInfoEntity.getApplicationCategoryId());
+        List<String> applicationCategoryIdList = Arrays.stream(productInfoEntity.getApplicationCategoryId().split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+        List<ApplicationCategoryEntity> applicationCategory = applicationCategoryService.listByIds(applicationCategoryIdList);
         if (ObjectUtils.isNotEmpty(applicationCategory)) {
-            resultMap.put("applicationCategory", applicationCategory.getName());
-            //一级分类编码
-            resultMap.put("applicationCategoryCode", applicationCategory.getCode());
+            List<Map<String, Object>> optionList = new ArrayList<>();
+            for (ApplicationCategoryEntity value : applicationCategory) {
+                Map<String, Object> option = new HashMap<>();
+                option.put("code", value.getCode());
+                option.put("name", value.getName()); // 通常Key和Name相同，具体取决于金蝶配置
+                optionList.add(option);
+            }
+            resultMap.put("applicationCategory", optionList);
         }
 
         //产品经理
@@ -398,9 +406,9 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         if (null != productInfoEntity){
             if ("费用".equalsIgnoreCase(productInfoEntity.getProperty()) || "服务".equalsIgnoreCase(productInfoEntity.getProperty())
             ){
-                resultMap.put("is_virtual", 1);
+                resultMap.put("is_virtual_goods", 1);
             } else{
-                resultMap.put("is_virtual", 0);
+                resultMap.put("is_virtual_goods", 0);
             }
             // 是否服务类商品/is_service
             // 商品属性=服务

@@ -72,4 +72,6 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
+
+    List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
 }

@@ -14,6 +14,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.dmp.enums.LingxingPlatformCodeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -93,7 +94,7 @@ public class DmpInputTeMuAddressInitHandler extends DmpInputInitHandler{
 					platformCode = platformInfoMap.getOrDefault("platform_order_no", "").toString();
 					// 解析来源平台
 					String platformCodeStr = platformInfoMap.getOrDefault("platform_code", "").toString();
-					isTemu = platformCodeStr.equals("10024");
+					isTemu = platformCodeStr.equals(LingxingPlatformCodeEnum.TEMU_FBP.getCode());
 				}
 			}
 			// 店铺ID

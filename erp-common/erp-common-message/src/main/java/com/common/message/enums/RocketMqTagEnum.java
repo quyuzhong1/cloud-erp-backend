@@ -347,6 +347,11 @@ public enum RocketMqTagEnum {
      * 分步式调入单同步金蝶
      */
     KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
+
+    /**
+     * 对账单同步金蝶
+     */
+    KINGDEE_PO_RECONCILIATION_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_reconciliation_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

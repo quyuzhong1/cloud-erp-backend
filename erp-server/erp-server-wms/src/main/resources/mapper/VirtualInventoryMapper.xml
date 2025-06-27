@@ -740,4 +740,61 @@
         where  diff.diffQty > 0
     </select>
 
+
+    <!-- 即时库存分页查询 -->
+    <select id="supplierInventoryPaging" resultType="com.erp.model.wms.dto.SupplierInventoryDTO$ListDTO">
+        WITH totalInventory as (
+        SELECT
+        warehouse_id,
+        sku_id,
+        warehouse_location,
+        SUM(CASE WHEN dict_inventory_status IN ('usable', 'frozen') THEN qty ELSE 0 END) AS realQty,
+        SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS useQty,
+        SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS freezeQty,
+        SUM(CASE WHEN dict_inventory_status = 'inTransit' THEN qty ELSE 0 END) AS inTransitQty
+        FROM inventory
+        WHERE is_deleted = false
+        GROUP BY warehouse_id, sku_id, warehouse_location
+        )
+        select
+        pd.images_url as imagesUrl,
+        pd.id as skuId,
+        pd.sku_no as skuNo,
+        pd.name as productName,
+        ps.sale_state as saleState,
+        inv.warehouse_id as warehouseId,
+        wh.name as warehouseName,
+        sum(inv.realQty) as realQty,
+        sum(inv.useQty) as useQty,
+        sum(inv.freezeQty) as freezeQty,
+        sum(inv.inTransitQty) as inTransitQty
+        from totalInventory inv
+        left join product_detail pd on inv.sku_id = pd.id and pd.is_deleted = false
+        left join product_sale ps  on inv.sku_id = ps.sku_id and ps.is_deleted = false
+        left join warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
+        left join warehouse_location wl on wh.id = wl.warehouse_id and inv.warehouse_location = wl.code and wl.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        <if test="params.hideZeroInventory">
+            and  inv.realQty != 0
+        </if>
+        <if test="supplierRefWarehouseList != null and supplierRefWarehouseList.size > 0">
+            and
+            <foreach collection="supplierRefWarehouseList" item="item" open="(" close=")" separator="or">
+                (inv.warehouse_id = #{item.warehouseId}
+                <if test="item.warehouseLocationCode != null and item.warehouseLocationCode != ''">
+                    and inv.warehouse_location = #{item.warehouseLocationCode}
+                </if>)
+            </foreach>
+        </if>
+        group by pd.id,pd.sku_no,pd.images_url,pd.name,ps.sale_state,inv.warehouse_id,wh.name
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        inv.warehouse_id,pd.id
+    </select>
+
 </mapper>

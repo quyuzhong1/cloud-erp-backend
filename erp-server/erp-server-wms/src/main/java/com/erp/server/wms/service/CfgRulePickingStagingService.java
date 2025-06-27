@@ -13,4 +13,5 @@ import com.common.business.service.SuperService;
  */
 public interface CfgRulePickingStagingService extends SuperService<CfgRulePickingStagingEntity> {
 
+    CfgRulePickingStagingEntity getByWarehouseId(String warehouseId, String billType);
 }

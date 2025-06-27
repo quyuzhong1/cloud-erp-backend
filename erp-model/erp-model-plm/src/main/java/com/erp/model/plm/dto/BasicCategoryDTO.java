@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -46,4 +47,24 @@ public class BasicCategoryDTO {
      */
     @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
     private List<BasicCategoryDTO> childrenList;
+
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class DropdownDTO {
+
+        private String id;
+
+        /**
+         */
+        private String pid;
+
+        /**
+         */
+        private String fullName;
+
+    }
+
 }

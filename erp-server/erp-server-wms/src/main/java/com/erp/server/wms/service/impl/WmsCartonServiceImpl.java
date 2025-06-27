@@ -246,6 +246,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         return baseMapper.listSkuByBoxIds(boxIds);
     }
 
+    @Override
+    public void updateReleaseInventory(List<String> cartonIds, Boolean aTrue) {
+        if (CollUtil.isEmpty(cartonIds)){
+            return;
+        }
+        this.lambdaUpdate().set(WmsCartonEntity::getIsReleaseInventory, aTrue).in(WmsCartonEntity::getId, cartonIds).update();
+    }
+
     /**
     * 新增修改处理数据
     */

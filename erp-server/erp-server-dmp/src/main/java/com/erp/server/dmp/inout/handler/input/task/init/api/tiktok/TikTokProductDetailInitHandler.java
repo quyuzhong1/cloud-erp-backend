@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -60,7 +61,7 @@ public class TikTokProductDetailInitHandler extends DmpInputInitHandler {
             paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
             findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
         }
-        if (findMongoData == null) {
+        if (CollUtil.isEmpty(findMongoData)) {
             return new ArrayList<>();
         }
 

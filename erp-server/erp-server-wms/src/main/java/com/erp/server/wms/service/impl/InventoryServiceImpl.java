@@ -1487,4 +1487,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                         InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
                 .in(InventoryEntity::getSkuNo, skuNoList).list();
     }
+
+    @Override
+    public List<InventoryDTO.RealQtyDTO> getRealQty(List<String> skuIds, List<String> warehouseIds, List<String> inventoryStatusList) {
+        return baseMapper.getRealQty(skuIds, warehouseIds, inventoryStatusList);
+    }
 }

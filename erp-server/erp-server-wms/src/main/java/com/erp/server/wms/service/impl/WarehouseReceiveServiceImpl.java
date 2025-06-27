@@ -1047,6 +1047,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
+            addDTO.setSourceCode(entity.getSourceCode());
             addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
@@ -2093,5 +2094,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(List<String> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listReceiveSourceByDetailIds(idList);
     }
 }

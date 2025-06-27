@@ -52,7 +52,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -416,6 +415,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		viewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		viewDto.setThirdCreateTime(entity.getCreateTime());
 		viewDto.setThirdUpdateTime(entity.getUpdateTime());
+        if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())){
+            viewDto.setThirdCode(entity.getThirdCode());
+        } else {
+            viewDto.setThirdCode("");
+        }
 		detailViewDto.setThirdReturnInstockId(thirdReturnInstockId);
 		detailViewDto.setThirdDetailCreateTime(detailEntity.getCreateTime());
 		detailViewDto.setThirdDetailUpdateTime(detailEntity.getUpdateTime());
@@ -698,7 +702,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		Map<String , Map<String, Object>> resultList = new HashMap<>();
 		
 		List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<SkuVO> skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
         List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
@@ -762,8 +766,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<SoInfoEntity> soInfoEntityList = new LinkedList();
         // 查询B2B订单
         List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
-        if (CollectionUtils.isEmpty(b2bReturnInstockList)){
-            List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+        if (CollectionUtils.isNotEmpty(b2bReturnInstockList)){
+            List<String> b2bSoIds = b2bReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
                     .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());

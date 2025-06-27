@@ -204,6 +204,7 @@ public class DmpInoutController extends BaseController {
         typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
         typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
         typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
+        typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
 
         return success(typeCacheMap);
     }
@@ -550,7 +551,7 @@ public class DmpInoutController extends BaseController {
     	bizTypeSourceSystemMaps.put("soReturn", sourceSystemMaps);
 
     	sourceSystemMaps = new HashMap<>();
-    	sourceSystemMaps.put("1858834023460133611", DmpBasicSystemCodeEnum.WDT.getCode());
+//    	sourceSystemMaps.put("1858834023460133611", DmpBasicSystemCodeEnum.WDT.getCode());
     	sourceSystemMaps.put("1858834187159624429", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
     	bizTypeSourceSystemMaps.put("soRefund", sourceSystemMaps);
 
@@ -560,6 +561,7 @@ public class DmpInoutController extends BaseController {
     	
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1801575292597545159", "DmpOutputSdySoDeliveryHandler");
+    	sourceSystemMaps.put("1801575292597545160", "DmpOutputSdySoDeliverySelfAddHandler");
     	sourceSystemMaps.put("1858458760101669422", "DmpOutputSdySoOutstockHandler");
     	sourceSystemMaps.put("1858459889228088846", "DmpOutputSdyLogisticsHandler");
     	sourceSystemMaps.put("1859050822961226666", "DmpOutputSdyReturnInstockHandler");
@@ -689,7 +691,7 @@ public class DmpInoutController extends BaseController {
     }
     
     private void sdyErpInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
-    	if("1801575292597545159".equals(cfgOutputId)) {
+    	if("1801575292597545159".equals(cfgOutputId) || "1801575292597545160".equals(cfgOutputId)) {
     		log.warn("开始重推数帝云erp配货单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();

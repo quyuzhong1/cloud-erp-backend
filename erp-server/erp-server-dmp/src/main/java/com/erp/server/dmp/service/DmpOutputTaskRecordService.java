@@ -51,7 +51,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return java.util.List<com.erp.model.dmp.dto.DmpOutputTaskDTO.TabListDTO>
      **/
     List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto);
-    List<DmpOutputTaskRecordDTO.TabListDTO> dorisTabList(PermissionsDTO dto);
 
     /**
      * 推送任务列表分页查询
@@ -61,7 +60,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskDTO.PagingDTO>
      **/
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
-    PagingVO<DmpOutputTaskRecordDTO.PagingDTO> dorisPaging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
 
     /**
      * 导出

@@ -4,8 +4,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,6 +17,9 @@ public class PoInStockQueryHandler extends AbstractQueryHandler {
             }
             this.buildDefaultDTO("psi.approve_status",value);
             this.buildSplicingSQLDTO("psi.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+        }
+        if("deliveryCode".equals(field)) {
+            return "exists (select 1 from po_receive where is_deleted = false and id = psi.source_id  and source_code "+compareCodeSplicingValueSql +")";
         }
         return null;
     }

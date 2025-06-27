@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 */
 @Data
 @NoArgsConstructor
-public class DmpAfterSaleExcekDTO implements Serializable {
+public class DmpAfterSaleExcelDTO implements Serializable {
         /**
          * 工单号
          */
@@ -105,15 +106,15 @@ public class DmpAfterSaleExcekDTO implements Serializable {
 
 
         /**
-         * 寄回快递单号
+         * 买家寄出快递单号
          */
-//        @ExcelProperty(value = "寄回快递单号", index = 15)
+//        @ExcelProperty(value = "买家寄出快递单号", index = 15)
         private String returnTrackNo;
 
         /**
-         * 寄出快递单号
+         * 商家寄出快递单号
          */
-//        @ExcelProperty(value = "寄出快递单号", index = 16)
+//        @ExcelProperty(value = "商家寄出快递单号", index = 16)
         private String outboundTrackNo;
 
         /**
@@ -127,6 +128,15 @@ public class DmpAfterSaleExcekDTO implements Serializable {
          */
 //        @ExcelProperty(value = "备注", index = 18)
         private String remark;
+        /**
+         * 客服备注
+         */
+        private String csrRemark;
+
+        /**
+         * 维修备注
+         */
+        private String rmaRemark;
 
         /**
          * 申请日期

@@ -190,7 +190,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 是否赠品
      */
-    private Integer is_gift = 0;
+    private Integer is_gift;
     /**
      * 是否组合装
      */
@@ -601,6 +601,11 @@ public class ShudiyunB2cOrderDTO {
      * 部门名称
      */
     private String department_name;
+
+    /**
+     * 发货类型
+     */
+    private String fulfillment_type;
 
 
     public String sdyStatusHandle(String operateEnum, int mainVersion, int detailVersion) {

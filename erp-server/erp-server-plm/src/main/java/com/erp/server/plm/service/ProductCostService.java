@@ -72,4 +72,13 @@ public interface ProductCostService extends IService<ProductCostEntity> {
      * @return ProductCostEntity
      */
     ProductCostEntity getBySkuId(String skuId);
+
+    /**
+     * 根据skuId集合查询
+     * @author will
+     * @date 2025/6/19 15:28
+     * @param skuIdList
+     * @return List<ProductCostEntity>
+     */
+    List<ProductCostEntity> listBySkuIdList(List<String> skuIdList);
 }

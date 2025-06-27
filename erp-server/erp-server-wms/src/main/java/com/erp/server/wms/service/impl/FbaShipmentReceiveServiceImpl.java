@@ -243,7 +243,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             }
         }
         //重算FBA货件明细
-        fbaShipmentDetailService.updateDetailByReceiveList(detailEntityList, saveList);
+        fbaShipmentDetailService.updateDetailByReceiveList(fbaShipmentEntity);
 
         // 需要挑拨的列表
         List<FbaShipmentReceiveEntity> handleEntityList = new LinkedList<>(saveList);
