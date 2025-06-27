@@ -238,8 +238,9 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          */
         private String hsCode;
 
-        public Item(String productSku, Integer quantity,String hsCode) {
+        public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
             this.productSku = productSku;
+            this.productSkuId = productSkuId;
             this.quantity = quantity;
             this.hsCode = hsCode;
         }
