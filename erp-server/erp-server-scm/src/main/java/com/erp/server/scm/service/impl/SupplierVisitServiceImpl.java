@@ -36,6 +36,7 @@ import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -96,6 +97,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
      * @date 2023-03-21 10:26
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(SupplierVisitDTO.AddDTO dto) {
         //供应商id
         String supplierId = dto.getSupplierId();
@@ -139,12 +141,13 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
             //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), id, "现场考察");
+            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "现场考察");
         }
         return result;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SupplierVisitDTO.UpdateDTO dto) {
         if(StringUtils.isBlank(dto.getSupplierId())){
             throw new ServiceException("供应商不能为空");
@@ -161,17 +164,73 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<String> peopleList = dto.getPeopleList();
         entity.setPeople(String.join(",", peopleList));
 
+
+
         //更新
         boolean save = updateById(entity);
         if(!save){
             throw new ServiceException("现场考察更新失败");
         }
 
+        //操作日志
+        String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
+        moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
+
+        //获取用户信息
+        List<String> oldUserIdList = Arrays.asList(oldEntity.getPeople().split(","));
+        //判断是否有变化
+        boolean isEqual = oldUserIdList.size() == peopleList.size() &&
+                oldUserIdList.containsAll(peopleList) &&
+                peopleList.containsAll(oldUserIdList);
+        //有变化再记录变化日志
+        if(Boolean.FALSE.equals(isEqual)){
+            //查询所有的拜访人
+            List<String> userIdList = new ArrayList<>();
+            userIdList.addAll(oldUserIdList);
+            userIdList.addAll(peopleList);
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+
+            if(CollUtil.isNotEmpty(oldUserIdList)){
+                // 处理删除的数据
+                List<String> removeIds = oldUserIdList.stream()
+                        .filter(id -> !peopleList.contains(id))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(removeIds)){
+                    List<FindUserDTO> removeUserList = userList.stream().filter(e -> removeIds.contains(e.getUserId())).collect(Collectors.toList());
+                    //添加日志
+                    List<Pair<String, String>> removePairList = removeUserList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getUserName())).collect(Collectors.toList());
+                    moduleOperateLogService.batchAddModuleOperateLog("删除了一个拜访人【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+                }
+            }
+
+            List<String> addIds = peopleList.stream()
+                    .filter(id -> !oldUserIdList.contains(id))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(addIds)){
+                List<FindUserDTO> addUserList = userList.stream().filter(e -> addIds.contains(e.getUserId())).collect(Collectors.toList());
+                //添加日志
+                List<Pair<String, String>> addPairList = addUserList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getUserName())).collect(Collectors.toList());
+                moduleOperateLogService.batchAddModuleOperateLog("添加了一个拜访人【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
+            }
+        }
+
         //处理物料
         List<String> skuIdList = dto.getSkuIdList();
         if (CollectionUtils.isEmpty(skuIdList)) {
-            //删除所有物料
-            supplierVisitSkuService.lambdaUpdate().eq(SupplierVisitSkuEntity::getSupplierVisitId,dto.getId()).set(SupplierVisitSkuEntity::getIsDeleted,Boolean.TRUE).update();
+            //sku信息
+            List<String> oldSkuIdList = supplierVisitSkuService.lambdaQuery().eq(SupplierVisitSkuEntity::getSupplierVisitId, dto.getId()).list().stream().map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(oldSkuIdList)){
+                //删除所有物料
+                supplierVisitSkuService.lambdaUpdate()
+                        .eq(SupplierVisitSkuEntity::getSupplierVisitId,dto.getId())
+                        .set(SupplierVisitSkuEntity::getIsDeleted,Boolean.TRUE)
+                        .update();
+                //获取到物料信息
+                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(oldSkuIdList);
+                //添加日志
+                List<Pair<String, String>> removePairList = skuList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getSkuNo())).collect(Collectors.toList());
+                moduleOperateLogService.batchAddModuleOperateLog("删除了一个拜访物料【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+            }
         }else {
             List<String> oldSkuIdList = supplierVisitSkuService.lambdaQuery().eq(SupplierVisitSkuEntity::getSupplierVisitId, dto.getId()).list().stream().map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());;
             if(CollectionUtils.isNotEmpty(oldSkuIdList)){
@@ -185,6 +244,11 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                             .in(SupplierVisitSkuEntity::getSkuId,removeIds)
                             .set(SupplierVisitSkuEntity::getIsDeleted,Boolean.TRUE)
                             .update();
+                    //获取到物料信息
+                    List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(removeIds);
+                    //添加日志
+                    List<Pair<String, String>> removePairList = skuList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getSkuNo())).collect(Collectors.toList());
+                    moduleOperateLogService.batchAddModuleOperateLog("删除了一个拜访物料【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
                 }
             }
 
@@ -193,15 +257,23 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             List<String> addIds = skuIdList.stream()
                     .filter(id -> !oldSkuIdList.contains(id))
                     .collect(Collectors.toList());
-            for (String skuId : addIds) {
-                //这是sku 的
-                SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
-                visitSku.setSkuId(skuId);
-                visitSku.setSupplierId(dto.getSupplierId());
-                visitSku.setSupplierVisitId(dto.getId());
-                addVisitSkuList.add(visitSku);
+            if(CollUtil.isNotEmpty(addIds)){
+                for (String skuId : addIds) {
+                    //这是sku 的
+                    SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
+                    visitSku.setSkuId(skuId);
+                    visitSku.setSupplierId(dto.getSupplierId());
+                    visitSku.setSupplierVisitId(dto.getId());
+                    addVisitSkuList.add(visitSku);
+                }
+                supplierVisitSkuService.saveBatch(addVisitSkuList);
+                //获取到物料信息
+                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(addIds);
+                //添加日志
+                List<Pair<String, String>> addPairList = skuList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getSkuNo())).collect(Collectors.toList());
+                moduleOperateLogService.batchAddModuleOperateLog("添加了一个拜访物料【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
             }
-            supplierVisitSkuService.saveBatch(addVisitSkuList);
+
         }
 
         //删除附件
@@ -229,9 +301,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             }
         }
 
-        //操作日志
-        String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
-        moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
+
         return Boolean.TRUE;
     }
 
