@@ -424,6 +424,18 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         return BeanUtil.copyToList(entities,OverseasProviderDTO.ListDTO.class);
     }
 
+    @Override
+    public OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName) {
+        if(StringUtils.isBlank(sysType) || StringUtils.isBlank(thirdShortName)){
+            return null;
+        }
+        return lambdaQuery()
+                .eq(OverseasProviderEntity::getCode, sysType)
+                .eq(OverseasProviderEntity::getShortName, thirdShortName)
+                .last("limit 1")
+                .one();
+    }
+
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
             //邮政编码不能为空
