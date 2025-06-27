@@ -93,9 +93,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Resource
     private SysUserFeign sysUserFeign;
-    @Autowired
+    @Resource
     private CfgQueryOptionService cfgQueryOptionService;
-
+    @Resource
+    private WorkMenuService workMenuService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -368,6 +369,33 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         } catch (Exception e) {
             throw new RuntimeException("飞书创建审批实例失败：" + e);
         }
+    }
+
+    @Override
+    public List<CfgProcessDTO.ProcessSelectDTO> listProcessSelect() {
+        List<WorkMenuEntity> list = workMenuService.list();
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<CfgProcessEntity> processList = this.list();
+        Map<String, String> processMap = CollUtil.isEmpty(processList) ? new HashMap<>() : processList.stream()
+                .collect(Collectors.toMap(CfgProcessEntity::getBussinessKey, CfgProcessEntity::getId));
+
+        List<CfgProcessDTO.ProcessSelectDTO> result = new ArrayList<>();
+        for (WorkMenuEntity workMenuEntity : list) {
+            CfgProcessDTO.ProcessSelectDTO processSelectDTO = new CfgProcessDTO.ProcessSelectDTO();
+            processSelectDTO.setCode(workMenuEntity.getModuleCode());
+            processSelectDTO.setName(workMenuEntity.getModuleClassify());
+            String id = processMap.get(workMenuEntity.getModuleCode());
+            if (StrUtil.isBlank(id)) {
+                processSelectDTO.setDisabled(Boolean.FALSE);
+            } else {
+                processSelectDTO.setDisabled(Boolean.TRUE);
+            }
+            result.add(processSelectDTO);
+        }
+        return result;
+
     }
 
     private ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(CfgProcessDTO.StartDTO dto, ThirdProcessDefinitionEntity processDefinition) {

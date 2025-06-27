@@ -101,5 +101,12 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      * @return
      */
     void startThirdProcess(CfgProcessDTO.StartDTO dto);
+    /**
+     * erp流程下拉
+     * @author will
+     * @date 2025/6/27 12:27
+     * @return List<ProcessSelectDTO>
+     */
+    List<CfgProcessDTO.ProcessSelectDTO> listProcessSelect();
 }
 

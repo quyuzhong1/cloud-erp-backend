@@ -6,13 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -255,5 +254,24 @@ public class CfgProcessDTO implements Serializable {
          */
         @NotBlank(message = "")
         private Map<String,Object> variablesMap;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessSelectDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 是否禁用，true禁用，false启用
+         */
+        private Boolean disabled;
     }
 }
