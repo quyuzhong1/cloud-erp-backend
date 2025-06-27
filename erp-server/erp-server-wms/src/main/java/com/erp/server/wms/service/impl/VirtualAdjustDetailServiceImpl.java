@@ -118,7 +118,7 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
             //删除原数据
             log.info("删除原虚拟仓调整单明细单数据，id：【{}】", e.getId());
             this.removeById(e.getId());
-            String msg = StrUtil.format("用户【{}】id为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), e.getId(), "虚拟仓调整单明细单");
+            String msg = StrUtil.format("删除一行明细SKU【{}】 ",  e.getSkuNo());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), mainId, "删除虚拟仓调整单明细数据");
         });
         //批量修改
@@ -126,7 +126,7 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         List<VirtualAdjustDetailEntity> addList = detailEntityList.stream().filter(detail -> CharSequenceUtil.isBlank(detail.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
-            String msg = StrUtil.format("用户【{}】id为【{}】的【{}】单据新增操作 ", UserContext.getDefaultLoginUser().getUserName(), addList.stream().map(VirtualAdjustDetailEntity::getId).collect(Collectors.joining(",")), "虚拟仓调整单明细单");
+            String msg = StrUtil.format("新增一行明细SKU【{}】", addList.stream().map(VirtualAdjustDetailEntity::getSkuNo).collect(Collectors.joining(",")), "虚拟仓调整单明细单");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), mainId, "新增虚拟仓调整单明细数据");
         }
         List<VirtualAdjustDetailEntity> updateList = detailEntityList.stream().filter(detail -> CharSequenceUtil.isNotBlank(detail.getId())).collect(Collectors.toList());

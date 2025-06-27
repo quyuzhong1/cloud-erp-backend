@@ -131,7 +131,7 @@ public class NfeInvoiceService {
             getPayMentDTO(createDTO);
             log.warn("付款信息已查询完成！");
              obj = tfFiscalService.createInvoice(createDTO);
-            log.warn("创建发票接口调用成功！请求参数-body:{}",JSONUtil.toJsonStr(createDTO));
+            log.warn("创建发票接口调用成功！请求参数-body:{},返回值：{}",JSONUtil.toJsonStr(createDTO), JSONUtil.toJsonStr(obj));
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage());
             log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
@@ -152,7 +152,7 @@ public class NfeInvoiceService {
             JSONArray jsonArray = JSONUtil.parseArray(obj);
             resultDTO = BeanUtil.toBean(jsonArray.get(0), NfeInvoiceDTO.NfeSuccessResultDTO.class);
         } catch (Exception e) {
-            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(obj));
            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
         }
         if (!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {

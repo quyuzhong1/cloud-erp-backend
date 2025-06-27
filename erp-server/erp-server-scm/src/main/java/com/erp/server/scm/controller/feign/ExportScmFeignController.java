@@ -46,9 +46,6 @@ public class ExportScmFeignController {
     private CfgSupplierSalesService cfgSupplierSalesService;
     @Resource
     private SupplierCredentialService supplierCredentialService;
-
-
-
     @Resource
     private SupplierRefWarehouseService supplierRefWarehouseService;
 
