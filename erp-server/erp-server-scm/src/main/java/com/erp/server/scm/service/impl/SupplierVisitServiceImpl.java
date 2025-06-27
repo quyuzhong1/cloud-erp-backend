@@ -161,6 +161,49 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<String> peopleList = dto.getPeopleList();
         entity.setPeople(String.join(",", peopleList));
 
+        //更新
+        boolean save = updateById(entity);
+        if(!save){
+            throw new ServiceException("现场考察更新失败");
+        }
+
+        //处理物料
+        List<String> skuIdList = dto.getSkuIdList();
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            //删除所有物料
+            supplierVisitSkuService.lambdaUpdate().eq(SupplierVisitSkuEntity::getSupplierVisitId,dto.getId()).set(SupplierVisitSkuEntity::getIsDeleted,Boolean.TRUE).update();
+        }else {
+            List<String> oldSkuIdList = supplierVisitSkuService.lambdaQuery().eq(SupplierVisitSkuEntity::getSupplierVisitId, dto.getId()).list().stream().map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());;
+            if(CollectionUtils.isNotEmpty(oldSkuIdList)){
+                // 处理删除的数据
+                List<String> removeIds = oldSkuIdList.stream()
+                        .filter(id -> !skuIdList.contains(id))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(removeIds)){
+                    supplierVisitSkuService.lambdaUpdate()
+                            .eq(SupplierVisitSkuEntity::getSupplierVisitId,dto.getId())
+                            .in(SupplierVisitSkuEntity::getSkuId,removeIds)
+                            .set(SupplierVisitSkuEntity::getIsDeleted,Boolean.TRUE)
+                            .update();
+                }
+            }
+
+            //处理需要新增的数据
+            List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>();
+            List<String> addIds = skuIdList.stream()
+                    .filter(id -> !oldSkuIdList.contains(id))
+                    .collect(Collectors.toList());
+            for (String skuId : addIds) {
+                //这是sku 的
+                SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
+                visitSku.setSkuId(skuId);
+                visitSku.setSupplierId(dto.getSupplierId());
+                visitSku.setSupplierVisitId(dto.getId());
+                addVisitSkuList.add(visitSku);
+            }
+            supplierVisitSkuService.saveBatch(addVisitSkuList);
+        }
+
         //删除附件
         attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         //附件集合
@@ -185,8 +228,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 attachmentService.saveBatch(batchAttachmentList);
             }
         }
-        //更新
-        updateById(entity);
+
         //操作日志
         String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
         moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
