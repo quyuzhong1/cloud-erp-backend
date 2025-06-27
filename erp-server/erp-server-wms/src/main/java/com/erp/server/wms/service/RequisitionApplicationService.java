@@ -289,4 +289,10 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     void generateRequisition(String id);
 
     void removeBySourceIds(List<String> sourceIds);
+
+    /**
+     * FBA发货计划（三方仓发三方仓）要货申请下推发货单
+     * @param dto
+     */
+    void generateThirdDelivery(RequisitionApplicationDTO.GenerateThirdDelivery dto);
 }

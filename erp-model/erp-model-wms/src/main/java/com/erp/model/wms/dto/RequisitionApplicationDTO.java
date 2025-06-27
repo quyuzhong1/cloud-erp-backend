@@ -302,6 +302,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 来源类型中文
@@ -468,6 +473,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 单据状态
@@ -800,6 +810,15 @@ public class RequisitionApplicationDTO implements Serializable {
          * 要货类型中文
          */
         private String typeName;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
+        /**
+         * 发货类型中文
+         */
+        private String deliveryTypeName;
 
         /**
          * 要货渠道
@@ -1001,6 +1020,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * type
          */
         private String type;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
         /**
          * 单据编号
          */
@@ -1689,5 +1713,16 @@ public class RequisitionApplicationDTO implements Serializable {
          * 打印数量
          */
         private Integer printNum;
+    }
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateThirdDelivery {
+        @NotBlank(message = "要货申请id不能为空")
+        private String id;
+        @NotBlank(message = "FBA货件号不能为空")
+        private String fbaShipmentCode;;
     }
 }

@@ -126,6 +126,12 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
      */
     @TableField("delivery_push_down_status")
     private String deliveryPushDownStatus;
+    /**
+     * 发货类型
+     * ThirdDeliveryTypeEnum
+     */
+    @TableField("deliveryType")
+    private String deliveryType;
 
     
 

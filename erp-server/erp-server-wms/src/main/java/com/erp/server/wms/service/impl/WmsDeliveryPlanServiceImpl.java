@@ -1227,14 +1227,24 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
      * 新增修改处理数据
      */
     private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
-
-        //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(wmsDeliveryPlanEntity.getToWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(updateDTO)) {
-            wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
+        List<String> warehouseIds = new ArrayList<>();
+        if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(wmsDeliveryPlanEntity.getDeliveryType())){
+            if (CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getFromWarehouseId())){
+                throw new ServiceException("来源仓库不能为空");
+            }
+            warehouseIds.add(wmsDeliveryPlanEntity.getFromWarehouseId());
         }
-
+        warehouseIds.add(wmsDeliveryPlanEntity.getToWarehouseId());
+        //设置仓库中文名
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
+        String toWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+        if (CharSequenceUtil.isNotBlank(toWarehouseName)) {
+            wmsDeliveryPlanEntity.setToWarehouseName(toWarehouseName);
+        }
+        String fromWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getFromWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+        if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
+            wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
+        }
         if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
@@ -1274,7 +1284,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                     }
                 }
                 if(CollectionUtils.isNotEmpty(errorSkuList)){
-                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
+                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息", errorSkuList, toWarehouseName));
                 }
             }
         }else{

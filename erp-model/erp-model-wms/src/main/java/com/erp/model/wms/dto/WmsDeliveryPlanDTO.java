@@ -142,6 +142,16 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String toWarehouseName;
 
         /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库中文名
+         */
+        private String fromWarehouseName;
+
+        /**
          * 国家
          */
         private String country;
@@ -369,6 +379,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 目的仓中文名
         */
         private String toWarehouseName;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库中文名
+         */
+        private String fromWarehouseName;
 
         /**
         * 国家二字码
@@ -445,6 +464,10 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 目的仓id
         */
         private String toWarehouseId;
+        /**
+         * 发货仓id
+         */
+        private String fromWarehouseId;
 
         /**
          * 店铺Id
@@ -551,6 +574,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 状态
@@ -730,6 +758,21 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 目的仓名称
          */
         private String toWarehouseName;
+
+        /**
+         * 发货仓id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 状态

@@ -84,6 +84,16 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
     @TableField("to_warehouse_name")
     private String toWarehouseName;
     /**
+     * 发货仓库id
+     */
+    @TableField("from_warehouse_id")
+    private String fromWarehouseId;
+    /**
+     * 发货仓库名称
+     */
+    @TableField("from_warehouse_name")
+    private String fromWarehouseName;
+    /**
     * 国家二字码
     */
     @TableField("country")
