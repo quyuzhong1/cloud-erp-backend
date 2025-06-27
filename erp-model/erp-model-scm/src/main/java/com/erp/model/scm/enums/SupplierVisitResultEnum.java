@@ -44,11 +44,22 @@ public enum SupplierVisitResultEnum implements EnumMessage {
                 .findFirst().orElse(null);
     }
 
-    public static String getName(String state) {
-        if (StringUtils.isNotBlank(state)) {
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
             for (SupplierVisitResultEnum item : SupplierVisitResultEnum.values()) {
-                if (state.equals(item.getCode())) {
+                if (code.equals(item.getCode())) {
                     return item.getName();
+                }
+            }
+        }
+        return "";
+    }
+
+    public static String getCode(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (SupplierVisitResultEnum item : SupplierVisitResultEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getCode();
                 }
             }
         }

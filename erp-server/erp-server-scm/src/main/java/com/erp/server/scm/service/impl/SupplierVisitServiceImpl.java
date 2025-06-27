@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -16,17 +17,21 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
+import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.model.scm.enums.SupplierVisitEnum;
+import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.listener.SupplierVisitExcelListener;
 import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -156,6 +161,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<String> peopleList = dto.getPeopleList();
         entity.setPeople(String.join(",", peopleList));
 
+        //删除附件
+        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         //附件集合
         List<String> attachmentUrlList = dto.getAttachmentUrlList();
         List<String> attachmentNameList = dto.getAttachmentNameList();
@@ -165,18 +172,6 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(dto.getId()), type);
-            if(CollUtil.isNotEmpty(oldAttachmentList)){
-                // 删除旧的附件
-                List<AttachmentDTO.UpdateDTO> removeList = oldAttachmentList.stream().filter(r -> !attachmentUrlList.contains(r.getAttachUrl())).collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(removeList)){
-                    List<String> urlList = removeList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-                    attachmentService.deleteByUrlList(urlList);
-                }
-
-                List<String> ids = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getId).collect(Collectors.toList());
-                attachmentService.removeByIds(ids);
-            }
             List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
             for (int i = 0; i < attachmentUrlList.size(); i++) {
                 AttachmentEntity addAttachment = new AttachmentEntity();
@@ -189,10 +184,9 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             if(CollectionUtils.isNotEmpty(batchAttachmentList)){
                 attachmentService.saveBatch(batchAttachmentList);
             }
-        }else {
-            //删除附件
-            attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         }
+        //更新
+        updateById(entity);
         //操作日志
         String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
         moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
@@ -425,11 +419,23 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<SupplierEntity> supplierList = supplierService.list();
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1,o2)->o1));
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-
-
-        return null;
+        SupplierVisitExcelListener excelListenerUtil = new SupplierVisitExcelListener(this,supplierList,map,userList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SupplierVisitImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入拜访错误！", e);
+            return Boolean.FALSE;
+        }
+        List<SupplierVisitImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "拜访错误信息";
+            ExcelUtil.export(fileName, "supplierVisitError", errorList, SupplierVisitImportExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     @Override

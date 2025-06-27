@@ -18,10 +18,10 @@ public class SupplierVisitQueryHandler extends AbstractQueryHandler {
             return getTabSql(value);
         }
         if("people".equals(field)){
-            return " and sv.id in (select DISTINCT svp.id from (select id,unnest(string_to_array(people, ',')) as user_id  from supplier_visit  where  user_id "+compareCodeSplicingValueSql+" ) as svp ) ";
+            return " sv.id in (select DISTINCT svp.id from (select id,unnest(string_to_array(people, ',')) as user_id  from supplier_visit) as svp where svp.user_id "+compareCodeSplicingValueSql+" ) ";
         }
         if("sku_id".equals(field)){
-            return " sv.id in (select DISTINCT supplier_visit_id from supplier_visit_sku where sku_id " + compareCodeSplicingValueSql+" ";
+            return " sv.id in (select DISTINCT supplier_visit_id from supplier_visit_sku where sku_id " + compareCodeSplicingValueSql+" )";
         }
         return null;
     }

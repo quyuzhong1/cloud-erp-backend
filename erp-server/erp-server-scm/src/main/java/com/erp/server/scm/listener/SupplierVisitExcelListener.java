@@ -54,7 +54,7 @@ public class SupplierVisitExcelListener extends AnalysisEventListener<SupplierVi
         this.userList = userList;
     }
 
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
      * 每解析一行数据回调一遍
@@ -83,42 +83,46 @@ public class SupplierVisitExcelListener extends AnalysisEventListener<SupplierVi
         String name = excelDTO.getName();
         if(StringUtils.isNotBlank(name)){
             SupplierEntity supplierEntity = supplierList.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
-            if (Objects.nonNull(supplierEntity)) {
+            if (Objects.isNull(supplierEntity)) {
                 errorMsgList.add("供应商不存在");
+            }else {
+                supplierId = supplierEntity.getId();
+                addDTO.setSupplierId(supplierId);
             }
-            supplierId = supplierEntity.getId();
-            addDTO.setSupplierId(supplierId);
         }
 
         //拜访类型
         String visitTypeName = excelDTO.getVisitTypeName();
         if(StringUtils.isNotBlank(visitTypeName)){
-            addDTO.setVisitType(SupplierVisitEnum.getName(visitTypeName));
+            addDTO.setVisitType(SupplierVisitEnum.getType(visitTypeName));
         }
 
         //拜访时间
         String visitTimeStr = excelDTO.getVisitTime();
         if(StringUtils.isNotBlank(visitTimeStr)){
-            LocalDate visitTime = StringUtils.isBlank(visitTimeStr) ? null : LocalDate.parse(visitTimeStr, dateTimeFormatter);
-            addDTO.setVisitTime(visitTime);
+            try {
+                LocalDate visitTime = StringUtils.isBlank(visitTimeStr) ? null : LocalDate.parse(visitTimeStr, dateTimeFormatter);
+                addDTO.setVisitTime(visitTime);
+            }catch (Exception e){
+                errorMsgList.add("拜访时间格式错误");
+            }
         }
 
         //拜访人
         if(StringUtils.isNotBlank(excelDTO.getPeoples())){
             List<String> peoples = Arrays.asList(excelDTO.getPeoples().split(","));
-            List<FindUserDTO> userInfoList = userList.stream().filter(e -> peoples.contains(e.getUserId())).collect(Collectors.toList());
+            List<FindUserDTO> userInfoList = userList.stream().filter(e -> peoples.contains(e.getUserName())).collect(Collectors.toList());
             if(CollUtil.isEmpty(userInfoList)){
                 errorMsgList.add("拜访人不存在");
+            }else {
+                List<String> userNameList = userInfoList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                List<String> missUserNameList = peoples.stream().filter(e -> !userNameList.contains(e)).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(missUserNameList)){
+                    errorMsgList.add("拜访人【"+String.join(",",missUserNameList)+"】不存在");
+                }
+                String people = String.join(",", userInfoList.stream().map(FindUserDTO::getUserId).collect(Collectors.toList()));
+                addDTO.setPeople(people);
             }
-
-            List<String> userNameList = userInfoList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-            List<String> missUserNameList = peoples.stream().filter(e -> !userNameList.contains(e)).collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(missUserNameList)){
-                errorMsgList.add("拜访人【"+String.join(",",missUserNameList)+"】不存在");
-            }
-
-            String people = String.join(",", userInfoList.stream().map(FindUserDTO::getUserId).collect(Collectors.toList()));
-            addDTO.setPeople(people);
         }
 
         //拜访内容
@@ -127,7 +131,7 @@ public class SupplierVisitExcelListener extends AnalysisEventListener<SupplierVi
         //拜访结果
         String resultName = excelDTO.getResultName();
         if(StringUtils.isNotBlank(resultName)){
-            addDTO.setResult(SupplierVisitResultEnum.getName(resultName));
+            addDTO.setResult(SupplierVisitResultEnum.getCode(resultName));
         }
 
         //拜访物料
@@ -146,7 +150,7 @@ public class SupplierVisitExcelListener extends AnalysisEventListener<SupplierVi
                     SupplierVisitSkuEntity supplierVisitSkuEntity = new SupplierVisitSkuEntity();
                     supplierVisitSkuEntity.setSupplierId(supplierId);
                     supplierVisitSkuEntity.setSkuId(skuVO.getSkuId());
-                    supplierVisitSkuEntity.setId(id);
+                    supplierVisitSkuEntity.setSupplierVisitId(id);
                     supplierVisitSkuEntityList.add(supplierVisitSkuEntity);
                 }
             }

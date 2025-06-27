@@ -55,4 +55,15 @@ public enum SupplierVisitEnum {
         return "";
     }
 
+    public static String getType(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (SupplierVisitEnum item : SupplierVisitEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getType();
+                }
+            }
+        }
+        return "";
+    }
+
 }
