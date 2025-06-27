@@ -1,7 +1,7 @@
 package com.erp.model.scm.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.constant.EnumMessage;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
@@ -14,7 +14,7 @@ import java.util.Arrays;
  * @Date 2023-03-21 10:09
  * @Created by yl
  */
-public enum SupplierVisitEnum {
+public enum SupplierVisitEnum implements EnumMessage {
 
     NEW_PRODUCT("newProduct","新品"),
     ACCESS("access","准入"),
@@ -22,32 +22,32 @@ public enum SupplierVisitEnum {
 
 
     @EnumValue
-    private String type;
+    private String code;
     private String name;
 
     SupplierVisitEnum(String type, String name) {
-        this.type = type;
+        this.code = type;
         this.name = name;
     }
 
-
-    public String getType() {
-        return type;
+    @Override
+    public String getCode() {
+        return code;
     }
-
+    @Override
     public String getName() {
         return name;
     }
 
     public static SupplierVisitEnum getByStatus(String type){
-        return Arrays.stream(values()).filter(a -> a.getType().equals(type))
+        return Arrays.stream(values()).filter(a -> a.getCode().equals(type))
                 .findFirst().orElse(null);
     }
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
             for (SupplierVisitEnum item : SupplierVisitEnum.values()) {
-                if (state.equals(item.getType())) {
+                if (state.equals(item.getCode())) {
                     return item.getName();
                 }
             }
@@ -59,7 +59,7 @@ public enum SupplierVisitEnum {
         if (StringUtils.isNotBlank(name)) {
             for (SupplierVisitEnum item : SupplierVisitEnum.values()) {
                 if (name.equals(item.getName())) {
-                    return item.getType();
+                    return item.getCode();
                 }
             }
         }

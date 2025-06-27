@@ -24,7 +24,8 @@ import java.time.LocalDate;
 @Setter
 @Accessors(chain = true)
 @TableName("supplier_visit")
-public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
+public class
+SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
 
     /**
      * 供应商id
