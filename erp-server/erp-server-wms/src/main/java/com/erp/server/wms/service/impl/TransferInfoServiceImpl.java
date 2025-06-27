@@ -1398,6 +1398,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  requisitionTransferList = new ArrayList<>();
         List<TransferDTO>  firstMileTransferList = new ArrayList<>();
         List<TransferDTO>  TransferToUlanziList = new ArrayList<>();
+        List<TransferDTO>  TransferToThirdList = new ArrayList<>();
         List<TransferDTO>  TransferFromUlanziList = new ArrayList<>();
 
         for (TransferInfoDetailEntity detailEntity : detailList) {
@@ -1433,6 +1434,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 soInfoTransferInfoList.add(transferDTO);
             }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
                 TransferToUlanziList.add(transferDTO);
+            }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_THIRD.getCode().equals(transferInfoEntity.getSourceType())){
+                TransferToThirdList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
                 TransferFromUlanziList.add(transferDTO);
             } else if (SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode().equals(transferInfoEntity.getSourceType())) {
@@ -1494,6 +1497,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(TransferToUlanziList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_TO_ULANZI.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //头程发货单生成调拨单（发货仓-优蓝子中转仓）
+        if(CollectionUtils.isNotEmpty(TransferToThirdList)){
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(TransferToThirdList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.FIRST_MILE_DELIVERY_PUSH_TRANSFER_TO_THIRD.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }

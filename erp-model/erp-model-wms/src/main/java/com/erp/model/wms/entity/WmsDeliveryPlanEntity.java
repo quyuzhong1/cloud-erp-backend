@@ -154,7 +154,7 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
      * 发货类型
      * ThirdDeliveryTypeEnum
      */
-    @TableField("deliveryType")
+    @TableField("delivery_type")
     private String deliveryType;
 
     public static final String CODE = "code";

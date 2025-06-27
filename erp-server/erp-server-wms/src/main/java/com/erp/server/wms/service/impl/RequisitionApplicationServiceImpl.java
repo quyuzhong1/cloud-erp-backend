@@ -3139,8 +3139,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         //暂存仓位
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
-        //映射主表信息
+        //映射主表信息（默认要货类型为FBA要货）
         FirstMileDeliveryDTO.AddDTO addDTO = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverFDD(shipmentEntity,entity,shopInfo);
+        if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
+            addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode());
+        }
         //校验明细数量是否一致
         List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
         List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();

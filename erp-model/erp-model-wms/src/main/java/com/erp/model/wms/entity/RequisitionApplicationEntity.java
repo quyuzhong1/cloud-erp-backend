@@ -130,7 +130,7 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
      * 发货类型
      * ThirdDeliveryTypeEnum
      */
-    @TableField("deliveryType")
+    @TableField("delivery_type")
     private String deliveryType;
 
     
