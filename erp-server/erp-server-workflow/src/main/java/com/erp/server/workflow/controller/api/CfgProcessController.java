@@ -15,7 +15,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
@@ -245,5 +244,16 @@ public class CfgProcessController extends BaseController {
     public ApiResult<List<CfgProcessDTO.TabListDTO>> startThirdProcess(@RequestBody CfgProcessDTO.StartDTO dto) {
         cfgProcessService.startThirdProcess(dto);
         return success();
+    }
+
+    /**
+     * erp流程下拉
+     * @author will
+     * @date 2025/6/27 12:26
+     * @return ApiResult<List<ProcessSelectDTO>>
+     */
+    @GetMapping("/listProcessSelect")
+    public ApiResult<List<CfgProcessDTO.ProcessSelectDTO>> listProcessSelect() {
+        return success(cfgProcessService.listProcessSelect());
     }
 }
