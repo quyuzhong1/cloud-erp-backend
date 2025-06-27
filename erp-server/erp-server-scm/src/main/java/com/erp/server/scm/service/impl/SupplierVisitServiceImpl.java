@@ -16,8 +16,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.PilotApplicationDTO;
-import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -26,7 +24,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.model.scm.enums.SupplierVisitEnum;
-import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -38,6 +35,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -48,7 +46,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_CREDENTIAL_REPORT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_VISIT_REPORT;
 
 /**
@@ -424,6 +421,14 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //供应商
+        List<SupplierEntity> supplierList = supplierService.list();
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+
         return null;
     }
 
@@ -450,4 +455,18 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchImportVisit(List<SupplierVisitDTO.ImportAddDTO> addList) {
+        if(CollUtil.isNotEmpty(addList)){
+            List<SupplierVisitEntity> supplierVisitEntities = BeanMapper.copyList(addList, SupplierVisitEntity.class);
+            this.saveBatch(supplierVisitEntities);
+
+            for (SupplierVisitDTO.ImportAddDTO importAddDTO : addList) {
+                if(CollUtil.isNotEmpty(importAddDTO.getSupplierVisitSkuEntityList())){
+                    supplierVisitSkuService.saveBatch(importAddDTO.getSupplierVisitSkuEntityList());
+                }
+            }
+        }
+    }
 }

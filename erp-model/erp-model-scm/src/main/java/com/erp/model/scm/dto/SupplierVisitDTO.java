@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -413,6 +414,55 @@ public class SupplierVisitDTO implements Serializable {
          * 附件名
          */
         private List<String> attachmentNameList;
+    }
+
+
+    /**
+     * 现场考察导入dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportAddDTO{
+        /**
+         * id
+         */
+        private String  id;
+        /**
+         * 供应商名
+         */
+        private String  supplierId;
+
+        /**
+         * 类型
+         */
+        private String visitType;
+
+        /**
+         * 拜访时间
+         */
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人 集合
+         */
+        private String people;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+
+        /**
+         * 结果
+         */
+        private String result;
+
+        /**
+         * 物料
+         */
+        private List<SupplierVisitSkuEntity> supplierVisitSkuEntityList;
+
     }
 
 
