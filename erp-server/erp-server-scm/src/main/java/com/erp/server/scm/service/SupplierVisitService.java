@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.model.scm.entity.SupplierVisitEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,15 +50,19 @@ public interface SupplierVisitService extends SuperService<SupplierVisitEntity> 
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierVisitDTO.PagingViewDTO>
      */
-    PagingVO<SupplierVisitDTO.ListDTO> paging(PagingDTO<BaseIdDTO> dto);
+    PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto);
 
     List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto);
 
-    List<SupplierVisitDTO.ViewDTO> view(String id);
+    SupplierVisitDTO.ViewDTO view(String id);
 
     void exportList(SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto);
+
+    void downloadTemplate(HttpServletResponse response);
+
+    void batchImportVisit(List<SupplierVisitDTO.ImportAddDTO> addList);
 }

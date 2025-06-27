@@ -1,5 +1,8 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -9,30 +12,46 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.entity.SupplierVisitEntity;
-import com.erp.model.scm.entity.SupplierVisitSkuEntity;
+import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
+import com.erp.model.scm.enums.SupplierVisitEnum;
+import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.listener.SupplierVisitExcelListener;
 import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_VISIT_REPORT;
 
 /**
  * <p>
@@ -59,6 +78,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -92,12 +113,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         visit.setSupplierId(supplierId);
         visit.setVisitTime(dto.getVisitTime());
         //拜访类型
-        String visitType = dto.getVisitType();
-        SupplierVisitEnum visitTypeEnum = SupplierVisitEnum.getByStatus(visitType);
-        visit.setVisitType(visitTypeEnum);
-        String visitResult = dto.getResult();
-        SupplierVisitResultEnum visitResultEnum = SupplierVisitResultEnum.getByStatus(visitResult);
-        visit.setResult(visitResultEnum);
+        visit.setVisitType(dto.getVisitType());
+        visit.setResult(dto.getResult());
         String id = IdWorker.getIdStr();
         visit.setId(id);
         List<String> peopleList = dto.getPeopleList();
@@ -124,13 +141,56 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             //添加日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), id, "现场考察");
         }
-
         return result;
     }
 
     @Override
     public Boolean update(SupplierVisitDTO.UpdateDTO dto) {
-        return null;
+        if(StringUtils.isBlank(dto.getSupplierId())){
+            throw new ServiceException("供应商不能为空");
+        }
+        SupplierEntity supplier = supplierService.getById(dto.getSupplierId());
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+
+        SupplierVisitEntity oldEntity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        SupplierVisitEntity entity = new SupplierVisitEntity();
+        BeanMapper.copy(dto, entity);
+
+        List<String> peopleList = dto.getPeopleList();
+        entity.setPeople(String.join(",", peopleList));
+
+        //删除附件
+        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+        //附件集合
+        List<String> attachmentUrlList = dto.getAttachmentUrlList();
+        List<String> attachmentNameList = dto.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            //处理附件
+            Class<SupplierVisitEntity> credentialClass = SupplierVisitEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                AttachmentEntity addAttachment = new AttachmentEntity();
+                addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                addAttachment.setAttachName(attachmentNameList.get(i));
+                addAttachment.setBusinessId(entity.getId());
+                addAttachment.setType(type);
+                batchAttachmentList.add(addAttachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
+        //更新
+        updateById(entity);
+        //操作日志
+        String msg = StrUtil.format("用户【{}】更新【{}】供应商现场考察", UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
+        moduleOperateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "", msg);
+        return Boolean.TRUE;
     }
 
 
@@ -143,7 +203,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
      * @date 2023-03-21 11:32
      */
     @Override
-    public PagingVO<SupplierVisitDTO.ListDTO> paging(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto) {
         //供应商id
         String supplierId = dto.getParams().getId();
         SupplierEntity supplier = supplierService.getById(supplierId);
@@ -152,14 +212,14 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, supplierId);
-        List<SupplierVisitDTO.ListDTO> list = pageData.getRecords();
+        List<SupplierVisitDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        List<String> ids = list.stream().map(SupplierVisitDTO.ListDTO::getId).collect(Collectors.toList());
+        List<String> ids = list.stream().map(SupplierVisitDTO.PagingViewDTO::getId).collect(Collectors.toList());
         List<String> peopleIdList = new ArrayList<>(5);
 
-        List<String> peopleList = list.stream().map(SupplierVisitDTO.ListDTO::getPeople).collect(Collectors.toList());
+        List<String> peopleList = list.stream().map(SupplierVisitDTO.PagingViewDTO::getPeople).collect(Collectors.toList());
         for (String people : peopleList) {
             String peopleStr[] = people.split(",");
             for (String str : peopleStr) {
@@ -176,12 +236,14 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        for (SupplierVisitDTO.ListDTO item : list) {
+        for (SupplierVisitDTO.PagingViewDTO item : list) {
             //拜访类型
             SupplierVisitEnum visitEnum = item.getVisitType();
             item.setVisitTypeName(visitEnum.getName());
+
             SupplierVisitResultEnum visitResultEnum = item.getResult();
             item.setResultName(visitResultEnum.getName());
+
             String people = item.getPeople();
             List<String> userIdList = Arrays.asList(people.split(","));
             String userName = userList.stream().filter(u -> userIdList.contains(u.getUserId())).
@@ -214,27 +276,203 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     }
 
     @Override
-    public List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
+    public List<SupplierVisitDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SupplierCredentialDTO.PagingParamDTO searchParam = new SupplierCredentialDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SupplierVisitDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        Map<String, SupplierVisitDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(SupplierVisitDTO.TabListDTO::getTabFlag, t -> t));
+        List<SupplierVisitDTO.TabListDTO> result = new ArrayList<>();
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.CONFORMITY.getCode(), SupplierVisitResultEnum.CONFORMITY.getName() , map.containsKey(SupplierVisitResultEnum.CONFORMITY.getCode()) ? map.get(SupplierVisitResultEnum.CONFORMITY.getCode()).getCount() : 0   ));
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.PENDING.getCode(), SupplierVisitResultEnum.PENDING.getName() , map.containsKey(SupplierVisitResultEnum.PENDING.getCode()) ? map.get(SupplierVisitResultEnum.PENDING.getCode()).getCount() : 0   ));
+        result.add(new SupplierVisitDTO.TabListDTO( SupplierVisitResultEnum.NONCONFORMITY.getCode(), SupplierVisitResultEnum.NONCONFORMITY.getName() , map.containsKey(SupplierVisitResultEnum.NONCONFORMITY.getCode()) ? map.get(SupplierVisitResultEnum.NONCONFORMITY.getCode()).getCount() : 0   ));
+        return result;
     }
 
     @Override
-    public List<SupplierVisitDTO.ViewDTO> view(String id) {
-        return Collections.emptyList();
+    public PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SupplierVisitDTO.ListDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<SupplierVisitDTO.ListDTO> list) {
+        List<String> ids = list.stream().map(SupplierVisitDTO.ListDTO::getId).collect(Collectors.toList());
+        List<String> peopleIdList = new ArrayList<>(5);
+
+        List<String> peopleList = list.stream().map(SupplierVisitDTO.ListDTO::getPeople).collect(Collectors.toList());
+        for (String people : peopleList) {
+            String peopleStr[] = people.split(",");
+            for (String str : peopleStr) {
+                peopleIdList.add(str);
+            }
+        }
+        //获取用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(peopleIdList);
+
+        //获取到附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
+        //sku id
+        List<SupplierVisitSkuEntity> visitSkuList = supplierVisitSkuService.getByVisitIds(ids);
+        List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        for (SupplierVisitDTO.ListDTO item : list) {
+            //拜访类型
+            String visitType = item.getVisitType();
+            item.setVisitTypeName(SupplierVisitEnum.getName(visitType));
+            String result = item.getResult();
+            item.setResultName(SupplierVisitResultEnum.getName(result));
+            String people = item.getPeople();
+            List<String> userIdList = Arrays.asList(people.split(","));
+            String userName = userList.stream().filter(u -> userIdList.contains(u.getUserId())).
+                    map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+
+            item.setPeopleName(userName);
+            //附件地址
+            List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+
+            //附件地址
+            List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            item.setAttachmentUrlList(attachmentUrlList);
+            item.setAttachmentNameList(attachmentNameList);
+            List<String> skuIdList = visitSkuList.stream().filter(s -> s.getSupplierVisitId().
+                    equals(item.getId())).map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
+            //获取到sku 信息
+            List<SkuVO> skuInfoList = skuList.stream().filter(sku -> skuIdList.contains(sku.getSkuId())).
+                    collect(Collectors.toList());
+            String skuInfo = skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
+            item.setSkuInfo(skuInfo);
+        }
     }
 
     @Override
-    public void exportList(SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public SupplierVisitDTO.ViewDTO view(String id) {
+        SupplierVisitEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL,"现场考察"));
+        // 数据填充处理
+        SupplierVisitDTO.ViewDTO view = fillOne(entity);
+        return view;
+    }
 
+    private SupplierVisitDTO.ViewDTO fillOne(SupplierVisitEntity entity) {
+        SupplierVisitDTO.ViewDTO view = new SupplierVisitDTO.ViewDTO();
+        BeanMapper.copy(entity,view);
+        //拜访类型
+        String visitType = view.getVisitType();
+        view.setVisitTypeName(SupplierVisitEnum.getName(visitType));
+        //拜访结果
+        String result = view.getResult();
+        view.setResultName(SupplierVisitResultEnum.getName(result));
+
+        String people = entity.getPeople();
+        if(StringUtils.isNotBlank(people)){
+            List<String> userIdList = Arrays.asList(people.split(","));
+            //获取用户信息
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+            List<String> userNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+            view.setPeopleList(userIdList);
+            view.setPeopleNameList(userNameList);
+        }
+
+        List<String> ids =Arrays.asList(entity.getId());
+        //获取到附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
+        //sku id
+        List<SupplierVisitSkuEntity> visitSkuList = supplierVisitSkuService.getByVisitIds(ids);
+
+        //附件地址
+        List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(view.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                collect(Collectors.toList());
+
+        //附件地址
+        List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(view.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+                collect(Collectors.toList());
+        view.setAttachmentUrlList(attachmentUrlList);
+        view.setAttachmentNameList(attachmentNameList);
+
+        if(CollUtil.isNotEmpty(visitSkuList)){
+            List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+            //sku信息
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+            List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+            view.setSkuIdList(skuIds);
+            view.setSkuNoList(skuNoList);
+        }
+        return view;
+    }
+
+    @Override
+    public void exportList(SupplierVisitDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
     }
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        //供应商
+        List<SupplierEntity> supplierList = supplierService.list();
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1,o2)->o1));
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        SupplierVisitExcelListener excelListenerUtil = new SupplierVisitExcelListener(this,supplierList,map,userList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SupplierVisitImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入拜访错误！", e);
+            return Boolean.FALSE;
+        }
+        List<SupplierVisitImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "拜访错误信息";
+            ExcelUtil.export(fileName, "supplierVisitError", errorList, SupplierVisitImportExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     @Override
-    public PagingVO<SupplierVisitDTO.ListDTO> pagingList(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
-        return null;
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/supplierVisit.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchImportVisit(List<SupplierVisitDTO.ImportAddDTO> addList) {
+        if(CollUtil.isNotEmpty(addList)){
+            List<SupplierVisitEntity> supplierVisitEntities = BeanMapper.copyList(addList, SupplierVisitEntity.class);
+            this.saveBatch(supplierVisitEntities);
+
+            for (SupplierVisitDTO.ImportAddDTO importAddDTO : addList) {
+                if(CollUtil.isNotEmpty(importAddDTO.getSupplierVisitSkuEntityList())){
+                    supplierVisitSkuService.saveBatch(importAddDTO.getSupplierVisitSkuEntityList());
+                }
+            }
+        }
     }
 }

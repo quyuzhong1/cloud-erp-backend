@@ -23,7 +23,7 @@ import java.util.List;
 @Mapper
 public interface SupplierCredentialMapper extends BaseMapper<SupplierCredentialEntity> {
 
-    List<SupplierCredentialDTO.TabListDTO> tabList(@Param("params") SupplierCredentialDTO.PagingParamDTO searchParam);
+    List<SupplierCredentialDTO.TabListDTO> tabList(@Param("params") SupplierCredentialDTO.PagingParamDTO params);
 
     IPage<SupplierCredentialDTO.ListDTO> paging(Page query,@Param("params") SupplierCredentialDTO.PagingParamDTO params);
 }

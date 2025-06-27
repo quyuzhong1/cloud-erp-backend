@@ -19,6 +19,8 @@ import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.server.scm.query.SupplierCredentialQueryHandler;
+import com.erp.server.scm.query.SupplierVisitQueryHandler;
+import com.erp.server.scm.service.SupplierCredentialService;
 import com.erp.server.scm.service.SupplierVisitService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -57,15 +59,14 @@ public class SupplierVisitController extends BaseController {
         return success(supplierVisitService.tabList(dto));
     }
 
-
     /**
      * 根据供应商id拜访分页列表
      *
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SupplierVisitDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
-        PagingVO<SupplierVisitDTO.ListDTO> pagingVO = supplierVisitService.paging(dto);
+    public ApiResult<PagingVO<SupplierVisitDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<SupplierVisitDTO.PagingViewDTO> pagingVO = supplierVisitService.paging(dto);
         return success(pagingVO);
     }
 
@@ -77,10 +78,10 @@ public class SupplierVisitController extends BaseController {
     @PostMapping("/pagingList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:supplierVisit:paging",
+            menuCode = "scm:supplierVisit:pagingList",
             tableAlias = "sv"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
     public ApiResult<PagingVO<SupplierVisitDTO.ListDTO>> pagingList(@RequestBody @Validated PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
         PagingVO<SupplierVisitDTO.ListDTO> pagingVO = supplierVisitService.pagingList(dto);
         return success(pagingVO);
@@ -108,6 +109,11 @@ public class SupplierVisitController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "编辑现场考察")
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplierVisit:update",
+            serviceClass = SupplierVisitService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SupplierVisitDTO.UpdateDTO dto) {
         Boolean  result= supplierVisitService.update(dto);
         return result==true?success():failure();
@@ -122,11 +128,11 @@ public class SupplierVisitController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplierVisit:view",
+            menuCode = "scm:supplierVisit:update",
             serviceClass = SupplierVisitService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<List<SupplierVisitDTO.ViewDTO>> view(@RequestParam("id") String id) {
+    public ApiResult<SupplierVisitDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(supplierVisitService.view(id));
     }
 
@@ -145,7 +151,7 @@ public class SupplierVisitController extends BaseController {
             tableAlias = "sv"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated SupplierVisitDTO.PagingParamDTO dto, HttpServletResponse response) {
         supplierVisitService.exportList(dto, response);
         return success();
@@ -159,6 +165,18 @@ public class SupplierVisitController extends BaseController {
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = supplierVisitService.importFile(excelFile, response);
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板现场考察")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        supplierVisitService.downloadTemplate(response);
+        return success();
     }
 
 }

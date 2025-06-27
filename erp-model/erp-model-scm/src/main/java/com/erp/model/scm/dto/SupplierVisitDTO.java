@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -73,8 +74,66 @@ public class SupplierVisitDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends CommonDTO {
+    public static class ViewDTO{
         private String id;
+        /**
+         * 供应商名
+         */
+        private String  supplierId;
+        /**
+         * 供应商名
+         */
+        private String  supplierCode;
+        /**
+         * 供应商名
+         */
+        private String  supplierName;
+
+        /**
+         * 类型
+         */
+        private String visitType;
+        private String visitTypeName;
+
+        /**
+         * 拜访时间
+         */
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人 集合
+         */
+        private List<String> peopleList;
+        private List<String> peopleNameList;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+
+        /**
+         * 结果
+         */
+        private String result;
+        private String resultName;
+
+        /**
+         * 附件url
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 物料sku 集合
+         */
+        private List<String> skuIdList;
+
+        private List<String> skuNoList;
     }
 
     @Data
@@ -110,6 +169,7 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 内容
          */
+        @NotBlank(message = "拜访记录不能为空")
         private String content;
 
 
@@ -222,6 +282,84 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 表id
          */
+        private String visitType;
+
+
+        /**
+         * 类型名称
+         */
+        private String visitTypeName;
+
+        /**
+         * 拜访时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人
+         */
+        private String people;
+
+        /**
+         * 拜访人
+         */
+        private String peopleName;
+
+
+        /**
+         * 物料信息
+         */
+        private String skuInfo;
+
+        /**
+         * 结果
+         */
+        private String result;
+
+        /**
+         * 结果
+         */
+        private String resultName;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+        /**
+         * 附件地址
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+    }
+
+    /**
+     * 供应商拜访分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class PagingViewDTO {
+        /**
+         * 表id
+         */
+        private String id;
+
+
+        /**
+         * 供应商名
+         */
+        private String  supplierName;
+
+
+        /**
+         * 表id
+         */
         private SupplierVisitEnum visitType;
 
 
@@ -276,6 +414,55 @@ public class SupplierVisitDTO implements Serializable {
          * 附件名
          */
         private List<String> attachmentNameList;
+    }
+
+
+    /**
+     * 现场考察导入dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportAddDTO{
+        /**
+         * id
+         */
+        private String  id;
+        /**
+         * 供应商名
+         */
+        private String  supplierId;
+
+        /**
+         * 类型
+         */
+        private String visitType;
+
+        /**
+         * 拜访时间
+         */
+        private LocalDate visitTime;
+
+        /**
+         * 拜访人 集合
+         */
+        private String people;
+
+        /**
+         * 内容
+         */
+        private String content;
+
+
+        /**
+         * 结果
+         */
+        private String result;
+
+        /**
+         * 物料
+         */
+        private List<SupplierVisitSkuEntity> supplierVisitSkuEntityList;
+
     }
 
 
