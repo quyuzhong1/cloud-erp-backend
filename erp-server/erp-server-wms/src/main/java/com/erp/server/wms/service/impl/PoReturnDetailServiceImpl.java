@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -38,7 +38,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.PoReturnDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -200,12 +199,36 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         } else {
             notProductOrderAdd(dto, id, listDetail);
         }
+        //校验数量
+        checkReturnQty(dto.getReturnMode(),listDetail);
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
         //更新是否组合品标识
         updateIsCombination(listDetail);
         //保存详情信息
         return this.saveBatch(listDetail);
+    }
+
+    /**
+     * 校验数量
+     * @author will
+     * @date 2025/6/27 10:37
+     * @param returnMode
+     * @param listDetail
+     * @return void
+     */
+    private void checkReturnQty (String returnMode,List<PoReturnDetailEntity> listDetail) {
+        if (CollUtil.isEmpty(listDetail)) {
+            return;
+        }
+        for (PoReturnDetailEntity detailEntity : listDetail) {
+            if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.REPLENISHMENT.getCode()) && MathUtil.compareTo(detailEntity.getReplenishQty(),MathUtil.ZERO)  <= 0) {
+                throw new ServiceException(ApiError.ERROR_PO_RETURN_REPLENISH_QTY_CHECK, detailEntity.getSkuNo());
+            }
+            if (CharSequenceUtil.equals(returnMode,ReturnModeEnum.DEDUCTION.getCode()) && MathUtil.compareTo(detailEntity.getDeductAmountQty(),MathUtil.ZERO)  <= 0) {
+                throw new ServiceException(ApiError.ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK, detailEntity.getSkuNo());
+            }
+        }
     }
 
     /**
@@ -360,6 +383,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         } else {
             notProductOrderUpdate(dto, id, listDetail,addList);
         }
+
+        //校验数量
+        checkReturnQty(dto.getReturnMode(),listDetail);
+
         //仓位必填验证
         checkWarehouseLocation(warehouse,listDetail);
 
