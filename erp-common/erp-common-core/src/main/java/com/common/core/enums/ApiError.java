@@ -1291,7 +1291,7 @@ public enum ApiError implements Serializable {
     ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
     ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
     ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
-    ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣数量必须大于0"),
+    ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
 
     /**
      * OMS 错误
