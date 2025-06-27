@@ -168,7 +168,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     return result;
                 }
             	
-                sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+            	if(StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformCode())) {
+            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+            	}else {
+            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformOrderCode());
+            	}
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
                 if(shopListMap == null) {
