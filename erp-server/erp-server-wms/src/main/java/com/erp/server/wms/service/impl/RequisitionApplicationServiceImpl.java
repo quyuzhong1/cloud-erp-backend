@@ -3079,6 +3079,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> detailEntityList = RequisitionApplicationConverter.INSTANCE.wmsDeliveryPlanDetailToRequisitionApplicationDetail(planDetailEntityList);
         detailEntityList.forEach(e -> {
             e.setMainId(entity.getId());
+            e.setToWarehouseId(planEntity.getToWarehouseId());
+            e.setToWarehouseName(planEntity.getToWarehouseName());
+            e.setFromWarehouseId(planEntity.getFromWarehouseId());
+            e.setFromWarehouseName(planEntity.getFromWarehouseName());
         });
         requisitionApplicationDetailService.saveBatch(detailEntityList);
     }
