@@ -1,14 +1,15 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
+import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -61,10 +62,10 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      * 删除
      * @author hcg
      * @date: 2025-05-12
-     * @param ids
+     * @param entity
      * @return
      */
-    void delete(@NotEmpty(message = "ids不能为空") List<String> ids);
+    BatchResultDTO delete(CfgProcessRuleEntity entity);
 
     /**
      * 导出

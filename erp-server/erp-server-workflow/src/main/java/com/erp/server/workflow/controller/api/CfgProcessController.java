@@ -1,31 +1,33 @@
 package com.erp.server.workflow.controller.api;
 
 
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.service.CfgProcessRuleService;
+import com.erp.server.workflow.service.CfgProcessService;
 import com.erp.server.workflow.service.CfgThirdProcessService;
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-import com.common.core.controller.BaseController;
-import com.erp.server.workflow.service.CfgProcessService;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.workflow.dto.CfgProcessDTO;
+
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +118,7 @@ public class CfgProcessController extends BaseController {
      * @param stateDTO
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量启用/删除")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "批量启用/删除")
     @PostMapping("/updateState")
     public ApiResult<List<BatchResultDTO>> updateState(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO stateDTO) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
@@ -163,13 +165,28 @@ public class CfgProcessController extends BaseController {
     /**
      * 批量删除
      *
-     * @param idsDTO idsDTO
+     * @param dto
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除")
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        cfgProcessService.delete(idsDTO.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<CfgProcessRuleEntity> entityList = cfgProcessRuleService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            CfgProcessRuleEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"流程规则不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(cfgProcessService.delete(entity));
+            }catch (Exception e){
+                log.error("流程规则删除失败",e);
+                CfgProcessEntity cfgProcessEntity = cfgProcessService.getById(entity.getCfgProcessId());
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), ObjUtil.isEmpty(cfgProcessEntity) ? "" : cfgProcessEntity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

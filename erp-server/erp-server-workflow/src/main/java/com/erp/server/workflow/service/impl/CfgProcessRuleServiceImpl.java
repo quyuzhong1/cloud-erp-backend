@@ -1,7 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.builder.EqualsBuilder;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,11 +8,8 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -22,7 +18,6 @@ import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.server.workflow.mapper.CfgProcessRuleMapper;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -240,7 +235,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
         if (CollUtil.isNotEmpty(ids)) {
             try {
-                removeByIds(ids);
+                super.removeByIds(ids);
                 cfgProcessExpService.delete(ids);
                 cfgProcessFieldMapService.delete(ids);
             } catch (Exception e) {
@@ -255,7 +250,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             String msg = StrUtil.format("删除流程设置执行条件-{}", processRuleEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), msg);
         });
-        return false;
+        return Boolean.TRUE;
     }
 
     @Override
@@ -286,6 +281,12 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId, id)
                 .eq(CharSequenceUtil.isNotBlank(type),CfgProcessRuleEntity::getType, type)
                 .eq(CfgProcessRuleEntity::getDisabled, Boolean.FALSE)
+                .list();
+    }
+
+    @Override
+    public List<CfgProcessRuleEntity> listAllByProcessId(String id) {
+        return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId, id)
                 .list();
     }
 
