@@ -86,6 +86,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -1069,8 +1071,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(entity.getSourceId());
-        //查询在途仓
-//        WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：头程发货单
@@ -1115,10 +1115,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setQty(detailEntity.getDeliveryQty());
             detailAddDto.setOutWarehouseId(fromWarehouse);
             if (isFirst){
-                detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
                 if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
                     //发货单关联的发后计划类型是三方仓发三方仓，调拨时直接调拨可用库存，调拨仓位自动取有库存的仓位
-                    detailAddDto.setOutWarehouseLocation(getAvailableLocation(detailEntity.getSkuId(), detailEntity.getDeliveryQty(), fromWarehouse));
+                    detailAddDto.setOutWarehouseLocation(getAvailableLocation(detailEntity, fromWarehouse,deliveryWarehouse.getName()));
+                }else {
+                    detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
                 }
             }else {
                 detailAddDto.setOutWarehouseLocation("");
@@ -1151,9 +1152,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         transferInfoService.addAndApprove(addDTO);
     }
 
-    private String getAvailableLocation(String skuId, Integer deliveryQty, String fromWarehouse) {
-//        inventoryService.getInventory()
-        return "";
+    private String getAvailableLocation(FirstMileDeliveryDetailEntity deliveryDetail, String fromWarehouseId, String fromWarehouseName) {
+        InventoryEntity inventoryEntity = inventoryService.lambdaQuery()
+                .eq(InventoryEntity::getSkuId, deliveryDetail.getSkuId())
+                .eq(InventoryEntity::getWarehouseId, fromWarehouseId)
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .ge(InventoryEntity::getQty, deliveryDetail.getDeliveryQty())
+                .orderByDesc(InventoryEntity::getQty)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(inventoryEntity)){
+            throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存", fromWarehouseName,deliveryDetail.getSkuNo(),deliveryDetail.getDeliveryQty()));
+        }
+        return inventoryEntity.getWarehouseLocation();
     }
 
     @Override
