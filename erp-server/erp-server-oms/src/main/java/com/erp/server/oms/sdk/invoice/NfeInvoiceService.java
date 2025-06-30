@@ -1,6 +1,5 @@
 package com.erp.server.oms.sdk.invoice;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -148,12 +147,41 @@ public class NfeInvoiceService {
         //开票成功
         NfeInvoiceDTO.NfeSuccessResultDTO resultDTO = null;
         try {
-            //解析obj
-            JSONArray jsonArray = JSONUtil.parseArray(obj);
-            resultDTO = BeanUtil.toBean(jsonArray.get(0), NfeInvoiceDTO.NfeSuccessResultDTO.class);
+            // 先尝试解析为JSONArray
+            if (obj instanceof JSONArray) {
+                JSONArray jsonArray = (JSONArray) obj;
+                if (jsonArray.isEmpty()) {
+                    throw new ServiceException("空数组无法解析");
+                }
+                resultDTO = jsonArray.get(0, NfeInvoiceDTO.NfeSuccessResultDTO.class);
+            }
+            // 再尝试解析为JSONObject
+            else if (obj instanceof JSONObject) {
+                JSONObject jsonObject = (JSONObject) obj;
+                resultDTO = jsonObject.toBean(NfeInvoiceDTO.NfeSuccessResultDTO.class);
+            }
+            // 处理字符串类型的原始JSON
+            else if (obj instanceof String) {
+                // 尝试解析为JSONArray
+                if (obj.toString().trim().startsWith("[")) {
+                    JSONArray jsonArray = JSONUtil.parseArray((String) obj);
+                    resultDTO = jsonArray.get(0, NfeInvoiceDTO.NfeSuccessResultDTO.class);
+                }
+                // 尝试解析为JSONObject
+                else {
+                    JSONObject jsonObject = JSONUtil.parseObj((String) obj);
+                    resultDTO = jsonObject.toBean(NfeInvoiceDTO.NfeSuccessResultDTO.class);
+                }
+            }
+            // 处理其他未知类型
+            else {
+                throw new IllegalArgumentException("不支持的数据类型");
+            }
         } catch (Exception e) {
-            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(obj));
-           throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
+            log.error("解析信息失败, 原始数据: {}, 错误: {}",
+                    JSONUtil.toJsonStr(obj),
+                    e.getMessage());
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
         }
         if (!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
