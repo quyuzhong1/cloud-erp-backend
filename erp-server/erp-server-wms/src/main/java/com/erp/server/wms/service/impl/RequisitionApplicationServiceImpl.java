@@ -3348,7 +3348,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();
         fbaDetailList.forEach(e ->{
             WmsDeliveryPlanDetailEntity planDetailEntity = planDetailEntityList.stream().filter(v -> v.getPlatformSku().equals(e.getMsku())
-                            && v.getPlatformFnSku().equals(e.getFnSku()) && Objects.equals(v.getQty(), e.getDeliveryQty()))
+                            && v.getPlatformFnSku().equals(e.getFnSku()) && Objects.equals(v.getQty(), e.getDeclareQty()))
                     .findFirst().orElse(null);
             if (Objects.isNull(planDetailEntity)){
                 throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】在发货计划中不存在");

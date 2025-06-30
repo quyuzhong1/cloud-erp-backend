@@ -355,7 +355,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
         }
         List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
-        if (CollectionUtils.isNotEmpty(requisitionApplicationEntities)) {
+        if (CollectionUtils.isNotEmpty(requisitionApplicationEntities) && !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
         }
         if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
