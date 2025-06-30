@@ -76,7 +76,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     /**
      * 保存 供应商资质信息
      *
-     * @param supplierId
      * @param credentialList
      * @return void
      * @author yl
@@ -84,12 +83,11 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void saveBatchCredential(String supplierId, List<SupplierCredentialDTO.AddDTO> credentialList) {
+    public void saveBatchCredential(List<SupplierCredentialDTO.AddDTO> credentialList) {
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
         for (SupplierCredentialDTO.AddDTO item : credentialList) {
-            item.setSupplierId(supplierId);
             self.add(item);
         }
     }
@@ -102,6 +100,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             throw new ServiceException("供应商不能为空");
         }
         SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
+
+        Integer count = self.lambdaQuery()
+                .eq(SupplierCredentialEntity::getSupplierId, dto.getSupplierId())
+                .eq(SupplierCredentialEntity::getCode, dto.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException("【"+supplierEntity.getName()+"】【"+dto.getName()+"】资质已存在");
+        }
 
         SupplierCredentialEntity addEntity = new SupplierCredentialEntity();
         String id = IdWorker.getIdStr();
@@ -168,7 +174,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     /**
      * 保存 供应商资质信息
      *
-     * @param supplierId
      * @param credentialList
      * @return void
      * @author yl
@@ -176,12 +181,11 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateBatchCredential(String supplierId, List<SupplierCredentialDTO.UpdateDTO> credentialList) {
+    public void updateBatchCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList) {
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
         for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
-            item.setSupplierId(supplierId);
             self.update(item);
         }
     }
@@ -190,12 +194,24 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(SupplierCredentialDTO.UpdateDTO dto) {
+        if(StringUtils.isBlank(dto.getId())){
+            throw new ServiceException("主键id不能为空");
+        }
         if(StringUtils.isBlank(dto.getSupplierId())){
-            throw new ServiceException("供应商不能为空");
+            throw new ServiceException("供应商id不能为空");
         }
         SupplierCredentialEntity old = super.getByIdOpt(dto.getId()).orElseThrow(()->new ServiceException("未找到供应商证照数据"));
 
         SupplierEntity supplierEntity = supplierService.getByIdOpt(dto.getSupplierId()).orElseThrow(()->new ServiceException("未找到供应商数据"));
+
+        Integer count = self.lambdaQuery()
+                .eq(SupplierCredentialEntity::getSupplierId, dto.getSupplierId())
+                .eq(SupplierCredentialEntity::getCode, dto.getCode())
+                .ne(SupplierCredentialEntity::getId,dto.getId())
+                .count();
+        if(count > 0){
+            throw new ServiceException("【"+supplierEntity.getName()+"】【"+dto.getName()+"】资质已存在");
+        }
 
         SupplierCredentialEntity entity = new SupplierCredentialEntity();
         BeanMapper.copy(dto, entity);
@@ -591,7 +607,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getCode(), "供应商证照管理");
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER.getCode(), supplierEntity.getId(), "删除供应商证照数据");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
 
     @Override
