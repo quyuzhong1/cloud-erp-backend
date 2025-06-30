@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
@@ -77,6 +78,10 @@ public class CfgRulePickingStagingController extends BaseController {
     public ApiResult<List<BatchResultDTO>> saveStaging(@RequestBody ValidList<CfgRulePickingStagingDTO.StagingDTO> dtoList){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         List<String> warehouseIds = dtoList.stream().map(CfgRulePickingStagingDTO.StagingDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(warehouseIds)){
+            cfgRulePickingStagingService.removeOtherWarehouse(warehouseIds);
+            return success(resultDTOS);
+        }
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<String> warehouseLocationIdList = dtoList.stream()
@@ -100,6 +105,8 @@ public class CfgRulePickingStagingController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(dto.getWarehouseId(), warehouseName, e.getMessage()));
             }
         }
+        //移除其他仓库配置
+        cfgRulePickingStagingService.removeOtherWarehouse(warehouseIds);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
