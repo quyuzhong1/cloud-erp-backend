@@ -233,7 +233,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             //折扣率
             jsonObject.set("discountRate", MathUtil.multiplyWithFour(detail.getDiscountRate(),MathUtil.BigDecimal_100));
             //折扣额
-            jsonObject.set("discountAmount", MathUtil.multiplyWithTwo(detail.getDiscountRate(),detail.getQty()));
+            jsonObject.set("discountAmount", MathUtil.multiplyWithTwo(detail.getDiscountRate(),detail.getTaxAmount()));
             //税额
             jsonObject.set("taxAmount", detail.getTaxAmount());
             //价税合计
