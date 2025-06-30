@@ -15,6 +15,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -130,7 +131,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 log.error("取消菜鸟仓入库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
             }
-            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+            return success();
         } catch (ApiException e) {
             log.error("取消菜鸟仓入库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(aliexpressCancelOrderDTO), e);
             throw new ServiceException("取消菜鸟仓入库单失败：" + e.getMessage());
@@ -248,7 +249,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         aliexpressCancelOrderDTO.setOrderId(cancelOutboundReq.getOrderCode());
         aliexpressCancelOrderDTO.setOrderType("JYCK");
         aliexpressCancelOrderDTO.setOwnerCode(cancelOutboundReq.getOwnerCode());
-        aliexpressCancelOrderDTO.setOrderCode(cancelOutboundReq.getOrderCode());
+        aliexpressCancelOrderDTO.setOrderCode(cancelOutboundReq.getErpOrderCode());
         aliexpressCancelOrderDTO.setWarehouseCode(cancelOutboundReq.getWarehouseCode());
         try {
             ApiOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.cancelOrder(aliexpressCancelOrderDTO);
@@ -256,7 +257,7 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 log.error("取消菜鸟仓出库单失败，{}",JSONUtil.toJsonStr(apiOrderResponseDTO));
                 return failure(apiOrderResponseDTO.getErrorResponse().getMsg()+";"+apiOrderResponseDTO.getErrorResponse().getSubMsg());
             }
-            return success(apiOrderResponseDTO.getResult().getData().getDeliveryOrderId());
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         } catch (ApiException e) {
             log.error("取消菜鸟仓出库单失败，入参：{}，错误信息：", JSONUtil.toJsonStr(cancelOutboundReq), e);
             throw new ServiceException("取消菜鸟仓出库单失败：" + e.getMessage());
