@@ -17,10 +17,13 @@ public class CurrentPeriodAllocatedCostDTO {
     private final BigDecimal productAllocatedAmount;
     private final int receiveQty;
     private final Integer deliveryQty;
+    // 当月签收数量
     private final int currentMonthReceiveQty;
     private final TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity;
+    //截止本月签收数量
     private final int asCurrentMonthReceiveQty;
     private final Integer initReceiveQty;
+    // 截止上月签收数量
     private final Integer asLastMonthReceiveQty;
     private final LocalDate reconciliationMonth;
     private final LocalDate reportPeriodMonth;
