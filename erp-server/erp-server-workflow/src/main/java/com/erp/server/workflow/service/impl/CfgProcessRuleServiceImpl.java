@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -101,12 +102,18 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.UpdateDTO update(String bussinessKey, String cfgProcessId, List<CfgProcessRuleDTO.AddOrUpdateDTO> addDTO) {
+
         // 查询数据库中与 mainId 关联的记录
         List<CfgProcessRuleEntity> old = this.list(
                 new LambdaQueryWrapper<CfgProcessRuleEntity>()
                         .eq(CfgProcessRuleEntity::getCfgProcessId, cfgProcessId)
                         .eq(CfgProcessRuleEntity::getIsDeleted, false)
         );
+
+        //校验是否存在关联单据是否在走流程
+        List<String> updateIdList = addDTO.stream().map(CfgProcessRuleDTO.AddOrUpdateDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<CfgProcessRuleEntity> updateRuleEntityList = old.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
+        checkBillStatus(updateRuleEntityList,Boolean.FALSE);
 
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
@@ -183,6 +190,9 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         if (CollUtil.isEmpty(processRuleEntityList)) {
             throw new ServiceException("请选择要删除的流程执行条件");
         }
+        //校验是否存在关联单据是否在走流程
+        checkBillStatus(processRuleEntityList,Boolean.TRUE);
+
         //校验是否存在运行中的流程,map,key是getType，value是List<id>
         Map<String, List<CfgProcessRuleEntity>> map = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
         StringBuilder errmsg = new StringBuilder();
@@ -320,5 +330,61 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             throw new ServiceException("默认条件不能超过1个");
         }
         return entities;
+    }
+
+
+    /**
+     * 验证是否存在单据进行中
+     * @author will
+     * @date 2025/6/30 14:40
+     * @param list
+     * @return void
+     */
+    private void checkBillStatus (List<CfgProcessRuleEntity> list,Boolean isDelete) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        //erp流程定义id
+        List<String> processDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
+        //erp流程定义版本
+        List<Integer> processDefinitionVersionList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(obj -> Integer.parseInt(obj.getProcessDefinitionVersion())).distinct().collect(Collectors.toList());
+        //fs流程定义id
+        List<String> fsProcessDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.FSPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
+
+        //查询进行中ERP流程
+        List<ProcessManagementEntity> managementList = processManagementService.listDoing(processDefinitionIdList, processDefinitionVersionList);
+        Map<String, List<ProcessManagementEntity>> managementMap = CollUtil.isEmpty(managementList) ? new HashMap<>() : managementList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getProcessDefinitionId(), obj.getProcessVersion())));
+
+        //查询进行中第三方流程
+        List<ThirdProcessManagementEntity> thirdManagementList = thirdProcessManagementService.listDoing(fsProcessDefinitionIdList);
+        Map<String, List<ThirdProcessManagementEntity>> thirdManagementMap = CollUtil.isEmpty(thirdManagementList) ? new HashMap<>() : thirdManagementList.stream().collect(Collectors.groupingBy(ThirdProcessManagementEntity::getProcessDefinitionId));
+
+        for (CfgProcessRuleEntity entity : list) {
+
+            Integer num = 0;
+            if (CharSequenceUtil.equals(entity.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
+                //ERP流程
+                List<ProcessManagementEntity> erpList = managementMap.get(CharSequenceUtil.format("{}-{}", entity.getProcessDefinitionId(), entity.getProcessDefinitionVersion()));
+                if (CollUtil.isEmpty(erpList)){
+                    continue;
+                }
+                num = erpList.size();
+            } else if (CharSequenceUtil.equals(entity.getType(), CfgProcessRuleTypeEnum.FSPROCESS.getCode())) {
+                //第三方流程
+                List<ThirdProcessManagementEntity> thirdList = thirdManagementMap.get(entity.getProcessDefinitionId());
+                if (CollUtil.isEmpty(thirdList)){
+                    continue;
+                }
+                num = thirdList.size();
+            } else {
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_TYPE_NOT_EXIST);
+            }
+            //未跳过则根据类型报错
+            if (isDelete) {
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE,CfgProcessRuleTypeEnum.getName(entity.getType()));
+            } else {
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_UPDATE,CfgProcessRuleTypeEnum.getName(entity.getType()),num);
+            }
+        }
     }
 }

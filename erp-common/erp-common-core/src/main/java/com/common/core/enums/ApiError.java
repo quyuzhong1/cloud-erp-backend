@@ -293,7 +293,9 @@ public enum ApiError implements Serializable {
     PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
     PROCESS_QUERY_THIRD_SUER_NOT_EXIST(94060,"未找到提审用户的飞书账号，请绑定飞书账号"),
     PROCESS_APPROVE_FS_PROCESS(94061,"审核失败，单据不支持ERP审核"),
-
+    CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
+    CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
+    CFG_PROCESS_RULE_UPDATE(94064,"{}存在{}条流程关联单据，请操作完成候编辑"),
 
 
     /**

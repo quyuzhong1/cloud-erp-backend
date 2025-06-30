@@ -321,4 +321,13 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
     Boolean checkSubmitByBusinessId(ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto);
 
     Boolean checkTaskByProcessInstanceId(String processInstanceId);
+    /**
+     * 查询进行中的数据
+     * @author will
+     * @date 2025/6/30 11:18
+     * @param processDefinitionIdList
+     * @param processDefinitionVersionList
+     * @return List<ProcessManagementEntity>
+     */
+    List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<Integer> processDefinitionVersionList);
 }

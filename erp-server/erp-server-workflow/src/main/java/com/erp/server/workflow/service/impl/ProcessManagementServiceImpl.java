@@ -1960,4 +1960,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return Boolean.FALSE;
     }
 
+    @Override
+    public List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<Integer> processDefinitionVersionList) {
+        if (CollUtil.isEmpty(processDefinitionIdList) || CollUtil.isEmpty(processDefinitionVersionList)) {
+            return Collections.emptyList();
+        }
+       return lambdaQuery().in(ProcessManagementEntity::getProcessDefinitionId,processDefinitionIdList)
+                .in(ProcessManagementEntity::getProcessVersion,processDefinitionVersionList)
+                .in(ProcessManagementEntity::getProcessStatus, Arrays.asList(ProcessStatusEnum.PAUSE, ProcessStatusEnum.RUNNING))
+                .list();
+    }
+
 }
