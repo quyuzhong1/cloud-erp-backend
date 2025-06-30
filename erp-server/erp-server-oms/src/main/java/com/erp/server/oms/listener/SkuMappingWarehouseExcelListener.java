@@ -119,6 +119,11 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             errorList.add(importExcelDTO);
             return;
         }
+        if(StringUtils.isBlank(importExcelDTO.getWarehouseName()) && StringUtils.isBlank(importExcelDTO.getAccount())){
+            importExcelDTO.setErrorMsg("仓库和账号不能同时为空");
+            errorList.add(importExcelDTO);
+            return;
+        }
 
         if (StringUtils.isNotBlank(importExcelDTO.getHasMappingAllStr())) {
             if (!importExcelDTO.getHasMappingAllStr().equals("是") && !importExcelDTO.getHasMappingAllStr().equals("否")) {
@@ -131,7 +136,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         String warehouseName = importExcelDTO.getWarehouseName();
         List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(warehouseName));
         //仓库名称
-        if (CollUtil.isEmpty(warehouseList)) {
+        if (CollUtil.isEmpty(warehouseList) && StringUtils.isBlank(importExcelDTO.getAccount())) {
             errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
         }else {
             warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
@@ -255,7 +260,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setListingId(listingId);
                 addSkuMapping.setDictPlatform(dto.getDictPlatform());
                 addSkuMapping.setPlatformName(dto.getDictPlatformName());
-                addSkuMapping.setHasMappingAll(false);
+                addSkuMapping.setHasMappingAll(true);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());
                 addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));
@@ -288,7 +293,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addSkuMapping.setListingId(listingId);
                 addSkuMapping.setDictPlatform(dto.getDictPlatform());
                 addSkuMapping.setPlatformName(dto.getDictPlatformName());
-                addSkuMapping.setHasMappingAll(false);
+                addSkuMapping.setHasMappingAll(true);
                 //生效时间
                 addSkuMapping.setEffectiveTime(LocalDateTime.now());
                 addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));

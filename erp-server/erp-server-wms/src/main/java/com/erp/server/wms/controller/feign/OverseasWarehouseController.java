@@ -97,7 +97,7 @@ public class OverseasWarehouseController extends BaseController {
      *
      */
     @PostMapping("/addThirdWarehouse")
-    public BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO){
+    public BaseResultDTO.AddDTO addThirdWarehouse(@RequestBody ThirdWarehouseDTO.AddDTO addDTO){
         return overseasProviderWarehouseService.addThirdWarehouse(addDTO);
     }
 }

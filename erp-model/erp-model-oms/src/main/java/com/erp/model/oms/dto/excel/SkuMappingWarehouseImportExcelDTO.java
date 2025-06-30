@@ -55,7 +55,6 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "仓库名称", index = 4)
-    @FieldValid(fieldName = "仓库名称", maxLength = 200)
     private String warehouseName;
 
     /**
@@ -79,7 +78,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      * 账号
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "account", index = 7)
+    @ExcelProperty(value = "账号", index = 7)
     private String account;
 
     /**
