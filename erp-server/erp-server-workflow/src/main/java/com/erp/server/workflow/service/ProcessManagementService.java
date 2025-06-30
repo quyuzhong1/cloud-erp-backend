@@ -329,5 +329,5 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param processDefinitionVersionList
      * @return List<ProcessManagementEntity>
      */
-    List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<String> processDefinitionVersionList);
+    List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<Integer> processDefinitionVersionList);
 }

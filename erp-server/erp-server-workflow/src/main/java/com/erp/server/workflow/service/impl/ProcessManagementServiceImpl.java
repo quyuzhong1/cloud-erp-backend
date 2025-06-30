@@ -1956,7 +1956,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
-    public List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<String> processDefinitionVersionList) {
+    public List<ProcessManagementEntity> listDoing(List<String> processDefinitionIdList, List<Integer> processDefinitionVersionList) {
         if (CollUtil.isEmpty(processDefinitionIdList) || CollUtil.isEmpty(processDefinitionVersionList)) {
             return Collections.emptyList();
         }
