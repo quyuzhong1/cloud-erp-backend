@@ -91,6 +91,9 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
         if(!dto.getParams().getSqlMap().containsKey("dmp")){
             dto.getParams().getSqlMap().put("dmp","1 = 1");
         }
+        if(!dto.getParams().getSqlMap().containsKey("default")){
+            dto.getParams().getSqlMap().put("default","1 = 1");
+        }
         //如果高级查询选择了listing相关 先查询出id再查dmp
         List<String> listingIds = new ArrayList<>();
         List<ListingPushRecordDTO.PagingViewDTO> pagingViewDTOS = baseMapper.pagingListingPush(dto.getParams().getSqlMap(),new ArrayList<>(),Arrays.asList(OmsPlatformEnum.CAI_NIAO.getCode()));
@@ -124,7 +127,7 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
             pagingViewDTO.setStatusName(item.getStatusName());
             pagingViewDTO.setLatestPushTime(item.getCreateTime());
 
-            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(pagingViewDTO.getListingId())).
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(pagingViewDTO.getSkuId())).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             pagingViewDTO.setProductName(skuName);
             pagingViewDTO.setPlatformName(OmsPlatformEnum.getByCode(pagingViewDTO.getPlatform()).getName());

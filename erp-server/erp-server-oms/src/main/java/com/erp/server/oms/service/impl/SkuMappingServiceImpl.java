@@ -635,7 +635,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductName(skuList.get(0).getSkuName());
         skuMappingEntity.setListingId(listingId);
         skuMappingEntity.setDictPlatform(platform);
-        skuMappingEntity.setHasMappingAll(false);
+        skuMappingEntity.setPlatformName(OmsPlatformEnum.getName(platform));
+        skuMappingEntity.setHasMappingAll(true);
 //        LocalDateTime now = LocalDateTime.now();
         //生效时间
         skuMappingEntity.setEffectiveTime(effectiveTime);
