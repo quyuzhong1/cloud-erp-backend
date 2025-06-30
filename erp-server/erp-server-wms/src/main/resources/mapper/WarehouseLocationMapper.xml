@@ -121,6 +121,9 @@
         <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
             and wl.parent_id = #{params.warehouseAreaId}
         </if>
+        <if test="params.areaType != null and params.areaType != ''">
+            and wl.area_type = #{params.areaType}
+        </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             case when wl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
