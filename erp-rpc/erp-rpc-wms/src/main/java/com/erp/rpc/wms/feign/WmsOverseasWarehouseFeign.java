@@ -51,5 +51,5 @@ public interface WmsOverseasWarehouseFeign {
     PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 
     @PostMapping("/feign/overseasWarehouse/addThirdWarehouse")
-    BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO);
+    BaseResultDTO.AddDTO addThirdWarehouse(@RequestBody @Validated ThirdWarehouseDTO.AddDTO addDTO);
 }

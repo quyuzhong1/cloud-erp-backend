@@ -44,6 +44,8 @@ public class ExportOmsFeignController {
     private SoInfoService soInfoService;
 
     @Resource
+    private ListingPushRecordService listingPushRecordService;
+    @Resource
     private SoB2cRefundService soB2cRefundService;
 
     @Resource
@@ -159,6 +161,12 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         return skuMappingService.exportWarehouseSku(dto);
+    }
+
+    @PostMapping("/exportListingPush")
+    @WebAdvanceQuery
+    public PagingVO<ListingPushRecordDTO.PagingViewDTO> exportListingPush(@RequestBody PagingDTO<ListingPushRecordDTO.PagingParamDTO> dto) {
+        return listingPushRecordService.paging(dto);
     }
 
     @PostMapping("/customerSku")
