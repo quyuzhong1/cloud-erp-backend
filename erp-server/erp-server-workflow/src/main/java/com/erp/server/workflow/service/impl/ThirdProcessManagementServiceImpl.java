@@ -2,12 +2,14 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.FsApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -34,10 +36,7 @@ import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -149,6 +148,16 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
                 .orderByDesc(ThirdProcessManagementEntity::getStartTime)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public List<ThirdProcessManagementEntity> listDoing(List<String> processDefinitionIdList) {
+        if (CollUtil.isEmpty(processDefinitionIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(ThirdProcessManagementEntity::getProcessDefinitionId,processDefinitionIdList)
+                .eq(ThirdProcessManagementEntity::getStatus, FsApproveStatusEnum.PENDING.getStatus())
+                .list();
     }
 
     /**

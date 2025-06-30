@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -183,6 +184,9 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         if (CollUtil.isEmpty(processRuleEntityList)) {
             throw new ServiceException("请选择要删除的流程执行条件");
         }
+        //校验是否存在关联单据是否在走流程
+        checkBillStatus(processRuleEntityList);
+
         //校验是否存在运行中的流程,map,key是getType，value是List<id>
         Map<String, List<CfgProcessRuleEntity>> map = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
         StringBuilder errmsg = new StringBuilder();
@@ -320,5 +324,53 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             throw new ServiceException("默认条件不能超过1个");
         }
         return entities;
+    }
+
+
+    /**
+     * 验证是否存在单据进行中
+     * @author will
+     * @date 2025/6/30 14:40
+     * @param list
+     * @return void
+     */
+    private void checkBillStatus (List<CfgProcessRuleEntity> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        //erp流程定义id
+        List<String> processDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
+        //erp流程定义版本
+        List<String> processDefinitionVersionList = list.stream().map(CfgProcessRuleEntity::getProcessDefinitionVersion).distinct().collect(Collectors.toList());
+        //fs流程定义id
+        List<String> fsProcessDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.FSPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
+
+        //查询进行中ERP流程
+        List<ProcessManagementEntity> managementList = processManagementService.listDoing(processDefinitionIdList, processDefinitionVersionList);
+        Map<String, List<ProcessManagementEntity>> managementMap = CollUtil.isEmpty(managementList) ? new HashMap<>() : managementList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getProcessDefinitionId(), obj.getProcessVersion())));
+
+        //查询进行中第三方流程
+        List<ThirdProcessManagementEntity> thirdManagementList = thirdProcessManagementService.listDoing(fsProcessDefinitionIdList);
+        Map<String, List<ThirdProcessManagementEntity>> thirdManagementMap = CollUtil.isEmpty(thirdManagementList) ? new HashMap<>() : thirdManagementList.stream().collect(Collectors.groupingBy(ThirdProcessManagementEntity::getProcessDefinitionId));
+
+        for (CfgProcessRuleEntity entity : list) {
+            //ERP流程
+            if (CharSequenceUtil.equals(entity.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
+                List<ProcessManagementEntity> erpList = managementMap.get(CharSequenceUtil.format("{}-{}", entity.getProcessDefinitionId(), entity.getProcessDefinitionVersion()));
+                if (CollUtil.isEmpty(erpList)){
+                    return;
+                }
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE);
+            } else if (CharSequenceUtil.equals(entity.getType(), CfgProcessRuleTypeEnum.FSPROCESS.getCode())) {
+                //第三方流程
+                List<ThirdProcessManagementEntity> thirdList = thirdManagementMap.get(entity.getProcessDefinitionId());
+                if (CollUtil.isEmpty(thirdList)){
+                    return;
+                }
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE);
+            } else {
+                throw new ServiceException(ApiError.CFG_PROCESS_RULE_TYPE_NOT_EXIST);
+            }
+        }
     }
 }

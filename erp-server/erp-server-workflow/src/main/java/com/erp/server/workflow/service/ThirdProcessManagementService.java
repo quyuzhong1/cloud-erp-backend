@@ -6,6 +6,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -49,4 +51,12 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
      * @return ThirdProcessManagementEntity
      */
     ThirdProcessManagementEntity getLastByBusinessIdAndKey(String businessId, String businessKey);
+    /**
+     * 查询进行中的流程
+     * @author will
+     * @date 2025/6/30 12:11
+     * @param processDefinitionIdList
+     * @return List<ThirdProcessManagementEntity>
+     */
+    List<ThirdProcessManagementEntity> listDoing(List<String> processDefinitionIdList);
 }
