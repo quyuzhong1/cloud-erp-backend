@@ -1,22 +1,20 @@
 package com.erp.model.workflow.dto;
 
-import java.time.LocalDateTime;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -166,7 +164,7 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 字段映射
          */
-        @NotEmpty
+        @NotEmpty(message = "字段映射不能为空")
         @Valid
         private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList;
     }

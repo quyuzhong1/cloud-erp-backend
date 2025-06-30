@@ -21,7 +21,6 @@ import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.service.CfgProcessRuleService;
 import com.erp.server.workflow.service.CfgProcessService;
-import com.erp.server.workflow.service.CfgThirdProcessService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -103,7 +102,7 @@ public class CfgProcessController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "workflow:cfgProcess:view",
-            serviceClass = CfgThirdProcessService.class,
+            serviceClass = CfgProcessService.class,
             keyIdName = "settingId")
     @LogViewService
     public ApiResult<CfgProcessDTO.ViewDTO> view(@RequestParam(value = "settingId") String settingId) {
@@ -215,7 +214,7 @@ public class CfgProcessController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "workflow:cfgProcess:update",
-            serviceClass = CfgThirdProcessService.class,
+            serviceClass = CfgProcessService.class,
             keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE, desc = "流程配置更新")
     public ApiResult<BaseResultDTO.AddDTO> update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
