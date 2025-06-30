@@ -154,9 +154,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate)){
             SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
             LocalDate now = LocalDate.now();
-            if(now.isBefore(effectiveDate)){
+            if(now.compareTo(effectiveDate) < 0){
                 status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
-            }else if(now.isAfter(effectiveDate) && now.isBefore(expireDate)){
+            }else if(now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0){
                 status = SupplierCredentialStatusEnum.EFFECTIVE;
             }
             addEntity.setStatus(status.getCode());
@@ -633,6 +633,19 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     @Override
     public DictBasicDTO addDictCredential(String credentialName) {
+        if(StringUtils.isBlank(credentialName)){
+            return null;
+        }
+
+        //校验名称是否已存在
+        Integer count = dictBasicService.lambdaQuery()
+                .eq(DictBasicEntity::getName, credentialName)
+                .eq(DictBasicEntity::getType, "credentialType")
+                .count();
+        if(count > 0){
+            throw new ServiceException(ApiError.ERROR_98124);
+        }
+
         DictBasicEntity dictBasicEntity = new DictBasicEntity();
         dictBasicEntity.setValue(IdWorker.getIdStr());
         dictBasicEntity.setName(credentialName);

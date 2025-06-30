@@ -127,19 +127,24 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             List<String> nameList = dto.getAttachmentNameList();
             //附件
             attachmentService.batchSave(urlList, nameList, type, id);
-            List<String> skuIdList = dto.getSkuIdList();
-            if (CollectionUtils.isNotEmpty(skuIdList)) {
-                List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
-                for (String skuId : skuIdList) {
-                    //这是sku 的
-                    SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
-                    visitSku.setSkuId(skuId);
-                    visitSku.setSupplierId(supplierId);
-                    visitSku.setSupplierVisitId(id);
-                    addVisitSkuList.add(visitSku);
+
+            //物料
+            if(CollUtil.isNotEmpty(dto.getSkuIdList())){
+                List<String> skuIdList = dto.getSkuIdList();
+                if (CollectionUtils.isNotEmpty(skuIdList)) {
+                    List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
+                    for (String skuId : skuIdList) {
+                        //这是sku 的
+                        SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
+                        visitSku.setSkuId(skuId);
+                        visitSku.setSupplierId(supplierId);
+                        visitSku.setSupplierVisitId(id);
+                        addVisitSkuList.add(visitSku);
+                    }
+                    supplierVisitSkuService.saveBatch(addVisitSkuList);
                 }
-                supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
+
             //添加日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一条现场考察"), ModuleTypeEnum.SUPPLIER.getCode(), dto.getSupplierId(), "现场考察");
         }
@@ -163,8 +168,6 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
         List<String> peopleList = dto.getPeopleList();
         entity.setPeople(String.join(",", peopleList));
-
-
 
         //更新
         boolean save = updateById(entity);

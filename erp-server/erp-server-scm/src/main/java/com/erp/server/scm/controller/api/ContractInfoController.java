@@ -81,7 +81,7 @@ public class ContractInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:contractInfo:paging",
-            tableAlias = ""
+            tableAlias = "ci"
     )
     public ApiResult<List<ContractInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(contractInfoService.tabList(dto));
@@ -328,7 +328,7 @@ public class ContractInfoController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "合同管理表导出Excel数据")
-    public void exportList(@RequestBody @Validated ContractInfoDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(@RequestBody @Validated ContractInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         contractInfoService.exportList(dto, response);
     }
 

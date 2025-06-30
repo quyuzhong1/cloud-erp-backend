@@ -41,6 +41,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     @TableField("service_provider_id")
     private String serviceProviderId;
     /**
+    * 服务商名称
+    */
+    @TableField("service_provider_name")
+    private String serviceProviderName;
+    /**
     * 审核时间
     */
     @TableField("approve_time")
@@ -50,6 +55,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     */
     @TableField("approve_user_id")
     private String approveUserId;
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
     /**
     * 合同类型,contractType字典
     */

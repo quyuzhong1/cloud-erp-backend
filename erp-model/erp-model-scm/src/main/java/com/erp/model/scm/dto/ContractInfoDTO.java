@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -70,19 +71,18 @@ public class ContractInfoDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+         /**
+          * 主键id
+          */
+         private List<String> ids;
+
      }
     /**
     * 分页列表
     */
     @Data
     @NoArgsConstructor
-    public static class ListDTO {
-
-        /**
-        * 主键id
-        */
-        private String  id;
-
+    public static class ListDTO extends BaseDTO{
         /**
         * 审核状态 
         */
@@ -97,6 +97,7 @@ public class ContractInfoDTO implements Serializable {
         * 服务商id
         */
         private String serviceProviderId;
+        private String serviceProviderName;
 
         /**
         * 审核时间
@@ -107,6 +108,7 @@ public class ContractInfoDTO implements Serializable {
         * 审核人
         */
         private String approveUserId;
+        private String approveUserName;
 
         /**
          * 生效状态名称
@@ -141,28 +143,46 @@ public class ContractInfoDTO implements Serializable {
         * 审核状态名称
         */
         private String approveStatusName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+        /**
+         * id
+         */
+        private String id;
 
         /**
-        * 创建时间
-        */
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
-    }
+         * 修改人id
+         */
+        private String updateUserId;
 
-    /**
-    * 导出Excel
-    */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
         /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -181,6 +201,7 @@ public class ContractInfoDTO implements Serializable {
         * 审核状态 
         */
         private String approveStatus;
+        private String approveStatusName;
 
         /**
         * 单据编号
@@ -191,6 +212,7 @@ public class ContractInfoDTO implements Serializable {
         * 服务商id
         */
         private String serviceProviderId;
+        private String serviceProviderName;
 
         /**
         * 审核时间
@@ -201,11 +223,13 @@ public class ContractInfoDTO implements Serializable {
         * 审核人
         */
         private String approveUserId;
+        private String approveUserName;
 
         /**
         * 合同类型,contractType字典
         */
         private String type;
+        private String typeName;
 
         /**
         * 生效时间
@@ -222,14 +246,8 @@ public class ContractInfoDTO implements Serializable {
         */
         private Boolean disable;
 
-        /**
-         * 文件路径
-         */
-        private String attachUrl;
-        /**
-         * 文件路径
-         */
-        private String attachName;
+        private List<String> attachmentUrlList;
+        private List<String> attachmentNameList;
     }
 
     /**
@@ -271,8 +289,8 @@ public class ContractInfoDTO implements Serializable {
         /**
         * 合同类型,contractType字典
         */
-        @NotBlank(message = "合同类型,contractType字典不能为空")
-        @Size(max = 32,message = "合同类型,contractType字典最大长度不能超过32位")
+        @NotBlank(message = "合同类型不能为空")
+        @Size(max = 32,message = "合同类型最大长度不能超过32位")
         private String type;
 
         /**
@@ -297,8 +315,10 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 文件不能为空
          */
-        @NotNull(message = "文件不能为空")
-        private MultipartFile file;
+        @NotEmpty(message = "文件不能为空")
+        private List<String> attachmentUrlList;
+        @NotEmpty(message = "文件不能为空")
+        private List<String> attachmentNameList;
     }
 
 
