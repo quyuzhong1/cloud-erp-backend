@@ -43,7 +43,7 @@ public interface ContractInfoMapper extends BaseMapper<ContractInfoEntity> {
     * @param params
     * @return
     */
-    List<ContractInfoDTO.ListDTO> listExport(@Param("params") ContractInfoDTO.ExportDTO params);
+    List<ContractInfoDTO.ListDTO> listExport(@Param("params") ContractInfoDTO.PagingParamDTO params);
 
 
     /**
