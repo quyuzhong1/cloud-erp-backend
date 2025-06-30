@@ -16,7 +16,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -682,5 +683,47 @@ public class RequisitionApplicationController extends BaseController {
     @WebAdvanceQuery
     public ApiResult<PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO>> pagingSkuByDeliveryPlan(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
         return success(requisitionApplicationService.pagingSkuByDeliveryPlan(dto));
+    }
+
+    /**
+     * 库存释放预览
+     * @param dto
+     * @Author zdy
+     * @Date 2025/06/12
+     * @return ApiResult
+     **/
+    @PostMapping("/unLockInventoryView")
+    public ApiResult<List<RequisitionApplicationDTO.InventoryDTO>> unLockInventoryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.unLockInventoryView(dto));
+    }
+    /**
+     * 库存释放保存
+     * @param validList
+     * @Author zdy
+     * @Date 2025/06/12
+     * @return ApiResult
+     **/
+    @PostMapping("/unLockInventorySave")
+    public ApiResult<List<BatchResultDTO>> unLockInventorySave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.InventoryDTO> validList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(validList.size());
+        List<String> ids = validList.stream().map(RequisitionApplicationDTO.InventoryDTO::getId).distinct().collect(Collectors.toList());
+        for (String id : ids) {
+            List<RequisitionApplicationDTO.InventoryDTO> inventoryDTOS = validList.stream().filter(v -> v.getId().equals(id)).collect(Collectors.toList());
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = requisitionApplicationService.unLockInventorySave(inventoryDTOS);
+            }catch (Exception e){
+                log.error("要货申请释放库存失败",e);
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "要货申请不存在, 释放库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】",entity.getCode()), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

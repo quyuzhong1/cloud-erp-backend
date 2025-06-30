@@ -2,6 +2,8 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
+import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
@@ -156,4 +158,14 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryDiffDTO.SendNoticeTotalDTO>
      */
     List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
+
+    /**
+     * 分页查询
+     * @author will
+     * @date 2025/6/19 15:18
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, @Param("params") SupplierInventoryDTO.PagingParamDTO params, @Param("supplierRefWarehouseList") List<SupplierRefWarehouseEntity> supplierRefWarehouseList);
 }

@@ -1483,5 +1483,26 @@
         </if>
         t.id
     </select>
+    <select id="getRealQty" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$RealQtyDTO">
+        select
+            i.warehouse_id as warehouseId,
+            i.sku_id as skuId,
+            sum(i.qty) as realQty
+        from  inventory i
+        WHERE i.is_deleted = FALSE
+        and i.sku_id in
+        <foreach collection="skuIds" item="skuId" open="(" close=")" separator=",">
+            #{skuId}
+        </foreach>
+        and i.warehouse_id in
+        <foreach collection="warehouseIds" item="warehouseId" open="(" close=")" separator=",">
+            #{warehouseId}
+        </foreach>
+        and i.dict_inventory_status in
+        <foreach collection="inventoryStatusList" item="inventoryStatus" open="(" close=")" separator=",">
+            #{inventoryStatus}
+        </foreach>
+        GROUP BY i.warehouse_id, i.sku_id
+    </select>
 
 </mapper>

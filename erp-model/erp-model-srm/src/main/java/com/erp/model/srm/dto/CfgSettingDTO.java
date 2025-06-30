@@ -1,12 +1,10 @@
 package com.erp.model.srm.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -67,6 +65,10 @@ public class CfgSettingDTO implements Serializable {
          */
         private ReturnConfirmDTO returnConfirmDTO;
 
+        /**
+         * 添加对账设置
+         */
+        private PoReconciliationDetailDTO.AddSettingDTO setDTO;
     }
 
 

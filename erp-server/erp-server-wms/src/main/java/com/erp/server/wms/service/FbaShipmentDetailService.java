@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
+import com.erp.model.wms.entity.FbaShipmentEntity;
 
 import java.util.List;
 
@@ -60,4 +60,6 @@ public interface FbaShipmentDetailService extends SuperService<FbaShipmentDetail
      * @return
      */
     FbaShipmentDetailEntity getDetail(String shipmentCode, String asin, String msku);
+
+    void updateDetailByReceiveList(FbaShipmentEntity fbaShipmentEntity);
 }

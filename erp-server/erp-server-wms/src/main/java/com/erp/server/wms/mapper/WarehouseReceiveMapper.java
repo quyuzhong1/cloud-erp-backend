@@ -116,4 +116,12 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
     List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> getReceiveListByPurchaseOrderIdsAll(@Param(value = "purchaseOrderIds") List<String> purchaseOrderIds);
 
     WarehouseReceiveDTO.PagingTotalDTO pagingTotal(@Param("params") WarehouseReceiveDTO.PagingParamDTO dto);
+    /**
+     * 根据ids查询收货信息
+     * @author will 
+     * @date 2025/6/12 10:39
+     * @param idList 
+     * @return List<ReceiveSourceDTO>
+     */
+    List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@Param("idList")List<String> idList);
 }

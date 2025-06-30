@@ -228,6 +228,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 装箱箱号
          */
         private String boxNo;
+        /**
+         * 是否释放库存
+         */
+        private Boolean isReleaseInventory;
 
         /**
          * 装箱sku
@@ -1689,5 +1693,100 @@ public class RequisitionApplicationDTO implements Serializable {
          * 打印数量
          */
         private Integer printNum;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InventoryDTO {
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请id不能为空")
+        private String id;
+        /**
+         * 明细id
+         **/
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+        /**
+         * 发货单id
+         */
+//        @NotBlank(message = "发货单id不能为空")
+        private String deliveryId;
+        /**
+         * 发货单明细id
+         */
+//        @NotBlank(message = "发货单明细id不能为空")
+        private String deliveryDetailId;
+        /**
+         * 要货申请编码
+         */
+        private String code;
+        /**
+         * 货件编码
+         */
+        private String shipmentCode;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱id
+         */
+        private String cartonId;
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
+        /**
+         * skuid
+         */
+        @NotBlank(message = "skuid不能为空")
+        private String skuId;
+        private String skuNo;
+        private String fnSku;
+        /**
+         * 已装数量
+         */
+        private Integer packQty;
+        /**
+         * 已释放数量
+         */
+        private Integer releaseQty;
+        /**
+         * 是否释放库存
+         */
+        private Boolean isReleaseInventory;
+        /**
+         * 虚拟仓冻结数量
+         */
+        @Min(value = 1, message = "释放数量不能小于1")
+        @NotNull(message = "释放数量不能为空")
+        private Integer virtualFrozenQty;
+        /**
+         * 来源实体仓id
+         */
+        private String fromWarehouseId;
+        /**
+         * 来源实体仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 目的实体仓id
+         */
+        private String toWarehouseId;
+        /**
+         * 目的实体仓名称
+         */
+        private String toWarehouseName;
+        /**
+         * 来源虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 来源虚拟仓名称
+         */
+        private String fromVirtualWarehouseName;
     }
 }

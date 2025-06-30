@@ -7,11 +7,11 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -44,6 +44,8 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private FileFeign fileFeign;
 
     /**
      * 批量保存附件信息
@@ -109,7 +111,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             throw new ServiceException(ApiError.ERROR_1018);
         }
         File file = FileUtil.multiToFile(multipartFile);
-        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+        String fileUrl = fileFeign.uploadFileAndName(file, fileName);
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.ERROR_95018);
         }
@@ -131,7 +133,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         //删除附件id
         this.removeById(plmAttachmentEntity.getId());
         //删除fastdfs
-        FastDFSClientUtil.deleteFile(plmAttachmentEntity.getAttachUrl());
+        fileFeign.deleteFile(plmAttachmentEntity.getAttachUrl());
     }
 
     @Override

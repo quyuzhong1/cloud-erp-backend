@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.server.dmp.service.DmpSoReturnInfoService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +34,8 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
+
 
 /**
  * 旺店通原始订单推送数帝云
@@ -38,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandler {
+	@Resource
+	private DmpSoReturnInfoService dmpSoReturnInfoService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -87,6 +95,18 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             }
         }
 
+		List<String> thirdCodeList = dmpReturnInstockEntityMap.values().stream().map(DmpReturnInstockEntity::getThirdCode)
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.collect(Collectors.toList());
+		Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap = new HashMap<>();
+		if (CollectionUtils.isNotEmpty(thirdCodeList)){
+			soReturnInfoMap = dmpSoReturnInfoService.lambdaQuery()
+					.in(DmpSoReturnInfoEntity::getThirdCode, thirdCodeList)
+					.list()
+					.stream().collect(Collectors.groupingBy(DmpSoReturnInfoEntity::getThirdCode));
+		}
+
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                 .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                 .list();
@@ -95,7 +115,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -105,7 +125,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpReturnInstockEntity != null && CollUtil.isNotEmpty(dmpReturnInstockDetailEntityList)) {
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
@@ -182,7 +202,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setSpec_no(spuNo);
 	            shudiyunB2cOrderDTO.setSpec_name(spuName);
 
-				shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
+//				shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
     	        Integer isComb = dmpReturnInstockDetailEntity.getIsComb();
     	        if(isComb == null) {
     	        	isComb = 0;
@@ -229,7 +249,13 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(platformOrderCode);
-    	        shudiyunB2cOrderDTO.setParent_node_no(platformReturnInstockCode);
+				List<DmpSoReturnInfoEntity> dmpSoReturnInfoEntities = soReturnInfoMap.get(dmpReturnInstockEntity.getThirdCode());
+				if (CollectionUtils.isNotEmpty(dmpSoReturnInfoEntities)){
+					// 旺店通退货入库取refund_no
+					shudiyunB2cOrderDTO.setParent_node_no(dmpSoReturnInfoEntities.get(0).getPlatformCode());
+				} else {
+					shudiyunB2cOrderDTO.setParent_node_no(dmpReturnInstockEntity.getPlatformReturnInstockCode());
+				}
 
     	        
     	        // 国家编码

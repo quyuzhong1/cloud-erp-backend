@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
@@ -35,7 +36,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -103,6 +103,8 @@ public class NfeInvoiceService {
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private FileFeign filefeign;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -129,7 +131,7 @@ public class NfeInvoiceService {
             getPayMentDTO(createDTO);
             log.warn("付款信息已查询完成！");
              obj = tfFiscalService.createInvoice(createDTO);
-            log.warn("创建发票接口调用成功！请求参数-body:{}",JSONUtil.toJsonStr(createDTO));
+            log.warn("创建发票接口调用成功！请求参数-body:{},返回值：{}",JSONUtil.toJsonStr(createDTO), JSONUtil.toJsonStr(obj));
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage());
             log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
@@ -150,7 +152,7 @@ public class NfeInvoiceService {
             JSONArray jsonArray = JSONUtil.parseArray(obj);
             resultDTO = BeanUtil.toBean(jsonArray.get(0), NfeInvoiceDTO.NfeSuccessResultDTO.class);
         } catch (Exception e) {
-            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(obj));
            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
         }
         if (!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
@@ -558,7 +560,7 @@ public class NfeInvoiceService {
             try {
 
                 MultipartFile xmlFile = readFileUrl(invoiceXmlUrl,AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
-                String xmlUrl = FastDFSClientUtil.uploadFile(xmlFile);
+                String xmlUrl = filefeign.uploadFile(xmlFile);
                 addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO(AttachmentTypeEnum.INVOICE_INFO_XML.getCode(),xmlUrl,xmlFile.getOriginalFilename(),invoiceId));
             } catch (Exception e) {
                 log.error("发票XML上传失败");
@@ -568,7 +570,7 @@ public class NfeInvoiceService {
        if (CharSequenceUtil.isNotBlank(invoicePdfUrl)) {
            try {
                MultipartFile pdfFile = readFileUrl(invoicePdfUrl,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
-               String pdfUrl = FastDFSClientUtil.uploadFile(pdfFile);
+               String pdfUrl = filefeign.uploadFile(pdfFile);
                addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO( AttachmentTypeEnum.INVOICE_INFO_PDF.getCode(),pdfUrl,pdfFile.getOriginalFilename(),invoiceId));
            } catch (Exception e) {
                log.error("发票PDF上传失败");

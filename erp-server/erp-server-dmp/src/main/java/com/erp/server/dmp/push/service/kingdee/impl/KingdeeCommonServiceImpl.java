@@ -29,6 +29,7 @@ import com.erp.model.dmp.enums.*;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.srm.feign.SrmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -92,6 +93,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private OmsTaskFeign omsTaskFeign;
+
+    @Resource
+    private SrmTaskFeign srmTaskFeign;
 
     @Resource
     private CfgSettingService cfgSettingService;
@@ -451,7 +455,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         viewMap.put("Id", id);
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         //单据状态
-        String documentStatus = (String) model.get("DocumentStatus");
+        String documentStatus = "";
+        if (type.equals(ApiModuleTypeEnum.PO_RECONCILIATION.getCode())) {
+            documentStatus = (String) model.get("DOCUMENTSTATUS");
+        } else {
+            documentStatus = (String) model.get("DocumentStatus");
+        }
         if (!KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //非已审核继续审核
             ArrayList<String> ids = new ArrayList<>();
@@ -524,6 +533,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         if (SystemConstants.OMS.equals(system)) {
             omsTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.SRM.equals(system)) {
+            srmTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
     }
 

@@ -1,24 +1,33 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
+import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.FbaShipmentReceiveService;
+import com.rtfparserkit.rtf.Command;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
+import static com.rtfparserkit.rtf.Command.list;
+
 /**
  * <p>
  * FBA拣货明细表 服务实现类
@@ -30,6 +39,9 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDetailMapper, FbaShipmentDetailEntity> implements FbaShipmentDetailService {
+
+    @Resource
+    private FbaShipmentReceiveService fbaShipmentReceiveService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,5 +109,29 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
             return baseMapper.getDetail(shipmentCode, asin, msku);
         }
         return null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDetailByReceiveList(FbaShipmentEntity fbaShipmentEntity) {
+        if (Objects.isNull(fbaShipmentEntity) || Objects.isNull(fbaShipmentEntity.getId())){
+            return;
+        }
+        List<FbaShipmentDetailEntity> detailEntityList = this.listByMainIds(Collections.singletonList(fbaShipmentEntity.getId()));
+        if (CollUtil.isEmpty(detailEntityList)){
+            return;
+        }
+        List<FbaShipmentReceiveEntity> list = fbaShipmentReceiveService.listByDetailIds(detailEntityList.stream().map(FbaShipmentDetailEntity::getId).collect(Collectors.toList()));
+        detailEntityList.forEach(detailEntity -> {
+            List<FbaShipmentReceiveEntity> collect = list.stream().filter(e -> e.getDetailId().equals(detailEntity.getId())).collect(Collectors.toList());
+            int receiveQty = collect.stream().mapToInt(FbaShipmentReceiveEntity::getReceiveQty).sum();
+            detailEntity.setReceiveQty(receiveQty);
+            int diffQty = receiveQty - detailEntity.getDeclareQty();
+            detailEntity.setDiffQty(diffQty);
+            this.lambdaUpdate().eq(FbaShipmentDetailEntity::getId,detailEntity.getId())
+                    .set(FbaShipmentDetailEntity::getReceiveQty,receiveQty)
+                    .set(FbaShipmentDetailEntity::getDiffQty,diffQty)
+                    .update();
+        });
     }
 }
