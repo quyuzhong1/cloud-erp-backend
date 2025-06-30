@@ -115,7 +115,7 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     * @param response
     * @return
     */
-    void exportList(ContractInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(ContractInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

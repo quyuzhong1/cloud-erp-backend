@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;

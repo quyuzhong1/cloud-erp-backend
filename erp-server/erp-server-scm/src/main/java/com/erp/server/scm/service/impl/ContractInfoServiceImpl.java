@@ -88,8 +88,6 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         if(!save) {
             throw new ServiceException("合同管理单保存失败");
         }
-        //上传文件
-        uploadFile(contractInfoEntity.getId(),addDTO.getFile());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "合同管理单" , contractInfoEntity.getCode());
@@ -121,7 +119,6 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
 
         //上传文件
-        uploadFile(contractInfoEntity.getId(),addOrUpdateDTO.getFile());
 
         // 记录主单操作日志
         log.info("编辑 开始记录合同管理单日志数据，单号：【{}】", contractInfoEntity.getCode());
@@ -157,25 +154,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     }
 
     @Override
-    public void exportList(ContractInfoDTO.ExportDTO param, HttpServletResponse response) {
-        List<ContractInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
+    public void exportList(ContractInfoDTO.PagingParamDTO param, HttpServletResponse response) {
 
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/contractInfo.xlsx";
-        String name = "合同管理单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -377,8 +357,6 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(data.getId());
         if (CollUtil.isNotEmpty(attachmentList)) {
-            data.setAttachUrl(attachmentList.get(0).getAttachUrl());
-            data.setAttachName(attachmentList.get(0).getAttachName());
         }
     }
 
@@ -458,15 +436,4 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     // TODO 验证数据 & 数据赋值
     }
 
-    /**
-     * 上传文件
-     * @author will
-     * @date 2025/6/16 16:02
-     * @param id
-     * @param file
-     * @return void
-     */
-    private void uploadFile(String id, MultipartFile file) {
-
-    }
 }

@@ -154,9 +154,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate)){
             SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
             LocalDate now = LocalDate.now();
-            if(now.isBefore(effectiveDate)){
+            if(now.compareTo(effectiveDate) < 0){
                 status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
-            }else if(now.isAfter(effectiveDate) && now.isBefore(expireDate)){
+            }else if(now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0){
                 status = SupplierCredentialStatusEnum.EFFECTIVE;
             }
             addEntity.setStatus(status.getCode());
