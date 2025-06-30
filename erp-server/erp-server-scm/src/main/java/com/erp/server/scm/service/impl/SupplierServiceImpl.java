@@ -243,7 +243,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierContactService.saveBatchContact(supplierId, contactList);
 
             credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
-            supplierCredentialService.saveBatchCredential(supplierId, credentialList);
+            supplierCredentialService.saveBatchCredential(credentialList);
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");

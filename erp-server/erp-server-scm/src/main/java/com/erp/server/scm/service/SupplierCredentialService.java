@@ -27,11 +27,10 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * 保存 供应商资质信息
      * @author yl
      * @date 2023-03-17 16:14
-     * @param supplierId
      * @param credentialList
      * @return void
      */
-    void saveBatchCredential(String supplierId, List<SupplierCredentialDTO.AddDTO> credentialList);
+    void saveBatchCredential(List<SupplierCredentialDTO.AddDTO> credentialList);
 
     /**
      * 根据供应商ｉｄ　获取资质信息
@@ -86,7 +85,7 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
 
     void getCredentialStatuses(SupplierCredentialEntity addEntity);
 
-    void updateBatchCredential(String supplierId, List<SupplierCredentialDTO.UpdateDTO> credentialList);
+    void updateBatchCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList);
 
     Boolean update(SupplierCredentialDTO.UpdateDTO dto);
 

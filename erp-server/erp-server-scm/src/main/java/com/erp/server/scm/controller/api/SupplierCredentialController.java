@@ -4,11 +4,14 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.query.SupplierCredentialQueryHandler;
 import com.erp.server.scm.service.SupplierCredentialService;
+import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -45,6 +48,8 @@ public class SupplierCredentialController extends BaseController {
 
     @Resource
     private SupplierCredentialService supplierCredentialService;
+    @Resource
+    private SupplierService supplierService;
 
     /**
     * 新增
@@ -56,13 +61,11 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "供应商证照新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody  @Validated SupplierCredentialDTO. AddListDTO dto) {
-
         SupplierCredentialDTO.AddDTO addDTO = dto.getList().stream().filter(e -> StringUtils.isNotBlank(e.getSupplierId())).findFirst().orElse(null);
         if(Objects.isNull(addDTO)){
             return failure();
         }
-        String supplierId = addDTO.getSupplierId();
-        supplierCredentialService.saveBatchCredential(supplierId,dto.getList());
+        supplierCredentialService.saveBatchCredential(dto.getList());
         return success();
     }
 
@@ -85,8 +88,7 @@ public class SupplierCredentialController extends BaseController {
         if(Objects.isNull(updateDTO)){
             return failure();
         }
-        String supplierId = updateDTO.getSupplierId();
-        supplierCredentialService.updateBatchCredential(supplierId,dto.getList());
+        supplierCredentialService.updateBatchCredential(dto.getList());
         return success();
     }
 
@@ -171,8 +173,9 @@ public class SupplierCredentialController extends BaseController {
                     deleteResult = BatchResultDTO.fail(id, id, "供应商证照不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
+                }else{
+                    deleteResult = BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage());
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
