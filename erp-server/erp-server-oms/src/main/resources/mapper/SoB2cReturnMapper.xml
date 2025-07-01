@@ -140,6 +140,7 @@
             sbr.shop_id,
             sbr.platform_order_no,
             sbr.platform_return_no,
+            sbr.return_logistic_code,
             sbr.so_id,
             sbr.so_code
         from so_b2c_return sbr
