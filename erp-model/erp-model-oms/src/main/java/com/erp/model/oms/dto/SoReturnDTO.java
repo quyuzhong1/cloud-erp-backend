@@ -65,6 +65,10 @@ public class SoReturnDTO {
          */
         private String sourceCode;
         /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
          * 单据类型
          */
         private String type;
@@ -264,6 +268,10 @@ public class SoReturnDTO {
          * 币种符号
          */
         private String currencySymbol;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -309,6 +317,10 @@ public class SoReturnDTO {
          * 币种符号
          */
         private String currencySymbol;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -333,6 +345,10 @@ public class SoReturnDTO {
          * 单据编号
          */
         private String code;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 审核状态
          */

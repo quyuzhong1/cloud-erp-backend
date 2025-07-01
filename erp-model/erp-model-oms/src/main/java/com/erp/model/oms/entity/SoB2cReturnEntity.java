@@ -94,6 +94,11 @@ public class SoB2cReturnEntity extends BaseEntity<SoB2cReturnEntity> {
 
     @TableField("source_type")
     private String sourceType;
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
 
     public static final String CODE = "code";
 
