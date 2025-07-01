@@ -119,5 +119,28 @@
         </if>
         GROUP BY ci.status
     </select>
+    <select id="listAttachByIds" resultType="com.erp.model.scm.dto.ContractInfoDTO$ListAttachDTO">
+        SELECT
+            ci.id,
+            ci.type,
+            ci.service_provider_name as serviceProviderName,
+            dict.name as typeName,
+            ac.attach_url,
+            ac.attach_name
+        FROM
+            contract_info AS ci
+                INNER JOIN attachment AS ac ON ci.ID = ac.business_id AND ac.is_deleted = FALSE
+                left join dict_basic as dict on ci.type = dict.value and dict.is_deleted = false and dict.status = true
+        WHERE
+            ci.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            and ci.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by ci.type
+
+    </select>
 
 </mapper>

@@ -29,7 +29,7 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     * 审核状态 
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 单据编号
     */

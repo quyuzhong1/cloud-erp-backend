@@ -13,6 +13,8 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
@@ -21,11 +23,18 @@ import com.erp.server.scm.query.ContractInfoQueryHandler;
 import com.erp.server.scm.service.CfgSupplierSalesService;
 import com.erp.server.scm.service.ContractInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -377,5 +386,33 @@ public class ContractInfoController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出附件
+     * @author jack
+     * @date:  2025-06-13
+     * @param dto
+     * @return StreamingResponseBody
+     */
+    @PostMapping("/exportZip")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:contractInfo:exportZip",
+            tableAlias = "ci"
+    )
+    public ResponseEntity<StreamingResponseBody> exportZip(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        ExportZipResultDTO resultDTO = contractInfoService.exportZip(dto);
+        // 编码文件名（兼容所有Java版本）
+        String encodedFileName;
+        try {
+            encodedFileName = URLEncoder.encode(resultDTO.getFileName(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException("编码失败");
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resultDTO.getResponseBody());
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -38,13 +39,13 @@ public class SupplierCredentialEntity extends BaseEntity<SupplierCredentialEntit
     /**
      * 有效开始时间
      */
-    @TableField("effective_date")
+    @TableField(value = "effective_date", updateStrategy = FieldStrategy.IGNORED)
     private LocalDate effectiveDate;
 
     /**
      * 失效日期
      */
-    @TableField("expire_date")
+    @TableField(value = "expire_date", updateStrategy = FieldStrategy.IGNORED)
     private LocalDate expireDate;
 
     /**

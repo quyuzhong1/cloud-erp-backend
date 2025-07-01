@@ -332,5 +332,26 @@ public class ContractInfoDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListAttachDTO {
+
+        private String id;
+
+        private String type;
+
+        private String serviceProviderName;
+
+        private String typeName;
+
+        private String attachUrl;
+
+        private String attachName;
+
+    }
+
 
 }

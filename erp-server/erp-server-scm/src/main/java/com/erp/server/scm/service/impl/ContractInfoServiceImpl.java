@@ -16,48 +16,49 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
-import com.erp.model.scm.entity.SupplierCredentialEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ContractInfoStatusEnum;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.ContractInfoStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.ContractInfoMapper;
-import com.erp.server.scm.service.AttachmentService;
-import com.erp.server.scm.service.ContractInfoService;
-import com.erp.server.scm.service.DictBasicService;
-import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_CONTRACT_INFO_REPORT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_VISIT_REPORT;
 
 /**
  * <p>
@@ -84,6 +85,12 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private AttachmentService attachmentService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SupplierService supplierService;
+
+    @Resource
+    @Qualifier("contractInfoExecutorPool")
+    private ExecutorService contractInfoExecutorPool;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -141,6 +148,14 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
      * 新增修改处理数据
      */
     private void handleData(ContractInfoEntity contractInfoEntity) {
+        //供应商
+        if(StringUtils.isNotBlank(contractInfoEntity.getServiceProviderId())){
+            SupplierEntity supplierEntity = supplierService.getById(contractInfoEntity.getServiceProviderId());
+            if(Objects.nonNull(supplierEntity)){
+                contractInfoEntity.setServiceProviderName(supplierEntity.getName());
+            }
+        }
+
         //校验有效期
         LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
         LocalDate expireDate = contractInfoEntity.getExpireDate();
@@ -217,7 +232,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_INFO.getType());
+        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
         Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
 
         //获取到附件信息
@@ -323,7 +338,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             return;
         }
 
-        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_INFO.getType());
+        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
         Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
 
         data.setStatusName(ContractInfoStatusEnum.getName(data.getStatus()));
@@ -595,6 +610,96 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CONTRACT_INFO.getCode(), entity.getId(), "更新合同管理");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public ExportZipResultDTO exportZip(BaseIdsDTO.IdsDTO dto) {
+        List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(dto.getIds());
+        if(CollUtil.isEmpty(list)){
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        // 动态生成文件名
+        String fileName = SourceTypeEnum.CONTRACT_INFO.getName()+"_"+ LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        StreamingResponseBody streamingResponseBody = downloadZip(list);
+        ExportZipResultDTO resultDTO = new ExportZipResultDTO();
+        resultDTO.setFileName(fileName);
+        resultDTO.setResponseBody(streamingResponseBody);
+        return resultDTO;
+    }
+
+    private StreamingResponseBody downloadZip(List<ContractInfoDTO.ListAttachDTO> list) {
+        return outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                // 并发下载所有文件内容
+                List<CompletableFuture<Triple<String, String, byte[]>>> downloadFutures = list.stream()
+                        .map(attachDTO -> CompletableFuture.supplyAsync(() -> {
+                            String fileName = attachDTO.getServiceProviderName()+"_"+attachDTO.getAttachName();//文件名
+                            String typeName = attachDTO.getTypeName(); // 分类文件夹名称
+                            try {
+                                byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
+                                return Triple.of(typeName, fileName, content); // 使用 commons-lang3 的 Triple
+                            } catch (Exception e) {
+                                throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);
+                            }
+                        }, contractInfoExecutorPool))
+                        .collect(Collectors.toList());
+
+                // 等待所有下载任务完成
+                CompletableFuture.allOf(downloadFutures.toArray(new CompletableFuture[0])).join();
+
+                // 用于记录每个文件名出现的次数
+                Map<String, Integer> fileNameCountMap = new HashMap<>();
+                // 单线程按顺序写入 ZIP（带子目录）
+                for (CompletableFuture<Triple<String, String, byte[]>> future : downloadFutures) {
+                    Triple<String, String, byte[]> fileData = future.get();
+                    String type = fileData.getLeft(); // 文件夹名
+                    String fileName = fileData.getMiddle();
+                    byte[] content = fileData.getRight();
+
+                    // 处理重复文件名
+                    String uniqueFileName = generateUniqueFileName(fileName, fileNameCountMap);
+
+                    String entryPath = (type != null ? type + "/" : "") + uniqueFileName;
+
+                    zipOut.putNextEntry(new ZipEntry(entryPath));
+                    zipOut.write(content);
+                    zipOut.closeEntry();
+                }
+            } catch (Exception e) {
+                throw new ServiceException("压缩包生成失败", e);
+            }
+        };
+    }
+
+    /**
+     * 生成唯一的文件名，避免重复
+     *
+     * @param baseFileName 原始文件名
+     * @param fileNameCountMap 记录已出现的文件名及其次数
+     * @return 唯一文件名
+     */
+    private String generateUniqueFileName(String baseFileName, Map<String, Integer> fileNameCountMap) {
+        int count = fileNameCountMap.getOrDefault(baseFileName, 0);
+        fileNameCountMap.put(baseFileName, count + 1);
+
+        if (count == 0) {
+            return baseFileName;
+        }
+
+        // 插入随机后缀或者使用递增序号
+        String nameWithoutExt = "";
+        String ext = "";
+
+        int dotIndex = baseFileName.lastIndexOf(".");
+        if (dotIndex > 0) {
+            nameWithoutExt = baseFileName.substring(0, dotIndex);
+            ext = baseFileName.substring(dotIndex);
+        } else {
+            nameWithoutExt = baseFileName;
+        }
+
+        // 使用递增序号防止重复，也可以用 UUID 随机数
+        return nameWithoutExt + "_" + count + ext;
     }
 
 }

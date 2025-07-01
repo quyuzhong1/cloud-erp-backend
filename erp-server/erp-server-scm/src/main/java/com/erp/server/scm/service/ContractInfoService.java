@@ -127,4 +127,6 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     Boolean approveEnd(ApproveOneDTO dto, ContractInfoEntity entity);
 
     BatchResultDTO enable(String id, Boolean disabled);
+
+    ExportZipResultDTO exportZip(BaseIdsDTO.IdsDTO dto);
 }
