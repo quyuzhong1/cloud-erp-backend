@@ -1,5 +1,6 @@
 package com.erp.server.file.service;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -29,4 +30,6 @@ public interface FileService {
     String uploadFile(File file, String fileName);
 
     byte[] downloadFile(String fileId);
+
+    ResponseEntity<byte[]> downloadByte(String fileId, String fileName, String contentType, boolean bPreview);
 }
