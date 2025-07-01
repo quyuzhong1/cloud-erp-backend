@@ -1,7 +1,7 @@
 package com.erp.wms.aliexpress.model.returnorder;
 
+import cn.hutool.core.annotation.Alias;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +30,7 @@ public class AliexpressReturnInstockDTO {
     public static class ExtendProps {
 
 
-        @JsonProperty("erpCustomKey")
+        @Alias("erpCustomKey")
         private String erpCustomKey;
     }
 
@@ -40,31 +40,31 @@ public class AliexpressReturnInstockDTO {
     @Builder
     public static class ReturnOrder {
 
-        @JsonProperty("logistics_name")
+        @Alias("logistics_name")
         private String logisticsName;
-        @JsonProperty("return_reason")
+        @Alias("return_reason")
         private String returnReason;
-        @JsonProperty("sender_info")
+        @Alias("sender_info")
         private SenderInfoDTO senderInfo;
-        @JsonProperty("warehouse_code")
+        @Alias("warehouse_code")
         private String warehouseCode;
-        @JsonProperty("owner_code")
+        @Alias("owner_code")
         private String ownerCode;
-        @JsonProperty("remark")
+        @Alias("remark")
         private String remark;
-        @JsonProperty("logistics_code")
+        @Alias("logistics_code")
         private String logisticsCode;
-        @JsonProperty("pre_delivery_order_code")
+        @Alias("pre_delivery_order_code")
         private String preDeliveryOrderCode;
-        @JsonProperty("order_flag")
+        @Alias("order_flag")
         private String orderFlag;
-        @JsonProperty("express_code")
+        @Alias("express_code")
         private String expressCode;
-        @JsonProperty("pre_delivery_order_id")
+        @Alias("pre_delivery_order_id")
         private String preDeliveryOrderId;
-        @JsonProperty("return_order_code")
+        @Alias("return_order_code")
         private String returnOrderCode;
-        @JsonProperty("order_type")
+        @Alias("order_type")
         private String orderType;
 
         @NoArgsConstructor
@@ -72,29 +72,29 @@ public class AliexpressReturnInstockDTO {
         @AllArgsConstructor
         @Builder
         public static class SenderInfoDTO {
-            @JsonProperty("area")
+            @Alias("area")
             private String area;
-            @JsonProperty("country_code")
+            @Alias("country_code")
             private String countryCode;
-            @JsonProperty("town")
+            @Alias("town")
             private String town;
-            @JsonProperty("province")
+            @Alias("province")
             private String province;
-            @JsonProperty("city")
+            @Alias("city")
             private String city;
-            @JsonProperty("detail_address")
+            @Alias("detail_address")
             private String detailAddress;
-            @JsonProperty("mobile")
+            @Alias("mobile")
             private String mobile;
-            @JsonProperty("name")
+            @Alias("name")
             private String name;
-            @JsonProperty("company")
+            @Alias("company")
             private String company;
-            @JsonProperty("tel")
+            @Alias("tel")
             private String tel;
-            @JsonProperty("zip_code")
+            @Alias("zip_code")
             private String zipCode;
-            @JsonProperty("email")
+            @Alias("email")
             private String email;
         }
     }
@@ -104,39 +104,39 @@ public class AliexpressReturnInstockDTO {
     @Builder
     public static class OrderLines {
 
-        @JsonProperty("item_code")
+        @Alias("item_code")
         private String itemCode;
-        @JsonProperty("plan_qty")
+        @Alias("plan_qty")
         private Integer planQty;
-        @JsonProperty("item_id")
+        @Alias("item_id")
         private String itemId;
-        @JsonProperty("source_order_code")
+        @Alias("source_order_code")
         private String sourceOrderCode;
-        @JsonProperty("owner_code")
+        @Alias("owner_code")
         private String ownerCode;
-        @JsonProperty("item_name")
+        @Alias("item_name")
         private String itemName;
-        @JsonProperty("batch_code")
+        @Alias("batch_code")
         private String batchCode;
-        @JsonProperty("product_date")
+        @Alias("product_date")
         private String productDate;
-        @JsonProperty("sub_source_order_code")
+        @Alias("sub_source_order_code")
         private String subSourceOrderCode;
-        @JsonProperty("expire_date")
+        @Alias("expire_date")
         private String expireDate;
-        @JsonProperty("order_line_no")
+        @Alias("order_line_no")
         private String orderLineNo;
-        @JsonProperty("produce_code")
+        @Alias("produce_code")
         private String produceCode;
-        @JsonProperty("extend_props")
+        @Alias("extend_props")
         private ExtendPropsDTO extendProps;
-        @JsonProperty("inventory_type")
+        @Alias("inventory_type")
         private String inventoryType;
 
         @NoArgsConstructor
         @Data
         public static class ExtendPropsDTO {
-            @JsonProperty("k1")
+            @Alias("k1")
             private String k1;
         }
     }

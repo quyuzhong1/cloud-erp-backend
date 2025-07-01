@@ -137,6 +137,13 @@ public class AliexpressWarehouseServiceTest {
                         .orderType("THRK")
                         .returnOrderCode("TEST-WJ062602")
                         .ownerCode("17379911544")
+                        .senderInfo(AliexpressReturnInstockDTO.ReturnOrder.SenderInfoDTO.builder()
+//                                .countryCode("CN")
+//                                .province("广东省")
+                                .detailAddress("广东省广州市天河区天汇大厦")
+//                                .city("广州市")
+//                                .mobile("123456789")
+                                .build())
                         .warehouseCode("STB")
                         .build())
                 .OrderLines(Arrays.asList(
@@ -176,7 +183,7 @@ public class AliexpressWarehouseServiceTest {
         aliexpressAuthDTO.setUrl("https://api-sg.aliexpress.com");
         aliexpressAuthDTO.setAppKey("503630");
         aliexpressAuthDTO.setAppSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ");
-        aliexpressAuthDTO.setAccessToken("50000601323tOAyeuehRCsRgaGES9kVwCJG196f1b4fOjWhuUCla8prcvvvXSTUA61PH");
+        aliexpressAuthDTO.setAccessToken("50000701530cnHtbirhzrd7ijPeou2emiSIajwwCg118389611msriNQyROLyoVZ1y1j");
         aliexpressAuthDTO.setOwnerCode("17379911544");
         return aliexpressAuthDTO;
     }
