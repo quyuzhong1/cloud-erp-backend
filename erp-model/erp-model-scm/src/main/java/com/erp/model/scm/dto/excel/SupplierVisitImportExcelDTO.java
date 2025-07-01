@@ -41,7 +41,7 @@ public class SupplierVisitImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*拜访时间(yyyy-MM-dd格式)", index = 2)
-    @FieldValid(fieldName = "拜访时间",formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    @FieldValid(fieldName = "拜访时间",isNotBlank = true)
     private String visitTime;
 
     /**
