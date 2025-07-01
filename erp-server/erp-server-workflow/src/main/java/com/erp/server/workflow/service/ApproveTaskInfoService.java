@@ -37,7 +37,7 @@ public interface ApproveTaskInfoService extends SuperService<ApproveTaskInfoEnti
     * @param dto
     * @return
     */
-    Boolean update(ApproveTaskInfoDTO.UpdateDTO dto);
+    Boolean  update(ApproveTaskInfoDTO.UpdateDTO dto);
 
     /**
      * tab列表

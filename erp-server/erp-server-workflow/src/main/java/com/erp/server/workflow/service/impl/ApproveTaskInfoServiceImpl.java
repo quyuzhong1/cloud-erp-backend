@@ -181,7 +181,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //数大臣类型名称
             detailDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getSysFieldType()));
             //数大臣单据字段信息
-            List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",detailDTO.getEntityCode(),detailDTO.getSysField()));
+            List<CfgQueryOptionEntity> fieldList = cfgQueryOptionMap.get(CharSequenceUtil.format("{}-{}",CharSequenceUtil.isBlank(detailDTO.getEntityCode()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : detailDTO.getEntityCode() ,detailDTO.getSysField()));
             if (CollUtil.isEmpty(fieldList)) {
                 throw new ServiceException("数大臣单据字段配置不存在");
             }
