@@ -131,6 +131,7 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
                     findFirst().map(SkuVO::getSkuName).orElse("");
             pagingViewDTO.setProductName(skuName);
             pagingViewDTO.setPlatformName(OmsPlatformEnum.getByCode(pagingViewDTO.getPlatform()).getName());
+            pagingViewDTO.setReturnMsg(item.getReturnMsg());
             result.add(pagingViewDTO);
         }
         PagingVO<ListingPushRecordDTO.PagingViewDTO> page = new PagingVO<>();

@@ -73,6 +73,8 @@ public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEnt
     @TableField("is_need_sync")
     private Boolean isNeedSync;
 
+    @TableField(exist = false)
+    private String sourceId;
 
     public static final String INPUT_STATUS = "input_status";
 

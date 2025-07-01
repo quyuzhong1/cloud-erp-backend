@@ -118,6 +118,8 @@ public class ListingPushRecordDTO implements Serializable {
          * 最新推送时间
          */
         private LocalDateTime latestPushTime;
+
+        private String returnMsg;
     }
 
 }

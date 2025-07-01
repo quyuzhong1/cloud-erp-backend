@@ -155,6 +155,29 @@ public class AliexpressWarehouseService {
         return JSON.parseObject(response.getBody(),new TypeReference<ApiInboundResponseDTO>() {}.getType());
     }
 
+    public ApiInboundResponseDTO createReturnInstockOrder(AliexpressInboundDTO aliexpressInboundDTO) throws ApiException {
+        log.warn("菜鸟仓创建退货入库单,{}",JSONUtil.toJsonStr(aliexpressInboundDTO));
+        AliexpressAuthDTO aliexpressAuthDTO = aliexpressInboundDTO.getAliexpressAuthDTO();
+        String url = aliexpressAuthDTO.getUrl();
+        if (!BusinessCommonConstants.hasProfile("prod")) {
+            url = url + "/sandbox";
+        }
+
+        String appKey = aliexpressAuthDTO.getAppKey();
+        String appSecret = aliexpressAuthDTO.getAppSecret();
+        String accessToken = aliexpressAuthDTO.getAccessToken();
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("cainiao.cnap.returnorder.create");
+        request.addApiParameter("simplify", "true");
+        request.addApiParameter("order_lines", JSONUtil.toJsonStr(aliexpressInboundDTO.getOrderLines()));
+        request.addApiParameter("extend_props", JSONUtil.toJsonStr(aliexpressInboundDTO.getExtendProps()));
+        request.addApiParameter("entry_order", JSONUtil.toJsonStr(aliexpressInboundDTO.getEntryOrder()));
+        IopResponse response = client.execute(request, accessToken, Protocol.TOP);
+        log.warn("菜鸟仓退货入库单回参{}",JSONUtil.toJsonStr(response.getBody()));
+        return JSON.parseObject(response.getBody(),new TypeReference<ApiInboundResponseDTO>() {}.getType());
+    }
+
     public ApiInventoryResponseDTO getInventory(AliexpressAuthDTO aliexpressAuthDTO) throws ApiException {
         String url = aliexpressAuthDTO.getUrl();
         if (!BusinessCommonConstants.hasProfile("prod")) {

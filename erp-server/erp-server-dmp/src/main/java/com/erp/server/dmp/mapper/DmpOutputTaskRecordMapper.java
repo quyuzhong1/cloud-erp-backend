@@ -100,4 +100,7 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(@Param("params") DmpSyncTaskDTO.OneDTO params);
 
     IPage<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(Page<T> query,@Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+
+    List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@Param("sourceIdList") List<String> sourceIdList, @Param("sourceType") String sourceType);
+
 }
