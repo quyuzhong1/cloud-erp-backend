@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @since 2024-06-07
  */
 @RestController
-@RequestMapping("/cfg-rule-picking-staging")
+@RequestMapping("/pickingStaging")
 public class CfgRulePickingStagingController extends BaseController {
 
     @Resource

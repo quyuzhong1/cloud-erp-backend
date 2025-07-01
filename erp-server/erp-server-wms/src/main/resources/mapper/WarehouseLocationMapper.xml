@@ -110,6 +110,7 @@
         wl.status,
         wl.disabled
         from warehouse_location wl
+        left join warehouse_location wa on wl.parent_id = wa.id
         where
         wl.is_deleted = false and wl.type = 'location'
         <if test="params.warehouseId != null and params.warehouseId != ''">
@@ -122,7 +123,7 @@
             and wl.parent_id = #{params.warehouseAreaId}
         </if>
         <if test="params.areaType != null and params.areaType != ''">
-            and wl.area_type = #{params.areaType}
+            and wa.area_type = #{params.areaType}
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
