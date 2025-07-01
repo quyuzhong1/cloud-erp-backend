@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -125,4 +126,7 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, ContractInfoEntity entity);
 
+    BatchResultDTO enable(String id, Boolean disabled);
+
+    ExportZipResultDTO exportZip(BaseIdsDTO.IdsDTO dto);
 }

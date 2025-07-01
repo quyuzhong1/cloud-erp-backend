@@ -47,11 +47,11 @@ public class ExportScmFeignController {
     @Resource
     private SupplierCredentialService supplierCredentialService;
     @Resource
-    private SupplierRefWarehouseService supplierRefWarehouseService;
-
-
-    @Resource
     private SupplierVisitService supplierVisitService;
+    @Resource
+    private SupplierRefWarehouseService supplierRefWarehouseService;
+    @Resource
+    private ContractInfoService contractInfoService;
 
 
     @PostMapping("/purchaseApplication")
@@ -192,6 +192,12 @@ public class ExportScmFeignController {
     @WebAdvanceQuery
     public PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(@RequestBody PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto) {
         return supplierRefWarehouseService.paging(dto);
+    }
+
+    @PostMapping("/exportContractInfo")
+    @WebAdvanceQuery(handler = ContractInfoQueryHandler.class)
+    public PagingVO<ContractInfoDTO.ListDTO> exportContractInfo(@RequestBody PagingDTO<ContractInfoDTO.PagingParamDTO> dto){
+        return contractInfoService.paging(dto);
     }
 
 

@@ -113,6 +113,7 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 生效状态名称
          */
+        private String status;
         private String statusName;
 
         /**
@@ -138,11 +139,15 @@ public class ContractInfoDTO implements Serializable {
         * 是否禁用
         */
         private Boolean disable;
+        private String disableName;
 
         /**
         * 审核状态名称
         */
         private String approveStatusName;
+
+        private List<String> attachmentUrlList;
+        private List<String> attachmentNameList;
     }
 
 
@@ -198,12 +203,6 @@ public class ContractInfoDTO implements Serializable {
         private String  id;
 
         /**
-        * 审核状态 
-        */
-        private String approveStatus;
-        private String approveStatusName;
-
-        /**
         * 单据编号
         */
         private String code;
@@ -213,17 +212,6 @@ public class ContractInfoDTO implements Serializable {
         */
         private String serviceProviderId;
         private String serviceProviderName;
-
-        /**
-        * 审核时间
-        */
-        private LocalDate approveTime;
-
-        /**
-        * 审核人
-        */
-        private String approveUserId;
-        private String approveUserName;
 
         /**
         * 合同类型,contractType字典
@@ -245,6 +233,11 @@ public class ContractInfoDTO implements Serializable {
         * 是否禁用
         */
         private Boolean disable;
+        /**
+         * 生效状态名称
+         */
+        private String status;
+        private String statusName;
 
         private List<String> attachmentUrlList;
         private List<String> attachmentNameList;
@@ -282,8 +275,8 @@ public class ContractInfoDTO implements Serializable {
         /**
         * 服务商id
         */
-        @NotBlank(message = "服务商id不能为空")
-        @Size(max = 19,message = "服务商id最大长度不能超过19位")
+        @NotBlank(message = "服务商不能为空")
+        @Size(max = 19,message = "服务商最大长度不能超过19位")
         private String serviceProviderId;
 
         /**
@@ -315,10 +308,49 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 文件不能为空
          */
-        @NotEmpty(message = "文件不能为空")
+        @NotEmpty(message = "附件不能为空")
+        @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentUrlList;
-        @NotEmpty(message = "文件不能为空")
+        @NotEmpty(message = "附件不能为空")
+        @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentNameList;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EnableStatusDTO {
+
+        @NotEmpty(message = "至少选择1个")
+        private List<String> ids;
+
+        @NotNull(message = "状态不能为空")
+        private Boolean disabled;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListAttachDTO {
+
+        private String id;
+
+        private String type;
+
+        private String serviceProviderName;
+
+        private String typeName;
+
+        private String attachUrl;
+
+        private String attachName;
+
     }
 
 

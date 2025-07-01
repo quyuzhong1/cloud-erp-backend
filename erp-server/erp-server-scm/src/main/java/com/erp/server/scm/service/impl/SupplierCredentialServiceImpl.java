@@ -22,10 +22,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
-import com.erp.model.scm.entity.AttachmentEntity;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.SupplierCredentialEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierCredentialStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -271,6 +268,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         List<String> businessIds = resultList.stream().map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(businessIds);
         for (SupplierCredentialDTO.UpdateDTO item : resultList) {
+            // 判断当前时间是否在资质有效期之间
+            LocalDate effectiveDate = item.getEffectiveDate();
+            LocalDate expireDate = item.getExpireDate();
+            String status = updateStatusByDate(item.getId(), item.getStatus(), effectiveDate, expireDate);
+            item.setStatus(status);
+
             item.setStatusName(SupplierCredentialStatusEnum.getName(item.getStatus()));
 
             List<String> attachmentUrlList = attachmentList.stream().
@@ -322,6 +325,10 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             SupplierCredentialEntity entity = new SupplierCredentialEntity();
             BeanMapper.copy(item, entity);
             entity.setSupplierId(supplierId);
+            //校验有效期
+            self.checkDate(entity);
+            //获取状态
+            self.getCredentialStatuses(entity);
             saveOrUpdateList.add(entity);
             //附件集合
             List<String> attachmentUrlList = item.getAttachmentUrlList();
@@ -530,6 +537,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         Map<String, List<AttachmentDTO.UpdateDTO>> attachmentMap = attachmentService.getByBusinessIdAndType(ids, type).stream().collect(Collectors.groupingBy(AttachmentDTO.UpdateDTO::getBusinessId));
 
         for (SupplierCredentialDTO.ListDTO record : records) {
+            //更新状态
+            // 判断当前时间是否在资质有效期之间
+            LocalDate effectiveDate = record.getEffectiveDate();
+            LocalDate expireDate = record.getExpireDate();
+            String status = updateStatusByDate(record.getId(), record.getStatus(), effectiveDate, expireDate);
+            record.setStatus(status);
             record.setStatusName(SupplierCredentialStatusEnum.getName(record.getStatus()));
             record.setSupplierStatusName(ApproveStatusEnum.getName(record.getSupplierStatus()));
 
@@ -546,6 +559,39 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 record.setAttachmentUrlList(attachmentUrlList);
                 record.setAttachmentNameList(attachmentNameList);
             }
+        }
+    }
+
+    private String updateStatusByDate(String id ,String oldStatus,LocalDate effectiveDate, LocalDate expireDate) {
+        //有效日期不为空
+        if(Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate)){
+            SupplierCredentialStatusEnum status = SupplierCredentialStatusEnum.EXPIRED;
+            LocalDate now = LocalDate.now();
+            if(now.compareTo(effectiveDate) < 0){
+                status = SupplierCredentialStatusEnum.NOT_EFFECTIVE;
+            }else if(now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0){
+                status = SupplierCredentialStatusEnum.EFFECTIVE;
+            }
+            if(!Objects.equals(oldStatus,status.getCode())){
+                //更新状态值
+                lambdaUpdate()
+                        .set(SupplierCredentialEntity::getStatus,status.getCode())
+                        .eq(SupplierCredentialEntity::getId, id)
+                        .update();
+
+                return status.getCode();
+
+            }else {
+                return oldStatus;
+            }
+        }else {
+            //更新状态值
+            lambdaUpdate()
+                    .set(SupplierCredentialEntity::getStatus,"")
+                    .eq(SupplierCredentialEntity::getId, id )
+                    .update();
+
+            return "";
         }
     }
 
