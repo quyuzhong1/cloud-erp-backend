@@ -9,6 +9,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.DisabledEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.View;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -61,7 +64,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
     @Autowired
-    private View view;
+    private CfgProcessService cfgProcessService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -109,11 +112,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                         .eq(CfgProcessRuleEntity::getCfgProcessId, cfgProcessId)
                         .eq(CfgProcessRuleEntity::getIsDeleted, false)
         );
-
-        //校验是否存在关联单据是否在走流程
-        List<String> updateIdList = addDTO.stream().map(CfgProcessRuleDTO.AddOrUpdateDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<CfgProcessRuleEntity> updateRuleEntityList = old.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-        checkBillStatus(updateRuleEntityList,Boolean.FALSE);
 
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
@@ -176,7 +174,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         old.forEach(entity -> {
             CfgProcessRuleEntity ruleEntity = entityMap.get(entity.getId());
             if (ObjectUtil.isNotEmpty(ruleEntity)) {
-                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "");
+                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】",entity.getProcessDefinitionId()));
             }
         });
         return new BaseResultDTO.UpdateDTO();
@@ -191,7 +189,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             throw new ServiceException("请选择要删除的流程执行条件");
         }
         //校验是否存在关联单据是否在走流程
-        checkBillStatus(processRuleEntityList,Boolean.TRUE);
+        checkBillStatus(processRuleEntityList);
 
         //校验是否存在运行中的流程,map,key是getType，value是List<id>
         Map<String, List<CfgProcessRuleEntity>> map = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
@@ -306,6 +304,31 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         return entity.getProcessVersion().toString();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateState(CfgProcessRuleEntity entity, Boolean disabled) {
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程规则");
+        }
+        CfgProcessEntity cfgProcessEntity = cfgProcessService.getById(entity.getCfgProcessId());
+        if (ObjectUtil.isEmpty(cfgProcessEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"流程配置");
+        }
+        //判断审核条件状态是否发生变化
+        if (disabled.equals(entity.getDisabled())) {
+           return  BatchResultDTO.fail(entity.getId(), cfgProcessEntity.getCode() + SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()), "状态未发生变化");
+        }
+        // 更新状态
+        entity.setDisabled(disabled);
+        entity.setUpdateTime(LocalDateTime.now());
+        super.updateById(entity);
+
+        //日志
+        String msg = StrUtil.format("流程设置执行条件状态由【{}】更新为【{}】", DisabledEnum.getName(entity.getDisabled()) , DisabledEnum.getName(disabled));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), entity.getCfgProcessId(), msg);
+        return BatchResultDTO.success(entity.getId(), cfgProcessEntity.getCode() + SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()), "状态更新成功");
+    }
+
     /**
      * 新增修改处理数据
      */
@@ -340,7 +363,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
      * @param list
      * @return void
      */
-    private void checkBillStatus (List<CfgProcessRuleEntity> list,Boolean isDelete) {
+    private void checkBillStatus (List<CfgProcessRuleEntity> list) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -361,30 +384,23 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
         for (CfgProcessRuleEntity entity : list) {
 
-            Integer num = 0;
             if (CharSequenceUtil.equals(entity.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
                 //ERP流程
                 List<ProcessManagementEntity> erpList = managementMap.get(CharSequenceUtil.format("{}-{}", entity.getProcessDefinitionId(), entity.getProcessDefinitionVersion()));
                 if (CollUtil.isEmpty(erpList)){
                     continue;
                 }
-                num = erpList.size();
             } else if (CharSequenceUtil.equals(entity.getType(), CfgProcessRuleTypeEnum.FSPROCESS.getCode())) {
                 //第三方流程
                 List<ThirdProcessManagementEntity> thirdList = thirdManagementMap.get(entity.getProcessDefinitionId());
                 if (CollUtil.isEmpty(thirdList)){
                     continue;
                 }
-                num = thirdList.size();
             } else {
                 throw new ServiceException(ApiError.CFG_PROCESS_RULE_TYPE_NOT_EXIST);
             }
             //未跳过则根据类型报错
-            if (isDelete) {
-                throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE,CfgProcessRuleTypeEnum.getName(entity.getType()));
-            } else {
-                throw new ServiceException(ApiError.CFG_PROCESS_RULE_UPDATE,CfgProcessRuleTypeEnum.getName(entity.getType()),num);
-            }
+            throw new ServiceException(ApiError.CFG_PROCESS_RULE_DELETE,CfgProcessRuleTypeEnum.getName(entity.getType()));
         }
     }
 }

@@ -2,7 +2,6 @@ package com.erp.server.workflow.controller.api;
 
 
 import cn.hutool.core.util.ObjUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -26,10 +25,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -123,37 +120,21 @@ public class CfgProcessController extends BaseController {
         List<String> ids = stateDTO.getIds().stream().distinct().collect(Collectors.toList());
         // 查询所有要更新的审核条件
         List<CfgProcessRuleEntity> entityList = cfgProcessRuleService.listByIds(ids);
-        Boolean disabled = stateDTO.getDisabled();
-        //获取审核条件对应的流程配置
-        Map<String, CfgProcessEntity> processEntityMap = cfgProcessService.list(new LambdaQueryWrapper<CfgProcessEntity>().in(CfgProcessEntity::getId, entityList.stream().map(CfgProcessRuleEntity::getCfgProcessId).collect(Collectors.toSet()))).stream()
-                .collect(Collectors.toMap(CfgProcessEntity::getId, e -> e));
         //处理要更新的审核条件
         for (String id : ids) {
-            CfgProcessRuleEntity entity = entityList.stream()
-                    .filter(e -> id.equals(e.getId()))
-                    .findFirst()
-                    .orElse(null);
-            //判断审核条件是否存在
-            if (Objects.isNull(entity)) {
-                resultDTOS.add(BatchResultDTO.fail(id, id, "流程规则不存在"));
-                continue;
-            }
-            //判断审核条件状态是否发生变化
-            CfgProcessEntity cfgProcess = processEntityMap.get(entity.getCfgProcessId());
-            if (disabled.equals(entity.getDisabled())) {
-                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey()), "状态未发生变化"));
+            CfgProcessRuleEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"流程规则不存在"));
                 continue;
             }
             //更新审核条件
             try {
-                // 更新状态
-                entity.setDisabled(disabled);
-                entity.setUpdateTime(LocalDateTime.now());
-                cfgProcessRuleService.updateById(entity);
-                resultDTOS.add(BatchResultDTO.success(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey())));
+                BatchResultDTO resultDTO = cfgProcessRuleService.updateState(entity, stateDTO.getDisabled());
+                resultDTOS.add(resultDTO);
             } catch (Exception e) {
                 log.error("流程规则更改状态失败，ID: {}", id, e);
-                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey()), e.getMessage()));
+                CfgProcessEntity cfgProcessEntity = cfgProcessService.getById(entity.getCfgProcessId());
+                resultDTOS.add(BatchResultDTO.fail(id, cfgProcessEntity.getCode() + SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
