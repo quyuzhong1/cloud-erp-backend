@@ -500,7 +500,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             String fileName = "报关对账单错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, DeclareReconciliationStandardExcelDTO.class);
             if (file != null && !file.isDirectory()) {
-                url = filefeign.uploadFileAndName(file, fileName);
+                url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
         fillImportList(successImortList);
@@ -691,7 +691,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             List<List<Object>> exportList = errorList.stream().map(obj -> obj.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList())).collect(Collectors.toList());
             File file = ExcelUtil.exportFile(fileName, "error", exportList, headList);
             if (file != null && !file.isDirectory()) {
-                url = filefeign.uploadFileAndName(file, fileName);
+                url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
         fillImportList(successImortList);
