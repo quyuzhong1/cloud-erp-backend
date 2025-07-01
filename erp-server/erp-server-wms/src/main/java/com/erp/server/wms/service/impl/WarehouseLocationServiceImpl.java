@@ -403,8 +403,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         
         WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
-        IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
-        if (CharSequenceUtil.isNotBlank(params.getSkuNo())){
+        IPage<WarehouseLocationDTO.LocationListDTO> pagResult;if (CharSequenceUtil.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
         }else {
             pagResult = baseMapper.pagingSelect(query, params);

@@ -1,8 +1,11 @@
 package com.erp.server.wms.mapper;
 
+import com.erp.model.wms.dto.CfgRulePickingStagingDTO;
 import com.erp.model.wms.entity.CfgRulePickingStagingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +18,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CfgRulePickingStagingMapper extends BaseMapper<CfgRulePickingStagingEntity> {
 
+    List<CfgRulePickingStagingDTO.StagingDTO> viewStaging();
 }

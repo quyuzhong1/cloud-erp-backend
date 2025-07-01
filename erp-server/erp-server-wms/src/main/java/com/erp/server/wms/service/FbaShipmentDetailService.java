@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.FbaShipmentDetailDTO;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 
 import java.util.List;

@@ -602,6 +602,16 @@ public class RequisitionApplicationController extends BaseController {
     }
 
     /**
+     * FBA发货计划（三方仓发三方仓）要货申请下推发货单
+     **/
+    @PostMapping("/generateThirdDelivery")
+    public ApiResult<?> generateThirdDelivery(@RequestBody @Validated RequisitionApplicationDTO.GenerateThirdDelivery dto) {
+        requisitionApplicationService.generateThirdDelivery(dto);
+        return success();
+    }
+
+
+    /**
      * 下载货件装箱信息模板
      *
      * @return

@@ -991,6 +991,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             priceSearchDTO.setSkuId(childSku.getSkuId());
             priceSearchDTO.setSkuNo(childSku.getSkuNo());
+            priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
             priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty() * childSku.getQty());
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
             if (CollUtil.isEmpty(taxPriceList)) {

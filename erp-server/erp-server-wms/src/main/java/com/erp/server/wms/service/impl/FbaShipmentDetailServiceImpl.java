@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
+import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;

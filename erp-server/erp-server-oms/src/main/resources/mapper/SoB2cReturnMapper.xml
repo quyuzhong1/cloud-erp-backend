@@ -66,6 +66,7 @@
             sbrd.remark,
             sbr.create_time as sysCreateTime,
             sbr.sys_return_time as sysReturnTime,
+            sbr.return_logistic_code as returnLogisticCode,
             sbr.update_time as updateTime
         from so_b2c_return sbr
         inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
@@ -126,6 +127,24 @@
         inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
         where sbr.is_deleted = false
         and sbr.so_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="selectLogisticsCodePreview"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$ReturnLogisticsDTO">
+        select
+            sbr.id,
+            sbr.code,
+            sbr.dict_platform,
+            sbr.shop_id,
+            sbr.platform_order_no,
+            sbr.platform_return_no,
+            sbr.so_id,
+            sbr.so_code
+        from so_b2c_return sbr
+        where  sbr.is_deleted = false
+            and sbr.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
