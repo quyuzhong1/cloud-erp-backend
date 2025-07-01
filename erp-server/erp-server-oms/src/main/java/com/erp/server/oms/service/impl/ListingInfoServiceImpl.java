@@ -616,9 +616,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         productDTO.setItemCode(listingInfoEntity.getPlatformSkuNo());
         productDTO.setItemName(listingInfoEntity.getPlatformSkuName());
         productDTO.setBarCode(StringUtils.isBlank(listingInfoEntity.getThirdBarcode())?listingInfoEntity.getPlatformSkuNo():listingInfoEntity.getThirdBarcode());
-        productDTO.setHeight(skuVO.getProductHeight());
-        productDTO.setWidth(skuVO.getProductWidth());
-        productDTO.setLength(skuVO.getProductLength());
+        productDTO.setHeight(skuVO.getProductHeight().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
+        productDTO.setWidth(skuVO.getProductWidth().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
+        productDTO.setLength(skuVO.getProductLength().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
         productDTO.setNetWeight(skuVO.getNetWeight().divide(new BigDecimal("1000"), 4, RoundingMode.HALF_UP));
         productDTO.setGrossWeight(skuVO.getGrossWeight().divide(new BigDecimal("1000"), 4, RoundingMode.HALF_UP));
         productDTO.setItemType("ZC");

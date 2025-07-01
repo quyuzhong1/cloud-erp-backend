@@ -419,6 +419,10 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if( Objects.isNull(overseasProviderEntity)){
             throw new ServiceException("海外物流商不存在");
         }
+        OverseasProviderWarehouseEntity exist = this.getByPlatform(overseasProviderEntity.getId(),addDTO.getCode());
+        if(Objects.nonNull(exist)){
+            throw new ServiceException("海外仓库编号已存在");
+        }
         OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
         overseasProviderWarehouseEntity.setPlatformWarehouseCode(addDTO.getCode());
         overseasProviderWarehouseEntity.setPlatformWarehouseName(addDTO.getName());

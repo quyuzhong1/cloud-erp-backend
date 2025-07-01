@@ -129,6 +129,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             if (!importExcelDTO.getHasMappingAllStr().equals("是") && !importExcelDTO.getHasMappingAllStr().equals("否")) {
                 errorMsgList.add("[对照关系适用于该服务商所有仓库]请输入'是'或'否'");
             }
+            if(importExcelDTO.getHasMappingAllStr().equals("否") && StringUtils.isBlank(importExcelDTO.getWarehouseName())){
+                errorMsgList.add("[对照关系适用于该服务商所有仓库]为否时，仓库名称不能为空");
+            }
         }
         importExcelDTO.setDictPlatform("");
         importExcelDTO.setDictPlatformName("");

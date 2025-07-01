@@ -42,6 +42,8 @@ public class DmpOutputTaskRecordDTO implements Serializable {
 
         private String statusName;
 
+        private String returnMsg;
+
         private LocalDateTime createTime;
 
     }
