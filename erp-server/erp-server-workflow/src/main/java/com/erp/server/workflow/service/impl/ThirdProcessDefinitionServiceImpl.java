@@ -1,7 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,39 +8,36 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.model.workflow.entity.DictBasicEntity;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
-import com.erp.model.workflow.enums.TableNameEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.DictBasicService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_THIRD_PROCESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_THIRD_PROCESS_DEFINITION;
 
 /**
  * <p>
@@ -134,6 +130,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             ThirdProcessDefinitionDTO.ListDTO dto = pageData.getRecords().get(i);
             ThirdProcessDefinitionTypeEnum byCode = ThirdProcessDefinitionTypeEnum.getByCode(dto.getType());
             dto.setTypeName(byCode.getName());
+            dto.setEnableStatusName(dto.getEnableStatus() ? "启用":"禁用");
         }
         return new PagingVO<>(pageData);
     }
@@ -165,7 +162,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
 
     @Override
     public void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("三方审批生成导出", EXPORT_PROCESS_THIRD_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
     }
 
 

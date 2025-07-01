@@ -44,4 +44,13 @@ public interface ExportWorkflowFeign {
     PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportApproveSyncRecord")
     PagingVO<ApproveSyncRecordDTO.ListDTO> exportApproveSyncRecord(PagingDTO<ApproveSyncRecordDTO.PagingParamDTO> dto);
+    /**
+     * 审批定义导出
+     * @author will
+     * @date 2025/7/1 17:26
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/feign/export/exportThirdProcessDefinition")
+    PagingVO<ThirdProcessDefinitionDTO.ListDTO> exportThirdProcessDefinition(PagingDTO<ThirdProcessDefinitionDTO.PagingParamDTO> dto);
 }
