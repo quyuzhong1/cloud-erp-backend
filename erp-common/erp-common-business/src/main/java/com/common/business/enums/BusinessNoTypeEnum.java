@@ -113,6 +113,7 @@ public enum BusinessNoTypeEnum {
     CODE_ZJTZ(86, "ZJTZ","质检通知",BusinessNoConstant.ZJTZ),
     CODE_TCTZ(87, "TCTZ","头程调整记录",BusinessNoConstant.TCTZ),
 
+    CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     ;
 
 

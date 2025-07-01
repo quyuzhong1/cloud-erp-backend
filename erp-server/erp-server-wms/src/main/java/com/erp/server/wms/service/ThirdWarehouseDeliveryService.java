@@ -24,4 +24,7 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
 
     ThirdWarehouseDeliveryEntity getByCodeAndSoId(String outCode,String soId);
 
+    ThirdWarehouseDeliveryEntity getLatestBySoId(String soId);
+
+    ThirdWarehouseDeliveryEntity getLatestByCode(String code);
 }
