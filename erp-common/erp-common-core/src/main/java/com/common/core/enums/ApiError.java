@@ -680,7 +680,7 @@ public enum ApiError implements Serializable {
     ERROR_98034(98034,"供应商名称不能重复"),
     ERROR_98035(98035,"只有已确认，已拒绝和送货中的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
-    ERROR_98037(98037,"资质有效起不能大于资质有效止"),
+    ERROR_98037(98037,"资质有效期起不能大于资质有效期止"),
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
     ERROR_98039(98039,"未找到供应商联系人"),
     ERROR_98040(98040,"只有已审核采购订单能下推签收单"),
@@ -790,6 +790,7 @@ public enum ApiError implements Serializable {
     ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT(98123,"供应商【{}】仓库【{}】全局仓位不能与其他仓位共存"),
 
     ERROR_98124(98124,"证照名称已存在"),
+    ERROR_98125(98125,"失效时间要大于生效时间"),
 
 
     /**

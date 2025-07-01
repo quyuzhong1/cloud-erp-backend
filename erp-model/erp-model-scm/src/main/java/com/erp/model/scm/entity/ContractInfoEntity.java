@@ -76,6 +76,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     @TableField("expire_date")
     private LocalDate expireDate;
     /**
+     * ContractInfoStatusEnum 生效状态：notEffective=未生效,effective=生效中,expired=失效
+     */
+    @TableField("status")
+    private String status;
+    /**
     * 是否禁用
     */
     @TableField("disable")

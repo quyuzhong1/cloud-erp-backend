@@ -22,6 +22,7 @@
        <result column="type" property="type" />
        <result column="effective_date" property="effectiveDate" />
        <result column="expire_date" property="expireDate" />
+       <result column="status" property="status" />
        <result column="disable" property="disable" />
     </resultMap>
 
@@ -46,6 +47,7 @@
 	ci.type AS type,
 	ci.effective_date AS effectiveDate,
 	ci.expire_date AS expireDate,
+	ci.status AS status,
 	ci.disable AS disable
     </sql>
 
@@ -70,6 +72,7 @@
             ci.type AS type,
             ci.effective_date AS effectiveDate,
             ci.expire_date AS expireDate,
+            ci.status AS status,
             ci.disable AS disable
         FROM
             contract_info as ci
@@ -107,14 +110,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.scm.dto.ContractInfoDTO$TabListDTO">
         SELECT
-        ci.approve_status AS tabFlag,
+        ci.status AS tabFlag,
         count(*)  AS count
         FROM  contract_info as ci
         WHERE ci.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY ci.approve_status
+        GROUP BY ci.status
     </select>
 
 </mapper>
