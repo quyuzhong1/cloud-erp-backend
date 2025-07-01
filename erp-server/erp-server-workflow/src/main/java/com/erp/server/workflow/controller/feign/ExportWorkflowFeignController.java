@@ -1,8 +1,10 @@
 package com.erp.server.workflow.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.server.workflow.query.ApproveTaskInfoQueryHandler;
 import com.erp.server.workflow.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +39,9 @@ public class ExportWorkflowFeignController {
     private ApproveTaskInfoService approveTaskInfoService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
+
+    @Resource
+    private ThirdProcessDefinitionService thirdProcessDefinitionService;
 
 
     @PostMapping("/processDefinition")
@@ -87,6 +92,7 @@ public class ExportWorkflowFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/exportApproveTaskInfo")
+    @WebAdvanceQuery(handler = ApproveTaskInfoQueryHandler.class)
     public PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(@RequestBody PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto){
         return approveTaskInfoService.paging(dto);
     }
@@ -94,5 +100,18 @@ public class ExportWorkflowFeignController {
     @PostMapping("/exportApproveSyncRecord")
     public PagingVO<ApproveSyncRecordDTO.ListDTO> exportApproveSyncRecord(@RequestBody PagingDTO<ApproveSyncRecordDTO.PagingParamDTO> dto){
         return approveSyncRecordService.paging(dto);
+    }
+
+    /**
+     * 审批定义导出
+     * @author will
+     * @date 2025/7/1 17:27
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportThirdProcessDefinition")
+    @WebAdvanceQuery
+    public PagingVO<ThirdProcessDefinitionDTO.ListDTO> exportThirdProcessDefinition(@RequestBody PagingDTO<ThirdProcessDefinitionDTO.PagingParamDTO> dto){
+        return thirdProcessDefinitionService.paging(dto);
     }
 }
