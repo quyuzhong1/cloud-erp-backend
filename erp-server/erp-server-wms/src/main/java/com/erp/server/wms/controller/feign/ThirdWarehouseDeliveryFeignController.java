@@ -43,4 +43,13 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
         thirdWarehouseDeliveryService.add(entity);
     }
 
+    @PostMapping("/getLatestBySoId")
+    public ThirdWarehouseDeliveryEntity getLatestBySoId(@RequestBody String soId) {
+        return thirdWarehouseDeliveryService.getLatestBySoId(soId);
+    }
+
+    @PostMapping("/update")
+    public boolean update(@RequestBody ThirdWarehouseDeliveryEntity entity) {
+       return thirdWarehouseDeliveryService.updateById(entity);
+    }
 }

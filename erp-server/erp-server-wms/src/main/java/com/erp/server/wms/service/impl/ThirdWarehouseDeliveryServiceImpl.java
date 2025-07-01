@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.server.wms.mapper.ThirdWarehouseDeliveryMapper;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
@@ -70,6 +71,23 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             return null;
         }
         return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode,outCode).eq(ThirdWarehouseDeliveryEntity::getSoId,soId).last("LIMIT 1").one();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getLatestBySoId(String soId) {
+        if(StringUtils.isBlank(soId)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getSoId, soId)
+                .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getLatestByCode(String code) {
+        if(StringUtils.isBlank(code)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code).one();
     }
 
 }
