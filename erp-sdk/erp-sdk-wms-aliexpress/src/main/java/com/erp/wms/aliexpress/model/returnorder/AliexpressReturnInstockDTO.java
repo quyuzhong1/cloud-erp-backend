@@ -69,6 +69,8 @@ public class AliexpressReturnInstockDTO {
 
         @NoArgsConstructor
         @Data
+        @AllArgsConstructor
+        @Builder
         public static class SenderInfoDTO {
             @JsonProperty("area")
             private String area;
@@ -105,7 +107,7 @@ public class AliexpressReturnInstockDTO {
         @JsonProperty("item_code")
         private String itemCode;
         @JsonProperty("plan_qty")
-        private String planQty;
+        private Integer planQty;
         @JsonProperty("item_id")
         private String itemId;
         @JsonProperty("source_order_code")

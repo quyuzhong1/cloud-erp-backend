@@ -17,6 +17,8 @@ import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
 import com.erp.wms.aliexpress.model.ApiResponseDTO;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
+import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import com.erp.wms.aliexpress.model.returnorder.ApiReturnOrderResponseDTO;
 import com.erp.wms.aliexpress.util.ApiException;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -154,13 +156,13 @@ public class AliexpressWarehouseService {
         return JSON.parseObject(response.getBody(),new TypeReference<ApiInboundResponseDTO>() {}.getType());
     }
 
-    public ApiInboundResponseDTO createReturnInstockOrder(AliexpressInboundDTO aliexpressInboundDTO) throws ApiException {
-        AliexpressAuthDTO aliexpressAuthDTO = aliexpressInboundDTO.getAliexpressAuthDTO();
+    public ApiReturnOrderResponseDTO createReturnInstockOrder(AliexpressReturnInstockDTO aliexpressReturnInstockDTO) throws ApiException {
+        AliexpressAuthDTO aliexpressAuthDTO = aliexpressReturnInstockDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
         if (!BusinessCommonConstants.hasProfile("prod")) {
             url = url + "/sandbox";
         }
-        log.warn("菜鸟仓创建退货入库单,{}",JSONUtil.toJsonStr(aliexpressInboundDTO));
+        log.warn("菜鸟仓创建退货入库单,{}",JSONUtil.toJsonStr(aliexpressReturnInstockDTO));
         String appKey = aliexpressAuthDTO.getAppKey();
         String appSecret = aliexpressAuthDTO.getAppSecret();
         String accessToken = aliexpressAuthDTO.getAccessToken();
@@ -168,12 +170,12 @@ public class AliexpressWarehouseService {
         IopRequest request = new IopRequest();
         request.setApiName("cainiao.cnap.returnorder.create");
         request.addApiParameter("simplify", "true");
-        request.addApiParameter("order_lines", JSONUtil.toJsonStr(aliexpressInboundDTO.getOrderLines()));
-        request.addApiParameter("extend_props", JSONUtil.toJsonStr(aliexpressInboundDTO.getExtendProps()));
-        request.addApiParameter("entry_order", JSONUtil.toJsonStr(aliexpressInboundDTO.getEntryOrder()));
+        request.addApiParameter("order_lines", JSONUtil.toJsonStr(aliexpressReturnInstockDTO.getOrderLines()));
+        request.addApiParameter("extend_props", JSONUtil.toJsonStr(aliexpressReturnInstockDTO.getExtendProps()));
+        request.addApiParameter("entry_order", JSONUtil.toJsonStr(aliexpressReturnInstockDTO.getReturnOrder()));
         IopResponse response = client.execute(request, accessToken, Protocol.TOP);
         log.warn("菜鸟仓退货入库单回参{}",JSONUtil.toJsonStr(response.getBody()));
-        return JSON.parseObject(response.getBody(),new TypeReference<ApiInboundResponseDTO>() {}.getType());
+        return JSON.parseObject(response.getBody(),new TypeReference<ApiReturnOrderResponseDTO>() {}.getType());
     }
 
     public ApiInventoryResponseDTO getInventory(AliexpressAuthDTO aliexpressAuthDTO) throws ApiException {
