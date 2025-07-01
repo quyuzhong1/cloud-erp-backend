@@ -43,4 +43,9 @@ public class FileServiceImpl implements FileService {
     public String uploadFile(File file, String fileName) {
         return FastDFSClientUtil.uploadFile(file, fileName);
     }
+
+    @Override
+    public byte[] downloadFile(String fileId) {
+        return FastDFSClientUtil.getFileByte(fileId);
+    }
 }

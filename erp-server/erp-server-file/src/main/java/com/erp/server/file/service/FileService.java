@@ -27,4 +27,6 @@ public interface FileService {
     void deleteBatchFile(List<String> urlList);
 
     String uploadFile(File file, String fileName);
+
+    byte[] downloadFile(String fileId);
 }
