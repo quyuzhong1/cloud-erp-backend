@@ -234,11 +234,14 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
                 }
             }
         }
-        //查询关联的三方审批生成
-        CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, entity.getBussinessCode()));
-
-        CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(entity.getBussinessKey());
-        createBillHandler.afreshGenerate(detailMap, thirdProcessEntity, entity);
+        if (CharSequenceUtil.equals(entity.getType(),ApproveTaskTypeEnum.PULL.getCode())) {
+            //查询关联的三方审批生成
+            CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, entity.getThirdApprovalCode()));
+            CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(entity.getBussinessKey());
+            createBillHandler.afreshGenerate(detailMap, thirdProcessEntity, entity);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getBussinessCode(),"推送类型不支持重新生成");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
 

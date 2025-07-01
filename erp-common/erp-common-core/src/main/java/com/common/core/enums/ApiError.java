@@ -287,7 +287,6 @@ public enum ApiError implements Serializable {
     PROCESS_APPROVE_FS_PROCESS(94061,"审核失败，单据不支持ERP审核"),
     CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
     CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
-    CFG_PROCESS_RULE_UPDATE(94064,"{}存在{}条流程关联单据，请操作完成候编辑"),
 
 
     /**

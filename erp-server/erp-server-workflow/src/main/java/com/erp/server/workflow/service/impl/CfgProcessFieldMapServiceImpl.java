@@ -117,7 +117,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 String id = dto.getId();
                 List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
                 if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
-                    cfgProcessValueMapService.addOrUpdate(cfgProcessId, id, processValueMapDTOList);
+                    cfgProcessValueMapService.addOrUpdate(cfgProcessId,processDefinitionId, dto, processValueMapDTOList);
                 }
             }
             //生成日志
@@ -126,7 +126,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             existingEntities.forEach(item -> {
                 CfgProcessFieldMapEntity entity = entityMap.get(item.getId());
                 if (ObjectUtil.isNotEmpty(item)) {
-                    operateLogService.addModuleOperateLogByObj(item, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+                    operateLogService.addModuleOperateLogByObj(item, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】字段配置",processDefinitionId));
                 }
             });
 

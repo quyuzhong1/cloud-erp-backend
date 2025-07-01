@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service;
 
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -35,7 +36,7 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId, String ruleId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId, String processDefinitionId, CfgProcessFieldMapDTO.AddOrUpdateDTO addOrUpdateDTO, List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
 
     /**
      * 根据第三方字段id以及定义code，解析form json得到选项的下拉值（包含amount）
