@@ -11,6 +11,8 @@ import com.erp.wms.aliexpress.model.order.AliexpressCancelOrderDTO;
 import com.erp.wms.aliexpress.model.order.AliexpressOrderDTO;
 import com.erp.wms.aliexpress.model.order.ApiOrderResponseDTO;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
+import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import com.erp.wms.aliexpress.model.returnorder.ApiReturnOrderResponseDTO;
 import com.erp.wms.aliexpress.util.ApiException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -127,7 +129,28 @@ public class AliexpressWarehouseServiceTest {
         ApiInboundResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createInbound(aliexpressInboundDTO);
         System.out.println(apiOrderResponseDTO);
     }
-
+    @Test
+    public void createReturnInstockOrder() throws ApiException{
+        AliexpressReturnInstockDTO aliexpressInboundDTO = AliexpressReturnInstockDTO.builder()
+                .aliexpressAuthDTO(buildAuthDTO())
+                .returnOrder(AliexpressReturnInstockDTO.ReturnOrder.builder()
+                        .orderType("THRK")
+                        .returnOrderCode("TEST-WJ062602")
+                        .ownerCode("17379911544")
+                        .warehouseCode("STB")
+                        .build())
+                .OrderLines(Arrays.asList(
+                        AliexpressReturnInstockDTO.OrderLines.builder()
+                                .itemCode("12000043163694871")
+                                .planQty(100)
+                                .inventoryType("1")
+                                .ownerCode("17379911544")
+                                .build()
+                ))
+                .build();
+        ApiReturnOrderResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.createReturnInstockOrder(aliexpressInboundDTO);
+        System.out.println(apiOrderResponseDTO);
+    }
     @Test
     public void getInventory() throws ApiException{
         ApiInventoryResponseDTO apiOrderResponseDTO = aliexpressWarehouseService.getInventory(buildAuthDTO());
@@ -153,7 +176,7 @@ public class AliexpressWarehouseServiceTest {
         aliexpressAuthDTO.setUrl("https://api-sg.aliexpress.com");
         aliexpressAuthDTO.setAppKey("503630");
         aliexpressAuthDTO.setAppSecret("PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ");
-        aliexpressAuthDTO.setAccessToken("50000701530cnHtbirhzrd7ijPeou2emiSIajwwCg118389611msriNQyROLyoVZ1y1j");
+        aliexpressAuthDTO.setAccessToken("50000601323tOAyeuehRCsRgaGES9kVwCJG196f1b4fOjWhuUCla8prcvvvXSTUA61PH");
         aliexpressAuthDTO.setOwnerCode("17379911544");
         return aliexpressAuthDTO;
     }
