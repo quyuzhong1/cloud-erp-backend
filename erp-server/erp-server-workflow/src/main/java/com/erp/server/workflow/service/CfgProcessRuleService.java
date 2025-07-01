@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
@@ -91,4 +92,13 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
      * @return
      */
     String getVersion(String processDefinitionId);
+    /**
+     * 启禁用
+     * @author will
+     * @date 2025/7/1 14:50
+     * @param entity
+     * @param disabled
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateState(CfgProcessRuleEntity entity, Boolean disabled);
 }

@@ -2,46 +2,43 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
+import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
 import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -95,7 +92,8 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId, String fieldMapId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
+    public BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId, String processDefinitionId, CfgProcessFieldMapDTO.AddOrUpdateDTO fieldMapDTO , List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
+        String fieldMapId = fieldMapDTO.getId();
         // 查询数据库中与 field_map_id 关联的记录
         List<CfgProcessValueMapEntity> existingEntities = this.list(
                 new LambdaQueryWrapper<CfgProcessValueMapEntity>()
@@ -149,7 +147,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         existingEntities.forEach(entity -> {
             CfgProcessValueMapEntity ruleEntity = entityMap.get(entity.getId());
             if (ObjectUtil.isNotEmpty(ruleEntity)) {
-                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】字段【{}】值映射",processDefinitionId,fieldMapDTO.getThirdField()));
             }
         });
 
