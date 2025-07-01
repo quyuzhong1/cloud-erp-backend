@@ -274,7 +274,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             if (CollUtil.isEmpty(detailList)) {
                 errorMsgList.add("对账单下未找到该对账明细信息");
             }
-            if (detailList.size() > 1) {
+            if (CollUtil.isNotEmpty(detailList) && detailList.size() > 1) {
                 errorMsgList.add("单号+SKU存在多条数据，请在页面直接编辑修改");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -283,11 +283,28 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 continue;
             }
             PoReconciliationDetailEntity entity = detailList.get(0);
-            entity.setDiscountRate(MathUtil.valueOf(excelDTO.getDiscountRate()));
-            entity.setTaxPrice(MathUtil.valueOf(excelDTO.getTaxPrice()));
-            entity.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
+            //折扣率
+            if (CharSequenceUtil.isNotBlank(excelDTO.getDiscountRate())) {
+                entity.setDiscountRate(MathUtil.valueOf(excelDTO.getDiscountRate()));
+            } else {
+                entity.setDiscountRate(MathUtil.multiplyWithFour(MathUtil.valueOf(entity.getDiscountRate()),MathUtil.BigDecimal_100));
+            }
+            //单价
+            if (CharSequenceUtil.isNotBlank(excelDTO.getTaxPrice())) {
+                entity.setTaxPrice(MathUtil.valueOf(excelDTO.getTaxPrice()));
+            }
+            //税率
+            if (CharSequenceUtil.isNotBlank(excelDTO.getTaxRate())) {
+                entity.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
+            } else {
+                entity.setTaxRate(MathUtil.multiplyWithFour(MathUtil.valueOf(entity.getTaxRate()),MathUtil.BigDecimal_100));
+            }
+            //预付金额
+            if (CharSequenceUtil.isNotBlank(excelDTO.getPrepayAmount())) {
+                entity.setPrepayAmount(MathUtil.valueOf(excelDTO.getPrepayAmount()));
+            }
+            //价税合计
             entity.setTaxAmount(MathUtil.multiplyWithFour(entity.getTaxPrice(),MathUtil.valueOf(entity.getQty())));
-            entity.setPrepayAmount(MathUtil.valueOf(excelDTO.getPrepayAmount()));
             //价税合计（折后）
             BigDecimal discountTaxAmount = MathUtil.subtract(MathUtil.subtract(entity.getTaxAmount(), entity.getPrepayAmount()), MathUtil.multiplyWithFour(entity.getTaxAmount(), entity.getDiscountRate()));
             entity.setDiscountTaxAmount(discountTaxAmount);

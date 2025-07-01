@@ -783,6 +783,8 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
+    ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE(98121,"SKU【{}】未审核通过，采购价目表数据不支持提交"),
+
 
     ERROR_SUPPLIER_REF_WAREHOUSE_EXIST(98121,"供应商【{}】仓库【{}】仓位【{}】已存在"),
     ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS(98122,"供应商【{}】在仓库【{}】已存在全局仓位"),
@@ -1245,6 +1247,8 @@ public enum ApiError implements Serializable {
     ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
     ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
     ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
+    ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
+    ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
 
     /**
      * OMS 错误
@@ -1626,6 +1630,7 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
     CONTENT_96018(96018,"系统配置管理"),
     ERROR_PO_RECONCILIATION_CANCAL_RECEIVE(96007,"仅【已收单据】支持取消单据签收"),
+    ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION(96008,"单据单号【{}】无需对账不支持生成对账单"),
 
 
 

@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.service.business.impl;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -254,9 +253,8 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         String fieldKeys = "FEntityPlan_FEntryID,FENDDATE,FPAYAMOUNTFOR,FPAYRATE,FPURCHASEORDERID,FPRICE_P,FQTY_P,FPURCHASEORDERNO,FMATERIALSEQ,FRELATEHADPAYQTY,FNOTVERIFICATEAMOUNT";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         if (CollectionUtils.isEmpty(queryList)) {
-            throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("code").toString()));
+            return;
         }
-
         /**
          * 编辑时需要付款计划信息
          */

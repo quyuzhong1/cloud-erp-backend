@@ -8,6 +8,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
+import com.erp.server.wms.query.SupplierInventoryQueryHandler;
 import com.erp.server.wms.service.SupplierInventoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -42,7 +43,7 @@ public class SupplierInventoryController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SupplierInventoryQueryHandler.class)
     public ApiResult<PagingVO<SupplierInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
         return success(supplierInventoryService.paging(dto));
     }
