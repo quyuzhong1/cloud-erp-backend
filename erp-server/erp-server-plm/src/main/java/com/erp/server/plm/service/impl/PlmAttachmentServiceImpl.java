@@ -7,6 +7,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
@@ -111,7 +112,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             throw new ServiceException(ApiError.ERROR_1018);
         }
         File file = FileUtil.multiToFile(multipartFile);
-        String fileUrl = fileFeign.uploadFileAndName(file, fileName);
+        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
         if (StringUtils.isBlank(fileUrl)) {
             throw new ServiceException(ApiError.ERROR_95018);
         }

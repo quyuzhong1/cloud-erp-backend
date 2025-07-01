@@ -22,15 +22,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.constant.EnumMessage;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.dto.CfgSettingDTO.DorisQuerySettingDTO;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
@@ -252,11 +247,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return dmpCfgDbDataSourceMap.get(dbId);
 	}
 	
-	public String dorisQuerySetting(String requestURI) {
-		return getDorisQuerySettingDTO(requestURI) != null ? "1" : "0";
-	}
-	
-	private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
+	public DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
 		if(dorisQueryCfgSettingMappingCache == null) {
 			this.initDorisQueryCfgSetting();
 		}
@@ -264,63 +255,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 			requestURI = "/" + requestURI;
 		}
 		return dorisQueryCfgSettingMappingCache.get(requestURI);
-	}
-	
-	public DynamicDataSourceTypeEnum getDynamicDataSourceType(String requestURI , String requestBody) {
-		if(StringUtils.isBlank(requestURI) || StringUtils.isBlank(requestBody)) {
-			return DynamicDataSourceTypeEnum.POSTGRES;
-		}
-		DorisQuerySettingDTO dorisQuerySettingDTO = this.getDorisQuerySettingDTO(requestURI);
-		if(dorisQuerySettingDTO == null) {
-			return DynamicDataSourceTypeEnum.POSTGRES;
-		}
-		String dataSourceName = dorisQuerySettingDTO.getDataSourceName();
-		if(StringUtils.isBlank(dataSourceName) || DynamicDataSourceTypeEnum.POSTGRES.getCode().equals(dataSourceName)) {
-			return DynamicDataSourceTypeEnum.POSTGRES;
-		}
-		Map<String, List<String>> cfgField = dorisQuerySettingDTO.getCfgField();
-		if(CollUtil.isNotEmpty(cfgField)) {
-			JSONObject parseObject = JSON.parseObject(requestBody);
-			if(parseObject == null) {
-				return DynamicDataSourceTypeEnum.POSTGRES;
-			}
-			String paramsField = dorisQuerySettingDTO.getParamsField();
-			if(StringUtils.isBlank(paramsField)) {
-				paramsField = "params";
-			}
-			JSONObject paramObject = parseObject.getJSONObject(paramsField);
-			if(paramObject == null) {
-				return DynamicDataSourceTypeEnum.POSTGRES;
-			}
-			
-			String advanceQueryDTOListField = dorisQuerySettingDTO.getAdvanceQueryDTOListField();
-			if(StringUtils.isBlank(advanceQueryDTOListField)) {
-				advanceQueryDTOListField = "advanceQueryDTOList";
-			}
-			JSONArray advanceQueryDTOListFieldList = paramObject.getJSONArray(advanceQueryDTOListField);
-			if(CollUtil.isEmpty(advanceQueryDTOListFieldList)) {
-				return DynamicDataSourceTypeEnum.POSTGRES;
-			}
-			
-			List<AdvanceQueryDTO> advanceQueryDTOList = JSON.parseArray(advanceQueryDTOListFieldList.toJSONString(), AdvanceQueryDTO.class)
-					.stream().filter(a -> {
-						boolean valueFlag = false;
-						Object value = a.getValue();
-						if(value != null && StringUtils.isNotBlank(value.toString())) {
-							valueFlag = true;
-						}
-						return StringUtils.isNotBlank(a.getField()) && StringUtils.isNotBlank(a.getCompare()) && valueFlag;
-					}).collect(Collectors.toList());
-			if(advanceQueryDTOList.stream().anyMatch(a -> {
-				String field = a.getField();
-				List<String> list = cfgField.get(field);
-				return CollUtil.isNotEmpty(list) && (list.contains("all") || list.contains(a.getCompare()));
-			})) {
-				return DynamicDataSourceTypeEnum.POSTGRES;
-			}
-		}
-		
-		return EnumMessage.getByCode(DynamicDataSourceTypeEnum.class , dataSourceName);
 	}
 	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {

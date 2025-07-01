@@ -455,6 +455,16 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
+                String platformType = customerInfo.getPlatformType();
+                if(StringUtils.isNotBlank(platformType)) {
+                	List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
+                            .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                            .eq(DictBasicEntity::getName, platformType)
+                            .list();
+                	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+                		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+                	}
+                }
             }
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));

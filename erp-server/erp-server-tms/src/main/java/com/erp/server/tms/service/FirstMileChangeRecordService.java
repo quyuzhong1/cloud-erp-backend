@@ -131,9 +131,10 @@ public interface FirstMileChangeRecordService extends SuperService<FirstMileChan
      * @param platformSkuNo  平台SKU
      * @param category       调整分类
      * @param reportPeriodId 核算区间id
+     * @param id            分摊记录id
      * @return
      */
-    FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId);
+    FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId, String id);
 
     void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField);
 
