@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -309,6 +310,20 @@ public class DmpFeignController extends BaseController {
             return null;
         }
         return dmpOutputTaskRecordService.getOutputTaskRecord(sourceCode, outputClass);
+    }
+
+    /**
+     * 获取推送记录
+     * @author zdy
+     * @date: 2025/04/01 12:00
+     * @return Boolean
+     */
+    @GetMapping("/outputTaskRecord/getOutputTaskByIdAndType")
+    public List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@RequestParam(value = "sourceIdList") List<String> sourceIdList, @RequestParam(value = "sourceType") String sourceType) {
+        if (CollectionUtils.isEmpty(sourceIdList) || CharSequenceUtil.isAllBlank(sourceType)){
+            return new ArrayList<>();
+        }
+        return dmpOutputTaskRecordService.getOutputTaskByIdAndType(sourceIdList, sourceType);
     }
 
     /**

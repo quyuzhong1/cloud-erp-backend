@@ -287,6 +287,13 @@ public interface DmpTaskFeign {
     DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
 
     /**
+     * 根据来源id,来源类型获取推送记录
+     * @return
+     */
+    @GetMapping("feign/outputTaskRecord/getOutputTaskByIdAndType")
+    List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@RequestParam(value = "sourceIdList") List<String> sourceIdList, @RequestParam(value = "sourceType") String sourceType);
+
+    /**
      * 创建第三方任务
      */
     @PostMapping("feign/createThirdWarehouseTask")

@@ -426,4 +426,15 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         </if>
         ORDER BY m.source_id, t.create_time DESC
     </select>
+    <select id="getOutputTaskByIdAndType" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT  s.*,m.source_id from dmp_push_msg m
+                          inner join dmp_output_task_record s on m.id = s.data_id
+        where m.source_type =   #{sourceType}
+        and m.source_id in
+        <foreach collection="sourceIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        and m.is_deleted = false and s.is_deleted = false
+        ORDER BY s.id, s.create_time desc LIMIT 1
+    </select>
 </mapper>

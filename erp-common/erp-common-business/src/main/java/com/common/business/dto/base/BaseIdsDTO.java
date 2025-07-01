@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,7 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class IdsDTO extends PermissionsDTO {
 
         /**

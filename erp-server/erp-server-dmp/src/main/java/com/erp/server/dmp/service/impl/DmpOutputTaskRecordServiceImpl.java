@@ -756,6 +756,11 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
 
+    @Override
+    public List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType) {
+        return baseMapper.getOutputTaskByIdAndType(sourceIdList, sourceType);
+    }
+
 	@Override
 	public List<String> outputErrorCountMsg() {
 		return baseMapper.outputErrorCountMsg();

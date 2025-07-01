@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
@@ -21,6 +22,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -30,8 +32,10 @@ import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingCustomerImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
@@ -2135,13 +2139,34 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {
-        List<OmsPushMsgEntity> msgList = entityList.stream()
-                .map(this::createOmsPushMsgEntity)
-                .collect(Collectors.toList());
-        boolean save = omsPushMsgService.saveBatch(msgList);
-        if (!save){
-            ServiceException.runError("保存本地消息失败:{}", JSONUtil.toJsonStr(msgList));
+        List<String> listingIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskByIdAndType(listingIds,SourceTypeEnum.CAINIAO_LISTING.getCode());
+        List<DmpOutputTaskRecordEntity> syncList = new ArrayList<>();
+        List<OmsPushMsgEntity> msgList = new ArrayList<>();
+        for (ListingInfoEntity listingInfoEntity : entityList) {
+            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.stream().filter(v->v.getSourceId().equals(listingInfoEntity.getId())).findFirst().orElse(null);
+            if(Objects.isNull(dmpOutputTaskRecordEntity)){
+                msgList.add(this.createOmsPushMsgEntity(listingInfoEntity));
+            }else{
+                syncList.add(dmpOutputTaskRecordEntity);
+            }
         }
+        if(CollectionUtils.isNotEmpty(msgList)){
+            boolean save = omsPushMsgService.saveBatch(msgList);
+            if (!save){
+                ServiceException.runError("保存本地消息失败:{}", JSONUtil.toJsonStr(msgList));
+            }
+        }
+        if(CollectionUtils.isNotEmpty(syncList)){
+            syncList.forEach(v->v.setStatus(DmpOutputTaskRecordStatusEnum.ERROR.getCode()));
+            List<String> syncIdList = syncList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            dmpInoutTaskFeign.updateDmpOutputTaskRecordEntity(syncList);
+            ApiResult<?> result = dmpInoutTaskFeign.querySyncIds(new BaseIdsDTO.IdsDTO(syncIdList));
+            if(!result.isSuccess()){
+                ServiceException.runError("重新推送消息失败:{}", result.getMsg());
+            }
+        }
+
     }
 
     private OmsPushMsgEntity createOmsPushMsgEntity(ListingInfoEntity listingInfoEntity) {
