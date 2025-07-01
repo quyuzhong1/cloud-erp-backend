@@ -87,11 +87,11 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             String id = dto.getId();
             List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
             if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
-                cfgProcessValueMapService.add(cfgProcessId, id, processValueMapDTOList);
+                cfgProcessValueMapService.add(cfgProcessId, id, processValueMapDTOList,processDefinitionId);
             }
         }
         // 操作日志
-        String msg = StrUtil.format("新增流程设置字段映射");
+        String msg = StrUtil.format("流程编码【{}】新增流程设置字段映射",processDefinitionId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
         return new BaseResultDTO.AddDTO();
     }

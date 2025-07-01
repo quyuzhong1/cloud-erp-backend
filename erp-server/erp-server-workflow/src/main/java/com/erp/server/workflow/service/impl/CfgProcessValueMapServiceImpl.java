@@ -65,7 +65,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(String cfgProcessId, String fieldMapId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
+    public BaseResultDTO.AddDTO add(String cfgProcessId, String fieldMapId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO, String processDefinitionId) {
         List<CfgProcessValueMapEntity> entities = addDTO.stream()
                 .map(dto -> {
                     CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
@@ -84,7 +84,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         }
         ;
         // 操作日志
-        String msg = StrUtil.format("新增流程设置值映射");
+        String msg = StrUtil.format("流程编码【{}】新增流程设置值映射",processDefinitionId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
 
         return new BaseResultDTO.AddDTO();
@@ -114,7 +114,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTOs = addDTO.stream()
                 .filter(dto -> StrUtil.isEmpty(dto.getId()))
                 .collect(Collectors.toList());
-        add(cfgProcessId, fieldMapId, addDTOs);
+        add(cfgProcessId, fieldMapId, addDTOs,processDefinitionId);
         addDTO.removeAll(addDTOs);
         // 删除未包含的记录
         if (!idsToDelete.isEmpty()) {

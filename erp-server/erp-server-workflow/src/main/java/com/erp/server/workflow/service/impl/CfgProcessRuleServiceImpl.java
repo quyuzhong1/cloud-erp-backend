@@ -95,10 +95,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                 cfgProcessFieldMapService.add(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList,dto.getProcessDefinitionId(),dto.getType());
             }
         }
-
-        // 操作日志
-        String msg = StrUtil.format("新增流程设置执行条件");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, msg);
         return new BaseResultDTO.AddDTO();
     }
 
@@ -174,7 +170,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         old.forEach(entity -> {
             CfgProcessRuleEntity ruleEntity = entityMap.get(entity.getId());
             if (ObjectUtil.isNotEmpty(ruleEntity)) {
-                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】",entity.getProcessDefinitionId()));
+                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】",ruleEntity.getProcessDefinitionId()));
             }
         });
         return new BaseResultDTO.UpdateDTO();
@@ -255,7 +251,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         }
         processRuleEntityList.forEach(processRuleEntity -> {
             // 操作日志
-            String msg = StrUtil.format("删除流程设置执行条件-{}", processRuleEntity.getId());
+            String msg = StrUtil.format("流程编码【{}】删除流程设置规则", processRuleEntity.getProcessDefinitionId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), msg);
         });
         return Boolean.TRUE;
@@ -324,7 +320,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         super.updateById(entity);
 
         //日志
-        String msg = StrUtil.format("流程设置执行条件状态由【{}】更新为【{}】", DisabledEnum.getName(entity.getDisabled()) , DisabledEnum.getName(disabled));
+        String msg = StrUtil.format("流程编码【{}】设置执行条件状态由【{}】更新为【{}】",entity.getProcessDefinitionId(), DisabledEnum.getName(entity.getDisabled()) , DisabledEnum.getName(disabled));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), entity.getCfgProcessId(), msg);
         return BatchResultDTO.success(entity.getId(), cfgProcessEntity.getCode() + SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()), "状态更新成功");
     }

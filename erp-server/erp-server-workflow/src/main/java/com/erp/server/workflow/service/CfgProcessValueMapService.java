@@ -26,7 +26,7 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO add(String cfgProcessId, String ruleId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO add(String cfgProcessId, String ruleId, List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto, String processDefinitionId);
 
     /**
      * 修改
