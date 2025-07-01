@@ -155,7 +155,7 @@ public class NfeInvoiceService {
             log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
         }
-        if (!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
+        if (Objects.isNull(resultDTO) || !resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
         }
