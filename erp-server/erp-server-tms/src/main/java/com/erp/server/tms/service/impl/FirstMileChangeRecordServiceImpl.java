@@ -510,8 +510,9 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     }
 
     @Override
-    public FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId) {
+    public FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId, String id) {
         return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceId, id)
                 .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
                 .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
