@@ -123,7 +123,10 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
     @Override
     public void removeOtherWarehouse(List<String> warehouseIds) {
         if (CollUtil.isEmpty(warehouseIds)){
-            this.lambdaUpdate().remove();
+            List<CfgRulePickingStagingEntity> list = this.lambdaQuery().list();
+            if (CollUtil.isNotEmpty(list)){
+                this.removeByIds(list.stream().map(CfgRulePickingStagingEntity::getId).collect(Collectors.toList()));
+            }
         }else {
             this.lambdaUpdate().notIn(CfgRulePickingStagingEntity::getWarehouseId, warehouseIds).remove();
         }

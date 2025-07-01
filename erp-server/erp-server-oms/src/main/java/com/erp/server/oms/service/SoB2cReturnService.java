@@ -65,4 +65,8 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     SoB2cReturnEntity getByPlatformReturnCode(String platformReturnNo);
 
     void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList);
+
+    List<SoB2cReturnDTO.ReturnLogisticsDTO> logisticsCodePreview(List<String> ids);
+
+    BatchResultDTO updateLogisticsCode(SoB2cReturnDTO.ReturnLogisticsDTO dto,SoB2cReturnEntity returnEntity);
 }

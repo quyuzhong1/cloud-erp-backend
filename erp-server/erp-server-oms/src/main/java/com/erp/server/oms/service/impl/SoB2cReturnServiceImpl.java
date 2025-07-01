@@ -1,12 +1,14 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -45,6 +47,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
+import com.erp.server.oms.convert.B2cReturnConverter;
 import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.service.*;
 import jodd.util.StringUtil;
@@ -344,31 +347,8 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<SoB2cReturnDTO.AddDTO> addList = new ArrayList<>();
         map.forEach((soId,val)->{
             SoB2cDTO.GenerateSoB2cReturnViewDTO generateSoB2cReturnViewDTO = val.get(0);
-            SoB2cReturnDTO.AddDTO addDTO = new SoB2cReturnDTO.AddDTO();
-            addDTO.setPlatformOrderNo(generateSoB2cReturnViewDTO.getPlatformOrderNo());
-            addDTO.setSoId(soId);
-            addDTO.setSoCode(generateSoB2cReturnViewDTO.getCode());
-            addDTO.setDictPlatform(generateSoB2cReturnViewDTO.getDictPlatform());
-            addDTO.setShopId(generateSoB2cReturnViewDTO.getShopId());
-            addDTO.setAmount(generateSoB2cReturnViewDTO.getAmount());
-            addDTO.setCurrency(generateSoB2cReturnViewDTO.getCurrency());
-            addDTO.setType(ReturnTypeEnum.CUSTOMER_RETURNS.getCode());
-            addDTO.setReason(generateSoB2cReturnViewDTO.getReturnReason());
-            addDTO.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
-            addDTO.setSourceType(SoB2cReturnSourceTypeEnum.SELF_ADD.code);
-            List<SoB2cReturnDetailDTO.AddDTO> detailList = new ArrayList<>();
-            for (SoB2cDTO.GenerateSoB2cReturnViewDTO soB2cReturnViewDTO : val) {
-                SoB2cReturnDetailDTO.AddDTO detail = new SoB2cReturnDetailDTO.AddDTO();
-                detail.setSkuId(soB2cReturnViewDTO.getSkuId());
-                detail.setSkuNo(soB2cReturnViewDTO.getSkuNo());
-                detail.setSaleQty(soB2cReturnViewDTO.getSaleQty());
-                detail.setReturnQty(soB2cReturnViewDTO.getReturnQty());
-                detail.setPlatformSkuNo(soB2cReturnViewDTO.getPlatformSkuNo());
-                detail.setRemark(soB2cReturnViewDTO.getRemark());
-                detail.setSoDetailId(soB2cReturnViewDTO.getDetailId());
-                detailList.add(detail);
-            }
-            addDTO.setDetailList(detailList);
+            SoB2cReturnDTO.AddDTO addDTO = B2cReturnConverter.INSTANCE.generateSoB2cReturnViewDTOToAddDTO(generateSoB2cReturnViewDTO);
+            addDTO.setDetailList(B2cReturnConverter.INSTANCE.generateSoB2cReturnDetailViewDTOToAddDTO(val));
             addList.add(addDTO);
         });
         addList.forEach(this::add);
@@ -395,6 +375,35 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
         soB2cReturnDetailEntityList.forEach(v->v.setMainId(soB2cReturnEntity.getId()));
         soB2cReturnDetailService.saveBatch(soB2cReturnDetailEntityList);
+    }
+
+    @Override
+    public List<SoB2cReturnDTO.ReturnLogisticsDTO> logisticsCodePreview(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        List<SoB2cReturnDTO.ReturnLogisticsDTO> returnLogisticsDTOS = baseMapper.selectLogisticsCodePreview(ids);
+        if (CollUtil.isEmpty(returnLogisticsDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> shopIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnLogisticsDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = CollUtil.isNotEmpty(shopIds) ? shopInfoService.listByIds(shopIds) : Collections.emptyList();
+        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        for (SoB2cReturnDTO.ReturnLogisticsDTO returnLogisticsDTO : returnLogisticsDTOS) {
+            returnLogisticsDTO.setDictPlatformName(PlatformDictEnum.getNameByCode(returnLogisticsDTO.getDictPlatform()));
+            returnLogisticsDTO.setShopName(shopMap.get(returnLogisticsDTO.getShopId()));
+        }
+        return returnLogisticsDTOS;
+    }
+
+    @Override
+    public BatchResultDTO updateLogisticsCode(SoB2cReturnDTO.ReturnLogisticsDTO dto, SoB2cReturnEntity returnEntity) {
+        this.lambdaUpdate().eq(SoB2cReturnEntity::getId, dto.getId())
+                .set(SoB2cReturnEntity::getReturnLogisticCode, dto.getReturnLogisticCode()).update();
+        //记录操作日志
+        String msg = CharSequenceUtil.format("用户【{}】更新退货订单【{}】物流单号由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(), returnEntity.getCode(), returnEntity.getReturnLogisticCode(), dto.getReturnLogisticCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_RETURN.getCode(), returnEntity.getId(), "修改操作");
+        return BatchResultDTO.success(dto.getId(), dto.getCode(), "修改成功");
     }
 
     private void fillBindReturnInstockView(List<SoB2cReturnDTO.BindReturnInstockViewDTO> soB2cReturnEntityList) {

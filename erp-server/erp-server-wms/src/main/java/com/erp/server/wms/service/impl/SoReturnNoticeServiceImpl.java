@@ -737,7 +737,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-            dto.setReturnLogisticCode(viewList.get(0).getReturnLogisticCode());
+            dto.setReturnLogisticCode(soReturnEntity.getReturnLogisticCode());
             List<SoReturnNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {
                 dto.setWarehouseId(view.getWarehouseId());

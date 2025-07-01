@@ -2306,6 +2306,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货数量
          */
+        @NotNull(message = "退货数量不能为空")
         private Integer returnQty;
 
         /**
@@ -2316,7 +2317,9 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
+         * ReturnTypeEnum
          */
+        @NotBlank(message = "退货类型不能为空")
         private String returnTypeDict;
 
         /**
@@ -2327,10 +2330,12 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货日期
          */
+        @NotNull(message = "退货日期不能为空")
         private LocalDate returnDate;
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓库名称
@@ -2353,10 +2358,12 @@ public class SoInfoDTO implements Serializable {
         /**
          *退货金额
          */
+        @NotNull(message = "退货金额不能为空")
         private BigDecimal returnAmount;
         /**
          *含税退货金额
          */
+        @NotNull(message = "含税退货金额不能为空")
         private BigDecimal taxReturnAmount;
         /**
          *销售金额
@@ -2378,6 +2385,11 @@ public class SoInfoDTO implements Serializable {
          * 库存组织id
          */
         private String warehouseOrgId;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
     }
 
     @Data
