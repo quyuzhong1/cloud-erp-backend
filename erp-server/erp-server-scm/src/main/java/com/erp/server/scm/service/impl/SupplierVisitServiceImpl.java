@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -530,8 +531,11 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        //供应商
-        List<SupplierEntity> supplierList = supplierService.list();
+        //供应商 (已审核 + 已启用)
+        List<SupplierEntity> supplierList = supplierService.lambdaQuery()
+                .eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .eq(SupplierEntity::getDisabled, Boolean.FALSE)
+                .list();
         //sku信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1,o2)->o1));
