@@ -30,6 +30,10 @@ public class DorisQuerySettingDTO {
 	 */
 	private String advanceQueryDTOListField;
 	/**
+	 * 睡眠毫秒数
+	 */
+	private Integer sleepMillis;
+	/**
 	 * 高级查询条件配置
 	 */
 	private Map<String, List<String>> cfgField;

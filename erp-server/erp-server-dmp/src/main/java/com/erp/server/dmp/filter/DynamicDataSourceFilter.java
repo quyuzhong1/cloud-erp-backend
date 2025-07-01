@@ -88,7 +88,18 @@ public class DynamicDataSourceFilter implements Filter {
         }
 
         String requestBody = sb.toString();
-        return dorisQuerySettingDTO.getDynamicDataSourceType(requestBody);
+        DynamicDataSourceTypeEnum dynamicDataSourceType = dorisQuerySettingDTO.getDynamicDataSourceType(requestBody);
+        if(dynamicDataSourceType != null && DynamicDataSourceTypeEnum.POSTGRES != dynamicDataSourceType) {
+        	Integer sleepMillis = dorisQuerySettingDTO.getSleepMillis();
+        	if(sleepMillis != null && sleepMillis > 0) {
+        		try {
+					Thread.sleep(sleepMillis);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+        	}
+        }
+		return dynamicDataSourceType;
     }
  
     @Override
