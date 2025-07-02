@@ -249,6 +249,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 }
             }
         }
+        if (CollUtil.isEmpty(processRuleList)) {
+            // 业务无匹配规则的Erp流程配置
+            log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
+            return null;
+        }
         //存在一条以上的规则都匹配数据的时候直接报错
         if (CollUtil.isNotEmpty(processRuleList) && processRuleList.size() > MathUtil.ONE) {
             throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));

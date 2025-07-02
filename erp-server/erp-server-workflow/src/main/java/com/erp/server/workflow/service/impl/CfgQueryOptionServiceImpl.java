@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.RuleCompareEnum;
@@ -15,11 +16,10 @@ import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.workflow.service.WorkMenuService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -144,6 +144,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     public List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO) {
         return baseMapper.listByMqParams(mqParamsDTO);
     }
+
 
     @Override
     public Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto) {
