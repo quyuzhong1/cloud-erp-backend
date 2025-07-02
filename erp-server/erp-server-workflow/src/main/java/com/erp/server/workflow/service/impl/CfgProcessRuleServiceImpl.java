@@ -199,7 +199,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             if (CfgProcessRuleTypeEnum.getByCode(key).equals(CfgProcessRuleTypeEnum.ERPPROCESS)) {
                 List<ProcessDefinitionEntity> definitionEntityList = processDefinitionService.listByIds(list);
                 Map<String, String> dIdToNameMap = definitionEntityList.stream()
-                        .collect(Collectors.toMap(ProcessDefinitionEntity::getId, ProcessDefinitionEntity::getProcessName));
+                        .collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getId(),obj.getProcessVersion()), ProcessDefinitionEntity::getProcessName));
 
                 List<ProcessManagementEntity> processManagementEntities = processManagementService.list(
                         new LambdaQueryWrapper<ProcessManagementEntity>()
@@ -213,7 +213,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                 for (CfgProcessRuleEntity item : value) {
                     Long a = groupCountMap.get(item.getProcessDefinitionId());
                     if (a != null && a.compareTo(0L) > 0) {
-                        errmsg.append(dIdToNameMap.get(item.getProcessDefinitionId()));
+                        errmsg.append(dIdToNameMap.get(CharSequenceUtil.format("{}-{}",item.getProcessDefinitionId(),item.getProcessDefinitionVersion())));
                     }
                 }
             } else {
