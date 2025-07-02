@@ -371,7 +371,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     public BatchResultDTO delete(String id) {
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
         // 删除主单数据
@@ -435,7 +435,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         }
         ContractInfoEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
