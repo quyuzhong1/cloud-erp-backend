@@ -401,7 +401,8 @@ public class ContractInfoController extends BaseController {
             menuCode = "scm:contractInfo:exportZip",
             tableAlias = "ci"
     )
-    public ResponseEntity<StreamingResponseBody> exportZip(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @WebAdvanceQuery(handler = ContractInfoQueryHandler.class)
+    public ResponseEntity<StreamingResponseBody> exportZip(@RequestBody @Validated ContractInfoDTO.PagingParamDTO dto) {
         ExportZipResultDTO resultDTO = contractInfoService.exportZip(dto);
         // 编码文件名（兼容所有Java版本）
         String encodedFileName;

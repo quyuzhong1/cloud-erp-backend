@@ -128,5 +128,5 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
 
     BatchResultDTO enable(String id, Boolean disabled);
 
-    ExportZipResultDTO exportZip(BaseIdsDTO.IdsDTO dto);
+    ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO dto);
 }
