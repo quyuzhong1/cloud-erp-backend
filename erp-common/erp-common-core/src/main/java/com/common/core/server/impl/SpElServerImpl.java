@@ -1,6 +1,7 @@
 package com.common.core.server.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.SpElAddFieldDTO;
 import com.common.core.dto.SpElExpressionDTO;
@@ -140,7 +141,7 @@ public class SpElServerImpl implements SpElServer {
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
             String originalField = item.getOriginalField();
-            List<Object> valueList = getValueList(originalField, mapList);
+            List<Object> valueList = CollUtil.isEmpty(mapList) ? null : getValueList(originalField, mapList);
             String addField = item.getNeedAddField();
             obj.put(addField, valueList);
         }
