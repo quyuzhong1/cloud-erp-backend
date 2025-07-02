@@ -622,7 +622,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     //规则条件字段对应的值
                     String feildValue = cfgRuleConditionMap.get(cfgQueryOptionEntity.getConditionField());
                     //提审
-                    if("waitSubmitToApproveIng".equals(feildValue)){
+                    if(ThirdNoticePushRecordNoticeNodeEnum.WAITSUBMITTOAPPROVEING.getCode().equals(feildValue)){
                         //提交操作
                         ProcessManagementDTO.CheckSubmitByBusinessIdDTO checkSubmitByBusinessIdDTO = new ProcessManagementDTO.CheckSubmitByBusinessIdDTO();
                         checkSubmitByBusinessIdDTO.setBusinessId(businessId);
@@ -633,7 +633,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }
                     }
                     //新增
-                    if("addRecord".equals(feildValue)){
+                    if(ThirdNoticePushRecordNoticeNodeEnum.ADDRECORD.getCode().equals(feildValue)){
                         //不等于新增则返回false
                         if(!Objects.equals(ThirdNoticeRecordOperationTypeEnum.INSERT.getCode(), dto.getOperationType())){
                             return Boolean.FALSE;

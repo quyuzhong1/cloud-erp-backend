@@ -240,7 +240,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             } else {
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
                 List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, cfgProcessEntity.getBussinessKey()).eq(CfgQueryOptionEntity::getIsDeleted, false));
-                Set<String> keySet = cfgQueryOptionEntities.stream().filter(obj -> !Arrays.asList(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode(),CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).contains(obj.getFieldBelongsType())).map(CfgQueryOptionEntity::getFieldBelongsType).collect(Collectors.toSet());
+                Set<String> keySet = cfgQueryOptionEntities.stream().map(CfgQueryOptionEntity::getFieldBelongsType).collect(Collectors.toSet());
                 Boolean matchResult = false;
                 for (String key : keySet) {
                     if (spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap(), key)) {
@@ -253,6 +253,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     processRuleList.add(cfgProcessRuleEntity);
                 }
             }
+        }
+        if (CollUtil.isEmpty(processRuleList)) {
+            // 业务无匹配规则的Erp流程配置
+            log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
+            return null;
         }
         //存在一条以上的规则都匹配数据的时候直接报错
         if (CollUtil.isNotEmpty(processRuleList) && processRuleList.size() > MathUtil.ONE) {
