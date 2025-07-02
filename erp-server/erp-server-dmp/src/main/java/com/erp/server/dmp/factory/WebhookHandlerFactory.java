@@ -1,9 +1,6 @@
 package com.erp.server.dmp.factory;
 
-import com.erp.server.dmp.handler.InboundHandler;
-import com.erp.server.dmp.handler.OrderOutboundHandler;
-import com.erp.server.dmp.handler.Track123WebhookHandler;
-import com.erp.server.dmp.handler.WebhookHandler;
+import com.erp.server.dmp.handler.*;
 import jnr.ffi.annotations.In;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +21,8 @@ public class WebhookHandlerFactory {
                 return new OrderOutboundHandler();
             case "inbound":
                 return new InboundHandler();
+            case "returnInstock":
+                return new ReturnInstockHandler();
             default:
                 throw new IllegalArgumentException("Unknown platform");
         }
