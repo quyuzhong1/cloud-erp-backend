@@ -1,7 +1,6 @@
 package com.erp.server.wms.convert;
 
 import com.erp.model.oms.dto.SoB2cReturnDTO;
-import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
@@ -37,7 +36,7 @@ public interface SoB2cReturnInstockConverter {
             @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.SO_B2C_RETURN.getCode())"),
             @Mapping(target = "billDate", source = "instockDTO.billDate"),
             @Mapping(target = "warehouseId", source = "instockDTO.warehouseId"),
-            @Mapping(target = "warehouseKeeperId", source = ""),
+            @Mapping(target = "warehouseKeeperId", ignore = true),
             @Mapping(target = "returnLogisticCode", source = "instockDTO.returnLogisticCode"),
             @Mapping(target = "detailList", ignore = true),
             @Mapping(target = "exchangeRate", ignore = true),
@@ -48,7 +47,7 @@ public interface SoB2cReturnInstockConverter {
     @Mappings({
             @Mapping(target = "exchangeRate", ignore = true),
             @Mapping(target = "isChildSkuNo", ignore = true),
-            @Mapping(target = "platformSkuNo", source = ""),
+            @Mapping(target = "platformSkuNo", ignore = true),
             @Mapping(target = "realQty", source = "instockQty"),
             @Mapping(target = "receiveQty", source = "instockQty"),
             @Mapping(target = "remark", ignore = true),
