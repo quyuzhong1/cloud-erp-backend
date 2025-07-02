@@ -43,6 +43,8 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
@@ -100,6 +102,9 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 数据处理
         handleData(contractInfoEntity);
+
+        //默认未生效
+        contractInfoEntity.setStatus(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode());
 
         log.info("开始新增合同管理单");
         // 生成单号
@@ -162,15 +167,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             throw new ServiceException(ApiError.ERROR_98125);
         }
 
-        //状态处理
-        ContractInfoStatusEnum status = ContractInfoStatusEnum.EXPIRED;
-        LocalDate now = LocalDate.now();
-        if (now.compareTo(effectiveDate) < 0) {
-            status = ContractInfoStatusEnum.NOT_EFFECTIVE;
-        } else if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
-            status = ContractInfoStatusEnum.EFFECTIVE;
-        }
-        contractInfoEntity.setStatus(status.getCode());
+
     }
 
     /**
@@ -189,6 +186,24 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 数据处理
         handleData(contractInfoEntity);
+
+        //审核通过的，才需要判断生效状态
+        if(Objects.equals(contractInfoEntity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())){
+            LocalDate now = LocalDate.now();
+            LocalDate effectiveDate = contractInfoEntity.getEffectiveDate();
+            LocalDate expireDate = contractInfoEntity.getExpireDate();
+            //状态处理
+            ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+            if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+                status = ContractInfoStatusEnum.EFFECTIVE;
+            } else if(now.compareTo(expireDate) > 0){
+                status = ContractInfoStatusEnum.EXPIRED;
+            }
+            contractInfoEntity.setStatus(status.getCode());
+        }else {
+            contractInfoEntity.setStatus(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode());
+        }
+
         log.info("编辑 开始修改合同管理单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(contractInfoEntity);
         if(!save) {
@@ -197,16 +212,38 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 记录主单操作日志
         log.info("编辑 开始记录合同管理单日志数据，单号：【{}】", contractInfoEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), contractInfoEntity.getCode(), "合同管理单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "合同管理单");
         operateLogService.addModuleOperateLogByObj(old, contractInfoEntity, ModuleTypeEnum.CONTRACT_INFO.getCode(), contractInfoEntity.getId(),"", msg);
 
-        //删除附件
-        attachmentService.deleteByBusinessIds(Arrays.asList(contractInfoEntity.getId()));
+
         //附件集合
         List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
         //附件名
         List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
-        batchSaveAttachment(attachmentUrlList, attachmentNameList, contractInfoEntity);
+
+        List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessId(contractInfoEntity.getId());
+        if(CollUtil.isEmpty(oldAttachmentList)){
+            batchSaveAttachment(attachmentUrlList, attachmentNameList, contractInfoEntity);
+            // 操作日志
+            String attachMsg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据新增附件[{}] ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "合同管理单",attachmentNameList.get(0));
+            operateLogService.addModuleOperateLog(attachMsg, ModuleTypeEnum.CONTRACT_INFO.getCode(), contractInfoEntity.getId(), "新增操作");
+        }else {
+            String oldAttachName = oldAttachmentList.get(0).getAttachName();
+            String newAttachName = attachmentNameList.get(0);
+            String oldAttachUrl = oldAttachmentList.get(0).getAttachUrl();
+            String newAttachUrl = attachmentUrlList.get(0);
+            if(!Objects.equals(oldAttachUrl, newAttachUrl)){
+                //删除附件
+                attachmentService.deleteByBusinessIds(Arrays.asList(contractInfoEntity.getId()));
+
+                batchSaveAttachment(attachmentUrlList, attachmentNameList, contractInfoEntity);
+
+                // 操作日志
+                String attachMsg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据编辑了附件由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "合同管理单",oldAttachName,newAttachName);
+                operateLogService.addModuleOperateLog(attachMsg, ModuleTypeEnum.CONTRACT_INFO.getCode(), contractInfoEntity.getId(), "新增操作");
+            }
+        }
+
         return Boolean.TRUE;
     }
 
@@ -242,33 +279,36 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 属性赋值
         for(ContractInfoDTO.ListDTO data : list) {
-            //校验有效期
-            LocalDate effectiveDate = data.getEffectiveDate();
-            LocalDate expireDate = data.getExpireDate();
-            if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
-                data.setStatus("");
+            //审核通过的，才需要判断生效状态
+            if(Objects.equals(data.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())){
+                //校验有效期
+                LocalDate effectiveDate = data.getEffectiveDate();
+                LocalDate expireDate = data.getExpireDate();
+                if (Objects.nonNull(effectiveDate) && Objects.nonNull(expireDate) && expireDate.compareTo(effectiveDate) < 0) {
+                    data.setStatus("");
 
-                //更新状态值
-                lambdaUpdate()
-                        .set(ContractInfoEntity::getStatus,"")
-                        .eq(ContractInfoEntity::getId,data.getId())
-                        .update();
-            }else {
-                //状态处理
-                ContractInfoStatusEnum status = ContractInfoStatusEnum.EXPIRED;
-                if (now.compareTo(effectiveDate) < 0) {
-                    status = ContractInfoStatusEnum.NOT_EFFECTIVE;
-                } else if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
-                    status = ContractInfoStatusEnum.EFFECTIVE;
-                }
-                if(!Objects.equals(data.getStatus(),status.getCode())){
-                    data.setStatus(status.getCode());
                     //更新状态值
                     lambdaUpdate()
-                            .set(ContractInfoEntity::getStatus,status.getCode())
+                            .set(ContractInfoEntity::getStatus,"")
                             .eq(ContractInfoEntity::getId,data.getId())
                             .update();
+                }else {
+                    //状态处理
+                    ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+                    if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+                        status = ContractInfoStatusEnum.EFFECTIVE;
+                    } else if(now.compareTo(expireDate) > 0){
+                        status = ContractInfoStatusEnum.EXPIRED;
+                    }
+                    if(!Objects.equals(data.getStatus(),status.getCode())){
+                        data.setStatus(status.getCode());
+                        //更新状态值
+                        lambdaUpdate()
+                                .set(ContractInfoEntity::getStatus,status.getCode())
+                                .eq(ContractInfoEntity::getId,data.getId())
+                                .update();
 
+                    }
                 }
             }
 
@@ -372,7 +412,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_DELETE);
+            throw new ServiceException(ApiError.ERROR_98009);
         }
         // 删除主单数据
         log.info("删除 开始删除合同管理单主单数据，id：【{}】", id);
@@ -444,6 +484,37 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "合同管理单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CONTRACT_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    //睡眠一秒
+                    Thread.sleep(1000);
+
+                    LocalDate effectiveDate = entity.getEffectiveDate();
+                    LocalDate expireDate = entity.getExpireDate();
+                    //状态处理
+                    ContractInfoStatusEnum status = ContractInfoStatusEnum.NOT_EFFECTIVE;
+                    LocalDate now = LocalDate.now();
+                    if (now.compareTo(effectiveDate) >= 0 && now.compareTo(expireDate) <= 0) {
+                        status = ContractInfoStatusEnum.EFFECTIVE;
+                    } else if(now.compareTo(expireDate) > 0){
+                        status = ContractInfoStatusEnum.EXPIRED;
+                    }
+                    //只更新审核通过的数据
+                    lambdaUpdate()
+                            .set(ContractInfoEntity::getStatus, status.getCode())
+                            .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                            .eq(ContractInfoEntity::getId, dto.getId())
+                            .update();
+
+                } catch (Exception e) {
+                    log.error("审核后数据状态更新异常", e);
+                }
+            }
+        });
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -483,6 +554,12 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //只更新未生效
+        lambdaUpdate()
+                .set(ContractInfoEntity::getStatus, ContractInfoStatusEnum.NOT_EFFECTIVE.getCode())
+                .eq(ContractInfoEntity::getId, id)
+                .update();
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "合同管理单");
