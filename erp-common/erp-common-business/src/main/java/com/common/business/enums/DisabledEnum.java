@@ -28,7 +28,7 @@ public enum DisabledEnum {
 
     public static String getName(Boolean code) {
         for (DisabledEnum item : DisabledEnum.values()) {
-            if (item.getCode().equals(code)) {
+            if (code.equals(item.getCode())) {
                 return item.getName();
             }
         }
