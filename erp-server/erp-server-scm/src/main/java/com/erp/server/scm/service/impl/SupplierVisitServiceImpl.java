@@ -538,9 +538,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        //供应商 (已审核 + 已启用)
+        //供应商 (已启用)
         List<SupplierEntity> supplierList = supplierService.lambdaQuery()
-                .eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
                 .eq(SupplierEntity::getDisabled, Boolean.FALSE)
                 .list();
         //sku信息
