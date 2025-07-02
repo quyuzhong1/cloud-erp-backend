@@ -35,6 +35,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private SubcontractOrderService subcontractOrderService;
 
+    @Resource
+    private ContractInfoService contractInfoService;
+
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -60,10 +63,31 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //委外订单
                 subcontractOrderApproveEnd(dto);
                 break;
+            case CONTRACT_INFO:
+                //合同管理
+                contractInfoApproveEnd(dto);
+                break;
             default:
                 break;
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 合同管理
+     * @Author jack
+     * @Date 2025-07-02
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean contractInfoApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        ContractInfoEntity entity = contractInfoService.getById(dto.getBusinessId());
+        ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setId(dto.getBusinessId());
+        return contractInfoService.approveEnd(baseApproveParamDTO,entity);
     }
 
     /**
