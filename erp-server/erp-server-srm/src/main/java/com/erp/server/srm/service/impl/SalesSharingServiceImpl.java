@@ -266,11 +266,12 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         return supplierRefUserList.stream().map(SupplierRefUserEntity::getSupplierId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
 
-    //获取供应商的销量设置信息
+    //获取供应商的销量设置信息 (未删除+启用)
     private  List<CfgSupplierSalesEntity> getCfgSupplierSalesEntities(List<String> supplierIds) {
         return FeignQuery.create(CfgSupplierSalesEntity.class)
                 .eq(CfgSupplierSalesEntity::getSupplierId, supplierIds.get(0))
                 .eq(CfgSupplierSalesEntity::getIsDeleted, Boolean.FALSE)
+                .eq(CfgSupplierSalesEntity::getDisabled, Boolean.FALSE)
                 .list();
     }
 
