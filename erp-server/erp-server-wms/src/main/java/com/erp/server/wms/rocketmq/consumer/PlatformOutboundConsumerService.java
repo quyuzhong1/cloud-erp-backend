@@ -152,7 +152,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         String curBillStatus = mainEntity.getBillStatus();
 
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
-        updateStatus.setSoCode(referenceNo);
+        updateStatus.setSoCode(mainEntity.getCode());
         updateStatus.setSoId(mainEntity.getId());
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             updateStatus.setBillStatus(billStatus);
@@ -186,12 +186,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             }
 
             // 校验是否已生成销售出库单
-            boolean exist = soOutstockService.checkExist(referenceNo, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            boolean exist = soOutstockService.checkExist(mainEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
             if (exist) {
-                log.warn("销售订单{} 已生成销售出库单, 忽略生成", referenceNo );
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", mainEntity.getCode() );
                 return ApiResult.success();
             }
-            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(referenceNo);
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(mainEntity.getCode());
             //查询三方仓发货明细，重新赋值明细数据
             if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                 List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryDetailService.listByMainId(thirdWarehouseDeliveryEntity.getId());
