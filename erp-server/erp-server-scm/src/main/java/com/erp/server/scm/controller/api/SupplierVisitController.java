@@ -78,7 +78,7 @@ public class SupplierVisitController extends BaseController {
     @PostMapping("/pagingList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:supplierVisit:pagingList",
+            menuCode = "scm:supplierVisit:paging",
             tableAlias = "sv"
     )
     @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
@@ -128,7 +128,7 @@ public class SupplierVisitController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplierVisit:update",
+            menuCode = "scm:supplierVisit:view",
             serviceClass = SupplierVisitService.class,
             keyIdName = "id")
     @LogViewService

@@ -80,7 +80,7 @@ public class SupplierCredentialController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "供应商证照修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "scm:supplierCredential:update",
+        menuCode = "scm:SupplierCredential:update",
         serviceClass = SupplierCredentialService.class,
         keyIdName = "id")
     public ApiResult<Object> update(@RequestBody  @Validated SupplierCredentialDTO. UpdateListDTO dto) {
@@ -99,7 +99,7 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:supplierCredential:paging",
+            menuCode = "scm:SupplierCredential:paging",
             tableAlias = "sc"
     )
     public ApiResult<List<SupplierCredentialDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -116,7 +116,7 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:supplierCredential:paging",
+            menuCode = "scm:SupplierCredential:paging",
             tableAlias = "sc"
     )
     @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
@@ -134,7 +134,7 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplierCredential:view",
+            menuCode = "scm:SupplierCredential:view",
             serviceClass = SupplierCredentialService.class,
             keyIdName = "id")
     @LogViewService
@@ -153,7 +153,7 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplierCredential:delete",
+            menuCode = "scm:SupplierCredential:delete",
             serviceClass = SupplierCredentialService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "供应商证照删除")
@@ -226,7 +226,7 @@ public class SupplierCredentialController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:supplierCredential:export",
+            menuCode = "scm:SupplierCredential:export",
             tableAlias = "sc"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
