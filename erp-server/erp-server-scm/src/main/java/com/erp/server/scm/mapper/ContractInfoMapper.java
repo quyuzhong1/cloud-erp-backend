@@ -33,21 +33,6 @@ public interface ContractInfoMapper extends BaseMapper<ContractInfoEntity> {
     IPage<ContractInfoDTO.ListDTO> paging(Page query, @Param("params") ContractInfoDTO.PagingParamDTO params);
 
     /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") ContractInfoDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<ContractInfoDTO.ListDTO> listExport(@Param("params") ContractInfoDTO.PagingParamDTO params);
-
-
-    /**
     * 获取状态统计
     * @param searchParam
     * @return
@@ -56,8 +41,7 @@ public interface ContractInfoMapper extends BaseMapper<ContractInfoEntity> {
 
     /**
      * 获取附件信息
-     * @param ids
      * @return
      */
-    List<ContractInfoDTO.ListAttachDTO> listAttachByIds(@Param("ids") List<String> ids);
+    List<ContractInfoDTO.ListAttachDTO> listAttachByIds(@Param("params") ContractInfoDTO.PagingParamDTO params);
 }

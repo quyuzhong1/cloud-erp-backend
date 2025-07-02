@@ -64,7 +64,7 @@
             s.code as supplierCode,
             s.name as supplierName
         from supplier_visit as sv
-                 left join supplier as s on sv.supplier_id = s.id and s.is_deleted  = FALSE
+        left join supplier as s on sv.supplier_id = s.id and s.is_deleted  = FALSE
         where
             ${params.sqlMap.default}
             and sv.is_deleted  = FALSE

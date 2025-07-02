@@ -101,13 +101,6 @@
         <include refid="paging_sql"></include>
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select ci.approve_status, count(id) from contract_info as ci where ci.is_deleted = false group by ci.approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.scm.dto.ContractInfoDTO$ListDTO">
-        <include refid="paging_sql"></include>
-    </select>
     <select id="tabList" resultType="com.erp.model.scm.dto.ContractInfoDTO$TabListDTO">
         SELECT
         ci.status AS tabFlag,
@@ -129,18 +122,20 @@
             ac.attach_name
         FROM
             contract_info AS ci
-                INNER JOIN attachment AS ac ON ci.ID = ac.business_id AND ac.is_deleted = FALSE
-                left join dict_basic as dict on ci.type = dict.value and dict.is_deleted = false and dict.status = true
+            INNER JOIN attachment AS ac ON ci.ID = ac.business_id AND ac.is_deleted = FALSE
+            left join dict_basic as dict on ci.type = dict.value and dict.is_deleted = false and dict.status = true
         WHERE
-            ci.is_deleted = FALSE
-        <if test="ids != null and ids.size > 0">
+        ${params.sqlMap.default}
+        AND ci.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
             and ci.id in
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
         </if>
-        order by ci.type
-
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
     </select>
 
 </mapper>

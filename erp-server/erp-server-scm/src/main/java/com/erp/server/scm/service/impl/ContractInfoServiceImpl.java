@@ -20,7 +20,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
@@ -31,6 +30,7 @@ import com.erp.model.scm.enums.ContractInfoStatusEnum;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.ContractInfoMapper;
@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,11 +70,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_CONTRACT_IN
 @Slf4j
 @Service
 public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper, ContractInfoEntity> implements ContractInfoService {
-    @Autowired
+    @Resource
     private ModuleOperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
@@ -296,19 +295,27 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         searchParam.setPermissionSql(param.getPermissionSql());
         List<ContractInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
 
-        LoginUser defaultLoginUser = UserContext.getDefaultLoginUser();
+        //待我审核
+        //根据单据id查询审核流程
+        LoginUser user = UserContext.getNonLoginUser();
+        int waitMeApproveCount = 0;
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.CONTRACT_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(user.getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            waitMeApproveCount = lambdaQuery().eq(ContractInfoEntity::getId, ids).count();
+        }
         //不通过
         Integer rejectCount = lambdaQuery().eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.REJECT).count();
-        //待我审核
-        Integer approveIngCount = lambdaQuery()
-                .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING)
-                .eq(ContractInfoEntity::getApproveUserId,defaultLoginUser.getUid())
-                .count();
+
         //生效状态
         Map<String, ContractInfoDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(ContractInfoDTO.TabListDTO::getTabFlag, t -> t));
         List<ContractInfoDTO.TabListDTO> result = new ArrayList<>();
 
-        result.add(new ContractInfoDTO.TabListDTO( ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName() , approveIngCount));
+        result.add(new ContractInfoDTO.TabListDTO( ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName() , waitMeApproveCount));
         result.add(new ContractInfoDTO.TabListDTO( ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName() , rejectCount ));
         result.add(new ContractInfoDTO.TabListDTO( ContractInfoStatusEnum.NOT_EFFECTIVE.getCode(), ContractInfoStatusEnum.NOT_EFFECTIVE.getName() , map.containsKey(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode()) ? map.get(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode()).getCount() : 0   ));
         result.add(new ContractInfoDTO.TabListDTO( ContractInfoStatusEnum.EFFECTIVE.getCode(), ContractInfoStatusEnum.EFFECTIVE.getName() , map.containsKey(ContractInfoStatusEnum.EFFECTIVE.getCode()) ? map.get(ContractInfoStatusEnum.EFFECTIVE.getCode()).getCount() : 0   ));
@@ -365,7 +372,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_DELETE);
         }
         // 删除主单数据
         log.info("删除 开始删除合同管理单主单数据，id：【{}】", id);
@@ -613,8 +620,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     }
 
     @Override
-    public ExportZipResultDTO exportZip(BaseIdsDTO.IdsDTO dto) {
-        List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(dto.getIds());
+    public ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO pagingParamDTO) {
+        List<ContractInfoDTO.ListAttachDTO> list = this.baseMapper.listAttachByIds(pagingParamDTO);
         if(CollUtil.isEmpty(list)){
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }

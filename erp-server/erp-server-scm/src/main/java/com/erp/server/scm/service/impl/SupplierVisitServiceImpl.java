@@ -130,20 +130,23 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             attachmentService.batchSave(urlList, nameList, type, id);
 
             //物料
-            if(CollUtil.isNotEmpty(dto.getSkuIdList())){
-                List<String> skuIdList = dto.getSkuIdList();
-                if (CollectionUtils.isNotEmpty(skuIdList)) {
-                    List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
-                    for (String skuId : skuIdList) {
-                        //这是sku 的
-                        SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
-                        visitSku.setSkuId(skuId);
-                        visitSku.setSupplierId(supplierId);
-                        visitSku.setSupplierVisitId(id);
-                        addVisitSkuList.add(visitSku);
-                    }
-                    supplierVisitSkuService.saveBatch(addVisitSkuList);
+            List<String> skuIdList = dto.getSkuIdList();
+            if (CollectionUtils.isNotEmpty(skuIdList)) {
+                //获取到物料信息
+                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+                Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (o1, o2) -> o1));
+
+                List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
+                for (String skuId : skuIdList) {
+                    //这是sku 的
+                    SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
+                    visitSku.setSkuId(skuId);
+                    visitSku.setSkuNo(skuMap.getOrDefault(skuId,""));
+                    visitSku.setSupplierId(supplierId);
+                    visitSku.setSupplierVisitId(id);
+                    addVisitSkuList.add(visitSku);
                 }
+                supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
 
             //添加日志
@@ -262,17 +265,21 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                     .filter(id -> !oldSkuIdList.contains(id))
                     .collect(Collectors.toList());
             if(CollUtil.isNotEmpty(addIds)){
+                //获取到物料信息
+                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(addIds);
+                Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (o1, o2) -> o1));
+
                 for (String skuId : addIds) {
                     //这是sku 的
                     SupplierVisitSkuEntity visitSku = new SupplierVisitSkuEntity();
                     visitSku.setSkuId(skuId);
+                    visitSku.setSkuNo(skuMap.getOrDefault(skuId,""));
                     visitSku.setSupplierId(dto.getSupplierId());
                     visitSku.setSupplierVisitId(dto.getId());
                     addVisitSkuList.add(visitSku);
                 }
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
-                //获取到物料信息
-                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(addIds);
+
                 //添加日志
                 List<Pair<String, String>> addPairList = skuList.stream().map(obj -> new Pair<>(dto.getSupplierId(), obj.getSkuNo())).collect(Collectors.toList());
                 moduleOperateLogService.batchAddModuleOperateLog("添加了一个拜访物料【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
