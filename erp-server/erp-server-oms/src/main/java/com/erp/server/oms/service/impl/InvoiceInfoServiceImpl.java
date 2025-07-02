@@ -212,7 +212,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
