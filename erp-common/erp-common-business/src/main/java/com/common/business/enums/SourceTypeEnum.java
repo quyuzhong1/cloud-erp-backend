@@ -110,6 +110,7 @@ public enum SourceTypeEnum {
     SO_PRICE_CHANGE( "soPriceChange", "销售调价表","so_price_change"),
 
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
+    CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),

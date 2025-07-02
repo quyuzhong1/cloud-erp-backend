@@ -13,6 +13,8 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.wms.aliexpress.model.ApiResponseDTO;
 import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
+import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import com.erp.wms.aliexpress.model.returnorder.ApiReturnOrderResponseDTO;
 import com.erp.wms.aliexpress.service.AliexpressWarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,29 @@ public class CaiNiaoCommonService {
         }catch (Exception e){
             log.error("推送菜鸟仓listing失败，参数：{}，异常：", JSON.toJSONString(aliexpressProductDTO), e);
             return ApiResult.error("推送菜鸟仓listing失败，异常：" + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 推送退货入库单
+     */
+    public ApiResult<?> pushReturnOrder(Object ext) {
+        AliexpressReturnInstockDTO aliexpressProductDTO = JSONUtil.toBean(ext.toString(), AliexpressReturnInstockDTO.class);
+        try {
+            ApiReturnOrderResponseDTO apiResponseDTO = aliexpressWarehouseService.createReturnInstockOrder(aliexpressProductDTO);
+            if (apiResponseDTO.isSuccess()) {
+                //更新
+                return ApiResult.success("推送菜鸟仓退货入库单成功");
+            } else {
+                // 处理失败逻辑
+                String errorMsg = apiResponseDTO.getErrorResponse().getMsg() + apiResponseDTO.getErrorResponse().getSubMsg();
+                log.error("推送菜鸟仓退货入库单失败，参数：{}，错误信息：{}", JSON.toJSONString(aliexpressProductDTO), JSON.toJSONString(apiResponseDTO));
+                return ApiResult.error("推送菜鸟仓退货入库单失败，异常：" + errorMsg);
+            }
+        }catch (Exception e){
+            log.error("推送菜鸟仓退货入库单失败，参数：{}，异常：", JSON.toJSONString(aliexpressProductDTO), e);
+            return ApiResult.error("推送菜鸟仓退货入库单失败，异常：" + e.getMessage());
         }
     }
 }

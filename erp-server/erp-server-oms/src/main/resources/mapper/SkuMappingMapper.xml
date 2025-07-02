@@ -307,6 +307,7 @@
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS platformSkuNo,
+        li.platform_sku_id as platformSkuId,
         li.platform_sku_name AS platformProductName,
         li.platform_spu_no AS platformSpuNo,
         li.platform_spu_name AS platformSpuName
@@ -314,6 +315,13 @@
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE
         AND sm.is_expire=FALSE
+        <!--skuId 列表-->
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
