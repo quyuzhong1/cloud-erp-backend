@@ -927,7 +927,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //头程分摊金额
             BigDecimal allocatedAmount = Objects.nonNull(detailEntity.getAllocatedAmount()) ? detailEntity.getAllocatedAmount() : BigDecimal.ZERO;
             //设置期初费用
-            setInitCost(detailEntity, beforeVO, beforeSkuDetailList,initEntity);
+            setInitCost(detailEntity, beforeVO, beforeSkuDetailList,initEntity,judgeReconciliationDTO);
             //冲期初在途费用 上月开始有账单
             setMidPeriodTransitCost(new FirstMileCostAllocationParamDTO(entity, detailEntity, judgeReconciliationDTO, productAllocatedAmount, currentMonthReceiveQty, receiveQty, deliveryQty, asLastMonthReceiveQty, initEntity));
             //本期分摊费用 本月开始有账单-上月暂估账单
@@ -1140,7 +1140,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
     }
 
-    private void setInitCost(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.PagingVO beforeVO, List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList, InitFirstMileAllocationDetailEntity initEntity) {
+    private void setInitCost(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.PagingVO beforeVO, List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList, InitFirstMileAllocationDetailEntity initEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO) {
         if (Objects.nonNull(beforeVO) && !CollectionUtils.isEmpty(beforeSkuDetailList)) {
             //上期记录
             FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId()) && Objects.equals(e.getPlatformSkuNo(), detailEntity.getPlatformSkuNo())
@@ -1155,11 +1155,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
             }
         } else {
-            if (Objects.nonNull(initEntity) && detailEntity.getFeeType().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode())) {
+            if (Objects.nonNull(initEntity) && detailEntity.getFeeType().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && !judgeReconciliationDTO.isHasOtherReconciliation()) {
                 //期初在途
                 detailEntity.setInitTransitCost(Objects.nonNull(initEntity.getInitTransitCost()) ? initEntity.getInitTransitCost() : BigDecimal.ZERO);
                 detailEntity.setInitEstimatedCost(Objects.nonNull(initEntity.getInitEstimatedCost()) ? initEntity.getInitEstimatedCost() : BigDecimal.ZERO);
-            } else if (Objects.nonNull(initEntity) && detailEntity.getFeeType().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode())) {
+            } else if (Objects.nonNull(initEntity) && detailEntity.getFeeType().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && !judgeReconciliationDTO.isHasOtherReconciliation()) {
                 detailEntity.setInitTransitCost(Objects.nonNull(initEntity.getInitTransitTariff()) ? initEntity.getInitTransitTariff() : BigDecimal.ZERO);
                 detailEntity.setInitEstimatedCost(Objects.nonNull(initEntity.getInitEstimatedTariff()) ? initEntity.getInitEstimatedTariff() : BigDecimal.ZERO);
             } else {
