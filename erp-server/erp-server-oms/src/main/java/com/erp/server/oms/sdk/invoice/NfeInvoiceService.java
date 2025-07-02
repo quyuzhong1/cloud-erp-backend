@@ -120,7 +120,7 @@ public class NfeInvoiceService {
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity);
             createDTO.setCliente(nfeClienteDTO);
-            log.warn("地址信息已查询完成！");
+            log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
             getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
             log.warn("税务信息已查询完成！");
@@ -330,6 +330,8 @@ public class NfeInvoiceService {
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
         String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
         nfeClienteDTO.setCep(newCep);
+        nfeClienteDTO.setBairro(getBairroStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua(),nfeClienteDTO.getBairro()));
+        nfeClienteDTO.setRua(getRuaStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua()));
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
@@ -344,6 +346,57 @@ public class NfeInvoiceService {
         return nfeClienteDTO;
     }
 
+    private String getRuaStr(String dictPlatform, String rua) {
+        if (CharSequenceUtil.isBlank(rua)){
+            return rua;
+        }
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(dictPlatform)){
+            //按照英文分号分割，取分号后面的内容
+            if (rua.contains(";")){
+                String[] split = rua.split(";");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1 ; i < split.length; i++){
+                    sb.append(split[i]);
+                }
+                return sb.toString();
+            }
+            return rua;
+        }else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dictPlatform)){
+            //英文冒号-:，符号前信息拼接到bairro，符号后信息保留到rua
+            if (rua.contains(":")){
+                String[] split = rua.split(":");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 1 ; i < split.length; i++){
+                    sb.append(split[i]);
+                }
+                return sb.toString();
+            }
+            return rua;
+        }else {
+            return rua;
+        }
+    }
+
+    private String getBairroStr(String dictPlatform, String rua, String bairro) {
+        if (CharSequenceUtil.isBlank(rua)){
+            return bairro;
+        }
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(dictPlatform)){
+            //英文分号-;，符号前信息拼接到bairro，符号后信息保留到rua
+            if (rua.contains(";")){
+                String[] split = rua.split(";");
+                return split[0];
+            }
+        }else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dictPlatform)){
+            //英文冒号-:，符号前信息拼接到bairro，符号后信息保留到rua
+            if (rua.contains(":")){
+                String[] split = rua.split(":");
+                return split[0];
+            }
+        }
+        return bairro;
+    }
+
     private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cEntity soB2cEntity) {
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
         if (ObjUtil.isEmpty(receiverEntity)) {
@@ -351,13 +404,13 @@ public class NfeInvoiceService {
         }
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
-            nfeClienteDTO.setBairro(receiverEntity.getCityName());
+            nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())){
             nfeClienteDTO.setMobile(receiverEntity.getReceiverTelNumber());
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())){
-            nfeClienteDTO.setRua(receiverEntity.getFirstAddress() + receiverEntity.getSecondAddress() + receiverEntity.getFullAddress());
+            nfeClienteDTO.setRua(receiverEntity.getSecondAddress() + receiverEntity.getFullAddress());
         }
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
