@@ -69,4 +69,6 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     List<SoB2cReturnDTO.ReturnLogisticsDTO> logisticsCodePreview(List<String> ids);
 
     BatchResultDTO updateLogisticsCode(SoB2cReturnDTO.ReturnLogisticsDTO dto,SoB2cReturnEntity returnEntity);
+
+    List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockPreview(List<String> ids);
 }
