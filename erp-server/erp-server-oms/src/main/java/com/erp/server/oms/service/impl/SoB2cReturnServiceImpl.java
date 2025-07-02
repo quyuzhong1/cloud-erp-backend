@@ -433,9 +433,17 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<String> shopIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = CollUtil.isNotEmpty(shopIds) ? shopInfoService.listByIds(shopIds) : Collections.emptyList();
         Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        List<String> skuIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> soIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
         for (SoB2cReturnDTO.ReturnInstockDTO returnInstockDTO : returnLogisticsDTOS) {
             returnInstockDTO.setDictPlatformName(PlatformDictEnum.getNameByCode(returnInstockDTO.getDictPlatform()));
             returnInstockDTO.setShopName(shopMap.get(returnInstockDTO.getShopId()));
+            returnInstockDTO.setProductName(skuMap.get(returnInstockDTO.getSkuId()));
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList1 = soOutstockDetailEntityList.stream().filter(v->v.getSoId().equals(returnInstockDTO.getSoId()) && v.getSkuId().equals(returnInstockDTO.getSkuId())).collect(Collectors.toList());
+            returnInstockDTO.setOutQty(soOutstockDetailEntityList1.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
         }
         return returnLogisticsDTOS;
     }

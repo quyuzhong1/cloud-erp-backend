@@ -701,6 +701,10 @@ public class SoB2cReturnDTO implements Serializable {
         private String skuId;
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * 销售数量
          */
         private Integer saleQty;
@@ -709,9 +713,14 @@ public class SoB2cReturnDTO implements Serializable {
          */
         private Integer returnQty;
         /**
+         * 出库数量
+         */
+        private Integer outQty;
+        /**
          * 退货入库数量
          */
         @NotNull(message = "退货入库数量不能为空")
+        @Min(value = 1, message = "退货入库数量不能小于1")
         private Integer instockQty;
         /**
          * 仓库id
