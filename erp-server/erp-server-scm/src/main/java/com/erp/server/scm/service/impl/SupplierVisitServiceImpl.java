@@ -287,32 +287,50 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
         }
 
-        //删除附件
-        attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+
         //附件集合
         List<String> attachmentUrlList = dto.getAttachmentUrlList();
         List<String> attachmentNameList = dto.getAttachmentNameList();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
-            //处理附件
-            Class<SupplierVisitEntity> credentialClass = SupplierVisitEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
-            for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity addAttachment = new AttachmentEntity();
-                addAttachment.setAttachUrl(attachmentUrlList.get(i));
-                addAttachment.setAttachName(attachmentNameList.get(i));
-                addAttachment.setBusinessId(entity.getId());
-                addAttachment.setType(type);
-                batchAttachmentList.add(addAttachment);
+            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessId(entity.getId());
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 处理删除的数据
+                List<AttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(remove)){
+                    attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                }
             }
-            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
-                attachmentService.saveBatch(batchAttachmentList);
+
+            //处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> add = attachmentUrlList.stream()
+                    .filter(url -> !oldUrlList.contains(url))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(add)){
+                //处理附件
+                Class<SupplierVisitEntity> credentialClass = SupplierVisitEntity.class;
+                TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+                //获取到表名
+                String type = tableName.value();
+                List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    AttachmentEntity addAttachment = new AttachmentEntity();
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    addAttachment.setAttachName(attachmentNameList.get(i));
+                    addAttachment.setBusinessId(entity.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
+                if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                    attachmentService.saveBatch(batchAttachmentList);
+                }
             }
+        }else {
+            //删除所有 附件
+            attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
         }
-
-
         return Boolean.TRUE;
     }
 
