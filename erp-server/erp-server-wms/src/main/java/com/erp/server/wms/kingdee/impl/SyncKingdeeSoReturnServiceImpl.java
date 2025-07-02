@@ -27,6 +27,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -55,6 +56,8 @@ import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -293,6 +296,16 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
+            String platformType = customerInfoEntity.getPlatformType();
+            if(StringUtils.isNotBlank(platformType)) {
+            	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                        .eq(DictBasicEntity::getName, platformType)
+                        .list();
+            	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+            		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+            	}
+            }
             //收款条件
             List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
             DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());

@@ -532,7 +532,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName,"")
                 .update();
         //推送金蝶
-        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DELETE);
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
@@ -557,8 +557,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         this.removeById(id);
         //清除明细主表信息
         poReconciliationDetailScmService.cleanDetailByMainId(id);
-        //推送金蝶
-        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DELETE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
