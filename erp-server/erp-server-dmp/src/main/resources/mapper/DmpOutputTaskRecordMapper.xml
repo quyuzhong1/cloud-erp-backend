@@ -395,11 +395,11 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         order by t.id asc limit 1
     </select>
     <select id="pagingOutLatest" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingViewDTO">
-        SELECT sourceId, createTime, status, returnMsg
+        SELECT sourceId, updateTime, status, returnMsg
         FROM (
         SELECT
         m.source_id AS sourceId,
-        t.create_time AS createTime,
+        t.update_time AS updateTime,
         t.status,
         t.response_data AS returnMsg,
         ROW_NUMBER() OVER (

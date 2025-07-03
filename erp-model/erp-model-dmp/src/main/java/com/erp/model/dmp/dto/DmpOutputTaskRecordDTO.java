@@ -1,11 +1,7 @@
 package com.erp.model.dmp.dto;
 
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -13,7 +9,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -44,7 +39,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
 
         private String returnMsg;
 
-        private LocalDateTime createTime;
+        private LocalDateTime updateTime;
 
     }
     /**
