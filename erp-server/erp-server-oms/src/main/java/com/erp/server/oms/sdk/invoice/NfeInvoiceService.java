@@ -21,6 +21,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -104,7 +105,8 @@ public class NfeInvoiceService {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private FileFeign filefeign;
-
+    @Resource
+    private OperateLogService operateLogService;
 
     @Transactional(rollbackFor = Exception.class)
     public void createInvoice(SoB2cEntity soB2cEntity,Boolean isAsync) {
@@ -139,6 +141,7 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+            operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return;
         }
         //开票成功
@@ -184,6 +187,7 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+            operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return;
         }
         if (Objects.isNull(resultDTO) || !resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
@@ -194,6 +198,7 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(JSONUtil.toJsonStr(resultDTO));
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("返回信息：{}",JSONUtil.toJsonStr(resultDTO)), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return;
         }
         //回写序列号和起始编号
