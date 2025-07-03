@@ -32,6 +32,19 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String platformCode;
 
     /**
+     * 店铺id
+     */
+    private String shopId;
+
+    /**
+     * 店铺名称
+     */
+    private String shopName;
+    /**
+     * 货主编码
+     */
+    private String ownerCode;
+    /**
      * 配送方式
      */
     private String shippingMethod;
@@ -202,6 +215,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String productSku;
 
         /**
+         * 海外仓产品SKU id
+         */
+        private String productSkuId;
+
+        /**
          * 数量
          */
         private Integer quantity;
@@ -214,13 +232,15 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
 
         private String sourceSkuId;
 
+        private String platformDetailId;
         /**
          * 海关编码
          */
         private String hsCode;
 
-        public Item(String productSku, Integer quantity,String hsCode) {
+        public Item(String productSku, Integer quantity,String hsCode,String productSkuId) {
             this.productSku = productSku;
+            this.productSkuId = productSkuId;
             this.quantity = quantity;
             this.hsCode = hsCode;
         }

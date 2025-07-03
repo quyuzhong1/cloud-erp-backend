@@ -54,15 +54,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      **/
     IPage<SoOutstockDTO.PdaPagingViewDTO> pdaPaging(Page query, @Param("params") SoOutstockDTO.PdaPagingParamDTO params);
 
-    /**
-     * pda:列表状态数量统计
-     * @Author Luo_WG
-     * @Date 2023/8/22 15:06
-     * @param params
-     * @return java.lang.Integer
-     **/
-    Integer listCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
-
 
     Integer pdaListCount(@Param("params") SoOutstockDTO.PagingParamDTO params);
 

@@ -1,7 +1,6 @@
 package com.erp.server.scm.controller.api;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -172,7 +171,7 @@ public class DropDownListController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listVisitType() {
         List<SupplierVisitEnum> list = Arrays.asList(SupplierVisitEnum.values());
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

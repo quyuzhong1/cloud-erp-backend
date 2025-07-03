@@ -21,6 +21,7 @@ public enum OmsPlatformEnum {
     OMS_SPT("spt","速派通"),
     OMS_ECCANG("eccang","易仓"),
     JIFENG("jifeng","极风"),
+    CAI_NIAO("cainiao","菜鸟仓"),
     ;
 
     @EnumValue
@@ -41,7 +42,15 @@ public enum OmsPlatformEnum {
         }
         return null;
     }
-
+    public static String getName(String code) {
+        OmsPlatformEnum[] values = values();
+        for (OmsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return value.name;
+            }
+        }
+        return null;
+    }
     public static boolean isThirdWarehouse(String code) {
         OmsPlatformEnum[] values = values();
         for (OmsPlatformEnum value : values) {

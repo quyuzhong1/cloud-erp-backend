@@ -40,7 +40,7 @@ public interface NfeInvoiceConverter {
     })
     NfeInvoiceDTO.NfeCancelDTO invoiceInfoEntityToNfeCancel(InvoiceInfoEntity invoiceInfoEntity);
     @Mappings({
-            @Mapping(target = "bairro", source = "districtName"),
+            @Mapping(target = "bairro", source = "firstAddress"),
             @Mapping(target = "cep", source = "postCode"),
             @Mapping(target = "cityId", source = "cityName"),
             @Mapping(target = "country", source = "country"),

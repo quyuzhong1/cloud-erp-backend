@@ -3,6 +3,8 @@ package com.erp.rpc.dmp.feign;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -285,6 +287,13 @@ public interface DmpTaskFeign {
     DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
 
     /**
+     * 根据来源id,来源类型获取推送记录
+     * @return
+     */
+    @GetMapping("feign/outputTaskRecord/getOutputTaskByIdAndType")
+    List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@RequestParam(value = "sourceIdList") List<String> sourceIdList, @RequestParam(value = "sourceType") String sourceType);
+
+    /**
      * 创建第三方任务
      */
     @PostMapping("feign/createThirdWarehouseTask")
@@ -295,4 +304,11 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/removeThirdWarehouseTask")
     void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity);
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("feign/pagingOutLatest")
+    PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
+
 }

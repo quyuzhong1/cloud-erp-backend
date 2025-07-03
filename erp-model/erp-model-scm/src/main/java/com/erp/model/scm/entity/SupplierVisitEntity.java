@@ -24,7 +24,8 @@ import java.time.LocalDate;
 @Setter
 @Accessors(chain = true)
 @TableName("supplier_visit")
-public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
+public class
+SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
 
     /**
      * 供应商id
@@ -36,7 +37,7 @@ public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
      * 类型
      */
     @TableField("visit_type")
-    private SupplierVisitEnum visitType;
+    private String visitType;
 
     /**
      * 拜访时间
@@ -62,7 +63,7 @@ public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
      * 结果
      */
     @TableField("result")
-    private SupplierVisitResultEnum result;
+    private String result;
 
 
 

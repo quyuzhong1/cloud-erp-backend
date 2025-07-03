@@ -1,11 +1,7 @@
 package com.erp.model.dmp.dto;
 
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -13,7 +9,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -29,6 +24,24 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class DmpOutputTaskRecordDTO implements Serializable {
 
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+        private String sourceId;
+
+        private String status;
+
+        private String statusName;
+
+        private String returnMsg;
+
+        private LocalDateTime updateTime;
+
+    }
     /**
     * 详情
     */
@@ -218,6 +231,20 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 目标平台
+         */
+        private List<String> targetPlatformCodeList;
+
+        /**
+         * 目标平台
+         */
+        private List<String> typeList;
+        /**
+         * 来源Id
+         */
+        private List<String> sourceIdList;
 
     }
 

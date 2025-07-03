@@ -212,7 +212,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
@@ -267,10 +266,25 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICING.getCode());
         soB2cService.updateById(soB2cEntity);
         //异步生成发票,调用第三方
-        nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
-        //添加日志
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");
-        return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
+        try {
+            Boolean result = nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
+            if (result){
+                //添加日志
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");
+                return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
+            }else {
+                //添加日志
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "开票失败");
+                return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票失败");
+            }
+        }catch (Exception e){
+            InvoiceInfoEntity entity = this.getInvoicingBySoId(soB2cEntity.getId());
+            entity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            entity.setRemark(e.getMessage());
+            this.updateNfeStatusById(entity);
+            operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
+            return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票失败");
+        }
     }
 
 

@@ -2,8 +2,11 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -310,6 +313,20 @@ public class DmpFeignController extends BaseController {
     }
 
     /**
+     * 获取推送记录
+     * @author zdy
+     * @date: 2025/04/01 12:00
+     * @return Boolean
+     */
+    @GetMapping("/outputTaskRecord/getOutputTaskByIdAndType")
+    public List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@RequestParam(value = "sourceIdList") List<String> sourceIdList, @RequestParam(value = "sourceType") String sourceType) {
+        if (CollectionUtils.isEmpty(sourceIdList) || CharSequenceUtil.isAllBlank(sourceType)){
+            return new ArrayList<>();
+        }
+        return dmpOutputTaskRecordService.getOutputTaskByIdAndType(sourceIdList, sourceType);
+    }
+
+    /**
      * 创建第三方任务
      */
     @PostMapping("/createThirdWarehouseTask")
@@ -323,5 +340,14 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/removeThirdWarehouseTask")
     public void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity){
         tbTaskTypeService.removeThirdWarehouseTask(overseasProviderEntity);
+    }
+
+
+    /**
+     * 查询最新推送记录
+     */
+    @PostMapping("/pagingOutLatest")
+    public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto){
+       return dmpOutputTaskRecordService.pagingOutLatest(dto);
     }
 }

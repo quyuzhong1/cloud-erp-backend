@@ -2,11 +2,13 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -93,6 +95,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
     @Resource
     private SoReturnInstockDetailService soReturnInstockDetailService;
 
+	@Resource
+	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -149,7 +153,17 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoOutstockEntity soOutstock = null;
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
 		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
-			soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
+			ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
+			if(dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)){
+				//查询三方仓发货单
+				thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(dto.getOrderReferenceNo());
+				if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+					String soCode = thirdWarehouseDeliveryEntity.getSoCode();
+					soB2cEntity = soB2cFeign.getSoCode(soCode);
+				}
+			}else{
+				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
+			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
 			}
@@ -254,7 +268,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
-		soReturnInstockEntity.setSourceCode(dto.getOrderReferenceNo());
+		soReturnInstockEntity.setSourceCode(Objects.nonNull(soB2cEntity)?soB2cEntity.getCode():dto.getOrderReferenceNo());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
@@ -392,7 +406,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
-			soReturnInstockEntity.setCurrency(shopInfoEntity.getDefaultCurrency());
+			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
 		}
 		if (StringUtils.isBlank(shopInfoEntity.getCustomerId())){
 			ServiceException.runError("店铺对应客户信息为空:{}", shopInfoEntity.getName());

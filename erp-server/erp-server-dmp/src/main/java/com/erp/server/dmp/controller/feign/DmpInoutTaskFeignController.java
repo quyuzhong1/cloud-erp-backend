@@ -10,6 +10,7 @@ import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
@@ -170,6 +171,17 @@ public class DmpInoutTaskFeignController{
 				systemCodeList,
 				billTypeList,
 				nextLevelIdList);
+	}
+
+	/**
+	 * 更新任务
+	 */
+	@PostMapping("/updateDmpOutputTaskRecordEntity")
+	public Boolean updateDmpOutputTaskRecordEntity(@RequestBody List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList){
+		if(CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)){
+			return null;
+		}
+		return dmpOutputTaskRecordService.updateBatchById(dmpOutputTaskRecordEntityList);
 	}
 
 }

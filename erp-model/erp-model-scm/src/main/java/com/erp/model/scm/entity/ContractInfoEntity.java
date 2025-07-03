@@ -29,7 +29,7 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     * 审核状态 
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 单据编号
     */
@@ -41,6 +41,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     @TableField("service_provider_id")
     private String serviceProviderId;
     /**
+    * 服务商名称
+    */
+    @TableField("service_provider_name")
+    private String serviceProviderName;
+    /**
     * 审核时间
     */
     @TableField("approve_time")
@@ -50,6 +55,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     */
     @TableField("approve_user_id")
     private String approveUserId;
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
     /**
     * 合同类型,contractType字典
     */
@@ -65,6 +75,11 @@ public class ContractInfoEntity extends BaseEntity<ContractInfoEntity> {
     */
     @TableField("expire_date")
     private LocalDate expireDate;
+    /**
+     * ContractInfoStatusEnum 生效状态：notEffective=未生效,effective=生效中,expired=失效
+     */
+    @TableField("status")
+    private String status;
     /**
     * 是否禁用
     */
