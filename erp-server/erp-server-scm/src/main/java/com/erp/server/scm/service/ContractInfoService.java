@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -115,7 +116,7 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     * @param response
     * @return
     */
-    void exportList(ContractInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(ContractInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -125,4 +126,7 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, ContractInfoEntity entity);
 
+    BatchResultDTO enable(String id, Boolean disabled);
+
+    ExportZipResultDTO exportZip(ContractInfoDTO.PagingParamDTO dto);
 }
