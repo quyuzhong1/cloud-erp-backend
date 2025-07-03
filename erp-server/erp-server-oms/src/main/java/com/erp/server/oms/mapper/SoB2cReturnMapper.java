@@ -32,4 +32,6 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
     List<SoB2cReturnDetailEntity> listDetailBySoIds(@Param("ids")List<String> soIds);
 
     List<SoB2cReturnDTO.ReturnLogisticsDTO> selectLogisticsCodePreview(@Param("ids") List<String> ids);
+
+    List<SoB2cReturnDTO.ReturnInstockDTO> selectReturnInstockPreview(@Param("detailIds") List<String> detailIds);
 }

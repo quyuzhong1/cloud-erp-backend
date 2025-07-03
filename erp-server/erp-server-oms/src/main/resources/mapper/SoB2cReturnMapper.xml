@@ -140,12 +140,38 @@
             sbr.shop_id,
             sbr.platform_order_no,
             sbr.platform_return_no,
+            sbr.return_logistic_code,
             sbr.so_id,
             sbr.so_code
         from so_b2c_return sbr
         where  sbr.is_deleted = false
             and sbr.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="selectReturnInstockPreview"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$ReturnInstockDTO">
+        select
+        sbr.id,
+        sbr.code,
+        sbr.dict_platform,
+        sbr.shop_id,
+        sbr.platform_order_no,
+        sbr.platform_return_no,
+        sbr.return_logistic_code,
+        sbr.so_id,
+        sbr.so_code,
+        sbrd.id as detailId,
+        sbrd.sku_id,
+        sbrd.sku_no,
+        sbrd.return_qty,
+        sbrd.sale_qty
+        from so_b2c_return sbr
+        left join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id
+        where  sbr.is_deleted = false and sbrd.is_deleted = false
+        and sbrd.id in
+        <foreach collection="detailIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
     </select>

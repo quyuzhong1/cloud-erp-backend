@@ -33,20 +33,18 @@ import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.convert.B2cReturnConverter;
 import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.service.*;
@@ -404,6 +402,50 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         String msg = CharSequenceUtil.format("用户【{}】更新退货订单【{}】物流单号由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(), returnEntity.getCode(), returnEntity.getReturnLogisticCode(), dto.getReturnLogisticCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_RETURN.getCode(), returnEntity.getId(), "修改操作");
         return BatchResultDTO.success(dto.getId(), dto.getCode(), "修改成功");
+    }
+
+    @Override
+    public List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockPreview(List<String> detailIds) {
+        if (CollUtil.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
+        List<SoB2cReturnDetailEntity> detailEntityList = soB2cReturnDetailService.listByIds(detailIds);
+        List<String> ids = detailEntityList.stream().map(SoB2cReturnDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        //校验数据
+        this.listByIds(ids).forEach(v->{
+            if (!v.getStatus().equals(SoB2cReturnStatusEnum.RETURNED.code)){
+                throw new ServiceException("只有已退货的订单才能下推入库单");
+            }
+        });
+        //退货订单明细没有下推退货通知单，且没有关联退货入库单时，明细允许下推退货入库单
+        List<SoReturnNoticeDetailEntity> returnNoticeDetailEntityList = soReturnNoticeFeign.listDetailBySourceDetailIds(detailIds);
+        if (CollUtil.isNotEmpty(returnNoticeDetailEntityList)){
+            throw new ServiceException("明细已下推退货通知单，无法下推退货入库单");
+        }
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntityList = soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIds);
+        if (CollUtil.isNotEmpty(returnInstockDetailEntityList)){
+            throw new ServiceException("明细已关联退货入库单，无法下推退货入库单");
+        }
+        List<SoB2cReturnDTO.ReturnInstockDTO> returnLogisticsDTOS = baseMapper.selectReturnInstockPreview(detailIds);
+        if (CollUtil.isEmpty(returnLogisticsDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> shopIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = CollUtil.isNotEmpty(shopIds) ? shopInfoService.listByIds(shopIds) : Collections.emptyList();
+        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        List<String> skuIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> soIds = returnLogisticsDTOS.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        for (SoB2cReturnDTO.ReturnInstockDTO returnInstockDTO : returnLogisticsDTOS) {
+            returnInstockDTO.setDictPlatformName(PlatformDictEnum.getNameByCode(returnInstockDTO.getDictPlatform()));
+            returnInstockDTO.setShopName(shopMap.get(returnInstockDTO.getShopId()));
+            returnInstockDTO.setProductName(skuMap.get(returnInstockDTO.getSkuId()));
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList1 = soOutstockDetailEntityList.stream().filter(v->v.getSoId().equals(returnInstockDTO.getSoId()) && v.getSkuId().equals(returnInstockDTO.getSkuId())).collect(Collectors.toList());
+            returnInstockDTO.setOutQty(soOutstockDetailEntityList1.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
+        }
+        return returnLogisticsDTOS;
     }
 
     private void fillBindReturnInstockView(List<SoB2cReturnDTO.BindReturnInstockViewDTO> soB2cReturnEntityList) {

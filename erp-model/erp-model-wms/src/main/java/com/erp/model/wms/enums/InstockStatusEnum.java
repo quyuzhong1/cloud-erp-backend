@@ -15,6 +15,7 @@ public enum InstockStatusEnum implements EnumMessage {
     NOT_IN_STOCK("0", "未入库"),
     PARTIALLY_IN_STOCK("1", "部分入库"),
     FULLY_IN_STOCK("2", "已入库"),
+    FULLY_OUT_STOCK("3", "超出入库"),
     ;
 
     /**

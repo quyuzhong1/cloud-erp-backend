@@ -6,6 +6,11 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
@@ -330,4 +335,16 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate);
+
+    /**
+     * 下推退货入库单保存
+     *
+     * @param soB2cReturnEntity
+     * @param detailEntityList
+     * @param returnInstockDTOS
+     * @param soB2cEntity
+     * @param b2cDetailEntityList
+     * @return
+     */
+    BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList);
 }

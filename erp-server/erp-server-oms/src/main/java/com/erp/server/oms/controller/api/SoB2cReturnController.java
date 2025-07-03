@@ -198,4 +198,14 @@ public class SoB2cReturnController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 下推退货入库单预览
+     * @param idsDTO 明细id
+     * @return
+     */
+    @PostMapping("/returnInstockPreview")
+    public ApiResult<List<SoB2cReturnDTO.ReturnInstockDTO>> returnInstockPreview(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
+        return success(soB2cReturnService.returnInstockPreview(idsDTO.getIds()));
+    }
 }
