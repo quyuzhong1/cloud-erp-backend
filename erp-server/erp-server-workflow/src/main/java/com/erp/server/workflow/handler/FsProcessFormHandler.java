@@ -1503,7 +1503,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
                         // 获取系统明细数据
                         Map<String, Object> sysRowData = new HashMap<>();
-                        if (sysParentId != null) {
+                        if (CharSequenceUtil.isNotBlank(sysParentId)) {
                             Object sysDetailObj = variablesMap.get(sysParentId);
                             if (sysDetailObj instanceof List) {
                                 List<Map<String, Object>> sysDetailList = (List<Map<String, Object>>) sysDetailObj;

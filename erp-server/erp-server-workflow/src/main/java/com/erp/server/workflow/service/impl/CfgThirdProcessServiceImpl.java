@@ -1,51 +1,48 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.ThirdConstants;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
-import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.dto.CfgThirdProcessDTO;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.CfgThirdProcessMapper;
-import com.erp.server.workflow.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.workflow.service.CfgProcessFieldMapService;
+import com.erp.server.workflow.service.CfgProcessValueMapService;
+import com.erp.server.workflow.service.CfgThirdProcessService;
+import com.erp.server.workflow.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgThirdProcessDTO;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_THIRD_PROCESS;
 
@@ -144,6 +141,9 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         view.getFieldMapList().forEach(cfgProcessFieldMapDTO -> {
             cfgProcessFieldMapDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getThirdFieldType()).getName());
             cfgProcessFieldMapDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getSysFieldType()).getName());
+            //唯一值
+            String uniqueCode = CharSequenceUtil.format("{}-{}", CharSequenceUtil.isBlank(cfgProcessFieldMapDTO.getSysParentId()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : cfgProcessFieldMapDTO.getSysParentId(), cfgProcessFieldMapDTO.getSysField());
+            cfgProcessFieldMapDTO.setUniqueCode(uniqueCode);
         });
         return view;
     }
