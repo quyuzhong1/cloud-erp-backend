@@ -1873,13 +1873,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(CollectionUtils.isEmpty(list)){
             return false;
         }
-
-        //已装箱才能审核
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(list.get(0).getSourceCode());
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException("未生成装箱任务，不允许下推发货单");
-        }
-
+        List<String> ids = list.stream().map(RequisitionApplicationDTO.GenerateDeliverViewDTO::getSourceId).distinct().collect(Collectors.toList());
+        this.listByIds(ids).forEach(v->{
+            if(!ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(v.getDeliveryType())){
+                //已装箱才能审核
+                PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(v.getCode());
+                if (Objects.isNull(taskEntity)) {
+                    throw new ServiceException("未生成装箱任务，不允许下推发货单");
+                }
+            }
+        });
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         list = list.stream().filter(v -> noInventorySkuIds.contains(v.getSkuId()) || v.getDeliveryQty() > 0).collect(Collectors.toList());
