@@ -37,6 +37,8 @@ public class PlatformInboundDTO extends UniqueDto {
     //入库单号
     private String receivingCode;
 
+    //来源单号
+    private String sourceCode;
     //ERP入库单状态
     private String receivingStatus;
 

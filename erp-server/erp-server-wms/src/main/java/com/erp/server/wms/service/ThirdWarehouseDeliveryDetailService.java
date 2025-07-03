@@ -3,6 +3,8 @@ package com.erp.server.wms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 三方仓发货单明细 服务类
@@ -14,4 +16,5 @@ import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 public interface ThirdWarehouseDeliveryDetailService extends SuperService<ThirdWarehouseDeliveryDetailEntity> {
 
 
+    List<ThirdWarehouseDeliveryDetailEntity> listByMainId(String mainId);
 }

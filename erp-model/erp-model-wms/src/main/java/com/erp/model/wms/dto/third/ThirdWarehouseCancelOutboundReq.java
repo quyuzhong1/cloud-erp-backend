@@ -20,6 +20,13 @@ public class ThirdWarehouseCancelOutboundReq extends ThirdWarehouseAuth{
     @NotNull(message = "出库单号不能为空")
     private String orderCode;
 
+    private String erpOrderCode;
+
+    private String warehouseCode;
+
+    private String shopId;
+
+    private String ownerCode;
     //拦截原因
     private String reason;
 

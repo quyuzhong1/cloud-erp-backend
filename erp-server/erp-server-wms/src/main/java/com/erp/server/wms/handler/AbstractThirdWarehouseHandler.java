@@ -105,7 +105,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             //将map转成List<Item>
             createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->{
                     ThirdWarehouseCreateOutboundReq.Item item = createOutboundReq.getItems().stream().filter(i->i.getProductSku().equals(v.getKey())).findFirst().orElse(new ThirdWarehouseCreateOutboundReq.Item());
-               return new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue(),item.getHsCode());
+               return new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue(),item.getHsCode(),item.getProductSkuId());
             }).collect(Collectors.toList()));
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());

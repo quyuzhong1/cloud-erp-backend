@@ -13,10 +13,7 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -99,5 +96,13 @@ public class ListingInfoFeignController extends BaseController {
     @PostMapping("/listInfoByPlatformSkuNo")
     public List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO){
         return listingInfoService.listInfoByPlatformSkuNo(queryDTO);
+    }
+
+    /**
+     * 更新平台SKU ID
+     **/
+    @PostMapping("/updatePlatformSkuId")
+    public boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId) {
+        return listingInfoService.updatePlatformSkuId(listingId,platformSkuId);
     }
 }

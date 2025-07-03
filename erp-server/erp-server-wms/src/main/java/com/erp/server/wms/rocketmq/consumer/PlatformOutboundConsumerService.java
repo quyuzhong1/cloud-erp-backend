@@ -17,23 +17,31 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 下载平台入库数据消费服务
@@ -63,6 +71,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     @Lazy
     @Resource
     private AsyncService asyncService;
+
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+    @Resource
+    private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -104,26 +118,41 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         PlatformOutboundDTO dto = JSONUtil.toBean(ext.toString(), PlatformOutboundDTO.class);
         log.warn("第三方出库单参数>>>>>>>{}",JSONUtil.toJsonStr(dto));
         //这个是B2c销售订单code
-        String soB2cCode = dto.getReferenceNo();
+        String referenceNo = dto.getReferenceNo();
         String billStatus = dto.getOrderStatus();
         // 查询已有订单
-        SoB2cEntity mainEntity = soB2cFeign.getSoCode(soB2cCode);
-        if(null == mainEntity){
-            if (CharSequenceUtil.isBlank(soB2cCode)){
+        SoB2cEntity mainEntity;
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
+        if(referenceNo.contains(BusinessNoConstant.WFHD)){
+            //查询三方仓发货单
+            thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
+            if(Objects.isNull(thirdWarehouseDeliveryEntity)){
+                log.error("第三方出库单: 未找到三方仓发货单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
                 return ApiResult.success();
             }
-            // 非ERP单号前缀
-            if (!soB2cCode.startsWith(BusinessNoConstant.XSDS) && !soB2cCode.startsWith(BusinessNoConstant.XSDD)){
+            String soCode = thirdWarehouseDeliveryEntity.getSoCode();
+            mainEntity = soB2cFeign.getSoCode(soCode);
+        }else{
+            mainEntity = soB2cFeign.getSoCode(referenceNo);
+            if(null == mainEntity){
+                if (CharSequenceUtil.isBlank(referenceNo)){
+                    return ApiResult.success();
+                }
+                // 非ERP单号前缀
+                if (!referenceNo.startsWith(BusinessNoConstant.XSDS) && !referenceNo.startsWith(BusinessNoConstant.XSDD)){
+                    return ApiResult.success();
+                }
+                log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
                 return ApiResult.success();
             }
-            log.error("第三方出库单: 未找到B2C销售订单 >>>>>>>{}",JSONUtil.toJsonStr(dto));
-            return ApiResult.success();
+            thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
         }
+
         // 当前单据状态
         String curBillStatus = mainEntity.getBillStatus();
 
         SoB2cDTO.UpdateStatusDTO updateStatus = new SoB2cDTO.UpdateStatusDTO();
-        updateStatus.setSoCode(soB2cCode);
+        updateStatus.setSoCode(mainEntity.getCode());
         updateStatus.setSoId(mainEntity.getId());
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             updateStatus.setBillStatus(billStatus);
@@ -157,14 +186,44 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             }
 
             // 校验是否已生成销售出库单
-            boolean exist = soOutstockService.checkExist(soB2cCode, SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+            boolean exist = soOutstockService.checkExist(mainEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
             if (exist) {
-                log.warn("销售订单{} 已生成销售出库单, 忽略生成", soB2cCode );
+                log.warn("销售订单{} 已生成销售出库单, 忽略生成", mainEntity.getCode() );
                 return ApiResult.success();
             }
-            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cCode);
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(mainEntity.getCode());
+            //查询三方仓发货明细，重新赋值明细数据
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryDetailService.listByMainId(thirdWarehouseDeliveryEntity.getId());
+                if(CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntityList)){
+                    LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
+                    List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Arrays.asList(mainEntity.getId()));
+                    for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntityList) {
+                        //表示有啊
+                        SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
+                        // 明细记录平台单号
+                        addDTO.setPlatformCode(mainEntity.getPlatformCode());
+                        addDTO.setSkuId(thirdWarehouseDeliveryDetailEntity.getSkuId());
+                        addDTO.setSkuNo(thirdWarehouseDeliveryDetailEntity.getSkuNo());
+                        SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getSkuId().equals(thirdWarehouseDeliveryDetailEntity.getSourceSkuId())).findFirst().orElse(new SoB2cDetailEntity());
+                        addDTO.setSourceDetailId(soB2cDetailEntity.getSourceDetailId());
+                        addDTO.setSoDetailId(soB2cDetailEntity.getId());
+                        addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
+                        addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
+                        addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                        addDTO.setRemark("三方仓出库自动生成");
+                        wantDetailList.add(addDTO);
+                    }
+                    generateB2cDTO.setDetailList(wantDetailList);
+                }
+                generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            }
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
+                thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+            }
         }
 
         if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {

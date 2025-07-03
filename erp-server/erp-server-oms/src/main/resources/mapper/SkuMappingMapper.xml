@@ -207,6 +207,7 @@
         li.platform_spu_name,
         li.platform_fn_sku,
         li.third_barcode,
+        li.platform_sku_id,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.update_user_name,
@@ -216,7 +217,8 @@
         sm.dict_platform,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name
+        op.short_name,
+        li.auth_id as authId
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
@@ -247,6 +249,7 @@
         sm.product_sku_no,
         li.platform_sku_no AS warehouseSkuNo,
         li.platform_sku_name AS warehouseProductName,
+        li.platform_sku_id,
         li.match_result,
         li.third_barcode,
         sm.warehouse_id,
@@ -304,6 +307,7 @@
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS platformSkuNo,
+        li.platform_sku_id as platformSkuId,
         li.platform_sku_name AS platformProductName,
         li.platform_spu_no AS platformSpuNo,
         li.platform_spu_name AS platformSpuName
@@ -311,6 +315,13 @@
         INNER JOIN listing_info li ON sm.listing_id = li.id AND li.is_deleted = FALSE
         WHERE sm.is_deleted = FALSE
         AND sm.is_expire=FALSE
+        <!--skuId 列表-->
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN

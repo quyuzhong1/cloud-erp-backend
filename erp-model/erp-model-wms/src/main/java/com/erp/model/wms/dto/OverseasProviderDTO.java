@@ -3,12 +3,10 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.ibatis.annotations.Result;
 
 import java.io.Serializable;
 import java.util.List;
@@ -27,6 +25,31 @@ import javax.validation.constraints.NotBlank;
 @Data
 @NoArgsConstructor
 public class OverseasProviderDTO implements Serializable {
+
+    /**
+     * 产品推送设置DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductPushSettingDTO {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 开启API推送
+         */
+        @NotNull(message = "开启API推送不能为空")
+        private Boolean isProductSync;
+
+        /**
+         * 货主编码
+         */
+        private String ownerCode;
+
+    }
 
     /**
      * 详情
@@ -80,6 +103,10 @@ public class OverseasProviderDTO implements Serializable {
          * OMS授权token
          */
         private String token;
+        /**
+         * shopAccount
+         */
+        private String shopAccount;
     }
     /**
     * 详情
@@ -284,6 +311,15 @@ public class OverseasProviderDTO implements Serializable {
         private LocalDateTime authExpireTime;
 
         private Map<String,Object> authJson;
+        /**
+         * 开启API推送
+         */
+        private Boolean isProductSync;
+
+        /**
+         * 货主编码
+         */
+        private String ownerCode;
     }
 
     /**
@@ -303,6 +339,7 @@ public class OverseasProviderDTO implements Serializable {
          * OMS注册邮箱: email
          * OMS授权token: token
          * wms系统域名: domain
+         * 店铺账号 ：shopAccount
          */
         @NotNull(message = "授权的信息不能为空")
         private Map<String, Object> authJson;

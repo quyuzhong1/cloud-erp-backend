@@ -20,4 +20,14 @@ public class ThirdWarehouseCancelInboundReq {
 
     //erp单号
     private String sourceCode;
+    /**
+     * 店铺id
+     */
+    private String shopId;
+
+    /**
+     * 货主编码
+     */
+    private String ownerCode;
+    private String warehouseCode;
 }

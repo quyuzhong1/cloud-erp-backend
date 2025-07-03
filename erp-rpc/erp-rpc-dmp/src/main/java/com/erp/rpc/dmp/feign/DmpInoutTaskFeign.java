@@ -2,10 +2,12 @@ package com.erp.rpc.dmp.feign;
 
 
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,5 +47,17 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/inputDetailList")
     List<DmpInoutDTO.ListDTO> inputDetailList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList);
-    
+
+    /**
+     * 公共-查询输入任务明细记录
+     */
+    @PostMapping("dmpInout/querySyncByIds")
+    ApiResult<?> querySyncIds(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+
+    /**
+     * 更新任务
+     */
+    @PostMapping("feign/inout/updateDmpOutputTaskRecordEntity")
+    Boolean updateDmpOutputTaskRecordEntity(@RequestBody List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
 }

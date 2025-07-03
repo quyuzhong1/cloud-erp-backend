@@ -62,6 +62,12 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     @TableField("shipping_method")
     private String shippingMethod;
 
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+
     @TableField(exist = false)
     private List<ThirdWarehouseDeliveryDetailEntity> detailEntityList;
 

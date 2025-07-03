@@ -28,6 +28,8 @@ public class DmpSyncTaskDTO {
          */
         private String sourceType;
 
+        private String targetPlatform;
+
         /**
          * 目标平台名称
          */
