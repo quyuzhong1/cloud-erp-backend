@@ -216,6 +216,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     }
                     generateB2cDTO.setDetailList(wantDetailList);
                 }
+                generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
             }
             // 第三方仓出库生成销售出库单（独立事务）
             soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
