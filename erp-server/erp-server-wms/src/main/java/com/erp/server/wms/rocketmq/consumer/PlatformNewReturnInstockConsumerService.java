@@ -406,7 +406,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
-			soReturnInstockEntity.setCurrency(shopInfoEntity.getDefaultCurrency());
+			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
 		}
 		if (StringUtils.isBlank(shopInfoEntity.getCustomerId())){
 			ServiceException.runError("店铺对应客户信息为空:{}", shopInfoEntity.getName());
