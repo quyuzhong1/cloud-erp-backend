@@ -265,8 +265,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 }
             }
         }else {
-            //删除所有 附件
-            attachmentService.deleteByBusinessIds(Arrays.asList(entity.getId()));
+            throw new ServiceException("附件不能为空");
         }
         //操作日志
         String msg = StrUtil.format("用户【{}】更新【{}】供应商证照", UserContext.getDefaultLoginUser().getUserName(), supplierEntity.getName());
