@@ -526,7 +526,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      */
     private Boolean isFsApprovePass (ProcessManagementDTO.ApproveDTO dto) {
         //查询三方审批生成记录
-        ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.getByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
+        ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.  getByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
         if (ObjectUtil.isEmpty(approveTaskInfo)) {
             return  Boolean.FALSE;
         }
@@ -954,7 +954,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ApproveTaskInfoEntity taskInfo = null;
         try {
             //查询三方生成查询记录
-             taskInfo = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getBussinessKey, dto.getBusinessKey()).eq(ApproveTaskInfoEntity::getBussinessId, dto.getBusinessId()).eq(ApproveTaskInfoEntity::getIsDeleted, Boolean.FALSE));
+             taskInfo = approveTaskInfoService.getByBusinessIdAndKey(dto.getBusinessKey(),dto.getBusinessId());
         }catch (Exception e){
             throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_INFO_ERROR);
         }

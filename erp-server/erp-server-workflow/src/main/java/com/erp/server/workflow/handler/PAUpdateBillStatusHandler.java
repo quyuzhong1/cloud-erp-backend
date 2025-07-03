@@ -7,7 +7,6 @@ package com.erp.server.workflow.handler;
  */
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -15,13 +14,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
@@ -29,13 +24,11 @@ import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.scm.feign.PurchaseApplicationFeign;
-import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.util.logging.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +36,8 @@ import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 采购申请单
@@ -157,25 +148,6 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         ObjectMapper mapper = new ObjectMapper();
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
 
-        }
-        if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
-            PurchaseApplicationDTO.AddDTO addDTO = mapper.convertValue(map, PurchaseApplicationDTO.AddDTO.class);
-            try {
-                //添加供应商
-                BatchResultDTO batchResultDTO = purchaseApplicationFeign.add(addDTO);
-                //更新三方生成查询
-                taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
-                taskInfo.setBussinessCode(batchResultDTO.getCode());
-                taskInfo.setBussinessId(batchResultDTO.getId());
-                taskInfo.setHappenTime(LocalDateTime.now());
-                taskInfo.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                boolean b = approveTaskInfoService.updateById(taskInfo);
-                if (!b) {
-                    throw new ServiceException("更新三方生成查询失败");
-                }
-            } catch (Exception e) {
-                throw new ServiceException("创建采购申请单失败错误信息：{}", e.getMessage());
-            }
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             if (instanceEntity.getStatus().equals(FSApprovalStatusEnum.APPROVED.getCode())) {
