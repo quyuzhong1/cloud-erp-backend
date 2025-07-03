@@ -129,8 +129,10 @@ public class SupplierCredentialDTO  implements Serializable {
         private String status;
         private String statusName;
 
+        @NotEmpty(message = "附件不能为空")
         private List<String> attachmentUrlList;
 
+        @NotEmpty(message = "附件不能为空")
         private List<String> attachmentNameList;
 
     }
