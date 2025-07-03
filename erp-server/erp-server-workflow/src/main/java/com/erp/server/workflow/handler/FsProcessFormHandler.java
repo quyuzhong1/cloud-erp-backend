@@ -10,23 +10,23 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
-import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import com.erp.model.workflow.enums.*;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.rpc.sys.feign.SysDepartmentThirdFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -40,7 +40,10 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,7 +82,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         // —— 动态构建父控件映射：thirdParentId -> sysParentField ——
         Map<String, String> parentFieldMap = fieldMapList.stream()
-                .filter(fm -> StrUtil.isNotBlank(fm.getSysParentId()))
+                .filter(fm -> CharSequenceUtil.isNotBlank(fm.getSysParentId()))
                 .collect(Collectors.toMap(
                         CfgProcessFieldMapEntity::getThirdParentId,
                         fm -> {
@@ -882,8 +885,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             // 判断当前字段是否是明细列表的父级字段
             // 我们通过检查 relevantFieldMaps 中第一个实体的 isDetailField 和 sysParentId 来判断
             boolean isDetailListParent = relevantFieldMaps.get(0).getIsDetailField() &&
-                    relevantFieldMaps.get(0).getSysParentId() != null &&
-                    !relevantFieldMaps.get(0).getSysParentId().isEmpty();
+                    CharSequenceUtil.isNotBlank(relevantFieldMaps.get(0).getSysParentId());
 
 
             if (feishuOriginalValue instanceof List && isDetailListParent) {
@@ -1054,7 +1056,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         // 明细列表在目标系统的字段名 (sysParentId)
         if (!mappedRows.isEmpty() && !detailFieldMaps.isEmpty()) {
             String sysParentId = detailFieldMaps.get(0).getSysParentId();
-            if (sysParentId != null && !sysParentId.isEmpty()) {
+            if (CharSequenceUtil.isNotBlank(sysParentId)) {
                 finalResultMap.put(sysParentId, mappedRows);
             }
         }

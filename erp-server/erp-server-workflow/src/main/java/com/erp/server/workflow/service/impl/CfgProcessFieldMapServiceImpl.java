@@ -237,17 +237,18 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && (CharSequenceUtil.equals(dto.getSysParentId(), "main") || CharSequenceUtil.equals(dto.getSysParentId(), "common"))) {
-                throw new ServiceException("明细只能对应明细");
+            if ((dto.getIsDetailField() && (CharSequenceUtil.isBlank(dto.getSysParentId()) || CharSequenceUtil.equals(dto.getSysParentId(), "main") || CharSequenceUtil.equals(dto.getSysParentId(), "common"))) ||
+                    (!dto.getIsDetailField() && CharSequenceUtil.isNotBlank(dto.getSysParentId()) && !CharSequenceUtil.equals(dto.getSysParentId(), "main") && !CharSequenceUtil.equals(dto.getSysParentId(), "common"))) {
+                throw new ServiceException("字段【{}】明细只能对应明细", dto.getThirdField());
             }
             // 校验通过后，进行保存或更新操作
-            if (StrUtil.isEmpty(dto.getId())) {
+            if (CharSequenceUtil.isEmpty(dto.getId())) {
                 dto.setId(IdWorker.getIdStr());
             }
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
-            if ("main".equals(entity.getSysParentId())) {
-                entity.setSysParentId(null); // 如果是主表字段，则不设置 sysParentId
+            if (CharSequenceUtil.equals(entity.getSysParentId(),"main") || CharSequenceUtil.equals(entity.getSysParentId(),"common")) {
+                entity.setSysParentId(""); // 如果是主表字段，则不设置 sysParentId
             }
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);

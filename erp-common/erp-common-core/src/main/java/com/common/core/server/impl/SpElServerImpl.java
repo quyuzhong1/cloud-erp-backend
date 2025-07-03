@@ -2,12 +2,14 @@ package com.common.core.server.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.SpElAddFieldDTO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.MathUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -459,6 +461,33 @@ public class SpElServerImpl implements SpElServer {
         return value;
     }
 
+    /**
+     * 数值类型转换（由于远程调用导致数值类型变成字符串无法使用运算符号，需要先转换类型）
+     * @author will
+     * @date 2025/7/2 18:37
+     * @param obj
+     * @param field
+     * @param valueType
+     * @return void
+     */
+    private void conversionBigDecimal(Map<String, Object> obj,String field, String valueType) {
+        if (ObjectUtil.isEmpty(obj)) {
+            return;
+        }
+        if (!"BigDecimal".equals(valueType)) {
+           return;
+        }
+        Object object = obj.get(field);
+        if (ObjectUtil.isEmpty(object)) {
+            return;
+        }
+        try {
+            obj.put(field,MathUtil.valueOf(object));
+        } catch (Exception e) {
+            log.error("转换BigDecimal失败，field:{},valueType:{},value:{}", field, valueType, object);
+        }
+    }
+
     private String getAddField(String field, List<SpElAddFieldDTO> addFieldList) {
         SpElAddFieldDTO addFieldDTO = new SpElAddFieldDTO();
         String addField = field + "List";
@@ -689,7 +718,11 @@ public class SpElServerImpl implements SpElServer {
             String value = element.getValue();
             //值的类型
             String valueType = element.getValueType();
+            //根据类型取输入值
             Object conversionValue = conversionValue(value, valueType);
+            //根据类型转换bigDecimal
+            conversionBigDecimal(obj, field, valueType);
+
             Boolean isStr = "String".equals(valueType);
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
                 String content = getContent(field,compare,conversionValue,isStr, obj);
