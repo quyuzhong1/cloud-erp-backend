@@ -1,69 +1,30 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.ReflectUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
-import com.common.core.constant.SqlConstants;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.ListingMatchResultEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.*;
-import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
-import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_LISTING_PUSH;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_WAREHOUSE_SKU;
 
 /**
  * <p>
@@ -125,7 +86,7 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
         for (DmpOutputTaskRecordDTO.PagingViewDTO item : pagingVO.getList()) {
             ListingPushRecordDTO.PagingViewDTO pagingViewDTO = pagingViewDTOS.stream().filter(v->v.getListingId().equals(item.getSourceId())).findFirst().orElse(new ListingPushRecordDTO.PagingViewDTO());
             pagingViewDTO.setStatusName(item.getStatusName());
-            pagingViewDTO.setLatestPushTime(item.getCreateTime());
+            pagingViewDTO.setLatestPushTime(item.getUpdateTime());
 
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(pagingViewDTO.getSkuId())).
                     findFirst().map(SkuVO::getSkuName).orElse("");
