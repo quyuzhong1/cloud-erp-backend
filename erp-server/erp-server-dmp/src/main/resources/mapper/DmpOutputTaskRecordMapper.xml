@@ -426,7 +426,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         </if>
         ) AS sub
         WHERE rn = 1
-        ORDER BY createTime DESC, sourceId
+        ORDER BY updateTime DESC, sourceId
     </select>
     <select id="getOutputTaskByIdAndType" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
         SELECT  s.*,m.source_id from dmp_push_msg m
