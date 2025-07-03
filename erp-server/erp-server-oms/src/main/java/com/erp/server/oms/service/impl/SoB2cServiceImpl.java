@@ -6206,7 +6206,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 平台来源币种为空取默认币种
         if (StringUtils.isBlank(dto.getCurrency())) {
-            dto.setCurrency(shopInfo.getDefaultCurrency());
+            dto.setCurrency(shopInfo.getSettlementCurrency());
         }
         // 全托管币种取值为交易币种
         if (isFullyManagedOrder(dto.getDictPlatform())){

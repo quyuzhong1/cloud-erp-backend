@@ -183,11 +183,6 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String platformStatus;
 
     /**
-     * 默认币种
-     */
-    @TableField("default_currency")
-    private String defaultCurrency;
-    /**
      * 类型：overseas 海外, internal 国内
      */
     @TableField("type")
@@ -239,6 +234,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField(exist = false)
     private String accessToken;
+
+    /**
+     * 时区
+     */
+    @TableField("time_zone")
+    private String timeZone = "";
 
     public static final String PLATFORM_DICT = "platform_dict";
 
