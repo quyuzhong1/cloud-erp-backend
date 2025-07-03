@@ -17,6 +17,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
@@ -833,7 +834,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String fileName = names[i];
                     try {
                         // 1.下载第三方文件
-                        byte[] fileByte = FastDFSClientUtil.getFileByte(fileUrl);
+                        byte[] fileByte = FileUtil.downloadFile(fileUrl);
                         //fileByte转为file
                         File file = new File(fileName);
                         FileUtils.writeByteArrayToFile(file, fileByte);
