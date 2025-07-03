@@ -98,45 +98,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
-            //解析数据
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
-            //生成三方生成查询明细
-            List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
-            //值映射
-            SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
-            //生成三方生成查询主表数据
-            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
-            taskInfo.setStatus(ApproveTaskStatusEnum.FAIL.getCode());
-            //保存三方生成查询
-            BaseResultDTO.AddDTO add = approveTaskInfoService.add(taskInfo);
-            if (add == null || add.getId() == null) {
-                throw new ServiceException("保存审批任务信息失败");
-            }
-            //转换
-            ApproveTaskInfoEntity taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
-            taskInfoEntity.setId(add.getId());
-            try {
-                // 第二步：保存供应商信息
-                String id = supplierFeign.add(addDTO);
-                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
-                // 第三步：更新taskInfo
-                if (!CollUtil.isEmpty(list)) {
-                    taskInfoEntity.setBussinessKey(thirdProcessEntity.getBussinessKey());
-                    taskInfoEntity.setBussinessCode(list.get(0).getCode());
-                    taskInfoEntity.setBussinessId(id);
-                    taskInfoEntity.setHappenTime(LocalDateTime.now());
-                    taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                    boolean b = approveTaskInfoService.updateById(taskInfoEntity);
-                    if (!b){
-                        throw new ServiceException("更新三方生成查询失败");
-                    }
-                }
-            } catch (Exception e) {
-                throw new ServiceException("创建供应商失败错误信息：{}", e.getMessage());
-            }
-        }
-
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             ApproveTaskInfoEntity entity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCE_CODE.getCode())));
             if (ObjectUtil.isNotEmpty(entity) && status.equals(FSApprovalStatusEnum.APPROVED.getCode())) {
@@ -212,30 +173,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             return;
         }
-        if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
-            SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
-
-            try {
-                // 第二步：保存供应商信息
-                String id = supplierFeign.add(addDTO);
-                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
-                // 第三步：更新taskInfo
-                if (!CollUtil.isEmpty(list)) {
-                    taskInfo.setBussinessKey(thirdProcessEntity.getBussinessKey());
-                    taskInfo.setBussinessCode(list.get(0).getCode());
-                    taskInfo.setBussinessId(id);
-                    taskInfo.setHappenTime(LocalDateTime.now());
-                    taskInfo.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                    boolean b = approveTaskInfoService.updateById(taskInfo);
-                    if (!b){
-                        throw new ServiceException("更新三方生成查询失败");
-                    }
-                }
-            } catch (Exception e) {
-                throw new ServiceException("创建供应商失败错误信息：{}", e.getMessage());
-            }
-        }
-
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             //更新单据状态为审核通过
             if (instanceEntity.getStatus().equals(FSApprovalStatusEnum.APPROVED.getCode())) {

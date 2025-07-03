@@ -19,10 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
@@ -237,8 +234,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            if ((dto.getIsDetailField() && (CharSequenceUtil.isBlank(dto.getSysParentId()) || CharSequenceUtil.equals(dto.getSysParentId(), "main") || CharSequenceUtil.equals(dto.getSysParentId(), "common"))) ||
-                    (!dto.getIsDetailField() && CharSequenceUtil.isNotBlank(dto.getSysParentId()) && !CharSequenceUtil.equals(dto.getSysParentId(), "main") && !CharSequenceUtil.equals(dto.getSysParentId(), "common"))) {
+            if ((dto.getIsDetailField() && CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(dto.getSysParentId())) ||
+                    (!dto.getIsDetailField() && !CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(dto.getSysParentId()))) {
                 throw new ServiceException("字段【{}】明细只能对应明细", dto.getThirdField());
             }
             // 校验通过后，进行保存或更新操作
@@ -247,7 +244,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
-            if (CharSequenceUtil.equals(entity.getSysParentId(),"main") || CharSequenceUtil.equals(entity.getSysParentId(),"common")) {
+            if (CfgQueryOptionFieldBelongsTypeEnum.isFieldMain(entity.getSysParentId())) {
                 entity.setSysParentId(""); // 如果是主表字段，则不设置 sysParentId
             }
             entity.setCfgId(ruleId); // 设置关联的 ruleId
