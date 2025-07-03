@@ -1,4 +1,6 @@
 package com.erp.model.workflow.enums;
+
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -53,5 +55,15 @@ public enum CfgQueryOptionFieldBelongsTypeEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    /**
+     * 是否是主表数据
+     */
+    public static Boolean isFieldMain(String code) {
+       if (CharSequenceUtil.isBlank(code) || CharSequenceUtil.equals(code,MAIN.getCode()) || CharSequenceUtil.equals(code,COMMON.getCode())) {
+           return Boolean.TRUE;
+       }
+        return Boolean.FALSE;
     }
 }
