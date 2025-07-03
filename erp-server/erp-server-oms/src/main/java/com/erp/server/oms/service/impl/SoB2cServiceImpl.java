@@ -10141,6 +10141,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
         lambdaUpdate().eq(SoB2cEntity::getId,soId).set(SoB2cEntity::getNfeInvoiceStatus,nfeInvoiceStatus).update();
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单开票状态为：{}",SoB2cNfeStatusEnum.getName(nfeInvoiceStatus)), ModuleTypeEnum.SO_B2C.getCode(), soId,"更新开票状态");
+
     }
 
     @Override
