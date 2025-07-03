@@ -109,7 +109,7 @@ public class NfeInvoiceService {
     private OperateLogService operateLogService;
 
     @Transactional(rollbackFor = Exception.class)
-    public void createInvoice(SoB2cEntity soB2cEntity,Boolean isAsync) {
+    public Boolean createInvoice(SoB2cEntity soB2cEntity,Boolean isAsync) {
         String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
@@ -142,7 +142,7 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
-            return;
+            return Boolean.FALSE;
         }
         //开票成功
         NfeInvoiceDTO.NfeSuccessResultDTO resultDTO = null;
@@ -188,9 +188,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setRemark(e.getMessage());
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
-            return;
+            return Boolean.FALSE;
         }
-        if (Objects.isNull(resultDTO) || !resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
+        if (Objects.isNull(resultDTO) || Objects.isNull(resultDTO.getSuccesso())||!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
 //            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
             //开票失败更新开票状态
@@ -199,7 +199,7 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setRemark(JSONUtil.toJsonStr(resultDTO));
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("返回信息：{}",JSONUtil.toJsonStr(resultDTO)), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
-            return;
+            return Boolean.FALSE;
         }
         //回写序列号和起始编号
         cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(),resultDTO.getSerie(),resultDTO.getNumeroNfe());
@@ -220,6 +220,7 @@ public class NfeInvoiceService {
         if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
             invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
         }
+        return Boolean.TRUE;
     }
 
     /**
