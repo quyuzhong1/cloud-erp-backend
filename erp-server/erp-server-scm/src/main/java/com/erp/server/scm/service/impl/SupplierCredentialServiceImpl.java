@@ -23,6 +23,7 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierCredentialStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -720,21 +721,21 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         //校验名称是否已存在
         Integer count = dictBasicService.lambdaQuery()
                 .eq(DictBasicEntity::getName, credentialName)
-                .eq(DictBasicEntity::getType, "credentialType")
+                .eq(DictBasicEntity::getType, DictBasicEnum.CREDENTIAL_TYPE.getType())
                 .count();
         if(count > 0){
             throw new ServiceException(ApiError.ERROR_98124);
         }
 
         DictBasicEntity dictBasicEntity = new DictBasicEntity();
-        dictBasicEntity.setValue(IdWorker.getIdStr());
+        dictBasicEntity.setValue("CT_"+IdWorker.getIdStr());
         dictBasicEntity.setName(credentialName);
-        dictBasicEntity.setType("credentialType");
-        dictBasicEntity.setTypeName("证照字典");
+        dictBasicEntity.setType(DictBasicEnum.CREDENTIAL_TYPE.getType());
+        dictBasicEntity.setTypeName(DictBasicEnum.CREDENTIAL_TYPE.getDesc());
         dictBasicEntity.setStatus(Boolean.TRUE);
         boolean save = dictBasicService.save(dictBasicEntity);
         if(!save){
-            return null;
+            throw new ServiceException("自定义证照新增失败");
         }
         DictBasicDTO dto = new DictBasicDTO();
         BeanMapper.copy(dictBasicEntity, dto);
