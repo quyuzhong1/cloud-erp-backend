@@ -107,6 +107,18 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     private Integer lastPickingQty;
 
     /**
+     * 客户PO号
+     */
+    @TableField("customer_po")
+    private String customerPO;
+    /**
+     * 目的地
+     */
+    @TableField("to_country")
+    private String toCountry;
+
+
+    /**
      * 修改前数量
      */
     @TableField(exist = false)
