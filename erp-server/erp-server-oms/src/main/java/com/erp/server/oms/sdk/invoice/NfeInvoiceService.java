@@ -371,7 +371,11 @@ public class NfeInvoiceService {
                 String[] split = rua.split(";");
                 StringBuilder sb = new StringBuilder();
                 for (int i = 1 ; i < split.length; i++){
-                    sb.append(split[i]);
+                    if (i != 1){
+                        sb.append(";").append(split[i]);
+                    }else {
+                        sb.append(split[i]);
+                    }
                 }
                 return sb.toString();
             }
@@ -382,7 +386,11 @@ public class NfeInvoiceService {
                 String[] split = rua.split(":");
                 StringBuilder sb = new StringBuilder();
                 for (int i = 1 ; i < split.length; i++){
-                    sb.append(split[i]);
+                    if (i != 1){
+                        sb.append(":").append(split[i]);
+                    }else {
+                        sb.append(split[i]);
+                    }
                 }
                 return sb.toString();
             }
