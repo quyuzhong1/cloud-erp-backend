@@ -1991,6 +1991,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 });
             });
         });
+        add.setDetailList(detailList);
         this.add(add);
         return BatchResultDTO.success(soB2cReturnEntity.getId(), soB2cReturnEntity.getCode(), "下推成功");
     }
