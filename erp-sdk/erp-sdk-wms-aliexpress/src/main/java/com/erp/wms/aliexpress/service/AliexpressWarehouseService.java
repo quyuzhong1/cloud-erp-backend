@@ -65,7 +65,7 @@ public class AliexpressWarehouseService {
         AliexpressAuthDTO aliexpressAuthDTO = aliexpressProductDTO.getAliexpressAuthDTO();
         String url = aliexpressAuthDTO.getUrl();
         if (!BusinessCommonConstants.hasProfile("prod")) {
-            url = url + "/sandbox";
+//            url = url + "/sandbox";
             aliexpressProductDTO.setWarehouseCode("STB");
         }else{
             aliexpressProductDTO.setWarehouseCode("other");
