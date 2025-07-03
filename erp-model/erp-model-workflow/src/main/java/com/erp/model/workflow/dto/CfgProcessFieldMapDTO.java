@@ -2,13 +2,12 @@ package com.erp.model.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.List;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -126,6 +125,11 @@ public class CfgProcessFieldMapDTO implements Serializable {
          * sysFieldTypeName
          */
         private String sysFieldTypeName;
+
+        /**
+         * 数据唯一值，sysParentId + sysField,同fieldBelongsType +conditionField
+         */
+        private String uniqueCode;
 
         private List<CfgProcessValueMapDTO.ViewDTO> processValueMapDTOList;
     }

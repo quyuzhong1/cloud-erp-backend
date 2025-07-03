@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -128,6 +129,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             if (StrUtil.isNotBlank(item.getFieldType())) {
                 item.setFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(item.getFieldType().toUpperCase()).getName());
             }
+            item.setUniqueCode(CharSequenceUtil.format("{}-{}", item.getFieldBelongsType(), item.getConditionField()));
         });
         return viewDTOS;
     }
