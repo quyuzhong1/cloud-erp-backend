@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -184,6 +185,14 @@ public class SoDeliveryNoticeDetailDTO {
          * 库位名称
          */
         private String warehouseLocationName;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
+         * 目的地
+         */
+        private String toCountry;
     }
 
 
