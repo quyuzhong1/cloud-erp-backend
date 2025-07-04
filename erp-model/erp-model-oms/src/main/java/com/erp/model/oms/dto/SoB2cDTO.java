@@ -1486,6 +1486,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款时间
          */
+        @NotNull(message = "付款时间不能为空")
         private LocalDateTime payTime;
 
         /**
