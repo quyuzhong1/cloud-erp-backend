@@ -1149,10 +1149,21 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //上期记录
             FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId()) && Objects.equals(e.getPlatformSkuNo(), detailEntity.getPlatformSkuNo())
                     && Objects.equals(detailEntity.getFeeType(), e.getFeeType())).findFirst().orElse(null);
-            if (Objects.nonNull(beforeDetailEntity) && !judgeReconciliationDTO.isCurrencyReconciliation()) {
-                //期初在途
-                detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
-                detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+            if (Objects.nonNull(beforeDetailEntity)) {
+                //上期是暂估时
+                if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && !judgeReconciliationDTO.isHasOtherReconciliation()) {
+                    //本月开始有实际账单 且本月没有其他实际对账单
+                    detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
+                    detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+                }else if (judgeReconciliationDTO.isLastReconciliation()){
+                    //上月有实际账单
+                    detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
+                    detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+                }else{
+                    //期初在途
+                    detailEntity.setInitTransitCost(BigDecimal.ZERO);
+                    detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
+                }
             } else {
                 //期初在途
                 detailEntity.setInitTransitCost(BigDecimal.ZERO);
