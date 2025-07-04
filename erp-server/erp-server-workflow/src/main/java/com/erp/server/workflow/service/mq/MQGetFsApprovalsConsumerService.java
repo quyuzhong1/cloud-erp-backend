@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC,
         selectorExpression = RocketMqNewTag.DMP_FS_APPROVALS_TO_WORKFLOW_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_APPROVALS_TO_WORKFLOW_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
 public class MQGetFsApprovalsConsumerService extends AbstractNewPlatformConsumerHandler {
     @Resource
