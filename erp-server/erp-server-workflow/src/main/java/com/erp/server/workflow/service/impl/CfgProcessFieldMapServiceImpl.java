@@ -114,7 +114,12 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
             //更新值映射
             for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
-                String id = dto.getId();
+                if (!CharSequenceUtil.equals(dto.getThirdFieldType(), CfgQueryOptionFieldTypeEnum.CHECKBOXV2.getCode())
+                        && !CharSequenceUtil.equals(dto.getThirdFieldType(), CfgQueryOptionFieldTypeEnum.RADIOV2.getCode())) {
+                    // 如果不是单选或多选，则跳过值映射的添加,并且清空已存在的映射
+                    cfgProcessValueMapService.delete(Collections.singletonList(dto.getId()));
+                    continue;
+                }
                 List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
                 if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
                     cfgProcessValueMapService.addOrUpdate(cfgProcessId,processDefinitionId, dto, processValueMapDTOList);
