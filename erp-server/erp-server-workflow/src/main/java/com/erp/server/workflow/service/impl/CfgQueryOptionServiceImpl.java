@@ -67,6 +67,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             queryWrapper.eq(CfgQueryOptionEntity::getFieldBelongsType, fieldBelongsType);
         }
         queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
+        queryWrapper.eq(CfgQueryOptionEntity::getUseType, useType);
         queryWrapper.eq(CfgQueryOptionEntity::getExtendType,"");//扩展字段
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
@@ -215,7 +216,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 String tableName = dto.getTableName();
                 String fieldBelongsType = dto.getFieldBelongsType();
                 String bussinessKey = dto.getBussinessKey();
-
+                String useType = dto.getUseType();
                 //判断同一个单据下的fieldBelongsType 是否已存在。 不存在才新增，存在则跳过
                 Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey)
                         .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsType)
@@ -223,13 +224,13 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 if(count > 0){
                     continue;
                 }
-                saveFromSql(bussinessKey, model,tableName,fieldBelongsType);
+                saveFromSql(bussinessKey, model,tableName,fieldBelongsType,useType);
             }
         }
     }
 
 
-    private void saveFromSql(String businessKey, String model , String tableName, String fieldBelongsType) {
+    private void saveFromSql(String businessKey, String model , String tableName, String fieldBelongsType, String useType) {
         //不允许重复添加
         Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, businessKey).eq(CfgQueryOptionEntity::getTableName, tableName).count();
         if(count > 0){
@@ -259,6 +260,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 cfgQueryOption.setTableName(tableName);
                 cfgQueryOption.setSysClassify(model);
                 cfgQueryOption.setTableCnName(Objects.isNull(tableComment) ? "" : tableComment);
+                cfgQueryOption.setUseType(useType);
                 results.add(cfgQueryOption);
             }
             saveBatch(results);

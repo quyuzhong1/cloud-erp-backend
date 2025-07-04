@@ -13,8 +13,11 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-007-02
  */
 public enum ThirdNoticePushRecordNoticeNodeEnum implements EnumMessage {
-    WAITSUBMITTOAPPROVEING("waitSubmitToApproveIng", "提审"),
-    ADDRECORD("addRecord", "新增记录"),
+    WAIT_SUBMITTO_APPROVEING("waitSubmitToApproveIng", "提审"),
+    ADD_RECORD("addRecord", "新增记录"),
+    QC_BACK_FILL_PACKAGING ("qcBackFillPackaging ", "产品尺寸变更"),
+    NOT_SUBSEQUENT_BATCH("notSubsequentBatch", "新品通知"),
+    SUBSEQUENT_BATCH("subsequentBatch", "老品通知"),
     ;
     /**
      * 类型
