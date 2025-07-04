@@ -349,14 +349,16 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 反审核条件判断
         validateDisApprove(entity);
 
-        // 检查是否有下推单据
-        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
-        if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-            throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
-        }
         List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(requisitionApplicationEntities) && !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
+        }
+        if (CollUtil.isNotEmpty(requisitionApplicationEntities)){
+            List<String> ids = requisitionApplicationEntities.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
+            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
+            }
         }
         if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
             requisitionApplicationService.removeBySourceIds(Collections.singletonList(id));

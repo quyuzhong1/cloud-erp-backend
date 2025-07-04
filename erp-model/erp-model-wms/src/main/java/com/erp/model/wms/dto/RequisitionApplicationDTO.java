@@ -311,6 +311,7 @@ public class RequisitionApplicationDTO implements Serializable {
          * ThirdDeliveryTypeEnum
          */
         private String deliveryType;
+        private String deliveryTypeName;
 
         /**
          * 来源类型中文

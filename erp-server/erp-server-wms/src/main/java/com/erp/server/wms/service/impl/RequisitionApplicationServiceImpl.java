@@ -2451,6 +2451,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         //来源类型中文
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
+        data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
         //要货类型中文
         data.setTypeName(RequisitionApplicationTypeEnum.getName(data.getType()));
         //单据状态中文
@@ -3274,8 +3275,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ));
         //如果订单类型是三方仓 渠道要改成仓库
         if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
-            entity.setChannelId(planEntity.getFromWarehouseId());
-            entity.setChannelName(planEntity.getFromWarehouseName());
+            entity.setChannelId(planEntity.getToWarehouseId());
+            entity.setChannelName(planEntity.getToWarehouseName());
         }
         this.save(entity);
         List<WmsDeliveryPlanDetailEntity> planDetailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Collections.singletonList(id));
