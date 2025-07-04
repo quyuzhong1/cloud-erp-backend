@@ -2,9 +2,10 @@ package com.erp.model.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -86,7 +87,6 @@ public class CfgProcessValueMapDTO implements Serializable {
         /**
         * 对应的字段配置ID
         */
-        @NotBlank(message = "对应的字段配置ID不能为空")
         @Size(max = 19,message = "对应的字段配置ID最大长度不能超过19位")
         private String fieldMapId;
 

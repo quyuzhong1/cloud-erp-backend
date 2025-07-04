@@ -199,7 +199,7 @@ public class SoInfoController extends BaseController {
             try {
                 resultDTOS.add(soInfoService.submit(entity));
             }catch (Exception e){
-                log.error("采购订单提交失败",e);
+                log.error("销售订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }

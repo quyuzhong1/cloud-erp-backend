@@ -8,6 +8,7 @@ package com.erp.server.workflow.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -17,6 +18,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -37,6 +39,7 @@ import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +123,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
+            //处理附件信息
+            handleAttachment(map);
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
@@ -156,6 +161,32 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
         thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
+    }
+
+    /**
+     * 附件处理
+     * @author will
+     * @date 2025/7/4 15:58
+     * @param map
+     * @return void
+     */
+    private void handleAttachment(Map<String, Object> map) {
+        // 处理附件逻辑
+        List<SupplierCredentialDTO.AddDTO> credentialList = (List<SupplierCredentialDTO.AddDTO>) map.get("credentialList");
+        if (CollUtil.isEmpty(credentialList)) {
+            return;
+        }
+        for (SupplierCredentialDTO.AddDTO addDTO : credentialList) {
+            Object object = map.get("attachment");
+            if (ObjUtil.isEmpty(object)) {
+                continue;
+            }
+            JSONObject attachment = JSONUtil.parseObj(object);
+            attachment.forEach((key, value) -> {
+                addDTO.setAttachmentNameList(Collections.singletonList(key));
+                addDTO.setAttachmentUrlList(Collections.singletonList(String.valueOf(value)));
+            });
+        }
     }
 
     @Override

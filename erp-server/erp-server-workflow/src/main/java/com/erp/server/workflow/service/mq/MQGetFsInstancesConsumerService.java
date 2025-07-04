@@ -2,13 +2,15 @@ package com.erp.server.workflow.service.mq;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqNewConsumerGroup;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
+import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.entity.*;
@@ -18,12 +20,10 @@ import com.erp.server.workflow.context.CreateBillFactory;
 import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.Instant;
@@ -37,14 +37,15 @@ import static com.common.business.enums.ApproveTypeEnum.PASS;
 import static com.common.business.enums.ApproveTypeEnum.REJECT;
 
 /**
- *
+ * 飞书获取单个审批实例详情
  */
-@Slf4j
 @Service
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC,
-        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_instances_to_workflow_tag",
-        consumerGroup = RocketMqConsumerGroup.WORKFLOW_FS_INSTANCES_CONSUMER)
-public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObject> {
+@Slf4j
+@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC,
+        selectorExpression = RocketMqNewTag.DMP_FS_INSTANCES_TO_WORKFLOW_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_FS_INSTANCES_TO_WORKFLOW_GROUP,
+        consumeMode = ConsumeMode.ORDERLY)
+public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsumerHandler {
 
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
@@ -76,9 +77,17 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     @Resource
     SysUserFeign sysUserFeign;
 
+
+    @Override
+    public String getBizName() {
+        return "飞书获取单个审批实例详情";
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void onMessage(JSONObject jsonObject) {
+    public void handle(String data) {
+
+        JSONObject jsonObject = JSONUtil.parseObj(data);
         String approvalCode = jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode());
 
         // 1. 获取启用的流程定义
@@ -152,14 +161,8 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
 
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
-        // 完成新增数据事务提交之后,异步执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                add(jsonObject,  thirdProcessEntity, fieldMapList, valueMapList);
-                log.info("飞书审批实例创建单据[{}]消息已投递,事务已提交");
-            }
-        });
+        // 新增数据
+        add(jsonObject,  thirdProcessEntity, fieldMapList, valueMapList);
     }
 
     //处理推送类型的消息
@@ -169,7 +172,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
             CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
             createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
         } catch (Exception e) {
-            throw new ServiceException("创建单据异常");
+            throw new ServiceException("创建单据异常，msg= {}", e.getMessage());
         }
     }
 
