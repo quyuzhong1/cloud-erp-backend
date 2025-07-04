@@ -21,6 +21,7 @@ public enum SoB2cBillStatusEnum implements EnumMessage {
 
     //目前只有海外仓出库会用来判断，数据库不会更新这个状态
     ENUM_EXCEPTION("exception",  "异常订单"),
+    ENUM_DISUSE("disuse",  "废弃"),
     ;
     /**
      * 类型

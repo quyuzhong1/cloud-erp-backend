@@ -15,12 +15,14 @@ import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
@@ -239,6 +241,24 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             soB2cFeign.addSoB2cError(addError);
             //异步取消海外仓订单
             asyncService.asyncCancelThirdWarehouseOrder(mainEntity);
+        }
+        if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
+            OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+            operateLogDTO.setOperation("三方仓出库单废弃");
+            operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+            operateLogDTO.setBusinessId(mainEntity.getId());
+            //订单如果为拦截中，直接更新订单状态为
+            mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+            mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            mainEntity.setIsIntercept(false);
+            mainEntity.setRemark("三方仓出库单废弃");
+            soB2cFeign.updateStatus(mainEntity);
+            operateLogDTO.setContent("三方仓出库单废弃");
+            soB2cFeign.addModuleOperateLog(operateLogDTO);
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+            }
         }
         return ApiResult.success();
     }
