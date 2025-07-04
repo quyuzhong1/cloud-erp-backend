@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcResultEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -132,4 +133,17 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      */
     void sendQcBackFillPackaging(List<ProductPackDTO> list);
 
+    /**
+     * 根据质检单id 查询质检结果
+     * @param qcInfoIds
+     * @return List<QcResultDTO.QcNoticeDTO>
+     */
+    List<QcResultDTO.QcNoticeDTO> listQcResultMsg(List<String> qcInfoIds);
+
+    /**
+     * 根据质检单id 获取（产品经理 + 项目经理）推送消息人员
+     * @Author jack
+     * @Date 2025-07-03
+     **/
+    Map<String, String> listQcItemRolePeople(QcResultDTO.QcItemRolePeopleDTO dto );
 }

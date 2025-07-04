@@ -135,15 +135,29 @@ public class MqConsumerRecordDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MqDTO  {
-
+        /**
+         * 表名
+         */
         private String table;
-
+        /**
+         * 操作类型
+         */
         private String operationType;
-
+        /**
+         * 数据库
+         */
         private String db;
-
+        /**
+         * 单据数据
+         */
         private Map<String, Object> dataJson;
-
+        /**
+         * mq消费记录主表id
+         */
         private String mqConsumerRecordId;
+        /**
+         * 单据类型
+         */
+        private String businessKey;
     }
 }

@@ -427,7 +427,13 @@ public interface WmsTaskFeign {
     @GetMapping("/feign/warehouseLocationReplenish/listTabInfo")
     List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
 
-
+    /**
+     * 根据质检单id 查询质检结果
+     * @param qcInfoIds
+     * @return List<QcResultDTO.QcNoticeDTO>
+     */
+    @PostMapping("/feign/qcBill/listQcResultMsg")
+    List<QcResultDTO.QcNoticeDTO> listQcResultMsg(@RequestBody List<String> qcInfoIds);
 
 
     /**
