@@ -14,15 +14,10 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
@@ -36,15 +31,14 @@ import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.util.logging.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
 /**
  *@Author: hcg
@@ -228,7 +222,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
     @Override
     public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS){
-        ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVAL_CODE.getCode())).
+        ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).
                 eq(ThirdProcessDefinitionEntity::getIsDeleted, false).eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()));
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
         addDTO.setDetailList(addDTOS);

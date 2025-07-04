@@ -1,13 +1,14 @@
 package com.erp.model.workflow.dto;
 
-import com.common.business.dto.base.UpdateStateDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -90,11 +91,13 @@ public class CfgProcessRuleDTO implements Serializable {
         /**
          * 审核条件
          */
+        @Valid
         private List<CfgProcessExpDTO.AddOrUpdateDTO> processExpDTOList;
 
         /**
          * 字段配置
          */
+        @Valid
         private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList;
     }
 
