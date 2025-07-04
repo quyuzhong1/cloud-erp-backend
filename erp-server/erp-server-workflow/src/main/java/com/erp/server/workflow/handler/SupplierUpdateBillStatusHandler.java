@@ -8,7 +8,6 @@ package com.erp.server.workflow.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -18,7 +17,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -33,13 +31,15 @@ import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.util.logging.Slf4j;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -88,6 +88,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
@@ -129,6 +131,10 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
             SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
+            //第一条账户设置成默认
+            if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
+                addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
+            }
             //生成三方生成查询主表数据
             ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
             taskInfo.setStatus(ApproveTaskStatusEnum.FAIL.getCode());
@@ -171,22 +177,42 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
      * @return void
      */
     private void handleAttachment(Map<String, Object> map) {
-        // 处理附件逻辑
-        List<SupplierCredentialDTO.AddDTO> credentialList = (List<SupplierCredentialDTO.AddDTO>) map.get("credentialList");
+        List<Object> credentialList = (List<Object>) map.get("credentialList");
         if (CollUtil.isEmpty(credentialList)) {
             return;
         }
-        for (SupplierCredentialDTO.AddDTO addDTO : credentialList) {
-            Object object = map.get("attachment");
-            if (ObjUtil.isEmpty(object)) {
+        // 创建新列表存储处理后的凭证
+        List<Map<String, Object>> processedList = new ArrayList<>();
+
+        for (Object object : credentialList) {
+            // 将原始对象转为可修改的 Map
+            Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+
+            Object attachmentObject = credentialMap.get("attachment");
+            if (ObjectUtil.isEmpty(attachmentObject)) {
+                processedList.add(credentialMap);
                 continue;
             }
-            JSONObject attachment = JSONUtil.parseObj(object);
+            // 处理附件
+            Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+            List<String> attachmentUrlList = new ArrayList<>();
+            List<String> attachmentNameList = new ArrayList<>();
+
             attachment.forEach((key, value) -> {
-                addDTO.setAttachmentNameList(Collections.singletonList(key));
-                addDTO.setAttachmentUrlList(Collections.singletonList(String.valueOf(value)));
+                attachmentNameList.add(key);
+                attachmentUrlList.add(String.valueOf(value));
             });
+
+            // 更新凭证对象
+            credentialMap.remove("attachment");
+            credentialMap.put("attachmentUrlList", attachmentUrlList);
+            credentialMap.put("attachmentNameList", attachmentNameList);
+
+            processedList.add(credentialMap);
         }
+
+        // 将处理后的列表更新回原始 map
+        map.put("credentialList", processedList);
     }
 
     @Override
@@ -259,7 +285,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setDetailList(addDTOS);
         addDTO.setType(thirdProcessDefinition.getType());
         addDTO.setThirdDefinniationName(thirdProcessDefinition.getName());
-        addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCE_CODE.getCode()));
+        addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
         addDTO.setThirdApprovalCode(thirdProcessDefinition.getApprovalCode());
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
         return addDTO;
