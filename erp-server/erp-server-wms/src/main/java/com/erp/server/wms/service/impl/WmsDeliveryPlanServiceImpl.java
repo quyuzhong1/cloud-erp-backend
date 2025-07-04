@@ -520,7 +520,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
         data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
-
+        //物流方式
+        data.setExpectLogisticsMethodName(LogisticsMethodEnum.getName(data.getExpectLogisticsMethod()));
         //明细信息
         List<WmsDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, WmsDeliveryPlanDetailDTO.ViewDTO.class);
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();

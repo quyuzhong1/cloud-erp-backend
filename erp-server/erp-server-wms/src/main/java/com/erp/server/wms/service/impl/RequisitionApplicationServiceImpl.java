@@ -3272,13 +3272,18 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         RequisitionApplicationEntity entity = RequisitionApplicationConverter.INSTANCE.wmsDeliveryPlanToRequisitionApplication(planEntity);
         entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHSQ));
+        //如果订单类型是三方仓 渠道要改成仓库
+        if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getType())){
+            entity.setChannelId(planEntity.getFromWarehouseId());
+            entity.setChannelName(planEntity.getFromWarehouseName());
+        }
         this.save(entity);
         List<WmsDeliveryPlanDetailEntity> planDetailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Collections.singletonList(id));
         List<RequisitionApplicationDetailEntity> detailEntityList = RequisitionApplicationConverter.INSTANCE.wmsDeliveryPlanDetailToRequisitionApplicationDetail(planDetailEntityList);
         detailEntityList.forEach(e -> {
             e.setMainId(entity.getId());
-            e.setToWarehouseId(planEntity.getToWarehouseId());
-            e.setToWarehouseName(planEntity.getToWarehouseName());
+            e.setToWarehouseId(planEntity.getFromWarehouseId());
+            e.setToWarehouseName(planEntity.getFromWarehouseName());
             e.setFromWarehouseId(planEntity.getFromWarehouseId());
             e.setFromWarehouseName(planEntity.getFromWarehouseName());
         });

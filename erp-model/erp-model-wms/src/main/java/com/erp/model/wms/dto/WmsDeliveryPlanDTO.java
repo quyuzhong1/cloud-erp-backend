@@ -403,6 +403,20 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 计划发货日期
         */
         private LocalDate planDeliveryDate;
+        /**
+         * 期望发货时间
+         */
+        private String expectDeliveryDate;
+
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
+
+        /**
+         * 期望物流方式名称
+         */
+        private String expectLogisticsMethodName;
 
         /**
         * 备注
