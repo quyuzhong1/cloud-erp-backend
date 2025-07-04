@@ -35,10 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -81,6 +78,12 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         }
         //插入值映射
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
+            if (!CharSequenceUtil.equals(dto.getThirdFieldType(), CfgQueryOptionFieldTypeEnum.CHECKBOXV2.getCode())
+                    && !CharSequenceUtil.equals(dto.getThirdFieldType(), CfgQueryOptionFieldTypeEnum.RADIOV2.getCode())) {
+                // 如果不是单选或多选，则跳过值映射的添加,并且清空已存在的映射
+                cfgProcessValueMapService.delete(Collections.singletonList(dto.getId()));
+                continue;
+            }
             String id = dto.getId();
             List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
             if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {

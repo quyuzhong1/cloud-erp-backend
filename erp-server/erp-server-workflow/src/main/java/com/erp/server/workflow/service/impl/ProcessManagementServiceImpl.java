@@ -434,7 +434,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
         //判断是否走飞书流程
-       Boolean isFsApprove = isFsApprovePass(dto);
+       Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
        if (isFsApprove) {
            throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
        }
@@ -521,17 +521,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * 判断单据是否走飞书审批
      * @author will
      * @date 2025/6/27 17:40
-     * @param dto
+     * @param businessId
+     * @param businessKey
      * @return Boolean
      */
-    private Boolean isFsApprovePass (ProcessManagementDTO.ApproveDTO dto) {
+    private Boolean isFsApprovePass (String businessId,String businessKey) {
         //查询三方审批生成记录
-        ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.  getByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
+        ApproveTaskInfoEntity approveTaskInfo = approveTaskInfoService.  getByBusinessIdAndKey(businessId, businessKey);
         if (ObjectUtil.isEmpty(approveTaskInfo)) {
             return  Boolean.FALSE;
         }
         //查询最后一条第三方流程管理记录，如果已结束则返回false
-        ThirdProcessManagementEntity managementEntity = thirdProcessManagementService.getLastByBusinessIdAndKey(dto.getBusinessId(), dto.getBusinessKey());
+        ThirdProcessManagementEntity managementEntity = thirdProcessManagementService.getLastByBusinessIdAndKey(businessId, businessKey);
         if (ObjectUtil.isNotEmpty(managementEntity) && ObjectUtil.isNotEmpty(managementEntity.getEndTime())) {
             return Boolean.FALSE;
         }
@@ -844,9 +845,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
-        ProcessManagementDTO.RevokeResultDTO resultDTO = revokeThirdInstance(dto);
-        if (resultDTO != null) {
-            return resultDTO;
+        //判断是否走飞书流程
+        Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
+        if (isFsApprove) {
+            throw new ServiceException(ApiError.PROCESS_APPROVE_FS_PROCESS);
         }
 
         // 查询业务数据和关联流程定义
