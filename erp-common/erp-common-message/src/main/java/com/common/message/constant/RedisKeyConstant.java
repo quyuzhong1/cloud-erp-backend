@@ -91,4 +91,9 @@ public class RedisKeyConstant {
      * 虚拟仓报表数据缓存
      */
     public static final String REPORT_VIRTUAL_ORDER_DATA = "REPORT_VIRTUAL_ORDER_DATA";
+
+    /**
+     * B2B销售订单key
+     */
+    public static final String SO_B2B_ORDER_KEY = "SO_B2B_ORDER_KEY";
 }
