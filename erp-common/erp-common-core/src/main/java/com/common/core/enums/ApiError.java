@@ -95,6 +95,7 @@ public enum ApiError implements Serializable {
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"{}单据提交失败"),
     ERROR_1043(1043,"只有待提交数据支持删除"),
+    ERROR_DATA_DELETE(1046, "数据删除失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
@@ -122,6 +123,12 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
+
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
 
     /**
      * 警告信息 从800 开始
@@ -713,11 +720,12 @@ public enum ApiError implements Serializable {
     ERROR_98030(98030,"只有未生成采购订单的申请单才能反审核"),
     ERROR_98031(98031,"供应商信息不能为空"),
     ERROR_98032(98032,"只有待提交或审核不通过数据支持提交"),
+    ERROR_DELETE(98032,"只有待提交或审核不通过数据支持删除"),
     ERROR_98033(98033,"已审核数据才能生成采购单"),
     ERROR_98034(98034,"供应商名称不能重复"),
     ERROR_98035(98035,"只有已确认，已拒绝和送货中的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
-    ERROR_98037(98037,"资质有效起不能大于资质有效止"),
+    ERROR_98037(98037,"资质有效期起不能大于资质有效期止"),
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
     ERROR_98039(98039,"未找到供应商联系人"),
     ERROR_98040(98040,"只有已审核采购订单能下推签收单"),
@@ -820,6 +828,15 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_REF_SUPPLIER_CONFIRM_DIFF(98119,"不能操作其他供应商采购订单【{}】"),
     ERROR_PURCHASE_DETAIL_ORDER_MORE_THEN_DELIVERY_QTY(98119,"采购订单明细【{}】送货数量不可超过【待交货量】"),
     ERROR_98120(98120,"非当前供应商【{}】的采购订单不支持导出采购合同"),
+    ERROR_98121(98121,"资质有效期不能为空"),
+    ERROR_PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE(98121,"SKU【{}】未审核通过，采购价目表数据不支持提交"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_EXIST(98121,"供应商【{}】仓库【{}】仓位【{}】已存在"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS(98122,"供应商【{}】在仓库【{}】已存在全局仓位"),
+    ERROR_SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT(98123,"供应商【{}】仓库【{}】全局仓位不能与其他仓位共存"),
+
+    ERROR_98124(98124,"证照名称已存在"),
+    ERROR_98125(98125,"失效时间要大于生效时间"),
+
 
     /**
      * WMS 错误
@@ -916,6 +933,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
     ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
+    ERROR_WAREHOUSE_NO_STAGING(99089,"仓库【{}】对应默认暂存库位不存在"),
     ERROR_99100(99100,"暂无可用仓位"),
 
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),
@@ -1258,6 +1276,7 @@ public enum ApiError implements Serializable {
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
+    ERROR_CUSTOMER_SKU_PRINT(92249,"打印客户SKU标签失败"),
     ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
     WAREHOUSE_AREA_NOT_EXIST(92251, "库区信息不存在"),
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
@@ -1275,6 +1294,10 @@ public enum ApiError implements Serializable {
     ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
     ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
     ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
+    ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
+    ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
+    ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1656,6 +1679,8 @@ public enum ApiError implements Serializable {
     ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
     ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
     CONTENT_96018(96018,"系统配置管理"),
+    ERROR_PO_RECONCILIATION_CANCAL_RECEIVE(96007,"仅【已收单据】支持取消单据签收"),
+    ERROR_PO_RECONCILIATION_NOT_NEED_RECONCILIATION(96008,"单据单号【{}】无需对账不支持生成对账单"),
 
 
 
@@ -1675,7 +1700,9 @@ public enum ApiError implements Serializable {
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
-
+    ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL(94103,"单据未审核不支持生成待对账明细"),
+    ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL(94104,"质检退货不支持生成待对账明细"),
+    ERROR_PO_RECONCILIATION_MANUAL_GENERATE(94105,"单据不支持生成对账明细"),
 
     /**
      * MRP 错误

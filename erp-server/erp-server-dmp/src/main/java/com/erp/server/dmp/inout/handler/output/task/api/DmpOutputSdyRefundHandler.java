@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -34,6 +35,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -48,6 +50,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
+import com.erp.server.dmp.service.DmpSoReturnInfoService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 
@@ -68,6 +71,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputSdyBaseTaskHandler {
     private SysUserFeign sysUserFeign;
     @Resource
     private ThirdShopService thirdShopService;
+    @Resource
+    private DmpSoReturnInfoService dmpSoReturnInfoService;
 
     /**
      * 解析订单数据
@@ -376,10 +381,34 @@ public class DmpOutputSdyRefundHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
 
+        List<DmpSoRefundInfoEntity> changeDmpSoRefundInfoList = dmpSoRefundInfoEntityMap.values().stream().filter(d -> changeIds.contains(d.getId())).collect(Collectors.toList());
+        List<String> platformOrderCodeList = changeDmpSoRefundInfoList.stream().filter(d -> StringUtils.isNotBlank(d.getPlatformOrderCode())).map(DmpSoRefundInfoEntity::getPlatformOrderCode).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(platformOrderCodeList)) {
+        	platformOrderCodeList = dmpSoReturnInfoService.lambdaQuery().eq(DmpSoReturnInfoEntity::getSourceSystem, changeDmpSoRefundInfoList.get(0).getSourceSystem())
+        		.in(DmpSoReturnInfoEntity::getPlatformOrderCode, platformOrderCodeList)
+        		.select(DmpSoReturnInfoEntity::getPlatformOrderCode)
+        		.list().stream().map(DmpSoReturnInfoEntity::getPlatformOrderCode).collect(Collectors.toList());
+        }
+        
         Map<String, String> map = new HashMap<>();
         Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for (String changId : changeIds) {
-            Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId) , cacheMap);
+            DmpSoRefundInfoEntity dmpSoRefundEntity = dmpSoRefundInfoEntityMap.get(changId);
+            if(dmpSoRefundEntity == null) {
+            	continue;
+            }
+            String platformOrderCode = dmpSoRefundEntity.getPlatformOrderCode();
+            if(StringUtils.isNotBlank(platformOrderCode) && platformOrderCodeList.contains(platformOrderCode)) {
+            	continue;
+            }
+			List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList = dmpSoRefundDetailEntityMap.get(changId);
+			if(CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+				DmpSoRefundDetailEntity dmpSoRefundDetailEntity = new DmpSoRefundDetailEntity();
+				dmpSoRefundDetailEntity.setId(dmpSoRefundEntity.getId());
+				dmpSoRefundDetailEntity.setQty(0);
+				dmpSoRefundDetailEntityList = Arrays.asList(dmpSoRefundDetailEntity);
+			}
+			Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoRefundEntity, dmpSoRefundDetailEntityList , cacheMap);
             if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));

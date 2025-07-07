@@ -1,9 +1,15 @@
 package com.erp.server.wms.service;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
+import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -143,4 +149,22 @@ public interface VirtualInventoryService extends SuperService<VirtualInventoryEn
     List<VirtualInventoryDTO.SkuReturnDTO> listSkuVirtualInventoryQty(List<VirtualInventoryDTO.BomParamDTO> paramList);
 
     PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
+
+    /**
+     * 获取虚拟仓实际数量
+     * @param params
+     * @return
+     */
+    List<VirtualInventoryDTO.ViewQtyDTO> getRealQty(VirtualInventoryDTO.ParamDTO params);
+
+
+    /**
+     * 分页查询
+     * @author will
+     * @date 2025/6/19 15:18
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, SupplierInventoryDTO.PagingParamDTO params, List<SupplierRefWarehouseEntity> supplierRefWarehouseList);
 }

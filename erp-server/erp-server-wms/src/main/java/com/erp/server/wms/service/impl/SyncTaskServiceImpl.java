@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -38,6 +39,7 @@ import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.*;
+import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -729,6 +731,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case TRANSFER_OUT:
                 resultList = newSyncTransferOut(sourceDetailList);
                 break;
+            case CAINIAO_SO_RETURN_INSTOCK:
+                resultList = newCaiNiaoSyncSoReturnInstock(sourceDetailList);
+                break;
             default:
                 break;
         }
@@ -1245,6 +1250,45 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             }
         }
         
+        return resultList;
+    }
+
+    /**
+     * 菜鸟销售退货入库单
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newCaiNiaoSyncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newCaiNiaoSyncSoReturnInstock >>>> 未找到数据！");
+            return resultList;
+        }
+        List<String> ids = list.stream().map(SoReturnInstockEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        Map<String, List<SoReturnInstockDetailEntity>> soReturnInstockDetailMap = soReturnInstockDetailEntityList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getMainId));
+
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            SoReturnInstockEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailMap.get(entity.getId());
+            if (CollUtil.isEmpty(detailEntityList)){
+                continue;
+            }
+            AliexpressReturnInstockDTO aliexpressReturnInstockDTO = soReturnInstockService.newSyncDataToCaiNiao(entity, detailEntityList,syncParamDetailDTO.getSyncOperate());
+            if(Objects.isNull(aliexpressReturnInstockDTO)){
+                continue;
+            }
+            Map<String, Object> dataMap = JSONUtil.parseObj(aliexpressReturnInstockDTO);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
+        }
         return resultList;
     }
 }

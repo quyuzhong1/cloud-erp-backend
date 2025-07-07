@@ -25,6 +25,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -172,7 +173,12 @@ public class ExportWmsFeignController {
     @Resource
     private QcNoticeService qcNoticeService;
     @Resource
+    private VirtualAdjustService virtualAdjustService;
+    @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private SupplierInventoryService supplierInventoryService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -468,23 +474,16 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/packingTaskDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            warehouseTableField = "pt.warehouse_id",
-            menuCode = "wms:packingTask:exportPackingDetail",
-            tableAlias = "pt"
-    )
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
     }
+    @PostMapping("/exportPackingTaskDetailMerge")
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.exportPackingTaskDetailMerge(dto);
+    }
     @PostMapping("/unPackingTaskDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            warehouseTableField = "pt.warehouse_id",
-            menuCode = "wms:packingTask:unPackingTaskDetail",
-            tableAlias = "pt"
-    )
     public PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.unPackingTaskDetail(dto);
     }
@@ -1024,5 +1023,27 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
         return qcNoticeService.exportList(dto);
+    }
+
+    /**
+     * 导出虚拟库存调整
+     */
+    @PostMapping("/exportVirtualAdjust")
+    @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(@RequestBody PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
+        return virtualAdjustService.paging(dto);
+    }
+
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2025/6/19 11:03
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/supplierInventory")
+    @WebAdvanceQuery(handler = SupplierInventoryQueryHandler.class)
+    public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
+        return supplierInventoryService.paging(dto);
     }
 }

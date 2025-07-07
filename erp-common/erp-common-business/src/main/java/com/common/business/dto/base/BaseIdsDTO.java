@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,7 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class IdsDTO extends PermissionsDTO {
 
         /**
@@ -43,6 +45,18 @@ public class BaseIdsDTO implements Serializable {
          */
         @NotEmpty(message = "detailIdList不能为空")
         private List<String> detailIdList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class StatusDTO extends IdsDTO{
+        /**
+         * 状态
+         */
+        @NotBlank(message = "状态不能为空")
+        @Size(max = 32,message = "状态不能超过32字符")
+        private String status;
 
     }
 

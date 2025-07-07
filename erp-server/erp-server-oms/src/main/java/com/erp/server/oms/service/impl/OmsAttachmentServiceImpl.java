@@ -6,16 +6,17 @@ import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.oms.mapper.OmsAttachmentMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +34,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapper, OmsAttachmentEntity> implements OmsAttachmentService {
-
+    @Resource
+    private FileFeign filefeign;
     @Override
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
@@ -169,7 +171,7 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             List<OmsAttachmentEntity> list = this.list(queryWrapper);
             List<String> urlList = list.stream().map(OmsAttachmentEntity::getAttachUrl).collect(Collectors.toList());
             //批量删除fastdfs 数据
-            FastDFSClientUtil.deleteBatchFile(urlList);
+            filefeign.deleteBatchFile(urlList);
             this.removeByIds(list.stream().map(OmsAttachmentEntity::getId).collect(Collectors.toList()));
         }
     }

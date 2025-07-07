@@ -144,12 +144,4 @@ public class CfgSettingDTO implements Serializable {
         private Boolean isPush;
     }
     
-    @Data
-    @NoArgsConstructor
-    public static class DorisQuerySettingDTO{
-    	private String dataSourceName;
-    	private String paramsField;
-    	private String advanceQueryDTOListField;
-    	private Map<String, List<String>> cfgField;
-    }
 }

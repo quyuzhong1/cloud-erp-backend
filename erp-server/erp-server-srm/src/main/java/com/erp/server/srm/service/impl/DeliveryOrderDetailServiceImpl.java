@@ -226,8 +226,6 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         this.updateBatchById(detailList);
         List<String> mainIds = detailList.stream().map(DeliveryOrderDetailEntity::getMainId).distinct().collect(Collectors.toList());
         deliveryOrderService.updateReceiveStatus(mainIds);
-        //收货单反确认删除对账明细
-        deliveryOrderService.removePoReconciliationDetail(mainIds);
         return true;
     }
 

@@ -27,6 +27,7 @@ import com.erp.model.plm.enums.ProductCertificateProjectEnum;
 import com.erp.model.plm.enums.ProductCertificateTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -82,6 +83,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
     @Override
     public PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> pagingDTO) {
         ProductCertificateDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -256,7 +259,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         plmAttachmentService.removeByIds(removeFileIdList);
         for (PlmAttachmentEntity entity : removeFileList) {
             //fastdfs删除附件
-            FastDFSClientUtil.deleteFile(entity.getAttachUrl());
+            fileFeign.deleteFile(entity.getAttachUrl());
         }
         //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
@@ -333,7 +336,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         plmAttachmentService.removeByIds(attachmentIdList);
         for (PlmAttachmentEntity entity : attachmentList) {
             //fastdfs删除附件
-            FastDFSClientUtil.deleteFile(entity.getAttachUrl());
+            fileFeign.deleteFile(entity.getAttachUrl());
         }
         return Boolean.TRUE;
     }
@@ -791,7 +794,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return;
         }
 
-        HashMap<String,File> map = new HashMap<>();
+        HashMap<String,MultipartFile> map = new HashMap<>();
         List<PlmAttachmentEntity> attachmentList = new ArrayList<>();
         for (ProductCertificateEntity entity : resultList) {
             //附件
@@ -823,13 +826,12 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 }
             }
 
-            File file = FileUtil.multiToFile(multipartFile);
             if (ObjectUtil.isEmpty(map.get(entity.getDictProject()))) {
-                map.put(entity.getDictProject(),file);
+                map.put(entity.getDictProject(),multipartFile);
             } else {
-                file = map.get(entity.getDictProject());
+                multipartFile = map.get(entity.getDictProject());
             }
-            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            String fileUrl = fileFeign.uploadFileAndName(multipartFile, fileName);
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }

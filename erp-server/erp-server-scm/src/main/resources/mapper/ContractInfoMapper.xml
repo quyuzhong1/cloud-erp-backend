@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.ContractInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ContractInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="code" property="code" />
+       <result column="service_provider_id" property="serviceProviderId" />
+       <result column="service_provider_name" property="serviceProviderName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="type" property="type" />
+       <result column="effective_date" property="effectiveDate" />
+       <result column="expire_date" property="expireDate" />
+       <result column="status" property="status" />
+       <result column="disable" property="disable" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ci.id AS id,
+	ci.create_user_id AS createUserId,
+	ci.create_user_name AS createUserName,
+	ci.create_time AS createTime,
+	ci.update_user_id AS updateUserId,
+	ci.update_user_name AS updateUserName,
+	ci.update_time AS updateTime,
+	ci.VERSION AS VERSION,
+	ci.is_deleted AS isDeleted,
+	ci.approve_status AS approveStatus,
+	ci.code AS code,
+	ci.service_provider_id AS serviceProviderId,
+	ci.service_provider_name AS serviceProviderName,
+	ci.approve_time AS approveTime,
+	ci.approve_user_id AS approveUserId,
+	ci.approve_user_name AS approveUserName,
+	ci.type AS type,
+	ci.effective_date AS effectiveDate,
+	ci.expire_date AS expireDate,
+	ci.status AS status,
+	ci.disable AS disable
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+            ci.id AS id,
+            ci.create_user_id AS createUserId,
+            ci.create_user_name AS createUserName,
+            ci.create_time AS createTime,
+            ci.update_user_id AS updateUserId,
+            ci.update_user_name AS updateUserName,
+            ci.update_time AS updateTime,
+            ci.VERSION AS VERSION,
+            ci.is_deleted AS isDeleted,
+            ci.approve_status AS approveStatus,
+            ci.code AS code,
+            ci.service_provider_id AS serviceProviderId,
+            ci.service_provider_name AS serviceProviderName,
+            ci.approve_time AS approveTime,
+            ci.approve_user_id AS approveUserId,
+            ci.approve_user_name AS approveUserName,
+            ci.type AS type,
+            ci.effective_date AS effectiveDate,
+            ci.expire_date AS expireDate,
+            ci.status AS status,
+            ci.disable AS disable
+        FROM
+            contract_info as ci
+        WHERE
+        ${params.sqlMap.default}
+        AND ci.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and ci.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ci.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.ContractInfoDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.scm.dto.ContractInfoDTO$TabListDTO">
+        SELECT
+        ci.status AS tabFlag,
+        count(*)  AS count
+        FROM  contract_info as ci
+        WHERE ci.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY ci.status
+    </select>
+    <select id="listAttachByIds" resultType="com.erp.model.scm.dto.ContractInfoDTO$ListAttachDTO">
+        SELECT
+            ci.id,
+            ci.type,
+            ci.service_provider_name as serviceProviderName,
+            dict.name as typeName,
+            ac.attach_url,
+            ac.attach_name
+        FROM
+            contract_info AS ci
+            INNER JOIN attachment AS ac ON ci.ID = ac.business_id AND ac.is_deleted = FALSE
+            left join dict_basic as dict on ci.type = dict.value and dict.is_deleted = false and dict.status = true
+        WHERE
+        ${params.sqlMap.default}
+        AND ci.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and ci.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+</mapper>

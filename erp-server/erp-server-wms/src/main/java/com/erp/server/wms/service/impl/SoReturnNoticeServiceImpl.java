@@ -787,6 +787,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount) {
+        if (ObjectUtil.isNull(returnAmount)) {
+            return BigDecimal.ZERO;
+        }
         return returnAmount
                 .multiply(exchangeRate)
                 .setScale(4, RoundingMode.DOWN)

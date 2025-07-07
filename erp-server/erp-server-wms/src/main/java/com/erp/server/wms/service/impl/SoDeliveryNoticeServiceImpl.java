@@ -10,12 +10,15 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -24,14 +27,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
+import com.erp.model.oms.enums.LabelSourceTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -39,7 +43,9 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
@@ -52,9 +58,11 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
@@ -66,13 +74,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.csource.common.MyException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -172,6 +188,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private MachineInfoService machineInfoService;
     @Resource
     private MachineDetailService machineDetailService;
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1926,5 +1946,270 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
         return baseMapper.rebuildB2bVirtualFlow();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(List<String> detailIds) {
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelDTOS = baseMapper.printSkuLabelView(detailIds);
+        if (CollUtil.isEmpty(printSkuLabelDTOS)){
+            return printSkuLabelDTOS;
+        }
+        //补充产品名称
+        List<String> skuIds = printSkuLabelDTOS.stream().map(SoDeliveryNoticeDTO.PrintSkuLabelDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(skuIds);
+        //判断sku是否组合品
+        //子件信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        Map<String, String> productNameMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO printSkuLabelDTO : printSkuLabelDTOS) {
+            printSkuLabelDTO.setProductName(productNameMap.get(printSkuLabelDTO.getSkuId()));
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(printSkuLabelDTO.getSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                printSkuLabelDTO.setIsCombination(Boolean.TRUE);
+                printSkuLabelDTO.setShowDate(Boolean.FALSE);
+            } else {
+                printSkuLabelDTO.setIsCombination(Boolean.FALSE);
+                printSkuLabelDTO.setShowDate(Boolean.TRUE);
+            }
+        }
+        return printSkuLabelDTOS;
+    }
+
+    @Override
+    public void printSkuLabelConfirm(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto, HttpServletResponse response) {
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> details = dto.getDetailList();
+        if(CollUtil.isEmpty(details)){
+            throw new ServiceException(ApiError.ERROR_1041,"客户SKU标签");
+        }
+        if (SkuPrintTypeEnum.BARCODE_INFO.getCode().equals(dto.getSkuPrintType()) && (CharSequenceUtil.isBlank(dto.getCompanyAddress()) || CharSequenceUtil.isBlank(dto.getCompanyName()))){
+            throw new ServiceException("公司名称和公司地址不能为空");
+        }
+        //校验客户sku是否存在空值
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> collect = details.stream().filter(v -> StrUtil.isBlank(v.getPlatformSkuNo()) || StrUtil.isBlank(v.getSkuNo())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(collect)){
+            throw new ServiceException("SKU和客户SKU不能为空");
+        }
+        int totalPrintNum = details.stream()
+                .mapToInt(detail -> Optional.ofNullable(detail.getPrintNum()).orElse(0))
+                .sum();
+        if(totalPrintNum > 5000){
+            throw new ServiceException("打印数量合计超过10000，建议减少打印数量后在预览页面下载pdf单独打印");
+        }
+        List<String> base64List = new ArrayList<>();
+        generateBase64ByFnskuBill(base64List, dto);
+        try {
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (OutputStream out = response.getOutputStream()) {
+                // 将 Base64 编码的字符串解码为字节数组
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                // 将字节数组写入到响应输出流中
+                out.write(pdfBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_CUSTOMER_SKU_PRINT);
+        }
+    }
+    private void generateBase64ByFnskuBill(List<String> base64List, SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto){
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList = dto.getDetailList();
+        //查询标签链接
+        buildSkuLabel(detailList);
+        //模板查询
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        byte[] content = null;
+        try {
+            content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+            InputStream inputStream = new ByteArrayInputStream(content);
+            if (inputStream == null) {
+                log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                return;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        LocalDate localDate = LocalDate.now();
+        String dateStr = localDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO dtoDetail : detailList) {
+            Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
+            String labelUrl = dtoDetail.getLabelUrl();
+            Boolean showDate = dtoDetail.getShowDate();
+            String labelSourceType = dtoDetail.getLabelSourceType();
+            String base = "";
+            //如果存在客户上传标签，以上传标签为准
+            if ((Objects.isNull(showDate) || Boolean.FALSE.equals(showDate) || LabelSourceTypeEnum.CUSTOMER.getCode().equals(labelSourceType)) && CharSequenceUtil.isNotBlank(labelUrl)){
+                try {
+                    byte[] content2 = FastDFSClientUtil.getStorageClient().download_file1(labelUrl);
+                    base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(content2);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (MyException e) {
+                    throw new RuntimeException(e);
+                }
+            }else {
+                Map<String, Object> map = new HashMap<>();
+                map.put("skuNo", dtoDetail.getSkuNo());
+                map.put("platformSkuNo", dtoDetail.getPlatformSkuNo());
+                if (Objects.nonNull(dtoDetail.getShowDate()) && dtoDetail.getShowDate()){
+                    map.put("dateStr", dateStr);
+                }else {
+                    map.put("dateStr", "");
+                }
+                InputStream inputStream = new ByteArrayInputStream(content);
+                byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
+                base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
+            }
+            for (int i = 1; i <= printNum; i++) {
+                base64List.add(base);
+            }
+        }
+        if (SkuPrintTypeEnum.BARCODE_INFO.getCode().equals(dto.getSkuPrintType())){
+            List<String> companyData = getCompanyData(dto);
+            if (CollUtil.isNotEmpty(companyData)){
+                base64List.addAll(companyData);
+            }
+        }
+    }
+
+    private List<String> getCompanyData(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto) {
+        List<String> companyData = new ArrayList<>();
+        //模板查询
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.COMPANY_LABEL);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        byte[] content = null;
+        try {
+            content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+            InputStream inputStream = new ByteArrayInputStream(content);
+            if (inputStream == null) {
+                log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                throw new ServiceException("公司标签模板不存在");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList = dto.getDetailList();
+        String companyAddress = dto.getCompanyAddress();
+        String companyName = dto.getCompanyName();
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO dtoDetail : detailList) {
+            Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
+            Map<String, Object> map = new HashMap<>();
+            map.put("companyAddress", "生产地址：" + companyAddress);
+            map.put("companyName", "生产厂名：" + companyName);
+            map.put("productName", "产品名称：" + maskString(dtoDetail.getProductName()));
+            InputStream inputStream = new ByteArrayInputStream(content);
+            byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
+            String base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
+            for (int i = 1; i <= printNum; i++) {
+                companyData.add(base);
+            }
+        }
+        return companyData;
+    }
+
+    private String maskString(String input) {
+        if (input == null || input.length() <= 23) {
+            return input;
+        }
+        String prefix = input.substring(0, 10);
+        String suffix = input.substring(input.length() - 10);
+        return prefix + "***" + suffix;
+    }
+
+    private void buildLabelData(List<String> base64List, List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList) {
+        //模板查询
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.CUSTOMER_SKU_LABEL);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        byte[] content = null;
+        try {
+            content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+            InputStream inputStream = new ByteArrayInputStream(content);
+            if (inputStream == null) {
+                log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                throw new ServiceException("客户sku标签模板不存在");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        LocalDate localDate = LocalDate.now();
+        String dateStr = localDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        byte[] content2 = null;
+        for (SoDeliveryNoticeDTO.PrintSkuLabelDTO dtoDetail : detailList) {
+            Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
+            String labelUrl = dtoDetail.getLabelUrl();
+            Boolean showDate = dtoDetail.getShowDate();
+            String base = "";
+            if ((Objects.isNull(showDate) || Boolean.FALSE.equals(showDate)) && CharSequenceUtil.isNotBlank(labelUrl)){
+                try {
+                    content2 = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+                    base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(content2);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (MyException e) {
+                    throw new RuntimeException(e);
+                }
+            }else {
+                Map<String, Object> map = new HashMap<>();
+                map.put("skuNo", CharSequenceUtil.isNotBlank(dtoDetail.getSkuNo()) ? dtoDetail.getSkuNo() : "");
+                map.put("platformSkuNo", CharSequenceUtil.isNotBlank(dtoDetail.getPlatformSkuNo()) ? dtoDetail.getPlatformSkuNo() : "");
+                if (Objects.nonNull(dtoDetail.getShowDate()) && dtoDetail.getShowDate()){
+                    map.put("dateStr", dateStr);
+                }else {
+                    map.put("dateStr", "");
+                }
+                if (Objects.isNull(content)){
+                    try {
+                        content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+                        InputStream inputStream = new ByteArrayInputStream(content);
+                        if (inputStream == null) {
+                            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                            throw new ServiceException("客户sku标签模板不存在");
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                InputStream inputStream = new ByteArrayInputStream(content);
+                byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
+                base = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
+            }
+            for (int i = 1; i <= printNum; i++) {
+                base64List.add(base);
+            }
+        }
+    }
+
+    private void buildSkuLabel(List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> detailList) {
+        List<String> platformSkuList = detailList.stream().map(SoDeliveryNoticeDTO.PrintSkuLabelDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setPlatformSkuNoList(platformSkuList);
+        queryDTO.setType(RuleTypeEnum.CUSTOMER.getCode());
+        List<ListingInfoEntity> infoEntityList = omsListingInfoFeign.listInfoByPlatformSkuNo(queryDTO);
+        detailList.forEach(e -> {
+            ListingInfoEntity listingInfoEntity = infoEntityList.stream().filter(obj -> obj.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
+            e.setLabelUrl(Objects.nonNull(listingInfoEntity) ? listingInfoEntity.getLabelUrl() : "");
+            e.setLabelSourceType(Objects.nonNull(listingInfoEntity)? listingInfoEntity.getLabelSourceType() : "");
+        });
     }
 }

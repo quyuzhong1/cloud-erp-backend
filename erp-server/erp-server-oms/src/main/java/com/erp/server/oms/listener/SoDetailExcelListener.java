@@ -161,6 +161,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setTaxRate(taxRate);
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
         addDTO.setCustomerPO(soDetailImportExcelDTO.getCustomerPO());
+        addDTO.setToCountry(soDetailImportExcelDTO.getToCountry());
         addDTO.setPlatformSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
         successList.add(addDTO);
     }

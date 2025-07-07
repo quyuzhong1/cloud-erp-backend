@@ -190,7 +190,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 是否赠品
      */
-    private Integer is_gift = 0;
+    private Integer is_gift;
     /**
      * 是否组合装
      */

@@ -548,4 +548,33 @@
         inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
         WHERE ra.is_deleted = false
     </select>
+    <select id="unLockInventoryView" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$InventoryDTO">
+        SELECT
+            ra.id,
+            pt.id as taskId,
+            wc.id as cartonId,
+            fs.code as shipmentCode,
+            ra.code,
+            wc.box_no as boxNo,
+            wc.is_release_inventory as isReleaseInventory,
+            wcd.sku_id as skuId,
+            wcd.sku_no as skuNo,
+            wcd.fn_sku as fnSku,
+            sum(wcd.pack_qty) as packQty,
+            sum(wcd.release_qty) as releaseQty
+        FROM requisition_application ra
+                 INNER JOIN packing_task pt ON ra.id = pt.source_id AND pt.is_deleted=false
+                 INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted=false
+                 INNER JOIN wms_carton_detail wcd ON wcd.main_id = wc.id AND wcd.is_deleted=false
+                LEFT JOIN fba_shipment_packing fsp on fsp.carton_id= wc.id and fsp.is_deleted=false
+                LEFT JOIN fba_shipment fs on fs.id = fsp.main_id and fs.is_deleted=false
+        WHERE ra.is_deleted=false and pt.packing_status = 'packed'
+          AND ra.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY ra.id, pt.id, wc.id, fs.code, ra.code, wc.box_no,wc.is_release_inventory, wcd.sku_id, wcd.sku_no,wcd.fn_sku
+        ORDER BY ra.id,wc.box_no,wcd.sku_no,wcd.fn_sku
+
+    </select>
 </mapper>

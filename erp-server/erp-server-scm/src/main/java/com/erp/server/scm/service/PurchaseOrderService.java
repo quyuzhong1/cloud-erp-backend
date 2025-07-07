@@ -492,6 +492,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param purchaseCalcQtyParamsDTO 参数
      */
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
     /**
      * 合同状态更新
      * @author jack
@@ -500,4 +501,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return ApiResult
      */
     void updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
+
+    /**
+     * 定时任务 ： (供应商 + 采购订单 + sku )采购数量计算
+     */
+    void calSupplierPurchaseQty();
+
+    List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(List<String> supplierIds);
 }

@@ -51,6 +51,8 @@ public enum OperationTypeEnum {
     SUSPEND("suspend", "暂停操作"),
 
 
+    MANUAL_GENERATE("manualGenerate", "手动生成"),
+
     ;
     @JsonValue
     @EnumValue

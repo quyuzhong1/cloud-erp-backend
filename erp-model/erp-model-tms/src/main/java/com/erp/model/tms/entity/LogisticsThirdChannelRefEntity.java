@@ -70,6 +70,13 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     @TableField("platform_type")
     private String platformType;
 
+    /**
+     * 手机号
+     */
+    @TableField("mobile")
+    private String mobile;
+
+
     public static final String REMARK = "remark";
 
     public static final String DISABLED = "disabled";

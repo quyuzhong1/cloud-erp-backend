@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -27,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -523,6 +525,24 @@ public class SoDeliveryNoticeController extends BaseController {
     public ApiResult generateMachineInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result =  soDeliveryNoticeService.generateMachineInfo(dto.getIds());
         return result ? success():failure();
+    }
+
+    /**
+     * 打印客户SKU标签预览
+     *
+     */
+    @PostMapping(value = "/printSkuLabelView")
+    public ApiResult<List<SoDeliveryNoticeDTO.PrintSkuLabelDTO>> printSkuLabelView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelDTOList = soDeliveryNoticeService.printSkuLabelView(dto.getIds());
+        return success(printSkuLabelDTOList);
+    }
+    /**
+     * 打印客户SKU标签确认
+     *
+     */
+    @PostMapping(value = "/printSkuLabelConfirm")
+    public void printSkuLabelConfirm(@RequestBody @Validated SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto , HttpServletResponse response) {
+        soDeliveryNoticeService.printSkuLabelConfirm(dto, response);
     }
 }
 

@@ -33,11 +33,16 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.*;
+import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
+import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +52,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,6 +69,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, ListingInfoEntity> implements ListingInfoService {
+
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -89,11 +99,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
      * @param skuNo
      * @param productName
      * @param thirdBarcode
+     * @param authId
+     * @param platform
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addWarehouseSku(String skuNo, String productName, String thirdBarcode) {
+    public String addWarehouseSku(String skuNo, String productName, String thirdBarcode, String authId, String platform) {
         String id = IdWorker.getIdStr();
         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
         listingInfoEntity.setId(id);
@@ -101,6 +113,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         listingInfoEntity.setPlatformSkuName(productName);
         listingInfoEntity.setThirdBarcode(thirdBarcode);
         listingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
+        listingInfoEntity.setPlatform(platform);
+        if(StringUtils.isNotBlank(authId)){
+            listingInfoEntity.setAuthId(authId);
+        }
         if (this.save(listingInfoEntity)) {
             return id;
         } else {
@@ -567,5 +583,76 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                     .list();
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public void updateLabelInfo(String id, String labelUrl, String labelSourceType, String labelFileName) {
+        this.lambdaUpdate().eq(ListingInfoEntity::getId,id)
+                .set(ListingInfoEntity::getLabelUrl,labelUrl)
+                .set(ListingInfoEntity::getLabelFileName,labelFileName)
+                .set(ListingInfoEntity::getLabelSourceType,labelSourceType)
+                .update();
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑产品标签【{}】链接【{}】",UserContext.getDefaultLoginUser().getUserName(),labelFileName,labelUrl), ModuleTypeEnum.LISTING_INFO.getCode(), id,"更新标签链接");
+    }
+
+    @Override
+    public List<ListingInfoEntity> listInfoByPlatformSkuNo(ListingInfoDTO.QueryDTO queryDTO) {
+        if (CharSequenceUtil.isBlank(queryDTO.getType()) || CollectionUtils.isEmpty(queryDTO.getPlatformSkuNoList())){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ListingInfoEntity::getPlatformSkuNo,queryDTO.getPlatformSkuNoList())
+                .eq(ListingInfoEntity::getType,queryDTO.getType()).list();
+    }
+
+    @Override
+    public AliexpressProductDTO convertAliexpressProductDTO(ListingInfoEntity listingInfoEntity) {
+        //查询SkuMapping
+        List<SkuMappingEntity> skuMappingList = skuMappingService.listByListingIds(Arrays.asList(listingInfoEntity.getId()));
+        if(CollectionUtils.isEmpty(skuMappingList)){
+            return null;
+        }
+        SkuMappingEntity skuMapping = skuMappingList.get(0);
+        String skuId = skuMapping.getProductSkuId();
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(Collections.singletonList(skuId));
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(skuId)).distinct().findFirst().orElse(new SkuVO());
+        OverseasProviderEntity overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class,listingInfoEntity.getAuthId());
+        if(Objects.isNull(overseasProviderEntity) || !overseasProviderEntity.getIsProductSync()){
+            return null;
+        }
+        Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
+        String shopId = authMap.get("shopId").toString();
+        AliExpressShopInfoDTO shopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
+        AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
+        aliexpressAuthDTO.setUrl(authMap.get("baseUrl").toString());
+        aliexpressAuthDTO.setAppKey(authMap.get("clientId").toString());
+        aliexpressAuthDTO.setAppSecret(authMap.get("clientSecret").toString());
+        aliexpressAuthDTO.setShopId(authMap.get("shopId").toString());
+        aliexpressAuthDTO.setAccessToken(shopInfoDTO.getToken());
+        aliexpressAuthDTO.setOwnerCode(overseasProviderEntity.getOwnerCode());
+
+        AliexpressProductDTO aliexpressProductDTO = new AliexpressProductDTO();
+        AliexpressProductDTO.ProductDTO productDTO = new AliexpressProductDTO.ProductDTO();
+        productDTO.setItemCode(listingInfoEntity.getPlatformSkuNo());
+        productDTO.setItemName(listingInfoEntity.getPlatformSkuName());
+        productDTO.setBarCode(StringUtils.isBlank(listingInfoEntity.getThirdBarcode())?listingInfoEntity.getPlatformSkuNo():listingInfoEntity.getThirdBarcode());
+        productDTO.setHeight(skuVO.getProductHeight().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
+        productDTO.setWidth(skuVO.getProductWidth().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
+        productDTO.setLength(skuVO.getProductLength().divide(new BigDecimal("10"), 4, RoundingMode.HALF_UP));
+        productDTO.setNetWeight(skuVO.getNetWeight().divide(new BigDecimal("1000"), 4, RoundingMode.HALF_UP));
+        productDTO.setGrossWeight(skuVO.getGrossWeight().divide(new BigDecimal("1000"), 4, RoundingMode.HALF_UP));
+        productDTO.setItemType("ZC");
+
+        aliexpressProductDTO.setAliexpressAuthDTO(aliexpressAuthDTO);
+        aliexpressProductDTO.setProductDTO(productDTO);
+        aliexpressProductDTO.setListingId(listingInfoEntity.getId());
+        return aliexpressProductDTO;
+    }
+
+    @Override
+    public boolean updatePlatformSkuId(String listingId, String platformSkuId) {
+        return lambdaUpdate()
+                .set(ListingInfoEntity::getPlatformSkuId, platformSkuId)
+                .eq(ListingInfoEntity::getId, listingId)
+                .update();
     }
 }

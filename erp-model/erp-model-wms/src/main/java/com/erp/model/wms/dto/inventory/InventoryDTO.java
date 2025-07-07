@@ -1831,4 +1831,11 @@ public class InventoryDTO implements Serializable {
          */
         private String tabFlagName;
     }
+    @Data
+    @NoArgsConstructor
+    public static class RealQtyDTO {
+        private String warehouseId;
+        private String skuId;
+        private Integer realQty;
+    }
 }

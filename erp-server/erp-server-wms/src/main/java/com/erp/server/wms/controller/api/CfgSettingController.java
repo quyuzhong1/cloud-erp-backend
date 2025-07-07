@@ -76,4 +76,15 @@ public class CfgSettingController extends BaseController {
     public ApiResult<String> getSubcontractInStockSetting() {
         return success(cfgSettingService.getSubcontractInStockSetting());
     }
+
+    /**
+     * 查询采购对账单配置
+     * @author will
+     * @date 2025/6/12 17:54
+     * @return ApiResult<PoReconciliationSettingDTO>
+     */
+    @GetMapping("/getPoReconciliationSetting")
+    public ApiResult<CfgSettingValueDTO.PoReconciliationSettingDTO> getPoReconciliationSetting() {
+        return success(cfgSettingService.getPoReconciliationSetting());
+    }
 }

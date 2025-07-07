@@ -51,6 +51,37 @@
         FROM basic_category
         WHERE pid = #{pid} and is_deleted = false
     </select>
+    <select id="getCategoryDropdown" resultType="com.erp.model.plm.dto.BasicCategoryDTO$DropdownDTO">
+        WITH RECURSIVE category_tree AS (
+            SELECT
+                id,
+                pid,
+                name,
+                CAST(name AS text) AS fullName,
+                1 AS level,
+                ARRAY[CAST(id AS text)] AS sort_path
+            FROM basic_category
+            WHERE is_deleted = false AND pid = '0'
+            UNION ALL
+            SELECT
+                c.id,
+                c.pid,
+                c.name,
+                (ct.fullName || '/' || c.name)::text AS fullName,
+                    ct.level + 1,
+                ct.sort_path || CAST(c.id AS text)
+            FROM basic_category c
+                     JOIN category_tree ct ON c.pid = ct.id
+            WHERE c.is_deleted = false
+        )
+
+        SELECT
+            id,
+            pid,
+            fullName
+        FROM category_tree
+        ORDER BY sort_path
+    </select>
 
     <!-- 定义递归映射 -->
     <resultMap id="categoryResultMap" type="com.erp.model.plm.dto.BasicCategoryDTO">

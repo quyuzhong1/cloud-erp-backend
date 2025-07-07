@@ -1299,4 +1299,40 @@ public class WarehouseReceiveDTO implements Serializable {
          */
         private Integer returnQty;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReceiveSourceDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 来与id
+         */
+        private String sourceId;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+    }
 }

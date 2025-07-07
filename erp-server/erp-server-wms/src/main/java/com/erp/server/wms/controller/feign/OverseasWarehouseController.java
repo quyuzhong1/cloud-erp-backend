@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -89,5 +90,14 @@ public class OverseasWarehouseController extends BaseController {
     @PostMapping("/pageWarehouseProduct")
     public PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
         return overseasProviderService.pageWarehouseProduct(advanceQueryDTO);
+    }
+
+    /**
+     * 新增三方仓
+     *
+     */
+    @PostMapping("/addThirdWarehouse")
+    public BaseResultDTO.AddDTO addThirdWarehouse(@RequestBody ThirdWarehouseDTO.AddDTO addDTO){
+        return overseasProviderWarehouseService.addThirdWarehouse(addDTO);
     }
 }

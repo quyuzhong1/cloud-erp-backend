@@ -61,7 +61,15 @@ public class AuthDataFeignController extends BaseController {
      */
     @PostMapping("/getShopPermissionSql")
     public String getShopPermissionSql(@RequestBody String shopTableField){
-        return authUserShopService.getShopPermissionSql(shopTableField);
+        return authUserShopService.getShopPermissionSql(shopTableField , null);
+    }
+    /**
+     * 获取用户店铺权限
+     * @return
+     */
+    @PostMapping("/getShopPermissionSqlByDynamicDataSource")
+    public String getShopPermissionSqlByDynamicDataSource(@RequestParam String shopTableField , @RequestParam String dynamicDataSource){
+    	return authUserShopService.getShopPermissionSql(shopTableField , dynamicDataSource);
     }
     /**
      * 获取用户仓库权限
@@ -69,7 +77,15 @@ public class AuthDataFeignController extends BaseController {
      */
     @PostMapping("/getWarehousePermissionSql")
     public String getWarehousePermissionSql(@RequestBody String warehouseTableField){
-        return authUserWarehouseService.getWarehousePermissionSql(warehouseTableField);
+        return authUserWarehouseService.getWarehousePermissionSql(warehouseTableField , null);
+    }
+    /**
+     * 获取用户仓库权限
+     * @return
+     */
+    @PostMapping("/getWarehousePermissionSqlByDynamicDataSource")
+    public String getWarehousePermissionSqlByDynamicDataSource(@RequestParam String warehouseTableField , @RequestParam String dynamicDataSource){
+    	return authUserWarehouseService.getWarehousePermissionSql(warehouseTableField , dynamicDataSource);
     }
 
     /**

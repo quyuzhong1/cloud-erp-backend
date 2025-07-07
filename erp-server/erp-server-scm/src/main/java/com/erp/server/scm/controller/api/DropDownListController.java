@@ -1,7 +1,6 @@
 package com.erp.server.scm.controller.api;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -102,6 +101,26 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+
+    /**
+     * 已审核 + 启用 + 启用协同供应商下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/supplier/srmSupplierList")
+    public ApiResult<List<BaseDropDownDTO.SrmDisabledDTO>> srmSupplierListDropDown() {
+        List<Map<String, Object>> mapList = supplierService.listApproveSupplier();
+        if (CollectionUtils.isEmpty(mapList)) {
+            return success(new ArrayList<>());
+        }
+        List<BaseDropDownDTO.SrmDisabledDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.SrmDisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled"), (Boolean)x.get("srm_disabled")))
+                .collect(Collectors.toList());
+        //已审核 + 启用 + 启用协同
+        result = result.stream().filter(e -> !e.getDisabled() && !e.getSrmDisabled()).collect(Collectors.toList());
+        return success(result);
+    }
+
     /**
      * 所有供应商下拉列表
      *
@@ -152,7 +171,7 @@ public class DropDownListController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listVisitType() {
         List<SupplierVisitEnum> list = Arrays.asList(SupplierVisitEnum.values());
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

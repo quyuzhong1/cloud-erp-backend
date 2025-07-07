@@ -536,10 +536,20 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
+            String platformType = customerInfoEntity.getPlatformType();
             PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
+            if(StringUtils.isNotBlank(platformType)) {
+            	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                        .eq(DictBasicEntity::getName, platformType)
+                        .list();
+            	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+            		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+            	}
+            }
         }
 
 //        //部门
@@ -761,10 +771,20 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
-            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
+            String platformType = customerInfoEntity.getPlatformType();
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(platformType);
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
+            if(StringUtils.isNotBlank(platformType)) {
+            	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                        .eq(DictBasicEntity::getName, platformType)
+                        .list();
+            	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+            		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+            	}
+            }
         }
 //        //部门
 //        if (CharSequenceUtil.isNotBlank(deptId)) {
@@ -960,10 +980,20 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
-            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
+            String platformType = customerInfoEntity.getPlatformType();
+			PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(platformType);
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
+            if(StringUtils.isNotBlank(platformType)) {
+            	List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                        .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                        .eq(DictBasicEntity::getName, platformType)
+                        .list();
+            	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+            		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+            	}
+            }
         }
 
         //部门

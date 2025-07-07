@@ -10,13 +10,13 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.service.CommonService;
@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +50,8 @@ public class CommonServiceImpl implements CommonService {
 
     @Autowired
     private WorkflowFeign workflowFeign;
-
+    @Resource
+    private FileFeign filefeign;
 
     /**
      * 获取用户名
@@ -144,7 +146,7 @@ public class CommonServiceImpl implements CommonService {
             //图片压缩
             MultipartFile newMultipartFile = compressImage(multipartFile, size);
             //上传fastdfs
-            String filePath = FastDFSClientUtil.uploadFile(newMultipartFile);
+            String filePath = filefeign.uploadFile(newMultipartFile);
             list.add(filePath);
         }
         return list;

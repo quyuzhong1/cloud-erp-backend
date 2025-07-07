@@ -124,4 +124,11 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @return
      */
     List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds);
+
+    /**
+     * 更新装箱释放库存状态
+     * @param cartonIds
+     * @param aTrue
+     */
+    void updateReleaseInventory(List<String> cartonIds, Boolean aTrue);
 }

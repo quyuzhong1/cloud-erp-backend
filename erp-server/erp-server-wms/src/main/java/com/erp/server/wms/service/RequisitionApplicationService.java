@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -281,4 +280,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
+
+    List<RequisitionApplicationDTO.InventoryDTO> unLockInventoryView(BaseIdsDTO.IdsDTO dto);
+    BatchResultDTO unLockInventorySave(List<RequisitionApplicationDTO.InventoryDTO> dtoList);
 }

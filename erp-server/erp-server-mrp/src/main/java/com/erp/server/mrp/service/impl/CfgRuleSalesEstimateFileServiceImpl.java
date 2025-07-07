@@ -13,7 +13,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesEstimateFileEntity;
@@ -22,6 +21,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.es.service.CustomerSalesEstimateEsService;
@@ -67,6 +67,8 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
     @Resource
     @Lazy
     private CfgRuleSalesQtyService cfgRuleSalesQtyService;
+    @Resource
+    private FileFeign filefeign;
 
     @Override
     public PagingVO<CfgRuleSalesEstimateFileDTO.PagingView> filePage(PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
@@ -138,7 +140,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             customerSalesEstimateEsService.removeByPlatform(platform);
             // 保存数据
             customerSalesEstimateEsService.saveAll(excelListenerUtil.getSuccessList());
-            String fileUrl = FastDFSClientUtil.uploadFile(excelFile);
+            String fileUrl = filefeign.uploadFile(excelFile);
             CfgRuleSalesEstimateFileEntity salesEstimateFile = new CfgRuleSalesEstimateFileEntity();
             salesEstimateFile.setSalesQtyId(salesQty.getId());
             salesEstimateFile.setFileName(excelFile.getOriginalFilename());

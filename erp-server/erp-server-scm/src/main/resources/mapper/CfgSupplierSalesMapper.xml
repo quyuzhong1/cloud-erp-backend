@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.CfgSupplierSalesMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.CfgSupplierSalesEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="permission" property="permission" />
+       <result column="daily_sales_type" property="dailySalesType" />
+       <result column="sales_ratio_type" property="salesRatioType" />
+       <result column="sales_ratio" property="salesRatio" />
+       <result column="notice_enabled" property="noticeEnabled" />
+       <result column="dimension" property="dimension" />
+       <result column="disabled" property="disabled" />
+       <result column="display_field" property="displayField" />
+       <result column="warehouse_type" property="warehouseType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        css.ID AS ID,
+        css.create_user_id AS createUserId,
+        css.create_user_name AS createUserName,
+        css.create_time AS createTime,
+        css.update_user_id AS updateUserId,
+        css.update_user_name AS updateUserName,
+        css.update_time AS updateTime,
+        css.VERSION AS VERSION,
+        css.is_deleted AS isDeleted,
+        css.supplier_id AS supplierId,
+        css.supplier_code AS supplierCode,
+        css.supplier_name AS supplierName,
+        css.permission AS permission,
+        css.daily_sales_type AS dailySalesType,
+        css.sales_ratio_type AS salesRatioType,
+        css.sales_ratio AS salesRatio,
+        css.notice_enabled AS noticeEnabled,
+        css.dimension AS dimension,
+        css.disabled AS disabled,
+        css.display_field AS displayField,
+        css.warehouse_type AS warehouseType
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM
+            cfg_supplier_sales AS css
+        WHERE
+        ${params.sqlMap.default}
+        AND css.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and css.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        css.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.CfgSupplierSalesDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+
+</mapper>

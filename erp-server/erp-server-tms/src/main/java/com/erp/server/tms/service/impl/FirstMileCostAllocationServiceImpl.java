@@ -550,7 +550,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                             && CharSequenceUtil.isNotBlank(e.getSkuId()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
                             && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                             && Objects.equals(e.getReportPeriodMonth(), lastMonth)
-                            && ((CharSequenceUtil.isNotBlank(entity.getReconciliationId()) && Objects.equals(e.getReconciliationId(), entity.getReconciliationId()))) || (CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()) && Objects.equals(e.getEstimatedBillId(), entity.getEstimatedBillId()))
+                            && ((CharSequenceUtil.isNotBlank(entity.getReconciliationId()) && Objects.equals(e.getReconciliationId(), entity.getReconciliationId())) || (CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()) && Objects.equals(e.getEstimatedBillId(), entity.getEstimatedBillId())))
                             && Objects.equals(e.getBillSourceType(), finalBillSourceType))
                     .findFirst().orElse(null);
             FirstMileSkuCostAllocationEntity lastAllocation = null;
@@ -945,7 +945,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     private void setRemark(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, FirstMileSkuCostAllocationDetailEntity detailEntity) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(),entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setRemark(changeRecordEntity.getNewValue());
         }
@@ -963,7 +963,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setEndPeriodEstimatedCost(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, BigDecimal productAllocatedAmount, int receiveQty, Integer deliveryQty) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_ESTIMATED_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_ESTIMATED_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(), entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setEndPeriodEstimatedCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -995,7 +995,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setEndPeriodTransitCost(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO, InitFirstMileAllocationDetailEntity initEntity, BigDecimal allocatedAmount) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId(), entity.getId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setEndPeriodTransitCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -1016,17 +1016,20 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //初始分摊（实际+暂估）可以判断期初费用分摊
                 if (judgeReconciliationDTO.isLastHasCostAllocation()){
                     if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                        //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                        //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                         //期初不等于0时，期初在途费用-冲期初-本期分摊费用
                         detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                    }else {
+                        //期初等于0时，头程分摊金额-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                     }
                 }else if (Objects.isNull(initEntity)){
                     //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                    //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                    //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                     //期初不等于0时，期初在途费用-冲期初-本期分摊费用
@@ -1043,7 +1046,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setCurrentPeriodAllocatedCost(CurrentPeriodAllocatedCostDTO currentPeriodAllocatedCostDTO) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),currentPeriodAllocatedCostDTO.getEntity().getSourceId(),currentPeriodAllocatedCostDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.CURRENT_PERIOD_ALLOCATED_COST.getCode(),currentPeriodAllocatedCostDTO.getDetailEntity().getSkuId(),currentPeriodAllocatedCostDTO.getDetailEntity().getPlatformSkuNo(),currentPeriodAllocatedCostDTO.getDetailEntity().getFeeType(),currentPeriodAllocatedCostDTO.getEntity().getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),currentPeriodAllocatedCostDTO.getEntity().getSourceId(),currentPeriodAllocatedCostDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.CURRENT_PERIOD_ALLOCATED_COST.getCode(),currentPeriodAllocatedCostDTO.getDetailEntity().getSkuId(),currentPeriodAllocatedCostDTO.getDetailEntity().getPlatformSkuNo(),currentPeriodAllocatedCostDTO.getDetailEntity().getFeeType(),currentPeriodAllocatedCostDTO.getEntity().getReportPeriodId(), currentPeriodAllocatedCostDTO.getEntity().getId());
         if (Objects.nonNull(changeRecordEntity)){
             currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -1069,7 +1072,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //期初为暂估费用 且当月开始有实际账单
                 //期初费用分摊是实际还是暂估 实际时计算使用本月签收 暂估时使用累计签收
                 if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isHasOtherReconciliation()){
-                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getCurrentMonthReceiveQty()), 2));
+                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getAsCurrentMonthReceiveQty()), 2));
                 }else {
                     //对账单来源判断 如果来源于期初分摊对账单 取期初签收 实际账单取本月累计签收
                     if (Objects.nonNull(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity()) && ReconciliationTypeEnum.ACTUAL.getCode().equals(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity().getReconciliationType())){
@@ -1098,7 +1101,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void setMidPeriodTransitCost(FirstMileCostAllocationParamDTO firstMileCostAllocationParamDTO) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),firstMileCostAllocationParamDTO.getEntity().getSourceId(),firstMileCostAllocationParamDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.MID_PERIOD_TRANSIT_COST.getCode(),firstMileCostAllocationParamDTO.getDetailEntity().getSkuId(),firstMileCostAllocationParamDTO.getDetailEntity().getPlatformSkuNo(),firstMileCostAllocationParamDTO.getDetailEntity().getFeeType(),firstMileCostAllocationParamDTO.getEntity().getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),firstMileCostAllocationParamDTO.getEntity().getSourceId(),firstMileCostAllocationParamDTO.getEntity().getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.MID_PERIOD_TRANSIT_COST.getCode(),firstMileCostAllocationParamDTO.getDetailEntity().getSkuId(),firstMileCostAllocationParamDTO.getDetailEntity().getPlatformSkuNo(),firstMileCostAllocationParamDTO.getDetailEntity().getFeeType(),firstMileCostAllocationParamDTO.getEntity().getReportPeriodId(), firstMileCostAllocationParamDTO.getEntity().getId());
         if (Objects.nonNull(changeRecordEntity)){
             firstMileCostAllocationParamDTO.getDetailEntity().setMidPeriodTransitCost(new BigDecimal(changeRecordEntity.getNewValue()));
             return;//存在则不进行计算直接赋值
@@ -1178,7 +1181,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileCostAllocationDTO.PagingVO beforeVO = null;
         if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //本月开始有实际账单，则之前为暂估账单
-            beforeVO = Collections.max(beforeList, Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth));
+            beforeVO = beforeList.stream().filter(e -> reconciliationMonth.equals(e.getReconciliationMonth()) || Objects.isNull(e.getReconciliationMonth())).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
         } else if (judgeReconciliationDTO.isLastMonthReconciliation() && Objects.nonNull(reconciliationMonth) && !CollectionUtils.isEmpty(beforeList)) {
             //上月开始有实际账单，则之前为实际账单
             beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);

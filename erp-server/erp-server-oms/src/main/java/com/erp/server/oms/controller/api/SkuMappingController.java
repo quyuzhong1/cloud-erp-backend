@@ -6,10 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
@@ -21,6 +18,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -42,6 +40,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * SKU对照表管理
@@ -158,7 +157,51 @@ public class SkuMappingController extends BaseController {
     public ApiResult<String> updateCustomer(@ModelAttribute @Validated(value = {UpdateGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
         return success(skuMappingService.updateCustomer(dto));
     }
-
+    /**
+     * 批量更新客户SKU标签
+     */
+    @PostMapping("/batchUpdateCustomerLabel")
+    public ApiResult<List<BatchResultDTO>> batchUpdateCustomerLabel(@RequestBody @Validated ValidList<SkuMappingDTO.CustomerLabelDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (SkuMappingDTO.CustomerLabelDTO dto : dtoList){
+            try {
+                BatchResultDTO resultDTO = skuMappingService.updateCustomerLabel(dto);
+                resultDTOS.add(resultDTO);
+            }catch (Exception e){
+                resultDTOS.add(BatchResultDTO.fail(dto.getPlatformSkuNo(),dto.getPlatformSkuNo(),e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 批量生成客户条码
+     */
+    @PostMapping("/batchGenerateCustomerLabel")
+    public ApiResult<List<BatchResultDTO>> batchGenerateCustomerLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SkuMappingEntity> mappingEntityList = skuMappingService.listByIds(dto.getIds());
+        List<String> listingIds = mappingEntityList.stream().map(SkuMappingEntity::getListingId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(listingIds);
+        for (String id : dto.getIds()) {
+            SkuMappingEntity skuMapping = mappingEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(skuMapping)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "映射信息不存在"));
+                continue;
+            }
+            ListingInfoEntity listingInfo = listingInfoEntityList.stream().filter(e -> e.getId().equals(skuMapping.getListingId())).findFirst().orElse(null);
+            if (Objects.isNull(listingInfo)) {
+                resultDTOS.add(BatchResultDTO.fail(id, skuMapping.getListingId(), "listing信息不存在"));
+                continue;
+            }
+            try {
+                BatchResultDTO resultDTO = skuMappingService.generateCustomerLabel(listingInfo, skuMapping);
+                resultDTOS.add(resultDTO);
+            } catch (Exception e) {
+                resultDTOS.add(BatchResultDTO.fail(listingInfo.getPlatformSkuNo(), listingInfo.getLabelUrl(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 导入平台sku对照表
@@ -466,6 +509,16 @@ public class SkuMappingController extends BaseController {
     @PostMapping("/getErpSkuByCustomerSku")
     public ApiResult<List<SkuMappingDTO.CustomerInventorySkuInfoDTO>> getErpSkuByCustomerSku(@RequestBody @Validated SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO) {
         return this.success(skuMappingService.getErpSkuByCustomerSku(skuParamDTO));
+    }
+
+
+    /**
+     * 推送商品
+     */
+    @PostMapping("/pushProduct")
+    public ApiResult<List<BatchResultDTO>> pushProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto ) {
+        List<BatchResultDTO> resultDTOS = skuMappingService.pushProduct(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 //    /**

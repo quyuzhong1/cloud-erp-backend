@@ -22,7 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.wrapper.FeignQuery;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,21 +33,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
     @Override
-    public void destroy() {
- 
-    }
- 
-    @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	String dorisQuerySetting = "0";
+    	DorisQuerySettingDTO dorisQuerySettingDTO = null;
     	try {
 			String requestURI = ((HttpServletRequest) request).getRequestURI();
-			dorisQuerySetting = FeignQuery.invoke(String.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "dorisQuerySetting", Arrays.asList(requestURI));
-		} catch (Exception e1) {
-			log.error("获取动态数据源配置错误" , e1);
+			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
+		} catch (Throwable e) {
+			log.error("获取动态数据源配置错误" , e);
 		}
-    	if(!"1".equals(dorisQuerySetting)) {
+    	if(dorisQuerySettingDTO == null) {
     		chain.doFilter(request, response);
     	}else {
     		ServletRequest requestWrapper = null;
@@ -59,7 +56,7 @@ public class DynamicDataSourceFilter implements Filter {
             } else {
             	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
                 try {
-    				dynamicDataSourceType = getDynamicDataSourceType(requestWrapper);
+    				dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
     			} catch (Throwable e) {
     				log.error("获取动态数据源类型错误" , e);
     			}
@@ -67,18 +64,19 @@ public class DynamicDataSourceFilter implements Filter {
                 	chain.doFilter(requestWrapper, response);
                 }else {
                 	try {
+                		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
         	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
         	            chain.doFilter(requestWrapper, response);
                     } finally {
                         DynamicDataSourceContextHolder.poll();
+                        DynamicDataSourceThreadLocal.remove();
                     }
                 }
             }
     	}
-    	
     }
     
-    private DynamicDataSourceTypeEnum getDynamicDataSourceType(ServletRequest requestWrapper) {
+    private DynamicDataSourceTypeEnum getDynamicDataSourceType(DorisQuerySettingDTO dorisQuerySettingDTO , ServletRequest requestWrapper) {
     	StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = requestWrapper.getReader()) {
             String line;
@@ -90,12 +88,27 @@ public class DynamicDataSourceFilter implements Filter {
         }
 
         String requestBody = sb.toString();
-        String requestURI = ((HttpServletRequest) requestWrapper).getRequestURI();
-        return FeignQuery.invoke(DynamicDataSourceTypeEnum.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDynamicDataSourceType", Arrays.asList(requestURI , requestBody));
+        DynamicDataSourceTypeEnum dynamicDataSourceType = dorisQuerySettingDTO.getDynamicDataSourceType(requestBody);
+        if(dynamicDataSourceType != null && DynamicDataSourceTypeEnum.POSTGRES != dynamicDataSourceType) {
+        	Integer sleepMillis = dorisQuerySettingDTO.getSleepMillis();
+        	if(sleepMillis != null && sleepMillis > 0) {
+        		try {
+					Thread.sleep(sleepMillis);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+        	}
+        }
+		return dynamicDataSourceType;
     }
  
     @Override
     public void init(FilterConfig arg0) throws ServletException {
+ 
+    }
+    
+    @Override
+    public void destroy() {
  
     }
     

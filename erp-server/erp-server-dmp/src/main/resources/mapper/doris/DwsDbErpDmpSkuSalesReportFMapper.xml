@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.doris.DwsDbErpDmpSkuSalesReportFMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.doris.DwsDbErpDmpSkuSalesReportFEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="daily_sales_type" property="dailySalesType" />
+       <result column="daily_sales" property="dailySales" />
+       <result column="dimension" property="dimension" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_name" property="skuName" />
+       <result column="sale_state" property="saleState" />
+       <result column="sale_state_name" property="saleStateName" />
+       <result column="product_image_url" property="productImageUrl" />
+       <result column="first_category_id" property="firstCategoryId" />
+       <result column="first_category_name" property="firstCategoryName" />
+       <result column="second_category_id" property="secondCategoryId" />
+       <result column="second_category_name" property="secondCategoryName" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="platform_name" property="platformName" />
+       <result column="shop_id" property="customerId" />
+       <result column="shop_name" property="customerName" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+       <result column="partition_id" property="partitionId" />
+       <result column="partition_name" property="partitionName" />
+       <result column="sales_last_3_days" property="salesLast3Days" />
+       <result column="sales_last_7_days" property="salesLast7Days" />
+       <result column="sales_last_30_days" property="salesLast30Days" />
+       <result column="sales_last_60_days" property="salesLast60Days" />
+       <result column="sales_last_90_days" property="salesLast90Days" />
+       <result column="stat_date" property="statDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        daily_sales_type, daily_sales, dimension, sku_id, sku_no, sku_name, sale_state, sale_state_name, product_image_url, first_category_id, first_category_name, second_category_id, second_category_name, dict_platform, platform_name, shop_id, shop_name, country_id, country_name, partition_id, partition_name, sales_last_3_days, sales_last_7_days, sales_last_30_days, sales_last_60_days, sales_last_90_days, stat_date
+    </sql>
+
+
+</mapper>

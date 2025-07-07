@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -195,6 +196,16 @@ public class AfterSaleDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 客服备注
+         */
+        private String csrRemark;
+
+        /**
+         * 维修备注
+         */
+        private String rmaRemark;
+
 
         /**
         * 审核状态名称
@@ -378,6 +389,16 @@ public class AfterSaleDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 客服备注
+         */
+        private String csrRemark;
+
+        /**
+         * 维修备注
+         */
+        private String rmaRemark;
+
 
         private String statusName;
         /**
@@ -531,6 +552,18 @@ public class AfterSaleDTO implements Serializable {
         private String remark;
 
         /**
+         * 客服备注
+         */
+        @Size(max = 255,message = "客服备注最大长度不能超过255位")
+        private String csrRemark;
+
+        /**
+         * 维修备注
+         */
+        @Size(max = 255,message = "维修备注最大长度不能超过255位")
+        private String rmaRemark;
+
+        /**
          * 小程序端附件
          */
         private List<String> attachmentList;
@@ -541,14 +574,14 @@ public class AfterSaleDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 寄出快递单号
+         * 商家寄出快递单号
          */
-        @Size(max = 64,message = "寄出快递单号最大长度不能超过64位")
+        @Size(max = 64,message = "商家寄出快递单号最大长度不能超过64位")
         private String outboundTrackNo;
         /**
-         * 寄回快递单号
+         * 买家寄出快递单号
          */
-        @Size(max = 64,message = "寄回快递单号最大长度不能超过64位")
+        @Size(max = 64,message = "买家寄出快递单号最大长度不能超过64位")
         private String returnTrackNo;
 
         /**
@@ -596,6 +629,15 @@ public class AfterSaleDTO implements Serializable {
          *
          */
         private String remark;
+        /**
+         * 客服备注
+         */
+        private String csrRemark;
+
+        /**
+         * 维修备注
+         */
+        private String rmaRemark;
     }
 
     /**

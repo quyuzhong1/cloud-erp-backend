@@ -390,14 +390,17 @@
     <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(*)
         from so_b2c sb2c
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
+            <!--替换logistics inner JOIN-->
+            AND EXISTS ( SELECT 1 FROM so_b2c_logistics sb2cl WHERE sb2cl.main_id = sb2c.id AND sb2cl.is_deleted = false )
+            <!--替换receiver JOIN-->
+            AND EXISTS ( SELECT 1 FROM so_b2c_receiver sb2cr WHERE sb2cr.main_id = sb2c.id AND sb2cr.is_deleted = false )
+            <!--替换shop_info JOIN-->
+            AND EXISTS ( SELECT 1 FROM shop_info si WHERE si.id = sb2c.shop_id AND si.is_deleted = false )
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

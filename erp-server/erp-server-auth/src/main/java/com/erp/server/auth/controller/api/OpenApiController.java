@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import com.erp.rpc.file.feign.FileFeign;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +27,6 @@ import com.alibaba.excel.util.CollectionUtils;
 import com.alibaba.fastjson.JSON;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
@@ -50,6 +50,8 @@ public class OpenApiController {
 
     @Resource
     private OpenApiService openApiService;
+    @Resource
+    private FileFeign filefeign;
 
     @PostMapping("/upload")
     public @ResponseBody ApiResult<String> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
@@ -88,7 +90,7 @@ public class OpenApiController {
         String fileUrl = "";
         try {
             MultipartFile multipartFile = new ArrayList<>(fileMap.values()).get(0);
-            fileUrl = FastDFSClientUtil.uploadFile(multipartFile);
+            fileUrl = filefeign.uploadFile(multipartFile);
         } catch (Exception e) {
             log.error("openApi文件上传失败", e);
             return ApiResult.error(500, "上传失败，请联系实施人员");

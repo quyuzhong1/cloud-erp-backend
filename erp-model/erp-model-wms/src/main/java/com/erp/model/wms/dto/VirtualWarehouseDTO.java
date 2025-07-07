@@ -503,4 +503,13 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private LocalDateTime updateTime;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewWarehouseDTO {
+        private String virtualWarehouseId;
+        private String virtualWarehouseName;
+        private String warehouseId;
+        private String warehouseName;
+    }
 }

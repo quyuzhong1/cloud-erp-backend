@@ -670,4 +670,23 @@
         </if>
     </select>
 
+    <!-- 查询发货来源信息 -->
+    <select id="listReceiveSourceByDetailIds"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$ReceiveSourceDTO">
+        select
+            pr.id,
+            pr.code,
+            pr.source_id,
+            pr.source_type,
+            pr.source_code,
+            prd.id as detailId,
+            prd.source_detail_id
+        from po_receive pr
+        inner join po_receive_detail prd on pr.id = prd.main_id and prd.is_deleted = false
+        where pr.is_deleted = false and prd.id in
+        <foreach collection="idList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

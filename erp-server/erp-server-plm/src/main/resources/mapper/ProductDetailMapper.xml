@@ -1760,16 +1760,18 @@
            and pi.is_deleted = FALSE AND pd.is_deleted = FALSE
     </select>
     <select id="listSku" resultType="com.erp.model.plm.dto.ProductDetailDTO$SkuDTO">
-        select id,sku_id,spu_no,sku_no,productName from
+        select id,sku_id,spu_no,sku_no,productName ,retailPrice from
        (
             select
                 pi."id",
                 pd.id AS sku_id,
                 pi.spu_no,
                 pi.name as productName,
-                pd.sku_no
+                pd.sku_no,
+                pc.retail_price as retailPrice
             FROM product_info pi
                      INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
+                     left join product_cost pc on  pd.id = pc.sku_id and pc.is_deleted = FALSE
             WHERE pi.is_deleted = FALSE
               AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text,'%')
             <if test="params.saleMethod !=null and params.saleMethod != ''">

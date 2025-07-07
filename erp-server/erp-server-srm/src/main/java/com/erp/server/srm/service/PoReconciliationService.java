@@ -45,7 +45,7 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
      * @author Will
      * @date: 2024/1/20 12:21
      */
-    void exportList(PoReconciliationDTO.PagingParamDTO dto);
+    void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * @description: 对账确认
      * @author Will
@@ -95,4 +95,14 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
     void exportPoReconciliation(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
 
     Integer countByStatus(String supplierId, String status);
+
+    /**
+     * 更新金蝶id
+     * @author will
+     * @date 2025/4/23 18:29
+     * @param businessId
+     * @param syncKingdeeId
+     * @return void
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

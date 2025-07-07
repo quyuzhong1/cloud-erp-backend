@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.srm.mapper.SalesSharingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.srm.entity.SalesSharingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="product_image" property="productImage" />
+       <result column="product_image_url" property="productImageUrl" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="sale_state" property="saleState" />
+       <result column="sale_state_name" property="saleStateName" />
+       <result column="saleable_stock" property="saleableStock" />
+       <result column="daily_sales" property="dailySales" />
+       <result column="sales_last_3_days" property="salesLast3Days" />
+       <result column="sales_last_7_days" property="salesLast7Days" />
+       <result column="sales_last_30_days" property="salesLast30Days" />
+       <result column="sales_last_60_days" property="salesLast60Days" />
+       <result column="sales_last_90_days" property="salesLast90Days" />
+       <result column="sales_ratio" property="salesRatio" />
+       <result column="saleable_days" property="saleableDays" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ss.ID AS ID,
+ss.create_user_id AS createUserId,
+ss.create_user_name AS createUserName,
+ss.create_time AS createTime,
+ss.update_user_id AS updateUserId,
+ss.update_user_name AS updateUserName,
+ss.update_time AS updateTime,
+ss.VERSION AS VERSION,
+ss.is_deleted AS isDeleted,
+ss.supplier_id AS supplierId,
+ss.supplier_code AS supplierCode,
+ss.supplier_name AS supplierName,
+ss.product_image AS productImage,
+ss.product_image_url AS productImageUrl,
+ss.sku_id AS skuId,
+ss.sku_no AS skuNo,
+ss.product_name AS productName,
+ss.sale_state AS saleState,
+ss.sale_state_name AS saleStateName,
+ss.saleable_stock AS saleableStock,
+ss.daily_sales AS dailySales,
+ss.sales_last_3_days AS salesLast3Days,
+ss.sales_last_7_days AS salesLast7Days,
+ss.sales_last_30_days AS salesLast30Days,
+ss.sales_last_60_days AS salesLast60Days,
+ss.sales_last_90_days AS salesLast90Days,
+ss.sales_ratio AS salesRatio,
+ss.saleable_days AS saleableDays
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM
+        sales_sharing AS ss
+        WHERE
+        ${params.sqlMap.default}
+        AND ss.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and ss.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.supplierId!=null and params.supplierId!=''">
+            and ss.supplier_id = #{params.supplierId}
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ss.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.srm.dto.SalesSharingDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listByParams" resultType="com.erp.model.srm.dto.SalesSharingDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+
+</mapper>

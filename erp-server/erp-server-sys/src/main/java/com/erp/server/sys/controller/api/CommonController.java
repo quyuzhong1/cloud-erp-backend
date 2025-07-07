@@ -7,13 +7,14 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.dto.SysCommonDTO;
+import com.erp.rpc.file.feign.FileFeign;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ import java.util.Map;
 @RequestMapping("common")
 public class CommonController extends BaseController {
 
+    @Resource
+    private FileFeign fileFeign;
 
     /**
      * 上传图片
@@ -45,7 +48,7 @@ public class CommonController extends BaseController {
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
-            String filePath = FastDFSClientUtil.uploadFile(file);
+            String filePath = fileFeign.uploadFile(file);
             list.add(filePath);
         }
         return this.success(list);
@@ -62,7 +65,7 @@ public class CommonController extends BaseController {
     @PostMapping("/deleteUrl")
     public ApiResult deleteUrl(@RequestParam("url") String url) {
         if (StringUtils.isNotBlank(url)) {
-            int num = FastDFSClientUtil.deleteFile(url);
+            int num = fileFeign.deleteFile(url);
             if (num == 0) {
                 return success();
             }
@@ -109,7 +112,7 @@ public class CommonController extends BaseController {
     public ApiResult<List<SysCommonDTO.AttachmentDTO>> uploadBatch(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<SysCommonDTO.AttachmentDTO> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
-            String filePath = FastDFSClientUtil.uploadFile(file);
+            String filePath = fileFeign.uploadFile(file);
             String fileName = file.getOriginalFilename();
             list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath));
         }

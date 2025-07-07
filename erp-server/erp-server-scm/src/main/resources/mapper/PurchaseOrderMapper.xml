@@ -821,4 +821,62 @@
             </foreach>
         </if>
     </select>
+    <select id="listSupplierPurchaseQty" resultType="com.erp.model.scm.entity.SupplierPurchaseQuantityEntity">
+        SELECT
+            t.supplier_id,
+            t.supplier_name,
+            t.sku_id,
+            t.sku_no,
+            t.supplier_purchase_qty as supplierQty,
+            SUM(t.supplier_purchase_qty) OVER (PARTITION BY t.sku_id) AS skuTotalQty,
+                ROUND(
+                        t.supplier_purchase_qty * 1.0 / SUM(t.supplier_purchase_qty) OVER (PARTITION BY t.sku_id),
+                        4
+                ) AS purchase_ratio
+        FROM (
+                 SELECT
+                     pos.supplier_id,
+                     pos.supplier_name,
+                     pod.sku_id,
+                     pod.sku_no,
+                     SUM(pod.purchase_qty) AS supplier_purchase_qty
+                 FROM
+                     purchase_order po
+                         INNER JOIN purchase_order_detail pod ON po.ID = pod.purchase_order_id AND pod.is_deleted = FALSE
+                         LEFT JOIN purchase_order_supplier pos ON po.ID = pos.purchase_order_id AND pos.is_deleted = FALSE
+                 WHERE
+                     po.is_deleted = FALSE
+                   AND po.invalid_status = FALSE
+                   AND po.approve_status = 'approve'
+                   AND po.create_time <![CDATA[ < ]]> CURRENT_DATE
+                 GROUP BY
+                     pos.supplier_id,
+                     pos.supplier_name,
+                     pod.sku_id,
+                     pod.sku_no
+             ) t
+        ORDER BY
+            t.sku_id,
+            t.supplier_id;
+    </select>
+    <select id="listSkuBySupplierIds" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SupplierSkuDTO">
+        SELECT DISTINCT
+            pos.supplier_id,
+            pod.sku_no
+        FROM
+            purchase_order_supplier AS pos
+                INNER JOIN purchase_order AS po ON pos.purchase_order_id = po.ID
+                AND po.approve_status = 'approve'
+                AND po.is_deleted =
+                    FALSE INNER JOIN purchase_order_detail AS pod ON pod.purchase_order_id = po.ID
+                AND pod.is_deleted = FALSE
+        WHERE
+            pos.is_deleted = FALSE
+        <if test="supplierIds != null and supplierIds.size > 0">
+            AND pos.supplier_id IN
+            <foreach collection="supplierIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

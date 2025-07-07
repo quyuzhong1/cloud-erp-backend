@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -270,6 +271,15 @@ public class SoDeliveryNoticeDTO {
          * 中转仓库名称
          */
         private String transferWarehouseNames;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
+         * 目的地
+         */
+        private String toCountry;
+
     }
 
     /**
@@ -662,5 +672,78 @@ public class SoDeliveryNoticeDTO {
 
         @Size(min = 1,message = "至少存在一条明细,才可生成拣货单")
         private List<String> detailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintSkuLabelDTO {
+        private String id;
+        private String detailId;
+        private String soId;
+        /**
+         * 销售订单号
+         */
+        private String soCode;
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 打印数量
+         */
+        private Integer printNum;
+        /**
+         * 是否显示日期
+         */
+        private Boolean showDate;
+        private String labelUrl;
+        /**
+         * 标签来源类型
+         * LabelSourceTypeEnum
+         */
+        private String labelSourceType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintSkuLabelConfirmDTO {
+        //打印尺寸
+        private String size;
+        /**
+         * 打印样式
+         */
+        @NotBlank(message = "打印样式不能为空")
+        private String skuPrintType;
+        /**
+         * 生产厂名
+         */
+//        @NotBlank(message = "生产厂名不能为空")
+        private String companyName;
+        /**
+         * 生产地址
+         */
+//        @NotBlank(message = "生产地址不能为空")
+        private String companyAddress;
+        /**
+         * 打印明细
+         */
+        private List<PrintSkuLabelDTO> detailList;
     }
 }

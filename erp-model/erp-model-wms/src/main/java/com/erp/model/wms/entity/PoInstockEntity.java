@@ -140,6 +140,12 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     private String sourceId;
 
     /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
      * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")

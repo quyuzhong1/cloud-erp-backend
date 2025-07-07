@@ -41,6 +41,7 @@ import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -260,6 +261,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         authorizeViewDTO.setEmail(authJson.getOrDefault("email","").toString());
         authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
         authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
+        authorizeViewDTO.setShopAccount(authJson.getOrDefault("shopAccount","").toString());
         return authorizeViewDTO;
     }
 
@@ -395,6 +397,40 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             }
         }
         return listDTOList;
+    }
+
+    @Override
+    public void productPushSettings(OverseasProviderDTO.ProductPushSettingDTO dto) {
+        OverseasProviderEntity overseasProviderEntity = this.getById(dto.getId());
+        if(dto.getIsProductSync() && StringUtils.isBlank(dto.getOwnerCode())){
+            throw new ServiceException("API推送开启时，货主编码不能为空");
+        }
+        overseasProviderEntity.setIsProductSync(dto.getIsProductSync());
+        overseasProviderEntity.setOwnerCode(dto.getOwnerCode());
+        this.updateById(overseasProviderEntity);
+    }
+
+    @Override
+    public List<OverseasProviderDTO.ListDTO> listAuthorizedThirdWarehouse() {
+        List<OverseasProviderEntity> entities = this.lambdaQuery()
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .list();
+        if (CollUtil.isEmpty(entities)) {
+            return new ArrayList<>();
+        }
+        return BeanUtil.copyToList(entities,OverseasProviderDTO.ListDTO.class);
+    }
+
+    @Override
+    public OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName) {
+        if(StringUtils.isBlank(sysType) || StringUtils.isBlank(thirdShortName)){
+            return null;
+        }
+        return lambdaQuery()
+                .eq(OverseasProviderEntity::getCode, sysType)
+                .eq(OverseasProviderEntity::getShortName, thirdShortName)
+                .last("limit 1")
+                .one();
     }
 
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {

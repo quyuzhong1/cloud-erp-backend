@@ -211,4 +211,6 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 按仓位导出数据
      */
     Page<InventoryDTO.PagingViewDTO> exportByLocation(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList, @Param("lastId") String lastId);
+
+    List<InventoryDTO.RealQtyDTO> getRealQty(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("inventoryStatusList") List<String> inventoryStatusList);
 }

@@ -47,7 +47,7 @@ public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
      * 获取用户店铺权限sql
      * @return
      */
-    String getShopPermissionSql(String shopTableField);
+    String getShopPermissionSql(String shopTableField , String dynamicDataSource);
 
     /**
      * 同步权限数据

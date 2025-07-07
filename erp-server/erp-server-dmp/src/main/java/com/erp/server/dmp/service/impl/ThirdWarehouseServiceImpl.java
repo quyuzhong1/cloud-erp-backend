@@ -58,36 +58,46 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdWarehouseDTO.AddDTO addDTO) {
-        //判断是否存在
-        addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
-        ThirdWarehouseEntity existEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
-                .eq(ThirdWarehouseEntity::getSysType, addDTO.getSysType())
-                .eq(ThirdWarehouseEntity::getCategory, addDTO.getCategory())
-                        .eq(ThirdWarehouseEntity::getCode, addDTO.getCode())
-                ,false);
-        if (Objects.nonNull(existEntity)) {
-            throw new ServiceException("第三方仓库已存在");
-        }
-        ThirdWarehouseEntity thirdWarehouseEntity = new ThirdWarehouseEntity();
-        BeanMapperUtils.copy(addDTO, thirdWarehouseEntity);
-        if(StringUtils.isBlank(thirdWarehouseEntity.getWarehouseId())){
-            thirdWarehouseEntity.setWarehouseId(thirdWarehouseEntity.getCode());
-        }
-        String code = thirdWarehouseEntity.getCode();
-        boolean save;
-        String operationMsg;
-        log.info("开始新增第三方系统仓库单");
-        save = super.save(thirdWarehouseEntity);
-        operationMsg="新增操作";
-        if(!save) {
-            throw new ServiceException("第三方系统仓库单保存失败");
-        }
+        String sysType = addDTO.getSysType();
+        if(sysType.equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+            BaseResultDTO.AddDTO addDTO1 = wmsOverseasWarehouseFeign.addThirdWarehouse(addDTO);
+            //        // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统仓库单" , addDTO1.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_WAREHOUSE.getCode(), addDTO1.getId(), "新增操作");
+
+            return new BaseResultDTO.AddDTO(addDTO1.getId(), addDTO1.getCode());
+        }else{
+            //判断是否存在
+            addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+            ThirdWarehouseEntity existEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
+                            .eq(ThirdWarehouseEntity::getSysType, addDTO.getSysType())
+                            .eq(ThirdWarehouseEntity::getCategory, addDTO.getCategory())
+                            .eq(ThirdWarehouseEntity::getCode, addDTO.getCode())
+                    ,false);
+            if (Objects.nonNull(existEntity)) {
+                throw new ServiceException("第三方仓库已存在");
+            }
+            ThirdWarehouseEntity thirdWarehouseEntity = new ThirdWarehouseEntity();
+            BeanMapperUtils.copy(addDTO, thirdWarehouseEntity);
+            if(StringUtils.isBlank(thirdWarehouseEntity.getWarehouseId())){
+                thirdWarehouseEntity.setWarehouseId(thirdWarehouseEntity.getCode());
+            }
+            String code = thirdWarehouseEntity.getCode();
+            boolean save;
+            String operationMsg;
+            log.info("开始新增第三方系统仓库单");
+            save = super.save(thirdWarehouseEntity);
+            operationMsg="新增操作";
+            if(!save) {
+                throw new ServiceException("第三方系统仓库单保存失败");
+            }
 
 //        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统仓库单" , thirdWarehouseEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_WAREHOUSE.getCode(), thirdWarehouseEntity.getId(), operationMsg);
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统仓库单" , thirdWarehouseEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_WAREHOUSE.getCode(), thirdWarehouseEntity.getId(), operationMsg);
 
-        return new BaseResultDTO.AddDTO(thirdWarehouseEntity.getId(), code);
+            return new BaseResultDTO.AddDTO(thirdWarehouseEntity.getId(), code);
+        }
     }
 
     /**

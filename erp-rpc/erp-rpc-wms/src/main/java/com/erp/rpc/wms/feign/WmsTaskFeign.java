@@ -436,4 +436,13 @@ public interface WmsTaskFeign {
     List<QcResultDTO.QcNoticeDTO> listQcResultMsg(@RequestBody List<String> qcInfoIds);
 
 
+    /**
+     * 根据ids查询收货信息
+     * @author will
+     * @date 2025/6/12 09:52
+     * @param idList
+     * @return List<ReceiveSourceDTO>
+     */
+    @PostMapping("/feign/warehouseReceive/listReceiveSourceByDetailIds")
+    List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList);
 }

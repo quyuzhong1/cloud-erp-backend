@@ -42,6 +42,18 @@ public class ExportScmFeignController {
     private SupplierReportService supplierReportService;
     @Resource
     private SupplierUserService supplierUserService;
+    @Resource
+    private CfgSupplierSalesService cfgSupplierSalesService;
+    @Resource
+    private SupplierCredentialService supplierCredentialService;
+    @Resource
+    private SupplierVisitService supplierVisitService;
+    @Resource
+    private SupplierRefWarehouseService supplierRefWarehouseService;
+    @Resource
+    private ContractInfoService contractInfoService;
+
+
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id,create_user_id",
@@ -144,5 +156,49 @@ public class ExportScmFeignController {
     public PagingVO<SubcontractChangeDTO.ListDTO> exportSubcontractChangeOrder(@RequestBody PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
         return subcontractChangeService.exportSubcontractChangeOrder(dto);
     }
+
+    @PostMapping("/cfgSupplierSales")
+    @WebAdvanceQuery
+    public PagingVO<CfgSupplierSalesDTO.ListDTO> exportCfgSupplierSales(@RequestBody PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {
+        return cfgSupplierSalesService.paging(dto);
+    }
+
+    @PostMapping("/exportSupplierCredential")
+    @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
+    public PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(@RequestBody PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
+        return supplierCredentialService.paging(dto);
+    }
+
+    @PostMapping("/exportSupplierVisit")
+    @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
+    public PagingVO<SupplierVisitDTO.ListDTO> exportSupplierVisit(@RequestBody PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
+        return supplierVisitService.pagingList(dto);
+    }
+
+
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2025/6/19 11:03
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/supplierRefWarehouse")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplierRefWarehouse:paging",
+            tableAlias = "sc"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(@RequestBody PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto) {
+        return supplierRefWarehouseService.paging(dto);
+    }
+
+    @PostMapping("/exportContractInfo")
+    @WebAdvanceQuery(handler = ContractInfoQueryHandler.class)
+    public PagingVO<ContractInfoDTO.ListDTO> exportContractInfo(@RequestBody PagingDTO<ContractInfoDTO.PagingParamDTO> dto){
+        return contractInfoService.paging(dto);
+    }
+
 
 }

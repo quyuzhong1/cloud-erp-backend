@@ -18,14 +18,20 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
+import com.erp.server.sys.service.KingdeeDepartmentService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +57,13 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
 
     @Resource
     private SysPushMsgService sysPushMsgService;
-
+    
+    @Resource
+    private SysAccountingCompanyService sysAccountingCompanyService;
+    
+    @Resource
+    private KingdeeDepartmentService kingdeeDepartmentService;
+    
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
@@ -121,9 +133,28 @@ public class SyncKingdeePostServiceImpl implements SyncKingdeePostService {
         resultMap.put("syncKingdeeId",entity.getKingdeeId());
         resultMap.put("operate", operate);
         String useOrgCode = entity.getUseOrgCode();
+        if(StringUtils.isBlank(useOrgCode)) {
+        	String useOrgId = entity.getUseOrgId();
+        	if(StringUtils.isNotBlank(useOrgId)) {
+        		SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(useOrgId);
+        		if(orgInfo != null) {
+        			useOrgCode = orgInfo.getCode();
+        		}
+        	}
+        }
         resultMap.put("createOrgCode", useOrgCode);
         resultMap.put("useOrgCode",useOrgCode);
-        resultMap.put("deptCode", entity.getKingdeeDeptCode());
+        String kingdeeDeptCode = entity.getKingdeeDeptCode();
+        if(StringUtils.isBlank(kingdeeDeptCode)) {
+        	String kingdeeDeptId = entity.getKingdeeDeptId();
+        	if(StringUtils.isNotBlank(kingdeeDeptId)) {
+        		KingdeeDepartmentEntity kingdeeDept = kingdeeDepartmentService.getById(kingdeeDeptId);
+        		if(kingdeeDept != null) {
+        			kingdeeDeptCode = kingdeeDept.getKingdeeDeptCode();
+        		}
+        	}
+        }
+		resultMap.put("deptCode", kingdeeDeptCode);
         return resultMap;
 	}
 }

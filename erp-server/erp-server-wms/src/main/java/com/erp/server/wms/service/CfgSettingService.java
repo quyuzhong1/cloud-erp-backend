@@ -78,4 +78,11 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return List<CfgSettingEntity>
      */
     List<CfgSettingEntity> listCfgSetting ();
+    /**
+     * 查询采购对账配置
+     * @author will
+     * @date 2025/6/12 17:55
+     * @return PoReconciliationSettingDTO
+     */
+    CfgSettingValueDTO.PoReconciliationSettingDTO getPoReconciliationSetting();
 }

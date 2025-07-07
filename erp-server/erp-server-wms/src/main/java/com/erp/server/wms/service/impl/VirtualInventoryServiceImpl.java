@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -18,6 +19,8 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.scm.entity.SupplierRefWarehouseEntity;
+import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -195,7 +198,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         paramDTO.setWarehouseIdList(warehouseIds);
         List<InventoryDTO.InventoryViewQtyDTO> inventoryUsableQtyList = inventoryService.getUsableQtyBySkuIdsAndWarehouseIds(paramDTO);
         //获取实体仓对应的虚拟仓所有（可用+冻结）库存数量
-        List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
+//        List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = baseMapper.getRealQty(vmParamDto);
         //获取调出虚拟仓可用数量
         List<String> fromVmIds = qtySearchDTOS.stream().map(VirtualInventoryDTO.QtySearchDTO::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         vmParamDto.setVirtualWarehouseIdList(fromVmIds);
@@ -352,6 +355,11 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public List<VirtualInventoryDTO.ViewQtyDTO> getRealQty(VirtualInventoryDTO.ParamDTO params) {
+        return baseMapper.getRealQty(params);
     }
 
     @Override
@@ -613,6 +621,12 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             }
             listDTO.setDetailList(detailList);
         }
+    }
+
+
+    @Override
+    public IPage<SupplierInventoryDTO.ListDTO> supplierInventoryPaging(Page query, SupplierInventoryDTO.PagingParamDTO params, List<SupplierRefWarehouseEntity> supplierRefWarehouseList) {
+        return this.baseMapper.supplierInventoryPaging(query, params, supplierRefWarehouseList);
     }
 
 

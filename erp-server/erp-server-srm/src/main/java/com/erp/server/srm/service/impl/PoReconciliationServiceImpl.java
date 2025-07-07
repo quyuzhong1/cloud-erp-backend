@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -14,8 +15,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
@@ -35,10 +38,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_EXPORT;
 
 /**
  * <p>
@@ -136,9 +139,26 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
-    public void exportList(PoReconciliationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("对账单Excel导出", EXPORT_SRM_PO_RECONCILIATION_EXPORT.getCode(), dto);
+    public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        poReconciliationScmService.fillList(list);
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/poReconciliation.xlsx";
+        String name = "对账单Excel导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
+
 
     @Override
     public BatchResultDTO confirm(String id) {
@@ -188,7 +208,13 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
 
-
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(PoReconciliationEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),PoReconciliationEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
 
     /**
      * @description: 添加文件信息

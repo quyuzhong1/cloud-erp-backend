@@ -112,11 +112,14 @@ public enum BusinessNoTypeEnum {
     CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
     CODE_ZJTZ(86, "ZJTZ","质检通知",BusinessNoConstant.ZJTZ),
     CODE_TCTZ(87, "TCTZ","头程调整记录",BusinessNoConstant.TCTZ),
+    CODE_XNKC(88, "XNKC","虚拟库存调整",BusinessNoConstant.XNKC),
+    CODE_GYSHT(88, "GYSHT","合同管理编码",BusinessNoConstant.GYSHT),
 
     CODE_LCWT(87, "LCWT","委托审批",BusinessNoConstant.LCWT),
     CODE_SFSP(88, "SFSP","ERP审批同步配置",BusinessNoConstant.SFSP),
     CODE_LCPZ(89, "LCPZ","流程配置",BusinessNoConstant.LCPZ),
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC)
+    CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
     ;
 
 

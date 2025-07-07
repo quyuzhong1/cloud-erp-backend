@@ -1,18 +1,16 @@
 package com.erp.model.srm.entity;
 
-import java.math.BigDecimal;
-
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -119,6 +117,13 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     */
     @TableField("purchase_confirm_user_name")
     private String purchaseConfirmUserName;
+
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
 
     public static final String CODE = "code";

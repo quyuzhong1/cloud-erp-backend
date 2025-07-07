@@ -87,6 +87,9 @@ public class MercadoLocalProductRocketMQTaskHandler extends DmpOutputRocketMQTas
      * 解析订单数据
      **/
     public PlatformProductDTO convert(DmpProductInfoEntity dmpProductInfoEntity , DmpSkuInfoEntity dmpSkuInfoEntity , String cfgOutputId) {
+    	if(dmpProductInfoEntity == null || dmpSkuInfoEntity == null) {
+    		return null;
+    	}
     	if(this.validateDataBlack(dmpSkuInfoEntity, cfgOutputId)) {
     		return null;
     	}

@@ -406,9 +406,9 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         if (null != productInfoEntity){
             if ("费用".equalsIgnoreCase(productInfoEntity.getProperty()) || "服务".equalsIgnoreCase(productInfoEntity.getProperty())
             ){
-                resultMap.put("is_virtual", 1);
+                resultMap.put("is_virtual_goods", 1);
             } else{
-                resultMap.put("is_virtual", 0);
+                resultMap.put("is_virtual_goods", 0);
             }
             // 是否服务类商品/is_service
             // 商品属性=服务

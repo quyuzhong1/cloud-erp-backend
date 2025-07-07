@@ -55,4 +55,6 @@ public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntit
      * @return
      */
     IPage<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(Page query,@Param("params") VirtualWarehouseDTO.PagingParamDTO params);
+
+    List<VirtualWarehouseDTO.ViewWarehouseDTO> listWarehouseInfoByIds(@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
 }

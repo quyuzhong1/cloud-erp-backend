@@ -70,4 +70,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return List<CfgSettingDTO.ViewDTO>
      */
     List<CfgSettingDTO.ViewDTO> listByKey(String key);
+    /**
+     * 根据key值查询配置
+     * @author will
+     * @date 2025/6/11 16:31
+     * @param key
+     * @return CfgSettingEntity
+     */
+    CfgSettingEntity getByKey(String key);
 }

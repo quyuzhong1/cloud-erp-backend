@@ -22,7 +22,7 @@ public class ttc {
                 "FRowType,FMaterialId,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
                 "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";
 
-        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(formId, 1);
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(formId);
         List<Map<String, Object>>objects = kingdeeApiUtils.queryList("", fieldKey, 1000, 1,0);
         System.out.println(JSONObject.toJSONString(objects));
 

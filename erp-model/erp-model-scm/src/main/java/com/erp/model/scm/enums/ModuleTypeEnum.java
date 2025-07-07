@@ -147,6 +147,13 @@ public enum ModuleTypeEnum {
     CFG_PROCESS("127", "流程配置"),
     CFG_THIRD_PROCESS("128", "三方审批生成"),
     CFG_THIRD_NOTICE("129", "三方通知配置"),
+    VIRTUAL_ADJUST("126", "虚拟库存调整"),
+    CFG_SUPPLIER_SALES("130", "销量设置"),
+    CONTRACT_INFO("128", "合同管理"),
+    SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+
+
+
     ;
 
 

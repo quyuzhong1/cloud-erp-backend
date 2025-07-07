@@ -152,7 +152,11 @@ public class DmpReturnInstockEntity extends BaseEntity<DmpReturnInstockEntity> {
     */
     @TableField("next_level_id")
     private String nextLevelId;
-
+    /**
+     * 平台原始入库单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
 
     public static final String SOURCE_PLATFORM = "source_platform";
 

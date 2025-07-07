@@ -4,12 +4,13 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.rpc.file.feign.FileFeign;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,8 @@ import java.util.Map;
 @LogSystemModule("BI通用")
 @RequestMapping("common")
 public class CommonController extends BaseController {
-
+    @Resource
+    private FileFeign filefeign;
 
 
 
@@ -45,7 +47,7 @@ public class CommonController extends BaseController {
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
-            String filePath = FastDFSClientUtil.uploadFile(file);
+            String filePath = filefeign.uploadFile(file);
             list.add(filePath);
         }
         return this.success(list);

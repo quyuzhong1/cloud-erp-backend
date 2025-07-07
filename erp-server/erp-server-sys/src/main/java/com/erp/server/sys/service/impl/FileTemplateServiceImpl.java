@@ -11,6 +11,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.sys.mapper.FileTemplateMapper;
 import com.erp.server.sys.service.FileTemplateService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Optional;
 
 /**
@@ -31,7 +33,8 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper, FileTemplateEntity> implements FileTemplateService {
-
+    @Resource
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -84,7 +87,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
         //上传新文件模板
         String url = "";
         try {
-             url = FastDFSClientUtil.uploadFile(fastdfsAddDTO.getFile());
+             url = fileFeign.uploadFile(fastdfsAddDTO.getFile());
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_95018);
         }
@@ -93,7 +96,7 @@ public class FileTemplateServiceImpl extends SuperServiceImpl<FileTemplateMapper
         //删除原文件
         if (ObjectUtil.isNotEmpty(entity) && StrUtil.isNotBlank(entity.getUrl())) {
             try {
-                FastDFSClientUtil.deleteFile(entity.getUrl());
+                fileFeign.deleteFile(entity.getUrl());
             } catch (Exception e) {
                 throw new ServiceException(ApiError.ERROR_FILE_DELETE);
             }

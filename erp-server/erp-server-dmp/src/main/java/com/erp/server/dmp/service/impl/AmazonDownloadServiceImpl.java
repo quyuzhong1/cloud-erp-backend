@@ -749,7 +749,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
     ) {
         // 按仓储中心补充仓库
         // 多渠道订单以仓储中心对应国家作为站点
-        try {
             CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
 
             // Map<国家代号, 店铺>
@@ -768,9 +767,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                 // B2C订单
                 parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
             }
-        } catch (Exception ex) {
-            log.error("解析亚马逊订单错误：{}", ExceptionUtil.stacktraceToString(ex));
-        }
         return e;
     }
 
@@ -783,23 +779,31 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                 .filter(t -> t.getAndParseCondition().contains(e.getSalesChannel()))
                 .findFirst()
                 .orElse(null);
-        if (null != timeZoneEntity) {
-            // 设置所有本地时区
-            e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
-            if (!curMap.isEmpty() && curMap.containsKey(timeZoneEntity.getCountry())) {
-                ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
-                e.setShopId(shopInfo.getId());
-                // 仓储中心为空按销售渠道对应仓库出库
-                if (null == centerEntity){
-                    // 补充仓库信息
-                    fillWarehouseInfo(e, warehouseMap, shopInfo);
-                } else {
-                    // 仓储中心配置为空
-                    if (StringUtils.isBlank(centerEntity.getCountry())){
-                        // 补充仓库信息
-                        fillWarehouseInfo(e, warehouseMap, shopInfo);
-                    }
-                }
+        if (null == timeZoneEntity) {
+           ServiceException.runError("未找到渠道配置信息:{}", e.getSalesChannel());
+        }
+        if (curMap.isEmpty()) {
+            ServiceException.runError("店铺信息缺失:账号{}", e.getPlatformShopCode());
+        }
+        if (!curMap.containsKey(timeZoneEntity.getCountry())){
+            ServiceException.runError("店铺信息缺失:账号{}:国家{}", e.getPlatformShopCode(), timeZoneEntity.getCountry());
+        }
+        ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
+        if (StringUtils.isBlank(shopInfo.getTimeZone())){
+            ServiceException.runError("店铺时区未配置:{}:{}", shopInfo.getName(), shopInfo.getTimeZone());
+        }
+        e.setShopId(shopInfo.getId());
+        // 设置所有本地时区
+        e.checkAndSetAllDateLocale(shopInfo.getTimeZone());
+        // 仓储中心为空按销售渠道对应仓库出库
+        if (null == centerEntity){
+            // 补充仓库信息
+            fillWarehouseInfo(e, warehouseMap, shopInfo);
+        } else {
+            // 仓储中心配置为空
+            if (StringUtils.isBlank(centerEntity.getCountry())){
+                // 补充仓库信息
+                fillWarehouseInfo(e, warehouseMap, shopInfo);
             }
         }
     }

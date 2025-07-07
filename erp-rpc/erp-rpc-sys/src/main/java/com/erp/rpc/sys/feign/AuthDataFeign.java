@@ -7,6 +7,7 @@ import com.erp.model.sys.dto.SysUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -45,11 +46,23 @@ public interface AuthDataFeign {
     @PostMapping("feign/auth/getShopPermissionSql")
     String getShopPermissionSql(@RequestBody String shopTableField);
     /**
+     * 获取用户店铺权限
+     * @return
+     */
+    @PostMapping("feign/auth/getShopPermissionSqlByDynamicDataSource")
+    String getShopPermissionSqlByDynamicDataSource(@RequestParam String shopTableField , @RequestParam String dynamicDataSource);
+    /**
      * 获取用户仓库权限
      * @return
      */
     @PostMapping("feign/auth/getWarehousePermissionSql")
     String getWarehousePermissionSql(@RequestBody String warehouseTableField);
+    /**
+     * 获取用户仓库权限
+     * @return
+     */
+    @PostMapping("feign/auth/getWarehousePermissionSqlByDynamicDataSource")
+    String getWarehousePermissionSqlByDynamicDataSource(@RequestParam String warehouseTableField , @RequestParam String dynamicDataSource);
 
     /**
      * @description: 根据店铺id查询已关联用户id

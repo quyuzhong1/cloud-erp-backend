@@ -379,6 +379,10 @@ public class ProductDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 标准零售价
+         */
+        private BigDecimal retailPrice;
     }
 
     @Data

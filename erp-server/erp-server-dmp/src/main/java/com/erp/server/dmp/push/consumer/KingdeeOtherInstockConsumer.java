@@ -47,7 +47,7 @@ public class KingdeeOtherInstockConsumer<T extends DmpSyncTaskIdDTO> extends Abs
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISCELLANEOUS.getCode(),2);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISCELLANEOUS.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "QTRK002504"));
         String filterStr = String.join(" and ", queryFilters);

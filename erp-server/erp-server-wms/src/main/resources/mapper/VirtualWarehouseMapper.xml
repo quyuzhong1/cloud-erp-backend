@@ -171,6 +171,23 @@
         </if>
         vw.id desc
     </select>
+    <select id="listWarehouseInfoByIds"
+            resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$ViewWarehouseDTO">
+        SELECT
+            vw.id as virtualWarehouseId,
+            vw.name as virtualWarehouseName,
+            w.id as warehouseId,
+            w."name" as warehouseName
+        FROM virtual_warehouse vw
+                 LEFT JOIN virtual_warehouse_relation vwr on vwr.virtual_warehouse_id = vw.id and vwr.is_deleted = false and vwr.disabled = false
+                 LEFT JOIN warehouse w on vwr.warehouse_id = w.id and w.is_deleted = false
+        <if test="virtualWarehouseIdList != null and virtualWarehouseIdList.size > 0">
+            and vw.id in
+            <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

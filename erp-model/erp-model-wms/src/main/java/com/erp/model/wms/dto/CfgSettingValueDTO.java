@@ -74,6 +74,10 @@ public class CfgSettingValueDTO implements Serializable {
          */
         @NotBlank(message = "对账周期生成类型不能为空")
         private String reconciliationType;
+        /**
+         * 对账周期生成类型名称
+         */
+        private String reconciliationTypeName;
 
         /**
          * 截止日期

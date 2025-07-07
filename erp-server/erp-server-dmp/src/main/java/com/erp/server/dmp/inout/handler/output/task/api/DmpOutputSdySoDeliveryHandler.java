@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
+
 import com.common.business.wrapper.FeignQuery;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +24,7 @@ import com.erp.model.dmp.entity.DmpSoDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpSoDeliveryEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoDeliveryService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
+	
+	@Resource
+	private DmpSoDeliveryService dmpSoDeliveryService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -82,12 +88,41 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
         }
-
+        
+        boolean selfAddFlag = isSelfAdd();
+        String selftAdd = "selfAdd";
+		List<String> selfAddPlatformCodes = dmpSoDeliveryEntityMap.values().stream()
+        		.filter(d -> selftAdd.equals(d.getSourceType()) && StringUtils.isNotBlank(d.getPlatformCode()) && changeIds.contains(d.getId()))
+        		.map(DmpSoDeliveryEntity::getPlatformCode)
+        		.collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(selfAddPlatformCodes)) {
+        	selfAddPlatformCodes = dmpSoDeliveryService.lambdaQuery().in(DmpSoDeliveryEntity::getPlatformCode, selfAddPlatformCodes)
+        		.ne(DmpSoDeliveryEntity::getSourceType, selftAdd)
+        		.select(DmpSoDeliveryEntity::getPlatformCode)
+        		.list().stream().map(DmpSoDeliveryEntity::getPlatformCode).collect(Collectors.toList());
+        }
+        
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoDeliveryEntityMap.get(changId), dmpSoDeliveryDetailEntityMap.get(changId) , cfgOutputId, cacheMap);
+        	DmpSoDeliveryEntity dmpSoDeliveryEntity = dmpSoDeliveryEntityMap.get(changId);
+        	if(dmpSoDeliveryEntity == null) {
+        		continue;
+        	}
+        	String sourceType = dmpSoDeliveryEntity.getSourceType();
+        	if(selfAddFlag) {
+        		String thirdDeliveryCode = dmpSoDeliveryEntity.getThirdDeliveryCode();
+        		if(!selftAdd.equals(sourceType) || thirdDeliveryCode.contains("_")) {
+        			continue;
+        		}
+        		String platformCode = dmpSoDeliveryEntity.getPlatformCode();
+    			if(selftAdd.equals(sourceType) && StringUtils.isNotBlank(platformCode) && selfAddPlatformCodes.contains(platformCode)) {
+    				continue;
+            	}
+        	}
+			List<DmpSoDeliveryDetailEntity> dmpSoDeliveryDetailEntityList = dmpSoDeliveryDetailEntityMap.get(changId);
+			Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoDeliveryEntity, dmpSoDeliveryDetailEntityList , cfgOutputId, cacheMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -95,6 +130,10 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
         return map;
+    }
+    
+    protected boolean isSelfAdd(){
+    	return false;
     }
     
     private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoDeliveryEntity dmpSoDeliveryEntity , List<DmpSoDeliveryDetailEntity> dmpSoDeliveryDetailEntityList , String cfgOutputId, Map<String, Map<String, Object>> cacheMap){
@@ -154,6 +193,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			thirdUpdateTimeFormat = localDateTime.format(thirdUpdateTime);
     		}
     		
+    		boolean selfAdd = isSelfAdd();
     		for(DmpSoDeliveryDetailEntity dmpSoDeliveryDetailEntity : dmpSoDeliveryDetailEntityList) {
     			if(validateDataBlack(dmpSoDeliveryDetailEntity, cfgOutputId)) {
     				continue;
@@ -162,12 +202,20 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			String detailId = dmpSoDeliveryDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
-    			shudiyunB2cOrderDTO.setBiz_uni_key(thirdDeliveryId + dmpSoDeliveryDetailEntity.getThirdDeliveryDetailId());
+				if(selfAdd) {
+    				shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoDeliveryDetailEntity.getSoId() + dmpSoDeliveryDetailEntity.getSoDetailId() + "_1");
+    			}else {
+    				shudiyunB2cOrderDTO.setBiz_uni_key(thirdDeliveryId + dmpSoDeliveryDetailEntity.getThirdDeliveryDetailId());
+    			}
     	        
     	        shudiyunB2cOrderDTO.setBiz_no(thirdDeliveryCode);
     	        shudiyunB2cOrderDTO.setBiz_time(payTimeFormat);
     	        //默认退货入库单
-    	        shudiyunB2cOrderDTO.setTransaction_type(transactionType);
+    	        if(selfAdd) {
+    	        	shudiyunB2cOrderDTO.setTransaction_type("线下订单");
+    	        }else {
+    	        	shudiyunB2cOrderDTO.setTransaction_type(transactionType);
+    	        }
     	        shudiyunB2cOrderDTO.setTransaction_sub_type(transactionSubType);
 
     	        shudiyunB2cOrderDTO.setBiz_status(deliveryStatus);
@@ -214,7 +262,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setSpec_no(spuNo);
 	            shudiyunB2cOrderDTO.setSpec_name(spuName);
 
-    	        shudiyunB2cOrderDTO.setIs_gift(dmpSoDeliveryDetailEntity.getIsGift());
+//    	        shudiyunB2cOrderDTO.setIs_gift(dmpSoDeliveryDetailEntity.getIsGift());
     	        shudiyunB2cOrderDTO.setIs_comb(dmpSoDeliveryDetailEntity.getIsComb());
 	            shudiyunB2cOrderDTO.setSuite_no(dmpSoDeliveryDetailEntity.getSuiteNo());
 	            shudiyunB2cOrderDTO.setSuite_name(dmpSoDeliveryDetailEntity.getSuiteName());
@@ -224,8 +272,18 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoDeliveryDetailEntity.getCurrencyCode());
 
 	            if(!isB2B) {
-	            	shudiyunB2cOrderDTO.setMsku_code(dmpSoDeliveryDetailEntity.getPlatformSkuNo());
-	            	shudiyunB2cOrderDTO.setMsku_name(dmpSoDeliveryDetailEntity.getPlatformSkuName());
+	            	String platformSkuNo = dmpSoDeliveryDetailEntity.getPlatformSkuNo();
+	            	String platformSkuName = dmpSoDeliveryDetailEntity.getPlatformSkuName();
+	            	if(selfAdd) {
+	            		if(StringUtils.isBlank(platformSkuNo)) {
+	            			platformSkuNo = skuNo;
+	            		}
+	            		if(StringUtils.isBlank(platformSkuName)) {
+	            			platformSkuName = skuName;
+	            		}
+	            	}
+	            	shudiyunB2cOrderDTO.setMsku_code(platformSkuNo);
+	            	shudiyunB2cOrderDTO.setMsku_name(platformSkuName);
 					// 配置指定平台税金为0
 					Map<String, Object> dmpDictBasticMap = queryAndCacheDmpDictBasicEntity(cacheMap);
 					List<com.erp.model.dmp.entity.DictBasicEntity> tax0PlatformTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("tax0PlatformType");

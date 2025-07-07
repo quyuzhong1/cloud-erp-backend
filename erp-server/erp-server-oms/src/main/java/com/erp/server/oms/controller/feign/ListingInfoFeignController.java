@@ -8,14 +8,12 @@ import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -86,5 +84,25 @@ public class ListingInfoFeignController extends BaseController {
     @PostMapping("/paging")
     public PagingVO<ListingInfoDTO.PageDTO> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
         return listingInfoService.paging(dto);
+    }
+
+    /**
+     * 根据参数查询sku映射记录
+     * @Author zdy
+     * @Date 2024/11/25 17:24
+     * @param queryDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
+     **/
+    @PostMapping("/listInfoByPlatformSkuNo")
+    public List<ListingInfoEntity> listInfoByPlatformSkuNo(@RequestBody ListingInfoDTO.QueryDTO queryDTO){
+        return listingInfoService.listInfoByPlatformSkuNo(queryDTO);
+    }
+
+    /**
+     * 更新平台SKU ID
+     **/
+    @PostMapping("/updatePlatformSkuId")
+    public boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId) {
+        return listingInfoService.updatePlatformSkuId(listingId,platformSkuId);
     }
 }

@@ -50,7 +50,7 @@ public interface LogisticsOrderConverter {
     LogisticsOrderConverter INSTANCE = Mappers.getMapper(LogisticsOrderConverter.class);
 
     @Mappings({
-            @Mapping(target = "cargoType", constant = "3"),
+            @Mapping(target = "cargoType", constant = "5"),
             @Mapping(target = "refNo", source = "deliveryNo"),
             @Mapping(target = "iossNo", source = "iossCode"),
             @Mapping(target = "vatNo", source = "receiverInfoVO.receiverTaxNo"),

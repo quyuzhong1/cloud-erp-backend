@@ -5,10 +5,8 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -163,6 +161,11 @@ public class DmpReturnInstockDTO implements Serializable {
         * 下一层级id
         */
         private String nextLevelId;
+
+        /**
+         * 平台原始入库单号
+         */
+        private String thirdCode;
 
         private List<DmpReturnInstockDetailDTO.ViewDTO> detailList;
     }

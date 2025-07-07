@@ -94,6 +94,7 @@ public enum InventoryBusinessTypeEnum {
     PURCHASE_ORDER_CHANGE_OUT("purchase_order_change_out", "52", "采购订单变更出库"),
     SO_B2C_DELIVERY_INTERCEPT("so_b2c_delivery_intercept", "53", "发货拦截单返还库存"),
     SO_INFO_PUSH_TRANSFER_INFO("so_info_push_transfer_info", "54", "中转调拨单（销售订单下推）"),
+    REQUISITION_APPLICATION_RELEASE("requisition_application_release", "55", "要货申请释放库存"),
     ;
 
     private String code;

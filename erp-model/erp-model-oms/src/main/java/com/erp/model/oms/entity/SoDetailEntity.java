@@ -236,6 +236,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("customer_po")
     private String customerPO;
+    /**
+     * 目的地
+     */
+    @TableField("to_country")
+    private String toCountry;
 
     @TableField(exist = false)
     private String approveStatus;

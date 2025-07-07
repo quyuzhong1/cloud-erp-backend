@@ -467,4 +467,16 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchasePrice/getBySkuIdList")
     public List<PurchaseSkuOrgRefEntity> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO);
+    /**
+     * @return
+     */
+    @PostMapping("feign/cfgSupplierSales/listAll")
+    List<CfgSupplierSalesDTO.ListAllDTO> listAll();
+
+    /**
+     *
+     * 根据供应商ids 查询已审核的采购订单中的sku
+     */
+    @PostMapping("feign/purchaseOrder/listSkuBySupplierIds")
+    List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds);
 }

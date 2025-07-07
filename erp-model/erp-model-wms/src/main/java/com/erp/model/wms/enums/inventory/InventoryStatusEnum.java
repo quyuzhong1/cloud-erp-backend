@@ -76,6 +76,10 @@ public enum InventoryStatusEnum  implements EnumMessage {
         InventoryStatusEnum inventoryStatusEnum = getByCode(code);
         return Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
     }
+    public static String getCodeByName(String name) {
+        InventoryStatusEnum inventoryStatusEnum = Arrays.stream(InventoryStatusEnum.values()).filter(r -> Objects.equals(r.getName(), name)).findFirst().orElse(null);
+        return Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getCode).orElse("");
+    }
 
     /**
      * 根据代码获取

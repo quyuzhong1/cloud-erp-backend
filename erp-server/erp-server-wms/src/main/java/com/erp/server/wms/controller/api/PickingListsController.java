@@ -107,11 +107,11 @@ public class PickingListsController extends BaseController {
     }
 
     /**
-     * 批量打印（组合/单品）
+     * 批量打印B2B拣货单（组合/单品）
      *
      * @param idsDTO idsDTO
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程/B2B拣货单")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印B2B拣货单")
     @PostMapping("/printCombination")
     public ApiResult<List<PickingListsDTO.PrintCombinationView>> printCombination(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         List<PickingListsDTO.PrintCombinationView> views = pickingListsService.printCombination(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
@@ -124,22 +124,10 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程拣货单")
     @PostMapping("/print")
-    public ApiResult<List<PickingListsDTO.PrintView>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<PickingListsDTO.PrintView> views = pickingListsService.print(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+    public ApiResult<List<PickingListsDTO.PrintCombinationView>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PickingListsDTO.PrintCombinationView> views = pickingListsService.print(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
         return success(views);
     }
-    /**
-     * 批量打印（b2b 拣货清单/发货清单）
-     *
-     * @param idsDTO idsDTO
-     **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印B2B拣货单")
-    @PostMapping("/b2bPrint")
-    public ApiResult<List<PickingListsDTO.PrintView>> b2bPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<PickingListsDTO.PrintView> views = pickingListsService.b2bPrint(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
-        return success(views);
-    }
-
     /**
      * 批量导出
      *

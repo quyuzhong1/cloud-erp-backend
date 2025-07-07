@@ -97,7 +97,6 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddWarehouseSkuDTO extends BaseMapping {
 
-        @NotBlank(message = "仓库id不能为空")
         private String warehouseId;
 
         @NotBlank(message = "库存SKU不能为空")
@@ -115,12 +114,10 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotNull(message = "生效时间不能为空")
         private LocalDateTime effectiveTime;
-//        /**
-//         * 平台类型: goodcang=谷仓，iml=艾姆勒
-//         */
-//        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
-//        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
-//        private String dictPlatform;
+        /**
+         * 授权Id
+         */
+        private String authId;
         /**
          * 产品条码（三方仓商品条码）
          */
@@ -246,6 +243,21 @@ public class SkuMappingDTO implements Serializable {
          * 图片url，更新时如果没变更传
          */
         private String productImageUrl;
+        /**
+         * 标签url
+         */
+        private String labelUrl;
+        /**
+         * 标签文件名称
+         */
+        private String labelFileName;
+        /**
+         * 标签来源
+         * 字段值流转【后端使用】
+         */
+        private String labelSourceType;
+
+
 
 
     }
@@ -444,6 +456,10 @@ public class SkuMappingDTO implements Serializable {
          * 产品条码（三方仓商品条码）
          */
         private String thirdBarcode;
+        /**
+         * 授权Id
+         */
+        private String authId;
 
     }
 
@@ -744,6 +760,28 @@ public class SkuMappingDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 标签链接
+         */
+        private String labelUrl;
+        private String labelUrlStr;
+        /**
+         * 标签文件名称
+         */
+        private String labelFileName;
+        /**
+         * 标签来源类型
+         * LabelSourceTypeEnum
+         */
+        private String labelSourceType;
+        /**
+         * 是否 上传附件 true 是 false 否
+         */
+        private Boolean isUploadLabel;
+        /**
+         * 上传附件
+         */
+        private String uploadLabelStr;
 
         /**
          * 创建人名称
@@ -783,6 +821,12 @@ public class SkuMappingDTO implements Serializable {
          */
         private String id;
 
+
+        /**
+         * authId
+         */
+        private String authId;
+
         /**
          * 备注
          */
@@ -798,10 +842,14 @@ public class SkuMappingDTO implements Serializable {
         private String listingId;
 
         /**
+         * 库存产品id
+         */
+        private String platformSkuId;
+
+        /**
          * 仓库id
          */
         private String warehouseId;
-
 
         /**
          * 仓库名称
@@ -1131,6 +1179,10 @@ public class SkuMappingDTO implements Serializable {
         private String platformSkuNo;
 
         /**
+         * 平台产品sku id
+         */
+        private String platformSkuId;
+        /**
          * 平台产品sku
          */
         private String platformSkuName;
@@ -1317,6 +1369,11 @@ public class SkuMappingDTO implements Serializable {
          * 库存sku
          */
         private String platformSkuNo;
+
+        /**
+         * 库存sku id
+         */
+        private String platformSkuId;
 
         /**
          * 库存sku名称
@@ -1625,5 +1682,24 @@ public class SkuMappingDTO implements Serializable {
          * 服务商简称
          */
         private String shortName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CustomerLabelDTO {
+        /**
+         * 客户sku
+         */
+        @NotBlank(message = "客户sku不能为空")
+        private String platformSkuNo;
+        /**
+         * 标签url
+         */
+        @NotBlank(message = "标签url不能为空")
+        private String labelUrl;
+        /**
+         * 标签文件名称
+         */
+        private String labelFileName;
     }
 }

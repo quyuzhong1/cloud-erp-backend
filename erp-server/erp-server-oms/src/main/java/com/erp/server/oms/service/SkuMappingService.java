@@ -311,6 +311,8 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
+    String getLabelUrl(String skuNo, String platformSkuNo);
+
     String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
     Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
@@ -324,6 +326,12 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 
     List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO);
+
+    BatchResultDTO updateCustomerLabel(SkuMappingDTO.CustomerLabelDTO dto);
+
+    BatchResultDTO generateCustomerLabel(ListingInfoEntity entity, SkuMappingEntity skuMapping);
+
+    List<BatchResultDTO> pushProduct(List<String> ids);
 
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

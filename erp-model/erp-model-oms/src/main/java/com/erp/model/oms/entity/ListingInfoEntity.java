@@ -41,6 +41,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("platform_spu_no")
     private String platformSpuNo;
+    /*
+     * SKU
+     */
+    @TableField(exist = false)
+    private String productSkuNo;
 
     /**
      * 平台产品SPU名称
@@ -133,6 +138,22 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("source_type")
     private String sourceType;
+    /**
+     * 标签url
+     */
+    @TableField("label_url")
+    private String labelUrl;
+    /**
+     * 标签文件名称
+     */
+    @TableField("label_file_name")
+    private String labelFileName;
+    /**
+     * 标签来源类型
+     * LabelSourceTypeEnum
+     */
+    @TableField("label_source_type")
+    private String labelSourceType;
 
     public static final String SKU_NO = "sku_no";
 

@@ -27,6 +27,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
+import com.erp.server.dmp.service.DmpSoRefundInfoService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -41,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -52,12 +54,17 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
     private SdyDeliveryOrderConsumer sdyDeliveryOrderConsumer;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DmpSoRefundInfoService dmpSoRefundInfoService;
 
     /**
      * 解析订单数据
      **/
-    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoReturnInfoEntity dmpSoReturnEntity, List<DmpSoReturnDetailEntity> dmpSoReturnDetailEntityList , Map<String, Map<String, Object>> cacheMap) {
+    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoReturnInfoEntity dmpSoReturnEntity, List<DmpSoReturnDetailEntity> dmpSoReturnDetailEntityList , Map<String, Map<String, Object>> cacheMap , List<String> platformOrderCodeList) {
     	Map<String , ShudiyunB2cOrderDTO> result = new HashMap<>();
+    	if(dmpSoReturnEntity == null) {
+    		return result;
+    	}
     	if (CollUtil.isEmpty(dmpSoReturnDetailEntityList)) {
             return result;
         }
@@ -101,6 +108,16 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 //退货退款
                 sdyDTO.setTransaction_sub_type("退货退款");
             }
+            
+            if (PlatformDictEnum.SHOPIFY.getCode().equals(dmpSoReturnEntity.getSourceSystem())) {
+            	String platformOrderCode = dmpSoReturnEntity.getPlatformOrderCode();
+            	if(StringUtils.isNotBlank(platformOrderCode) && platformOrderCodeList.contains(platformOrderCode)) {
+            		//RMA.退货单
+                    sdyDTO.setTransaction_type("RMA.退货单");
+                    //退货退款
+                    sdyDTO.setTransaction_sub_type("退货退款");
+            	}
+            }
 
             if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getStatus()) && CharSequenceUtil.isNotBlank(DmpReturnInfoStatusEnum.getName(Integer.valueOf(dmpSoReturnEntity.getStatus())))) {
                 sdyDTO.setBiz_status(DmpReturnInfoStatusEnum.getName(Integer.valueOf(dmpSoReturnEntity.getStatus())));
@@ -131,7 +148,9 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             }
 
             String shopId = "";
+            String parentNodeNo = "";
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                parentNodeNo = dmpSoReturnEntity.getPlatformCode();
                 //RMA.退货单
             	if ("2".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
                     sdyDTO.setTransaction_type("RMA.退货单");
@@ -149,7 +168,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     return result;
                 }
             	
-                sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+            	if(StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformCode())) {
+            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+            	}else {
+            		sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformOrderCode());
+            	}
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
                 if(shopListMap == null) {
@@ -183,6 +206,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     shopId = dmpSoReturnEntity.getShopId();
                 }
             }
+            //退换单号
+            sdyDTO.setParent_node_no(parentNodeNo);
             
             Map<String, Object> shopInfoMap = cacheMap.get("shopInfo");
             if(shopInfoMap == null) {
@@ -395,10 +420,24 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
 
+        List<String> platformOrderCodeList = new ArrayList<>();
+        List<DmpSoReturnInfoEntity> changeDmpSoReturnInfoList = dmpSoReturnInfoEntityMap.values().stream().filter(d -> changeIds.contains(d.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(changeDmpSoReturnInfoList)) {
+        	String sourceSystem = changeDmpSoReturnInfoList.get(0).getSourceSystem();
+        	if(PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(sourceSystem)) {
+        		platformOrderCodeList = changeDmpSoReturnInfoList.stream().filter(d -> StringUtils.isNotBlank(d.getPlatformOrderCode())).map(DmpSoReturnInfoEntity::getPlatformOrderCode).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(platformOrderCodeList)) {
+    				platformOrderCodeList = dmpSoRefundInfoService.lambdaQuery().eq(DmpSoRefundInfoEntity::getSourceSystem, sourceSystem)
+                		.in(DmpSoRefundInfoEntity::getPlatformOrderCode, platformOrderCodeList)
+                		.select(DmpSoRefundInfoEntity::getPlatformOrderCode)
+                		.list().stream().map(DmpSoRefundInfoEntity::getPlatformOrderCode).collect(Collectors.toList());
+                }
+        	}
+        }
         Map<String, String> map = new HashMap<>();
         Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for(String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoReturnInfoEntityMap.get(changId), dmpSoReturnDetailEntityMap.get(changId) , cacheMap);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoReturnInfoEntityMap.get(changId), dmpSoReturnDetailEntityMap.get(changId) , cacheMap , platformOrderCodeList);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));

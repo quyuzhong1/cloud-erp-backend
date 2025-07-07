@@ -184,6 +184,10 @@ public class SoInfoDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
+        /**
+         * 目的地
+         */
+        private String toCountry;
 
         /**
          * 销售组织id

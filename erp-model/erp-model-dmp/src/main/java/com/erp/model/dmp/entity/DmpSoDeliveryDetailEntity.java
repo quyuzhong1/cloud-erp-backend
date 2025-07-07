@@ -204,8 +204,18 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     /**
      * 备注
      */
-     @TableField("remark")
-     private String remark;
+    @TableField("remark")
+    private String remark;
+    /**
+     * 销售订单id
+     */
+    @TableField("so_id")
+    private String soId;
+    /**
+     * 销售订单明细id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
     /**
     * 唯一字段md5值
     */

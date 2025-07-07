@@ -23,6 +23,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -93,6 +94,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     
     @Resource
     private OmsPushMsgService omsPushMsgService;
+    
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 销售变更单同步金碟
@@ -279,6 +283,16 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
+                String platformType = customerInfo.getPlatformType();
+                if(StringUtils.isNotBlank(platformType)) {
+                	List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
+                            .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                            .eq(DictBasicEntity::getName, platformType)
+                            .list();
+                	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+                		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+                	}
+                }
             }
         }
         //变更原因

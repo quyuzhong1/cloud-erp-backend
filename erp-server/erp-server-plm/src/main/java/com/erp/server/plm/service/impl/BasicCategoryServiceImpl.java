@@ -700,4 +700,9 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
         return basicCategoryEntity.getName();
     }
+
+    @Override
+    public List<BasicCategoryDTO.DropdownDTO> getCategoryDropdown() {
+        return baseMapper.getCategoryDropdown();
+    }
 }

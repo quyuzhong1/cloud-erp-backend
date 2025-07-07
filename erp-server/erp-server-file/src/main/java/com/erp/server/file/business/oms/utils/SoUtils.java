@@ -103,6 +103,7 @@ public final class SoUtils {
         headMap.put("isDeclare", "是否报关");
         headMap.put("remark", "备注");
         headMap.put("customerPO", "客户PO号");
+        headMap.put("toCountry", "目的地");
         headMap.put("detailRemark", "明细备注");
         headMap.put("approveUserName", "最新审核人");
         headMap.put("createUserName", "创建人");

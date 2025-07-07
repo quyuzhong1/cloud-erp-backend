@@ -105,4 +105,6 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @return java.util.List<com.erp.model.wms.entity.VirtualInventoryStockDTO.OutInStockDTO>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
+
+    List<RequisitionApplicationDTO.InventoryDTO> unLockInventoryView(@Param("ids") List<String> ids);
 }

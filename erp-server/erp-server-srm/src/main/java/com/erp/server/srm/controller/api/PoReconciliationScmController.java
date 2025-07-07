@@ -21,10 +21,8 @@ import com.erp.server.srm.service.PoReconciliationScmService;
 import com.erp.server.srm.service.PoReconciliationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -275,20 +273,55 @@ public class PoReconciliationScmController extends BaseController {
     @LogAction(value = LogActionEnum.RECEIVE, desc = "单据签收")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:scm:delete",
+            menuCode = "srm:poReconciliation:scm:receive",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<Object> receive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> receive(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = poReconciliationScmService.receive(id);
+                resultDTO = poReconciliationScmService.receive(id,dto.getBillDate());
             }catch (Exception e){
                 log.error("对账单 单据签收失败",e);
                 PoReconciliationEntity entity = poReconciliationScmService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 单据签收失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消单据签收
+     * @author Will
+     * @date: 2024/1/23 14:16
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/cancelReceive")
+    @LogAction(value = LogActionEnum.RECEIVE, desc = "取消单据签收")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:scm:cancelReceive",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "ids")
+    public ApiResult<Object> cancelReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = poReconciliationScmService.cancelReceive(id);
+            }catch (Exception e){
+                log.error("对账单 取消单据签收失败",e);
+                PoReconciliationEntity entity = poReconciliationScmService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "对账单不存在, 取消单据签收失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -313,5 +346,34 @@ public class PoReconciliationScmController extends BaseController {
     )
     public ApiResult<List<PoReconciliationDetailDTO.AddPoReconciliationViewDTO>> viewToBeSupplierConfirm(@RequestBody PermissionsDTO dto) {
         return success(poReconciliationScmService.viewToBeSupplierConfirm(dto));
+    }
+
+    /**
+     * 下载模板
+     * @author will
+     * @date 2025/6/13 12:11
+     * @param response
+     * @return ApiResult<Void>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
+        poReconciliationScmService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 明细批量导入
+     * @author will
+     * @date 2025/6/13 11:52
+     * @param excelFile
+     * @param response
+     * @return ApiResult<ImportDTO>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "新增明细导入")
+    @PostMapping("/importFile")
+    public ApiResult<PoReconciliationDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "id") String id, HttpServletResponse response) {
+        PoReconciliationDetailDTO.ImportDTO result = poReconciliationScmService.importFile(excelFile,id, response);
+        return success(result);
     }
 }

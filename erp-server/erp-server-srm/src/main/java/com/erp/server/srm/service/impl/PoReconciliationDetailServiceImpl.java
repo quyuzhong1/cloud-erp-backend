@@ -1,14 +1,17 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,8 +82,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
             //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
-                deleteList.stream().forEach(obj -> obj.setMainId(""));
-                list.addAll(deleteList);
+                poReconciliationDetailScmService.cleanDetailByDetailIdList(deleteIds);
             }
         }
 
@@ -105,8 +108,24 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         //默认查询当前登录人的绑定的供应商数据
         SupplierEntity supplierEntity = commonService.getSupplierEntity();
         dto.setSupplierId(supplierEntity.getId());
-//        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL.getCode(), dto);
-        poReconciliationDetailScmService.exportList(dto, response);
+
+        List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listExport(dto);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        poReconciliationDetailScmService.fillList(list);
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/poReconciliationDetail.xlsx";
+        String name = "对账明细导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     /**

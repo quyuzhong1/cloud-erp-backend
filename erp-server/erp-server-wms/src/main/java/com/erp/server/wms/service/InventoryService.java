@@ -360,4 +360,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryEntity> listNegativeInventoryByWarehouseId(String warehouseId);
 
     List<InventoryEntity> listInventoryBySkuNos(List<String> skuNoList);
+
+    List<InventoryDTO.RealQtyDTO> getRealQty(List<String> skuIds, List<String> warehouseIds, List<String> inventoryStatusList);
 }

@@ -549,4 +549,11 @@ public class PurchaseOrderFeignController {
     public void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO) {
         purchaseOrderService.updateContractStampStatus(contractStampStatusParamsDTO);
     }
+
+    /**
+     */
+    @PostMapping("/listSkuBySupplierIds")
+    public List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@RequestBody List<String> supplierIds) {
+        return purchaseOrderService.listSkuBySupplierIds(supplierIds);
+    }
 }

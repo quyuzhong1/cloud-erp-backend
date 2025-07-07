@@ -6,6 +6,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.scm.mapper.AttachmentMapper;
 import com.erp.server.scm.service.AttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
 public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
 
 
+    @Resource
+    private FileFeign fileFeign;
     /**
      * 根据业务表id获取附件信息
      *
@@ -61,7 +65,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             List<AttachmentEntity> list = this.list(queryWrapper);
             List<String> urlList = list.stream().map(AttachmentEntity::getAttachUrl).collect(Collectors.toList());
             //批量删除fastdfs 数据
-            FastDFSClientUtil.deleteBatchFile(urlList);
+            fileFeign.deleteBatchFile(urlList);
             this.removeByIds(list.stream().map(AttachmentEntity::getId).collect(Collectors.toList()));
         }
     }
@@ -115,6 +119,26 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     }
 
     /**
+     * 根据业务表id和type 获取附件信息
+     *
+     * @param businessIds
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author jack
+     * @date 2026-06-23
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessIdAndType(List<String> businessIds, String type) {
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        queryWrapper.eq(AttachmentEntity::getType, type);
+        List<AttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    /**
      * 删除附件
      *
      * @param dto
@@ -131,7 +155,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
 
         }
         this.remove(queryWrapper);
-        FastDFSClientUtil.deleteFile(dto.getAttachUrl());
+        fileFeign.deleteFile(dto.getAttachUrl());
     }
 
 
@@ -142,5 +166,17 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
         return this.list(queryWrapper);
+    }
+
+
+    @Override
+    public void deleteByUrlList(List<String> urlList) {
+        if (CollectionUtils.isNotEmpty(urlList)) {
+            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
+            this.remove(queryWrapper);
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+        }
     }
 }

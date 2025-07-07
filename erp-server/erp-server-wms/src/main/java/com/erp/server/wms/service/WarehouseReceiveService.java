@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -12,7 +11,6 @@ import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -369,4 +367,12 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      *
      **/
     BatchResultDTO deleteEntity(WarehouseReceiveEntity entity);
+    /**
+     * 根据ids查询收货信息
+     * @author will
+     * @date 2025/6/12 09:54
+     * @param idList
+     * @return List<ReceiveSourceDTO>
+     */
+    List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(List<String> idList);
 }

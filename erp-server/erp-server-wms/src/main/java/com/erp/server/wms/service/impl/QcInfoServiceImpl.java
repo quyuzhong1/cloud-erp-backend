@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -218,21 +219,21 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
         String billId = dto.getId();
-        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
-        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
-        if (ObjectUtils.isNotEmpty(qcProduct)) {
-            String skuNo = qcProduct.getSkuNo();
-            if(StringUtils.isNotBlank(skuNo)){
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-            }else {
-                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-            }
-
-        }
+//        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+//        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
+//        if (ObjectUtils.isNotEmpty(qcProduct)) {
+//            String skuNo = qcProduct.getSkuNo();
+//            if(StringUtils.isNotBlank(skuNo)){
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+//            }else {
+//                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+//                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+//            }
+//
+//        }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
             billId = IdWorker.getIdStr();
@@ -595,7 +596,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //当是 b2b 质检的时候 生成入库单
             if (b2bQc.equals(qcType) && isExist) {
                 //生成入库单
-                autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
+                autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
             //新品首批回填SKU的尺寸信息
             updateProductPack(Collections.singletonList(billId));
@@ -798,7 +799,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @author yl
      * @date 2023-04-20 14:55
      */
-    private void autoStockInBill(String billId, QcResultDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
+    private void autoStockInBill(String billId, QcResultDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId,String code) {
         PoInstockDTO.AddDTO dto = new PoInstockDTO.AddDTO();
         List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>(1);
         PoInstockDetailDTO.AddDTO detail = new PoInstockDetailDTO.AddDTO();
@@ -809,6 +810,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         details.add(detail);
         dto.setDetails(details);
         dto.setSourceId(billId);
+        dto.setSourceCode(code);
         dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
@@ -852,11 +854,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Map<String, List<QcResultDTO.StockInDTO>> map = stockInList.stream().collect(Collectors.groupingBy(QcResultDTO.StockInDTO::getMainId));
         List<PoInstockDTO.AddDTO> addList = new ArrayList<>(map.size());
 
+        List<QcInfoEntity> qcInfoList = this.listByIds(idList);
+        Map<String, QcInfoEntity> qcMap = qcInfoList.stream().collect(Collectors.toMap(QcInfoEntity::getId, Function.identity()));
+
         for (Map.Entry<String, List<QcResultDTO.StockInDTO>> entry : map.entrySet()) {
             String mainId = entry.getKey();
             List<QcResultDTO.StockInDTO> qcList = entry.getValue();
             PoInstockDTO.AddDTO addStockIn = new PoInstockDTO.AddDTO();
+            QcInfoEntity qcInfoEntity = qcMap.get(mainId);
+            if (ObjUtil.isEmpty(qcInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
             addStockIn.setSourceId(mainId);
+            addStockIn.setSourceCode(qcInfoEntity.getCode());
             addStockIn.setSourceType(sourceType);
             addStockIn.setStockInUserId(userId);
             addStockIn.setStockInDeptId(depart.getDepartmentId());
@@ -1065,7 +1075,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //当是 b2b 质检的时候 生成入库单
             if (b2bQc.equals(qcType) && isExist) {
                 //生成入库单
-                autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId);
+                autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
 
             //异步发送通知
@@ -2060,6 +2070,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
             view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setExchangeRate(soReturnReceiveDetailEntity.getExchangeRate());
             if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());

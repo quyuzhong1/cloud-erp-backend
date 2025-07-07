@@ -190,7 +190,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //供应商资质信息
         List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
         //检查资质日期
-        supplierCredentialService.checkDate(credentialList);
+        supplierCredentialService.checkListDate(credentialList);
         String paymentConditionCode = dto.getPaymentCondition();
         //验证付款条件是否正确
         if (StrUtils.isNotEmpty(paymentConditionCode)) {
@@ -252,7 +252,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //供应商联系人信息
             supplierContactService.saveBatchContact(supplierId, contactList);
 
-            supplierCredentialService.saveBatchCredential(supplierId, credentialList);
+            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
+            supplierCredentialService.saveBatchCredential(credentialList);
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
@@ -393,7 +394,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
         List<SupplierCredentialDTO.AddDTO> credentialAddList = BeanMapper.copyList(credentialList, SupplierCredentialDTO.AddDTO.class);
-        supplierCredentialService.checkDate(credentialAddList);
+        supplierCredentialService.checkListDate(credentialAddList);
         String code = supplier.getCode();
         //检查供应商名称
         checkName(supplierId, dto.getName());
@@ -447,6 +448,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.updateAccount(bankAccountList, supplierId);
             //资质的
+            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
             supplierCredentialService.updateCredential(credentialList, supplierId);
             return supplierId;
         }

@@ -242,6 +242,8 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
                 throw new ServiceException("[FbaShipmentReceivedEntity] 批量保存失败: entity=" + JSONUtil.toJsonStr(saveList));
             }
         }
+        //重算FBA货件明细
+        fbaShipmentDetailService.updateDetailByReceiveList(fbaShipmentEntity);
 
         // 需要挑拨的列表
         List<FbaShipmentReceiveEntity> handleEntityList = new LinkedList<>(saveList);

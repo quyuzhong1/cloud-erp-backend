@@ -6526,6 +6526,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPackEntity.setProductHeight(height);
         productPackEntity.setGrossWeight(weight);
 
+        BigDecimal boxLength = productPackEntity.getBoxLength().max(length);
+        BigDecimal boxWidth = productPackEntity.getBoxWidth().max(width);
+        BigDecimal boxHeight = productPackEntity.getBoxHeight().max(height);
+        String logContent2 = format("对SKU【{}】更新【箱规尺寸长】从{}更新为{}，【箱规尺寸宽】从{}更新为{}，【箱规尺寸高】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getBoxLength(),boxLength,productPackEntity.getBoxWidth(),boxWidth,productPackEntity.getBoxHeight(),boxHeight);
+        productPackEntity.setBoxLength(boxLength);
+        productPackEntity.setBoxWidth(boxWidth);
+        productPackEntity.setBoxHeight(boxHeight);
+
         //获取产品包装信息修改的字段
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(productPackEntity,productPackDTO);
@@ -6548,7 +6556,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
 
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
-                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
         }
 
         return "操作成功";

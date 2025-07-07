@@ -44,6 +44,8 @@
             sdnd.sku_id AS skuId,
             sdnd.sku_no AS skuNo,
             sdnd.delivery_qty AS deliveryQty,
+            sdnd.customer_po AS customerPO,
+            sdnd.to_country AS toCountry,
             sdn.seller_name AS sellerName,
             sdn.require_date AS requireDate,
             sdn.plan_delivery_date AS planDeliveryDate,
@@ -114,6 +116,8 @@
         sdnd.sku_id AS skuId,
         sdnd.sku_no AS skuNo,
         sdnd.delivery_qty AS deliveryQty,
+        sdnd.customer_po AS customerPO,
+        sdnd.to_country AS toCountry,
         sdn.seller_name AS sellerName,
         sdn.require_date AS requireDate,
         sdn.plan_delivery_date AS planDeliveryDate,
@@ -364,5 +368,23 @@
         inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
         where so.is_deleted = false
+    </select>
+    <select id="printSkuLabelView" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PrintSkuLabelDTO">
+        SELECT
+            sdn.id,
+            sdnd.id as detailId,
+            sdn.source_id as soId,
+            sdn.source_code as soCode,
+            sdnd.sku_id as skuId,
+            sdnd.sku_no as skuNo,
+            sdnd.platform_sku_no as platformSkuNo,
+            sdnd.delivery_qty as deliveryQty
+        from so_delivery_notice sdn
+                 LEFT JOIN so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id
+        where sdn.is_deleted = false and sdnd.is_deleted = false
+          and sdnd.id in
+        <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 </mapper>

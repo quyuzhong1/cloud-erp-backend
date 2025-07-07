@@ -99,6 +99,9 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 发货通知单处理类型
      */
     SO_DELIVERY_NOTICE_HANDLE("so_delivery_notice_handle", "18","发货通知单处理减少可用、添加冻结"),
+
+    FREEZE_OUT_USABLE("freeze_out_usable", "19","出库，当前仓冻结减少"),
+    FREEZE_IN_USABLE("freeze_in_usable", "20","入库，当前仓冻结增加"),
     ;
 
     private String code;

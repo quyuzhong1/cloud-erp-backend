@@ -44,6 +44,7 @@ public enum InventorySourceTypeEnum {
     REQUISITION_APPLICATION("requisitionApplication", "要货申请"),
     SO_INFO("soInfo", "B2B销售订单"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "b2c发货拦截单"),
+    VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整"),
     ;
 
     /**

@@ -113,5 +113,14 @@ public class BasicCategoryController extends BaseController {
         return success(result);
     }
 
+
+    /**
+     * 品类下拉框
+     */
+    @GetMapping("/getCategoryDropdown")
+    public ApiResult<List<BasicCategoryDTO.DropdownDTO>> getCategoryDropdown(){
+        return success(categoryService.getCategoryDropdown());
+    }
+
 }
 
