@@ -3322,12 +3322,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"FBA货件");
         }
         if (shipmentEntityList.size() > 1){
-            throw new ServiceException(ApiError.ERROR_1017,"FBA货件【"+dto.getFbaShipmentCode()+"】存在多个货件信息");
+            throw new ServiceException("FBA货件【"+dto.getFbaShipmentCode()+"】存在多个货件信息");
         }
         //校验
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByFbaShipmentCodes(Collections.singletonList(dto.getFbaShipmentCode()));
         if (CollUtil.isNotEmpty(firstMileDeliveryDetailEntityList)){
-            throw new ServiceException(ApiError.ERROR_1017,"FBA货件【"+dto.getFbaShipmentCode()+"】已关联发货单");
+            throw new ServiceException("FBA货件【"+dto.getFbaShipmentCode()+"】已关联发货单");
         }
         FbaShipmentEntity shipmentEntity = shipmentEntityList.get(0);
         if (!planEntity.getShopId().equals(shipmentEntity.getShopId())){
