@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
@@ -48,4 +49,7 @@ public interface WmsOverseasWarehouseFeign {
 
     @PostMapping("/feign/overseasWarehouse/pageWarehouseProduct")
     PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    @PostMapping("/feign/overseasWarehouse/addThirdWarehouse")
+    BaseResultDTO.AddDTO addThirdWarehouse(@RequestBody @Validated ThirdWarehouseDTO.AddDTO addDTO);
 }

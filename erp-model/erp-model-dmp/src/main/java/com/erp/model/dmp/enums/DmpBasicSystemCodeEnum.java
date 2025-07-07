@@ -31,6 +31,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     SDY("sdy", "数帝云"),
     LING_XING("lingxing", "领星"),
     JIFENG("jifeng", "极风"),
+    CAINIAO("cainiao", "菜鸟仓"),
     ;
     /**
      * 类型

@@ -20,6 +20,16 @@ import java.util.List;
 public class ThirdWarehouseCreateInboundReq {
 
     /**
+     * 店铺id
+     */
+    private String shopId;
+
+    /**
+     * 货主编码
+     */
+    private String ownerCode;
+
+    /**
      * 第三方入库单号（编辑时必填）
      */
     private String receivingCode;
@@ -246,6 +256,10 @@ public class ThirdWarehouseCreateInboundReq {
          */
         private String productSku;
 
+        /**
+         * 海外仓产品SKUId
+         */
+        private String productSkuId;
         /**
          * 箱号
          */

@@ -74,6 +74,7 @@ public enum PlatformDictEnum implements EnumMessage {
     EBAY("eBay", "eBay", "eBay", "036"),
     SPT("spt", "速派通", "速派通", "55"),
     JIFENG("jifeng", "极风", "极风", "55"),
+    CAINIAO("cainiao", "菜鸟仓", "菜鸟仓", "55"),
 
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),

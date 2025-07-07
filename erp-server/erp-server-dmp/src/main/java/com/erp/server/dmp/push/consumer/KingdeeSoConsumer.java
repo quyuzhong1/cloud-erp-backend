@@ -47,7 +47,7 @@ public class KingdeeSoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode(), 1);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FBillNo in ({})", "'XSD24053100007'"));
         String filterStr = String.join(" and ", queryFilters);

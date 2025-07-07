@@ -75,6 +75,11 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     @TableField("data_encrypt")
     private String dataEncrypt;
 
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 

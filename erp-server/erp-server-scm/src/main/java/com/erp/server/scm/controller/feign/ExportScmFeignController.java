@@ -42,16 +42,16 @@ public class ExportScmFeignController {
     private SupplierReportService supplierReportService;
     @Resource
     private SupplierUserService supplierUserService;
-
     @Resource
     private CfgSupplierSalesService cfgSupplierSalesService;
-
-
-
+    @Resource
+    private SupplierCredentialService supplierCredentialService;
+    @Resource
+    private SupplierVisitService supplierVisitService;
     @Resource
     private SupplierRefWarehouseService supplierRefWarehouseService;
-
-
+    @Resource
+    private ContractInfoService contractInfoService;
 
 
     @PostMapping("/purchaseApplication")
@@ -163,6 +163,18 @@ public class ExportScmFeignController {
         return cfgSupplierSalesService.paging(dto);
     }
 
+    @PostMapping("/exportSupplierCredential")
+    @WebAdvanceQuery(handler = SupplierCredentialQueryHandler.class)
+    public PagingVO<SupplierCredentialDTO.ListDTO> exportSupplierCredential(@RequestBody PagingDTO<SupplierCredentialDTO.PagingParamDTO> dto) {
+        return supplierCredentialService.paging(dto);
+    }
+
+    @PostMapping("/exportSupplierVisit")
+    @WebAdvanceQuery(handler = SupplierVisitQueryHandler.class)
+    public PagingVO<SupplierVisitDTO.ListDTO> exportSupplierVisit(@RequestBody PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {
+        return supplierVisitService.pagingList(dto);
+    }
+
 
     /**
      * 导出数据查询
@@ -180,6 +192,12 @@ public class ExportScmFeignController {
     @WebAdvanceQuery
     public PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(@RequestBody PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto) {
         return supplierRefWarehouseService.paging(dto);
+    }
+
+    @PostMapping("/exportContractInfo")
+    @WebAdvanceQuery(handler = ContractInfoQueryHandler.class)
+    public PagingVO<ContractInfoDTO.ListDTO> exportContractInfo(@RequestBody PagingDTO<ContractInfoDTO.PagingParamDTO> dto){
+        return contractInfoService.paging(dto);
     }
 
 

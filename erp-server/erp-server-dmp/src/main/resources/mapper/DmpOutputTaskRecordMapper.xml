@@ -171,7 +171,7 @@ from
 left join 
 (select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = false and t3.is_deleted = false) t4 
 on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
-where t1.field_value != '' and t1.compare_sign = 'eq' and t1.is_web_add = 't' and t1.is_deleted = false) t
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.is_web_add = true and t1.is_deleted = false) t
 LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
         LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
@@ -364,5 +364,79 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 				and t.create_time <![CDATA[ < ]]> current_date
 				and l.id is not null and i.id is not null and k.id is not null
 				group by l."name",i.name,k.name order by k.name,i.name,count(*) desc
+    </select>
+    <select id="getSuccessData" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$SyncInfoDTO">
+        SELECT
+        t.id,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE  t.is_deleted = false and t.status in('finish')
+        <if test="params.sourceId != null and params.sourceId != ''">
+            and m.source_id = #{params.sourceId}
+        </if>
+        <if test="params.targetPlatform != null and params.targetPlatform != ''">
+            and i.code = #{params.targetPlatform}
+        </if>
+        order by t.id asc limit 1
+    </select>
+    <select id="pagingOutLatest" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingViewDTO">
+        SELECT sourceId, updateTime, status, returnMsg
+        FROM (
+        SELECT
+        m.source_id AS sourceId,
+        t.update_time AS updateTime,
+        t.status,
+        t.response_data AS returnMsg,
+        ROW_NUMBER() OVER (
+        PARTITION BY m.source_id
+        ORDER BY t.create_time DESC
+        ) AS rn
+        FROM dmp_output_task_record t
+        INNER JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE ${params.sqlMap.dmp}
+        AND t.is_deleted = false
+        AND m.target_platform IN
+        <foreach collection="params.targetPlatformCodeList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND m.source_type IN
+        <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="params.sourceIdList != null and params.sourceIdList.size > 0">
+            AND m.source_id IN
+            <foreach collection="params.sourceIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) AS sub
+        WHERE rn = 1
+        ORDER BY updateTime DESC, sourceId
+    </select>
+    <select id="getOutputTaskByIdAndType" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT  s.*,m.source_id from dmp_push_msg m
+                          inner join dmp_output_task_record s on m.id = s.data_id
+        where m.source_type =   #{sourceType}
+        and m.source_id in
+        <foreach collection="sourceIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        and m.is_deleted = false and s.is_deleted = false
+        ORDER BY s.id, s.create_time desc LIMIT 1
     </select>
 </mapper>

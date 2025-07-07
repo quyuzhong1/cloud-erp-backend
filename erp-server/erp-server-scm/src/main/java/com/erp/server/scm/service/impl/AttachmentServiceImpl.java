@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;
@@ -118,6 +119,26 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     }
 
     /**
+     * 根据业务表id和type 获取附件信息
+     *
+     * @param businessIds
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author jack
+     * @date 2026-06-23
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessIdAndType(List<String> businessIds, String type) {
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        queryWrapper.eq(AttachmentEntity::getType, type);
+        List<AttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    /**
      * 删除附件
      *
      * @param dto
@@ -145,5 +166,17 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
         return this.list(queryWrapper);
+    }
+
+
+    @Override
+    public void deleteByUrlList(List<String> urlList) {
+        if (CollectionUtils.isNotEmpty(urlList)) {
+            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
+            this.remove(queryWrapper);
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+        }
     }
 }

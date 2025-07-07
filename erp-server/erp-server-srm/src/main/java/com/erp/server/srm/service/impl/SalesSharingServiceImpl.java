@@ -82,13 +82,13 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         //获取供应商id
         List<String> supplierIds = getSupplierIds();
         if(CollUtil.isEmpty(supplierIds)){
-            throw new ServiceException("供应商信息不存在");
+            return new PagingVO();
         }
 
         //获取供应商的销量设置信息
         List<CfgSupplierSalesEntity> cfgSupplierSalesList = getCfgSupplierSalesEntities(supplierIds);
         if(CollUtil.isEmpty(cfgSupplierSalesList)){
-            throw new ServiceException("供应商的销量设置信息不存在");
+            return new PagingVO();
         }
         CfgSupplierSalesEntity cfgSupplierSalesEntity = cfgSupplierSalesList.get(0);
 
@@ -266,11 +266,12 @@ public class SalesSharingServiceImpl extends SuperServiceImpl<SalesSharingMapper
         return supplierRefUserList.stream().map(SupplierRefUserEntity::getSupplierId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
 
-    //获取供应商的销量设置信息
+    //获取供应商的销量设置信息 (未删除+启用)
     private  List<CfgSupplierSalesEntity> getCfgSupplierSalesEntities(List<String> supplierIds) {
         return FeignQuery.create(CfgSupplierSalesEntity.class)
                 .eq(CfgSupplierSalesEntity::getSupplierId, supplierIds.get(0))
                 .eq(CfgSupplierSalesEntity::getIsDeleted, Boolean.FALSE)
+                .eq(CfgSupplierSalesEntity::getDisabled, Boolean.FALSE)
                 .list();
     }
 

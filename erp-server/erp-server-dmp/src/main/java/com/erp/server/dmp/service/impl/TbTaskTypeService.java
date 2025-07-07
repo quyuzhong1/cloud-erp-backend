@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
@@ -347,12 +348,19 @@ public class TbTaskTypeService {
      * @param dmpCfgInputEntity
      */
     private void addInputDetail(OverseasProviderEntity overseasProviderEntity, DmpCfgInputEntity dmpCfgInputEntity) {
+
+        boolean isCaiNiaoOutbound = overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode()) && (dmpCfgInputEntity.getCode().equals("outbound") || dmpCfgInputEntity.getCode().equals("inbound"));
         //添加基础任务
         DmpCfgInputDetailDTO.AddDTO addDTO = new DmpCfgInputDetailDTO.AddDTO();
         addDTO.setMainId(dmpCfgInputEntity.getId());
         addDTO.setNextLevelId(overseasProviderEntity.getId());
-        addDTO.setLastTime(LocalDateTime.now());
-        addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
+        if(isCaiNiaoOutbound){
+            addDTO.setLastTime(LocalDateTime.now().plusYears(100));
+            addDTO.setNextTime(LocalDateTime.now().plusYears(100));
+        }else{
+            addDTO.setLastTime(LocalDateTime.now());
+            addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
+        }
         addDTO.setIntervalTime(600);
         addDTO.setOverrideTime(120);
         addDTO.setMaxRetryCount(3);
@@ -360,20 +368,21 @@ public class TbTaskTypeService {
         addDTO.setDealyTime(60);
         addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpCfgInputDetailService.add(addDTO);
-
-        //添加历史任务
-        DmpCfgInputDetailDTO.AddDTO addHistoryDTO = new DmpCfgInputDetailDTO.AddDTO();
-        addHistoryDTO.setMainId(dmpCfgInputEntity.getId());
-        addHistoryDTO.setNextLevelId(overseasProviderEntity.getId());
-        addHistoryDTO.setLastTime(overseasProviderEntity.getEnableDate().atStartOfDay());
-        addHistoryDTO.setNextTime(overseasProviderEntity.getEnableDate().atStartOfDay().plusHours(6));
-        addHistoryDTO.setIntervalTime(21600);
-        addHistoryDTO.setOverrideTime(0);
-        addHistoryDTO.setMaxRetryCount(3);
-        addHistoryDTO.setExecTimeout(1200);
-        addHistoryDTO.setDealyTime(86400);
-        addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
-        dmpCfgInputDetailService.add(addDTO);
+        if(!isCaiNiaoOutbound){
+            //添加历史任务
+            DmpCfgInputDetailDTO.AddDTO addHistoryDTO = new DmpCfgInputDetailDTO.AddDTO();
+            addHistoryDTO.setMainId(dmpCfgInputEntity.getId());
+            addHistoryDTO.setNextLevelId(overseasProviderEntity.getId());
+            addHistoryDTO.setLastTime(overseasProviderEntity.getEnableDate().atStartOfDay());
+            addHistoryDTO.setNextTime(overseasProviderEntity.getEnableDate().atStartOfDay().plusHours(6));
+            addHistoryDTO.setIntervalTime(21600);
+            addHistoryDTO.setOverrideTime(0);
+            addHistoryDTO.setMaxRetryCount(3);
+            addHistoryDTO.setExecTimeout(1200);
+            addHistoryDTO.setDealyTime(86400);
+            addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
+            dmpCfgInputDetailService.add(addDTO);
+        }
     }
 
     public List<LocalDateTime> splitTimeRange(LocalDateTime startTime, LocalDateTime endTime, Duration interval) {

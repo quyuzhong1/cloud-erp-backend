@@ -14,7 +14,8 @@ public enum DictBasicEnum {
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式"),
     SUBCONTRACT_CHANGE_REASON("subcontractChangeReason","委外变更原因"),
     PURCHASE_ORDER_TYPE("purchaseOrderType","采购订单单据类型"),
-    CONTRACT_INFO("contractInfo","采购合同管理"),
+    CONTRACT_TYPE("contractType","采购合同管理"),
+    CREDENTIAL_TYPE("credentialType","证照字典"),
 
     ;
 

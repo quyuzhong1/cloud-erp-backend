@@ -15,6 +15,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotNull;
+
 
 /**
  * <p>
@@ -73,6 +75,19 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
      */
     @TableField("enable_date")
     private LocalDate enableDate;
+
+    /**
+     * 开启API推送
+     */
+    @TableField("is_product_sync")
+    private Boolean isProductSync;
+
+    /**
+     * 货主编码
+     */
+    @TableField("owner_code")
+    private String ownerCode;
+
 
     public static final String AUTH_STATUS = "auth_status";
 

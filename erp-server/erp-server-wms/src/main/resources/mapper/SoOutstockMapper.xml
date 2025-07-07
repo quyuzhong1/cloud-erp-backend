@@ -202,10 +202,13 @@
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
             so.approve_status,
-	        count(distinct so.id) count
+	        count(*) count
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
-	     WHERE so.is_deleted=FALSE AND sod.is_deleted=FALSE and so.invalid_status=false
+	     WHERE so.is_deleted=FALSE  and so.invalid_status=false
+        AND EXISTS (
+            SELECT 1 FROM so_outstock_detail
+            WHERE main_id = so.id AND is_deleted = FALSE
+        )
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -252,41 +255,12 @@
         ORDER BY so.id desc
     </select>
 
-    <select id="listCount" resultType="java.lang.Integer">
-        select
-        count(distinct so.id)
-        FROM so_outstock_detail sod
-        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
-        WHERE so.is_deleted = FALSE
-        AND so.source_type NOT IN ('SAL_OUTSTOCK')
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and so.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.billDateList !=null and params.billDateList.size>0">
-            AND so.bill_date >= #{params.billDateList[0]} and
-            (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > so.bill_date
-        </if>
-        <if test="params.invalidStatus != null">
-            and so.invalid_status = #{params.invalidStatus}
-        </if>
-
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-
-    </select>
-
     <select id="pdaListCount" resultType="java.lang.Integer">
-        select
-        count(distinct so.id)
-        FROM so_outstock_detail sod
-        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        SELECT COUNT(*)
+        FROM so_outstock so
         WHERE so.is_deleted = FALSE
         AND so.source_type NOT IN ('SAL_OUTSTOCK')
+        AND EXISTS ( SELECT 1 FROM so_outstock_detail sod WHERE sod.main_id = so.id AND sod.is_deleted = FALSE )
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and so.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">

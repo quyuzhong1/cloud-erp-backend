@@ -114,6 +114,8 @@ public interface BusinessNoConstant {
     String FHD = "FHD";
     // b2c销售订单
     String XSDD = "XSDD";
+    // b2c三方仓发货单
+    String WFHD = "WFHD";
     // 海外仓发货计划
     String FHJH = "FHJH";
     // 要货申请

@@ -1,19 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.scm.mapper.SupplierVisitMapper">
-
-
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierVisitDTO$PagingViewDTO">
+        select
+            sv.id as id,
+            sv.create_user_id as createUserId,
+            sv.create_user_name as createUserName,
+            sv.create_time as createTime,
+            sv.update_user_id as updateUserId,
+            sv.update_user_name as updateUserName,
+            sv.update_time as updateTime,
+            sv.version as version,
+            sv.is_deleted as isDeleted,
+            sv.supplier_id as supplierId,
+            sv.visit_type as visitType,
+            sv.visit_time as visitTime,
+            sv.people as people,
+            sv.content as content,
+            sv.result as result ,
+            s.code as supplierCode,
+            s.name as supplierName
+        from supplier_visit as sv
+                 left join supplier as s on sv.supplier_id = s.id and s.is_deleted  = FALSE
+        WHERE
+            sv.supplier_id=#{supplierId}
+            AND sv.is_deleted=false
+        ORDER BY
+            sv.create_time DESC
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.scm.dto.SupplierVisitDTO$TabListDTO">
         SELECT
-            id,
-            visit_time,
-            people,
-            content,
-            result,
-            visit_type,
-            supplier_id
-        FROM supplier_visit
-        WHERE supplier_id=#{supplierId} AND is_deleted=false
-        ORDER BY create_time DESC
+            sv.RESULT AS tabFlag,
+            COUNT ( 1 ) AS COUNT
+        FROM
+            supplier_visit AS sv
+        WHERE
+            sv.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY
+            sv.RESULT
+    </select>
+
+    <sql id="paging_sql">
+        select
+            sv.id as id,
+            sv.create_user_id as createUserId,
+            sv.create_user_name as createUserName,
+            sv.create_time as createTime,
+            sv.update_user_id as updateUserId,
+            sv.update_user_name as updateUserName,
+            sv.update_time as updateTime,
+            sv.version as version,
+            sv.is_deleted as isDeleted,
+            sv.supplier_id as supplierId,
+            sv.visit_type as visitType,
+            sv.visit_time as visitTime,
+            sv.people as people,
+            sv.content as content,
+            sv.result as result ,
+            s.code as supplierCode,
+            s.name as supplierName
+        from supplier_visit as sv
+        left join supplier as s on sv.supplier_id = s.id and s.is_deleted  = FALSE
+        where
+            ${params.sqlMap.default}
+            and sv.is_deleted  = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and sv.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sv.create_time DESC
+
+    </sql>
+
+    <select id="pagingList" resultType="com.erp.model.scm.dto.SupplierVisitDTO$ListDTO">
+        <include refid="paging_sql"></include>
     </select>
 </mapper>
