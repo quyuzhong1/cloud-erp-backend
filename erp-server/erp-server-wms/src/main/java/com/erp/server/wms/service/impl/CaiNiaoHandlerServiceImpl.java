@@ -37,6 +37,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -86,6 +87,16 @@ public class CaiNiaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AliexpressAuthDTO aliexpressAuthDTO = buildAuthDTO(createInboundReq.getShopId(),createInboundReq.getOwnerCode());
 
         List<AliexpressInboundDTO.OrderLines> orderLines = new ArrayList<>();
+        List<ThirdWarehouseCreateInboundReq.Item> itemList = createInboundReq.getItems();
+        //相同sku合并数量
+        if(CollectionUtils.isNotEmpty(itemList)){
+            Map<String,Integer> mergeSkuMap = itemList.stream().collect(Collectors.toMap(ThirdWarehouseCreateInboundReq.Item::getProductSku, ThirdWarehouseCreateInboundReq.Item::getQuantity, Integer::sum));
+            //将map转成List<Item>
+            createInboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->{
+                ThirdWarehouseCreateInboundReq.Item item = itemList.stream().filter(i->i.getProductSku().equals(v.getKey())).findFirst().orElse(new ThirdWarehouseCreateInboundReq.Item());
+                return new ThirdWarehouseCreateInboundReq.Item(v.getKey(),item.getProductSkuId(),v.getValue());
+            }).collect(Collectors.toList()));
+        }
         for (ThirdWarehouseCreateInboundReq.Item item : createInboundReq.getItems()) {
             AliexpressInboundDTO.OrderLines orderLine = AliexpressInboundDTO.OrderLines.builder()
                     .itemCode(item.getProductSku())

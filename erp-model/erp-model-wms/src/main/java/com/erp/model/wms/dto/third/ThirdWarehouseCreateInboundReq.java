@@ -294,5 +294,11 @@ public class ThirdWarehouseCreateInboundReq {
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
         private String weightUnit;
+
+        public Item(String productSku, String productSkuId, Integer quantity) {
+            this.productSku = productSku;
+            this.productSkuId = productSkuId;
+            this.quantity = quantity;
+        }
     }
 }
