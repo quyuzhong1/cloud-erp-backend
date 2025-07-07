@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,9 @@ public class DmpInputTaskFactory{
 		if(dbDmpInputTaskEntity == null) {
 			log.warn("输入任务不存在id={}" , inputTaskId);
 			return null;
+		}
+		if(!DmpCfgInputExecSystemEnum.DMP.getCode().equals(dbDmpInputTaskEntity.getExecSystem())) {
+			ServiceException.runError("输入任务非dmp执行，id={}, exec_system={}", inputTaskId , dbDmpInputTaskEntity.getExecSystem());
 		}
 		
 		List<DmpInputTaskStatusEnum> values = DmpInputTaskStatusEnum.getNextStatus(dbDmpInputTaskEntity.getStatus());
