@@ -1500,6 +1500,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         // 保存明细
         // 生成实际和差异记录
+        curListDTO.setReconciliationId(reconciliationEntity.getId());
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO, reconciliationCount,Boolean.FALSE);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
