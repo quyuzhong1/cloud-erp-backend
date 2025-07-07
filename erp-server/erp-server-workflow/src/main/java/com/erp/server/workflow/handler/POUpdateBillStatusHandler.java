@@ -9,29 +9,26 @@ package com.erp.server.workflow.handler;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
-import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
-import com.erp.server.workflow.service.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.erp.server.workflow.service.ApproveTaskInfoService;
+import com.erp.server.workflow.service.CfgProcessFieldMapService;
+import com.erp.server.workflow.service.ThirdProcessDefinitionService;
+import com.erp.server.workflow.service.ThirdProcessManagementService;
 import groovy.util.logging.Slf4j;
 import io.seata.spring.annotation.GlobalTransactional;
-import org.apache.commons.collections.SetUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,10 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  *@Author: hcg
@@ -117,7 +112,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
                 //构建三方生成查询主、明细数据
                 List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
                 //构建三方生成查询主表数据
-                ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
+                ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS,thirdProcessEntity.getBussinessKey());
                 taskInfo.setStatus(ApproveTaskStatusEnum.FAIL.getCode());
                 //保存三方生成查询
                 BaseResultDTO.AddDTO add = taskInfoService.add(taskInfo);
@@ -190,7 +185,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
     }
 
     @Override
-    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS) {
+    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {
         ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).
                 eq(ThirdProcessDefinitionEntity::getIsDeleted, false).eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()));
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
@@ -200,6 +195,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
         addDTO.setThirdApprovalCode(thirdProcessDefinition.getApprovalCode());
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
+        addDTO.setBussinessKey(bussinessKey);
         return addDTO;
     }
 

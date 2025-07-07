@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1227,11 +1228,23 @@ public class PurchaseApplicationDTO implements Serializable {
         private String approvalUserName;
     }
 
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class UpdateApprovalStatusDTO {
+    public static class UpdateApproveStatusDTO {
+
+        /**
+         * 供应商id
+         */
         private PurchaseApplicationEntity purchaseApplicationEntity;
+
+        /**
+         * 审核状态
+         *
+         */
+        //校验数据枚举类型
+        @StateEnumValue(strValues = {"waitSubmit","approveIng","reject","approve"}, message = "审核类型有误")
         private ApproveStatusEnum approveStatus;
     }
 }

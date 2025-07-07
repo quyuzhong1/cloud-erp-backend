@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -73,12 +74,19 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author Will
      * @date: 2023/3/15 18:20
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param dto
 
      */
-    BatchResultDTO approve(PurchaseApplicationEntity entity, String type, String comment, Boolean isNeedProcess);
+    BatchResultDTO approve(PurchaseApplicationEntity entity, ApproveOneDTO dto);
+    /**
+     * 审核通过
+     * @author will
+     * @date 2025/7/7 17:40
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, PurchaseApplicationEntity entity);
     /**
      * @description: 批量反审核
      * @author Will
@@ -237,4 +245,21 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Integer
      */
     Integer getPushDownBySourceIds(List<String> soIds);
+    /**
+     * 新增并且审核
+     * @author will
+     * @date 2025/7/7 18:23
+     * @param dto
+     * @return PurchaseApplicationEntity
+     */
+    PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.AddDTO dto);
+    /**
+     * 第三方审核结束
+     * @author will
+     * @date 2025/7/7 18:31
+     * @param updateApproveStatusDTO
+     * @return Boolean
+     */
+    Boolean thirdApproveEnd(PurchaseApplicationDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+
 }

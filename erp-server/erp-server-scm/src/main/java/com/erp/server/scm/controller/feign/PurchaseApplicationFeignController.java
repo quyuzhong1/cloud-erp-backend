@@ -1,8 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,6 +39,18 @@ public class PurchaseApplicationFeignController {
     @PostMapping("/add")
     BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
         PurchaseApplicationEntity entity = purchaseApplicationService.add(dto);
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+    /**
+     * 新增审核
+     * @author will
+     * @date 2025/7/7 18:23
+     * @param dto
+     * @return BatchResultDTO
+     */
+    @PostMapping("/addAndApprove")
+    BatchResultDTO addAndApprove(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
+        PurchaseApplicationEntity entity = purchaseApplicationService.addAndApprove(dto);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
