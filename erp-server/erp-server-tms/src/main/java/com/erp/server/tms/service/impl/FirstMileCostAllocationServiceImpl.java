@@ -1008,35 +1008,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //当如果是当月无实际账单,本月也无签收的直接显示为0
             detailEntity.setEndPeriodTransitCost(BigDecimal.ZERO);
         } else {
-            //本月（核算月份）有其他对账月份的实际对账单
-            if (judgeReconciliationDTO.isHasOtherReconciliation()){
-                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-            }else if(Objects.nonNull(initEntity) && initEntity.getInitEstimatedCost().compareTo(BigDecimal.ZERO) == 0){
+            //期初在途不为0
+            if(detailEntity.getInitTransitCost().compareTo(BigDecimal.ZERO) != 0){
                 //期初在途费用-冲期初-本期分摊费用
                 detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
             }else {
-                //初始分摊（实际+暂估）可以判断期初费用分摊
-                if (judgeReconciliationDTO.isLastHasCostAllocation()){
-                    if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                        //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
-                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                    }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
-                        //期初不等于0时，期初在途费用-冲期初-本期分摊费用
-                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
-                    }else {
-                        //期初等于0时，头程分摊金额-冲期初-本期分摊费用
-                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                    }
-                }else if (Objects.isNull(initEntity)){
-                    //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
-                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
-                    //期初暂估!=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
-                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
-                    //期初不等于0时，期初在途费用-冲期初-本期分摊费用
-                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
-                }
+                //头程分摊金额-冲期初-本期分摊费用
+                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
             }
         }
     }
