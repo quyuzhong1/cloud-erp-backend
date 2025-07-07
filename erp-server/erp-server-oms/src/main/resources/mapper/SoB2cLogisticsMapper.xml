@@ -105,6 +105,26 @@
             is_deleted = false and (code = #{logisticsCode}  or (string_to_array(track_no, ',') &amp;&amp;  string_to_array(#{logisticsCode}, ',')))
         </where>
     </select>
+    <select id="transferOrderView" resultType="com.erp.model.oms.dto.SoB2cLogisticsDTO$transferOrderDTO">
+        select
+            sb2c.id,
+            sb2c.code as code,
+            sb2cl.id as logisticsId,
+            sb2cl.logistics_channel_id as channelId,
+            sb2cl.logistics_channel_name as channelName,
+            sb2cl.track_no as trackNo,
+            sb2cl.code as transportNo
+        from so_b2c sb2c
+        left join so_b2c_logistics sb2cl on sb2c.id=sb2cl.main_id
+        where sb2c.is_deleted=false and sb2cl.is_deleted=false
+        <if test="ids != null and ids.size > 0">
+            AND sb2c.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        order by sb2c.update_time desc
+    </select>
 
 
 </mapper>

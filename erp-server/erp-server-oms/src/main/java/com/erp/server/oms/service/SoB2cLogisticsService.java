@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -180,4 +181,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @param currency
      */
     void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency);
+
+    /**
+     * 转单预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cLogisticsDTO.transferOrderDTO> transferOrderView(List<String> ids);
+
+    BatchResultDTO transferOrderSave(SoB2cLogisticsDTO.transferOrderDTO dto, LogisticsChannelDTO.BaseDTO channel, SoB2cEntity soB2cEntity);
 }
