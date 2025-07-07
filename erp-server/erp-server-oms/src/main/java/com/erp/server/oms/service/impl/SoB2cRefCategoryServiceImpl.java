@@ -18,6 +18,7 @@ import com.erp.server.oms.service.SoB2cRefCategoryService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -161,6 +162,15 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         if (CollectionUtils.isEmpty(soIds)) {
             return Collections.emptyList();
         }
-        return baseMapper.listCategoryNamesBySoIds(soIds);
+        List<SoB2cRefCategoryEntity> list = lambdaQuery().in(SoB2cRefCategoryEntity::getSoB2cId, soIds).list();
+        Map<String, List<SoB2cRefCategoryEntity>> soB2cIdMaps = list.stream().collect(Collectors.groupingBy(SoB2cRefCategoryEntity::getSoB2cId));
+        List<SoB2cRefCategoryDTO.CategoryNamesDTO> categoryNamesDTOList = new ArrayList<>();
+        for(Map.Entry<String, List<SoB2cRefCategoryEntity>> soB2cIdMap : soB2cIdMaps.entrySet()) {
+        	SoB2cRefCategoryDTO.CategoryNamesDTO categoryNamesDTO = new SoB2cRefCategoryDTO.CategoryNamesDTO();
+        	categoryNamesDTO.setSoB2cId(soB2cIdMap.getKey());
+        	categoryNamesDTO.setCategoryNames(soB2cIdMap.getValue().stream().filter(s -> StringUtils.isNotBlank(s.getCategoryName())).map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(",")));
+        	categoryNamesDTOList.add(categoryNamesDTO);
+        }
+        return categoryNamesDTOList;
     }
 }

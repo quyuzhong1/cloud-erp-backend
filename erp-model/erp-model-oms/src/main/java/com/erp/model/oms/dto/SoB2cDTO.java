@@ -261,6 +261,11 @@ public class SoB2cDTO implements Serializable {
          * 是否全托管
          */
         private Boolean isFullyManaged;
+        
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     @Data
@@ -1851,6 +1856,8 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+        
+        private String dynamicDataSource;
 
     }
 
