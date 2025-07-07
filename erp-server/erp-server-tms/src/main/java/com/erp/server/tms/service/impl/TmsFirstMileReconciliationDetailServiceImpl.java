@@ -757,24 +757,24 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
     	String mainId = estimatedListDTO.getMainId();
-    	if(mainId == null) {
+    	if(StringUtils.isBlank(mainId)) {
     		mainId = estimatedListDTO.getReconciliationId();
     	}
-    	if(mainId == null) {
+    	if(StringUtils.isBlank(mainId)) {
     		mainId = actualListDTO.getMainId();
     	}
-    	if(mainId == null) {
+    	if(StringUtils.isBlank(mainId)) {
     		mainId = actualListDTO.getReconciliationId();
     	}
-    	if(mainId == null) {
+    	if(StringUtils.isBlank(mainId)) {
     		mainId = diffListDTO.getMainId();
     	}
-    	if(mainId == null) {
+    	if(StringUtils.isBlank(mainId)) {
     		mainId = diffListDTO.getReconciliationId();
     	}
     	
     	LocalDate reconciliationMonth = LocalDate.now();
-    	if(mainId != null) {
+    	if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
     		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
     	}
@@ -1321,11 +1321,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         BigDecimal totalCost = BigDecimal.ZERO;
         String mainId = record.getMainId();
-        if(mainId == null) {
+        if(StringUtils.isBlank(mainId)) {
         	mainId = record.getReconciliationId();
         }
         LocalDate reconciliationMonth = LocalDate.now();
-        if(mainId != null) {
+        if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = ApplicationContextUtils.getBean(TmsFirstMileReconciliationService.class).getById(mainId);
     		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
     	}
