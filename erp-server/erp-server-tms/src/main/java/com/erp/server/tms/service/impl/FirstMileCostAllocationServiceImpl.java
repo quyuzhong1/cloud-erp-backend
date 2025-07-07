@@ -1129,10 +1129,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     && Objects.equals(detailEntity.getFeeType(), e.getFeeType())).findFirst().orElse(null);
             if (Objects.nonNull(beforeDetailEntity)) {
                 //上期是暂估时
-                if (judgeReconciliationDTO.isCurrencyMonthReconciliation() && !judgeReconciliationDTO.isHasOtherReconciliation()) {
-                    //本月开始有实际账单 且本月没有其他实际对账单
-                    detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
-                    detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+                if (judgeReconciliationDTO.isCurrencyMonthReconciliation()) {
+                    if (judgeReconciliationDTO.isHasOtherReconciliation()){
+                        detailEntity.setInitTransitCost(BigDecimal.ZERO);
+                        detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
+                    }else{
+                        //本月开始有实际账单 且本月没有其他实际对账单
+                        detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
+                        detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
+                    }
                 }else if (judgeReconciliationDTO.isLastReconciliation()){
                     //上月有实际账单
                     detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
