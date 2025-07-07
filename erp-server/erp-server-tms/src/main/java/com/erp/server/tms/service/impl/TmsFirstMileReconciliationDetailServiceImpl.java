@@ -755,7 +755,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
-    	String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    	LocalDate receiveDate = estimatedListDTO.getReceiveDate();
+    	if(receiveDate == null) {
+    		receiveDate = actualListDTO.getReceiveDate();
+    	}
+    	if(receiveDate == null) {
+    		receiveDate = diffListDTO.getReceiveDate();
+    	}
+		String currentDate = receiveDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
     	Map<String, BigDecimal> rateMap = new HashMap<>();
     	rateMap.put("CNY", BigDecimal.ONE);
@@ -1296,7 +1303,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.toList());
 
         BigDecimal totalCost = BigDecimal.ZERO;
-        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String currentDate = record.getReceiveDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
         Map<String, BigDecimal> rateMap = new HashMap<>();
         rateMap.put("CNY", BigDecimal.ONE);
