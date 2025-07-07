@@ -5189,7 +5189,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
             //旧包装信息
             ProductPackEntity oldPackEntity = productPackService.getById(productKey.getPackId());
-            if(StringUtils.isNotBlank(dto.getBoxLength()) || StringUtils.isNotBlank(dto.getProductLength())){
+            if(!(StringUtils.isBlank(dto.getBoxLength()) && StringUtils.isBlank(dto.getProductLength()))){
                 BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
                 if(StringUtils.isBlank(dto.getBoxLength())){
                     boxLength = oldPackEntity.getBoxLength();
@@ -5202,7 +5202,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
                 }
             }
-            if(StringUtils.isNotBlank(dto.getBoxWidth()) || StringUtils.isNotBlank(dto.getProductWidth())){
+            if(!(StringUtils.isBlank(dto.getBoxWidth()) && StringUtils.isBlank(dto.getProductWidth()))){
                 BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
                 if(StringUtils.isBlank(dto.getBoxWidth())){
                     boxWidth = oldPackEntity.getBoxWidth();
@@ -5215,7 +5215,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
                 }
             }
-            if(StringUtils.isNotBlank(dto.getBoxHeight()) || StringUtils.isNotBlank(dto.getProductHeight())){
+            if(!(StringUtils.isBlank(dto.getBoxHeight()) && StringUtils.isBlank(dto.getProductHeight()))){
                 BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
                 if(StringUtils.isBlank(dto.getBoxHeight())){
                     boxHeight = oldPackEntity.getBoxHeight();
@@ -5228,7 +5228,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
                 }
             }
-            if(StringUtils.isNotBlank(dto.getGrossWeight()) || StringUtils.isNotBlank(dto.getNetWeight())){
+            if(!(StringUtils.isBlank(dto.getGrossWeight()) && StringUtils.isBlank(dto.getNetWeight()))){
                 BigDecimal grossWeight = MathUtil.valueOf(dto.getGrossWeight());
                 if(StringUtils.isBlank(dto.getGrossWeight())){
                     grossWeight = oldPackEntity.getGrossWeight();
