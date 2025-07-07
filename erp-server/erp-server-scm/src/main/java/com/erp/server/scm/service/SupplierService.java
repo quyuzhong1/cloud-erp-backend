@@ -1,7 +1,6 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -13,7 +12,6 @@ import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -120,14 +118,13 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @param entity
      * @return Boolean
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 12:02
      */
-    Boolean approveEnd(SupplierEntity entity,String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd(SupplierEntity entity,String type, String comment);
 
 
     /**

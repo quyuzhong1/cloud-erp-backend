@@ -88,4 +88,14 @@ public interface ApproveTaskInfoService extends SuperService<ApproveTaskInfoEnti
      * @return ApproveTaskInfoEntity
      */
     ApproveTaskInfoEntity getByBusinessIdAndKey( String businessId,  String businessKey);
+    /**
+     * 删除
+     * @author will
+     * @date 2025/7/7 14:55
+     * @param type
+     * @param thirdInstanceId
+     * @param thirdApprovalCode
+     * @return Boolean
+     */
+    Boolean deleteByThird( String type, String thirdInstanceId, String thirdApprovalCode);
 }
