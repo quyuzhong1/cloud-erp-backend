@@ -561,6 +561,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
+        //查询支付方式是否需要填写付款时间
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(soB2cEntity);
+        if(!isFlag && Objects.isNull(soB2cEntity.getPayTime())){
+            throw new ServiceException("付款时间不能为空");
+        }
         if (StrUtil.isEmpty(soB2cEntity.getSourceType())) {
             soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
