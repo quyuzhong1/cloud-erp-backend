@@ -5196,10 +5196,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
                 if(StringUtils.isBlank(dto.getBoxLength())){
                     boxLength = oldPackEntity.getBoxLength();
+                }else {
+                    boxLength = LengthConverterUtil.cmToMm(boxLength);
                 }
                 BigDecimal productLength = MathUtil.valueOf(dto.getProductLength());
                 if(StringUtils.isBlank(dto.getProductLength())){
                     productLength = oldPackEntity.getProductLength();
+                }else {
+                    productLength = LengthConverterUtil.cmToMm(productLength);
                 }
                 if(boxLength.compareTo(productLength)<0){
                     errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
@@ -5209,10 +5213,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
                 if(StringUtils.isBlank(dto.getBoxWidth())){
                     boxWidth = oldPackEntity.getBoxWidth();
+                }else {
+                    boxWidth = LengthConverterUtil.cmToMm(boxWidth);
                 }
                 BigDecimal productWidth = MathUtil.valueOf(dto.getProductWidth());
                 if(StringUtils.isBlank(dto.getProductWidth())){
                     productWidth = oldPackEntity.getProductWidth();
+                }else {
+                    productWidth = LengthConverterUtil.cmToMm(productWidth);
                 }
                 if(boxWidth.compareTo(productWidth)<0){
                     errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
@@ -5222,10 +5230,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
                 if(StringUtils.isBlank(dto.getBoxHeight())){
                     boxHeight = oldPackEntity.getBoxHeight();
+                }else {
+                    boxHeight = LengthConverterUtil.cmToMm(boxHeight);
                 }
                 BigDecimal productHeight = MathUtil.valueOf(dto.getProductHeight());
                 if(StringUtils.isBlank(dto.getProductHeight())){
                     productHeight = oldPackEntity.getProductHeight();
+                }else {
+                    productHeight = LengthConverterUtil.cmToMm(productHeight);
                 }
                 if(boxHeight.compareTo(productHeight)<0){
                     errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
