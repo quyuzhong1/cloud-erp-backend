@@ -777,6 +777,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     	if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
     		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}else {
+    		reconciliationMonth = estimatedListDTO.getReceiveDate();
+    	}
+    	if(reconciliationMonth == null) {
+    		reconciliationMonth = LocalDate.now();
     	}
     	
 		String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -1328,7 +1333,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = ApplicationContextUtils.getBean(TmsFirstMileReconciliationService.class).getById(mainId);
     		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}else {
+    		reconciliationMonth = record.getReceiveDate();
     	}
+        if(reconciliationMonth == null) {
+        	reconciliationMonth = LocalDate.now();
+        }
         String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
         Map<String, BigDecimal> rateMap = new HashMap<>();
