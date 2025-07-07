@@ -5186,17 +5186,60 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
-            if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
-                errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+            ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
+            //旧包装信息
+            ProductPackEntity oldPackEntity = productPackService.getById(productKey.getPackId());
+            if(!(StringUtils.isBlank(dto.getBoxLength()) && StringUtils.isBlank(dto.getProductLength()))){
+                BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
+                if(StringUtils.isBlank(dto.getBoxLength())){
+                    boxLength = oldPackEntity.getBoxLength();
+                }
+                BigDecimal productLength = MathUtil.valueOf(dto.getProductLength());
+                if(StringUtils.isBlank(dto.getProductLength())){
+                    productLength = oldPackEntity.getProductLength();
+                }
+                if(boxLength.compareTo(productLength)<0){
+                    errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
-                errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+            if(!(StringUtils.isBlank(dto.getBoxWidth()) && StringUtils.isBlank(dto.getProductWidth()))){
+                BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
+                if(StringUtils.isBlank(dto.getBoxWidth())){
+                    boxWidth = oldPackEntity.getBoxWidth();
+                }
+                BigDecimal productWidth = MathUtil.valueOf(dto.getProductWidth());
+                if(StringUtils.isBlank(dto.getProductWidth())){
+                    productWidth = oldPackEntity.getProductWidth();
+                }
+                if(boxWidth.compareTo(productWidth)<0){
+                    errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
-                errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+            if(!(StringUtils.isBlank(dto.getBoxHeight()) && StringUtils.isBlank(dto.getProductHeight()))){
+                BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
+                if(StringUtils.isBlank(dto.getBoxHeight())){
+                    boxHeight = oldPackEntity.getBoxHeight();
+                }
+                BigDecimal productHeight = MathUtil.valueOf(dto.getProductHeight());
+                if(StringUtils.isBlank(dto.getProductHeight())){
+                    productHeight = oldPackEntity.getProductHeight();
+                }
+                if(boxHeight.compareTo(productHeight)<0){
+                    errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
-                errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+            if(!(StringUtils.isBlank(dto.getGrossWeight()) && StringUtils.isBlank(dto.getNetWeight()))){
+                BigDecimal grossWeight = MathUtil.valueOf(dto.getGrossWeight());
+                if(StringUtils.isBlank(dto.getGrossWeight())){
+                    grossWeight = oldPackEntity.getGrossWeight();
+                }
+                BigDecimal netWeight = MathUtil.valueOf(dto.getNetWeight());
+                if(StringUtils.isBlank(dto.getNetWeight())){
+                    netWeight = oldPackEntity.getNetWeight();
+                }
+                if(grossWeight.compareTo(netWeight)<0){
+                    errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+                }
             }
 
             //存在错误信息则返回
@@ -5629,12 +5672,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
+
             //获取产品基本信息修改的字段
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO,null);
             //获取产品包装信息修改的字段
             productPackDTO.setId(productKey.getPackId());
-            List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,null);
+            List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,oldPackEntity);
+
+
             //发送通知
             ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
             noticeDTO.setProductId(productInfoDTO.getId());
