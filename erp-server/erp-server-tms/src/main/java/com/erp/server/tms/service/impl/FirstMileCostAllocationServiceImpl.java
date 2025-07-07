@@ -1138,14 +1138,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
                         detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
                     }
-                }else if (judgeReconciliationDTO.isLastReconciliation()){
-                    //上月有实际账单
+                }else{
+                    //上月有账单
                     detailEntity.setInitTransitCost(beforeDetailEntity.getEndPeriodTransitCost());
                     detailEntity.setInitEstimatedCost(beforeDetailEntity.getEndPeriodEstimatedCost());
-                }else{
-                    //期初在途
-                    detailEntity.setInitTransitCost(BigDecimal.ZERO);
-                    detailEntity.setInitEstimatedCost(BigDecimal.ZERO);
                 }
             } else {
                 //期初在途
