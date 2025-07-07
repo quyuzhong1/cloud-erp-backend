@@ -746,6 +746,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
             }
             warehouse.setOnwayWarehouseName(entity.getName());
+        }else {
+            warehouse.setOnwayWarehouseName("");
+            warehouse.setOnwayWarehouseId("");
         }
         if(dto.getChannelAffiliation() == null) {
         	warehouse.setChannelAffiliation("");
