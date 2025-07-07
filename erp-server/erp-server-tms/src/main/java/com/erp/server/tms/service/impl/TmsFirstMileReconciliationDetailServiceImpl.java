@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -755,14 +756,30 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
-    	LocalDate receiveDate = estimatedListDTO.getReceiveDate();
-    	if(receiveDate == null) {
-    		receiveDate = actualListDTO.getReceiveDate();
+    	String mainId = estimatedListDTO.getMainId();
+    	if(mainId == null) {
+    		mainId = estimatedListDTO.getReconciliationId();
     	}
-    	if(receiveDate == null) {
-    		receiveDate = diffListDTO.getReceiveDate();
+    	if(mainId == null) {
+    		mainId = actualListDTO.getMainId();
     	}
-		String currentDate = receiveDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    	if(mainId == null) {
+    		mainId = actualListDTO.getReconciliationId();
+    	}
+    	if(mainId == null) {
+    		mainId = diffListDTO.getMainId();
+    	}
+    	if(mainId == null) {
+    		mainId = diffListDTO.getReconciliationId();
+    	}
+    	
+    	LocalDate reconciliationMonth = LocalDate.now();
+    	if(mainId != null) {
+    		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
+    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}
+    	
+		String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
     	Map<String, BigDecimal> rateMap = new HashMap<>();
     	rateMap.put("CNY", BigDecimal.ONE);
@@ -1303,7 +1320,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.toList());
 
         BigDecimal totalCost = BigDecimal.ZERO;
-        String currentDate = record.getReceiveDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String mainId = record.getMainId();
+        if(mainId == null) {
+        	mainId = record.getReconciliationId();
+        }
+        LocalDate reconciliationMonth = LocalDate.now();
+        if(mainId != null) {
+    		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = ApplicationContextUtils.getBean(TmsFirstMileReconciliationService.class).getById(mainId);
+    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}
+        String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
         Map<String, BigDecimal> rateMap = new HashMap<>();
         rateMap.put("CNY", BigDecimal.ONE);
