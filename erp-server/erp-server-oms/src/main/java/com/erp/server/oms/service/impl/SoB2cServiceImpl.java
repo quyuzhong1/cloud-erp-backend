@@ -6441,11 +6441,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 自发货订单状态不更新(由ERP系统决定)
             if (!oldEntity.hasPlatformWarehouseOrder()) {
-                dto.setBillStatus(oldEntity.getBillStatus());
-            }
-            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
-            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
-                dto.setBillStatus(oldEntity.getBillStatus());
+                //1、当ERP订单状态是待配货 或者 配货中  推过来冻结中的状态 就直接改订单状态为冻结中，增加冻结标识；
+                //2、当ERP订单状态是除了待配货和配货中  就不改为冻结中的状态
+                String oldStatus = oldEntity.getBillStatus();
+                String newStatus = dto.getBillStatus();
+                // 处理冻结状态转换
+                if (newStatus.equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())) {
+                    // 只有待配货和配货中状态可以转为冻结
+                    if (!oldStatus.equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) &&
+                            !oldStatus.equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
+                        // 非待配货/配货中状态，保持原状态
+                        dto.setBillStatus(oldStatus);
+                    }
+                }
+                // 处理解冻状态转换
+                else if (oldStatus.equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())) {
+                    // 从冻结状态转出，默认回到待配货
+                    dto.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                }
             }
 
             // 自发货订单的平台状态作废：如果订单状态是(待发货/已发货/部分发货)=已有发货单不作废，只添加平台作废记录
