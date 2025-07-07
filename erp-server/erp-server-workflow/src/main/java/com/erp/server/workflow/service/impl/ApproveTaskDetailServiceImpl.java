@@ -68,6 +68,11 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
         return lambdaQuery().eq(ApproveTaskDetailEntity::getMianId,id).list();
     }
 
+    @Override
+    public Boolean removeByMainId(String mainId) {
+        return lambdaUpdate().eq(ApproveTaskDetailEntity::getMianId,mainId).remove();
+    }
+
 
     /**
     * 新增修改处理数据

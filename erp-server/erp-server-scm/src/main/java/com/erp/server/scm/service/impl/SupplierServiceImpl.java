@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -28,7 +29,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
@@ -39,6 +39,7 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierTabEnum;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
@@ -86,6 +87,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER;
 
 /**
@@ -688,7 +690,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
         if (Objects.nonNull(data) && ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             //无需走流程的数据则直接更新状态
-            approveEnd(entity,type,comment,isNeedProcess);
+            approveEnd(entity,type,comment);
         }
         //添加日志
         addModuleOperateLog(String.format("审核【%s】了一个供应商信息【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "审核操作");
@@ -699,7 +701,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
@@ -707,7 +708,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(SupplierEntity entity,String type, String comment, Boolean isNeedProcess) {
+    public Boolean approveEnd(SupplierEntity entity,String type, String comment) {
         if (Objects.isNull(entity)) {
             return Boolean.TRUE;
         }
@@ -1457,24 +1458,39 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String add(SupplierDTO.InsertDTO addDTO) {
         SupplierEntity supplierEntity = addSupplier(addDTO);
         if(Objects.isNull(supplierEntity)){
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        //根据id，更新审核状态
-        updateApproveStatusForDisApprove(Collections.singletonList(supplierEntity.getId()), addDTO.getApprovalStatus());
+        //直接审核通过
+        if (ObjectUtil.isNotEmpty(addDTO.getApprovalStatus()) && ApproveStatusEnum.APPROVE.equals(addDTO.getApprovalStatus())) {
+            SupplierEntity oldEntity = this.getById(supplierEntity.getId());
+            //根据id，更新审核状态
+            self.updateApproveStatus(new SupplierDTO.UpdateApproveStatusDTO(oldEntity, ApproveStatusEnum.APPROVE));
+        }
         return supplierEntity.getId();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();
-        if (approveStatus == ApproveStatusEnum.APPROVE_ING){
-            supplierEntity.setApproveUserId(sysUserFeign.getUserByThird( ThirdpartyPlatformEnum.FS.getCode(),supplierEntity.getApproveUserId()).getUserId());
+        if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(supplierEntity.getApproveUserId())){
+            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), supplierEntity.getApproveUserId());
+            if (Objects.isNull(userByThird)) {
+                throw new ServiceException("第三方用户信息不存在");
+            }
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
+            if (ObjUtil.isEmpty(findUserDTO)) {
+                throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+            }
+            supplierEntity.setApproveUserId(findUserDTO.getUserId());
+            supplierEntity.setApproveUserName(findUserDTO.getUserName());
         }
-        updateApproveStatus( Collections.singletonList(supplierEntity), approveStatus);
+        approveEnd(supplierEntity,ApproveTypeEnum.PASS.getStatus(),"");
     }
 
     /**
@@ -1630,8 +1646,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             list.stream().forEach(obj -> {
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
                     obj.setApproveTime(LocalDateTime.now());
-                    obj.setApproveUserId(userInfo.getUid());
-                    obj.setApproveUserName(userInfo.getUserName());
+                    obj.setApproveUserId(CharSequenceUtil.isNotBlank(obj.getApproveUserId()) ? userInfo.getUid() : obj.getApproveUserId());
+                    obj.setApproveUserName(CharSequenceUtil.isNotBlank(obj.getApproveUserName()) ? userInfo.getUserName() : obj.getApproveUserName());
                 } else {
                     obj.setApproveTime(null);
                     obj.setApproveUserId("");

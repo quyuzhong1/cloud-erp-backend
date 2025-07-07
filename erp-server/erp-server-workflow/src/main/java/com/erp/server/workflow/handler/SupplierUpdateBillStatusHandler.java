@@ -14,6 +14,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -135,8 +136,14 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
                 addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
             }
+            addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
+
             //生成三方生成查询主表数据
             ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
+
+            //判断是否存在三方生成查询数据，存在则删除
+            approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
+
             taskInfo.setStatus(ApproveTaskStatusEnum.FAIL.getCode());
             //保存三方生成查询
             BaseResultDTO.AddDTO add = approveTaskInfoService.add(taskInfo);

@@ -44,4 +44,12 @@ public interface ApproveTaskDetailService extends SuperService<ApproveTaskDetail
      * @return List<ApproveTaskDetailEntity>
      */
     List<ApproveTaskDetailEntity> listByMainId(String id);
+    /**
+     * 根据主表id删除
+     * @author will
+     * @date 2025/7/7 14:57
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean removeByMainId(String mainId);
 }

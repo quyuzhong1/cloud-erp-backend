@@ -250,6 +250,20 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         return lambdaQuery().eq(ApproveTaskInfoEntity::getBussinessKey,businessKey).eq(ApproveTaskInfoEntity::getBussinessId,businessId).last("limit 1").one();
     }
 
+    @Override
+    public Boolean deleteByThird(String type, String thirdInstanceId, String thirdApprovalCode) {
+        lambdaQuery().eq(ApproveTaskInfoEntity::getType,type)
+                .eq(ApproveTaskInfoEntity::getThirdInstanceId,thirdInstanceId)
+                .eq(ApproveTaskInfoEntity::getThirdApprovalCode,thirdApprovalCode)
+                .list().forEach(approveTaskInfoEntity -> {
+            //删除明细
+            approveTaskDetailService.removeByMainId(approveTaskInfoEntity.getId());
+            //删除主表
+            super.removeById(approveTaskInfoEntity.getId());
+        });
+        return Boolean.TRUE;
+    }
+
     /**
      * 分页查询数据处理
      * @author will

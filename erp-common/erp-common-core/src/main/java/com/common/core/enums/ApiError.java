@@ -131,6 +131,12 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
+
     /**
      * 警告信息 从800 开始
      */
