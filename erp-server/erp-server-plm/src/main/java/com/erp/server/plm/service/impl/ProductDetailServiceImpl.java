@@ -5057,19 +5057,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-            List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
-                    .map(String::trim)
-                    .collect(Collectors.toList());
-            List<String> applicationCategoryIdList = new ArrayList<>();
-            for (String applicationCategoryName : applicationCategoryNameList) {
-                String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
-                if (StringUtils.isBlank(applicationCategoryId)) {
-                    errorMsgList.add(applicationCategoryName+" 应用分类不存在");
-                    continue;
+            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
+
+                List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
+                List<String> applicationCategoryIdList = new ArrayList<>();
+                for (String applicationCategoryName : applicationCategoryNameList) {
+                    String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
+                    if (StringUtils.isBlank(applicationCategoryId)) {
+                        errorMsgList.add(applicationCategoryName+" 应用分类不存在");
+                        continue;
+                    }
+                    applicationCategoryIdList.add(applicationCategoryId);
                 }
-                applicationCategoryIdList.add(applicationCategoryId);
+                productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             }
-            productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
             if (StringUtils.isNotBlank(pirateRisk)) {

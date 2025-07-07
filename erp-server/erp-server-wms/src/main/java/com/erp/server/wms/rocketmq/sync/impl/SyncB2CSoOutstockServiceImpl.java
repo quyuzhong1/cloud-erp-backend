@@ -209,7 +209,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
-                .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
+                .eq(SoOutstockEntity::getCode, entity.getCode()));
         //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
             if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
