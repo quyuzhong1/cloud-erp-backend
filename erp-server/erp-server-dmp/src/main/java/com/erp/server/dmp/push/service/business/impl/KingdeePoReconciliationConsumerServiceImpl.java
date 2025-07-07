@@ -147,6 +147,8 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
+            //无需自动审核
+            param.setIsAutoAudit(Boolean.FALSE);
             //新增数据
             saveOrUpdate( apiUtils, platformEntity, map,json, param);
             return;
@@ -189,7 +191,8 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
      * 新增
      */
     public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
-
+        //无需自动审核
+        param.setIsAutoAudit(Boolean.FALSE);
         Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.PO_RECONCILIATION.getCode());
         if (isAdd) {
             //给明细id赋值

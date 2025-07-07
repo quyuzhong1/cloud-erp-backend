@@ -41,6 +41,10 @@ public class KingdeeParamDTO {
          */
         private  Boolean IsVerifyBaseDataField = true;
 
+        /**
+         * 是否自动审核
+         */
+        private Boolean isAutoAudit = Boolean.TRUE;
 
         public SaveParamDTO(JSONObject Model) {
             this.Model = Model;
