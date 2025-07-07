@@ -85,7 +85,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
     @Override
     public CfgQueryOptionBussinessKeyEnum getEvent() {
-        return CfgQueryOptionBussinessKeyEnum.TRANSFEROUT;
+        return CfgQueryOptionBussinessKeyEnum.PURCHASEAPPLICATION;
     }
 
     @Override
