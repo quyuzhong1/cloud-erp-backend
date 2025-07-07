@@ -13,7 +13,6 @@ import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
-import com.erp.model.workflow.enums.ApproveTaskTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 
 import java.util.List;
@@ -56,5 +55,5 @@ public interface CreateBillHandler {
      * @param addDTOS
      * @return
      */
-    ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS);
+    ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey);
 }

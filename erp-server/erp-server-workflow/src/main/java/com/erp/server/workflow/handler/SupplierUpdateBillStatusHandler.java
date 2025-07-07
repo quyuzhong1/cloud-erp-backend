@@ -99,7 +99,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         ObjectMapper objectMapper = new ObjectMapper();
 
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
-            ApproveTaskInfoEntity entity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCE_CODE.getCode())));
+            ApproveTaskInfoEntity entity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())));
             if (ObjectUtil.isNotEmpty(entity) && status.equals(FSApprovalStatusEnum.APPROVED.getCode())) {
                 JSONArray taskList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TASKLIST.getCode());
                 JSONObject lastTask = taskList.getJSONObject(taskList.size() - 1);
@@ -139,7 +139,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
 
             //生成三方生成查询主表数据
-            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS);
+            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(jsonObject, addDTOS,thirdProcessEntity.getBussinessKey());
 
             //判断是否存在三方生成查询数据，存在则删除
             approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
@@ -285,7 +285,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     }
 
     @Override
-    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS){
+    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(JSONObject jsonObject, List<ApproveTaskDetailDTO.AddDTO> addDTOS,String bussinessKey) {
         ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALCODE.getCode())).
                 eq(ThirdProcessDefinitionEntity::getIsDeleted, false).eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()));
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
@@ -295,6 +295,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         addDTO.setThirdInstanceId(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
         addDTO.setThirdApprovalCode(thirdProcessDefinition.getApprovalCode());
         addDTO.setSourcePlatform(thirdProcessDefinition.getSourcePlatform());
+        addDTO.setBussinessKey(bussinessKey);
         return addDTO;
     }
 }

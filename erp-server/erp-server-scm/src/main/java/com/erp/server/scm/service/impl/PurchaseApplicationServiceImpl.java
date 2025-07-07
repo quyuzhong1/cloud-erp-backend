@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -51,9 +52,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PilotApplicationFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -265,30 +268,63 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(PurchaseApplicationEntity entity, String type, String comment, Boolean isNeedProcess) {
+    public BatchResultDTO approve(PurchaseApplicationEntity entity, ApproveOneDTO dto) {
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
 
-        log.info("采购申请单【{}】，id=【{}】",ApproveTypeEnum.getName(type), entity.getId());
-        //审核通过
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            //审核通过 TODO
-
-            //更新单据状态(后面有流程了可删)
-            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.APPROVE.getStatus());
-        }
-        //审核不通过
-        if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            //中止当前审核流程
-
-            //更新单据状态
-            updateApproveStatusForApprove(entity.getId(),ApproveStatusEnum.REJECT.getStatus());
-        }
+        log.info("采购申请订单【{}】，ids=【{}】", ApproveTypeEnum.getName(dto.getType()), JSONUtil.toJsonStr(entity.getId()));
+        //调用审核流程
+        approveProcess(entity, dto);
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购申请单【%s】",ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"审核操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购申请单【%s】",ApproveTypeEnum.getName(dto.getType()),entity.getCode()).concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+
+    /**
+     * @param entity
+     * @param dto
+     * @description: 结束深审核
+     * @author Will
+     * @date: 2023/7/11 14:22
+     */
+    private void approveProcess(PurchaseApplicationEntity entity, ApproveOneDTO dto) {
+        /**
+         * 目前代码里面批量审核的都是内部审核，不走流程，赋值可取第一条
+         */
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, PurchaseApplicationEntity entity) {
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        Boolean result = this.updateApproveStatusForApprove(entity.getId(), approveStatus.getStatus());
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -1136,11 +1172,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     /**
      * 审核后更新审核状态、审核人、审核时间
      */
-    private void updateApproveStatusForApprove(String id,String approveStatus) {
+    private Boolean updateApproveStatusForApprove(String id,String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
-        this.lambdaUpdate().eq(PurchaseApplicationEntity::getId,id)
+        return  this.lambdaUpdate().eq(PurchaseApplicationEntity::getId,id)
                 .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
                 .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
                 .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
@@ -1401,8 +1437,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-        //启动流程 TODO
-
+        //启动流程
+        startProcess(entity);
         //更新审核状态
         updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
@@ -1576,5 +1612,76 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             return 0;
         }
         return this.lambdaQuery().in(PurchaseApplicationEntity::getSourceId,sourceIds).count();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.AddDTO dto) {
+        PurchaseApplicationEntity entity = this.add(dto);
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        PurchaseApplicationEntity oldEntity = this.getById(entity.getId());
+        //直接审核通过
+        ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class).thirdApproveEnd(new PurchaseApplicationDTO.UpdateApproveStatusDTO(oldEntity, ApproveStatusEnum.APPROVE));
+        return oldEntity;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean thirdApproveEnd(PurchaseApplicationDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
+        PurchaseApplicationEntity entity = updateApproveStatusDTO.getPurchaseApplicationEntity();
+        if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(entity.getApproveUserId())){
+            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), entity.getApproveUserId());
+            if (Objects.isNull(userByThird)) {
+                throw new ServiceException("第三方用户信息不存在");
+            }
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userByThird.getUserId());
+            if (ObjUtil.isEmpty(findUserDTO)) {
+                throw new ServiceException(ApiError.ERROR_1037, userByThird.getUserId());
+            }
+            entity.setApproveUserId(findUserDTO.getUserId());
+            entity.setApproveUserName(findUserDTO.getUserName());
+        }
+        return approveEnd(new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),""), entity);
+    }
+
+    /**
+     * @param entity
+     * @description: 启动审核流程
+     * @author Will
+     * @date: 2023/7/11 14:11
+     */
+    private void startProcess(PurchaseApplicationEntity entity) {
+        LoginUser userInfo = UserContext.getLoginUser();
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchaseApplicationEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByPurchaseApplicationId(entity.getId());
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_98049);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        return variablesMap;
     }
 }
