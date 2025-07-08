@@ -3356,15 +3356,21 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
         List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();
         fbaDetailList.forEach(e ->{
+            WmsDeliveryPlanDetailEntity planDetailEntity1 = planDetailEntityList.stream().filter(v -> v.getPlatformSku().equals(e.getMsku())
+                            && v.getPlatformFnSku().equals(e.getFnSku()))
+                    .findFirst().orElse(null);
+            if (Objects.isNull(planDetailEntity1)){
+                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】在发货计划中不存在");
+            }
             WmsDeliveryPlanDetailEntity planDetailEntity = planDetailEntityList.stream().filter(v -> v.getPlatformSku().equals(e.getMsku())
                             && v.getPlatformFnSku().equals(e.getFnSku()) && Objects.equals(v.getQty(), e.getDeclareQty()))
                     .findFirst().orElse(null);
             if (Objects.isNull(planDetailEntity)){
-                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】在发货计划中不存在");
+                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】,货件数量【"+e.getDeclareQty()+"】与发货计划数量不一致");
             }
             RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(f -> f.getSourceDetailId().equals(planDetailEntity.getId())).findFirst().orElseThrow(() -> new ServiceException("要货申请单【" + entity.getCode() + "】中不存在MSKU【" + e.getMsku() + "】,FNSKU【" + e.getFnSku() + "】的明细信息"));
-            if (!Objects.equals(e.getDeclareQty(),planDetailEntity.getQty())){
-                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】货件数量【"+e.getDeclareQty()+"】与发货计划数量【"+planDetailEntity.getQty()+"】不一致");
+            if (!Objects.equals(e.getDeclareQty(),detailEntity.getRequisitionQty())){
+                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】货件数量【"+e.getDeclareQty()+"】与要货申请要货数量【"+detailEntity.getRequisitionQty()+"】不一致");
             }
             CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                     .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
