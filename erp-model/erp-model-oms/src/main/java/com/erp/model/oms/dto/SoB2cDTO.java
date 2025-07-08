@@ -2000,6 +2000,8 @@ public class SoB2cDTO implements Serializable {
          * 物流方式集合
          */
         private List<String> logisticsChannelIdList;
+        
+        private String dynamicDataSource;
     }
 
     /**
