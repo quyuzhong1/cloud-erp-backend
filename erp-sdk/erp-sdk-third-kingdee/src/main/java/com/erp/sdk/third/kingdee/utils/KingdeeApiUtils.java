@@ -452,7 +452,7 @@ public class KingdeeApiUtils {
      *  撤销
      */
     public RepoRet cancelAssign(List<String> idList) {
-        return submit(idList, false);
+        return cancelAssign(idList, false);
     }
 
     /**
