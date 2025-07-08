@@ -98,6 +98,10 @@ public class SoReturnInstockDetailDTO {
          * 平台sku
          */
         private String platformSkuNo;
+        /**
+         * 是否校验签收数量
+         */
+        private Boolean isCheckReceiveQty;
     }
 
     /**

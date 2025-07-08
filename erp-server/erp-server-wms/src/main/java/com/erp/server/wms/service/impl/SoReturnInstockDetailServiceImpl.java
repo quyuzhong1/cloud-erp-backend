@@ -309,7 +309,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 //签收单数量
                 Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                    if (Objects.isNull(detailDto.getIsCheckReceiveQty()) || detailDto.getIsCheckReceiveQty()){
+                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                    }
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){

@@ -94,6 +94,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         b2bStagingEntity.setWarehouseAreaId(b2bWarehouseLocation.getParentId());
         b2bStagingEntity.setWarehouseLocationId(b2bWarehouseLocation.getId());
         b2bStagingEntity.setWarehouseLocation(b2bWarehouseLocation.getName());
+        b2bStagingEntity.setWarehouseId(dto.getWarehouseId());
         this.saveOrUpdate(b2bStagingEntity);
 
         CfgRulePickingStagingEntity fbaStagingEntity = cfgList.stream().filter(e -> PickingBillTypeEnum.FBA.getCode().equals(e.getBillType())).findFirst().orElse(new CfgRulePickingStagingEntity());
@@ -101,6 +102,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         fbaStagingEntity.setWarehouseAreaId(fbaWarehouseLocation.getParentId());
         fbaStagingEntity.setWarehouseLocationId(fbaWarehouseLocation.getId());
         fbaStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getName());
+        fbaStagingEntity.setWarehouseId(dto.getWarehouseId());
         this.saveOrUpdate(fbaStagingEntity);
 
         CfgRulePickingStagingEntity thirdStagingEntity = cfgList.stream().filter(e -> PickingBillTypeEnum.THIRD.getCode().equals(e.getBillType())).findFirst().orElse(new CfgRulePickingStagingEntity());
@@ -108,6 +110,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         thirdStagingEntity.setWarehouseAreaId(thirdWarehouseLocation.getParentId());
         thirdStagingEntity.setWarehouseLocationId(thirdWarehouseLocation.getId());
         thirdStagingEntity.setWarehouseLocation(thirdWarehouseLocation.getName());
+        thirdStagingEntity.setWarehouseId(dto.getWarehouseId());
         this.saveOrUpdate(thirdStagingEntity);
         return BatchResultDTO.success(dto.getWarehouseId(), warehouseName, "保存成功");
     }
