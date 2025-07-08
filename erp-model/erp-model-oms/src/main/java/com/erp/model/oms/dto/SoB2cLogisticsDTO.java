@@ -267,4 +267,35 @@ public class SoB2cLogisticsDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class transferOrderDTO {
+        @NotBlank(message = "销售订单id不能为空")
+        private String id;
+        /**
+         * 订单号
+         */
+        private String code;
+
+        @NotBlank(message = "渠道id不能为空")
+        private String channelId;
+        /**
+         * 物流id
+         */
+        private String logisticsId;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
+        /**
+         * 物流跟踪号
+         */
+        @NotBlank(message = "物流跟踪号不能为空")
+       private String trackNo;
+    }
 }
