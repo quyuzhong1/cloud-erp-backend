@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -755,7 +756,35 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
-    	String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    	String mainId = estimatedListDTO.getMainId();
+    	if(StringUtils.isBlank(mainId)) {
+    		mainId = estimatedListDTO.getReconciliationId();
+    	}
+    	if(StringUtils.isBlank(mainId)) {
+    		mainId = actualListDTO.getMainId();
+    	}
+    	if(StringUtils.isBlank(mainId)) {
+    		mainId = actualListDTO.getReconciliationId();
+    	}
+    	if(StringUtils.isBlank(mainId)) {
+    		mainId = diffListDTO.getMainId();
+    	}
+    	if(StringUtils.isBlank(mainId)) {
+    		mainId = diffListDTO.getReconciliationId();
+    	}
+    	
+    	LocalDate reconciliationMonth = LocalDate.now();
+    	if(StringUtils.isNotBlank(mainId)) {
+    		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
+    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}else {
+    		reconciliationMonth = estimatedListDTO.getReceiveDate();
+    	}
+    	if(reconciliationMonth == null) {
+    		reconciliationMonth = LocalDate.now();
+    	}
+    	
+		String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
     	Map<String, BigDecimal> rateMap = new HashMap<>();
     	rateMap.put("CNY", BigDecimal.ONE);
@@ -1296,7 +1325,21 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.toList());
 
         BigDecimal totalCost = BigDecimal.ZERO;
-        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String mainId = record.getMainId();
+        if(StringUtils.isBlank(mainId)) {
+        	mainId = record.getReconciliationId();
+        }
+        LocalDate reconciliationMonth = LocalDate.now();
+        if(StringUtils.isNotBlank(mainId)) {
+    		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = ApplicationContextUtils.getBean(TmsFirstMileReconciliationService.class).getById(mainId);
+    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    	}else {
+    		reconciliationMonth = record.getReceiveDate();
+    	}
+        if(reconciliationMonth == null) {
+        	reconciliationMonth = LocalDate.now();
+        }
+        String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
         Map<String, BigDecimal> rateMap = new HashMap<>();
         rateMap.put("CNY", BigDecimal.ONE);
@@ -1753,7 +1796,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
             if(hasCostAllocation){
                 //成本分摊逻辑
-                InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(skuIdList, dongGuanSetting ,mainEntity.getReconciliationDate());
+                InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(skuIdList, dongGuanSetting ,mainEntity.getReconciliationMonth());
                 List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
                 if(CollUtil.isEmpty(skuCostDTOS)){
                     errorMsgList.add("sku成本不能为空");
@@ -1884,14 +1927,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     // 提取公共逻辑：构建查询参数
-    private InventorySkuCostDTO.QueryB2BDTO buildQueryB2BDTO(List<String> skuIdList,CfgSettingValueDTO.DongGuanSettingDTO dongGuanSetting, LocalDate reconciliationDate) {
+    private InventorySkuCostDTO.QueryB2BDTO buildQueryB2BDTO(List<String> skuIdList,CfgSettingValueDTO.DongGuanSettingDTO dongGuanSetting, LocalDate reconciliationMonth) {
         InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = new InventorySkuCostDTO.QueryB2BDTO();
         queryB2BDTO.setSkuIds(skuIdList);
         queryB2BDTO.setWarehouseId(dongGuanSetting.getWarehouseId());
         queryB2BDTO.setSalesOrgId(dongGuanSetting.getCompanyId());
-        queryB2BDTO.setBillDate(reconciliationDate);
+        queryB2BDTO.setBillDate(reconciliationMonth);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-        String month = reconciliationDate.format(formatter);
+        String month = reconciliationMonth.format(formatter);
         queryB2BDTO.setMonth(month);
         return queryB2BDTO;
     }

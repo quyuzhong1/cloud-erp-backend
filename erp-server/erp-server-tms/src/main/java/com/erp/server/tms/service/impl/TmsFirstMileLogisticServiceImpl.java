@@ -1459,7 +1459,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             reconciliationEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             reconciliationEntity.setExchangeRate(BigDecimal.ONE);
         }else {
-            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String currentDate = reconciliationEntity.getReconciliationMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
             if (Objects.isNull(rate)){
                 throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
@@ -1500,6 +1500,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         // 保存明细
         // 生成实际和差异记录
+        curListDTO.setReconciliationId(reconciliationEntity.getId());
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO, reconciliationCount,Boolean.FALSE);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
