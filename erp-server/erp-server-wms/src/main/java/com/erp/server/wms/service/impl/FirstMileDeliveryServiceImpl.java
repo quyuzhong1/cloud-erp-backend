@@ -921,9 +921,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(entity.getDestWarehouseId()));
                 // 查询发货目的仓平台
                 OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-
+                if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+                    providerEntity = null;
+                }
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity) && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())) {
+                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)
+                        && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
@@ -1931,6 +1934,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         // 所属平台:未绑定海外仓为空
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(destWarehouseId);
+        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+            providerEntity = null;
+        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         //物流信息

@@ -5131,19 +5131,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-            List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
-                    .map(String::trim)
-                    .collect(Collectors.toList());
-            List<String> applicationCategoryIdList = new ArrayList<>();
-            for (String applicationCategoryName : applicationCategoryNameList) {
-                String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
-                if (StringUtils.isBlank(applicationCategoryId)) {
-                    errorMsgList.add(applicationCategoryName+" 应用分类不存在");
-                    continue;
+            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
+
+                List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
+                List<String> applicationCategoryIdList = new ArrayList<>();
+                for (String applicationCategoryName : applicationCategoryNameList) {
+                    String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
+                    if (StringUtils.isBlank(applicationCategoryId)) {
+                        errorMsgList.add(applicationCategoryName+" 应用分类不存在");
+                        continue;
+                    }
+                    applicationCategoryIdList.add(applicationCategoryId);
                 }
-                applicationCategoryIdList.add(applicationCategoryId);
+                productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             }
-            productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
             if (StringUtils.isNotBlank(pirateRisk)) {
@@ -6605,15 +6608,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if(Objects.isNull(productPackEntity)){
             throw new ServiceException("包装信息不存在");
         }
-        BigDecimal length = productPackEntity.getBoxLength().max(LengthConverterUtil.cmToMm(dto.getLength()));
-        BigDecimal width = productPackEntity.getBoxWidth().max(LengthConverterUtil.cmToMm(dto.getWidth()));
-        BigDecimal height = productPackEntity.getBoxHeight().max(LengthConverterUtil.cmToMm(dto.getHeight()));
+        BigDecimal length = LengthConverterUtil.cmToMm(dto.getLength());
+        BigDecimal width = LengthConverterUtil.cmToMm(dto.getWidth());
+        BigDecimal height = LengthConverterUtil.cmToMm(dto.getHeight());
         BigDecimal weight = dto.getWeight().multiply(new BigDecimal("1000"));
         String logContent = format("对SKU【{}】更新【包装尺寸长】从{}更新为{}，【包装尺寸宽】从{}更新为{}，【包装尺寸高】从{}更新为{}，【毛重】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getProductLength(),length,productPackEntity.getProductWidth(),width,productPackEntity.getProductHeight(),height,productPackEntity.getGrossWeight(),weight);
         productPackEntity.setProductLength(length);
         productPackEntity.setProductWidth(width);
         productPackEntity.setProductHeight(height);
         productPackEntity.setGrossWeight(weight);
+
+        BigDecimal boxLength = productPackEntity.getBoxLength().max(length);
+        BigDecimal boxWidth = productPackEntity.getBoxWidth().max(width);
+        BigDecimal boxHeight = productPackEntity.getBoxHeight().max(height);
+        String logContent2 = format("对SKU【{}】更新【箱规尺寸长】从{}更新为{}，【箱规尺寸宽】从{}更新为{}，【箱规尺寸高】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getBoxLength(),boxLength,productPackEntity.getBoxWidth(),boxWidth,productPackEntity.getBoxHeight(),boxHeight);
+        productPackEntity.setBoxLength(boxLength);
+        productPackEntity.setBoxWidth(boxWidth);
+        productPackEntity.setBoxHeight(boxHeight);
 
         //获取产品包装信息修改的字段
         ProductPackDTO productPackDTO = new ProductPackDTO();
@@ -6637,7 +6648,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
 
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
-                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
         }
 
         return "操作成功";

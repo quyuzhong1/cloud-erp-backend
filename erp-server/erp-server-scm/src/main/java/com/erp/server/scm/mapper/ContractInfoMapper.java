@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -32,24 +33,15 @@ public interface ContractInfoMapper extends BaseMapper<ContractInfoEntity> {
     IPage<ContractInfoDTO.ListDTO> paging(Page query, @Param("params") ContractInfoDTO.PagingParamDTO params);
 
     /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") ContractInfoDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<ContractInfoDTO.ListDTO> listExport(@Param("params") ContractInfoDTO.ExportDTO params);
-
-
-    /**
     * 获取状态统计
     * @param searchParam
     * @return
     */
     List<ContractInfoDTO.TabListDTO> tabList(@Param("params") ContractInfoDTO.PagingParamDTO searchParam);
+
+    /**
+     * 获取附件信息
+     * @return
+     */
+    List<ContractInfoDTO.ListAttachDTO> listAttachByIds(@Param("params") ContractInfoDTO.PagingParamDTO params);
 }

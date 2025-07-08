@@ -368,6 +368,10 @@ public class ShopDTO implements Serializable {
          * app secret
          */
         private String clientSecret;
+        /**
+         * 时区
+         */
+        private String timeZone = "";
     }
 
 
@@ -723,13 +727,10 @@ public class ShopDTO implements Serializable {
          */
         private String businessModel;
 
-
-
         /**
          * 授权过期时间
          */
         private LocalDate authExpireDate;
-
         /**
          * 授权token
          */
@@ -746,6 +747,10 @@ public class ShopDTO implements Serializable {
          * dictAreaCode
          */
         private String dictAreaCode;
+        /**
+         * 时区
+         */
+        private String timeZone = "";
     }
     @Data
     @NoArgsConstructor

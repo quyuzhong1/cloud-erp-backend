@@ -10,6 +10,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
@@ -30,9 +31,11 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @param warehouseSkuNo
      * @param warehouseProductName
      * @param thirdBarcode
+     * @param authId
+     * @param platform
      * @return
      */
-    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName, String thirdBarcode);
+    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName, String thirdBarcode, String authId, String platform);
 
     /**
      * 根据平台sku 获取到对应的list
@@ -104,4 +107,8 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     void updateLabelInfo(String id, String labelUrl, String labelSourceType, String labelFileName);
 
     List<ListingInfoEntity> listInfoByPlatformSkuNo(ListingInfoDTO.QueryDTO queryDTO);
+
+    AliexpressProductDTO convertAliexpressProductDTO(ListingInfoEntity productDetailEntity);
+
+    boolean updatePlatformSkuId(String listingId, String platformSkuId);
 }

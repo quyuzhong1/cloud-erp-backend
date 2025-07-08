@@ -511,6 +511,16 @@ public class SkuMappingController extends BaseController {
         return this.success(skuMappingService.getErpSkuByCustomerSku(skuParamDTO));
     }
 
+
+    /**
+     * 推送商品
+     */
+    @PostMapping("/pushProduct")
+    public ApiResult<List<BatchResultDTO>> pushProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto ) {
+        List<BatchResultDTO> resultDTOS = skuMappingService.pushProduct(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 //    /**
 //     * 根据customerId和平台sku 查询是否存在套装bom
 //     * @author jack

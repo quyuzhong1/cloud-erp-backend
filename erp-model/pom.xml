@@ -27,6 +27,7 @@
         <module>erp-model-tms</module>
         <module>erp-model-srm</module>
         <module>erp-model-mrp</module>
+        <module>erp-model-file</module>
     </modules>
 
     <dependencies>

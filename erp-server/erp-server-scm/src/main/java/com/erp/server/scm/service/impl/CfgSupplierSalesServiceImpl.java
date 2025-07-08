@@ -569,7 +569,9 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
     //查询所有的启动未删除的销量设置
     @Override
     public List<CfgSupplierSalesDTO.ListAllDTO> listAll() {
-        List<CfgSupplierSalesEntity> list = lambdaQuery().eq(CfgSupplierSalesEntity::getDisabled,Boolean.FALSE).eq(CfgSupplierSalesEntity::getIsDeleted,Boolean.FALSE).list();
+        List<CfgSupplierSalesEntity> list = lambdaQuery()
+                .eq(CfgSupplierSalesEntity::getIsDeleted,Boolean.FALSE)
+                .list();
         if(CollUtil.isEmpty(list)){
             return Collections.emptyList();
         }

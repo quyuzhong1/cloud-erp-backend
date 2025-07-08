@@ -42,6 +42,8 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
@@ -55,6 +57,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -753,8 +756,33 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
 
+    @Override
+    public List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType) {
+        return baseMapper.getOutputTaskByIdAndType(sourceIdList, sourceType);
+    }
+
 	@Override
 	public List<String> outputErrorCountMsg() {
 		return baseMapper.outputErrorCountMsg();
 	}
+
+    @Override
+    public DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO) {
+        return baseMapper.getSuccessData(oneDTO);
+    }
+
+    @Override
+    public PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<DmpOutputTaskRecordDTO.PagingViewDTO> pageData = baseMapper.pagingOutLatest(query, params);
+        List<DmpOutputTaskRecordDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        list.forEach(v->{
+            v.setStatusName(DmpOutputTaskRecordStatusEnum.getName(v.getStatus()));
+        });
+        return new PagingVO<>(pageData);
+    }
 }

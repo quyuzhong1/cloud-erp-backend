@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -36,10 +37,14 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -65,6 +70,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.*;
@@ -79,6 +86,8 @@ import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.listener.SoReturnStockExcelListener;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
+import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
+import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -183,6 +192,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
 
     @Resource
     private PoReturnService poReturnService;
@@ -215,6 +226,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private AuthDataFeign authDataFeign;
     @Resource
     private SoB2cReturnFeign soB2cReturnFeign;
+
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -719,7 +739,40 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(SoReturnInstockEntity::getId, ids)
                 .update();
+        pushThirdWarehouse(ids, entityList);
         return Boolean.TRUE;
+    }
+
+    private void pushThirdWarehouse(List<String> ids, List<SoReturnInstockEntity> entityList) {
+        //如果是速卖通菜鸟仓，推送至第三方仓
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        List<String> warehouseIds = detailEntityList.stream().map(SoReturnInstockDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseDTO.ViewDTO> overseasProviderWarehouseDTOList = overseasProviderWarehouseService.listByWarehouseIdList(warehouseIds);
+        for (SoReturnInstockEntity soReturnInstockEntity : entityList) {
+            SoReturnInstockDetailEntity soReturnInstockDetailEntity = detailEntityList.stream()
+                    .filter(detail -> detail.getMainId().equals(soReturnInstockEntity.getId()))
+                    .findFirst().orElse(null);
+            if(Objects.isNull(soReturnInstockDetailEntity) || StringUtils.isBlank(soReturnInstockDetailEntity.getWarehouseId())){
+                continue;
+            }
+            OverseasProviderWarehouseDTO.ViewDTO viewDTO = overseasProviderWarehouseDTOList.stream().filter(
+                    overseasProviderWarehouseDTO -> overseasProviderWarehouseDTO.getWarehouseId().equals(soReturnInstockDetailEntity.getWarehouseId())
+            ).findFirst().orElse(null);
+            if(Objects.isNull(viewDTO)){
+                continue;
+            }
+            if(viewDTO.getProviderCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
+                WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.CAINIAO.getCode());
+                wmsPushMsgEntity.setSourceType(SourceTypeEnum.CAINIAO_SO_RETURN_INSTOCK.getCode());
+                wmsPushMsgEntity.setSourceId(soReturnInstockEntity.getId());
+                wmsPushMsgEntity.setSourceCode(soReturnInstockEntity.getCode());
+                wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+
+                wmsPushMsgService.save(wmsPushMsgEntity);
+            }
+        }
     }
 
     @Override
@@ -749,6 +802,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //判断是否是审核中的状态
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        //如果是菜鸟仓的情况，不能手动审核
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+        List<String> warehouseIds = detailEntityList.stream().map(SoReturnInstockDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseDTO.ViewDTO> overseasProviderWarehouseDTOList = overseasProviderWarehouseService.listByWarehouseIdList(warehouseIds);
+        if( CollectionUtils.isNotEmpty(overseasProviderWarehouseDTOList)) {
+            OverseasProviderWarehouseDTO.ViewDTO viewDTO = overseasProviderWarehouseDTOList.get(0);
+            if (Objects.nonNull(viewDTO) && OmsPlatformEnum.CAI_NIAO.getCode().equals(viewDTO.getProviderCode())) {
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "菜鸟仓退货入库单不允许手动审核");
+            }
         }
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -1963,6 +2026,79 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.ERROR_95125);
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate) {
+        String warehouseId = detailEntityList.get(0).getWarehouseId();
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        if(Objects.isNull(warehouseEntity)){
+            log.warn("新建菜鸟退货入库单失败，未找到仓库");
+            return null;
+        }
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(warehouseId);
+        if(Objects.isNull(overseasProviderEntity)){
+            log.warn("新建菜鸟退货入库单失败，未找到三方仓配置");
+            return null;
+        }
+        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(warehouseId);
+        if(Objects.isNull(overseasProviderWarehouseEntity)){
+            log.warn("新建菜鸟退货入库单失败，未找到三方仓仓库");
+            return null;
+        }
+        Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
+        String shopId = authMap.get("shopId").toString();
+        AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
+        AliexpressAuthDTO aliexpressAuthDTO = new AliexpressAuthDTO();
+        aliexpressAuthDTO.setUrl(authMap.get("baseUrl").toString());
+        aliexpressAuthDTO.setAppKey(authMap.get("clientId").toString());
+        aliexpressAuthDTO.setAppSecret(authMap.get("clientSecret").toString());
+        aliexpressAuthDTO.setShopId(authMap.get("shopId").toString());
+        aliexpressAuthDTO.setAccessToken(aliExpressShopInfoDTO.getToken());
+        aliexpressAuthDTO.setOwnerCode(overseasProviderEntity.getOwnerCode());
+
+        List<String> skuIds = detailEntityList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setAuthId(overseasProviderEntity.getId());
+        listingInfoParamDTO.setSkuIdList(skuIds);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+        List<AliexpressReturnInstockDTO.OrderLines> orderLines = new ArrayList<>();
+        for (SoReturnInstockDetailEntity soReturnInstockDetailEntity : detailEntityList) {
+            SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingSkuViewDTOList.stream()
+                    .filter(v->v.getProductSkuId().equals(soReturnInstockDetailEntity.getSkuId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(mappingSkuViewDTO)){
+                continue;
+            }
+            AliexpressReturnInstockDTO.OrderLines orderLine = AliexpressReturnInstockDTO.OrderLines.builder()
+                    .itemCode(mappingSkuViewDTO.getPlatformSkuNo())
+                    .itemId(mappingSkuViewDTO.getPlatformSkuId())
+                    .planQty(soReturnInstockDetailEntity.getRealQty())
+                    .inventoryType("1")
+                    .ownerCode(overseasProviderEntity.getOwnerCode())
+                    .build();
+            orderLines.add(orderLine);
+        }
+        if(CollectionUtils.isEmpty(orderLines)){
+            log.warn("新建菜鸟退货入库单失败，未找到有效的sku映射关系");
+            return null;
+        }
+        AliexpressReturnInstockDTO aliexpressInboundDTO = AliexpressReturnInstockDTO.builder()
+                .aliexpressAuthDTO(aliexpressAuthDTO)
+                .returnOrder(AliexpressReturnInstockDTO.ReturnOrder.builder()
+                        .orderType("THRK")
+                        .returnOrderCode(entity.getCode())
+                        .ownerCode(overseasProviderEntity.getOwnerCode())
+                        .senderInfo(AliexpressReturnInstockDTO.ReturnOrder.SenderInfoDTO.builder()
+                                .detailAddress(warehouseEntity.getAddress())
+                                .build())
+                        .warehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode())
+                        .build())
+                .OrderLines(orderLines)
+                .build();
+        return aliexpressInboundDTO;
     }
 
     @Override

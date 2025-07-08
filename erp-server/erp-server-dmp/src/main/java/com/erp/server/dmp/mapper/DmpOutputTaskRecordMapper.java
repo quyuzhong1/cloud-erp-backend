@@ -8,6 +8,7 @@ import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
 
@@ -95,4 +96,11 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     DmpOutputTaskRecordEntity getOutputTaskRecord(@Param("sourceCode") String sourceCode, @Param("outputClass") String outputClass);
     
     List<String> outputErrorCountMsg();
+
+    DmpPushTaskDTO.SyncInfoDTO getSuccessData(@Param("params") DmpSyncTaskDTO.OneDTO params);
+
+    IPage<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(Page<T> query,@Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+
+    List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(@Param("sourceIdList") List<String> sourceIdList, @Param("sourceType") String sourceType);
+
 }

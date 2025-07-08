@@ -371,8 +371,14 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+        left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
+        </if>
+        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
+        </if>
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
@@ -390,14 +396,17 @@
     <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(*)
         from so_b2c sb2c
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
+            <!--替换logistics inner JOIN-->
+            AND EXISTS ( SELECT 1 FROM so_b2c_logistics sb2cl WHERE sb2cl.main_id = sb2c.id AND sb2cl.is_deleted = false )
+            <!--替换receiver JOIN-->
+            AND EXISTS ( SELECT 1 FROM so_b2c_receiver sb2cr WHERE sb2cr.main_id = sb2c.id AND sb2cr.is_deleted = false )
+            <!--替换shop_info JOIN-->
+            AND EXISTS ( SELECT 1 FROM shop_info si WHERE si.id = sb2c.shop_id AND si.is_deleted = false )
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -502,25 +511,48 @@
             sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
             and sb2c.bill_status not in('waitShipped','shipped')
             and sb2c.is_not_merge = false and sb2cl.code = ''
-            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+        	and (sb2c.label_json not like '%AFN%' or sb2c.label_json not like '%U_TAXED%' or sb2c.label_json not like '%I_TAXED%' or sb2c.label_json not like '%cainiaoInternationalWarehouse%')
+        	</if>
+	        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+	        and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+	        </if>
             and sb2c.dict_platform not in ('Shopee', 'mercadolibre','TikTokFully')
-            and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
+            and sb2c.id not in (select target_id from so_b2c_ref where is_deleted = false) and sb2c.id not in (select source_id from so_b2c_ref where is_deleted = false)
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-            <if test="params.code != null and params.code != '' ">
-                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+	            <if test="params.code != null and params.code != '' ">
+	                and LOWER(sb2c.code) LIKE LOWER(concat('%',#{params.code},'%'))
+	            </if>
+	            <if test="params.buyerName != null and params.buyerName != '' ">
+	                and LOWER(sb2cr.name) LIKE LOWER(concat('%',#{params.buyerName},'%'))
+	            </if>
+	            <if test="params.receiverName != null and params.receiverName != '' ">
+	                and LOWER(sb2cr.receiver_name) LIKE LOWER(concat('%',#{params.receiverName},'%'))
+	            </if>
+	            <if test="params.address != null and params.address != '' ">
+	                and (LOWER(sb2cr.first_address) LIKE LOWER(concat('%',#{params.address},'%')) or LOWER(sb2cr.second_address) like LOWER(concat('%',#{params.address},'%')) or LOWER(sb2cr.full_address) LIKE LOWER(concat('%',#{params.address},'%')))
+	            </if>
             </if>
-            <if test="params.buyerName != null and params.buyerName != '' ">
-                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
+            
+            <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+	            <if test="params.code != null and params.code != '' ">
+	                and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
+	            </if>
+	            <if test="params.buyerName != null and params.buyerName != '' ">
+	                and sb2cr.name iLIKE concat('%',#{params.buyerName}::text,'%')
+	            </if>
+	            <if test="params.receiverName != null and params.receiverName != '' ">
+	                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
+	            </if>
+	            <if test="params.address != null and params.address != '' ">
+	                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike concat('%',#{params.address}::text,'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
+	            </if>
             </if>
-            <if test="params.receiverName != null and params.receiverName != '' ">
-                and sb2cr.receiver_name iLIKE concat('%',#{params.receiverName}::text,'%')
-            </if>
-            <if test="params.address != null and params.address != '' ">
-                and (sb2cr.first_address iLIKE concat('%',#{params.address}::text,'%') or sb2cr.second_address ilike concat('%',#{params.address}::text,'%') or sb2cr.full_address iLIKE concat('%',#{params.address}::text,'%'))
-            </if>
+            
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
@@ -1047,8 +1079,14 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+        left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
+        </if>
+        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
+        </if>
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false

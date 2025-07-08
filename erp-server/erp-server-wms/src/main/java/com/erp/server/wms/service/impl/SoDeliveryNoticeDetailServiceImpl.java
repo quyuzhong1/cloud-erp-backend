@@ -114,6 +114,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
             soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+            soDeliveryNoticeDetailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
+            soDeliveryNoticeDetailEntity.setToCountry(soDetailEntity.getToCountry());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
             soDeliveryNoticeDetailEntity.setRemark(detailDto.getRemark());
