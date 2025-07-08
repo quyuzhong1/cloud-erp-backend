@@ -320,7 +320,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, PurchaseApplicationEntity entity) {
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        Boolean result = this.updateApproveStatusForApprove(entity.getId(), approveStatus.getStatus());
+        Boolean result = this.updateApproveStatusForApprove(entity, approveStatus);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -1172,16 +1172,20 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     /**
      * 审核后更新审核状态、审核人、审核时间
      */
-    private Boolean updateApproveStatusForApprove(String id,String approveStatus) {
+    private Boolean updateApproveStatusForApprove(PurchaseApplicationEntity entity, ApproveStatusEnum statusEnum ) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-
-        return  this.lambdaUpdate().eq(PurchaseApplicationEntity::getId,id)
-                .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
-                .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
-                .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
-                .set(PurchaseApplicationEntity::getApproveTime,LocalDateTime.now())
-                .update();
+        if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
+            entity.setApproveTime(LocalDateTime.now());
+            entity.setApproveUserId(CharSequenceUtil.isBlank(entity.getApproveUserId()) ? userInfo.getUid() : entity.getApproveUserId());
+            entity.setApproveUserName(CharSequenceUtil.isBlank(entity.getApproveUserName()) ? userInfo.getUserName() : entity.getApproveUserName());
+        } else {
+            entity.setApproveTime(null);
+            entity.setApproveUserId("");
+            entity.setApproveUserName("");
+        }
+        entity.setApproveStatus(statusEnum.getCode());
+        return super.updateById(entity);
     }
 
     /**

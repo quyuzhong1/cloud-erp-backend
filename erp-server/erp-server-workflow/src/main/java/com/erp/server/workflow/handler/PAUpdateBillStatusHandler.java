@@ -8,6 +8,7 @@ package com.erp.server.workflow.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -23,6 +24,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
@@ -111,6 +113,8 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             handleMapData(map);
             //值映射
             PurchaseApplicationDTO.AddDTO addDTO = BeanUtil.toBean(map, PurchaseApplicationDTO.AddDTO.class);
+            String approveUserId = ObjectUtil.isNotEmpty(jsonObject.get("userId")) ? String.valueOf(jsonObject.get("userId")) : "";
+            addDTO.setApproveUserId(approveUserId);
             //查询三方生成查询
             ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
             if (ObjectUtil.isEmpty(taskInfoEntity)){
@@ -127,6 +131,11 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
                 taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
                 //主键id
                 taskInfoEntity.setId(add.getId());
+            } else {
+                PurchaseApplicationEntity applicationEntity = FeignQuery.getById(PurchaseApplicationEntity.class, taskInfoEntity.getBussinessId());
+                if (ObjectUtil.isNotEmpty(applicationEntity)) {
+                   throw new ServiceException(ApiError.NOT_EXIST_BILL, CharSequenceUtil.format("采购申请单{}",applicationEntity.getCode()));
+                }
             }
             try {
                 //添加供应商
