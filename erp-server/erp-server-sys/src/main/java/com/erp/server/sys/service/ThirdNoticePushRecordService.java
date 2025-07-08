@@ -8,9 +8,7 @@ import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +32,17 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     BatchResultDTO repush(String id);
 
-    @Async("thirdNoticePushExecutor")
-    @Transactional(rollbackFor = Exception.class)
-    void sendThirdNoticeByMqAsync(MqConsumerRecordDTO.MqDTO dto);
+    void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields);
+
+    String getBusinessKey(String table);
+
+    Map<String, Object> convertToCamelCaseMap(Map<String, Object> jsonMap);
 
     void sendThirdNoticeByMq(MqConsumerRecordDTO.MqDTO dto);
 
-    void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey, Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap, List<com.erp.model.workflow.entity.CfgQueryOptionEntity> cfgQueryOptionList);
+    void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> ruleList, String bussinessKey, List<CfgApproveSyncFieldMapEntity> fieldList, List<CfgQueryOptionEntity> cfgQueryOptionList);
+
+    boolean checkRule(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> cfgRuleConditionEntities, String bussinessKey);
 
     List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO);
 

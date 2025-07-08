@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -159,5 +160,9 @@ public class MqConsumerRecordDTO implements Serializable {
          * 单据类型
          */
         private String businessKey;
+        /**
+         * 变动字段
+         */
+        private List<String> diffFields;
     }
 }
