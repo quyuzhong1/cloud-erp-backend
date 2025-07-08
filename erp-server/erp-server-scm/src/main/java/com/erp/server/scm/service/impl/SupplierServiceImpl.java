@@ -1646,8 +1646,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             list.stream().forEach(obj -> {
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
                     obj.setApproveTime(LocalDateTime.now());
-                    obj.setApproveUserId(CharSequenceUtil.isNotBlank(obj.getApproveUserId()) ? userInfo.getUid() : obj.getApproveUserId());
-                    obj.setApproveUserName(CharSequenceUtil.isNotBlank(obj.getApproveUserName()) ? userInfo.getUserName() : obj.getApproveUserName());
+                    obj.setApproveUserId(CharSequenceUtil.isBlank(obj.getApproveUserId()) ? userInfo.getUid() : obj.getApproveUserId());
+                    obj.setApproveUserName(CharSequenceUtil.isBlank(obj.getApproveUserName()) ? userInfo.getUserName() : obj.getApproveUserName());
                 } else {
                     obj.setApproveTime(null);
                     obj.setApproveUserId("");

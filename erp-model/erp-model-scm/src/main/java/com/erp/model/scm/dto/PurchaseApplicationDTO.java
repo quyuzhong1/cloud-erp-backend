@@ -8,7 +8,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -345,6 +344,11 @@ public class PurchaseApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class  AddDTO extends CommonDTO {
+        /**
+         * 审核人，拉取数据时使用
+         */
+        private String approveUserId;
+
         /**
          * 采购申请明细
          */
