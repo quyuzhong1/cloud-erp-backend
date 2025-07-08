@@ -66,12 +66,19 @@ public class TemuClient {
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-00886115267191231"));
-        temuCommonDTO.setParentOrderSn("PO-211-00886115267191231");
-        temuCommonDTO.setOrderSn( "211-00886023516791231");
+        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-11605328599673675"));
+        temuCommonDTO.setParentOrderSn("PO-211-11605328599673675");
         TemuClient temuClient = new TemuClient();
-        TemuResp<TemuLogisticShipmentDTO> resp = temuClient.getLogisticsShipment(temuCommonDTO);
-        System.out.println(JSONUtil.toJsonStr(resp));
+        TemuResp<TemuOrderDTO> temuResp = temuClient.getOrderList(temuCommonDTO);
+        TemuOrderDTO temuOrderDTO = temuResp.getResult();
+        List<TemuOrderDTO.PageItemsDTO> pageItemsDTOList = temuOrderDTO.getPageItems();
+        TemuOrderDTO.PageItemsDTO pageItemsDTO = pageItemsDTOList.get(0);
+        TemuOrderDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = pageItemsDTO.getParentOrderMap();
+        String parentOrder = parentOrderMapDTO.getParentOrderSn();
+        temuCommonDTO.setParentOrderSn(parentOrder);
+        temuCommonDTO.setOrderSn("211-11605383649913675");
+        TemuResp<TemuLogisticShipmentDTO> temuLogisticShipmentDTOTemuResp = temuClient.getLogisticsShipment(temuCommonDTO);
+        System.out.println(1231);
     }
 
     public TemuResp<TemuWarehouseDTO> getWarehouseList(TemuCommonDTO temuCommonDTO){

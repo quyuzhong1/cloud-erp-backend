@@ -16,6 +16,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.*;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.MDC;
@@ -168,6 +169,14 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	@Override
 	public List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList) {
 		return baseMapper.lastBySystemCodeAndBillType(systemCodeList, billTypeList, nextLevelIdList);
+	}
+
+	@Override
+	public DmpInputTaskEntity getByInputIdAndExtendJson(String inputId, String key, String value) {
+		if( StrUtil.isBlank(inputId) || StrUtil.isBlank(key) || StrUtil.isBlank(value)) {
+			return null;
+		}
+		return baseMapper.getByInputIdAndExtendJson(inputId,key,value);
 	}
 
 }

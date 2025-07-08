@@ -78,4 +78,10 @@
              ) AS latest_records
         WHERE row_num = 1
     </select>
+    <select id="getByInputIdAndExtendJson" resultType="com.erp.model.dmp.entity.DmpInputTaskEntity">
+        SELECT * from dmp_input_task where
+                                         cfg_input_id = #{inputId}
+                                       and is_deleted = false
+                                       and extend_json @> jsonb_build_object( CAST(#{key} AS text), CAST(#{value} AS text))
+    </select>
 </mapper>
