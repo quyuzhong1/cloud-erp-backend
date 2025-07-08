@@ -47,16 +47,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
     @Resource
-    private MqConsumerRecordService mqConsumerRecordService;
-    @Resource
-    private CfgRuleConditionService cfgRuleConditionService;
-
-    private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
-
-    @Resource
-    private RedisUtil redisUtil;
-
-    @Resource
     @Qualifier("thirdNoticePushExecutor")
     private Executor thirdNoticePushExecutor;
 
@@ -69,31 +59,40 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         if (StringUtils.isBlank(jsonStr)) {
             return;
         }
-        // 创建 Gson 实例
+        // 建议：增加debug日志
+        log.debug("接收到MQ消息内容: {}", jsonStr);
+
         Gson gson = new Gson();
         List<Map<String, Map<String, Object>>> list = new ArrayList<>();
 
-        //jsonStr 有可能是数组的，也有可能是非数组
-        if (jsonStr.startsWith("[")) {//表示数组
-            Type mapType = new TypeToken<List<Map<String, Map<String, Object>>>>(){}.getType();
-            list = gson.fromJson(jsonStr, mapType);
-        }else{
-            // 定义嵌套 Map 类型结构： { "before": {...}, "after": {...} }
-            Type mapType = new TypeToken<Map<String, Map<String, Object>>>() {}.getType();
-            Map<String, Map<String, Object>> jsonMap = gson.fromJson(jsonStr, mapType);
-            list.add(jsonMap);
+        try {
+            //jsonStr 有可能是数组的，也有可能是非数组
+            if (jsonStr.startsWith("[")) {
+                Type mapType = new TypeToken<List<Map<String, Map<String, Object>>>>(){}.getType();
+                list = gson.fromJson(jsonStr, mapType);
+            } else {
+                Type mapType = new TypeToken<Map<String, Map<String, Object>>>() {}.getType();
+                Map<String, Map<String, Object>> jsonMap = gson.fromJson(jsonStr, mapType);
+                list.add(jsonMap);
+            }
+        } catch (Exception e) {
+            log.error("MQ消息JSON解析异常: {}", jsonStr, e);
+            return;
         }
 
         for (Map<String, Map<String, Object>> jsonMap : list) {
-            Map<String, Object> before = jsonMap.getOrDefault("before",null);
-            Map<String, Object> after = jsonMap.getOrDefault("after",null);
-            if(Objects.isNull(after)){
+            if (Objects.isNull(jsonMap)) {
+                log.warn("解析后的jsonMap为null");
                 continue;
             }
-
-            //只有更新操作才需要进行字段对比
+            Map<String, Object> before = jsonMap.getOrDefault("before", null);
+            Map<String, Object> after = jsonMap.getOrDefault("after", null);
+            if (Objects.isNull(after)) {
+                continue;
+            }
+            //获取变动字段
             List<String> diffFields = JsonFieldDiffUtil.compare(before, after);
-            if(CollUtil.isEmpty(diffFields)){
+            if (CollUtil.isEmpty(diffFields)) {
                 continue;
             }
             //转驼峰
@@ -101,7 +100,22 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                     .map(CharSequenceUtil::toCamelCase)
                     .collect(Collectors.toList());
 
-            thirdNoticePushRecordService.sendThirdNoticeByMqAsync(after,convertedDiffFields);
+            try {
+                //深拷贝
+                Map<String, Object> safeAfter = new HashMap<>(after);
+                List<String> safeConvertedDiffFields = new ArrayList<>(convertedDiffFields);
+
+                // 使用线程池直接异步执行
+                thirdNoticePushExecutor.execute(() -> {
+                    try {
+                        thirdNoticePushRecordService.sendThirdNoticeByMqAsync(safeAfter, safeConvertedDiffFields);
+                    } catch (Exception ex) {
+                        log.error("线程池异步执行 sendThirdNoticeByMqAsync 失败", ex);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("异步调用 sendThirdNoticeByMqAsync 失败", e);
+            }
         }
         log.info("MqRecordConsumerService 结束");
     }

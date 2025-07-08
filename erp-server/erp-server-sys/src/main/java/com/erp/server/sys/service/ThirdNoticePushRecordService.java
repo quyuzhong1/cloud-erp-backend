@@ -34,7 +34,11 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields);
 
-    String getBusinessKey(String table);
+    MqConsumerRecordDTO.MqDTO buildMqRecordDTO(Map<String, Object> jsonMap,
+                                               List<String> diffFields,
+                                               String businessKey);
+
+    String getBusinessKeyWithCache(String table);
 
     Map<String, Object> convertToCamelCaseMap(Map<String, Object> jsonMap);
 
@@ -42,9 +46,17 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> ruleList, String bussinessKey, List<CfgApproveSyncFieldMapEntity> fieldList, List<CfgQueryOptionEntity> cfgQueryOptionList);
 
+    void saveFailedRecordByType(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, String noticeMethod, String businessId, String bussinessKey, String errorReason, String code, String thirdNoticePushFailedType);
+
     boolean checkRule(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> cfgRuleConditionEntities, String bussinessKey);
+
+    List<String> getUserList(String post, String roleType, String specificPerson, String businessId, String businessKey);
 
     List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO);
 
     void sendThirdNoticeJob();
+
+    void handleSendNoticeFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson);
+
+    void handleNoPersonFailedType(MqConsumerRecordDTO.MqDTO dto, ThirdNoticePushRecordEntity entity, Map<String, Object> dataJson);
 }
