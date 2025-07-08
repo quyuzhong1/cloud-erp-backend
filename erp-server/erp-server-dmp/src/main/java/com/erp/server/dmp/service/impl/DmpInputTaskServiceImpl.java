@@ -165,6 +165,13 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     	
 		return update;
 	}
+    
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    public boolean updateNextExecTime(String id , LocalDateTime nextExecTime) {
+    	return lambdaUpdate().eq(DmpInputTaskEntity::getId, id)
+    			.set(DmpInputTaskEntity::getNextExecTime, nextExecTime)
+    			.update();
+    }
 
 	@Override
 	public List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList) {

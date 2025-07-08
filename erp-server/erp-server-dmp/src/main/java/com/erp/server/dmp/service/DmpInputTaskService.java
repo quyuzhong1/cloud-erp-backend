@@ -10,6 +10,7 @@ import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -41,6 +42,8 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
     Boolean update(DmpInputTaskDTO.UpdateDTO dto);
 
     boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
+    
+    boolean updateNextExecTime(String id , LocalDateTime nextExecTime);
 
     /**
      * 根据系统代号和业务代号查询最新任务记录

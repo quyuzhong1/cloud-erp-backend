@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -51,6 +52,7 @@ import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,18 +96,6 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		if(CollectionUtils.isEmpty(shopInfoEntityList)) {
 			throw new ServiceException("店铺信息不存在");
 		}
-		// 默认请求速率配置
-		String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, taskEntity.getId(),dmpSoInfoEntity.getPlatformCode() );
-		// 校验速率
-		Object limitObj = redisUtil.get(limitKey);
-		if (null != limitObj) {
-			log.warn("【Temu出库】 未到达查询间隔时间，{}，{}", taskEntity.getId(),dmpSoInfoEntity.getPlatformCode());
-			// 触发限流不执行当前
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return Collections.emptyList();
-		}
-		redisUtil.set(limitKey, taskEntity.getId(), 14400L);
 
 		ShopInfoEntity shopInfoEntity = shopInfoEntityList.get(0);
 		Map<String,Object> extendMap = shopInfoEntity.getExtendData();
@@ -142,11 +132,13 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		TemuLogisticShipmentDTO temuLogisticShipmentDTO = temuLogisticShipmentDTOTemuResp.getResult();
 		if(CollectionUtils.isEmpty(temuLogisticShipmentDTO.getShipmentInfoDTO())){
 			log.error("查询temu发货数据，没有发货数据,{}", JSONUtil.toJsonStr(temuLogisticShipmentDTO));
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu发货数据，没有发货数据,{}", JSONUtil.toJsonStr(temuLogisticShipmentDTO));
 		}
 		TemuLogisticShipmentDTO.ShipmentInfoDTODTO shipmentInfoDTODTO = temuLogisticShipmentDTO.getShipmentInfoDTO().get(0);
 		if(shipmentInfoDTODTO.getCooperativeWarehouseDTO() == null || shipmentInfoDTODTO.getCooperativeWarehouseDTO().getWarehouseCode() == null){
 			log.error("查询temu发货数据，没有发货仓库,{}",JSONUtil.toJsonStr(temuLogisticShipmentDTO));
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu发货数据，没有发货仓库,{}",JSONUtil.toJsonStr(temuLogisticShipmentDTO));
 		}
 		pageItemsDTO.setTrackNo(shipmentInfoDTODTO.getTrackingNumber());
@@ -160,4 +152,5 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
+	
 }
