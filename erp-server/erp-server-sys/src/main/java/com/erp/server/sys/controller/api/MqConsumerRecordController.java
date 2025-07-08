@@ -32,41 +32,4 @@ import com.erp.model.sys.dto.MqConsumerRecordDTO;
 @RequestMapping("/mqConsumerRecord")
 public class MqConsumerRecordController extends BaseController {
 
-    @Resource
-    private MqConsumerRecordService mqConsumerRecordService;
-
-    /**
-    * 新增
-    * @author jack
-    * @date:  2025-05-29
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "mq消费记录新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated MqConsumerRecordDTO.AddDTO dto) {
-        return success(mqConsumerRecordService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-05-29
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "mq消费记录修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:mqConsumerRecord:update",
-        serviceClass = MqConsumerRecordService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated MqConsumerRecordDTO.UpdateDTO dto) {
-        mqConsumerRecordService.update(dto);
-        return success();
-    }
-
-
-
 }

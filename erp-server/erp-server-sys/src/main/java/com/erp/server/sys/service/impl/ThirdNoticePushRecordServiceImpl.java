@@ -16,6 +16,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -46,10 +48,10 @@ import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
@@ -85,6 +87,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
+import static com.erp.server.sys.rocketmq.consumer.MqRecordConsumerService.TABLE_BUSINESS_KEY;
 
 /**
  * <p>
@@ -133,7 +136,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     @Resource
     private CfgRuleConditionService cfgRuleConditionService;
     @Resource
-    private ScmTaskFeign scmTaskFeign;
+    private RedisUtil redisUtil;
+    @Resource
+    private MqConsumerRecordService mqConsumerRecordService;
+
 
 
     @Override
@@ -261,14 +267,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
 
             //三方通知配置--推送消息
-            List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().eq(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeId).list();
-            Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
+            List<CfgApproveSyncFieldMapEntity> fieldList = cfgApproveSyncFieldMapService.lambdaQuery().eq(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeId).list();
 
             //三方通知配置--规则条件
-            List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().eq(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeId).list();
-            Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+            List<CfgRuleConditionEntity> ruleList = cfgRuleConditionService.lambdaQuery().eq(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeId).list();
 
-            sendMsgByCfg(dto, noticeEntity, ruleConditionMap, bussinessKey, fieldMap, cfgQueryOptionList);
+            sendMsgByCfg(dto, noticeEntity, ruleList, bussinessKey, fieldList, cfgQueryOptionList);
         }
 
         if (Objects.equals(thirdNoticePushFailedType, ThirdNoticePushFailedTypeEnum.SENDNOTICE.getCode())) {
@@ -313,8 +317,91 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     @Async("thirdNoticePushExecutor")
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void sendThirdNoticeByMqAsync(MqConsumerRecordDTO.MqDTO dto) {
-        sendThirdNoticeByMq(dto);
+    public void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields) {
+        ThirdNoticePushRecordServiceImpl self = ApplicationContextUtils.getBean(ThirdNoticePushRecordServiceImpl.class);
+        //根据table获取单据类型
+        String table = jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table"));
+        String businessKey = self.getBusinessKey(table);
+        if (StringUtils.isBlank(businessKey)) {
+            return;
+        }
+
+        //获取三方通知配置的信息--单条--即时通知
+        Integer count = cfgThirdNoticeService.lambdaQuery()
+                .eq(CfgThirdNoticeEntity::getBusinessType, businessKey)
+                .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
+                .count();
+        if (count == 0) {
+            return;
+        }
+
+        String db = jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db"));
+        //获取操作类型 I:insert U:update D:delete
+        String operationType = jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD"));
+        //需要把每个字段都转出驼峰
+        Map<String, Object> convertedMap = self.convertToCamelCaseMap(jsonMap);
+        //接收中台发送的ddl变更
+        //参数不能为空
+        if (StringUtils.isNotBlank(db)
+                && StringUtils.isNotBlank(table)
+                && StringUtils.isNotBlank(operationType)
+                && Objects.nonNull(convertedMap)) {
+            //保存mq消费记录
+            MqConsumerRecordDTO.MqDTO dto = new MqConsumerRecordDTO.MqDTO();
+            dto.setDb(db);
+            dto.setTable(table);
+            dto.setOperationType(operationType);
+            dto.setDataJson(convertedMap);
+            dto.setBusinessKey(businessKey);
+            dto.setDiffFields(diffFields);
+            // 将 Map 转换为 JSON 字符串
+            String id = mqConsumerRecordService.addMqRecord(dto);
+            if (StringUtils.isNotBlank(id)) {
+                dto.setMqConsumerRecordId(id);
+                self.sendThirdNoticeByMq(dto);
+            }
+        }
+    }
+
+    /**
+     *  根据table获取单据类型
+     */
+    @Override
+    public String getBusinessKey(String table){
+        String bussinessKey = String.valueOf(redisUtil.hget(TABLE_BUSINESS_KEY, table));
+        if(StringUtils.isBlank(bussinessKey)){
+            List<CfgQueryOptionEntity> cfgQueryOptionEntityList = FeignQuery.create(CfgQueryOptionEntity.class)
+                    .eq(CfgQueryOptionEntity::getTableName, table)
+                    .eq(CfgQueryOptionEntity::getFieldBelongsType,CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode()) //限定主表类型
+                    .ne(CfgQueryOptionEntity::getBussinessKey, "")
+                    .last( "limit 1")
+                    .list();
+            if(CollUtil.isEmpty(cfgQueryOptionEntityList)){
+                return bussinessKey;
+            }
+
+            bussinessKey = cfgQueryOptionEntityList.get(0).getBussinessKey();
+
+            //缓存table 和 busineskey的映射关系，有效期1小时
+            redisUtil.hset(TABLE_BUSINESS_KEY,table,bussinessKey,3600);
+        }
+        return bussinessKey;
+    }
+
+    /**
+     *  下划线转驼峰
+     */
+    @Override
+    public Map<String, Object> convertToCamelCaseMap(Map<String, Object> jsonMap) {
+        Map<String, Object> convertedMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            String originalKey = entry.getKey();
+            Object value = entry.getValue();
+            String camelCaseKey = CharSequenceUtil.toCamelCase(originalKey);
+            convertedMap.put(camelCaseKey, value);
+        }
+        return convertedMap;
     }
 
     /**
@@ -352,16 +439,25 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return;
         }
 
+        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
+
+        //三方通知配置--推送消息字段配置
+        List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
+        Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
+
+        //三方通知配置--规则条件
+        List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
+        Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+
         try {
-            List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
-            //三方通知配置--推送消息字段配置
-            List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
-            Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
-            //三方通知配置--规则条件
-            List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
-            Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+            ThirdNoticePushRecordServiceImpl self = ApplicationContextUtils.getBean(ThirdNoticePushRecordServiceImpl.class);
             for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
-                sendMsgByCfg(dto, noticeEntity, ruleConditionMap, bussinessKey, fieldMap, cfgQueryOptionList);
+                List<CfgApproveSyncFieldMapEntity> fieldList = fieldMap.getOrDefault(noticeEntity.getId(), null);
+
+                List<CfgRuleConditionEntity> ruleList = ruleConditionMap.getOrDefault(noticeEntity.getId(), null);
+
+                //根据配置发送通知
+                self.sendMsgByCfg(dto, noticeEntity, ruleList, bussinessKey,fieldList , cfgQueryOptionList);
             }
         } catch (Exception e) {
             //保持一条推送失败记录，用于重新推送（全部配置）
@@ -396,13 +492,21 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey, Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap, List<CfgQueryOptionEntity> cfgQueryOptionList) {
+    public void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> ruleList, String bussinessKey, List<CfgApproveSyncFieldMapEntity> fieldList, List<CfgQueryOptionEntity> cfgQueryOptionList) {
         Map<String, Object> variablesMap = dto.getDataJson();
         String code = String.valueOf(variablesMap.getOrDefault("code", ""));
         //主键id
         String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+
+        //没有可以发送的字段
+        if(CollUtil.isEmpty(fieldList)){
+            return;
+        }
+
         //校验规则条件
-        if (!checkRule(dto, noticeEntity, ruleConditionMap, bussinessKey)) return;
+        if (!ApplicationContextUtils.getBean(ThirdNoticePushRecordServiceImpl.class).checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
+            return ;
+        }
 
         //根据通知方式查找人员 目前只有飞书
         if (StringUtils.isNotBlank(noticeEntity.getNoticeMethod())) {
@@ -432,9 +536,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e, (o1, o2) -> o1));
 
                     //组装推送消息请求体
-                    List<CfgApproveSyncFieldMapEntity> fieldList = fieldMap.get(noticeEntity.getId()).stream()
-                            .sorted(Comparator.comparing(CfgApproveSyncFieldMapEntity::getSort))
+
+                    fieldList.stream().sorted(Comparator.comparing(CfgApproveSyncFieldMapEntity::getSort))
                             .collect(Collectors.toList());
+
                     //获取需要推送的表字段（包括common、主表、明细）
                     List<String> fieldIds = fieldList.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
 
@@ -625,12 +730,24 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         insertBatch(Arrays.asList(recordEntity));
     }
 
-    /**
-     * 规则校验
-     * */
-    private boolean checkRule(MqConsumerRecordDTO.MqDTO dto,CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey) {
-        List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
+    @Override
+    public boolean checkRule(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> cfgRuleConditionEntities, String bussinessKey) {
         if (CollUtil.isNotEmpty(cfgRuleConditionEntities)) {
+            //获取变动字段
+            List<String> diffFields = dto.getDiffFields();
+            //变动字段中不存在规则条件中
+            List<String> fieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
+            //如果只有一个通知节点做规则条件
+            if (fieldList.size() == 1 && fieldList.get(0).equals(CfgQueryOptionExtendTypeEnum.NOTICENODE.getCode())) {
+
+            }else {
+                //如果变动字段中不存在规则条件中的字段，则返回false
+                boolean existField = fieldList.stream().anyMatch(diffFields::contains);
+                if(!existField){
+                    return Boolean.FALSE;
+                }
+            }
+
             //规则条件转map
             Map<String, String> cfgRuleConditionMap = cfgRuleConditionEntities.stream().collect(Collectors.toMap(CfgRuleConditionEntity::getField, CfgRuleConditionEntity::getValue,(o1,o2) -> o2));
 
@@ -640,13 +757,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             //单据类型
             String businessType = noticeEntity.getBusinessType();
 
-            List<String> fieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             //查询是否有拓展
             CfgQueryOptionDTO.ListByFieldDTO listByFieldDTO = new CfgQueryOptionDTO.ListByFieldDTO();
             listByFieldDTO.setBusinessType(businessType);
             listByFieldDTO.setFieldList(fieldList);
             List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(listByFieldDTO);
-//            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             List<String> cfgQueryOptionfieldList = new ArrayList<>();
             if(CollUtil.isNotEmpty(cfgQueryOptionList)){
                 for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionList) {
@@ -699,7 +814,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     }
                 }
             }
-
 
             //封装条件参数
             Map<String, Object> map = cfgRuleConditionEntities.stream()

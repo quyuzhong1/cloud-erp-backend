@@ -14,23 +14,6 @@ import com.erp.model.sys.dto.MqConsumerRecordDTO;
  */
 public interface MqConsumerRecordService extends SuperService<MqConsumerRecordEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-05-29
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(MqConsumerRecordDTO.AddDTO dto);
 
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-05-29
-    * @param dto
-    * @return
-    */
-    Boolean update(MqConsumerRecordDTO.UpdateDTO dto);
-
-
+    String addMqRecord(MqConsumerRecordDTO.MqDTO dto);
 }
