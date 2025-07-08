@@ -209,11 +209,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
-        List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS1 = entity.getDetailList();
-        WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO = wdtSoOutStockDetailDTOS1.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo())).findFirst().orElse(null);
-        if (Objects.nonNull(wdtSoOutStockDetailDTO)){
-            log.info("==========开始同步旺店通销售出库单，单号：{},组合品：{}",entity.getThirdCode(), wdtSoOutStockDetailDTO.getSuiteNo());
-        }
         //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
             if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
