@@ -155,7 +155,7 @@
         <result property="ruleId" column="rule_id_for_exp"/>
         <result property="leftBracket" column="left_bracket"/>
         <result property="field" column="field"/>
-        <result property="fieldName" column="filed_name"/>
+        <result property="fieldName" column="field_name"/>
         <result property="compare" column="compare"/>
         <result property="value" column="value"/>
         <result property="rightBracket" column="right_bracket"/>
@@ -242,7 +242,7 @@
                e.rule_id                        AS rule_id_for_exp,
                e.left_bracket                   AS left_bracket,
                e.field                          AS field,
-               e.field_name                     AS filedName,
+               e.field_name                     AS fieldName,
                e.compare                        AS compare,
                e.value                          AS value,
                e.right_bracket                  AS right_bracket,
