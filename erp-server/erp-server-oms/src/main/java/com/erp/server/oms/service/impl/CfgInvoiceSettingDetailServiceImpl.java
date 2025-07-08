@@ -165,7 +165,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
             return;
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())
+                || CharSequenceUtil.equals(soB2cEntity.getNfeInvoiceStatus(), SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode())) {
             return;
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
