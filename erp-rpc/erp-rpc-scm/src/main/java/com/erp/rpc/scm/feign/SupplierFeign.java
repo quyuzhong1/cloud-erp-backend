@@ -3,7 +3,6 @@ package com.erp.rpc.scm.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -94,7 +93,7 @@ public interface SupplierFeign {
      * add
      */
     @PostMapping("/feign/supplier/add")
-    String add(@RequestBody SupplierDTO.InsertDTO addDTO);
+    BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO);
 
     @PostMapping("/feign/supplier/updateApproveStatus")
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);

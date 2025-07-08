@@ -1620,14 +1620,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.AddDTO dto) {
+    public PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.InsertDTO dto) {
         PurchaseApplicationEntity entity = this.add(dto);
         if(Objects.isNull(entity)){
             throw new ServiceException(ApiError.ERROR_1019);
         }
         PurchaseApplicationEntity oldEntity = this.getById(entity.getId());
         //直接审核通过
-        ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class).thirdApproveEnd(new PurchaseApplicationDTO.UpdateApproveStatusDTO(oldEntity, ApproveStatusEnum.APPROVE));
+        ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class).thirdApproveEnd(new PurchaseApplicationDTO.UpdateApproveStatusDTO(dto.getApprovalStatus(),dto.getThirdApproveUserId(),dto.getThirdApproveTime(),oldEntity, ApproveStatusEnum.APPROVE));
         return oldEntity;
     }
 
@@ -1647,6 +1647,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             entity.setApproveUserId(findUserDTO.getUserId());
             entity.setApproveUserName(findUserDTO.getUserName());
+            entity.setApproveTime(updateApproveStatusDTO.getThirdApproveTime());
         }
         return approveEnd(new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),""), entity);
     }

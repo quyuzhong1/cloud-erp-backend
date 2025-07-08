@@ -995,6 +995,7 @@ public enum ApiError implements Serializable {
     ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
     ERROR_99090(99090,"盘点任务明细为空"),
     NOT_EXIST_BILL(99091, "{}单据不存在"),
+    ERROR_EXIST_BILL(99091, "{}单据已存在"),
     STOCKTAKING_TASK_STARTED(99091, "盘点任务已开始, 无法反审核"),
     // 仓位不能为空
     WAREHOUSE_LOCATION_IS_NULL(99092, "仓位不能为null"),

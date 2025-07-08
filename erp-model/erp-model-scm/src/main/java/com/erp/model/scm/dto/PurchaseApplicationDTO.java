@@ -344,16 +344,33 @@ public class PurchaseApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class  AddDTO extends CommonDTO {
-        /**
-         * 审核人，拉取数据时使用
-         */
-        private String approveUserId;
 
         /**
          * 采购申请明细
          */
         @Valid
         private List<PurchaseApplicationDetailDTO.AddDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class  InsertDTO extends AddDTO {
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approvalStatus;
+
+        /**
+         * 审核人，拉取数据时使用
+         */
+        private String thirdApproveUserId;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
+
     }
 
     @Data
@@ -1237,6 +1254,21 @@ public class PurchaseApplicationDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateApproveStatusDTO {
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approvalStatus;
+
+        /**
+         * 审核人，拉取数据时使用
+         */
+        private String thirdApproveUserId;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
 
         /**
          * 供应商id
