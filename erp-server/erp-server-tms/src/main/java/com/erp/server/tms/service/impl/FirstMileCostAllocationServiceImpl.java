@@ -1033,7 +1033,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isCurrencyMonthReconciliation() && Objects.nonNull(currentPeriodAllocatedCostDTO.getInitEntity()) && (BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitCost()) != 0 || BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitTariff()) != 0)) {
             if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isHasOtherReconciliation()){
-                currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
+                if (currentPeriodAllocatedCostDTO.getReceiveQty() >= currentPeriodAllocatedCostDTO.getDeliveryQty()) {
+                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getDeliveryQty()), 2));
+                }else {
+                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
+                }
             }else if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isHasInitCostReconciliationAndEnd()){
                 currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
             }else {
@@ -1043,7 +1047,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
         } else if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isCurrencyMonthReconciliation()) {
             if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isHasOtherReconciliation()){
-                currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
+                if (currentPeriodAllocatedCostDTO.getReceiveQty() >= currentPeriodAllocatedCostDTO.getDeliveryQty()) {
+                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getDeliveryQty()), 2));
+                }else {
+                    currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
+                }
             }else if ((Objects.isNull(currentPeriodAllocatedCostDTO.getInitEntity()) || (BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitCost()) == 0
                     && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitTariff()) == 0
                     && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitEstimatedCost()) == 0
