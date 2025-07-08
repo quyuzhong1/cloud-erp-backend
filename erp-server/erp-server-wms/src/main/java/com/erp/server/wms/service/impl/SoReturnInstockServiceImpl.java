@@ -2116,6 +2116,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnInstockDetailDTO.Add> detailList = SoB2cReturnInstockConverter.INSTANCE.soB2cReturnDetailEntityToAdd(returnInstockDTOS);
         detailList.forEach(detail -> {
             detailEntityList.stream().filter(e -> e.getId().equals(detail.getSoReturnDetailId())).findFirst().ifPresent(f -> {
+                detail.setIsCheckReceiveQty(Boolean.FALSE);
                 detail.setRemark(f.getRemark());
                 detail.setReturnReasonDict(soB2cReturnEntity.getReason());
                 b2cDetailEntityList.stream().filter(h -> h.getId().equals(f.getSoDetailId())).findFirst().ifPresent(g -> {
