@@ -49,7 +49,7 @@ public class PurchaseApplicationFeignController {
      * @return BatchResultDTO
      */
     @PostMapping("/addAndApprove")
-    BatchResultDTO addAndApprove(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
+    BatchResultDTO addAndApprove(@RequestBody @Validated PurchaseApplicationDTO.InsertDTO dto){
         PurchaseApplicationEntity entity = purchaseApplicationService.addAndApprove(dto);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }

@@ -252,7 +252,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return PurchaseApplicationEntity
      */
-    PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.AddDTO dto);
+    PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.InsertDTO dto);
     /**
      * 第三方审核结束
      * @author will

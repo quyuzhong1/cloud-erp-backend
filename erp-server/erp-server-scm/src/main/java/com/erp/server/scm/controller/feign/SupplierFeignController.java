@@ -2,7 +2,6 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -13,7 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 供应商feign控制器
@@ -137,8 +139,9 @@ public class SupplierFeignController extends BaseController {
      * 根据供应商编号查询
      */
     @PostMapping("/add")
-    String add(@RequestBody SupplierDTO.InsertDTO addDTO){
-        return supplierService.add(addDTO);
+    BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO){
+        SupplierEntity entity = supplierService.add(addDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
      @PostMapping("/updateApproveStatus")

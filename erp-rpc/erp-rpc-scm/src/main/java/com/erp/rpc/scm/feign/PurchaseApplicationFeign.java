@@ -40,7 +40,7 @@ public interface PurchaseApplicationFeign {
      * @return BatchResultDTO
      */
     @PostMapping("/addAndApprove")
-    BatchResultDTO addAndApprove(PurchaseApplicationDTO.AddDTO addDTO);
+    BatchResultDTO addAndApprove(PurchaseApplicationDTO.InsertDTO addDTO);
 
 
     /**

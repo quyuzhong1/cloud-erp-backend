@@ -1459,18 +1459,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String add(SupplierDTO.InsertDTO addDTO) {
+    public SupplierEntity add(SupplierDTO.InsertDTO addDTO) {
         SupplierEntity supplierEntity = addSupplier(addDTO);
         if(Objects.isNull(supplierEntity)){
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        SupplierEntity oldEntity = this.getById(supplierEntity.getId());
         //直接审核通过
         if (ObjectUtil.isNotEmpty(addDTO.getApprovalStatus()) && ApproveStatusEnum.APPROVE.equals(addDTO.getApprovalStatus())) {
-            SupplierEntity oldEntity = this.getById(supplierEntity.getId());
             //根据id，更新审核状态
-            self.updateApproveStatus(new SupplierDTO.UpdateApproveStatusDTO(oldEntity, ApproveStatusEnum.APPROVE));
+            self.updateApproveStatus(new SupplierDTO.UpdateApproveStatusDTO(addDTO.getThirdApprovalUserId(),addDTO.getThirdApproveTime(),oldEntity, ApproveStatusEnum.APPROVE));
         }
-        return supplierEntity.getId();
+        return oldEntity;
     }
 
     @Override
@@ -1478,8 +1478,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();
-        if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(supplierEntity.getApproveUserId())){
-            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), supplierEntity.getApproveUserId());
+        if (approveStatus == ApproveStatusEnum.APPROVE && CharSequenceUtil.isNotBlank(updateApproveStatusDTO.getThirdApprovalUserId())){
+            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), updateApproveStatusDTO.getThirdApprovalUserId());
             if (Objects.isNull(userByThird)) {
                 throw new ServiceException("第三方用户信息不存在");
             }
@@ -1489,8 +1489,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
             supplierEntity.setApproveUserId(findUserDTO.getUserId());
             supplierEntity.setApproveUserName(findUserDTO.getUserName());
+            supplierEntity.setApproveTime(updateApproveStatusDTO.getThirdApproveTime());
         }
-        approveEnd(supplierEntity,ApproveTypeEnum.PASS.getStatus(),"");
+         approveEnd(supplierEntity,ApproveTypeEnum.PASS.getStatus(),"");
     }
 
     /**
@@ -1645,7 +1646,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
-                    obj.setApproveTime(LocalDateTime.now());
+                    obj.setApproveTime(ObjectUtil.isEmpty(obj.getApproveTime()) ? LocalDateTime.now() : obj.getApproveTime());
                     obj.setApproveUserId(CharSequenceUtil.isBlank(obj.getApproveUserId()) ? userInfo.getUid() : obj.getApproveUserId());
                     obj.setApproveUserName(CharSequenceUtil.isBlank(obj.getApproveUserName()) ? userInfo.getUserName() : obj.getApproveUserName());
                 } else {

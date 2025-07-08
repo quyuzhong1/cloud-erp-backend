@@ -878,14 +878,33 @@ public class SupplierDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class InsertDTO extends AddDTO{
-
+        /**
+         * 审核状态
+         */
         private ApproveStatusEnum approvalStatus;
+        /**
+         * 第三方审核人
+         */
+        private String thirdApprovalUserId;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateApproveStatusDTO {
+
+        /**
+         * 第三方审核人
+         */
+        private String thirdApprovalUserId;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
 
         /**
          * 供应商id
