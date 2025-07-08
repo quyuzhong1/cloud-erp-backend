@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.TeMuSoOutStockDTO;
+import com.common.business.dto.TeMuSoOutStockDetailDTO;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO.PositionDetailsList;
@@ -21,13 +23,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -44,6 +46,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -54,6 +57,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -113,8 +117,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private WmsTaskFeign wmsTaskFeign;
 
     @Resource
-    private SoInfoFeign soInfoFeign;
-
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -392,6 +395,81 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //推送数帝云
         this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
+    @DistributeLocker(keyName = "entity.platformOrderCode")
+    public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
+        //查询销售出库单
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),null);
+        soB2cEntityList = soB2cEntityList.stream().filter(SoB2cEntity::hasPlatformWarehouseOrder).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            log.warn("同步temu销售出库单失败，未查询到对应的销售订单，平台订单号：{}", entity.getPlatformOrderCode());
+            return;
+        }
+        //查询仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> warehouseMappingDTOS = dmpThirdMappingFeign.listMappingBySysIds(new ArrayList<>(),PlatformDictEnum.TE_MU.getCode());
+        if(CollectionUtils.isEmpty(warehouseMappingDTOS)){
+            throw new ServiceException("Temu平台仓库映射未配置，{}",entity.getPlatformOrderCode());
+        }
+        List<String> allWarehouseIds = warehouseMappingDTOS.stream().map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,allWarehouseIds);
+
+        SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
+
+        List<TeMuSoOutStockDetailDTO> detailList = entity.getDetailList();
+        List<SoB2cDetailEntity> handleDetailList = new ArrayList<>();
+        for (TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO : detailList) {
+            String erpWarehouseId = warehouseMappingDTOS.stream().filter(v->v.getThirdWarehouseCode().equals(teMuSoOutStockDetailDTO.getPlatformWarehouseCode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).findFirst().orElse(null);
+            if(StringUtils.isBlank(erpWarehouseId)){
+                throw new ServiceException("Temu平台仓库映射未配置，平台仓库编码：{}",teMuSoOutStockDetailDTO.getPlatformWarehouseCode());
+            }
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
+            if(Objects.isNull(soB2cDetailEntity)){
+                log.warn("同步temu销售出库单失败，未查询到对应的销售订单明细，平台订单号：{}，平台sku编号：{}", entity.getPlatformOrderCode(), teMuSoOutStockDetailDTO.getPlatformSkuNo());
+                continue;
+            }
+            soB2cDetailEntity.setWarehouseId(erpWarehouseId);
+            WarehouseEntity warehouse = warehouseEntityList.stream().filter(w->w.getId().equals(soB2cDetailEntity.getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(warehouse)){
+                soB2cDetailEntity.setWarehouseName(warehouse.getName());
+            }
+            handleDetailList.add(soB2cDetailEntity);
+        }
+        if(CollectionUtils.isEmpty(handleDetailList)){
+            log.warn("同步temu销售出库单失败，待处理明细为空，平台订单号：{}", entity.getPlatformOrderCode());
+            return;
+        }
+        soB2cFeign.updateDetail(soB2cDetailEntityList);
+        //不同仓库生成不同的出库单
+        Map<String,List<SoB2cDetailEntity>> detailMap = soB2cDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
+        detailMap.forEach((warehouseId,detailEntities)->{
+            for (SoB2cDetailEntity detailEntity : detailEntities) {
+                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream().filter(v->v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);
+                if(Objects.nonNull(teMuSoOutStockDetailDTO)){
+                    detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
+                }
+            }
+            //出库
+            soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,detailEntities,entity.getOutTime(),warehouseId,entity.getTransportNo());
+        });
+        if(StringUtils.isNotBlank(entity.getTransportNo())){
+            //更新物流信息
+            List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
+            if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
+                soB2cLogisticsEntity.setCode(entity.getTransportNo());
+                soB2cLogisticsEntity.setTrackNo(entity.getTransportNo());
+                //更新物流信息
+                soB2cFeign.batchUpdateLogistics(Collections.singletonList(soB2cLogisticsEntity));
+            }
+        }
+
+    }
+
     private void syncToSdy(SoOutstockEntity entity, String operate) {
         //推送数帝云
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));

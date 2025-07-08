@@ -2,6 +2,7 @@ package com.erp.server.dmp.service;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -49,4 +50,6 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
      * @return 最新任务信息
      */
     List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
+
+    DmpInputTaskEntity getByInputIdAndExtendJson(String inputId, String key, String value);
 }
