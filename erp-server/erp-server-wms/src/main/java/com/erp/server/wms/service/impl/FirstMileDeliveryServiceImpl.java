@@ -596,13 +596,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
+        RequisitionApplicationEntity requisitionApplication = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? requisitionApplicationService.getById(entity.getSourceId()) : null;
 
         //查询在途仓
         WarehouseEntity warehouseEntity = warehouseService.getById(destWarehouse.getOnwayWarehouseId());
 
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //默认来源类型：头程发货单
-        addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+
+        if (Objects.nonNull(requisitionApplication) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_THIRD.getCode());
+        }else {
+            //默认来源类型：头程发货单
+            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        }
         //默认调出日期：当前日期
         addDTO.setBillDate(Objects.nonNull(entity.getDeliveryDate()) ? entity.getDeliveryDate() : LocalDate.now());
         //默认调拨方向：普通
@@ -1078,9 +1084,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：头程发货单
         if (isLastTransfer){
-            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode());
-        }else if (isFirst && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
-            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_THIRD.getCode());
+            //即是第一个，又是最后一个
+            if (isFirst && Objects.nonNull(requisitionApplication) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+                addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_THIRD.getCode());
+            }else {
+                addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode());
+            }
+        }else if (isFirst && Objects.nonNull(requisitionApplication) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+            addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD.getCode());
         }else {
             addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode());
         }
