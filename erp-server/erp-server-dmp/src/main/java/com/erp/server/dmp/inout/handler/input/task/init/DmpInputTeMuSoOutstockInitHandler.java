@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -104,6 +105,7 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 			initDmpResponse.setDoNextStatus(false);
 			return Collections.emptyList();
 		}
+		redisUtil.set(limitKey, taskEntity.getId(), 14400L);
 
 		ShopInfoEntity shopInfoEntity = shopInfoEntityList.get(0);
 		Map<String,Object> extendMap = shopInfoEntity.getExtendData();
@@ -116,23 +118,16 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		TemuResp<TemuOrderDTO> temuResp = temuClient.getOrderList(temuOrderReq);
 		if(!temuResp.getSuccess()){
 			log.error("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			redisUtil.set(limitKey, taskEntity.getId(), 14400L);
-			return new ArrayList<>();
+			throw new ServiceException("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
 		}
 		TemuOrderDTO temuOrderDTO = temuResp.getResult();
 		if(CollectionUtils.isEmpty(temuOrderDTO.getPageItems())){
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return new ArrayList<>();
+			throw new ServiceException("查询temu订单数据内容为空");
 		}
 		List<TemuOrderDTO.PageItemsDTO> pageItemsDTOList = temuOrderDTO.getPageItems();
 		TemuOrderDTO.PageItemsDTO pageItemsDTO = pageItemsDTOList.get(0);
 		if(Objects.isNull(pageItemsDTO)){
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return new ArrayList<>();
+			throw new ServiceException("查询temu订单数据内容为空");
 		}
 
 		TemuOrderDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = pageItemsDTO.getParentOrderMap();
@@ -142,23 +137,17 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		TemuResp<TemuLogisticShipmentDTO> temuLogisticShipmentDTOTemuResp = temuClient.getLogisticsShipment(temuOrderReq);
 		if(!temuLogisticShipmentDTOTemuResp.getSuccess()){
 			log.error("查询temu发货数据响应失败,{}",temuResp.getErrorMsg());
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return new ArrayList<>();
+			throw new ServiceException("查询temu发货数据响应失败，{}",temuResp.getErrorMsg());
 		}
 		TemuLogisticShipmentDTO temuLogisticShipmentDTO = temuLogisticShipmentDTOTemuResp.getResult();
 		if(CollectionUtils.isEmpty(temuLogisticShipmentDTO.getShipmentInfoDTO())){
-			log.error("查询temu发货数据，没有发货数据,{}",temuResp.getErrorMsg());
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return new ArrayList<>();
+			log.error("查询temu发货数据，没有发货数据,{}", JSONUtil.toJsonStr(temuLogisticShipmentDTO));
+			throw new ServiceException("查询temu发货数据，没有发货数据,{}", JSONUtil.toJsonStr(temuLogisticShipmentDTO));
 		}
 		TemuLogisticShipmentDTO.ShipmentInfoDTODTO shipmentInfoDTODTO = temuLogisticShipmentDTO.getShipmentInfoDTO().get(0);
 		if(shipmentInfoDTODTO.getCooperativeWarehouseDTO() == null || shipmentInfoDTODTO.getCooperativeWarehouseDTO().getWarehouseCode() == null){
-			log.error("查询temu发货数据，没有发货仓库,{}",temuResp.getErrorMsg());
-			DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-			initDmpResponse.setDoNextStatus(false);
-			return new ArrayList<>();
+			log.error("查询temu发货数据，没有发货仓库,{}",JSONUtil.toJsonStr(temuLogisticShipmentDTO));
+			throw new ServiceException("查询temu发货数据，没有发货仓库,{}",JSONUtil.toJsonStr(temuLogisticShipmentDTO));
 		}
 		pageItemsDTO.setTrackNo(shipmentInfoDTODTO.getTrackingNumber());
 		pageItemsDTO.setShipmentInfoDTODTO(shipmentInfoDTODTO);
