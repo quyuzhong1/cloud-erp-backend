@@ -815,10 +815,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //重新审核
         if (KingdeeDocStatusEnum.REAPPROVE.equals(docStatusEnum)) {
-     /*       //审核中需要撤销
+          //审核中需要撤销
             if (StrUtil.equals(KingdeeDocStatusEnum.APPROVING.getCode(), documentStatus)) {
                 return this.cancelAssign(apiUtils,syncKingdeeId);
-            }*/
+            }
             return this.unAudit(apiUtils, syncKingdeeId);
         }
         //审核通过
