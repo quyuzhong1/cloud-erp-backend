@@ -8,6 +8,7 @@ package com.erp.server.workflow.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -40,6 +41,7 @@ import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +133,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
-            SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
+            SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
             //第一条账户设置成默认
             if (CollUtil.isNotEmpty(addDTO.getBankAccountList())) {
                 addDTO.getBankAccountList().get(0).setIsDefault(Boolean.TRUE);
@@ -194,6 +196,18 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         for (Object object : credentialList) {
             // 将原始对象转为可修改的 Map
             Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+
+            //有效期起
+            Object effectiveDate = credentialMap.get("effectiveDate");
+            if (ObjectUtil.isNotEmpty(effectiveDate)) {
+                credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+            }
+
+            //有效期起
+            Object expireDate = credentialMap.get("expireDate");
+            if (ObjectUtil.isNotEmpty(expireDate)) {
+                credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+            }
 
             Object attachmentObject = credentialMap.get("attachment");
             if (ObjectUtil.isEmpty(attachmentObject)) {
