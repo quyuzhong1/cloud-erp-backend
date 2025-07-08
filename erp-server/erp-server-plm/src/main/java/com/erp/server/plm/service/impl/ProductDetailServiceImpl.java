@@ -5613,14 +5613,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-
             //获取产品基本信息修改的字段
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO,null);
             //获取产品包装信息修改的字段
             productPackDTO.setId(productKey.getPackId());
             List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,oldPackEntity);
-
-
             //发送通知
             ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
             noticeDTO.setProductId(productInfoDTO.getId());
