@@ -246,6 +246,12 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     @TableField("suite_name")
     private String suiteName;
 
+    /**
+     * 组合装数量
+     */
+    @TableField("suite_qty")
+    private Integer suiteQty;
+
 
     public static final String MAIN_ID = "main_id";
 
