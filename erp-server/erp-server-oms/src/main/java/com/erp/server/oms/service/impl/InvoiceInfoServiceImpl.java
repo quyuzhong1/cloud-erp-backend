@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -45,6 +46,9 @@ import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +59,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -128,6 +133,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     @Lazy
     private NfeInvoiceService nfeInvoiceService;
+    @Lazy
+    @Resource
+    private OmsAttachmentService omsAttachmentService;
+
 
 
     @Resource
@@ -738,12 +747,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (!InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceInfoEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
         }
+        NfeInvoiceDTO.NfeReturnDTO nfeReturnDTO = new NfeInvoiceDTO.NfeReturnDTO();
+        nfeReturnDTO.setMotivo(remark);
+        if (CharSequenceUtil.isBlank(invoiceInfoEntity.getQueryKey())){
+            throw new ServiceException("发票秘钥不存在，无法进行退票操作");
+        }
+        nfeReturnDTO.setChaveNfe(invoiceInfoEntity.getQueryKey());
+        //第三方对接
+        nfeInvoiceService.returnInvoice(invoiceInfoEntity,nfeReturnDTO);
         invoiceInfoEntity.setCancelReason(remark);
         invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.RETURN_INVOICE.getCode());
         invoiceInfoEntity.setReturnTaxCode(returnTaxCode);
         this.updateById(invoiceInfoEntity);
-
-        //TODO 第三方对接
         return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "退票");
     }
 
@@ -832,6 +847,57 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return baseMapper.getNewInvoicedAttachBySoId(soId,invoiceType,attachmentType);
     }
 
+    @Override
+    public void initNfeInvoiceKey() {
+        //查询符合条件数据
+        List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery()
+                .eq(InvoiceInfoEntity::getInvoiceType,InvoiceInfoInvoiceTypeEnum.NFE.getCode())
+                .eq(InvoiceInfoEntity::getStatus,InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())
+                .eq(InvoiceInfoEntity::getQueryKey,CharSequenceUtil.EMPTY)
+                .list();
+        List<List<InvoiceInfoEntity>> partition = ListUtil.partition(invoiceInfoEntityList, 100);
+        for (List<InvoiceInfoEntity> invoiceInfoEntities : partition) {
+            List<String> ids = invoiceInfoEntities.stream().map(InvoiceInfoEntity::getId).collect(Collectors.toList());
+            List<OmsAttachmentDTO.UpdateDTO> updateDTOList = omsAttachmentService.getByBusinessIds(ids);
+            if (CollUtil.isEmpty(updateDTOList)){
+                continue;
+            }
+            for (InvoiceInfoEntity entity : invoiceInfoEntities){
+                OmsAttachmentDTO.UpdateDTO updateDTO = updateDTOList.stream().filter(e -> AttachmentTypeEnum.INVOICE_INFO_XML.getCode().equals(e.getType()) && Objects.equals(entity.getId(), e.getBusinessId())).findFirst().orElse(null);
+                if (Objects.isNull(updateDTO)){
+                    continue;
+                }
+                String url = FastDFSClientUtil.publicUrl + updateDTO.getAttachUrl();
+                String queryKey = nfeInvoiceService.getQueryKey(url);
+                if (CharSequenceUtil.isNotBlank(queryKey)){
+                    this.lambdaUpdate().eq(InvoiceInfoEntity::getId,entity.getId()).set(InvoiceInfoEntity::getQueryKey,queryKey).update();
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据xml文件获取queryKey
+     * @author zdy
+     * @date 2025/7/18 15:37
+     * @param linkXml
+     * @return
+     */
+    private String getQueryKey(String linkXml) {
+        if (CharSequenceUtil.isEmpty(linkXml)) {
+            return "";
+        }
+        try {
+            SAXReader reader = new SAXReader();
+            Document document = reader.read(new URL(linkXml));
+            Element root = document.getRootElement();
+            String queryKey = root.element("NFe").element("infNFe").attributeValue("Id");
+            return queryKey;
+        } catch (Exception e) {
+            log.error("获取queryKey失败,xml文件:{}异常：{}",linkXml, e.getMessage());
+            return "";
+        }
+    }
     /**
      * 查询进行中数据
      * @author will

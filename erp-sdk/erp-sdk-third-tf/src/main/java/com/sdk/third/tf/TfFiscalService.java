@@ -222,6 +222,18 @@ public class TfFiscalService {
         String body = JSONUtil.toJsonStr(nfeCancelDTO);
         return doPostUrl(URL + path, body);
     }
+    /**
+     * 退票接口
+     * @author zdy
+     * @date 2025/7/9 12:12
+     * @param nfeReturnDTO
+     * @return Object
+     */
+    public Object returnInvoice(NfeInvoiceDTO.NfeReturnDTO nfeReturnDTO){
+        String path = "/registrar_insucesso_entrega";
+        String body = JSONUtil.toJsonStr(nfeReturnDTO);
+        return doPostUrl(URL + path, body);
+    }
 
 
     /**

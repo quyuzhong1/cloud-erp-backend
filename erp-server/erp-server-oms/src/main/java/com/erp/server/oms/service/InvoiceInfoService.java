@@ -190,4 +190,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return InvoiceInfoDTO.AttachDTO
      */
     InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType);
+
+    void initNfeInvoiceKey();
 }

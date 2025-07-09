@@ -36,6 +36,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -46,6 +49,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -208,6 +212,7 @@ public class NfeInvoiceService {
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
+        invoiceInfoEntity.setQueryKey(getQueryKey(resultDTO.getLink_xml()));
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
         invoiceInfoEntity.setNo(resultDTO.getSerie());
         invoiceInfoEntity.setStartCode(String.valueOf(resultDTO.getNumeroNfe()));
@@ -221,6 +226,29 @@ public class NfeInvoiceService {
             invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 根据xml文件获取queryKey
+     * @author zdy
+     * @date 2025/7/18 15:37
+     * @param linkXml
+     * @return
+     */
+    public String getQueryKey(String linkXml) {
+        if (CharSequenceUtil.isEmpty(linkXml)) {
+            return "";
+        }
+        try {
+            SAXReader reader = new SAXReader();
+            Document document = reader.read(new URL(linkXml));
+            Element root = document.getRootElement();
+            String queryKey = root.element("NFe").element("infNFe").attributeValue("Id");
+            return queryKey;
+        } catch (Exception e) {
+            log.error("获取queryKey失败,xml文件:{}异常：{}",linkXml, e.getMessage());
+            return "";
+        }
     }
 
     /**
@@ -585,6 +613,33 @@ public class NfeInvoiceService {
         Object obj;
         try {
              obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
+        }
+    }
+
+    /**
+     * 退票
+     * @param invoiceInfoEntity
+     * @param nfeReturnDTO
+     */
+    public void returnInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeReturnDTO nfeReturnDTO) {
+        //b2c订单信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        if (CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP,soB2cEntity.getCode());
+        }
+        //税务信息
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        nfeReturnDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
+        Object obj;
+        try {
+            log.error("退票响应接口请求：{}", JSONUtil.toJsonStr(nfeReturnDTO));
+            obj = tfFiscalService.returnInvoice(nfeReturnDTO);
+            log.error("退票响应接口返回：{}", JSONUtil.toJsonStr(obj));
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
         }

@@ -258,6 +258,29 @@ public class NfeInvoiceDTO implements Serializable {
         @Alias("enviar_email_para_cliente")
         private Boolean enviarEmailParaCliente = true;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NfeReturnDTO {
+
+        /**
+         * 关系id
+         */
+        @Alias("chave_nfe")
+        private String chaveNfe;
+
+        /**
+         * 原因
+         */
+        @Alias("motivo")
+        private String motivo;
+
+        /**
+         * token
+         */
+        @Alias("token_empresa")
+        private String tokenEmpresa;
+    }
 
     @Data
     @NoArgsConstructor
@@ -333,7 +356,11 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("id")
         private String id;
-
+        /**
+         * link_nota,pdf文件
+         */
+        @Alias("xml")
+        private String xml;
         /**
          * link_nota,pdf文件
          */

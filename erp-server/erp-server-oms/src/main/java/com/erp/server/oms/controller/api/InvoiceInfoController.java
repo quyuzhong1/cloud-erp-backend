@@ -314,4 +314,14 @@ public class InvoiceInfoController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 初始化处理nfe发票密钥数据
+     * @return
+     */
+    @PostMapping("/initNfeInvoiceKey")
+    public ApiResult  initNfeInvoiceKey() {
+        invoiceInfoService.initNfeInvoiceKey();
+        return success();
+    }
 }
