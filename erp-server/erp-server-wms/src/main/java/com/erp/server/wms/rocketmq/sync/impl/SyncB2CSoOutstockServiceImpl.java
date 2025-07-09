@@ -424,7 +424,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
             wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).flatMap(Collection::stream).collect(Collectors.toList());
+            List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
             wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
             //单价处理 明细*qty之和 / 合并数量
             BigDecimal totalPrice = soOutStockDetailDTOS1.stream().map(e -> e.getPrice().multiply(new BigDecimal(e.getActualQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
