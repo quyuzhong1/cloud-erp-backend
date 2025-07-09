@@ -1,9 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.CollectionUtils;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.CommonConstants;
+import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -13,8 +17,10 @@ import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -127,4 +133,46 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         }
         return null;
     }
+
+    @Override
+    public List<ProductCustomsDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PagingVO<ProductCustomsDTO.ListDTO> paging(PagingDTO<ProductCustomsDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean add(ProductCustomsDTO.AddDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean update(ProductCustomsDTO.UpdateDTO dto) {
+        return null;
+    }
+
+    @Override
+    public ProductCustomsDTO.ViewDTO view(String id) {
+        return null;
+    }
+
+    @Override
+    public void exportList(ProductCustomsDTO.PagingParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+
+    }
+
+
 }
