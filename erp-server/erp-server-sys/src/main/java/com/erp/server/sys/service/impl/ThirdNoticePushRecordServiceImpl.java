@@ -295,6 +295,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 .eq(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeId)
                 .list();
 
+        //校验规则条件
+        if (!checkRule(dto, noticeEntity, ruleList, businessKey)) {
+            throw new ServiceException("规则条件不满足");
+        }
         sendMsgByCfg(dto, noticeEntity, ruleList, businessKey, fieldList, cfgQueryOptionList);
     }
 
@@ -354,12 +358,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
 
         //检查是否存在有效配置
-        Integer count = cfgThirdNoticeService.lambdaQuery()
+        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
                 .eq(CfgThirdNoticeEntity::getBusinessType, businessKey)
                 .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
                 .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                .count();
-        if (count == 0) {
+                .list();
+        if (CollUtil.isEmpty(cfgThirdNoticeList)) {
             log.debug("业务类型[{}]无有效通知配置", businessKey);
             return;
         }
@@ -369,15 +373,35 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         if (Objects.isNull(dto)) {
             return;
         }
-        // //保存mq消费记录
-        String id = mqConsumerRecordService.addMqRecord(dto);
-        if (StringUtils.isBlank(id)) {
-            log.error("保存MQ消费记录失败");
-            return;
+
+        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
+
+        //三方通知配置--规则条件
+        List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
+        Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+
+        List<String> isQualifiedCfgIds = new  ArrayList<>();
+        for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
+            List<CfgRuleConditionEntity> ruleList = ruleConditionMap.getOrDefault(noticeEntity.getId(), null);
+            //校验规则条件
+            if (checkRule(dto, noticeEntity, ruleList, businessKey)) {
+                isQualifiedCfgIds.add(noticeEntity.getId());
+            }
         }
-        //设置记录ID并触发通知
-        dto.setMqConsumerRecordId(id);
-        sendThirdNoticeByMq(dto);
+
+        //获取到符合条件的配置
+        if(isQualifiedCfgIds.size() > 0){
+            dto.setIsQualifiedCfgIds(isQualifiedCfgIds);
+            // //保存mq消费记录
+            String id = mqConsumerRecordService.addMqRecord(dto);
+            if (StringUtils.isBlank(id)) {
+                log.error("保存MQ消费记录失败");
+                return;
+            }
+            //设置记录ID并触发通知
+            dto.setMqConsumerRecordId(id);
+            sendThirdNoticeByMq(dto);
+        }
     }
 
     /**
@@ -483,18 +507,22 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
         //单据类型
         String bussinessKey = dto.getBusinessKey();
+        //符合规则的配置主键id集合
+        List<String> cfgThirdNoticeIdList = dto.getIsQualifiedCfgIds();
+        if (CollUtil.isEmpty(cfgThirdNoticeIdList)) {
+            return;
+        }
 
         //获取三方通知配置的信息--单条--即时通知
         List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
                 .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
                 .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
                 .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
+                .in(CfgThirdNoticeEntity::getId,cfgThirdNoticeIdList)
                 .list();
         if (CollUtil.isEmpty(cfgThirdNoticeList)) {
             return;
         }
-
-        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
 
         //三方通知配置--推送消息字段配置
         List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
@@ -550,17 +578,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         String code = String.valueOf(variablesMap.getOrDefault("code", ""));
         //主键id
         String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
-
         //没有可以发送的字段
         if(CollUtil.isEmpty(fieldList)){
             return;
         }
-
-        //校验规则条件
-        if (!checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
-            return ;
-        }
-
+//        //校验规则条件
+//        if (!checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
+//            return ;
+//        }
         //根据通知方式查找人员 目前只有飞书
         if (StringUtils.isNotBlank(noticeEntity.getNoticeMethod())) {
             List<String> noticeMethodList = Arrays.asList(noticeEntity.getNoticeMethod().split(","));

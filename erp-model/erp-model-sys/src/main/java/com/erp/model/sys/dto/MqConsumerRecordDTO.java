@@ -164,5 +164,9 @@ public class MqConsumerRecordDTO implements Serializable {
          * 变动字段
          */
         private List<String> diffFields;
+        /**
+         * 规则满足的配置的主键id集合
+         */
+        private List<String> isQualifiedCfgIds;
     }
 }
