@@ -450,13 +450,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return Collections.emptyMap();
         }
 
-        return jsonMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> CharSequenceUtil.toCamelCase(entry.getKey()),
-                        Map.Entry::getValue,
-                        (v1, v2) -> v1,  // 冲突时保留第一个值
-                        LinkedHashMap::new  // 保持原始顺序
-                ));
+        Map<String, Object> convertedMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            String originalKey = entry.getKey();
+            Object value = entry.getValue();
+            String camelCaseKey = CharSequenceUtil.toCamelCase(originalKey);
+            convertedMap.put(camelCaseKey, value);
+        }
+        return convertedMap;
     }
 
     /**
