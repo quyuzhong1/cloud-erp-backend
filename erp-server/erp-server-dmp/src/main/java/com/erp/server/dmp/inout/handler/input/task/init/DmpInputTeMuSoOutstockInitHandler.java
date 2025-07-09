@@ -108,15 +108,18 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		TemuResp<TemuOrderDTO> temuResp = temuClient.getOrderList(temuOrderReq);
 		if(!temuResp.getSuccess()){
 			log.error("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
 		}
 		TemuOrderDTO temuOrderDTO = temuResp.getResult();
 		if(CollectionUtils.isEmpty(temuOrderDTO.getPageItems())){
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu订单数据内容为空");
 		}
 		List<TemuOrderDTO.PageItemsDTO> pageItemsDTOList = temuOrderDTO.getPageItems();
 		TemuOrderDTO.PageItemsDTO pageItemsDTO = pageItemsDTOList.get(0);
 		if(Objects.isNull(pageItemsDTO)){
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu订单数据内容为空");
 		}
 
@@ -127,6 +130,7 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		TemuResp<TemuLogisticShipmentDTO> temuLogisticShipmentDTOTemuResp = temuClient.getLogisticsShipment(temuOrderReq);
 		if(!temuLogisticShipmentDTOTemuResp.getSuccess()){
 			log.error("查询temu发货数据响应失败,{}",temuResp.getErrorMsg());
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu发货数据响应失败，{}",temuResp.getErrorMsg());
 		}
 		TemuLogisticShipmentDTO temuLogisticShipmentDTO = temuLogisticShipmentDTOTemuResp.getResult();
