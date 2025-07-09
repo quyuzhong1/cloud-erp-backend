@@ -165,11 +165,16 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
             return;
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())
+                || CharSequenceUtil.equals(soB2cEntity.getNfeInvoiceStatus(), SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode())) {
             return;
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
-            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+            try {
+                invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+            }catch (Exception e){
+                log.error("生成nfe发票失败，{}",e.getMessage());
+            }
         }
     }
 

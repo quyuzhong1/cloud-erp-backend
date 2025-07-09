@@ -29,7 +29,7 @@ public interface FileFeign {
      * @return
      */
     @PostMapping(value ="/feign/file/uploadFileAndName", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    String uploadFileAndName(@RequestPart("file") File file, @RequestParam("fileName") String fileName);
+    String uploadFileAndName(@RequestPart("file") MultipartFile file, @RequestParam("fileName") String fileName);
 
     /**
      * 删除文件
@@ -44,4 +44,12 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/deleteBatchFile")
     void deleteBatchFile(@RequestParam("urlList") List<String> urlList);
+
+    /**
+     * 下载文件
+     * @param fileId
+     * @return
+     */
+    @PostMapping("/feign/file/downloadFile")
+    byte[] downloadFile(@RequestParam("fileId") String fileId);
 }

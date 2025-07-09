@@ -272,6 +272,8 @@ public class ThirdWarehouseDTO implements Serializable {
 //        @Size(max = 255, message = "分类最大长度不能超过255位")
         private String category;
         private String warehouseList;
+
+        private String thirdShortName;
     }
 
     @Data

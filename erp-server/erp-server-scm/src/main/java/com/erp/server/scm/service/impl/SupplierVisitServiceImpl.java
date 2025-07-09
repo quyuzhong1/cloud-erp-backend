@@ -316,6 +316,9 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 String type = tableName.value();
                 List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if(!add.contains(attachmentUrlList.get(i))){
+                        continue;
+                    }
                     AttachmentEntity addAttachment = new AttachmentEntity();
                     addAttachment.setAttachUrl(attachmentUrlList.get(i));
                     addAttachment.setAttachName(attachmentNameList.get(i));

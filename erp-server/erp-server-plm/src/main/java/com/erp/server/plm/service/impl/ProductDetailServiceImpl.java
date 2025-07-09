@@ -5131,19 +5131,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-            List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
-                    .map(String::trim)
-                    .collect(Collectors.toList());
-            List<String> applicationCategoryIdList = new ArrayList<>();
-            for (String applicationCategoryName : applicationCategoryNameList) {
-                String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
-                if (StringUtils.isBlank(applicationCategoryId)) {
-                    errorMsgList.add(applicationCategoryName+" 应用分类不存在");
-                    continue;
+            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
+
+                List<String> applicationCategoryNameList = Arrays.stream(dto.getApplicationCategoryName().split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
+                List<String> applicationCategoryIdList = new ArrayList<>();
+                for (String applicationCategoryName : applicationCategoryNameList) {
+                    String applicationCategoryId = applicationCategoryMap.get(applicationCategoryName);
+                    if (StringUtils.isBlank(applicationCategoryId)) {
+                        errorMsgList.add(applicationCategoryName+" 应用分类不存在");
+                        continue;
+                    }
+                    applicationCategoryIdList.add(applicationCategoryId);
                 }
-                applicationCategoryIdList.add(applicationCategoryId);
+                productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             }
-            productInfoDTO.setApplicationCategoryId(String.join(",", applicationCategoryIdList));
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
             if (StringUtils.isNotBlank(pirateRisk)) {
@@ -5186,17 +5189,72 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
-            if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
-                errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+            ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
+            //旧包装信息
+            ProductPackEntity oldPackEntity = productPackService.getById(productKey.getPackId());
+            if(StringUtils.isNotBlank(dto.getBoxLength()) || StringUtils.isNotBlank(dto.getProductLength())){
+                BigDecimal boxLength = MathUtil.valueOf(dto.getBoxLength());
+                if(StringUtils.isBlank(dto.getBoxLength())){
+                    boxLength = oldPackEntity.getBoxLength();
+                }else {
+                    boxLength = LengthConverterUtil.cmToMm(boxLength);
+                }
+                BigDecimal productLength = MathUtil.valueOf(dto.getProductLength());
+                if(StringUtils.isBlank(dto.getProductLength())){
+                    productLength = oldPackEntity.getProductLength();
+                }else {
+                    productLength = LengthConverterUtil.cmToMm(productLength);
+                }
+                if(boxLength.compareTo(productLength)<0){
+                    errorMsgList.add(ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
-                errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+            if(StringUtils.isNotBlank(dto.getBoxWidth()) || StringUtils.isNotBlank(dto.getProductWidth())){
+                BigDecimal boxWidth = MathUtil.valueOf(dto.getBoxWidth());
+                if(StringUtils.isBlank(dto.getBoxWidth())){
+                    boxWidth = oldPackEntity.getBoxWidth();
+                }else {
+                    boxWidth = LengthConverterUtil.cmToMm(boxWidth);
+                }
+                BigDecimal productWidth = MathUtil.valueOf(dto.getProductWidth());
+                if(StringUtils.isBlank(dto.getProductWidth())){
+                    productWidth = oldPackEntity.getProductWidth();
+                }else {
+                    productWidth = LengthConverterUtil.cmToMm(productWidth);
+                }
+                if(boxWidth.compareTo(productWidth)<0){
+                    errorMsgList.add(ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
-                errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+            if(StringUtils.isNotBlank(dto.getBoxHeight()) || StringUtils.isNotBlank(dto.getProductHeight())){
+                BigDecimal boxHeight = MathUtil.valueOf(dto.getBoxHeight());
+                if(StringUtils.isBlank(dto.getBoxHeight())){
+                    boxHeight = oldPackEntity.getBoxHeight();
+                }else {
+                    boxHeight = LengthConverterUtil.cmToMm(boxHeight);
+                }
+                BigDecimal productHeight = MathUtil.valueOf(dto.getProductHeight());
+                if(StringUtils.isBlank(dto.getProductHeight())){
+                    productHeight = oldPackEntity.getProductHeight();
+                }else {
+                    productHeight = LengthConverterUtil.cmToMm(productHeight);
+                }
+                if(boxHeight.compareTo(productHeight)<0){
+                    errorMsgList.add(ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT.msg);
+                }
             }
-            if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
-                errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+            if(StringUtils.isNotBlank(dto.getGrossWeight()) || StringUtils.isNotBlank(dto.getNetWeight())){
+                BigDecimal grossWeight = MathUtil.valueOf(dto.getGrossWeight());
+                if(StringUtils.isBlank(dto.getGrossWeight())){
+                    grossWeight = oldPackEntity.getGrossWeight();
+                }
+                BigDecimal netWeight = MathUtil.valueOf(dto.getNetWeight());
+                if(StringUtils.isBlank(dto.getNetWeight())){
+                    netWeight = oldPackEntity.getNetWeight();
+                }
+                if(grossWeight.compareTo(netWeight)<0){
+                    errorMsgList.add(ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET.msg);
+                }
             }
 
             //存在错误信息则返回
@@ -5629,12 +5687,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
             //获取产品基本信息修改的字段
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO,null);
             //获取产品包装信息修改的字段
             productPackDTO.setId(productKey.getPackId());
-            List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,null);
+            List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,oldPackEntity);
             //发送通知
             ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
             noticeDTO.setProductId(productInfoDTO.getId());
@@ -6605,15 +6662,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if(Objects.isNull(productPackEntity)){
             throw new ServiceException("包装信息不存在");
         }
-        BigDecimal length = productPackEntity.getBoxLength().max(LengthConverterUtil.cmToMm(dto.getLength()));
-        BigDecimal width = productPackEntity.getBoxWidth().max(LengthConverterUtil.cmToMm(dto.getWidth()));
-        BigDecimal height = productPackEntity.getBoxHeight().max(LengthConverterUtil.cmToMm(dto.getHeight()));
+        BigDecimal length = LengthConverterUtil.cmToMm(dto.getLength());
+        BigDecimal width = LengthConverterUtil.cmToMm(dto.getWidth());
+        BigDecimal height = LengthConverterUtil.cmToMm(dto.getHeight());
         BigDecimal weight = dto.getWeight().multiply(new BigDecimal("1000"));
         String logContent = format("对SKU【{}】更新【包装尺寸长】从{}更新为{}，【包装尺寸宽】从{}更新为{}，【包装尺寸高】从{}更新为{}，【毛重】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getProductLength(),length,productPackEntity.getProductWidth(),width,productPackEntity.getProductHeight(),height,productPackEntity.getGrossWeight(),weight);
         productPackEntity.setProductLength(length);
         productPackEntity.setProductWidth(width);
         productPackEntity.setProductHeight(height);
         productPackEntity.setGrossWeight(weight);
+
+        BigDecimal boxLength = productPackEntity.getBoxLength().max(length);
+        BigDecimal boxWidth = productPackEntity.getBoxWidth().max(width);
+        BigDecimal boxHeight = productPackEntity.getBoxHeight().max(height);
+        String logContent2 = format("对SKU【{}】更新【箱规尺寸长】从{}更新为{}，【箱规尺寸宽】从{}更新为{}，【箱规尺寸高】从{}更新为{}",purchaseEntity.getSkuNo(),productPackEntity.getBoxLength(),boxLength,productPackEntity.getBoxWidth(),boxWidth,productPackEntity.getBoxHeight(),boxHeight);
+        productPackEntity.setBoxLength(boxLength);
+        productPackEntity.setBoxWidth(boxWidth);
+        productPackEntity.setBoxHeight(boxHeight);
 
         //获取产品包装信息修改的字段
         ProductPackDTO productPackDTO = new ProductPackDTO();
@@ -6637,7 +6702,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
 
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
-                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
+                    .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
         }
 
         return "操作成功";

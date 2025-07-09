@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
@@ -26,6 +27,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
+import com.erp.wms.aliexpress.model.product.AliexpressProductDTO;
+import com.sdk.third.lingxing.dto.ProductInfo;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import lombok.extern.slf4j.Slf4j;
@@ -320,7 +323,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SDY_ALIEXPRESS_DELIVERY_ORDER:
                 resultList = newSyncSdyAliExpressDeliveryOrder(sourceDetailList);
                 break;
-
+            case CAINIAO_LISTING:
+                resultList = newSyncCaiNiaoListing(sourceDetailList);
+                break;
             default:
                 break;
         }
@@ -1091,6 +1096,36 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     dictGlobalEntityList,
                     deptList
                     ));
+        }
+        return resultList;
+    }
+    /**
+     * 查询同步SKU到领星
+     */
+    private Map<String , Map<String, Object>> newSyncCaiNiaoListing(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ListingInfoEntity> list = listingInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncWarehouseListing >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            ListingInfoEntity productDetailEntity = list.stream()
+                    .filter(obj -> obj.getId().equals(sourceId))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                continue;
+            }
+            AliexpressProductDTO productInfo = listingInfoService.convertAliexpressProductDTO(productDetailEntity);
+            if(Objects.isNull(productInfo)){
+                log.warn("newSyncCaiNiaoListing >>>> 未找到产品信息: sourceId={}", sourceId);
+                continue;
+            }
+            Map<String, Object> dataMap = JSONUtil.parseObj(productInfo);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
         }
         return resultList;
     }

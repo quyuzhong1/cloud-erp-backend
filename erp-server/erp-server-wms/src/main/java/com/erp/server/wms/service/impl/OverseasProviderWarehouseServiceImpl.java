@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -410,6 +411,26 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             return Collections.emptyList();
         }
         return Collections.singletonList(OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(entity3));
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO) {
+        OverseasProviderEntity overseasProviderEntity = overseasProviderService.getByPlatformCodeAndShortName(addDTO.getSysType(),addDTO.getThirdShortName());
+        if( Objects.isNull(overseasProviderEntity)){
+            throw new ServiceException("海外物流商不存在");
+        }
+        OverseasProviderWarehouseEntity exist = this.getByPlatform(overseasProviderEntity.getId(),addDTO.getCode());
+        if(Objects.nonNull(exist)){
+            throw new ServiceException("海外仓库编号已存在");
+        }
+        OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
+        overseasProviderWarehouseEntity.setPlatformWarehouseCode(addDTO.getCode());
+        overseasProviderWarehouseEntity.setPlatformWarehouseName(addDTO.getName());
+        overseasProviderWarehouseEntity.setMainId(overseasProviderEntity.getId());
+        if(!save(overseasProviderWarehouseEntity)){
+            throw new ServiceException("保存失败");
+        }
+        return new BaseResultDTO.AddDTO(overseasProviderWarehouseEntity.getId(),overseasProviderWarehouseEntity.getPlatformWarehouseCode());
     }
 
     private List<String> getShopIdBySite(String site) {

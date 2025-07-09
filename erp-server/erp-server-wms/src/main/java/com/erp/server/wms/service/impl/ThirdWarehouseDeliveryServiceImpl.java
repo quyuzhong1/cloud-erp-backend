@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.server.wms.mapper.ThirdWarehouseDeliveryMapper;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
@@ -15,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +63,31 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         });
         detailService.saveBatch(entity.getDetailEntityList());
         return entity.getId();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getByCodeAndSoId(String outCode, String soId) {
+        if(StringUtils.isBlank(outCode) || StringUtils.isBlank(soId)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode,outCode).eq(ThirdWarehouseDeliveryEntity::getSoId,soId).last("LIMIT 1").one();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getLatestBySoId(String soId) {
+        if(StringUtils.isBlank(soId)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getSoId, soId)
+                .orderByDesc(ThirdWarehouseDeliveryEntity::getCreateTime).last("LIMIT 1").one();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity getLatestByCode(String code) {
+        if(StringUtils.isBlank(code)){
+            return null;
+        }
+        return lambdaQuery().eq(ThirdWarehouseDeliveryEntity::getCode, code).one();
     }
 
 }

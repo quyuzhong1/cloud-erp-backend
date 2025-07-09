@@ -48,8 +48,6 @@ public class SupplierCredentialController extends BaseController {
 
     @Resource
     private SupplierCredentialService supplierCredentialService;
-    @Resource
-    private SupplierService supplierService;
 
     /**
     * 新增

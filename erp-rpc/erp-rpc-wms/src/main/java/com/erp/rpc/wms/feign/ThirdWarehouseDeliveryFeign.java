@@ -17,4 +17,12 @@ public interface ThirdWarehouseDeliveryFeign {
     @PostMapping("feign/thirdWarehouseDelivery/add")
     void add(@RequestBody ThirdWarehouseDeliveryEntity entity);
 
+    /**
+     *  获取最新的三方仓发货单
+     */
+    @PostMapping("feign/thirdWarehouseDelivery/getLatestBySoId")
+    ThirdWarehouseDeliveryEntity getLatestBySoId(@RequestBody String soId);
+
+    @PostMapping("feign/thirdWarehouseDelivery/update")
+    boolean update(@RequestBody ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
 }

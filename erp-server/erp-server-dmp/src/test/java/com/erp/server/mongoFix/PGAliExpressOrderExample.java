@@ -26,7 +26,7 @@ public class PGAliExpressOrderExample {
         // 写个脚本，注意不是mongo，查询pgsql的表so_b2c，条件是SELECT platform_code FROM so_b2c WHERE dict_platform = 'AliExpress' and source_type = 'selfAdd' and platform_code in （？）
         String pgUrl = "jdbc:postgresql://172.16.100.10:5432/prod-erp-oms?autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8&stringtype=unspecified";
         String username = "ulanzi_developer";
-        String password = "x8SmnZQmGZBZaqY8";
+        String password = "";
         String sql = "SELECT * FROM so_b2c WHERE dict_platform = 'AliExpress' and platform_code in (\n" +
 //                "'1106042587457337',\n" +
 //                "'1106263395014408',\n" +

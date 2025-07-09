@@ -127,7 +127,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         // 平台来源币种为空取默认币种
         if (StringUtils.isBlank(dto.getCurrency())){
-            dto.setCurrency(shopInfo.getDefaultCurrency());
+            dto.setCurrency(shopInfo.getSettlementCurrency());
         }
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoMultiChannelEntity oldEntity = null;

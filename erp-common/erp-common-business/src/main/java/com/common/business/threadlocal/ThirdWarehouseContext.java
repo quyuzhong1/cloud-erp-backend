@@ -41,6 +41,11 @@ public class ThirdWarehouseContext {
      */
     private static final ThreadLocal<String> msg = new ThreadLocal<>();
 
+    /**
+     * 数据
+     */
+    private static final ThreadLocal<String> data = new ThreadLocal<>();
+
     public static void setAuthId(String id) {authId.set(id);}
 
     public static String getAuthId() {return authId.get();}
@@ -61,11 +66,16 @@ public class ThirdWarehouseContext {
 
     public static String getMsg() { return msg.get();}
 
+    public static void setData(String data) {ThirdWarehouseContext.data.set(data);}
+
+    public static String getData() { return data.get();}
+
     public static void remove() {
         responseJson.remove();
         requestJson.remove();
         authMap.remove();
         authId.remove();
         msg.remove();
+        data.remove();
     }
 }

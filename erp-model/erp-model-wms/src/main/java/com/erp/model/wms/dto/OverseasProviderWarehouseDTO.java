@@ -42,6 +42,10 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         private String mainId;
 
         /**
+         * 货主编码
+         */
+        private String ownerCode;
+        /**
          * 第三方仓库类型 0标准 1中转 2虚拟
          */
         private String platformWarehouseType;
