@@ -47,6 +47,7 @@ public class SoReturnController extends BaseController {
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
+    @Resource
     private SoB2cReturnService soB2cReturnService;
 
     /**
