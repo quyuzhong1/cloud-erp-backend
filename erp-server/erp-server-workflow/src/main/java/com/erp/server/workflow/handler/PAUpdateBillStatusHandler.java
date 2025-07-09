@@ -23,7 +23,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -33,6 +33,7 @@ import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.PurchaseApplicationFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
@@ -47,6 +48,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -89,6 +91,10 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     public boolean isMatch(String event) {
@@ -188,6 +194,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             }
             map.remove("applyUserName");
             map.put("applyUserId", findUserDTO.getUserId());
+            map.put("applyDeptId", findUserDTO.getDepartmentId());
         }
         //申请日期
         Object applyDate = map.get("applyDate");
@@ -218,11 +225,13 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             //sku
             Object skuNo = detailMap.get("skuNo");
             if (ObjectUtil.isNotEmpty(skuNo)) {
-                List<ProductDetailEntity> list = FeignQuery.create(ProductDetailEntity.class).eq(ProductDetailEntity::getSkuNo, skuNo).list();
-                if (ObjectUtil.isEmpty(list)) {
+                List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo.toString()));
+                if (ObjectUtil.isEmpty(skuVOList)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, skuNo);
                 }
-                detailMap.put("skuId", list.get(0).getId());
+                detailMap.put("skuId", skuVOList.get(0).getSkuId());
+                detailMap.put("unitQty", skuVOList.get(0).getBoxQty());
+                detailMap.put("moq", skuVOList.get(0).getMoq());
             }
         }
     }

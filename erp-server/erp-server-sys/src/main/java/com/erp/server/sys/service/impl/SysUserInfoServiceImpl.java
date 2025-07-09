@@ -19,7 +19,6 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
@@ -1158,6 +1157,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
             userDTO.setIsMyState(0);
+            //部门信息
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(entity.getUid());
+            if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
+                userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
+                userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
+            }
             return userDTO;
         }
         return new FindUserDTO();

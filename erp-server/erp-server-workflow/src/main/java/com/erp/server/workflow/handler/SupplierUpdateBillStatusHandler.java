@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
@@ -120,7 +121,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
             //处理附件信息
-            handleAttachment(map);
+            handleSupplierData(map);
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
@@ -174,7 +175,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
      * @param map
      * @return void
      */
-    private void handleAttachment(Map<String, Object> map) {
+    private void handleSupplierData(Map<String, Object> map) {
 
         //付款条件
         Object paymentCondition = map.get("paymentCondition");
@@ -197,6 +198,18 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         for (Object object : credentialList) {
             // 将原始对象转为可修改的 Map
             Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+
+            //名称
+            Object name = credentialMap.get("name");
+
+            if (ObjectUtil.isNotEmpty(name)) {
+                List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+                String credentialCode = disabledList.stream().
+                        filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
+                        .map(DictBasicEntity::getValue)
+                        .findFirst().orElse("");
+                credentialMap.put("code", credentialCode);
+            }
 
             //有效期起
             Object effectiveDate = credentialMap.get("effectiveDate");
