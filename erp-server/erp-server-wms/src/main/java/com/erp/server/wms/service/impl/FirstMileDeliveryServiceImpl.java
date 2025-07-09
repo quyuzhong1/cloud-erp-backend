@@ -671,14 +671,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 Integer deliveryQty = detailEntity.getDeliveryQty();
                 for (InventoryEntity inventoryEntity : availableLocation) {
                     if (inventoryEntity.getQty() >= deliveryQty){
-                        detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                        detailAddDto.setQty(deliveryQty);
-                        detailAddDtoList.add(detailAddDto);
+                        TransferInfoDetailDTO.AddDTO detailAddDto2 = FirstMileDeliveryConverter.INSTANCE.detailAddDto(detailAddDto);
+                        detailAddDto2.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                        detailAddDto2.setQty(deliveryQty);
+                        detailAddDtoList.add(detailAddDto2);
                         break;
                     }else {
-                        detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                        detailAddDto.setQty(inventoryEntity.getQty());
-                        detailAddDtoList.add(detailAddDto);
+                        TransferInfoDetailDTO.AddDTO detailAddDto2 = FirstMileDeliveryConverter.INSTANCE.detailAddDto(detailAddDto);
+                        detailAddDto2.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                        detailAddDto2.setQty(inventoryEntity.getQty());
+                        detailAddDtoList.add(detailAddDto2);
                         deliveryQty = deliveryQty - inventoryEntity.getQty();
                     }
                 }
@@ -1190,14 +1192,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     Integer deliveryQty = detailEntity.getDeliveryQty();
                     for (InventoryEntity inventoryEntity : availableLocation) {
                         if (inventoryEntity.getQty() >= deliveryQty){
-                            detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                            detailAddDto.setQty(deliveryQty);
-                            detailAddDtoList.add(detailAddDto);
+                            TransferInfoDetailDTO.AddDTO detailAddDto2 = FirstMileDeliveryConverter.INSTANCE.detailAddDto(detailAddDto);
+                            detailAddDto2.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                            detailAddDto2.setQty(deliveryQty);
+                            detailAddDtoList.add(detailAddDto2);
                             break;
                         }else {
-                            detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
-                            detailAddDto.setQty(inventoryEntity.getQty());
-                            detailAddDtoList.add(detailAddDto);
+                            TransferInfoDetailDTO.AddDTO detailAddDto2 = FirstMileDeliveryConverter.INSTANCE.detailAddDto(detailAddDto);
+                            detailAddDto2.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                            detailAddDto2.setQty(inventoryEntity.getQty());
+                            detailAddDtoList.add(detailAddDto2);
                             deliveryQty = deliveryQty - inventoryEntity.getQty();
                         }
                     }
