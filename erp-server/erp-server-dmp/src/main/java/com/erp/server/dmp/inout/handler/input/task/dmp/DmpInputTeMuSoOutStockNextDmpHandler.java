@@ -52,6 +52,7 @@ public class DmpInputTeMuSoOutStockNextDmpHandler extends DmpInputDoNextDmpHandl
 			map.put("specifics",product.getSpec());
 			map.put("thirdOrderCode",sourceOrder.getParentOrderMap().getParentOrderSn());
 			map.put("platformOrderCode",sourceOrder.getParentOrderMap().getParentOrderSn());
+			map.put("nextLevelId",dmpInputTaskEntity.getId());
 			resultList.add(map);
 		}
 		return resultList;

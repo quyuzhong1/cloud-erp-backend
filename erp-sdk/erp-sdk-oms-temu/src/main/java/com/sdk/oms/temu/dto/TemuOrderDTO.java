@@ -72,6 +72,8 @@ public class TemuOrderDTO {
         private String shopId;
         private String shopName;
         private String parentOrderSn;
+        private String nextLevelId;
+        private String soDetailId;
         @NoArgsConstructor
         @Data
         public static class OrderListDTO {
