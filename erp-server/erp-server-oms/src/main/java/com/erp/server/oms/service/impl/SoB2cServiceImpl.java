@@ -7718,10 +7718,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId, String shopId) {
         SoB2cEntity entity = this.getById(soId);
-        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(entity.getPlatformCode(),"DmpOutputAliExpressOrderRocketMQTaskHandler");
-        if (Objects.isNull(dmpOutputTaskRecordEntity)) {
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskRecord(entity.getPlatformCode(),"DmpOutputAliExpressOrderRocketMQTaskHandler");
+        if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
             return Boolean.TRUE;
         }
+        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
         PlatformOrderDTO dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
         return SoB2cHandler.handleSoOutStock(dto, null, entity);
     }
