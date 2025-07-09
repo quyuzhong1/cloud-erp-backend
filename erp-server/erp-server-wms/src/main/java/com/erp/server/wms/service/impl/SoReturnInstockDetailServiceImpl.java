@@ -321,7 +321,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
-                        detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
+                        detailEntity.setReturnTypeDict(CharSequenceUtil.isBlank(detailEntity.getReturnTypeDict()) ? soB2cReturnEntity.getType() : detailEntity.getReturnTypeDict());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
                     }
                 }

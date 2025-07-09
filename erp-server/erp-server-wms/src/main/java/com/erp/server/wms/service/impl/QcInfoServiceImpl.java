@@ -305,7 +305,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         bill.setCode(code);
         bill.setSourceDetailId(dto.getSourceDetailId());
-        bill.setVersion(0);
+        bill.setVersion(Objects.nonNull(qc) ? qc.getVersion() : 0);
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
