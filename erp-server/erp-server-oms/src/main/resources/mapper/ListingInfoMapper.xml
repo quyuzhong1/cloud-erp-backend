@@ -29,8 +29,6 @@
             SELECT
                 id,
                 platform_sku_no,
-                sku_no AS warehouseSkuNo,
-                product_name AS warehouseProductName
             FROM listing_info WHERE is_deleted=FALSE
             AND type=#{type}
     </select>
