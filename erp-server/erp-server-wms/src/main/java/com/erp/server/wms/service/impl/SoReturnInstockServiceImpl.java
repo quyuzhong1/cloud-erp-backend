@@ -2121,10 +2121,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detail.setReturnReasonDict(soB2cReturnEntity.getReason());
                 b2cDetailEntityList.stream().filter(h -> h.getId().equals(f.getSoDetailId())).findFirst().ifPresent(g -> {
                     detail.setReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
-                    detail.setTaxReturnAmount(detail.getReturnAmount());
+                    detail.setTaxReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
                     detail.setWarehouseId(instockDTO.getWarehouseId());
                     detail.setPlatformSkuNo(g.getPlatformSkuNo());
                     detail.setExchangeRate(g.getExchangeRate());
+                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(),detail.getReturnAmount()));
+                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(),detail.getTaxReturnAmount()));
                 });
             });
         });

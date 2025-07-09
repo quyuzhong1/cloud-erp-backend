@@ -129,6 +129,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(detailDto.getSkuId());
                 detailEntity.setSkuNo(detailDto.getSkuNo());
+                detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
@@ -286,7 +287,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(detailDto.getSkuId());
                 detailEntity.setSkuNo(detailDto.getSkuNo());
+                detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
