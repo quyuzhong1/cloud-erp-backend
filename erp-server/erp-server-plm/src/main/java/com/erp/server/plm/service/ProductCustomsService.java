@@ -74,11 +74,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
     List<ProductCustomsEntity> listBySkuIds(List<String> skuIds, String country);
 
     ProductCustomsEntity getBySkuIdAndCountry(String skuId, String country);
-    /**
-     * 获取状态统计
-     * @return
-     */
-    List<ProductCustomsDTO.TabListDTO> tabList(PermissionsDTO dto);
+
     /**
      * 分页查询
      *
@@ -91,7 +87,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @param dto
      * @return
      */
-    Boolean add(ProductCustomsDTO.AddDTO dto);
+    Boolean add(ProductCustomsDTO.AddListDTO dto);
     /**
      * 编辑
      *

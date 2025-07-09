@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.server.plm.service.ProductCustomsService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,19 +40,6 @@ public class ProductCustomsController extends BaseController {
     @Resource
     private ProductCustomsService productCustomsService;
 
-    /**
-     * 获取状态统计
-     * @return
-     */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:productCustoms:paging",
-            tableAlias = "pc"
-    )
-    public ApiResult<List<ProductCustomsDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        return success(productCustomsService.tabList(dto));
-    }
 
     /**
      * 分页查询
@@ -78,9 +66,9 @@ public class ProductCustomsController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增目的国清关信息")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated ProductCustomsDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated ProductCustomsDTO.AddListDTO dto) {
        Boolean  result= productCustomsService.add(dto);
-        return result==true?success():failure();
+       return result==true?success():failure();
     }
 
 
