@@ -31,6 +31,7 @@ import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -318,9 +319,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
                 sourceCode = soB2cEntity.getThirdCode();
             }
-            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
+            List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
             PlatformOrderDTO dto = null;
-            if (Objects.nonNull(dmpOutputTaskRecordEntity)) {
+            if (CollectionUtils.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
                 dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
                 dto.setBillDate(entry.getValue().get(0).getOutstockTime().toLocalDate());
             }
