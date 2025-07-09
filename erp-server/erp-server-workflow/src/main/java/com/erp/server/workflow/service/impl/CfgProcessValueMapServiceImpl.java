@@ -11,8 +11,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -183,8 +181,6 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
 
     @Override
     public void delete(List<String> mainIds) {
-        // 当前用户信息
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
         // 符合 ruleId 存在于 ids 的更新
         List<CfgProcessValueMapEntity> cfgProcessValueMapEntities = this.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, mainIds));
         if (CollectionUtils.isEmpty(cfgProcessValueMapEntities)) {
@@ -192,14 +188,6 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         }
         List<String> ids = cfgProcessValueMapEntities.stream().map(CfgProcessValueMapEntity::getId).collect(Collectors.toList());
         removeByIds(ids);
-        //TODO 日志
     }
 
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(CfgProcessValueMapEntity cfgProcessValueMapEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
 }

@@ -9,8 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -37,7 +35,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -61,7 +58,6 @@ import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
-import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -73,7 +69,6 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -1853,9 +1848,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date 2025/5/21 10:51
      */
     private Map<String, Object> getVariablesMap(PurchaseOrderEntity entity) {
-        Map<String, String> typeMap = dictBasicService.getByKey("purchaseOrderType").stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
-        entity.setType(typeMap.get(entity.getType()));
-        entity.setApproveStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()).getName());
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -1876,8 +1868,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(account)){
             throw new ServiceException("供应商账户为空");
         }
-        Map<String, String> payeeMap = account.stream().collect(Collectors.toMap(SupplierAccountDTO.UpdateDTO::getId, SupplierAccountDTO.UpdateDTO::getPayee));
-
         //税率额外处理
         detailList.forEach(item->{
             //item.getTaxRate() bigdecimal乘以100
@@ -1887,13 +1877,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         variablesMap.put(stringHashMap.get(PURCHASE_ORDER_DETAIL), BeanUtil.copyToList(detailList, Map.class));
 
         //供应商map
-        String accountId = entity.getSupplierAccountId();
-        Map<String, String> payMethod = dictBasicService.getByKey("supplierPayMode").stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
-        supplier.setPayMethodId(payMethod.get(supplier.getPayMethodId()));
         Map<String, Object> supplierMap = BeanUtil.beanToMap(supplier);
-        supplierMap.put("supplierAccountId", payeeMap.get(accountId));
-        log.info("供应商账户,{}",payeeMap.get(accountId));
-        List<Map<String, Object>> maps = Arrays.asList(supplierMap);
+        List<Map<String, Object>> maps = Collections.singletonList(supplierMap);
         variablesMap.put(stringHashMap.get(ThirdConstants.PURCHASE_ORDER_SUPPLIER), maps);
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(), obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
