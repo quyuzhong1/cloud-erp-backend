@@ -567,6 +567,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         List<CfgApproveSyncFieldMapEntity> cfgApproveSyncFieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(entity.getId()));
         if(CollUtil.isNotEmpty(cfgApproveSyncFieldMapEntities)){
             List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = BeanMapper.copyList(cfgApproveSyncFieldMapEntities, CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO.class);
+            // 按 sort 升序排序
+            pushMsgList.sort(Comparator.comparingInt(CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO::getSort));
             data.setPushMsgList(pushMsgList);
         }
 
