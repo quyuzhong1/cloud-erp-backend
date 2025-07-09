@@ -84,6 +84,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
      */
      @TableField("exec_timeout")
      private Integer execTimeout;
+     
+     /**
+      * 下次执行任务时间
+      */
+     @TableField("next_exec_time")
+     private LocalDateTime nextExecTime;
 
     /**
      * 执行系统:默认:dmp

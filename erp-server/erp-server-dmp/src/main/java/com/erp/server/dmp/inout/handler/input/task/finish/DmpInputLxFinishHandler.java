@@ -1,6 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.finish;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
@@ -18,6 +20,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -83,6 +88,7 @@ public class DmpInputLxFinishHandler extends DmpInputBaseFinishHandler{
 					DmpInputHotfixCreateRequest dmpInputCreateRequest = new DmpInputHotfixCreateRequest();
 					dmpInputCreateRequest.setCfgInputId("1940979833966186779");
 					dmpInputCreateRequest.setDetailExtendJson(dataJson);
+					dmpInputCreateRequest.setNextExecTime(LocalDateTimeUtil.offset(LocalDateTime.now(), 1, ChronoUnit.MINUTES));
 					// 拉取时间
 					dmpInputCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
 					// 创建任务
