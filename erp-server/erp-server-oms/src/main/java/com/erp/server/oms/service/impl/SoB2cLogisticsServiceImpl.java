@@ -522,6 +522,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 ,logisticsEntity.getLogisticsChannelName(),channel.getName(),logisticsEntity.getTrackNo(),dto.getTrackNo(),logisticsEntity.getCode(),dto.getTransportNo());
         this.lambdaUpdate().eq(SoB2cLogisticsEntity::getId, dto.getLogisticsId())
                .set(SoB2cLogisticsEntity::getLogisticsChannelId, channel.getId())
+               .set(SoB2cLogisticsEntity::getLogisticsChannelName, channel.getName())
                .set(SoB2cLogisticsEntity::getCode, dto.getTransportNo())
                .set(SoB2cLogisticsEntity::getTrackNo, dto.getTrackNo()).update();
          operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");

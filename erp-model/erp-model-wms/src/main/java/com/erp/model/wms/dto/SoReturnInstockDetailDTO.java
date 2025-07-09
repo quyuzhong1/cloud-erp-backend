@@ -58,6 +58,10 @@ public class SoReturnInstockDetailDTO {
         @Min(value = 1, message = "签收数量最小值为1")
         @Max(value = 999999999, message = "签收数量最大值为999999999")
         private Integer receiveQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
 
         /**
          * 仓库id
