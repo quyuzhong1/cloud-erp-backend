@@ -28,7 +28,7 @@
     <select id="listByType" resultType="com.erp.model.oms.dto.ListingInfoDTO$ListDTO">
             SELECT
                 id,
-                platform_sku_no,
+                platform_sku_no
             FROM listing_info WHERE is_deleted=FALSE
             AND type=#{type}
     </select>
