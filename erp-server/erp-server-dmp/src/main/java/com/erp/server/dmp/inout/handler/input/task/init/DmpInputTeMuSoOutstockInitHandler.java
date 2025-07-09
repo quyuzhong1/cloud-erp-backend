@@ -98,6 +98,11 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		}
 
 		ShopInfoEntity shopInfoEntity = shopInfoEntityList.get(0);
+		if(StringUtils.isBlank(shopInfoEntity.getDictAreaCode())){
+			log.error("店铺信息中dictAreaCode为空,shopId:{}", shopId);
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
+			throw new ServiceException("店铺信息中dictAreaCode为空,shopId:{}", shopId);
+		}
 		Map<String,Object> extendMap = shopInfoEntity.getExtendData();
 		TemuOrderReq temuOrderReq = new TemuOrderReq();
 		temuOrderReq.setAreaCode(shopInfoEntity.getDictAreaCode());
