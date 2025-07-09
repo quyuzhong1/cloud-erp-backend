@@ -85,6 +85,7 @@
         sbr.code,
         sbr.so_id as soId,
         sbr.status,
+        sbr.return_logistic_code as returnLogisticCode,
         sbr.dict_platform as platform,
         sbr.shop_id as shopId,
         sbrd.id as detailId,
