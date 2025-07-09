@@ -9,9 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -163,6 +161,16 @@ public class ProductCustomsDTO {
         private String imageUrl;
 
         /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+
+        /**
+         * 中国海关编码
+         */
+        private String chinaCustomsCode;
+
+        /**
          * 国家
          */
         private String country;
@@ -173,12 +181,22 @@ public class ProductCustomsDTO {
         private String countryName;
 
         /**
-         * 海关编码
+         * 目的国清关英文名
          */
-        private String customsCode;
+        private String destinationCustomsEnName;
 
         /**
-         * 税率
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国海关编码
+         */
+        private String destinationCustomsCode;
+
+        /**
+         * 目的国关税税率%
          */
         private BigDecimal taxRate;
 
@@ -186,12 +204,9 @@ public class ProductCustomsDTO {
          * CustomsTypeEnum 海关类型：出关 exitCustoms 清关 clearanceCustoms 默认：清关
          */
         private String type;
+
         private String typeName;
 
-        /**
-         * 目的国申报价
-         */
-        private BigDecimal toDeclarePrice;
         /**
          * 目的国申报币种
          */
@@ -201,14 +216,34 @@ public class ProductCustomsDTO {
          */
         private String toCurrencySymbol;
 
+        /**
+         * 目的国增值税税率%
+         */
+        private BigDecimal destinationVatRate;
 
         /**
-         * 报关中文名
+         * 目的国附加关税税率%
          */
-        private String declareChineseName;
+        private BigDecimal destinationAdditionalDutyRate;
 
+        /**
+         * 目的国反倾销税税率%
+         */
+        private BigDecimal destinationAntiDumpingDutyRate;
 
+        /**
+         * 目的国其他税率%
+         */
+        private BigDecimal destinationOtherTaxRate;
 
+        /**
+         *报关型号
+         */
+        private String declareModel;
+        /**
+         *申报要素
+         */
+        private String declareElement;
 
     }
 
@@ -280,6 +315,68 @@ public class ProductCustomsDTO {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * sku
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 国家
+         */
+        @NotBlank(message = "国家不能为空")
+        private String country;
+
+        /**
+         * 目的国申报币种
+         */
+        private String toCurrency;
+        /**
+         * 货币符号
+         */
+        private String toCurrencySymbol;
+
+        /**
+         * 目的国清关英文名
+         */
+        private String destinationCustomsEnName;
+
+        /**
+         * 目的国申报价
+         */
+        @NotNull(message = "目的国申报价不能为空")
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国海关编码
+         */
+        private String destinationCustomsCode;
+
+        /**
+         * 目的国关税税率%
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 目的国增值税税率%
+         */
+        private BigDecimal destinationVatRate;
+
+        /**
+         * 目的国附加关税税率%
+         */
+        private BigDecimal destinationAdditionalDutyRate;
+
+        /**
+         * 目的国反倾销税税率%
+         */
+        private BigDecimal destinationAntiDumpingDutyRate;
+
+        /**
+         * 目的国其他税率%
+         */
+        private BigDecimal destinationOtherTaxRate;
+
 
     }
 
@@ -289,7 +386,6 @@ public class ProductCustomsDTO {
      */
     @Data
     @NoArgsConstructor
-    @Valid
     public static class AddDTO extends CommonDTO{
 
 
@@ -300,14 +396,26 @@ public class ProductCustomsDTO {
      */
     @Data
     @NoArgsConstructor
-    @Valid
     public static class UpdateDTO extends CommonDTO{
-
         /**
          * 主键id
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddListDTO {
+        @NotEmpty(message = "新增列表不能为空")
+        List<ProductCustomsDTO. @Valid AddDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateListDTO {
+        @NotEmpty(message = "修改列表不能为空")
+        List<ProductCustomsDTO. @Valid UpdateDTO> list;
     }
 
 

@@ -1,22 +1,32 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.utils.CollectionUtils;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.CustomsTypeEnum;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
 import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -135,18 +145,59 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
-    public List<ProductCustomsDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
+    public PagingVO<ProductCustomsDTO.ListDTO> paging(PagingDTO<ProductCustomsDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<ProductCustomsDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<ProductCustomsDTO.ListDTO> records) {
+        for (ProductCustomsDTO.ListDTO record : records) {
+            record.setTypeName(CustomsTypeEnum.getName(record.getType()));
+        }
     }
 
     @Override
-    public PagingVO<ProductCustomsDTO.ListDTO> paging(PagingDTO<ProductCustomsDTO.PagingParamDTO> dto) {
-        return null;
-    }
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean add(ProductCustomsDTO.AddListDTO dto) {
+        if(Objects.isNull(dto) || CollectionUtil.isEmpty(dto.getList())){
+            return Boolean.FALSE;
+        }
 
-    @Override
-    public Boolean add(ProductCustomsDTO.AddDTO dto) {
-        return null;
+        List<ProductCustomsEntity> list = new ArrayList<>(dto.getList().size());
+        for (ProductCustomsDTO.AddDTO addDTO : dto.getList()) {
+            String skuId = addDTO.getSkuId();
+            ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
+            if (Objects.isNull(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+
+            ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
+            BeanMapper.copy(dto,productCustomsEntity);
+            //目的国海关编码
+            productCustomsEntity.setCustomsCode(addDTO.getDestinationCustomsCode());
+
+            //查询国家
+            String country = addDTO.getCountry();
+            if(StringUtils.isNotBlank(country)){
+                List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).eq(DictCountryEntity::getId, country).list();
+                if(CollUtil.isNotEmpty(dictCountry)){
+                    productCustomsEntity.setCountryName(dictCountry.get(0).getNameCn());
+                }
+            }else {
+                productCustomsEntity.setCountry("default");
+            }
+
+            list.add(productCustomsEntity);
+        }
+
+        return this.saveBatch(list);
     }
 
     @Override
