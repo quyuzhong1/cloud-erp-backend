@@ -608,8 +608,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         }
         //跟踪单号
-        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(Collections.singletonList(soOutstock.getId()));
-        result.setTrackNoList(trackNoMAp.get(soOutstock.getId()));
+        result.setTrackNos(soOutstock.getTrackNo());
+        result.setTrackNoList(Arrays.asList(soOutstock.getTrackNo().split(",")));
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(soOutstock.getWarehouseId()));
         for (SoOutstockDetailDTO.ViewDTO viewDTO : detailList) {
@@ -1807,6 +1807,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         BigDecimal totalDiscountAmount = MathUtil.multiplyWithTwo(discountAmount, discountAmountRate, 2);
 
         BeanMapper.copy(dto, soOutstock);
+        soOutstock.setTrackNo(CollUtil.isNotEmpty(dto.getTrackNoList()) ? String.join(",", dto.getTrackNoList()) :"");
         soOutstock.setCode(code);
         soOutstock.setTotalDiscountAmount(totalDiscountAmount);
         // 出库日期

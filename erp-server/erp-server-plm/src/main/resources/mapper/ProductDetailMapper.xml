@@ -726,7 +726,7 @@
         <if test="params.permissionSql != '' and params.permissionSql != null">
             ${params.permissionSql}
         </if>
-        ORDER BY pd.create_time DESC
+        order by pi.id desc
     </select>
 
     <select id="getNotFinish" resultType="com.common.business.dto.base.BaseIdDTO">
