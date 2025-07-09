@@ -641,7 +641,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(detailEntity.getDeliveryQty());
             detailAddDto.setOutWarehouseId(entity.getDeliveryWarehouseId());
-            detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
             detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
@@ -659,7 +658,34 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 detailAddDto.setRemark(detailEntity.getFbaShipmentCode());
             }
 
-            detailAddDtoList.add(detailAddDto);
+            if (Objects.nonNull(requisitionApplication) &&  ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+                //发货单关联的发后计划类型是三方仓发三方仓，调拨时直接调拨可用库存，调拨仓位自动取有库存的仓位
+                List<InventoryEntity> availableLocation = getAvailableLocation(detailEntity, entity.getDeliveryWarehouseId());
+                if (CollUtil.isEmpty(availableLocation)){
+                    throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存", deliveryWarehouse.getName(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty()));
+                }
+                int sum = availableLocation.stream().mapToInt(InventoryEntity::getQty).sum();
+                if (sum < detailEntity.getDeliveryQty()){
+                    throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存【{}】", deliveryWarehouse.getName(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty(),sum));
+                }
+                Integer deliveryQty = detailEntity.getDeliveryQty();
+                for (InventoryEntity inventoryEntity : availableLocation) {
+                    if (inventoryEntity.getQty() >= deliveryQty){
+                        detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                        detailAddDto.setQty(deliveryQty);
+                        detailAddDtoList.add(detailAddDto);
+                        break;
+                    }else {
+                        detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                        detailAddDto.setQty(inventoryEntity.getQty());
+                        detailAddDtoList.add(detailAddDto);
+                        deliveryQty = deliveryQty - inventoryEntity.getQty();
+                    }
+                }
+            }else {
+                detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+                detailAddDtoList.add(detailAddDto);
+            }
         }
         addDTO.setDetailList(detailAddDtoList);
         return transferInfoService.addAndApprove(addDTO);
@@ -1128,16 +1154,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setSkuNo(detailEntity.getSkuNo());
             detailAddDto.setQty(detailEntity.getDeliveryQty());
             detailAddDto.setOutWarehouseId(fromWarehouse);
-            if (isFirst){
-                if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
-                    //发货单关联的发后计划类型是三方仓发三方仓，调拨时直接调拨可用库存，调拨仓位自动取有库存的仓位
-                    detailAddDto.setOutWarehouseLocation(getAvailableLocation(detailEntity, fromWarehouse,deliveryWarehouse.getName()));
-                }else {
-                    detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
-                }
-            }else {
-                detailAddDto.setOutWarehouseLocation("");
-            }
             //头程发货单审核通过时，按照中转配置的仓库依次走调拨，最后从最低级的中转仓调拨至在途仓，，调拨时库存状态为冻结
             if (isLastTransfer){
                 detailAddDto.setInWarehouseId(destWarehouse.getOnwayWarehouseId());
@@ -1160,25 +1176,51 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 detailAddDto.setRemark(detailEntity.getFbaShipmentCode());
             }
 
-            detailAddDtoList.add(detailAddDto);
+            if (isFirst){
+                if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(requisitionApplication.getDeliveryType())){
+                    //发货单关联的发后计划类型是三方仓发三方仓，调拨时直接调拨可用库存，调拨仓位自动取有库存的仓位
+                    List<InventoryEntity> availableLocation = getAvailableLocation(detailEntity, fromWarehouse);
+                    if (CollUtil.isEmpty(availableLocation)){
+                        throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存", deliveryWarehouse.getName(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty()));
+                    }
+                    int sum = availableLocation.stream().mapToInt(InventoryEntity::getQty).sum();
+                    if (sum < detailEntity.getDeliveryQty()){
+                        throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存【{}】", deliveryWarehouse.getName(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty(),sum));
+                    }
+                    Integer deliveryQty = detailEntity.getDeliveryQty();
+                    for (InventoryEntity inventoryEntity : availableLocation) {
+                        if (inventoryEntity.getQty() >= deliveryQty){
+                            detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                            detailAddDto.setQty(deliveryQty);
+                            detailAddDtoList.add(detailAddDto);
+                            break;
+                        }else {
+                            detailAddDto.setOutWarehouseLocation(inventoryEntity.getWarehouseLocation());
+                            detailAddDto.setQty(inventoryEntity.getQty());
+                            detailAddDtoList.add(detailAddDto);
+                            deliveryQty = deliveryQty - inventoryEntity.getQty();
+                        }
+                    }
+                }else {
+                    detailAddDto.setOutWarehouseLocation(detailEntity.getWarehouseLocation());
+                    detailAddDtoList.add(detailAddDto);
+                }
+            }else {
+                detailAddDto.setOutWarehouseLocation("");
+                detailAddDtoList.add(detailAddDto);
+            }
         }
         addDTO.setDetailList(detailAddDtoList);
         transferInfoService.addAndApprove(addDTO);
     }
 
-    private String getAvailableLocation(FirstMileDeliveryDetailEntity deliveryDetail, String fromWarehouseId, String fromWarehouseName) {
-        InventoryEntity inventoryEntity = inventoryService.lambdaQuery()
+    private List<InventoryEntity> getAvailableLocation(FirstMileDeliveryDetailEntity deliveryDetail, String fromWarehouseId) {
+        return inventoryService.lambdaQuery()
                 .eq(InventoryEntity::getSkuId, deliveryDetail.getSkuId())
                 .eq(InventoryEntity::getWarehouseId, fromWarehouseId)
                 .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                .ge(InventoryEntity::getQty, deliveryDetail.getDeliveryQty())
                 .orderByDesc(InventoryEntity::getQty)
-                .last("limit 1")
-                .one();
-        if (Objects.isNull(inventoryEntity)){
-            throw new ServiceException(CharSequenceUtil.format("仓库【{}】SKU【{}】发货数量【{}】无足够可用库存", fromWarehouseName,deliveryDetail.getSkuNo(),deliveryDetail.getDeliveryQty()));
-        }
-        return inventoryEntity.getWarehouseLocation();
+                .list();
     }
 
     @Override
