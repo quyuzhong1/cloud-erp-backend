@@ -618,7 +618,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
     @Override
     public void testPush(String jsonStr) {
-        mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(),jsonStr , IdUtil.simpleUUID(),1);
+        mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(),jsonStr , IdUtil.simpleUUID(),1);
     }
 
     @Override

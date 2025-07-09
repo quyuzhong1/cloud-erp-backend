@@ -6,6 +6,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -68,6 +70,8 @@ import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.redisson.executor.CronExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -140,10 +144,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     private RedisUtil redisUtil;
     @Resource
     private MqConsumerRecordService mqConsumerRecordService;
-
-    @Resource
-    @Lazy
-    private ThirdNoticePushRecordService self;
 
     @Override
     public List<ThirdNoticePushRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -249,13 +249,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         ThirdNoticePushFailedTypeEnum typeEnum = ThirdNoticePushFailedTypeEnum.getByCode(failedType);
         switch (typeEnum) {
             case ALL:
-                self.sendThirdNoticeByMq(dto);
+                sendThirdNoticeByMq(dto);
                 break;
             case NOPERSON:
-                self.handleNoPersonFailedType(dto, entity, dataJson);
+                handleNoPersonFailedType(dto, entity, dataJson);
                 break;
             case SENDNOTICE:
-                self.handleSendNoticeFailedType(dto, entity, dataJson);
+                handleSendNoticeFailedType(dto, entity, dataJson);
                 break;
             default:
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "未知重推类型");
@@ -295,7 +295,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 .eq(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeId)
                 .list();
 
-        self.sendMsgByCfg(dto, noticeEntity, ruleList, businessKey, fieldList, cfgQueryOptionList);
+        sendMsgByCfg(dto, noticeEntity, ruleList, businessKey, fieldList, cfgQueryOptionList);
     }
 
     @Override
@@ -338,7 +338,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * @date 2025-05-30
      */
     @Async("thirdNoticePushExecutor")
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields) {
         //参数校验
@@ -348,7 +347,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
         //根据table获取业务单据类型（带缓存）
         String table = jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table"));
-        String businessKey = self.getBusinessKeyWithCache(table);
+        String businessKey = getBusinessKeyWithCache(table);
         if (StringUtils.isBlank(businessKey)) {
             log.warn("未找到table[{}]对应的业务类型", table);
             return;
@@ -366,7 +365,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
 
         //构建MQ记录DTO
-        MqConsumerRecordDTO.MqDTO dto = self.buildMqRecordDTO(jsonMap, diffFields, businessKey);
+        MqConsumerRecordDTO.MqDTO dto = buildMqRecordDTO(jsonMap, diffFields, businessKey);
         if (Objects.isNull(dto)) {
             return;
         }
@@ -378,7 +377,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
         //设置记录ID并触发通知
         dto.setMqConsumerRecordId(id);
-        self.sendThirdNoticeByMq(dto);
+        sendThirdNoticeByMq(dto);
     }
 
     /**
@@ -466,7 +465,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * @date 2025-05-30
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void sendThirdNoticeByMq(MqConsumerRecordDTO.MqDTO dto) {
         Map<String, Object> variablesMap = dto.getDataJson();
         String code = String.valueOf(variablesMap.getOrDefault("code", ""));
@@ -512,7 +510,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 List<CfgRuleConditionEntity> ruleList = ruleConditionMap.getOrDefault(noticeEntity.getId(), null);
 
                 //根据配置发送通知
-                self.sendMsgByCfg(dto, noticeEntity, ruleList, bussinessKey,fieldList , cfgQueryOptionList);
+                sendMsgByCfg(dto, noticeEntity, ruleList, bussinessKey,fieldList , cfgQueryOptionList);
             }
         } catch (Exception e) {
             //保持一条推送失败记录，用于重新推送（全部配置）
@@ -546,7 +544,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * 根据第三方消息通知配置进行消息推送 （mq）
      * */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, List<CfgRuleConditionEntity> ruleList, String bussinessKey, List<CfgApproveSyncFieldMapEntity> fieldList, List<CfgQueryOptionEntity> cfgQueryOptionList) {
         Map<String, Object> variablesMap = dto.getDataJson();
         String code = String.valueOf(variablesMap.getOrDefault("code", ""));
@@ -559,7 +556,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
 
         //校验规则条件
-        if (!self.checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
+        if (!checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
             return ;
         }
 
@@ -572,15 +569,15 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 String post = noticeEntity.getPost();
                 if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
                     String errorReason = "通知配置通知人员不能为空";
-                    self.saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
+                    saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
                     continue;
                 }
 
-                List<String> userIdList = self.getUserList(post,roleType, specificPerson, businessId, noticeEntity.getBusinessType());
+                List<String> userIdList = getUserList(post,roleType, specificPerson, businessId, noticeEntity.getBusinessType());
                 if (CollUtil.isEmpty(userIdList)) {
                     //如果没有unionId，则保存失败记录
                     String errorReason = "通知人员不存在";
-                    self.saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
+                    saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
                     continue;
                 }
 
@@ -634,7 +631,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             clazz = (Class<BaseEntity>) Class.forName(classpath);
                         } catch (ClassNotFoundException e) {
                             String errorReason = "配置实体不存在";
-                            self.saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
+                            saveFailedRecordByType(dto, noticeEntity,noticeMethod, businessId, bussinessKey,errorReason, code,ThirdNoticePushFailedTypeEnum.NOPERSON.getCode());
                             continue;
                         }
                         List<BaseEntity> detailList = FeignQuery.create(clazz)
@@ -751,8 +748,41 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             sendMessage.setMessageId(recordEntity.getId());
                             sendMessage.setUnionIds(Arrays.asList(thirdUnionId));
                             sendMessage.setContentMap(contentMap);
-
-                            mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), 1);
+//                            SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), 1);
+//                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+//                                throw new ServiceException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+//                            }
+//                            log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                            LocalDateTime now = LocalDateTime.now();
+                            try {
+                                //发送消息的结果
+                                Boolean sendResult = fsService.sendMessage(sendMessage);
+                                //当发送成功后
+                                if (Boolean.TRUE.equals(sendResult)) {
+                                    String messageId = sendMessage.getMessageId();
+                                    lambdaUpdate()
+                                            .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                                            .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                                            .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                                            .update();
+                                }else {
+                                    String messageId = sendMessage.getMessageId();
+                                    lambdaUpdate()
+                                            .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                                            .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                                            .set(ThirdNoticePushRecordEntity::getErrorReason,"发送消息失败")
+                                            .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                                            .update();
+                                }
+                            }catch (Exception e) {
+                                String messageId = sendMessage.getMessageId();
+                                lambdaUpdate()
+                                        .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                                        .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                                        .set(ThirdNoticePushRecordEntity::getErrorReason,e.getMessage())
+                                        .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                                        .update();
+                            }
                         }
                     }
                 }
@@ -1336,7 +1366,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                                 Map<String, Object> contentMap = fsService.getCardMessageMap(title, content, url);
                                 sendMessage.setContentMap(contentMap);
                                 sendMessage.setMessageId(messageId);
-                                mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), delayLevel);
+                                SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), delayLevel);
+                                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                                    throw new ServiceException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                                }
+                                log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
                             }
                         }
                     }

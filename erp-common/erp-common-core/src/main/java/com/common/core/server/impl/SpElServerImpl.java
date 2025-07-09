@@ -137,6 +137,8 @@ public class SpElServerImpl implements SpElServer {
         if (StrUtil.isBlank(key)){
             key="detailList";
         }
+        //自动根据obj里面的对象
+        convertObjData(obj);
         SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
         List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get(key);
@@ -148,7 +150,86 @@ public class SpElServerImpl implements SpElServer {
             obj.put(addField, valueList);
         }
         return matchExpressionWithVariable(spElDTO, obj);
+    }
 
+    /**
+     * 解析obj所有层级字段
+     * @author will
+     * @date 2025/7/9 15:28
+     * @param objMap
+     * @return void
+     */
+    private void convertObjData(Map<String, Object> objMap) {
+        if (ObjectUtil.isEmpty(objMap)) {
+            return;
+        }
+
+        // 存储最终提取的字段（单值或拼接值）
+        Map<String, Object> resultFields = new HashMap<>();
+        // 收集集合中的字段值（字段名 -> 值列表）
+        Map<String, List<Object>> collectionValues = new HashMap<>();
+
+        // 递归处理整个Map
+        for (Map.Entry<String, Object> entry : objMap.entrySet()) {
+            processField(entry.getKey(), entry.getValue(), resultFields, collectionValues, false);
+        }
+
+        // 处理集合中的值（拼接字符串）
+        for (Map.Entry<String, List<Object>> colEntry : collectionValues.entrySet()) {
+            resultFields.put(colEntry.getKey(),
+                    colEntry.getValue().stream()
+                            .distinct()
+                            .map(Object::toString)
+                            .collect(Collectors.joining(",")));
+        }
+
+        // 将提取的字段合并回原始Map
+        objMap.putAll(resultFields);
+    }
+
+    /**
+     * 递归处理字段
+     * @param fieldName 当前字段名
+     * @param data 字段值
+     * @param resultFields 结果字段映射
+     * @param collectionValues 集合值收集器
+     * @param inCollection 当前是否在集合上下文中
+     */
+    private void processField(String fieldName, Object data,
+                              Map<String, Object> resultFields,
+                              Map<String, List<Object>> collectionValues,
+                              boolean inCollection) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+
+        if (data instanceof Map) {
+            // 处理Map类型
+            Map<?, ?> map = (Map<?, ?>) data;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String subFieldName = entry.getKey().toString();
+                Object value = entry.getValue();
+                // 递归处理子字段
+                processField(subFieldName, value, resultFields, collectionValues, inCollection);
+            }
+        } else if (data instanceof List) {
+            // 处理List类型
+            List<?> list = (List<?>) data;
+            for (Object item : list) {
+                // 递归处理集合元素，标记为在集合上下文中
+                processField(fieldName, item, resultFields, collectionValues, true);
+            }
+        } else {
+            // 处理基本数据类型
+            if (inCollection) {
+                // 在集合上下文中：收集值到临时列表
+                collectionValues.computeIfAbsent(fieldName, k -> new ArrayList<>())
+                        .add(data);
+            } else {
+                // 不在集合上下文中：直接覆盖结果字段
+                resultFields.put(fieldName, data);
+            }
+        }
     }
 
     @Override

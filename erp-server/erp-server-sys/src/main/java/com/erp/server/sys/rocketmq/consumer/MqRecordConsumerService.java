@@ -106,13 +106,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 List<String> safeConvertedDiffFields = new ArrayList<>(convertedDiffFields);
 
                 // 使用线程池直接异步执行
-                thirdNoticePushExecutor.execute(() -> {
-                    try {
-                        thirdNoticePushRecordService.sendThirdNoticeByMqAsync(safeAfter, safeConvertedDiffFields);
-                    } catch (Exception ex) {
-                        log.error("线程池异步执行 sendThirdNoticeByMqAsync 失败", ex);
-                    }
-                });
+                thirdNoticePushRecordService.sendThirdNoticeByMqAsync(safeAfter, safeConvertedDiffFields);
             } catch (Exception e) {
                 log.error("异步调用 sendThirdNoticeByMqAsync 失败", e);
             }
