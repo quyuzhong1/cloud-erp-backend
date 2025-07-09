@@ -11,8 +11,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -30,6 +28,7 @@ import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.erp.server.workflow.service.OperateLogService;
 import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,14 +101,15 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         //校验飞书必填字段
         validateRequiredFsFields(processDefinitionId, type, addDTO);
         // 查询数据库中与 ruleId 关联的记录
-        List<CfgProcessFieldMapEntity> existingEntities = this.list(
-                new LambdaQueryWrapper<CfgProcessFieldMapEntity>()
-                        .eq(CfgProcessFieldMapEntity::getCfgId, ruleId)
-                        .eq(CfgProcessFieldMapEntity::getIsDeleted, false)
-        );
+        List<CfgProcessFieldMapEntity> oldList = listByCfgId(ruleId);
         try {
             //校验更新数据
             List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(ruleId, addDTO);
+            //需要删除的ID列表
+            List<String> deleteIds = getDeleteIds(entitiesToAddOrUpdate, oldList);
+            if (CollUtil.isNotEmpty(deleteIds)) {
+                this.removeByIds(deleteIds);
+            }
             // 批量插入和更新
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
             //更新值映射
@@ -128,7 +128,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             //生成日志
             Map<String, CfgProcessFieldMapEntity> entityMap = entitiesToAddOrUpdate.stream()
                     .collect(Collectors.toMap(CfgProcessFieldMapEntity::getId, entity -> entity));
-            existingEntities.forEach(item -> {
+            oldList.forEach(item -> {
                 CfgProcessFieldMapEntity entity = entityMap.get(item.getId());
                 if (ObjectUtil.isNotEmpty(item)) {
                     operateLogService.addModuleOperateLogByObj(item, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, CharSequenceUtil.format("流程编码【{}】字段配置",processDefinitionId));
@@ -140,6 +140,27 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             log.info("字段配置更新失败："+e);
             throw new ServiceException("字段配置更新失败:{}", e.getMessage());
         }
+    }
+
+    /**
+     * 根据配置id查询
+     * @author will
+     * @date 2025/7/8 17:28
+     * @param cfgId
+     * @return List<CfgProcessFieldMapEntity>
+     */
+    private List<CfgProcessFieldMapEntity> listByCfgId(String cfgId) {
+        return lambdaQuery().eq(CfgProcessFieldMapEntity::getCfgId,cfgId).list();
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<CfgProcessFieldMapEntity> newList, List<CfgProcessFieldMapEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override
@@ -176,10 +197,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> mainIds) {
-        // 当前用户信息
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
         // 符合 ruleId 存在于 ids 的更新
         List<CfgProcessFieldMapEntity> cfgProcessFieldMapEntityList = this.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().in(CfgProcessFieldMapEntity::getCfgId, mainIds));
         if (CollectionUtils.isEmpty(cfgProcessFieldMapEntityList)) {
