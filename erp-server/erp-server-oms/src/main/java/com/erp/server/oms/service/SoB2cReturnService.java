@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.common.business.service.SuperService;
@@ -71,4 +73,6 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     BatchResultDTO updateLogisticsCode(SoB2cReturnDTO.ReturnLogisticsDTO dto,SoB2cReturnEntity returnEntity);
 
     List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockPreview(List<String> ids);
+
+    List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
 }

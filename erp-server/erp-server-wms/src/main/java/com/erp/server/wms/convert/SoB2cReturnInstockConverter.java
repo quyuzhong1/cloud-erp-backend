@@ -60,7 +60,8 @@ public interface SoB2cReturnInstockConverter {
             @Mapping(target = "sourceDetailId", ignore = true),
             @Mapping(target = "taxReturnAmount", ignore = true),
             @Mapping(target = "taxReturnAmountLocalCurrency", ignore = true),
-            @Mapping(target = "warehouseLocation", ignore = true)
+            @Mapping(target = "warehouseLocation", ignore = true),
+            @Mapping(target = "isCheckReceiveQty", ignore = true)
     })
     SoReturnInstockDetailDTO.Add soB2cReturnDetailEntityToAdd(SoB2cReturnDTO.ReturnInstockDTO returnInstockDTO);
     List<SoReturnInstockDetailDTO.Add> soB2cReturnDetailEntityToAdd(List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS);

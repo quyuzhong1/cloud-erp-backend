@@ -19,6 +19,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.query.SoReturnQueryHandler;
+import com.erp.server.oms.service.SoB2cReturnService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,9 @@ public class SoReturnController extends BaseController {
 
     @Resource
     private SoReturnDetailService soReturnDetailService;
-    
+    @Resource
+    private SoB2cReturnService soB2cReturnService;
+
     /**
      * 列表查询
      * @Author Luo_WG
@@ -382,8 +385,12 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/listAddDetailView")
     public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestBody listAddDetailViewDTO dto) {
-        List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(dto);
-        return success(addDetailViews);
+        SoReturnEntity soReturn = soReturnService.getById(dto.getId());
+        if (Objects.nonNull(soReturn)){
+            return success(soReturnDetailService.listAddDetailView(dto));
+        }else {
+            return success(soB2cReturnService.listAddDetailView(dto));
+        }
     }
 
 
