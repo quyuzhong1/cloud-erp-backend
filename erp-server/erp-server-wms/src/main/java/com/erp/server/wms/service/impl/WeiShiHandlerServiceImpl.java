@@ -114,7 +114,19 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         dto.setAuthJson(authJson);
         return true;
     }
-
+    @Override
+    protected  ApiResult<String> refreshToken(Map<String,Object> map){
+        WeiShiBaseResp<WeiShiTokenResp> authResp = weiShiService.accessToken(map);
+        if(!isSuccess(authResp)){
+            throw new ServiceException("授权失败,"+authResp.getMsg());
+        }
+        WeiShiTokenResp weiShiTokenResp = authResp.getData();
+        map.put("accessToken",weiShiTokenResp.getAccessToken());
+        Long expireInSecond = weiShiTokenResp.getExpiresIn();
+        LocalDateTime expireIn = LocalDateTime.now().plusSeconds(expireInSecond);
+        map.put("expireIn",expireIn.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        return success();
+    }
 
     public <T> boolean isSuccess(WeiShiBaseResp<T> resp){
         return resp.getCode()==200;
