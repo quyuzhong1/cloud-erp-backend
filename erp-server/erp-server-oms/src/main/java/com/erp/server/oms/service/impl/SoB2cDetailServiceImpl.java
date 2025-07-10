@@ -447,6 +447,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         // 是否保留历史数量和sku信息：自发货订单已发货(待发货)保留历史明细
         boolean keepHistory = !mainEntity.hasPlatformWarehouseOrder() &&
+                CollectionUtils.isNotEmpty(oldDetailEntityList) &&
                 (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus()) );
         if (keepHistory){
             return oldDetailEntityList;
