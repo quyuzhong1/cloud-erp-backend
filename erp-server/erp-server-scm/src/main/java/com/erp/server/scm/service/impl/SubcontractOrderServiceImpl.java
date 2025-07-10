@@ -1292,10 +1292,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //存在加急
         Boolean isUrgent = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsUrgent);
-        variablesMap.put("isUrgent", isUrgent);
+        variablesMap.put("isUrgentTotal", isUrgent);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsGift);
-        variablesMap.put("isGift", isGift);
+        variablesMap.put("isGiftTotal", isGift);
         //SKU
         String skuNo = detailList.stream().map(SubcontractOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
