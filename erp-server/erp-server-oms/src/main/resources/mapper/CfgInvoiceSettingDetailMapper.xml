@@ -60,6 +60,8 @@
                 <result column="tax_type" property="taxType"/>
                 <result column="invoice_node" property="invoiceNode"/>
                 <result column="is_auto_upload" property="isAutoUpload"/>
+                <result column="dict_verify_type" property="dictVerifyType"/>
+                <result column="isCheckIe" property="isCheckIe"/>
             </collection>
         </collection>
     </resultMap>
@@ -102,6 +104,8 @@
         d.tax_type,
         d.invoice_node,
         d.is_auto_upload,
+        d.dict_verify_type,
+        case when d.dict_verify_type = 'ie' then true else false end as isCheckIe,
         d.create_time,
         d.update_time,
         COALESCE(dict.name, d.dict_platform) as platform_name

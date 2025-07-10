@@ -70,6 +70,11 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     */
     @TableField("is_auto_upload")
     private Boolean isAutoUpload;
+    /**
+     * 校验类型
+     */
+    @TableField("dict_verify_type")
+    private String dictVerifyType;
 
     /**
      * 公司token

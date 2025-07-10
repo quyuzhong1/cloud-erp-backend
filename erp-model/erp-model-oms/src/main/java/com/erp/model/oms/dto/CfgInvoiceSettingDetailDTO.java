@@ -130,6 +130,12 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          * 自动上传
          */
         private Boolean isAutoUpload;
+        /**
+         * 是否校验类型
+         */
+        private Boolean isCheckIe;
+
+        private String dictVerifyType;
     }
 
     @Data

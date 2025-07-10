@@ -19,6 +19,7 @@ import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.InvoiceNodeEnum;
+import com.erp.model.oms.enums.InvoiceVerifyTypeEnum;
 import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper;
@@ -268,7 +269,11 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 entity.setRatio((ratio == null ? BigDecimal.ZERO : ratio).divide(new BigDecimal("100")));
                 entity.setDictPlatform(platformValue);
                 entity.setMainId(mainId); // 确保设置了mainId
-
+                if (Objects.nonNull(detail.getIsCheckIe()) && detail.getIsCheckIe()){
+                    entity.setDictVerifyType(InvoiceVerifyTypeEnum.IE.getCode());
+                }else {
+                    entity.setDictVerifyType(InvoiceVerifyTypeEnum.NONE.getCode());
+                }
                 // 判断是新增还是更新
                 String id = detail.getId();
                 if (ObjectUtil.isEmpty(id) || idsWithChangedShopId.contains(id)) {
