@@ -274,30 +274,30 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
         }
         result.setDeclareInfo(declareInfo);
-        //国家列表
-        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
-        List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
-        List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(productCustomsList)) {
-            customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
-            customsList.forEach(viewDTO -> {
-                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
-                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                }
-                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
-                    String[] split = viewDTO.getCountry().split(",");
-                    List<String> countryIdList = Arrays.asList(split);
-                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
-                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
-                    viewDTO.setCountryName(countryName);
-                }
-            });
-        }
-        productCustomsList.forEach(req -> {
-
-        });
-        result.setCustomsList(customsList);
+//        //国家列表
+//        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
+//        List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
+//        List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
+//        if (CollectionUtils.isNotEmpty(productCustomsList)) {
+//            customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
+//            customsList.forEach(viewDTO -> {
+//                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
+//                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+//                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+//                }
+//                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
+//                    String[] split = viewDTO.getCountry().split(",");
+//                    List<String> countryIdList = Arrays.asList(split);
+//                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
+//                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
+//                    viewDTO.setCountryName(countryName);
+//                }
+//            });
+//        }
+//        productCustomsList.forEach(req -> {
+//
+//        });
+//        result.setCustomsList(customsList);
         return result;
     }
 

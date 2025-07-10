@@ -1,11 +1,10 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,15 +14,21 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
+import com.erp.model.scm.entity.SupplierCredentialEntity;
 import com.erp.server.plm.service.ProductCustomsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 目的国清关信息
@@ -32,8 +37,9 @@ import java.util.List;
  * @since 2023-03-15
  */
 @RestController
-@LogSystemModule("供应商列表")
-@RequestMapping("/supplier/visit")
+@LogSystemModule("目的国清关信息")
+@RequestMapping("/productCustoms")
+@Slf4j
 public class ProductCustomsController extends BaseController {
 
 
@@ -85,9 +91,48 @@ public class ProductCustomsController extends BaseController {
             menuCode = "plm:productCustoms:update",
             serviceClass = ProductCustomsService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ProductCustomsDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated ProductCustomsDTO.UpdateListDTO dto) {
         Boolean  result= productCustomsService.update(dto);
         return result==true?success():failure();
+    }
+
+    /**
+     * 删除
+     * @author jack
+     * @date:  2025-06-21
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productCustoms:delete",
+            serviceClass = ProductCustomsService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "目的国清关信息删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ProductCustomsEntity> list = productCustomsService.listBySkuIds(ids);
+        Map<String, ProductCustomsEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductCustomsEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = productCustomsService.delete(id);
+            }catch (Exception e){
+                log.error("目的国清关信息删除失败",e);
+                ProductCustomsEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "目的国清关信息不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }else{
+                    deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo()+":"+entity.getCountryName(), e.getMessage());
+                }
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
