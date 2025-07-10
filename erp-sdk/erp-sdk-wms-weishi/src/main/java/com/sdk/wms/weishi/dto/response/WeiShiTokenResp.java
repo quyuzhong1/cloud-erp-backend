@@ -21,5 +21,5 @@ public class WeiShiTokenResp {
     /**
      * accessToken过期时间
      */
-    private Long expireIn;
+    private Long expiresIn;
 }

@@ -11,6 +11,8 @@ import com.sdk.wms.weishi.utils.WeiShiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,15 +32,16 @@ public class WeiShiService {
     public static void main(String[] args) {
         WeiShiService weiShiService = new WeiShiService();
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("key","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
         authMap.put("accessToken","566362ec-97bf-430f-ab8e-9ee140253d8d");
-        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
+//        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
 //        WeiShiBaseResp<WeiShiTokenResp> weiShiBaseResp = weiShiService.accessToken(authMap);
-        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
+//        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
+
     }
 
     public WeiShiBaseResp<WeiShiTokenResp> accessToken(Map<String,Object> authMap){
-        String path = "/omsapi/auth/omsLoginBySecretKey/" + authMap.get("key").toString();
+        String path = "/omsapi/auth/omsLoginBySecretKey/" + authMap.get("appKey").toString();
         String bodyStr = OkHttpUtils.doGet(preUrl +path, new HashMap<>(), new HashMap<>());
         return WeiShiUtils.parseToJiFengResp(bodyStr, WeiShiTokenResp.class);
     }
