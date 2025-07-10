@@ -98,6 +98,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     private CfgRuleInvoiceService cfgRuleInvoiceService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -1027,7 +1029,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> soIdList) {
+    public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> soIdList, Boolean isCheckInvoiceTax) {
         if (CollUtil.isEmpty(soIdList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -1040,7 +1042,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
         List<String> shopIdList = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
         List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
-
+        //买家地址
+        List<SoB2cReceiverEntity> receiverEntityList = soB2cReceiverService.listByMainIds(soIdList);
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(soIdList);
         if (CollUtil.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_DETAIL_NOT_EXIST);
@@ -1095,7 +1098,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? new InvoiceTaxEntity() : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(new InvoiceTaxEntity());
             Boolean isGenerateInvoiceTax = invoiceTaxService.checkInvoiceTax(invoiceTaxEntity);
-            if (isGenerateInvoiceTax) {
+            if (isGenerateInvoiceTax && Objects.nonNull(isCheckInvoiceTax) && isCheckInvoiceTax) {
                 continue;
             }
             BeanUtil.copyProperties(invoiceTaxEntity,viewDTO);
@@ -1104,6 +1107,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             viewDTO.setShopId(soB2cEntity.getShopId());
+            viewDTO.setSoId(soB2cEntity.getId());
             viewDTO.setShopName(shopMap.get(soB2cEntity.getShopId()));
             viewDTO.setUnit(CharSequenceUtil.isBlank(viewDTO.getUnit()) ? "UN" : viewDTO.getUnit());
             //同州cfop
@@ -1123,6 +1127,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 } else if (TaxTypeEnum.SELF_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
                     viewDTO.setDiffStateTaxCode(NfeCfopEnum.SELF_SALE_DIFF_CFOP.getCode());
                 }
+            }
+            //发票地址
+            SoB2cReceiverEntity soB2cReceiverEntity = receiverEntityList.stream().filter(e -> e.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cReceiverEntity)){
+                viewDTO.setInvoiceAddress(soB2cReceiverEntity.getInvoiceAddress());
             }
             resultList.add(viewDTO);
         }

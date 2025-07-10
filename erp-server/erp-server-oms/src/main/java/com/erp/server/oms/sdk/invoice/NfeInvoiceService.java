@@ -361,20 +361,28 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getShopId,soB2cEntity.getShopId())
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            throw new ServiceException("B2C买家信息记录不存在");
+        }
         if (CollUtil.isEmpty(allDmpSoBillDetailEntityList)) {
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
                     || (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform()))){
                 throw new ServiceException("开票地址信息不能为空");
             }
            //按照销售信息赋值
-            return getNfeClienteDTOBySoB2c(soB2cEntity);
+            return getNfeClienteDTOBySoB2c(receiverEntity);
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
         String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
         nfeClienteDTO.setCep(newCep);
         nfeClienteDTO.setBairro(getBairroStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua(),nfeClienteDTO.getBairro()));
-        nfeClienteDTO.setRua(getRuaStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua()));
+        if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())){
+            nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
+        }else {
+            nfeClienteDTO.setRua(getRuaStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua()));
+        }
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
@@ -448,11 +456,7 @@ public class NfeInvoiceService {
         return bairro;
     }
 
-    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cEntity soB2cEntity) {
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
-        if (ObjUtil.isEmpty(receiverEntity)) {
-            throw new ServiceException("B2C买家信息记录不存在");
-        }
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cReceiverEntity receiverEntity) {
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
             nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );
@@ -771,6 +775,7 @@ public class NfeInvoiceService {
         return FileUtil.toMultipartFile(invoiceUrl,sourceFile.getName(),defaultSuffix);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void createInvoiceProcess(SoB2cEntity soB2cEntity, InvoiceInfoEntity invoiceInfoEntity) {
          log.warn("记录异步开票日志开始：{}",invoiceInfoEntity.getCode());
         try {

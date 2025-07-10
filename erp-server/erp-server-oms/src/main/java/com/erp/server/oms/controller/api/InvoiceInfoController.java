@@ -148,8 +148,8 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<List<ViewDTO>>
      */
     @PostMapping("/checkGenerateInvoice")
-    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds());
+    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated InvoiceTaxDTO.IdsDTO dto) {
+        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds(),dto.getIsCheckInvoiceTax());
         return  success(list);
     }
 
