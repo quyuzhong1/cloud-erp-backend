@@ -1397,8 +1397,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  soInfoTransferInfoList = new ArrayList<>();
         List<TransferDTO>  requisitionTransferList = new ArrayList<>();
         List<TransferDTO>  firstMileTransferList = new ArrayList<>();
-        List<TransferDTO>  TransferToUlanziList = new ArrayList<>();
-        List<TransferDTO>  TransferFromUlanziList = new ArrayList<>();
+        List<TransferDTO>  transferToUlanziList = new ArrayList<>();
+        List<TransferDTO>  transferToThirdList = new ArrayList<>();
+        List<TransferDTO>  transferFromUlanziList = new ArrayList<>();
+        List<TransferDTO>  firstMileThirdList = new ArrayList<>();
 
         for (TransferInfoDetailEntity detailEntity : detailList) {
 
@@ -1432,9 +1434,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }else if (SourceTypeEnum.SO_INFO_TRANSFER_INFP.getCode().equals(transferInfoEntity.getSourceType())){
                 soInfoTransferInfoList.add(transferDTO);
             }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
-                TransferToUlanziList.add(transferDTO);
+                transferToUlanziList.add(transferDTO);
+            }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD.getCode().equals(transferInfoEntity.getSourceType())){
+                transferToThirdList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
-                TransferFromUlanziList.add(transferDTO);
+                transferFromUlanziList.add(transferDTO);
+            }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_THIRD.getCode().equals(transferInfoEntity.getSourceType())){
+                firstMileThirdList.add(transferDTO);
             } else if (SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode().equals(transferInfoEntity.getSourceType())) {
                 requisitionTransferList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())) {
@@ -1490,17 +1496,33 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
         //头程发货单生成调拨单（发货仓-优蓝子中转仓）
-        if(CollectionUtils.isNotEmpty(TransferToUlanziList)){
+        if(CollectionUtils.isNotEmpty(transferToUlanziList)){
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-            inventoryTransferDTO.setParamList(TransferToUlanziList);
+            inventoryTransferDTO.setParamList(transferToUlanziList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_TO_ULANZI.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
-        //头程发货单生成调拨单（优蓝子中转仓-目的仓在途仓）
-        if(CollectionUtils.isNotEmpty(TransferFromUlanziList)){
+        //头程发货单生成调拨单（发货仓-中转仓）三方仓-三方仓
+        if(CollectionUtils.isNotEmpty(transferToThirdList)){
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-            inventoryTransferDTO.setParamList(TransferFromUlanziList);
+            inventoryTransferDTO.setParamList(transferToThirdList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.FIRST_MILE_DELIVERY_PUSH_TRANSFER_TO_THIRD.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //头程发货单生成调拨单（发货仓-目的仓仓）三方仓-三方仓
+        if(CollectionUtils.isNotEmpty(firstMileThirdList)){
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(firstMileThirdList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.FIRST_MILE_PUSH_TRANSFER_TO_THIRD.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //头程发货单生成调拨单（优蓝子中转仓-目的仓在途仓）
+        if(CollectionUtils.isNotEmpty(transferFromUlanziList)){
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(transferFromUlanziList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DELIVERY_PUSH_TRANSFER_FROM_ULANZI.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);

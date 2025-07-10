@@ -60,6 +60,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -103,6 +104,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
@@ -347,14 +349,19 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 反审核条件判断
         validateDisApprove(entity);
 
-        // 检查是否有下推单据
-        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
-        if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-            throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
-        }
         List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
-        if (CollectionUtils.isNotEmpty(requisitionApplicationEntities)) {
+        if (CollectionUtils.isNotEmpty(requisitionApplicationEntities) && !ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
+        }
+        if (CollUtil.isNotEmpty(requisitionApplicationEntities)){
+            List<String> ids = requisitionApplicationEntities.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
+            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
+            }
+        }
+        if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())){
+            requisitionApplicationService.removeBySourceIds(Collections.singletonList(id));
         }
 
         // 更新审核信息
@@ -455,6 +462,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus) && ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(entity.getDeliveryType())) {
+            // 审核通过 生成要货申请
+            requisitionApplicationService.generateRequisition(entity.getId());
+        }
         return Boolean.TRUE;
     }
 
@@ -510,7 +521,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 //        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(skuIdList,"");
         //设置状态中文名称
         data.setApproveStatusName(data.getApproveStatus().getName());
-
+        data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
+        //物流方式
+        data.setExpectLogisticsMethodName(LogisticsMethodEnum.getName(data.getExpectLogisticsMethod()));
         //明细信息
         List<WmsDeliveryPlanDetailDTO.ViewDTO> viewDTOS = BeanMapper.copyList(detailEntityList, WmsDeliveryPlanDetailDTO.ViewDTO.class);
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
@@ -1130,6 +1143,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         // 属性赋值
         for(WmsDeliveryPlanDTO.ListDTO data : list) {
+            data.setDeliveryTypeName(ThirdDeliveryTypeEnum.getName(data.getDeliveryType()));
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(data.getDeliveryStatus()));
@@ -1216,14 +1230,24 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
      * 新增修改处理数据
      */
     private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
-
-        //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(wmsDeliveryPlanEntity.getToWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(updateDTO)) {
-            wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
+        List<String> warehouseIds = new ArrayList<>();
+        if (ThirdDeliveryTypeEnum.THIRD_TO_THIRD.getCode().equals(wmsDeliveryPlanEntity.getDeliveryType())){
+            if (CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getFromWarehouseId())){
+                throw new ServiceException("来源仓库不能为空");
+            }
+            warehouseIds.add(wmsDeliveryPlanEntity.getFromWarehouseId());
         }
-
+        warehouseIds.add(wmsDeliveryPlanEntity.getToWarehouseId());
+        //设置仓库中文名
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
+        String toWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+        if (CharSequenceUtil.isNotBlank(toWarehouseName)) {
+            wmsDeliveryPlanEntity.setToWarehouseName(toWarehouseName);
+        }
+        String fromWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getFromWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+        if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
+            wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
+        }
         if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
@@ -1263,7 +1287,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                     }
                 }
                 if(CollectionUtils.isNotEmpty(errorSkuList)){
-                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
+                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息", errorSkuList, toWarehouseName));
                 }
             }
         }else{

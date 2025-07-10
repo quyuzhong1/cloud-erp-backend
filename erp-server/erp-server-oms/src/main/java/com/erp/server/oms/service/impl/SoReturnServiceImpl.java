@@ -528,6 +528,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setCurrency(dto.getCurrency());
         soReturnEntity.setCurrencySymbol(currencySymbol.get(dto.getCurrency()));
+        soReturnEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
     }
 
     //生成销售退货单
@@ -571,6 +572,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setCurrency(dto.getCurrency());
         soReturnEntity.setCurrencySymbol(currencySymbol.get(dto.getCurrency()));
+        soReturnEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
     }
 
     @Override
@@ -1128,15 +1130,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         Map<String, String> currencySymbol = getCurrencySymbol(currencys);
         //获取
         for (String soId : soIdList) {
+            List<SoInfoDTO.GenerateSoReturnView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
+            SoInfoDTO.GenerateSoReturnView soReturnView = viewList.get(0);
+            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(soId)).findFirst().orElse(new SoInfoEntity());
             SoReturnDTO.Add add = new SoReturnDTO.Add();
             add.setSourceId(soId);
             add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-
-            List<SoInfoDTO.GenerateSoReturnView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
-            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(soId)).findFirst().orElse(new SoInfoEntity());
+            add.setWarehouseId(soReturnView.getWarehouseId());
+            add.setBillDate(soReturnView.getReturnDate());
+            add.setCustomerId(soReturnView.getCustomerId());
+            add.setCurrency(soInfoEntity.getCurrency());
+            add.setCurrencySymbol(currencySymbol.get(soInfoEntity.getCurrency()));
+            add.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
+            add.setReturnLogisticCode(soReturnView.getReturnLogisticCode());
             List<SoReturnDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateSoReturnView view : viewList) {
-                add.setWarehouseId(view.getWarehouseId());
                 SoReturnDetailDTO.Add detailAdd = new SoReturnDetailDTO.Add();
                 detailAdd.setReturnQty(view.getReturnQty());
                 detailAdd.setReturnTypeDict(view.getReturnTypeDict());
@@ -1147,11 +1155,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setTaxReturnAmount(view.getTaxReturnAmount());
                 detailAdd.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
                 detailAdd.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
-                add.setBillDate(view.getReturnDate());
-                add.setCustomerId(view.getCustomerId());
-                add.setCurrency(soInfoEntity.getCurrency());
-                add.setCurrencySymbol(currencySymbol.get(soInfoEntity.getCurrency()));
-                add.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
                 detailAdd.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
                 detailList.add(detailAdd);
             }
