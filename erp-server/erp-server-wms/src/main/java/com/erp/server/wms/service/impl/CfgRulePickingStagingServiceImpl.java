@@ -95,7 +95,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         b2bStagingEntity.setBillType(PickingBillTypeEnum.B2B.getCode());
         b2bStagingEntity.setWarehouseAreaId(b2bWarehouseLocation.getParentId());
         b2bStagingEntity.setWarehouseLocationId(b2bWarehouseLocation.getId());
-        b2bStagingEntity.setWarehouseLocation(b2bWarehouseLocation.getName());
+        b2bStagingEntity.setWarehouseLocation(b2bWarehouseLocation.getCode());
         b2bStagingEntity.setWarehouseId(dto.getWarehouseId());
         addList.add(b2bStagingEntity);
 
@@ -103,7 +103,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         fbaStagingEntity.setBillType(PickingBillTypeEnum.FBA.getCode());
         fbaStagingEntity.setWarehouseAreaId(fbaWarehouseLocation.getParentId());
         fbaStagingEntity.setWarehouseLocationId(fbaWarehouseLocation.getId());
-        fbaStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getName());
+        fbaStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getCode());
         fbaStagingEntity.setWarehouseId(dto.getWarehouseId());
         addList.add(fbaStagingEntity);
 
@@ -111,7 +111,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         thirdStagingEntity.setBillType(PickingBillTypeEnum.THIRD.getCode());
         thirdStagingEntity.setWarehouseAreaId(thirdWarehouseLocation.getParentId());
         thirdStagingEntity.setWarehouseLocationId(thirdWarehouseLocation.getId());
-        thirdStagingEntity.setWarehouseLocation(thirdWarehouseLocation.getName());
+        thirdStagingEntity.setWarehouseLocation(thirdWarehouseLocation.getCode());
         thirdStagingEntity.setWarehouseId(dto.getWarehouseId());
         addList.add(thirdStagingEntity);
         this.saveBatch(addList);
