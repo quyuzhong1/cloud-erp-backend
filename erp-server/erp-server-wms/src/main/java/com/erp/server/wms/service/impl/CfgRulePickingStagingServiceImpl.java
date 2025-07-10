@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO saveStaging(CfgRulePickingStagingDTO.StagingDTO dto, String warehouseName, Map<String, WarehouseLocationEntity> locationMap, List<CfgRulePickingStagingEntity> cfgList) {
+    public BatchResultDTO saveStaging(CfgRulePickingStagingDTO.StagingDTO dto, String warehouseName, Map<String, WarehouseLocationEntity> locationMap) {
         WarehouseLocationEntity b2bWarehouseLocation = locationMap.getOrDefault(dto.getB2bWarehouseLocationId(), null);
         if (b2bWarehouseLocation == null) {
             throw new RuntimeException("B2B暂存库位不存在");
@@ -89,29 +90,31 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         if (thirdWarehouseLocation == null) {
             throw new RuntimeException("第三方暂存库位不存在");
         }
-        CfgRulePickingStagingEntity b2bStagingEntity = cfgList.stream().filter(e -> PickingBillTypeEnum.B2B.getCode().equals(e.getBillType())).findFirst().orElse(new CfgRulePickingStagingEntity());
+        List<CfgRulePickingStagingEntity> addList = new ArrayList<>(3);
+        CfgRulePickingStagingEntity b2bStagingEntity = new CfgRulePickingStagingEntity();
         b2bStagingEntity.setBillType(PickingBillTypeEnum.B2B.getCode());
         b2bStagingEntity.setWarehouseAreaId(b2bWarehouseLocation.getParentId());
         b2bStagingEntity.setWarehouseLocationId(b2bWarehouseLocation.getId());
         b2bStagingEntity.setWarehouseLocation(b2bWarehouseLocation.getName());
         b2bStagingEntity.setWarehouseId(dto.getWarehouseId());
-        this.saveOrUpdate(b2bStagingEntity);
+        addList.add(b2bStagingEntity);
 
-        CfgRulePickingStagingEntity fbaStagingEntity = cfgList.stream().filter(e -> PickingBillTypeEnum.FBA.getCode().equals(e.getBillType())).findFirst().orElse(new CfgRulePickingStagingEntity());
+        CfgRulePickingStagingEntity fbaStagingEntity = new CfgRulePickingStagingEntity();
         fbaStagingEntity.setBillType(PickingBillTypeEnum.FBA.getCode());
         fbaStagingEntity.setWarehouseAreaId(fbaWarehouseLocation.getParentId());
         fbaStagingEntity.setWarehouseLocationId(fbaWarehouseLocation.getId());
         fbaStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getName());
         fbaStagingEntity.setWarehouseId(dto.getWarehouseId());
-        this.saveOrUpdate(fbaStagingEntity);
+        addList.add(fbaStagingEntity);
 
-        CfgRulePickingStagingEntity thirdStagingEntity = cfgList.stream().filter(e -> PickingBillTypeEnum.THIRD.getCode().equals(e.getBillType())).findFirst().orElse(new CfgRulePickingStagingEntity());
+        CfgRulePickingStagingEntity thirdStagingEntity = new CfgRulePickingStagingEntity();
         thirdStagingEntity.setBillType(PickingBillTypeEnum.THIRD.getCode());
         thirdStagingEntity.setWarehouseAreaId(thirdWarehouseLocation.getParentId());
         thirdStagingEntity.setWarehouseLocationId(thirdWarehouseLocation.getId());
         thirdStagingEntity.setWarehouseLocation(thirdWarehouseLocation.getName());
         thirdStagingEntity.setWarehouseId(dto.getWarehouseId());
-        this.saveOrUpdate(thirdStagingEntity);
+        addList.add(thirdStagingEntity);
+        this.saveBatch(addList);
         return BatchResultDTO.success(dto.getWarehouseId(), warehouseName, "保存成功");
     }
 

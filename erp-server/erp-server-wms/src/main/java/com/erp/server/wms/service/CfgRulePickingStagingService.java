@@ -33,10 +33,9 @@ public interface CfgRulePickingStagingService extends SuperService<CfgRulePickin
      * @param dto
      * @param warehouseName
      * @param locationMap
-     * @param cfgList
      * @return
      */
-    BatchResultDTO saveStaging(CfgRulePickingStagingDTO.StagingDTO dto, String warehouseName, Map<String, WarehouseLocationEntity> locationMap, List<CfgRulePickingStagingEntity> cfgList);
+    BatchResultDTO saveStaging(CfgRulePickingStagingDTO.StagingDTO dto, String warehouseName, Map<String, WarehouseLocationEntity> locationMap);
 
     List<CfgRulePickingStagingEntity> listByWarehouseIds(List<String> strings);
 

@@ -78,10 +78,8 @@ public class CfgRulePickingStagingController extends BaseController {
     public ApiResult<List<BatchResultDTO>> saveStaging(@RequestBody ValidList<CfgRulePickingStagingDTO.StagingDTO> dtoList){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         List<String> warehouseIds = dtoList.stream().map(CfgRulePickingStagingDTO.StagingDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CollUtil.isEmpty(warehouseIds)){
-            cfgRulePickingStagingService.removeOtherWarehouse(warehouseIds);
-            return success(resultDTOS);
-        }
+        //删除已有配置
+        cfgRulePickingStagingService.removeOtherWarehouse(null);
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<String> warehouseLocationIdList = dtoList.stream()
@@ -90,23 +88,19 @@ public class CfgRulePickingStagingController extends BaseController {
                 .collect(Collectors.toList());
         List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByIds(warehouseLocationIdList);
         Map<String, WarehouseLocationEntity> locationMap = locationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity()));
-        List<CfgRulePickingStagingEntity> list = cfgRulePickingStagingService.listByWarehouseIds(warehouseIds);
         //检查是否存在重复仓库id配置
-        int size = dtoList.stream().map(CfgRulePickingStagingDTO.StagingDTO::getWarehouseId).distinct().collect(Collectors.toList()).size();
+        int size = (int) dtoList.stream().map(CfgRulePickingStagingDTO.StagingDTO::getWarehouseId).distinct().count();
         if (dtoList.size() != size){
             return failure("仓库存在重复配置，请检查！");
         }
         for (CfgRulePickingStagingDTO.StagingDTO dto : dtoList){
             String warehouseName = warehouseMap.get(dto.getWarehouseId());
-            List<CfgRulePickingStagingEntity> cfgList = list.stream().filter(e -> e.getWarehouseId().equals(dto.getWarehouseId())).collect(Collectors.toList());
             try {
-                resultDTOS.add(cfgRulePickingStagingService.saveStaging(dto,warehouseName,locationMap,cfgList));
+                resultDTOS.add(cfgRulePickingStagingService.saveStaging(dto,warehouseName,locationMap));
             }catch (Exception e){
                 resultDTOS.add(BatchResultDTO.fail(dto.getWarehouseId(), warehouseName, e.getMessage()));
             }
         }
-        //移除其他仓库配置
-        cfgRulePickingStagingService.removeOtherWarehouse(warehouseIds);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
