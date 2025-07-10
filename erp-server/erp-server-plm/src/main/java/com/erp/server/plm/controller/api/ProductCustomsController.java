@@ -113,7 +113,7 @@ public class ProductCustomsController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<ProductCustomsEntity> list = productCustomsService.listBySkuIds(ids);
+        List<ProductCustomsEntity> list = productCustomsService.listByIds(ids);
         Map<String, ProductCustomsEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductCustomsEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;

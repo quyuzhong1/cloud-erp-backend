@@ -436,7 +436,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
-    public List<ProductCustomsEntity> listBySkuIds(List<String> skuIds) {
-        return baseMapper.listBySkuIds(skuIds);
+    public List<ProductCustomsEntity> listByIds(List<String> ids) {
+        return baseMapper.listByIds(ids);
     }
 }
