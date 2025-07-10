@@ -2,44 +2,53 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.excel.ProductCustomsExcelDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.CustomsTypeEnum;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.plm.listener.ProductCustomsExcelListener;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SysLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_CUSTOMS;
 
 /**
  * <p>
@@ -53,8 +62,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMapper, ProductCustomsEntity> implements ProductCustomsService {
 
-
-
     @Resource
     private SysLogService sysLogService;
 
@@ -63,6 +70,9 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
     @Resource
     private ProductCustomsService self;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     private static final String PCCLASSPATH = String.valueOf(ProductCustomsEntity.class);
 
@@ -207,13 +217,14 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
             self.save(productCustomsEntity);
             // 操作日志
-            String format = String.format("用户【%s】新增【目的国清关信息】为【%s】", UserContext.getNonLoginUser().getUserName(), StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+            String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
             sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
         }
         return Boolean.TRUE;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCustomsDTO.UpdateListDTO dto) {
         if(Objects.isNull(dto) || CollectionUtil.isEmpty( dto.getList())){
             return Boolean.FALSE;
@@ -242,7 +253,11 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             List<ProductCustomsDTO.UpdateDTO> value = entry.getValue();
 
             List<ProductCustomsEntity> oldValue = oldSkuGroup.getOrDefault(skuId, null);
+            Map<String, ProductCustomsEntity> oldMap = new HashMap<>();
             if(CollUtil.isNotEmpty(oldValue)){
+
+                oldMap = oldValue.stream().collect(Collectors.toMap(ProductCustomsEntity::getId, e -> e, (o1, o2) -> o1));
+
                 // 处理删除的数据
                 List<String> newIds = value.stream().map(ProductCustomsDTO.UpdateDTO::getId).collect(Collectors.toList());
                 List<ProductCustomsEntity> remove = oldValue.stream()
@@ -254,51 +269,130 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                             .in(ProductCustomsEntity::getId,removeIds )
                             .update();
 
-
-
-
-
+                    // 操作日志
+                    for (ProductCustomsEntity productCustomsEntity : remove) {
+                        String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                        sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                    }
                 }
             }
 
+            for (ProductCustomsDTO.UpdateDTO updateDTO : value) {
+                ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
+                ProductCustomsEntity oldEntity = new ProductCustomsEntity();
+                if (StringUtils.isNotBlank(updateDTO.getId())) {
+                    oldEntity = oldMap.get(updateDTO.getId());
+                }
+                BeanMapper.copy(dto,productCustomsEntity);
+                //目的国海关编码
+                productCustomsEntity.setCustomsCode(updateDTO.getDestinationCustomsCode());
+                //查询国家
+                String country = updateDTO.getCountry();
+                if(StringUtils.isNotBlank(country)){
+                    productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
+                }
 
-
-
+                if (StringUtils.isNotBlank(updateDTO.getId())) {
+                    productCustomsEntity.setVersion(oldEntity.getVersion());
+                    self.updateById(productCustomsEntity);
+                    // 操作日志
+                    String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), "",format);
+                }else {
+                    self.save(productCustomsEntity);
+                    // 操作日志
+                    String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                }
+            }
         }
-
-
         return Boolean.TRUE;
     }
 
     @Override
-    public ProductCustomsDTO.ViewDTO view(String id) {
-        return null;
+    public List<ProductCustomsDTO.ViewDTO> view(List<String> ids) {
+        if(CollUtil.isNotEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.view(ids);
     }
 
     @Override
-    public void exportList(ProductCustomsDTO.PagingParamDTO dto, HttpServletResponse response) {
-
+    public void exportList(ProductCustomsDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("目的国清关导出", EXPORT_PLM_PRODUCT_CUSTOMS.getCode(), param);
     }
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        //SKU
+        Map<String, String> skuMap = productDetailService.list().stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (o1, o2) -> o1));
+
+        //国家信息
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
+        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId));
+        ProductCustomsExcelListener excelListenerUtil = new ProductCustomsExcelListener(dictCountryMap, skuMap);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProductCustomsExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入拜访错误！", e);
+            return Boolean.FALSE;
+        }
+        List<ProductCustomsExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "拜访错误信息";
+            ExcelUtil.export(fileName, "error", errorList, ProductCustomsExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        List<ProductCustomsEntity> successList = excelListenerUtil.getSuccessList();
+        if(CollUtil.isNotEmpty(successList)){
+            self.saveBatch(successList);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-
+        String path = "classpath:excel/productCustomsTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 
     @Override
     public BatchResultDTO delete(String id) {
-        return null;
+        ProductCustomsEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到目的国清关信息"));
+
+        String country = entity.getCountry();
+        if(Objects.equals(country, CommonConstants.DEFAULT)){
+            throw new ServiceException("国家等于默认的明细行不允许删除");
+        }
+
+        // 删除主单数据
+        super.removeById(id);
+
+        // 删除日志数据
+        String format = String.format("删除【%s】清关信息", StringUtils.isBlank(entity.getCountryName()) ? "默认" : entity.getCountryName());
+        sysLogService.addSysLogBySave(format, PCCLASSPATH, entity.getSkuId(), "");
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo()+":"+entity.getCountryName(), OperationTypeEnum.DELETE);
     }
 
     @Override
     public List<ProductCustomsEntity> listBySkuIds(List<String> skuIds) {
         return baseMapper.listBySkuIds(skuIds);
     }
-
-
 }

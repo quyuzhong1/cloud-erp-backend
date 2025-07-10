@@ -57,6 +57,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出"),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发"),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出"),
+    EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出"),
 
 
     //oms

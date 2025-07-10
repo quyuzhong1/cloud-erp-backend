@@ -100,9 +100,8 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * 详情
      * @author jack
      * @date:  2025-06-21
-     * @return ApiResult<SupplierCredentialDTO.ViewDTO>>
      */
-    ProductCustomsDTO.ViewDTO view(String id);
+    List<ProductCustomsDTO.ViewDTO> view(List<String> ids);
     /**
      * 导出Excel数据
      * @author jack

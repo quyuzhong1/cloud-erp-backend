@@ -48,4 +48,6 @@ public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
     List<ProductCustomsEntity> listProductCustomsBySkuIds(@Param("dto") ProductCustomsSkuDTO dto);
 
     IPage<ProductCustomsDTO.ListDTO> paging(Page query,@Param("params") ProductCustomsDTO.PagingParamDTO params);
+
+    List<ProductCustomsDTO.ViewDTO> view(@Param("ids")List<String> ids);
 }
