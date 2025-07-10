@@ -20,6 +20,8 @@ import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -80,9 +82,12 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-
                 //平台仓拆分
                 List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
+                generateB2cList = generateB2cList.stream().filter(v-> StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(generateB2cList)){
+                    return false;
+                }
                 generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
                 log.error("[TeMu生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());

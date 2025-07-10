@@ -193,7 +193,6 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isEmpty(findUserDTO)) {
                 throw new ServiceException(ApiError.ERROR_1037,applyUserName);
             }
-            map.remove("applyUserName");
             map.put("applyUserId", findUserDTO.getUserId());
             map.put("applyDeptId", findUserDTO.getDepartmentId());
         }
