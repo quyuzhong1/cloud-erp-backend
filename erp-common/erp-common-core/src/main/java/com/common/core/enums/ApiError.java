@@ -126,7 +126,7 @@ public enum ApiError implements Serializable {
 
     ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
-
+    ERROR_NOT_FOUND(1067,"{}未找到"),
 
 
 
@@ -836,7 +836,7 @@ public enum ApiError implements Serializable {
 
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
-
+    ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
 
     /**
      * WMS 错误
