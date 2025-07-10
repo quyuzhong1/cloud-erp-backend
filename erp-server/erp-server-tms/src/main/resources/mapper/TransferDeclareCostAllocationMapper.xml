@@ -37,6 +37,7 @@
 	select
             t.id mainId,
             g.id,
+            h.id as detailId,
 			t.report_date,
 			t.account_date,
 			t.report_status,
