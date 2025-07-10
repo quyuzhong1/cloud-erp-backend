@@ -36,10 +36,7 @@ import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.*;
-import com.kingdee.bos.webapi.entity.RepoResult;
-import com.kingdee.bos.webapi.entity.RepoRet;
-import com.kingdee.bos.webapi.entity.RepoStatus;
-import com.kingdee.bos.webapi.entity.SuccessEntity;
+import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -361,6 +358,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         map.put("syncKingdeeId", id);
         //提交
         submit(map, apiUtils, id, type);
+        //判断是否自动审核
+        if (param.getIsAutoAudit()) {
+            //提交成功后继续审核直至已审核
+            audit(map, apiUtils, id, type);
+        }
         //更新业务表中的金蝶id
         updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id,kingdeeCode);
         return Boolean.TRUE;
@@ -425,11 +427,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         List<String> ids = new ArrayList<>();
         ids.add(id);
 
-        apiUtils.submit(ids);
+        OperatorResult submitResult = apiUtils.submit(ids);
+        boolean submit = submitResult.isSuccessfully();
+        if(!submit){
+            throw new RuntimeException("金碟提交失败");
+        }
         log.info("提交成功,数据Id = 【{}】", JSONUtil.toJsonStr(ids));
-        //提交成功后继续审核直至已审核
-        Boolean audit = audit(map, apiUtils, id, type);
-        return audit;
+        return submit;
     }
 
     @Override
@@ -465,7 +469,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //非已审核继续审核
             ArrayList<String> ids = new ArrayList<>();
             ids.add(id);
-            apiUtils.auditById(ids);
+            OperatorResult operatorResult = apiUtils.auditById(ids);
+            boolean audit = operatorResult.isSuccessfully();
+            if(!audit){
+                throw new RuntimeException("金碟审核失败");
+            }
             //审核成功操作日志
             log.info("审核成功,数据【{}】", JSONUtil.toJsonStr(viewMap));
             //当审核状态非已审核时继续审核
@@ -807,7 +815,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //重新审核
         if (KingdeeDocStatusEnum.REAPPROVE.equals(docStatusEnum)) {
-     /*       //审核中需要撤销
+         /* //审核中需要撤销
             if (StrUtil.equals(KingdeeDocStatusEnum.APPROVING.getCode(), documentStatus)) {
                 return this.cancelAssign(apiUtils,syncKingdeeId);
             }*/

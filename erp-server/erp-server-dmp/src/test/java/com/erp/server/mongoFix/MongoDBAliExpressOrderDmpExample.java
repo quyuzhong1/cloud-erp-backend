@@ -20,8 +20,8 @@ import java.util.Set;
 public class MongoDBAliExpressOrderDmpExample {
     public static void main(String[] args) {
         // MongoDB 连接字符串，包括用户名和密码
-        String connectionString = "mongodb://root:mongoDBulanzi@172.16.100.60:32550";
-//        String connectionString = "mongodb://ulanzi_developer:ulanzi_developer@172.16.100.10:27017";
+        String connectionString = "mongodb://?:mongoDBulanzi@172.16.100.60:32550";
+//        String connectionString = "mongodb://?:ulanzi_developer@172.16.100.10:27017";
 
         try (MongoClient mongoClient = MongoClients.create(connectionString)) {
             String dbName = "erp-dmp";
