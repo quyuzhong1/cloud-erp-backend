@@ -86,39 +86,15 @@ public class ProductCustomsDTO {
         private String id;
 
         /**
-         * skuId
+         * sku
          */
         private String skuId;
-
-        /**
-         * skuNo
-         */
-        private String skuNo;
 
         /**
          * 国家
          */
         private String country;
 
-        /**
-         * 国家
-         */
-        private String countryName;
-
-        /**
-         * 海关编码
-         */
-        private String customsCode;
-
-        /**
-         * 税率
-         */
-        private BigDecimal taxRate;
-
-        /**
-         * 目的国申报价
-         */
-        private BigDecimal toDeclarePrice;
         /**
          * 目的国申报币种
          */
@@ -127,6 +103,47 @@ public class ProductCustomsDTO {
          * 货币符号
          */
         private String toCurrencySymbol;
+
+        /**
+         * 目的国清关英文名
+         */
+        private String destinationCustomsEnName;
+
+        /**
+         * 目的国申报价
+         */
+        private BigDecimal toDeclarePrice;
+
+        /**
+         * 目的国海关编码
+         */
+        private String destinationCustomsCode;
+
+        /**
+         * 目的国关税税率%
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 目的国增值税税率%
+         */
+        private BigDecimal destinationVatRate;
+
+        /**
+         * 目的国附加关税税率%
+         */
+        private BigDecimal destinationAdditionalDutyRate;
+
+        /**
+         * 目的国反倾销税税率%
+         */
+        private BigDecimal destinationAntiDumpingDutyRate;
+
+        /**
+         * 目的国其他税率%
+         */
+        private BigDecimal destinationOtherTaxRate;
+
     }
 
     @Data
@@ -380,15 +397,12 @@ public class ProductCustomsDTO {
 
     }
 
-
     /**
      *
      */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO{
-
-
     }
 
     /**

@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
@@ -94,7 +95,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @param dto
      * @return
      */
-    Boolean update(ProductCustomsDTO.UpdateDTO dto);
+    Boolean update(ProductCustomsDTO.UpdateListDTO dto);
     /**
      * 详情
      * @author jack
@@ -122,4 +123,13 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @return
      */
     void downloadTemplate(HttpServletResponse response);
+    /**
+     * 删除
+     * @author jack
+     * @date:  2025-06-21
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    BatchResultDTO delete(String id);
+
+    List<ProductCustomsEntity> listBySkuIds(List<String> skuIds);
 }
