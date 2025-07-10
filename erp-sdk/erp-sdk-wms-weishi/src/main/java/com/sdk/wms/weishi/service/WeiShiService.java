@@ -3,20 +3,19 @@ package com.sdk.wms.weishi.service;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.weishi.dto.request.WeiShiAuthRequest;
+import com.sdk.wms.weishi.dto.request.WeiShiBaseRequest;
+import com.sdk.wms.weishi.dto.request.WeiShiProductRequest;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
+import com.sdk.wms.weishi.dto.response.WeiShiProductResp;
 import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
 import com.sdk.wms.weishi.dto.response.WeiShiWarehouseResp;
 import com.sdk.wms.weishi.utils.WeiShiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 
 @Slf4j
@@ -33,10 +32,11 @@ public class WeiShiService {
         WeiShiService weiShiService = new WeiShiService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
-        authMap.put("accessToken","566362ec-97bf-430f-ab8e-9ee140253d8d");
-//        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
+        authMap.put("accessToken","769cf24c-3463-4374-b52d-b276b3051188");
+
+        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
 //        WeiShiBaseResp<WeiShiTokenResp> weiShiBaseResp = weiShiService.accessToken(authMap);
-//        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
+        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
 
     }
 
@@ -60,6 +60,21 @@ public class WeiShiService {
         bodyMap.put("data", "{}");
         String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiWarehouseResp>>>() {});
+    }
+
+    /**
+     * 查询产品
+     * @return
+     */
+    public WeiShiBaseResp<List<WeiShiProductResp>> querySkuList(WeiShiProductRequest weiShiProductRequest){
+        String action = "querySkuList";
+        Map<String, String> headerMap = buildHearderMap(weiShiProductRequest.getAuthMap());
+        weiShiProductRequest.setPage(100);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiProductRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiProductResp>>>() {});
     }
 
 

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Max;
+import java.util.Map;
 
 /**
  * @author liuruipeng
@@ -16,8 +17,10 @@ import javax.validation.constraints.Max;
 @SuperBuilder
 public class WeiShiBaseRequest {
 
-    @Max(value = 200,message = "每页最大长度不能大于200")
-    protected Integer pageSize;
+    private Map<String,Object> authMap;
+
+    @Max(value = 100,message = "每页最大长度不能大于100")
+    protected Integer limit;
 
     protected Integer page;
 }
