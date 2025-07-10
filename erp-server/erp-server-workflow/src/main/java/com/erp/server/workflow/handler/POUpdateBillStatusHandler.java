@@ -130,7 +130,7 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
                 taskInfoEntity.setHappenTime(LocalDateTime.now());
                 taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
                 if (status.equals(FSApprovalStatusEnum.APPROVED.getCode())){
-                    taskInfoEntity.setStatus(ApproveTaskStatusEnum.ALL.getCode());
+                    taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
                 }
                 boolean b = taskInfoService.updateById(taskInfoEntity);
                 if (!b){
