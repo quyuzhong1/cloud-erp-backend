@@ -130,5 +130,5 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      */
     BatchResultDTO delete(String id);
 
-    List<ProductCustomsEntity> listBySkuIds(List<String> skuIds);
+    List<ProductCustomsEntity> listByIds(List<String> ids);
 }

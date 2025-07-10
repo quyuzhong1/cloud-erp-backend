@@ -210,4 +210,26 @@
         ORDER BY
         pc.sku_id,pc.id DESC
     </select>
+    <select id="listByIds" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+        SELECT
+        pc.id,
+        pd.id AS skuId,
+        pd.images_url,
+        pd.sku_no,
+        pc.country,
+        pc.country_name as countryName,
+        pc.to_declare_price as toDeclarePrice,
+        pc.to_currency as toCurrency,
+        pc.to_currency_symbol as toCurrencySymbol,
+        pc.customs_code,
+        pc.tax_rate,
+        pc.type
+        FROM product_customs pc
+        LEFT JOIN product_detail pd ON pc.sku_id = pd."id" AND pd.is_deleted = FALSE
+        WHERE pc.is_deleted = FALSE
+        and pc.id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>
