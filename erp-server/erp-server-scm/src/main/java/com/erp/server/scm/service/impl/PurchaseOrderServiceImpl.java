@@ -1891,10 +1891,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         variablesMap.put("purchaseQtyTotal", purchaseQtyTotal);
         //存在加急
         Boolean isUrgent = detailList.stream().anyMatch(PurchaseOrderDetailEntity::getIsUrgent);
-        variablesMap.put("isUrgent", isUrgent);
+        variablesMap.put("isUrgentTotal", isUrgent);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(PurchaseOrderDetailEntity::getIsGift);
-        variablesMap.put("isGift", isGift);
+        variablesMap.put("isGiftTotal", isGift);
         //新品首批
         String firstMassProduct = detailList.stream().map(PurchaseOrderDetailEntity::getFirstMassProduct).collect(Collectors.joining(","));
         variablesMap.put("firstMassProduct", firstMassProduct);
