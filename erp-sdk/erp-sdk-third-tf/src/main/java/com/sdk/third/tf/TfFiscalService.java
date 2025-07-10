@@ -235,6 +235,20 @@ public class TfFiscalService {
         return doPostUrl(URL + path, body);
     }
 
+    /**
+     * 作废接口
+     * @author zdy
+     * @date 2025/7/9 12:12
+     * @param nfeVoidedDTO
+     * @return Object
+     */
+    public Object voidedInvoice(NfeInvoiceDTO.NfeVoidedDTO nfeVoidedDTO){
+        String path = "/inutilizar_nfe";
+        String body = JSONUtil.toJsonStr(nfeVoidedDTO);
+        return doPostUrl(URL + path, body);
+    }
+
+
 
     /**
      * 更新cce信息

@@ -637,14 +637,34 @@ public class NfeInvoiceService {
         nfeReturnDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
         Object obj;
         try {
-            log.error("退票响应接口请求：{}", JSONUtil.toJsonStr(nfeReturnDTO));
+            log.error("退票接口请求：{}", JSONUtil.toJsonStr(nfeReturnDTO));
             obj = tfFiscalService.returnInvoice(nfeReturnDTO);
-            log.error("退票响应接口返回：{}", JSONUtil.toJsonStr(obj));
+            log.error("退票接口返回：{}", JSONUtil.toJsonStr(obj));
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_RETURN,e.getMessage());
+        }
+        //解析是否成功，失败抛出异常原因
+        NfeInvoiceDTO.NfeReturnResultDTO resultDTO = JSONUtil.toBean(obj.toString(), NfeInvoiceDTO.NfeReturnResultDTO.class);
+        if (Objects.isNull(resultDTO) || resultDTO.getErro()){
+            throw new ServiceException("退票接口异常：{}",resultDTO.getMsg());
         }
     }
+    /**
+     * 作废
+     * @param nfeVoidedDTO
+     */
+    public void voidedInvoice(NfeInvoiceDTO.NfeVoidedDTO nfeVoidedDTO) {
+        Object obj;
+        try {
+            log.error("作废接口请求：{}", JSONUtil.toJsonStr(nfeVoidedDTO));
+            obj = tfFiscalService.voidedInvoice(nfeVoidedDTO);
+            log.error("作废接口返回：{}", JSONUtil.toJsonStr(obj));
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_VOIDED,e.getMessage());
+        }
+        //{"retorno":{"attributes":{"versao":"4.00"},"infInut":{"tpAmb":"1","verAplic":"SP_NFE_PL009_V4","cStat":"102","xMotivo":"Inutilização de número homologado","cUF":"35","ano":"25","CNPJ":"59399522000150","mod":"55","serie":"1","nNFIni":"1","nNFFin":"2","dhRecbto":"2025-07-10T00:53:25-03:00","nProt":"135251896535761"}}}
 
+    }
     /**
      * 更新Cce数据
      * @author will

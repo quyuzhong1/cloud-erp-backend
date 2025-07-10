@@ -281,6 +281,39 @@ public class NfeInvoiceDTO implements Serializable {
         @Alias("token_empresa")
         private String tokenEmpresa;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NfeVoidedDTO {
+
+        /**
+         * 序列号
+         */
+        @Alias("serie")
+        private String serie;
+
+        /**
+         * 起始编号
+         */
+        @Alias("numero_inicial")
+        private String numeroInicial;
+        /**
+         * 结束编号
+         */
+        @Alias("numero_final")
+        private String numeroFinal;
+        /**
+         * 作废原因
+         */
+        @Alias("justificativa")
+        private String justificativa;
+
+        /**
+         * token
+         */
+        @Alias("token_empresa")
+        private String tokenEmpresa;
+    }
 
     @Data
     @NoArgsConstructor
@@ -406,5 +439,29 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("url_xml_upload")
         private String urlXmlUpload;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class NfeReturnResultDTO {
+        /**
+         * 是否错误
+         */
+        @Alias("erro")
+        private Boolean erro;
+        /**
+         * 异常信息
+         */
+        @Alias("msg")
+        private String msg;
+        /**
+         * 错误码
+         */
+        @Alias("linha")
+        private Integer linha;
+        /**
+         * 文件
+         */
+        @Alias("file")
+        private String file;
     }
 }

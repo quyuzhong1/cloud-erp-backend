@@ -1529,6 +1529,8 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_CREATE_JSON_HANDLE(92190,"NF-e创建发票json解析失败"),
     ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
     ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
+    ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
 
 
 
