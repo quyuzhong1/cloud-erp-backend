@@ -2781,9 +2781,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //temu通过明细记录异常
             if(dto.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) && CollectionUtils.isNotEmpty(dto.getDetailList())){
                 addError.setDetailId(dto.getDetailList().get(0).getSoDetailId());
-            }else{
-                soB2cFeign.addSoB2cError(addError);
             }
+            soB2cFeign.addSoB2cError(addError);
             return Boolean.FALSE;
         }
     }
