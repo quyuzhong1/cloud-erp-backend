@@ -95,7 +95,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @param dto
      * @return
      */
-    Boolean update(ProductCustomsDTO.UpdateListDTO dto);
+    Boolean update(ProductCustomsDTO.AddListDTO dto);
     /**
      * 详情
      * @author jack
