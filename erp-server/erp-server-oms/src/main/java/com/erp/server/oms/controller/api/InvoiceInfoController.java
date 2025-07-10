@@ -124,7 +124,7 @@ public class InvoiceInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id,Boolean.FALSE);
+                resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("生成Nfe发票失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);

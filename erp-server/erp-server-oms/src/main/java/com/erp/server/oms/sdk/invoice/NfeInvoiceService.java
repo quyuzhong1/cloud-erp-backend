@@ -113,7 +113,7 @@ public class NfeInvoiceService {
     private OperateLogService operateLogService;
 
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createInvoice(SoB2cEntity soB2cEntity,Boolean isAsync) {
+    public Boolean createInvoice(SoB2cEntity soB2cEntity) {
         String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
@@ -769,6 +769,27 @@ public class NfeInvoiceService {
         File sourceFile = new File(invoiceUrl);
         String defaultSuffix = AttachmentTypeEnum.INVOICE_INFO_XML.getCode().equals(type) ? "xml" : "pdf";
         return FileUtil.toMultipartFile(invoiceUrl,sourceFile.getName(),defaultSuffix);
+    }
+
+    public void createInvoiceProcess(SoB2cEntity soB2cEntity, InvoiceInfoEntity invoiceInfoEntity) {
+         log.warn("记录异步开票日志开始：{}",invoiceInfoEntity.getCode());
+        try {
+            Boolean result = this.createInvoice(soB2cEntity);
+            if (result){
+                //添加日志
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");
+            }else {
+                //添加日志
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "开票失败");
+            }
+        }catch (Exception e){
+            InvoiceInfoEntity entity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            entity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            entity.setRemark(e.getMessage());
+            invoiceInfoService.updateNfeStatusById(entity);
+            operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
+        }
+        log.warn("记录异步开票日志结束：{}",invoiceInfoEntity.getCode());
     }
 }
 

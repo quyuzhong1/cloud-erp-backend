@@ -171,7 +171,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
             try {
-                invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+                invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.FALSE);
             }catch (Exception e){
                 log.error("生成nfe发票失败，{}",e.getMessage());
             }
