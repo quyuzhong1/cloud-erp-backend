@@ -28,6 +28,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -44,6 +45,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -78,6 +80,7 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.convert.SoB2cReturnInstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.listener.SoReturnStockExcelListener;
@@ -94,7 +97,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -222,6 +224,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private SoReturnNoticeService soReturnNoticeService;
     @Resource
     private AuthDataFeign authDataFeign;
+    @Resource
+    private SoB2cReturnFeign soB2cReturnFeign;
 
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
@@ -395,9 +399,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         dto.setSalesDeptId(soOutstock.getSalesDeptId());
                         dto.setSalesOrgId(soOutstock.getSalesOrgId());
                     }
+                    dto.setExchangeRate(soB2cEntity.getExchangeRate());
+                    dto.setCurrency(soB2cEntity.getCurrency());
+                    dto.setCurrencySymbol(CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency()));
                 }
-                if(Objects.nonNull(shopInfoEntity)){
+                if(Objects.nonNull(shopInfoEntity) && CharSequenceUtil.isNotBlank(shopInfoEntity.getCustomerId())){
                     dto.setCustomerId(shopInfoEntity.getCustomerId());
+                    CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,shopInfoEntity.getCustomerId());
+                    if (Objects.nonNull(customerInfoEntity)){
+                        dto.setSellerId(CharSequenceUtil.isBlank(dto.getSellerId()) ? customerInfoEntity.getSellerId() : dto.getSellerId());
+                        dto.setSalesDeptId(CharSequenceUtil.isBlank(dto.getSalesDeptId()) ? customerInfoEntity.getSalesDeptId() : dto.getSalesDeptId());
+                        dto.setSalesOrgId(CharSequenceUtil.isBlank(dto.getSalesOrgId()) ? customerInfoEntity.getUseOrgId() : dto.getSalesOrgId());
+                    }
                 }
                 entity.setSoId(soB2cReturnEntity.getSoId());
                 entity.setSoCode(soB2cReturnEntity.getSoCode());
@@ -813,7 +826,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             //更新库存
             inventoryTransCore(Collections.singletonList(entity));
-
             //发送金蝶
             sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
             this.syncToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
@@ -2087,6 +2099,40 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .OrderLines(orderLines)
                 .build();
         return aliexpressInboundDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList) {
+        SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
+        WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());
+        if (Objects.isNull(warehouseEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST,"仓库【"+instockDTO.getWarehouseName()+"】");
+        }
+        //构建退货入库单新增数据
+        SoReturnInstockDTO.Add add = SoB2cReturnInstockConverter.INSTANCE.soB2cReturnEntityToAdd(instockDTO);
+        add.setWarehouseKeeperId(warehouseEntity.getChargeId());
+        //构建明细数据
+        List<SoReturnInstockDetailDTO.Add> detailList = SoB2cReturnInstockConverter.INSTANCE.soB2cReturnDetailEntityToAdd(returnInstockDTOS);
+        detailList.forEach(detail -> {
+            detailEntityList.stream().filter(e -> e.getId().equals(detail.getSoReturnDetailId())).findFirst().ifPresent(f -> {
+                detail.setIsCheckReceiveQty(Boolean.FALSE);
+                detail.setRemark(f.getRemark());
+                detail.setReturnReasonDict(soB2cReturnEntity.getReason());
+                b2cDetailEntityList.stream().filter(h -> h.getId().equals(f.getSoDetailId())).findFirst().ifPresent(g -> {
+                    detail.setReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
+                    detail.setTaxReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
+                    detail.setWarehouseId(instockDTO.getWarehouseId());
+                    detail.setPlatformSkuNo(g.getPlatformSkuNo());
+                    detail.setExchangeRate(g.getExchangeRate());
+                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(),detail.getReturnAmount()));
+                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(),detail.getTaxReturnAmount()));
+                });
+            });
+        });
+        add.setDetailList(detailList);
+        this.add(add);
+        return BatchResultDTO.success(soB2cReturnEntity.getId(), soB2cReturnEntity.getCode(), "下推成功");
     }
 
     /**

@@ -4,10 +4,7 @@ package com.erp.server.wms.convert;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.FbaShipmentDetailEntity;
-import com.erp.model.wms.entity.FbaShipmentEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -115,4 +112,67 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "fbaShipmentCode", ignore = true),
     })
     FirstMileDeliveryDetailDTO.AddDTO generateFbaDeliverDetailFDD(FbaShipmentDetailEntity fbaShipmentDetailEntity, SkuVO skuVO);
+
+    @Mappings({
+            @Mapping(target = "sourceId", source = "id"),
+            @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.DELIVERY_PLAN.getCode())"),
+            @Mapping(target = "status", expression = "java(com.erp.model.wms.enums.RequisitionApplicationStatusEnum.HANDLE.getCode())"),
+            @Mapping(target = "invalidStatus", ignore = true),
+            @Mapping(target = "invalidRemark", ignore = true),
+            @Mapping(target = "invalidTime", ignore = true),
+            @Mapping(target = "type", source = "type"),
+            @Mapping(target = "channelId", source = "shopId"),
+            @Mapping(target = "channelName", source = "shopName"),
+            @Mapping(target = "requisitionWarehouseId", source = "fromWarehouseId"),
+            @Mapping(target = "requisitionWarehouseName", source = "fromWarehouseName"),
+            @Mapping(target = "handleUserId", source = "approveUserId"),
+            @Mapping(target = "handleUserName", source = "approveUserName"),
+            @Mapping(target = "handleTime", source = "approveTime"),
+            @Mapping(target = "remark", source = "remark"),
+            @Mapping(target = "fbaShipmentCode", ignore = true),
+            @Mapping(target = "pickPushDownStatus", expression = "java(com.erp.model.wms.enums.BillPushDownStatusEnum.WAIT.getCode())"),
+            @Mapping(target = "deliveryPushDownStatus", expression = "java(com.erp.model.wms.enums.BillPushDownStatusEnum.WAIT.getCode())"),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "code", ignore = true),
+            @Mapping(target = "isUnlockInventory", ignore = true)
+    })
+    RequisitionApplicationEntity wmsDeliveryPlanToRequisitionApplication(WmsDeliveryPlanEntity planEntity);
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "mainId", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "approveQty",  source = "qty"),
+            @Mapping(target = "bomVersion", ignore = true),
+            @Mapping(target = "changeBeforeQty", ignore = true),
+            @Mapping(target = "deliveryQty", source = "qty"),
+            @Mapping(target = "fromVirtualWarehouseId", ignore = true),
+            @Mapping(target = "fromVirtualWarehouseName", ignore = true),
+            @Mapping(target = "fromWarehouseId", ignore = true),
+            @Mapping(target = "fromWarehouseName", ignore = true),
+            @Mapping(target = "pickingQty", source = "qty"),
+            @Mapping(target = "requisitionQty", source = "qty"),
+            @Mapping(target = "requisitionWarehouseLocation", ignore = true),
+            @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
+            @Mapping(target = "toWarehouseId", ignore = true),
+            @Mapping(target = "toWarehouseName", ignore = true),
+            @Mapping(target = "virtualFrozenQty", ignore = true)
+    })
+    RequisitionApplicationDetailEntity wmsDeliveryPlanDetailToRequisitionApplicationDetail(WmsDeliveryPlanDetailEntity detailEntity);
+    List<RequisitionApplicationDetailEntity> wmsDeliveryPlanDetailToRequisitionApplicationDetail(List<WmsDeliveryPlanDetailEntity> planDetailEntityList);
 }

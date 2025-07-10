@@ -136,6 +136,11 @@ public class SoB2cDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuNo;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
     }
 
     @Data

@@ -119,6 +119,14 @@ public class WdtSoOutStockDetailDTO implements Serializable {
     private Boolean invalidStatus;
 
     private String soId;
+    /**
+     * 组合品编码
+     */
+    private String suiteNo;
+    /**
+     * 组合品数量
+     */
+    private Integer suiteQty;
 
     private List<PositionDetailsList> positionDetailsList;
 

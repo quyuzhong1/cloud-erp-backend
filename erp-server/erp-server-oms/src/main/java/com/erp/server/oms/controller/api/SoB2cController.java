@@ -1522,7 +1522,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/generateSoB2cReturn")
-    public ApiResult<Boolean> generateSoB2cReturn(@RequestBody @Valid List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
+    public ApiResult<Boolean> generateSoB2cReturn(@RequestBody @Valid ValidList<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
         return success(soB2cService.generateSoB2cReturn(list));
     }
 

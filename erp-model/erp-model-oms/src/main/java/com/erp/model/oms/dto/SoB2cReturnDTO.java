@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.AdvanceQueryDTO;
@@ -224,6 +225,10 @@ public class SoB2cReturnDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
 
     }
 
@@ -248,6 +253,10 @@ public class SoB2cReturnDTO implements Serializable {
          * 平台订单编号
          */
         private String platformOrderNo;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 销售id
          */
@@ -584,5 +593,148 @@ public class SoB2cReturnDTO implements Serializable {
          */
         private Integer instockQty;
 
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReturnLogisticsDTO {
+        /**
+         * 退货单id
+         */
+        @NotBlank(message = "退货单id不能为空")
+        private String id;
+        /**
+         * 退货单号
+         */
+        private String code;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+        /**
+         * 平台退货单号
+         */
+        private String platformReturnNo;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReturnInstockDTO {
+        /**
+         * 退货单id
+         */
+        @NotBlank(message = "退货单id不能为空")
+        private String id;
+        private String detailId;
+        /**
+         * 退货单号
+         */
+        private String code;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+        /**
+         * 平台退货单号
+         */
+        private String platformReturnNo;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+
+        private String skuId;
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+        /**
+         * 出库数量
+         */
+        private Integer outQty;
+        /**
+         * 退货入库数量
+         */
+        @NotNull(message = "退货入库数量不能为空")
+        @Min(value = 1, message = "退货入库数量不能小于1")
+        private Integer instockQty;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 入库日期
+         */
+        @NotNull(message = "入库日期不能为空")
+        private LocalDate billDate;
     }
 }

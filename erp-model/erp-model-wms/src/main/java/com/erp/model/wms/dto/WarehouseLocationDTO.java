@@ -290,6 +290,12 @@ public class WarehouseLocationDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 库区类型
+         * WarehouseAreaTypeEnum
+         * pickingArea 拣货区 stockingArea 备货区 stagingArea 暂存区 defectiveArea 次品区
+         */
+        private String areaType;
 
     }
 
