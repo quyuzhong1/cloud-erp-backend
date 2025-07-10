@@ -213,18 +213,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String categoryId = dto.getCategoryId();
         String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        if (CharSequenceUtil.isBlank(categoryName)) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("供应商分类{}", categoryId));
+        }
 
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         String gradeId = dto.getGradeId();
         String gradeName = supplierGradeList.stream().filter(d -> d.getId().equals(gradeId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        if (CharSequenceUtil.isBlank(gradeName)) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("供应商等级{}", gradeId));
+        }
         addEntity.setGradeName(gradeName);
 
         addEntity.setId(supplierId);
         addEntity.setCategoryName(categoryName);
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
         addEntity.setCode(code);
         String purchaseUserId = dto.getPurchaseUserId();

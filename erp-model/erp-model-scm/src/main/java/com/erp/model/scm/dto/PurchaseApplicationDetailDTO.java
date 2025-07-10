@@ -1,7 +1,9 @@
 package com.erp.model.scm.dto;
 
 import cn.hutool.json.JSONArray;
+import com.common.core.anno.StateEnumValue;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -113,6 +115,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          * 新品首批
          */
         @NotNull(message = "新品首批不能为空")
+        @StateEnumValue(clazz = FirstMassProductTypeEnum.class, message = "新品首批值有误")
         private String firstMassProduct;
 
         /**

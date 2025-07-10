@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -157,7 +158,7 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
 
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
 
-        List<String> fieldIdList = fieldMapList.stream().map(e -> e.getId()).collect(Collectors.toList());
+        List<String> fieldIdList = fieldMapList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 

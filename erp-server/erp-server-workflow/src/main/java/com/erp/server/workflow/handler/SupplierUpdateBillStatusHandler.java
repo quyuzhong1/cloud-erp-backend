@@ -121,7 +121,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
             //处理附件信息
-            handleSupplierData(map);
+            handleSupplierData(map,Boolean.TRUE);
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
@@ -151,7 +151,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             String reason = "";
             String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
             try {
-                // 第二步：保存供应商信息
+                //添加供应商
+                ValidatorUtil.validateEntity(addDTO);
                 batchResultDTO = supplierFeign.add(addDTO);
             } catch (Exception e) {
                 taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
@@ -175,18 +176,21 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
      * @param map
      * @return void
      */
-    private void handleSupplierData(Map<String, Object> map) {
+    private void handleSupplierData(Map<String, Object> map,Boolean isDmpAdd) {
 
         //付款条件
         Object paymentCondition = map.get("paymentCondition");
-        if (ObjectUtil.isNotEmpty(paymentCondition)) {
-            List<BaseDropDownDTO.DisabledDTO> disabledList = scmTaskFeign.listPaymentCondition();
-            String paymentConditionCode = disabledList.stream().
-                    filter(req -> CharSequenceUtil.equals(String.valueOf(paymentCondition),req.getValue()))
-                    .map(BaseDropDownDTO.DisabledDTO::getCode)
-                    .findFirst().orElse("");
-            map.put("paymentCondition", paymentConditionCode);
+        List<BaseDropDownDTO.DisabledDTO> paymentConditionList = scmTaskFeign.listPaymentCondition();
+        String paymentConditionCode = paymentConditionList.stream().
+                filter(req -> CharSequenceUtil.equals(String.valueOf(paymentCondition),req.getValue()))
+                .map(BaseDropDownDTO.DisabledDTO::getCode)
+                .findFirst().orElse("");
+        // 如果付款条件不存在，抛出异常
+        if (CharSequenceUtil.isBlank(paymentConditionCode)) {
+            log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
+        map.put("paymentCondition", paymentConditionCode);
 
         List<Object> credentialList = (List<Object>) map.get("credentialList");
         if (CollUtil.isEmpty(credentialList)) {
@@ -201,26 +205,29 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
             //名称
             Object name = credentialMap.get("name");
-
-            if (ObjectUtil.isNotEmpty(name)) {
-                List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
-                String credentialCode = disabledList.stream().
-                        filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
-                        .map(DictBasicEntity::getValue)
-                        .findFirst().orElse("");
-                credentialMap.put("code", credentialCode);
+            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+            String credentialCode = disabledList.stream().
+                    filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
+                    .map(DictBasicEntity::getValue)
+                    .findFirst().orElse("");
+            // 如果凭证类型不存在，抛出异常
+            if (CharSequenceUtil.isNotBlank(credentialCode)) {
+                log.error("凭证类型未找到，当前凭证类型：{}", name);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
             }
+            credentialMap.put("code", credentialCode);
 
-            //有效期起
-            Object effectiveDate = credentialMap.get("effectiveDate");
-            if (ObjectUtil.isNotEmpty(effectiveDate)) {
-                credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
-            }
-
-            //有效期起
-            Object expireDate = credentialMap.get("expireDate");
-            if (ObjectUtil.isNotEmpty(expireDate)) {
-                credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+            if (isDmpAdd) {
+                //有效期
+                Object effectiveDate = credentialMap.get("effectiveDate");
+                if (ObjectUtil.isNotEmpty(effectiveDate)) {
+                    credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+                }
+                //失效期
+                Object expireDate = credentialMap.get("expireDate");
+                if (ObjectUtil.isNotEmpty(expireDate)) {
+                    credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+                }
             }
 
             Object attachmentObject = credentialMap.get("attachment");
@@ -239,7 +246,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             });
 
             // 更新凭证对象
-            credentialMap.remove("attachment");
             credentialMap.put("attachmentUrlList", attachmentUrlList);
             credentialMap.put("attachmentNameList", attachmentNameList);
 
@@ -277,6 +283,9 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             String lastUserId = lastTask.getStr(FsRequestBodyAttributesEnum.USERID.getCode());
             Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
+
+            //处理附件信息
+            handleSupplierData(map,Boolean.FALSE);
 
             //值映射
             SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
