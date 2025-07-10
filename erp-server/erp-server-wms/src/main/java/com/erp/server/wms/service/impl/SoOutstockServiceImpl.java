@@ -2720,7 +2720,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
-            this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+            //temu通过明细清楚异常
+            if(generateB2cDTO.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                deleteDTO.setMainId(generateB2cDTO.getSoId());
+                deleteDTO.setType(type);
+                List<String> soDetailIds = generateB2cDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(soDetailIds)){
+                    deleteDTO.setDetailIdList(soDetailIds);
+                    soB2cFeign.deleteDetailError(deleteDTO);
+                }else{
+                    this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+                }
+            }else{
+                this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+            }
         }
         return result;
     }
@@ -2764,6 +2779,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setMainId(soB2cId);
             addError.setMessage(message);
             addError.setParamJson(paramJson);
+            //temu通过明细记录异常
+            if(dto.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) && CollectionUtils.isNotEmpty(dto.getDetailList())){
+                addError.setDetailId(dto.getDetailList().get(0).getSoDetailId());
+            }
             soB2cFeign.addSoB2cError(addError);
             return Boolean.FALSE;
         }

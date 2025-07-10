@@ -132,7 +132,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             //解析数据
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
             //处理数据
-            handleMapData(map);
+            handleMapData(map,Boolean.TRUE);
             //值映射
             PurchaseApplicationDTO.InsertDTO insertDTO = BeanUtil.toBean(map, PurchaseApplicationDTO.InsertDTO.class);
             insertDTO.setThirdApproveUserId(lastUserId);
@@ -159,6 +159,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             String reason = "";
             try {
                 //添加供应商
+                ValidatorUtil.validateEntity(insertDTO);
                 batchResultDTO = purchaseApplicationFeign.addAndApprove(insertDTO);
             } catch (Exception e) {
                 taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
@@ -184,7 +185,7 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
      * @param map
      * @return void
      */
-    private void handleMapData (Map<String, Object> map) {
+    private void handleMapData (Map<String, Object> map,Boolean isDmpAdd) {
         //申请名称
         Object applyUserName = map.get("applyUserName");
         if (ObjectUtil.isNotEmpty(applyUserName)) {
@@ -192,14 +193,16 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isEmpty(findUserDTO)) {
                 throw new ServiceException(ApiError.ERROR_1037,applyUserName);
             }
-            map.remove("applyUserName");
             map.put("applyUserId", findUserDTO.getUserId());
             map.put("applyDeptId", findUserDTO.getDepartmentId());
         }
-        //申请日期
-        Object applyDate = map.get("applyDate");
-        if (ObjectUtil.isNotEmpty(applyDate)) {
-            map.put("applyDate", LocalDateTimeUtil.ofDate((TemporalAccessor) applyDate));
+        //中台消费才需要处理日期格式
+        if (isDmpAdd) {
+            //申请日期
+            Object applyDate = map.get("applyDate");
+            if (ObjectUtil.isNotEmpty(applyDate)) {
+                map.put("applyDate", LocalDateTimeUtil.ofDate((TemporalAccessor) applyDate));
+            }
         }
 
         //计划交期处理
@@ -207,10 +210,13 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
         for  (Object detail : (List<Object>) details) {
 
             Map<String, Object> detailMap = (Map<String, Object>) detail;
-            //计划交期
-            Object planDeliveryDate = detailMap.get("planDeliveryDate");
-            if (ObjectUtil.isNotEmpty(planDeliveryDate)) {
-                detailMap.put("planDeliveryDate", LocalDateTimeUtil.ofDate((TemporalAccessor) planDeliveryDate));
+            //中台消费才需要处理日期格式
+            if (isDmpAdd) {
+                //计划交期
+                Object planDeliveryDate = detailMap.get("planDeliveryDate");
+                if (ObjectUtil.isNotEmpty(planDeliveryDate)) {
+                    detailMap.put("planDeliveryDate", LocalDateTimeUtil.ofDate((TemporalAccessor) planDeliveryDate));
+                }
             }
             //仓库
             Object destWarehouseName = detailMap.get("destWarehouseName");
@@ -265,6 +271,8 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
             LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
 
+            //处理数据
+            handleMapData(map,Boolean.FALSE);
             //更新单据状态为待审核
             PurchaseApplicationDTO.InsertDTO insertDTO = BeanUtil.toBean(map, PurchaseApplicationDTO.InsertDTO.class);
             insertDTO.setThirdApproveUserId(lastUserId);

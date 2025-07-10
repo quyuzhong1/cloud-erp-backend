@@ -529,7 +529,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
         //客户sku
-        String platformSkuNo = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).collect(Collectors.joining(","));
+        String platformSkuNo = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
         variablesMap.put("platformSkuNo", platformSkuNo);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(SoDetailEntity::getIsGift);

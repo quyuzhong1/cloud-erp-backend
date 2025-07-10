@@ -58,7 +58,9 @@
     <select id="paging" resultType="com.erp.model.workflow.dto.ApproveTaskInfoDTO$ListDTO">
         select
             <include refid="Base_Column_List"/>
+            ,tpi.serial_number as serialNumber
         from approve_task_info ati
+        left join third_process_instance tpi on ati.third_instance_id = tpi.instance_code and tpi.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ati.is_deleted = false

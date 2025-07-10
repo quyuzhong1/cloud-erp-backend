@@ -73,6 +73,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -153,6 +154,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     private PilotApplicationFeign pilotApplicationFeign;
     @Resource
     private SupplierAccountService supplierAccountService;
+
+    @Resource
+    @Lazy
+    private PurchaseApplicationService purchaseApplicationService;
+
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -1621,13 +1627,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.InsertDTO dto) {
-        PurchaseApplicationEntity entity = this.add(dto);
+        PurchaseApplicationEntity entity = purchaseApplicationService.add(dto);
         if(Objects.isNull(entity)){
             throw new ServiceException(ApiError.ERROR_1019);
         }
         PurchaseApplicationEntity oldEntity = this.getById(entity.getId());
         //直接审核通过
-        ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class).thirdApproveEnd(new PurchaseApplicationDTO.UpdateApproveStatusDTO(dto.getApprovalStatus(),dto.getThirdApproveUserId(),dto.getThirdApproveTime(),oldEntity, ApproveStatusEnum.APPROVE));
+        purchaseApplicationService.thirdApproveEnd(new PurchaseApplicationDTO.UpdateApproveStatusDTO(dto.getApprovalStatus(),dto.getThirdApproveUserId(),dto.getThirdApproveTime(),oldEntity, ApproveStatusEnum.APPROVE));
         return oldEntity;
     }
 

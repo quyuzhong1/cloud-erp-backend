@@ -131,6 +131,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
+    ERROR_NOT_FOUND(1067,"{}未找到"),
 
 
 
@@ -840,7 +841,7 @@ public enum ApiError implements Serializable {
 
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
-
+    ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
 
     /**
      * WMS 错误
