@@ -22,7 +22,7 @@
         SELECT *
         FROM crosstab(
                      'SELECT warehouse_id, bill_type, warehouse_location_id
-                      FROM cfg_rule_picking_staging
+                      FROM cfg_rule_picking_staging where is_deleted = false
                       ORDER BY 1, 2',
                      'SELECT DISTINCT bill_type FROM cfg_rule_picking_staging ORDER BY 1'
              ) AS ct (warehouseId text, "b2bWarehouseLocationId" text, "fbaWarehouseLocationId" text, "thirdWarehouseLocationId" text)

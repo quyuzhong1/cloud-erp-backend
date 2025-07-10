@@ -113,6 +113,11 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String thirdInstanceId;
 
         /**
+         * 第三方单据实际单号
+         */
+        private String serialNumber;
+
+        /**
          * 第三方审批定义【可排序】
          */
         private String thirdApprovalCode;
