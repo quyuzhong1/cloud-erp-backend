@@ -120,24 +120,25 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
                 //主键id
                 taskInfoEntity.setId(add.getId());
             }
+            String reason = "";
+            String taskStatus = ApproveTaskStatusEnum.SUCCESS.getCode();
             try {
                 //更新盖章状态
                 purchaseOrderFeign.updateContractStatusById(contractStampStatusParamsDTO);
-                //更新三方生成查询
-                taskInfoEntity.setBussinessKey(thirdProcessEntity.getBussinessKey());
-                taskInfoEntity.setBussinessCode(list.get(0).getCode());
-                taskInfoEntity.setBussinessId(list.get(0).getId().toString());
-                taskInfoEntity.setHappenTime(LocalDateTime.now());
-                taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                if (status.equals(FSApprovalStatusEnum.APPROVED.getCode())){
-                    taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                }
-                boolean b = taskInfoService.updateById(taskInfoEntity);
-                if (!b){
-                    throw new ServiceException("更新三方生成查询失败");
-                }
             }catch (Exception e) {
-                throw new ServiceException("更新合同状态失败：{}",e.getMessage());
+                taskStatus = ApproveTaskStatusEnum.FAIL.getCode();
+                reason = e.getMessage();
+            }
+            //更新三方生成查询
+            taskInfoEntity.setBussinessKey(thirdProcessEntity.getBussinessKey());
+            taskInfoEntity.setBussinessCode(list.get(0).getCode());
+            taskInfoEntity.setBussinessId(list.get(0).getId().toString());
+            taskInfoEntity.setHappenTime(LocalDateTime.now());
+            taskInfoEntity.setStatus(taskStatus);
+            taskInfoEntity.setReason(reason);
+            boolean b = taskInfoService.updateById(taskInfoEntity);
+            if (!b){
+                throw new ServiceException("更新三方生成查询失败");
             }
         }
     }
