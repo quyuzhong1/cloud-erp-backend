@@ -602,6 +602,8 @@ public enum ApiError implements Serializable {
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
 
     ERROR_95291(95291,"审核中不支持上传"),
+
+    ERROR_95290(95290,"【{}】已存在【】国家"),
     /**
      * TMS 错误
      * 从96000 开始

@@ -332,11 +332,11 @@ public class ProductCustomsDTO {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
         /**
-         * sku
+         * 主键id
          */
-        @NotBlank(message = "SKU不能为空")
-        private String skuId;
+        private String id;
 
         /**
          * 国家
@@ -393,8 +393,6 @@ public class ProductCustomsDTO {
          * 目的国其他税率%
          */
         private BigDecimal destinationOtherTaxRate;
-
-
     }
 
     /**
@@ -402,35 +400,25 @@ public class ProductCustomsDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO{
-    }
+    public static class AddDTO{
 
-    /**
-     *
-     */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO{
         /**
-         * 主键id
+         * sku
          */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        @NotEmpty(message = "列表不能为空")
+        List<ProductCustomsDTO. @Valid CommonDTO> detailDTOList;
+
+
     }
 
     @Data
     @NoArgsConstructor
     public static class AddListDTO {
-        @NotEmpty(message = "新增列表不能为空")
+
+        @NotEmpty(message = "列表不能为空")
         List<ProductCustomsDTO. @Valid AddDTO> list;
     }
-
-    @Data
-    @NoArgsConstructor
-    public static class UpdateListDTO {
-        @NotEmpty(message = "修改列表不能为空")
-        List<ProductCustomsDTO. @Valid UpdateDTO> list;
-    }
-
-
 }

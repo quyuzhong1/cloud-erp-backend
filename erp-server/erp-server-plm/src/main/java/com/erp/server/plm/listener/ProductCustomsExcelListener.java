@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.anno.FieldValid;
+import com.common.core.constant.CommonConstants;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Description 目的国清关信息导入
@@ -87,6 +89,9 @@ public class ProductCustomsExcelListener extends AnalysisEventListener<ProductCu
             String country = dictCountryMap.getOrDefault(countryName, "");
             if(StringUtils.isNotBlank(country)){
                 entity.setCountry(country);
+                if(!Objects.equals(country, CommonConstants.DEFAULT)){
+                    entity.setCountryName(countryName);
+                }
             }else {
                 errorMsgList.add("国家不存在");
             }
@@ -98,9 +103,6 @@ public class ProductCustomsExcelListener extends AnalysisEventListener<ProductCu
             errorList.add(productCustomsExcelDTO);
             return;
         }
-
-        String id = IdWorker.getIdStr();
-        entity.setId(id);
 
         entity.setDestinationCustomsEnName(productCustomsExcelDTO.getDestinationCustomsEnName());
 

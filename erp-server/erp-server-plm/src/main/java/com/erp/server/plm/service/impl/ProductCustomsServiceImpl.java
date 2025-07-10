@@ -193,73 +193,82 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         if(Objects.isNull(dto) || CollectionUtil.isEmpty( dto.getList())){
             return Boolean.FALSE;
         }
-
+        //获取skuIds
         List<ProductCustomsDTO.AddDTO> addList = dto.getList();
+        List<String> skuIds = addList.stream().map(ProductCustomsDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
+
         //国家信息
-        List<String> countryIdList = addList.stream().map(ProductCustomsDTO.AddDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).eq(DictCountryEntity::getId, countryIdList).list();
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
         Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
 
         for (ProductCustomsDTO.AddDTO addDTO : addList) {
-            ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
-            BeanMapper.copy(dto,productCustomsEntity);
-            //目的国海关编码
-            productCustomsEntity.setCustomsCode(addDTO.getDestinationCustomsCode());
+            String skuId = addDTO.getSkuId();
 
-            //查询国家
-            String country = addDTO.getCountry();
-            if(StringUtils.isNotBlank(country)){
-                productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
-            }else {
-                //不存在都设置为默认
-                productCustomsEntity.setCountry(CommonConstants.DEFAULT);
+            List<ProductCustomsDTO.CommonDTO> detailDTOList = addDTO.getDetailDTOList();
+            if(CollUtil.isNotEmpty(detailDTOList)){
+                for (ProductCustomsDTO.CommonDTO commonDTO : detailDTOList) {
+                    ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
+                    BeanMapper.copy(commonDTO,productCustomsEntity);
+
+                    productCustomsEntity.setSkuId(skuId);
+                    //目的国海关编码
+                    productCustomsEntity.setCustomsCode(commonDTO.getDestinationCustomsCode());
+
+                    //查询国家
+                    String country = commonDTO.getCountry();
+                    if(StringUtils.isNotBlank(country)){
+                        productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
+                    }
+
+                    ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
+                    if(Objects.nonNull(oldEntity)){
+                        ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
+                        throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
+                    }
+
+                    self.save(productCustomsEntity);
+                    // 操作日志
+                    String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                }
             }
-
-            self.save(productCustomsEntity);
-            // 操作日志
-            String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-            sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
         }
         return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean update(ProductCustomsDTO.UpdateListDTO dto) {
+    public Boolean update(ProductCustomsDTO.AddListDTO dto) {
         if(Objects.isNull(dto) || CollectionUtil.isEmpty( dto.getList())){
             return Boolean.FALSE;
         }
-        List<ProductCustomsDTO.UpdateDTO> updateList = dto.getList();
+        List<ProductCustomsDTO.AddDTO> updateList = dto.getList();
         //旧sku
-        List<String> skuIds = updateList.stream().map(ProductCustomsDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIds = updateList.stream().map(ProductCustomsDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductCustomsEntity> oldList = lambdaQuery()
                 .in(ProductCustomsEntity::getSkuId, skuIds)
-                .ne(ProductCustomsEntity::getCountry,CommonConstants.DEFAULT)
                 .list();
         //按sku维度进行分组
         Map<String, List<ProductCustomsEntity>> oldSkuGroup = oldList.stream().collect(Collectors.groupingBy(ProductCustomsEntity::getSkuId));
 
         //国家信息
-        List<String> countryIdList = updateList.stream().map(ProductCustomsDTO.UpdateDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).eq(DictCountryEntity::getId, countryIdList).list();
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
         Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
 
         //按sku维度进行分组
-        Map<String, List<ProductCustomsDTO.UpdateDTO>> skuGroup = updateList.stream().collect(Collectors.groupingBy(ProductCustomsDTO.UpdateDTO::getSkuId));
+        for (ProductCustomsDTO.AddDTO entry : updateList) {
+            String skuId = entry.getSkuId();
 
-        for (Map.Entry<String, List<ProductCustomsDTO.UpdateDTO>> entry : skuGroup.entrySet()) {
-            String skuId = entry.getKey();
-
-            List<ProductCustomsDTO.UpdateDTO> value = entry.getValue();
+            List<ProductCustomsDTO.CommonDTO> value = entry.getDetailDTOList();
 
             List<ProductCustomsEntity> oldValue = oldSkuGroup.getOrDefault(skuId, null);
             Map<String, ProductCustomsEntity> oldMap = new HashMap<>();
             if(CollUtil.isNotEmpty(oldValue)){
-
                 oldMap = oldValue.stream().collect(Collectors.toMap(ProductCustomsEntity::getId, e -> e, (o1, o2) -> o1));
 
                 // 处理删除的数据
-                List<String> newIds = value.stream().map(ProductCustomsDTO.UpdateDTO::getId).collect(Collectors.toList());
+                List<String> newIds = value.stream().map(ProductCustomsDTO.CommonDTO::getId).collect(Collectors.toList());
                 List<ProductCustomsEntity> remove = oldValue.stream()
                         .filter(old -> !newIds.contains(old.getId()))
                         .collect(Collectors.toList());
@@ -277,7 +286,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                 }
             }
 
-            for (ProductCustomsDTO.UpdateDTO updateDTO : value) {
+            for (ProductCustomsDTO.CommonDTO updateDTO : value) {
                 ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
                 ProductCustomsEntity oldEntity = new ProductCustomsEntity();
                 if (StringUtils.isNotBlank(updateDTO.getId())) {
@@ -290,6 +299,15 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                 String country = updateDTO.getCountry();
                 if(StringUtils.isNotBlank(country)){
                     productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
+                }
+
+                ProductCustomsEntity existEntity = oldList.stream()
+                        .filter(e ->  !e.getId().equals(updateDTO.getId()) && e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry()))
+                        .findFirst()
+                        .orElse(null);
+                if(Objects.nonNull(existEntity)){
+                    ProductDetailEntity productDetailEntity = productDetailService.getById(existEntity.getSkuId());
+                    throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
                 }
 
                 if (StringUtils.isNotBlank(updateDTO.getId())) {
@@ -330,6 +348,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         //国家信息
         List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
         Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId));
+        dictCountryMap.put("默认",CommonConstants.DEFAULT);
         ProductCustomsExcelListener excelListenerUtil = new ProductCustomsExcelListener(dictCountryMap, skuMap);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductCustomsExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -343,9 +362,34 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             ExcelUtil.export(fileName, "error", errorList, ProductCustomsExcelDTO.class, response);
             return Boolean.FALSE;
         }
+
         List<ProductCustomsEntity> successList = excelListenerUtil.getSuccessList();
         if(CollUtil.isNotEmpty(successList)){
-            self.saveBatch(successList);
+            List<String> skuIds = successList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
+            if(CollUtil.isEmpty(oldList)){
+                //根据skuId 和 country字段唯一来找出successList 中存在于oldList的数据
+                List<ProductCustomsEntity> updateList = successList.stream()
+                        .filter(success -> oldList.stream().allMatch(old -> success.getSkuId().equals(old.getSkuId()) && success.getCountry().equals(old.getCountry()))).
+                        collect(Collectors.toList());
+
+                for (ProductCustomsEntity productCustomsEntity : updateList) {
+                    ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
+                    productCustomsEntity.setId(oldEntity.getId());
+                    productCustomsEntity.setVersion(oldEntity.getVersion());
+                }
+                self.updateBatchById(updateList);
+            }
+
+            //根据skuId 和 country字段唯一来找出successList 中不存在于oldList的数据
+            List<ProductCustomsEntity> addList = successList.stream()
+                    .filter(success -> oldList.stream().noneMatch(old -> success.getSkuId().equals(old.getSkuId()) && success.getCountry().equals(old.getCountry()))).
+                    collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(addList)){
+                self.saveBatch(addList);
+            }
+            //新增sku国家默认的记录，如果有则不新增
+            self.addDefaultCustoms(skuIds);
         }
         return Boolean.TRUE;
     }

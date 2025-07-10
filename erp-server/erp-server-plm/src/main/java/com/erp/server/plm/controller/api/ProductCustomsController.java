@@ -91,7 +91,7 @@ public class ProductCustomsController extends BaseController {
             menuCode = "plm:productCustoms:update",
             serviceClass = ProductCustomsService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ProductCustomsDTO.UpdateListDTO dto) {
+    public ApiResult update(@RequestBody @Validated ProductCustomsDTO.AddListDTO dto) {
         Boolean  result= productCustomsService.update(dto);
         return result==true?success():failure();
     }
