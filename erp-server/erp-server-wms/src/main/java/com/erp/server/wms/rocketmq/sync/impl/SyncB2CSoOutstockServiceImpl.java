@@ -257,6 +257,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
+        if (ObjectUtil.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_FOUND, warehouseList.get(0).getSysName());
+        }
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         //组织信息
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
