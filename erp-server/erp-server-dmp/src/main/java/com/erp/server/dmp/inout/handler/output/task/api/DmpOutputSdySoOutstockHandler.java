@@ -338,7 +338,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 
 				// 添加发货类型
 				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
-				shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "平台配送":"自发货");
+				shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "0":"1");
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
 
