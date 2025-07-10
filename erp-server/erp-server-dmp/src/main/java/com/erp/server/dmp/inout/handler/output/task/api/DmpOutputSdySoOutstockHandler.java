@@ -222,6 +222,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     		String financialCompanyId = dmpSoOutstockEntity.getFinancialCompanyId();
     		String shopId = dmpSoOutstockEntity.getShopId();
     		String shopName = dmpSoOutstockEntity.getShopName();
+    		String platformCode = dmpSoOutstockEntity.getPlatformCode();
     		LocalDateTime deliveryTime = dmpSoOutstockEntity.getDeliveryTime();
     		
     		String billDateFormat = null;
@@ -387,6 +388,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoOutstockDetailEntity.getThirdOrderCode());
+    	        shudiyunB2cOrderDTO.setParent_node_no(platformCode);
     			
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
