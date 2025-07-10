@@ -1511,6 +1511,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_TIKTOK_SPLIT_SKU(92080,"订单【{}】SKU【{}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
     ERROR_TIKTOK_SPLIT(92081,"订单【{}】TikTok拆分订单失败"),
     ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING(92083,"同步旺店通B2C单据未找到对应的仓库映射【{}】"),
+    ERROR_WAREHOUSE_NOT_FOUND(92083,"未找到对应的仓库【{}】"),
     ERROR_WDT_NOT_FOUND_SHOP_MAPPING(92084,"同步旺店通B2C单据未找到对应的店铺映射【{}】"),
     ERROR_WDT_NOT_FOUND_SKU(92085,"同步旺店通单据未找到对应的SKU【{}】"),
 

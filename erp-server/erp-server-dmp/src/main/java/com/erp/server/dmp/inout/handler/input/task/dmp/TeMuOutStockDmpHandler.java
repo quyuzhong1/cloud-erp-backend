@@ -58,7 +58,7 @@ public class TeMuOutStockDmpHandler extends DmpInputDbConvertDmpHandler{
 			TemuOrderDTO.PageItemsDTO sourceOrder = JSON.parseObject(JSON.toJSONString(mongoDataMap), TemuOrderDTO.PageItemsDTO.class);
 			for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				TemuOrderDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = sourceOrder.getParentOrderMap();
-				dmpDataMap.put("thirdCode",parentOrderMapDTO.getParentOrderSn());
+				dmpDataMap.put("thirdCode",sourceOrder.getSoDetailId());
 				dmpDataMap.put("platformCode",parentOrderMapDTO.getParentOrderSn());
 				Long shippingTimeInt = parentOrderMapDTO.getParentShippingTime();
 				Instant instant = Instant.ofEpochSecond(shippingTimeInt);
@@ -70,6 +70,7 @@ public class TeMuOutStockDmpHandler extends DmpInputDbConvertDmpHandler{
 				dmpDataMap.put("logisticsCode",sourceOrder.getTrackNo());
 				dmpDataMap.put("shopId",sourceOrder.getShopId());
 				dmpDataMap.put("shopName",sourceOrder.getShopName());
+				dmpDataMap.put("nextLevelId",dmpInputTaskEntity.getId());
 			}
 		}
 	}

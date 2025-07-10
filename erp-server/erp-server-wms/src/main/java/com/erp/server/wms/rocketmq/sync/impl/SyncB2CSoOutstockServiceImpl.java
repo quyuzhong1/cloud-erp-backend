@@ -261,6 +261,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
+        if (ObjectUtil.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_FOUND, warehouseList.get(0).getSysName());
+        }
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         //组织信息
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
@@ -487,9 +490,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             log.warn("同步temu销售出库单失败，待处理明细为空，平台订单号：{}", entity.getPlatformOrderCode());
             return;
         }
-        soB2cFeign.updateDetail(soB2cDetailEntityList);
+        soB2cFeign.updateDetail(handleDetailList);
         //不同仓库生成不同的出库单
-        Map<String,List<SoB2cDetailEntity>> detailMap = soB2cDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
+        Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
         detailMap.forEach((warehouseId,detailEntities)->{
             for (SoB2cDetailEntity detailEntity : detailEntities) {
                 TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream().filter(v->v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);

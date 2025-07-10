@@ -127,7 +127,14 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu订单数据内容为空");
 		}
-
+		List<TemuOrderDTO.PageItemsDTO.OrderListDTO> orderListDTOList = pageItemsDTO.getOrderList();
+		orderListDTOList = orderListDTOList.stream().filter(v->v.getProductList().get(0).getExtCode().equals(dmpSoDetailEntity.getPlatformSku())).collect(Collectors.toList());
+		if(CollectionUtils.isEmpty(orderListDTOList)){
+			log.error("查询temu订单明细为空,订单号:{}",dmpSoDetailEntity.getPlatformDetailId());
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
+			throw new ServiceException("查询temu订单数据内容为空,订单号:{}",dmpSoInfoEntity.getPlatformCode());
+		}
+		pageItemsDTO.setOrderList(orderListDTOList);
 		TemuOrderDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = pageItemsDTO.getParentOrderMap();
 		String parentOrder = parentOrderMapDTO.getParentOrderSn();
 		temuOrderReq.setParentOrderSn(parentOrder);
@@ -155,6 +162,8 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		pageItemsDTO.setShopId(shopInfoEntity.getId());
 		pageItemsDTO.setShopName(shopInfoEntity.getName());
 		pageItemsDTO.setParentOrderSn(parentOrderMapDTO.getParentOrderSn());
+		pageItemsDTO.setNextLevelId(taskEntity.getId());
+		pageItemsDTO.setSoDetailId(dmpSoDetailEntity.getId());
 		List<TemuOrderDTO.PageItemsDTO> allResult = new ArrayList<>();
 		allResult.add(pageItemsDTO);
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
