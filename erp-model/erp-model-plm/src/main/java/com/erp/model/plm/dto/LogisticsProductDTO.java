@@ -472,14 +472,6 @@ public class LogisticsProductDTO implements Serializable {
          */
         @Valid
         private DeclareInfoDTO declareInfo;
-
-
-        /**
-         * 目的国海关编码
-         */
-        private List<ProductCustomsDTO.ViewDTO> customsList;
-
-
     }
 
 
