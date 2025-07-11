@@ -146,6 +146,11 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
      */
     @TableField("is_update_error")
     private Boolean isUpdateError;
+    /**
+     * IE号
+     */
+    @TableField("ie_no")
+    private String ieNo;
 
     public static final String MAIN_ID = "main_id";
 

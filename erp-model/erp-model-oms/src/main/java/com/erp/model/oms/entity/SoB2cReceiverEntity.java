@@ -133,6 +133,12 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("invoice_address")
     private String invoiceAddress;
 
+    /**
+     * IE号
+     */
+    @TableField("ie_no")
+    private String ieNo;
+
 
     @TableField(exist = false)
     private String partitionCode;

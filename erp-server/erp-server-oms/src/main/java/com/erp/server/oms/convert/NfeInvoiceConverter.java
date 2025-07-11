@@ -51,7 +51,7 @@ public interface NfeInvoiceConverter {
             @Mapping(target = "numero", constant = "1"),
             @Mapping(target = "rua", source = "invoiceAddress"),
             @Mapping(target = "state", source = "provinceName"),
-            @Mapping(target = "ieRg", constant = ""),
+            @Mapping(target = "ieRg", source = "ieNo"),
             @Mapping(target = "uf", ignore = true)
     })
     NfeInvoiceDTO.NfeClienteDTO soB2cReceiverEntityToNfeCliente(SoB2cReceiverEntity receiverEntity);

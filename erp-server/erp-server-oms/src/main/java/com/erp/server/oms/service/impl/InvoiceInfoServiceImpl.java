@@ -223,13 +223,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
         }
         if (SoB2cNfeStatusEnum.INVOICING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICING);
         }
 
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(id));
@@ -303,7 +304,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 entity.setRemark(e.getMessage());
                 this.updateNfeStatusById(entity);
                 operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
-                return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票失败");
+                return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票失败:" + e.getMessage());
             }
         }
 
@@ -1035,9 +1036,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //销售订单
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
-        soB2cEntityList =  soB2cEntityList.stream().filter(obj -> !SoB2cNfeStatusEnum.INVOICING.getCode().equals(obj.getNfeInvoiceStatus())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(soB2cEntityList)) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST);
+        if (CollUtil.isEmpty(soB2cEntityList)){
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        long count = soB2cEntityList.stream().filter(obj -> SoB2cNfeStatusEnum.INVOICING.getCode().equals(obj.getNfeInvoiceStatus())).count();
+        if (count > 0 && Objects.nonNull(isCheckInvoiceTax) && isCheckInvoiceTax) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICING);
         }
         Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
         List<String> shopIdList = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());

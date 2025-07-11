@@ -124,7 +124,7 @@ public class NfeInvoiceService {
         try {
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
-            NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity);
+            NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
@@ -244,7 +244,7 @@ public class NfeInvoiceService {
             Document document = reader.read(new URL(linkXml));
             Element root = document.getRootElement();
             String queryKey = root.element("NFe").element("infNFe").attributeValue("Id");
-            return queryKey;
+            return queryKey.replace("NFe", "");
         } catch (Exception e) {
             log.error("获取queryKey失败,xml文件:{}异常：{}",linkXml, e.getMessage());
             return "";
@@ -349,12 +349,15 @@ public class NfeInvoiceService {
 
     /**
      * 地址信息
+     *
+     * @param soB2cEntity
+     * @param invoiceSettingDetail
+     * @return NfeClienteDTO
      * @author will
      * @date 2025/4/11 15:22
-     * @param soB2cEntity
-     * @return NfeClienteDTO
      */
-    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTO(SoB2cEntity soB2cEntity) {
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        String dictVerifyType = invoiceSettingDetail.getDictVerifyType();
         //查询亚马逊财务配送报告
         List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class)
                 .eq(DmpSoBillDetailEntity::getPlatformCode,soB2cEntity.getPlatformCode())
@@ -371,9 +374,12 @@ public class NfeInvoiceService {
                 throw new ServiceException("开票地址信息不能为空");
             }
            //按照销售信息赋值
-            return getNfeClienteDTOBySoB2c(receiverEntity);
+            return getNfeClienteDTOBySoB2c(receiverEntity,dictVerifyType);
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
+        if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(dmpSoBillDetailEntity.getRegistrationNo())){
+            throw new ServiceException("公司买家IE号不允许为空");
+        }
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
         String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
         nfeClienteDTO.setCep(newCep);
@@ -456,7 +462,10 @@ public class NfeInvoiceService {
         return bairro;
     }
 
-    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cReceiverEntity receiverEntity) {
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cReceiverEntity receiverEntity, String dictVerifyType) {
+        if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(receiverEntity.getIeNo())){
+            throw new ServiceException("公司买家IE号不允许为空");
+        }
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
             nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );

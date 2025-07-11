@@ -72,6 +72,7 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     private Boolean isAutoUpload;
     /**
      * 校验类型
+     * InvoiceVerifyTypeEnum
      */
     @TableField("dict_verify_type")
     private String dictVerifyType;

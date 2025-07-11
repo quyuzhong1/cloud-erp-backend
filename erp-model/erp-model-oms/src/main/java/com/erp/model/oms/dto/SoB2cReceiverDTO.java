@@ -181,6 +181,10 @@ public class SoB2cReceiverDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
 
     }
