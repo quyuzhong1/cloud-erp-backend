@@ -221,7 +221,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     .map(DictBasicEntity::getValue)
                     .findFirst().orElse("");
             // 如果凭证类型不存在，抛出异常
-            if (CharSequenceUtil.isNotBlank(credentialCode)) {
+            if (CharSequenceUtil.isBlank(credentialCode)) {
                 log.error("凭证类型未找到，当前凭证类型：{}", name);
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
             }
