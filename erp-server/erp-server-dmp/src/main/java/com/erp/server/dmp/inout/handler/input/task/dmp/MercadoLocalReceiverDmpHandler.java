@@ -61,6 +61,7 @@ public class MercadoLocalReceiverDmpHandler extends DmpInputDoNextDmpHandler {
                         BillViewDTO.BuyerDTO.BillingInfoDTO billingInfoDTO = Objects.nonNull(buyerDTO) ? buyerDTO.getBillingInfo() : null;
                         detail.put("receiverTaxNo", Objects.nonNull(billingInfoDTO) ? billingInfoDTO.getIdentification().getNumber() : "");
                         detail.put("ieNo", Objects.nonNull(billingInfoDTO) ? billingInfoDTO.getTaxes().getInscriptions().getStateRegistration() : "");
+                        detail.put("taxidType", Objects.nonNull(billingInfoDTO) ? billingInfoDTO.getIdentification().getType() : "");
                     }
                 }
 

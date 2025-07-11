@@ -85,7 +85,7 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
 
         CfgInvoiceInvalidEntity cfgInvoiceInvalidEntity = new CfgInvoiceInvalidEntity();
         BeanMapperUtils.copy(addDTO, cfgInvoiceInvalidEntity);
-
+        cfgInvoiceInvalidEntity.setDeactivateInvoiceNo(addDTO.getStartInvoiceNo() + "-" + addDTO.getEndInvoiceNo());
 
         log.info("开始新增作废发票号");
         boolean save = super.save(cfgInvoiceInvalidEntity);

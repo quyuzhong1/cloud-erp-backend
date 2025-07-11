@@ -99,6 +99,10 @@ public class PlatformOrderReceiverDTO implements Serializable {
      * IE号
      */
     private String ieNo;
+    /**
+     * 证件类型（CPF自然人，CNPJ公司）
+     */
+    private String taxidType;
 
     public String getCountry() {
         // 全局替换UK为GB
