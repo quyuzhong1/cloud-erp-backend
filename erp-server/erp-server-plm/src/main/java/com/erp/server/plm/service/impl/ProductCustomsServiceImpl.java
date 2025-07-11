@@ -346,8 +346,21 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
-    public List<ProductCustomsDTO.ViewDTO> view(String skuId) {
-        return baseMapper.view(skuId);
+    public ProductCustomsDTO.ViewDTO view(String skuId) {
+        List<ProductCustomsDTO.ViewDetailDTO> detailDTOList = baseMapper.view(skuId);
+        if(CollUtil.isEmpty(detailDTOList)){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        ProductCustomsDTO.ViewDTO view = new ProductCustomsDTO.ViewDTO();
+        ProductCustomsDTO.ViewDetailDTO viewDetailDTO = detailDTOList.get(0);
+        BeanMapper.copy(viewDetailDTO,view);
+        detailDTOList.stream().forEach(e -> {
+            if(e.getCountry().equals(CommonConstants.DEFAULT)){
+                e.setCountryName("默认");
+            }
+        });
+        view.setDetailDTOList(detailDTOList);
+        return view;
     }
 
     @Override

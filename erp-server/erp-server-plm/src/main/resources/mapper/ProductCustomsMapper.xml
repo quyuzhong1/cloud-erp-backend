@@ -164,23 +164,16 @@
         <include refid="paging_sql"></include>
     </select>
 
-    <select id="view" resultType="com.erp.model.plm.dto.ProductCustomsDTO$ViewDTO">
+    <select id="view" resultType="com.erp.model.plm.dto.ProductCustomsDTO$ViewDetailDTO">
         SELECT
         pc.ID AS ID,
-        pc.create_user_id AS createUserId,
-        pc.create_user_name AS createUserName,
-        pc.create_time AS createTime,
-        pc.update_user_id AS updateUserId,
-        pc.update_user_name AS updateUserName,
-        pc.update_time AS updateTime,
-        pc.VERSION AS VERSION,
-        pc.is_deleted AS isDeleted,
         pd.ID AS skuId,
         pd.sku_no AS skuNo,
         pd.images_url AS imagesUrl,
         pl.declare_chinese_name AS declareChineseName,
         pl.customs_code AS chinaCustomsCode,
         pc.country AS country,
+        pc.country_name AS countryName,
         pc.to_declare_price AS toDeclarePrice,
         pc.to_currency AS toCurrency,
         pc.to_currency_symbol AS toCurrencySymbol,
@@ -190,13 +183,12 @@
         pc.destination_additional_duty_rate as destinationAdditionalDutyRate,
         pc.destination_anti_dumping_duty_rate as destinationAntiDumpingDutyRate,
         pc.destination_other_tax_rate as destinationOtherTaxRate,
-        pc.TYPE,
         pc.destination_customs_en_name as destinationCustomsEnName,
         pl.declare_model as declareModel,
         pl.declare_element as declareElement
         FROM
-        product_customs pc
-        LEFT JOIN product_detail pd ON pc.sku_id = pd.ID
+        product_detail pd
+        LEFT JOIN product_customs pc ON pc.sku_id = pd.ID
         AND pd.is_deleted =
         FALSE LEFT JOIN product_info pi ON pi.ID = pd.product_id
         AND pi.is_deleted =
@@ -204,9 +196,10 @@
         AND pl.is_deleted = FALSE
         WHERE
         pc.is_deleted = FALSE
-        and pc.sku_id = #{skuId}
+        and pc.type = 'clearanceCustoms'
+        and pd.id = #{skuId}
         ORDER BY
-        pc.sku_id,pc.id DESC
+        pd.id,pc.id DESC
     </select>
     <select id="listByIds" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
         SELECT
