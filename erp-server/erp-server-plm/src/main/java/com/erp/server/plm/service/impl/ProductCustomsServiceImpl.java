@@ -200,8 +200,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
 
         //国家信息
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
-        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
+        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn,(o1,o2)-> o1));
 
         for (ProductCustomsDTO.AddDTO addDTO : addList) {
             String skuId = addDTO.getSkuId();
@@ -225,7 +225,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
                     if(Objects.nonNull(oldEntity)){
                         ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
-                        throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
+                        throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     }
 
                     productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
@@ -259,8 +259,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         Map<String, List<ProductCustomsEntity>> oldSkuGroup = oldList.stream().collect(Collectors.groupingBy(ProductCustomsEntity::getSkuId));
 
         //国家信息
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
-        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
+        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn,(o1,o2)-> o1));
 
         //按sku维度进行分组
         for (ProductCustomsDTO.AddDTO entry : updateList) {
@@ -313,7 +313,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                         .orElse(null);
                 if(Objects.nonNull(existEntity)){
                     ProductDetailEntity productDetailEntity = productDetailService.getById(existEntity.getSkuId());
-                    throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
+                    throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                 }
 
                 productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
@@ -358,8 +358,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         Map<String, String> skuMap = productDetailService.list().stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (o1, o2) -> o1));
 
         //国家信息
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCurrencyEntity.class).list();
-        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId));
+        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
+        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId,(o1,o2)-> o1));
         dictCountryMap.put("默认",CommonConstants.DEFAULT);
         ProductCustomsExcelListener excelListenerUtil = new ProductCustomsExcelListener(dictCountryMap, skuMap);
         try {

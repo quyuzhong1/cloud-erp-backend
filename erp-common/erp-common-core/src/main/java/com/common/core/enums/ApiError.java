@@ -603,7 +603,7 @@ public enum ApiError implements Serializable {
 
     ERROR_95291(95291,"审核中不支持上传"),
 
-    ERROR_95290(95290,"【{}】已存在【】国家"),
+    ERROR_95290(95290,"【{}】已存在【{}】国家"),
     /**
      * TMS 错误
      * 从96000 开始
