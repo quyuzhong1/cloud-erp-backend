@@ -15,9 +15,11 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.UserTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,6 +27,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.entity.DictBankEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
@@ -178,6 +181,16 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
      */
     private void handleSupplierData(Map<String, Object> map,Boolean isDmpAdd) {
 
+        //采购员
+        Object purchaseUserName = map.get("purchaseUserName");
+        if (ObjectUtil.isNotEmpty(purchaseUserName)) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(purchaseUserName.toString(), UserTypeEnum.ERP.getCode());
+            if (ObjectUtil.isEmpty(findUserDTO)) {
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND,CharSequenceUtil.format("采购员【{}】未找到", purchaseUserName));
+            }
+            map.put("purchaseUserId", findUserDTO.getUserId());
+        }
+
         //付款条件
         Object paymentCondition = map.get("paymentCondition");
         List<BaseDropDownDTO.DisabledDTO> paymentConditionList = scmTaskFeign.listPaymentCondition();
@@ -198,70 +211,96 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
         // 如果付款条件不存在，抛出异常
         if (CharSequenceUtil.isBlank(paymentConditionCode)) {
             log.error("付款条件未找到，当前付款条件：{}", paymentCondition);
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
+            //throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("付款条件【{}】", paymentCondition));
         }
         map.put("paymentCondition", paymentConditionCode);
 
+        //账户信息
+        List<Object> bankAccountList = (List<Object>) map.get("bankAccountList");
+        if (CollUtil.isNotEmpty(bankAccountList)) {
+            // 创建新列表存储处理后的凭证
+            List<Map<String, Object>> bankAccountMapList = new ArrayList<>();
+            for (Object object : bankAccountList) {
+                // 将原始对象转为可修改的 Map
+                Map<String, Object> bankAccountMap = JSONUtil.parseObj(object).toBean(Map.class);
+                Object bankName = bankAccountMap.get("bankName");
+                if (ObjectUtil.isEmpty(bankName)) {
+                    log.error("银行名称不能为空");
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, "银行名称");
+                }
+                List<DictBankEntity> bankList = FeignQuery.create(DictBankEntity.class).eq(DictBankEntity::getName, bankName).list();
+                if (CollUtil.isEmpty(bankList)) {
+                    log.error("银行名称未找到，当前银行名称：{}", bankName);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("银行名称【{}】", bankName));
+                }
+                bankAccountMap.put("bankId", bankList.get(0).getId());
+                bankAccountMapList.add(bankAccountMap);
+            }
+            // 将处理后的列表更新回原始 map
+            map.put("bankAccountList", bankAccountMapList);
+        }
+
+        //资质信息
         List<Object> credentialList = (List<Object>) map.get("credentialList");
-        if (CollUtil.isEmpty(credentialList)) {
-            return;
-        }
-        // 创建新列表存储处理后的凭证
-        List<Map<String, Object>> processedList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(credentialList)) {
+            // 创建新列表存储处理后的凭证
+            List<Map<String, Object>> credentialMapList = new ArrayList<>();
 
-        for (Object object : credentialList) {
-            // 将原始对象转为可修改的 Map
-            Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
+            for (Object object : credentialList) {
+                // 将原始对象转为可修改的 Map
+                Map<String, Object> credentialMap = JSONUtil.parseObj(object).toBean(Map.class);
 
-            //名称
-            Object name = credentialMap.get("name");
-            List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
-            String credentialCode = disabledList.stream().
-                    filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
-                    .map(DictBasicEntity::getValue)
-                    .findFirst().orElse("");
-            // 如果凭证类型不存在，抛出异常
-            if (CharSequenceUtil.isBlank(credentialCode)) {
-                log.error("凭证类型未找到，当前凭证类型：{}", name);
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
-            }
-            credentialMap.put("code", credentialCode);
-            //dmp新增特殊处理
-            if (isDmpAdd) {
-                //有效期
-                Object effectiveDate = credentialMap.get("effectiveDate");
-                if (ObjectUtil.isNotEmpty(effectiveDate)) {
-                    credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+                //名称
+                Object name = credentialMap.get("name");
+                List<DictBasicEntity> disabledList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.CREDENTIAL_TYPE.getType()).list();
+                String credentialCode = disabledList.stream().
+                        filter(req -> CharSequenceUtil.equals(String.valueOf(name),req.getName()))
+                        .map(DictBasicEntity::getValue)
+                        .findFirst().orElse("");
+                // 如果凭证类型不存在，抛出异常
+                if (CharSequenceUtil.isBlank(credentialCode)) {
+                    log.error("凭证类型未找到，当前凭证类型：{}", name);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
                 }
-                //失效期
-                Object expireDate = credentialMap.get("expireDate");
-                if (ObjectUtil.isNotEmpty(expireDate)) {
-                    credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+                credentialMap.put("code", credentialCode);
+                //dmp新增特殊处理
+                if (isDmpAdd) {
+                    //有效期
+                    Object effectiveDate = credentialMap.get("effectiveDate");
+                    if (ObjectUtil.isNotEmpty(effectiveDate)) {
+                        credentialMap.put("effectiveDate", LocalDateTimeUtil.ofDate((TemporalAccessor) effectiveDate));
+                    }
+                    //失效期
+                    Object expireDate = credentialMap.get("expireDate");
+                    if (ObjectUtil.isNotEmpty(expireDate)) {
+                        credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
+                    }
                 }
-            }
-            Object attachmentObject = credentialMap.get("attachment");
-            if (ObjectUtil.isEmpty(attachmentObject)) {
-                processedList.add(credentialMap);
-                continue;
-            }
-            // 处理附件
-            Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
-            List<String> attachmentUrlList = new ArrayList<>();
-            List<String> attachmentNameList = new ArrayList<>();
+                Object attachmentObject = credentialMap.get("attachment");
+                if (ObjectUtil.isEmpty(attachmentObject)) {
+                    credentialMapList.add(credentialMap);
+                    continue;
+                }
+                // 处理附件
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                List<String> attachmentUrlList = new ArrayList<>();
+                List<String> attachmentNameList = new ArrayList<>();
 
-            attachment.forEach((key, value) -> {
-                attachmentNameList.add(key);
-                attachmentUrlList.add(String.valueOf(value));
-            });
+                attachment.forEach((key, value) -> {
+                    attachmentNameList.add(key);
+                    attachmentUrlList.add(String.valueOf(value));
+                });
 
-            // 更新凭证对象
-            credentialMap.put("attachmentUrlList", attachmentUrlList);
-            credentialMap.put("attachmentNameList", attachmentNameList);
-            processedList.add(credentialMap);
+                // 更新凭证对象
+                credentialMap.put("attachmentUrlList", attachmentUrlList);
+                credentialMap.put("attachmentNameList", attachmentNameList);
+                credentialMapList.add(credentialMap);
+            }
+
+            // 将处理后的列表更新回原始 map
+            map.put("credentialList", credentialMapList);
         }
 
-        // 将处理后的列表更新回原始 map
-        map.put("credentialList", processedList);
     }
 
     @Override
