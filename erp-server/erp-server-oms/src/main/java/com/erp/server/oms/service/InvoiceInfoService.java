@@ -141,12 +141,14 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     InvoiceInfoDTO.ExportResultDTO exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 生成发票校验
+     *
+     * @param ids
+     * @param isCheckInvoiceTax
+     * @return List<CheckGenerateInvoiceDTO>
      * @author will
      * @date 2025/4/8 14:22
-     * @param ids
-     * @return List<CheckGenerateInvoiceDTO>
      */
-    List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids);
+    List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids, Boolean isCheckInvoiceTax);
 
     /**
      * 压缩zip
@@ -190,4 +192,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return InvoiceInfoDTO.AttachDTO
      */
     InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType);
+
+    void initNfeInvoiceKey();
 }

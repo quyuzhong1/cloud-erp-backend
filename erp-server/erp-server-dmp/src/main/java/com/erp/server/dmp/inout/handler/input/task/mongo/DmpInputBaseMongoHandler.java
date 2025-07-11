@@ -1,16 +1,10 @@
 package com.erp.server.dmp.inout.handler.input.task.mongo;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -26,13 +20,12 @@ import com.erp.server.dmp.inout.dto.request.DmpInputMongoRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFdsResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.service.DmpInputTaskFileService;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * dmp输入任务mongo基础处理器，被mongo任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -67,6 +60,9 @@ public class DmpInputBaseMongoHandler extends DmpInputMongoHandler{
 					List<Map<String, Object>> dataList = this.getDataList(contentType, resultList);
 					int currParseCount = 0;
 					for(Map<String, Object> data : dataList) {
+						if (ObjUtil.isEmpty(data)) {
+							continue;
+						}
 						dmpInputMongoEntityList.addAll(this.getDmpInputMongoEntityList(contentType , dmpInputTaskFileEntity.getId() , currParseCount, data, allFieldFlag, uniqueFieldSet));
 						currParseCount = currParseCount + 1;
 					}

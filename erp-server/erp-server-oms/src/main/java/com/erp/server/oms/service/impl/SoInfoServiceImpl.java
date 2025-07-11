@@ -533,10 +533,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         variablesMap.put("platformSkuNo", platformSkuNo);
         //存在赠品
         Boolean isGift = detailList.stream().anyMatch(SoDetailEntity::getIsGift);
-        variablesMap.put("isGift", isGift);
+        variablesMap.put("isGiftTotal", isGift);
         //存在补发
         Boolean isReissue = detailList.stream().anyMatch(SoDetailEntity::getIsReissue);
-        variablesMap.put("isReissue", isReissue);
+        variablesMap.put("isReissueTotal", isReissue);
         return variablesMap;
     }
 

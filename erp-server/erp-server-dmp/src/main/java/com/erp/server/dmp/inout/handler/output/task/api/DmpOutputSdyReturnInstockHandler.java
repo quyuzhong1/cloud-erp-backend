@@ -28,6 +28,7 @@ import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
@@ -112,10 +113,12 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                 .list();
         Map<String, DictBasicEntity> dictMaps = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, d -> d , (d1 , d2) -> d1));
         
+        Map<String, String> warehouseMap = FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
+        
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap , warehouseMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -125,7 +128,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap , Map<String, String> warehouseMap){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpReturnInstockEntity != null && CollUtil.isNotEmpty(dmpReturnInstockDetailEntityList)) {
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
@@ -223,7 +226,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 				shudiyunB2cOrderDTO.setReturned_quantity(returnInstockQty);
 
     	        shudiyunB2cOrderDTO.setRemark(dmpReturnInstockDetailEntity.getRemark());
-    	        shudiyunB2cOrderDTO.setWarehouse_no(dmpReturnInstockDetailEntity.getWarehouseNo());
+    	        shudiyunB2cOrderDTO.setWarehouse_no(warehouseMap.get(dmpReturnInstockDetailEntity.getWarehouseNo()));
     	        shudiyunB2cOrderDTO.setWarehouse_name(dmpReturnInstockDetailEntity.getWarehouseName());
     	        shudiyunB2cOrderDTO.setReturn_receipt_time(returnInstockTimeFormat);
     	        shudiyunB2cOrderDTO.setReturn_receipt_amount(dmpReturnInstockDetailEntity.getReturnInstockAmount());

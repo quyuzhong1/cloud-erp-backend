@@ -335,6 +335,13 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         }
     }
 
+    @Override
+    public void updateInvoiceAddress(String soId, String invoiceAddress) {
+        if (CharSequenceUtil.isNotBlank(soId)){
+            this.lambdaUpdate().eq(SoB2cReceiverEntity::getMainId,soId).set(SoB2cReceiverEntity::getInvoiceAddress,invoiceAddress).update();
+        }
+    }
+
     private void handleImportSuccessList(List<B2CCustomerImportExcelDTO> successList, List<B2CCustomerImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;

@@ -95,6 +95,10 @@ public class PlatformOrderReceiverDTO implements Serializable {
      * 是否更新订单异常
      */
     private Boolean isUpdateError;
+    /**
+     * IE号
+     */
+    private String ieNo;
 
     public String getCountry() {
         // 全局替换UK为GB
