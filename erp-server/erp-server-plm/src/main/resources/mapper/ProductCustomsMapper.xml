@@ -141,6 +141,7 @@
         WHERE
         ${params.sqlMap.default}
         and  pc.is_deleted = FALSE
+        and pc.type = 'clearanceCustoms'
         <if test="params.ids != null and params.ids.size > 0">
             and pc.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
