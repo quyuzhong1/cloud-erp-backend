@@ -101,7 +101,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @author jack
      * @date:  2025-06-21
      */
-    List<ProductCustomsDTO.ViewDTO> view(String skuId);
+    ProductCustomsDTO.ViewDTO view(String skuId);
     /**
      * 导出Excel数据
      * @author jack

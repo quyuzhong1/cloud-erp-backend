@@ -74,26 +74,60 @@ public class ProductCustomsDTO {
      * 货币符号
      */
     private String toCurrencySymbol;
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        private String id;
+
+        private String SkuId;
+        /**
+         * sku
+         */
+        private String SkuNo;
+        /**
+         * 产品图片
+         */
+        private String imageUrl;
+        /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+
+        private List<ProductCustomsDTO.ViewDetailDTO> detailDTOList;
+    }
+
     /**
      * 详情
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO{
+    public static class ViewDetailDTO{
         /**
-         * id
+         * 主键id
          */
         private String id;
 
         /**
-         * sku
+         * SKU
          */
         private String skuId;
+
+        private String skuNo;
+
+        private String imagesUrl;
+
+        private String declareChineseName;
 
         /**
          * 国家
          */
         private String country;
+
+        private String countryName;
 
         /**
          * 目的国申报币种
@@ -143,7 +177,6 @@ public class ProductCustomsDTO {
          * 目的国其他税率%
          */
         private BigDecimal destinationOtherTaxRate;
-
     }
 
     @Data
@@ -339,6 +372,11 @@ public class ProductCustomsDTO {
         private String id;
 
         /**
+         * SKU
+         */
+        private String skuId;
+
+        /**
          * 国家
          */
         @NotBlank(message = "国家不能为空")
@@ -409,7 +447,7 @@ public class ProductCustomsDTO {
         private String skuId;
 
         @NotEmpty(message = "列表不能为空")
-        List<ProductCustomsDTO. @Valid CommonDTO> detailDTOList;
+        private List<ProductCustomsDTO. @Valid CommonDTO> detailDTOList;
 
 
     }
@@ -419,6 +457,8 @@ public class ProductCustomsDTO {
     public static class AddListDTO {
 
         @NotEmpty(message = "列表不能为空")
-        List<ProductCustomsDTO. @Valid AddDTO> list;
+        private List<ProductCustomsDTO. @Valid AddDTO> list;
     }
+
+
 }
