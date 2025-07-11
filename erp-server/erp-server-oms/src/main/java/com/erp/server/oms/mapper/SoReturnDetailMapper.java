@@ -24,7 +24,7 @@ public interface SoReturnDetailMapper extends BaseMapper<SoReturnDetailEntity> {
 
     List<SoReturnDetailEntity> listDetailByIds(@Param("ids") List<String> ids);
 
-    List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
+    List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("dto") listAddDetailViewDTO dto);
 
     SoDetailDTO.AddDetailView listAddDetailViewById(@Param("id") String id);
 }

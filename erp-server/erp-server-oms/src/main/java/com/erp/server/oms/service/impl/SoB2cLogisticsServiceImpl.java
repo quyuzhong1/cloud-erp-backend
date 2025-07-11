@@ -31,6 +31,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -500,5 +501,31 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, b2cSoId)
                 .set(SoB2cLogisticsEntity::getEstimatedShippingCost, totalShippingCost).set(SoB2cLogisticsEntity::getEstimatedShippingCurrency,currency).update();
+    }
+
+    @Override
+    public List<SoB2cLogisticsDTO.transferOrderDTO> transferOrderView(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.transferOrderView(ids);
+    }
+
+    @Override
+    public BatchResultDTO transferOrderSave(SoB2cLogisticsDTO.transferOrderDTO dto, LogisticsChannelDTO.BaseDTO channel, SoB2cEntity soB2cEntity) {
+        if (CharSequenceUtil.isBlank(dto.getTransportNo())){
+            dto.setTransportNo(dto.getTrackNo());
+        }
+        //获取物流单id
+        SoB2cLogisticsEntity logisticsEntity = this.getById(dto.getLogisticsId());
+        String msg = CharSequenceUtil.format("物流信息变更 物流渠道由【{}】改为【{}】,物流跟踪号由【{}】改为【{}】，物流运单号由【{}】改为【{}】"
+                ,logisticsEntity.getLogisticsChannelName(),channel.getName(),logisticsEntity.getTrackNo(),dto.getTrackNo(),logisticsEntity.getCode(),dto.getTransportNo());
+        this.lambdaUpdate().eq(SoB2cLogisticsEntity::getId, dto.getLogisticsId())
+               .set(SoB2cLogisticsEntity::getLogisticsChannelId, channel.getId())
+               .set(SoB2cLogisticsEntity::getLogisticsChannelName, channel.getName())
+               .set(SoB2cLogisticsEntity::getCode, dto.getTransportNo())
+               .set(SoB2cLogisticsEntity::getTrackNo, dto.getTrackNo()).update();
+         operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
+        return BatchResultDTO.success(dto.getId(),soB2cEntity.getCode(),"转单成功");
     }
 }

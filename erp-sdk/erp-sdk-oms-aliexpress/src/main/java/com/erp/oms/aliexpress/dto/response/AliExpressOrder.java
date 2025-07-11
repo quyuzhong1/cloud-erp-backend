@@ -431,7 +431,7 @@ public class AliExpressOrder implements Serializable {
         // 存在签收信息
         boolean existReceive = logisticInfoArray.stream()
                 .map(e -> JSON.parseObject(JSON.toJSONString(e)))
-                .anyMatch(e -> "received".equalsIgnoreCase(e.getString("receive_status")));
+                .anyMatch(e -> ("received".equalsIgnoreCase(e.getString("receive_status")) || "not_received".equalsIgnoreCase(e.getString("receive_status"))));
         return !existReceive;
     }
 }

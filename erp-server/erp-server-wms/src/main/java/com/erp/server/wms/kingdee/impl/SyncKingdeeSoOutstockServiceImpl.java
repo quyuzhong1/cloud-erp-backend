@@ -1508,7 +1508,18 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	viewDto.setThirdCode(thirdCode);
     	detailView.setThirdCode(thirdCode);
     	detailView.setThirdDetailId(soOutstockDetailEntity.getId());
-    	viewDto.setThirdBillNo(entity.getCode());
+    	String code = entity.getCode();
+    	viewDto.setThirdBillNo(code);
+    	String platformCode = "";
+    	if(code.startsWith("CK")) {
+    		platformCode = entity.getThirdCode();
+    		if(!platformCode.startsWith("JY")) {
+    			throw new ServiceException("旺店通出库单号CK开头，对应销售订单号不是JY开头，请检查");
+    		}
+    	}else {
+    		platformCode = entity.getSoCode();
+    	}
+    	viewDto.setPlatformCode(platformCode);
     	viewDto.setBillDate(entity.getBillDate().atStartOfDay());
     	//默认出库单
     	viewDto.setTradeLabel(convertOutstockTransactionSubType(transactionSubType));

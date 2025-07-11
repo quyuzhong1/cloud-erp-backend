@@ -92,17 +92,17 @@
         LEFT JOIN so_detail sd ON srd.source_detail_id = sd.ID AND sd.is_deleted = FALSE 	AND sd.is_close = FALSE
         WHERE
         sr.is_deleted =FALSE
-        <if test="id != null and id != ''">
-            AND sr.id = #{id}
+        <if test="dto.id != null and dto.id != ''">
+            AND sr.id = #{dto.id}
         </if>
-        <if test="skuNoList != null and skuNoList.size > 0">
+        <if test="dto.skuNoList != null and dto.skuNoList.size > 0">
             AND srd.sku_no IN
-            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+            <foreach collection="dto.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
             </foreach>
         </if>
-        <if test="remoteSearchSku != null  and remoteSearchSku != ''">
-            AND srd.sku_no ILIKE concat('%',#{remoteSearchSku}::text,'%')
+        <if test="dto.remoteSearchSku != null  and dto.remoteSearchSku != ''">
+            AND srd.sku_no ILIKE concat('%',#{dto.remoteSearchSku}::text,'%')
         </if>
     </select>
 
