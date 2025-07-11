@@ -49,7 +49,7 @@ public class WeiShiServiceTest {
         weiShiProductRequest.setAuthMap(authMap);
         weiShiProductRequest.setStartTime("2024-03-01 00:00:00");
         weiShiProductRequest.setEndTime("2025-04-07 00:00:00");
-        WeiShiBaseResp<List<WeiShiProductResp>>  resp = weiShiService.querySkuList(weiShiProductRequest);
+        WeiShiBaseResp<List<WeiShiProductResp.ListDTO>>  resp = weiShiService.querySkuList(weiShiProductRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }
