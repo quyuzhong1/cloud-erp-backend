@@ -137,7 +137,7 @@ public class InvoiceInfoController extends BaseController {
             }
             resultDTOS.add(resultDTO);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success("执行异步生成发票,请稍后查看发票生成状态",resultDTOS) : failure(resultDTOS);
     }
 
     /**
