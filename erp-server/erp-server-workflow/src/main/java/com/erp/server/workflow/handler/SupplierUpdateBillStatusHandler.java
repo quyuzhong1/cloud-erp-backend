@@ -226,7 +226,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
             }
             credentialMap.put("code", credentialCode);
-
+            //dmp新增特殊处理
             if (isDmpAdd) {
                 //有效期
                 Object effectiveDate = credentialMap.get("effectiveDate");
@@ -238,29 +238,26 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 if (ObjectUtil.isNotEmpty(expireDate)) {
                     credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                 }
-                Object attachmentObject = credentialMap.get("attachment");
-                if (ObjectUtil.isEmpty(attachmentObject)) {
-                    processedList.add(credentialMap);
-                    continue;
-                }
-                // 处理附件
-                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
-                List<String> attachmentUrlList = new ArrayList<>();
-                List<String> attachmentNameList = new ArrayList<>();
-
-                attachment.forEach((key, value) -> {
-                    attachmentNameList.add(key);
-                    attachmentUrlList.add(String.valueOf(value));
-                });
-
-                // 更新凭证对象
-                credentialMap.put("attachmentUrlList", attachmentUrlList);
-                credentialMap.put("attachmentNameList", attachmentNameList);
-
-                processedList.add(credentialMap);
             }
+            Object attachmentObject = credentialMap.get("attachment");
+            if (ObjectUtil.isEmpty(attachmentObject)) {
+                processedList.add(credentialMap);
+                continue;
+            }
+            // 处理附件
+            Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+            List<String> attachmentUrlList = new ArrayList<>();
+            List<String> attachmentNameList = new ArrayList<>();
 
+            attachment.forEach((key, value) -> {
+                attachmentNameList.add(key);
+                attachmentUrlList.add(String.valueOf(value));
+            });
 
+            // 更新凭证对象
+            credentialMap.put("attachmentUrlList", attachmentUrlList);
+            credentialMap.put("attachmentNameList", attachmentNameList);
+            processedList.add(credentialMap);
         }
 
         // 将处理后的列表更新回原始 map
