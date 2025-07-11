@@ -341,7 +341,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
     @Override
     public List<ProductCustomsDTO.ViewDTO> view(List<String> ids) {
-        if(CollUtil.isNotEmpty(ids)){
+        if(CollUtil.isEmpty(ids)){
             return Collections.emptyList();
         }
         return baseMapper.view(ids);
