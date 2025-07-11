@@ -265,6 +265,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
             receiverDTO.setFullAddress(dmpSoReceiverEntity.getFullAddress());
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
             receiverDTO.setIsUpdateError(dmpSoReceiverEntity.getIsUpdateError());
+            receiverDTO.setIeNo(dmpSoReceiverEntity.getIeNo());
         }
         orderDTO.setReceiver(receiverDTO);
 
