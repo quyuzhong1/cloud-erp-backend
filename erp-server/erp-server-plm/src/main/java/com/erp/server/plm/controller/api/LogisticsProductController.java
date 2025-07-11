@@ -308,7 +308,7 @@ public class LogisticsProductController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "更新出口申报价")
     @PostMapping("/importUpdateDeclarePrice")
     public ApiResult<Object> importUpdateDeclarePrice(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsProductService.importExcel(excelFile, response);
+        Boolean result = logisticsProductService.importUpdateDeclarePrice(excelFile, response);
         return result ? success() : failure();
     }
 
