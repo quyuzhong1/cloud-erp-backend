@@ -274,30 +274,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
         }
         result.setDeclareInfo(declareInfo);
-//        //国家列表
-//        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
-//        List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
-//        List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
-//        if (CollectionUtils.isNotEmpty(productCustomsList)) {
-//            customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
-//            customsList.forEach(viewDTO -> {
-//                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
-//                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-//                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-//                }
-//                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
-//                    String[] split = viewDTO.getCountry().split(",");
-//                    List<String> countryIdList = Arrays.asList(split);
-//                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
-//                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
-//                    viewDTO.setCountryName(countryName);
-//                }
-//            });
-//        }
-//        productCustomsList.forEach(req -> {
-//
-//        });
-//        result.setCustomsList(customsList);
         return result;
     }
 
@@ -751,14 +727,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        CurrencyEnum usd = CurrencyEnum.USD;
-        CurrencyEnum cny = CurrencyEnum.CNY;
         //sku no list
         List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        //国家
-        List<String> countryNameList = successList.stream().filter(c -> StringUtils.isNotBlank(c.getCountry())).
-                map(LogisticsProductExcelDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = CollectionUtils.isNotEmpty(countryNameList) ? sysDictFeign.listCountryByNames(countryNameList) : Collections.emptyList();
 
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
@@ -786,39 +756,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String id = logistics.getId();
                 BeanMapper.copy(item, logistics);
                 logistics.setId(id);
-                //国家
-                String countryName = item.getCountry();
-                String country = "default";
-                if (StringUtils.isNotBlank(countryName)) {
-                    country = countryList.stream().filter(s -> s.getNameCn().equals(countryName)).findFirst().
-                            map(DictCountryEntity::getId).orElse("");
-                    if (StringUtils.isBlank(country)) {
-                        errorMsgList.add("国家不存在");
-                    }
-                }
-                ProductCustomsEntity customs = new ProductCustomsEntity();
-                //根据sku获取是否存在记录
-                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, country);
-                if (Objects.nonNull(oldEntity)){
-                    BeanMapperUtils.copy(oldEntity,customs);
-                }
+
                 //报关申报价
                 String declarePriceStr = item.getDeclarePrice();
                 if (StringUtils.isNotBlank(declarePriceStr)) {
                     logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
-                    logistics.setDeclareCurrency(cny.getCurrencyCode());
-                    logistics.setDeclareCurrencySymbol(cny.getCurrencySymbol());
+                    logistics.setDeclareCurrency(item.getDeclareCurrency());
+                    logistics.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(item.getDeclareCurrency()));
                 }
-                //目的国申报价
-                String destDeclarePriceStr = item.getDestDeclarePrice();
-                if (StringUtils.isNotBlank(destDeclarePriceStr)) {
-                    logistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
-                    logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
-                    logistics.setDestCurrency(usd.getCurrencyCode());
-                    customs.setToDeclarePrice(new BigDecimal(destDeclarePriceStr));
-                    customs.setToCurrency(usd.getCurrencyCode());
-                    customs.setToCurrencySymbol(usd.getCurrencySymbol());
-                }
+
                 logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
                 logistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
                 if (StringUtils.isBlank(skuId)) {
@@ -838,21 +784,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 if (StringUtils.isBlank(combinationDeclareType)) {
                     errorMsgList.add("组合品申报不存在");
                 }
-                customs.setSkuId(skuId);
-                if (StringUtils.isNotBlank(item.getDestCustomsCode())){
-                    customs.setCustomsCode(item.getDestCustomsCode());
-                }
-                if (StringUtils.isNotBlank(country)){
-                    customs.setCountryName(countryName);
-                    customs.setCountry(country);
-                }
-                customs.setSkuNo(item.getSkuNo());
-                String taxRateStr = item.getTaxRate();
-                if (StringUtils.isNotBlank(taxRateStr)) {
-                    BigDecimal taxRate = new BigDecimal(taxRateStr);
-                    customs.setTaxRate(taxRate);
-                }
-                customsList.add(customs);
 
                 //存在错误信息则
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
