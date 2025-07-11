@@ -199,6 +199,9 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         List<String> skuIds = addList.stream().map(ProductCustomsDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
 
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listByIds(skuIds);
+        Map<String, ProductDetailEntity> skuMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
+
         //国家信息
         List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
         Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn,(o1,o2)-> o1));
@@ -223,8 +226,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     }
 
                     ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
+                    ProductDetailEntity productDetailEntity = skuMap.get(skuId);
                     if(Objects.nonNull(oldEntity)){
-                        ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
                         throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     }
 
@@ -236,7 +239,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -258,6 +261,9 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         //按sku维度进行分组
         Map<String, List<ProductCustomsEntity>> oldSkuGroup = oldList.stream().collect(Collectors.groupingBy(ProductCustomsEntity::getSkuId));
 
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listByIds(skuIds);
+        Map<String, ProductDetailEntity> skuMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
+
         //国家信息
         List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
         Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn,(o1,o2)-> o1));
@@ -265,6 +271,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         //按sku维度进行分组
         for (ProductCustomsDTO.AddDTO entry : updateList) {
             String skuId = entry.getSkuId();
+            ProductDetailEntity productDetailEntity = skuMap.get(skuId);
 
             List<ProductCustomsDTO.CommonDTO> value = entry.getDetailDTOList();
 
@@ -287,7 +294,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     // 操作日志
                     for (ProductCustomsEntity productCustomsEntity : remove) {
                         String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                        sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                        sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                     }
                 }
             }
@@ -312,7 +319,6 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                         .findFirst()
                         .orElse(null);
                 if(Objects.nonNull(existEntity)){
-                    ProductDetailEntity productDetailEntity = productDetailService.getById(existEntity.getSkuId());
                     throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                 }
 
@@ -326,13 +332,13 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), "",format);
+                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
                 }else {
 
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), "");
+                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -340,11 +346,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
-    public List<ProductCustomsDTO.ViewDTO> view(List<String> ids) {
-        if(CollUtil.isEmpty(ids)){
-            return Collections.emptyList();
-        }
-        return baseMapper.view(ids);
+    public List<ProductCustomsDTO.ViewDTO> view(String skuId) {
+        return baseMapper.view(skuId);
     }
 
     @Override

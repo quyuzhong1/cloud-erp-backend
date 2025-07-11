@@ -204,12 +204,7 @@
         AND pl.is_deleted = FALSE
         WHERE
         pc.is_deleted = FALSE
-        <if test="ids != null and ids.size > 0">
-            and pc.id in
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
+        and pc.sku_id = #{skuId}
         ORDER BY
         pc.sku_id,pc.id DESC
     </select>

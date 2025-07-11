@@ -148,8 +148,8 @@ public class ProductCustomsController extends BaseController {
             serviceClass = ProductCustomsService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<List<ProductCustomsDTO.ViewDTO>> view(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(productCustomsService.view(dto.getIds()));
+    public ApiResult<List<ProductCustomsDTO.ViewDTO>> view(@RequestParam(value = "skuId") String skuId) {
+        return success(productCustomsService.view(skuId));
     }
 
     /**
