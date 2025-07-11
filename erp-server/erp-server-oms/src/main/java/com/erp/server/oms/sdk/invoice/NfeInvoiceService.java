@@ -377,6 +377,9 @@ public class NfeInvoiceService {
             return getNfeClienteDTOBySoB2c(receiverEntity,dictVerifyType);
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
+        if (CharSequenceUtil.isNotBlank(receiverEntity.getIeNo())){
+            dmpSoBillDetailEntity.setRegistrationNo(receiverEntity.getIeNo());
+        }
         if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(dmpSoBillDetailEntity.getRegistrationNo())){
             throw new ServiceException("公司买家IE号不允许为空");
         }
