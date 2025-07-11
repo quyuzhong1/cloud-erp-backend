@@ -25,6 +25,8 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.ChainWrapper;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
 
 /**
@@ -61,6 +63,7 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
     		if(entity == null) {
     			String sqlSet = lambdaUpdateWrapper.getSqlSet();
         		if(StringUtils.isNotBlank(sqlSet) && !sqlSet.replace(" ", "").contains("update_time=")) {
+        			String notBlankSqlSet = sqlSet.replace(" ", "");
         			Object object = null;
 					try {
 						Field field = lambdaUpdateWrapper.getClass().getDeclaredField("sqlSet");
@@ -70,9 +73,21 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+					
+					LoginUser loginUser = UserContext.getNonLoginUser();
+	                String userId = loginUser.getUid();
+	                String userName = loginUser.getUserName();
         			if(object != null) {
         				List<String> sqlSetList = (List<String>)object;
-        				sqlSetList.add("update_time='" + LocalDateTime.now()+"'");
+        				if(!notBlankSqlSet.contains("update_time=")) {
+        					sqlSetList.add("update_time='" + LocalDateTime.now()+"'");
+        				}
+        				if(!notBlankSqlSet.contains("update_user_id=") && StringUtils.isNotBlank(userId)) {
+        					sqlSetList.add("update_user_id='" + userId+"'");
+        				}
+        				if(!notBlankSqlSet.contains("update_user_name=") && StringUtils.isNotBlank(userName)) {
+        					sqlSetList.add("update_user_name='" + userName+"'");
+        				}
         			}
         		}
     		}
