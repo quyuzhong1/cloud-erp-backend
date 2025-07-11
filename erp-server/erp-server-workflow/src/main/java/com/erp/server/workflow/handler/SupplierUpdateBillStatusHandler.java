@@ -221,12 +221,12 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     .map(DictBasicEntity::getValue)
                     .findFirst().orElse("");
             // 如果凭证类型不存在，抛出异常
-            if (CharSequenceUtil.isNotBlank(credentialCode)) {
+            if (CharSequenceUtil.isBlank(credentialCode)) {
                 log.error("凭证类型未找到，当前凭证类型：{}", name);
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND, CharSequenceUtil.format("凭证类型【{}】", name));
             }
             credentialMap.put("code", credentialCode);
-
+            //dmp新增特殊处理
             if (isDmpAdd) {
                 //有效期
                 Object effectiveDate = credentialMap.get("effectiveDate");
@@ -239,7 +239,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                     credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                 }
             }
-
             Object attachmentObject = credentialMap.get("attachment");
             if (ObjectUtil.isEmpty(attachmentObject)) {
                 processedList.add(credentialMap);
@@ -258,7 +257,6 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             // 更新凭证对象
             credentialMap.put("attachmentUrlList", attachmentUrlList);
             credentialMap.put("attachmentNameList", attachmentNameList);
-
             processedList.add(credentialMap);
         }
 
