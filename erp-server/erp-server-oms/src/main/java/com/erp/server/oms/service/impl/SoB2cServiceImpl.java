@@ -6432,7 +6432,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 else if (oldStatus.equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())) {
                     // 从冻结状态转出，默认回到待配货
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                } else if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())){
+                } else {
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
