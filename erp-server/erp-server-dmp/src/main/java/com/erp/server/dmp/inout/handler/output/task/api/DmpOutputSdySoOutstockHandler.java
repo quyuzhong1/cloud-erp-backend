@@ -39,6 +39,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -190,6 +191,8 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), DictBasicDTO.ViewDTO::getValue));
 				cfgMaps.put("wdtSdyPlatformDeliveryType", deliveryTypeMap);
 			}
+			
+			cfgMaps.put("warehouse", FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode)));
 		}
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
@@ -375,7 +378,9 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                 shudiyunB2cOrderDTO.setSuite_name(dmpSoOutstockDetailEntity.getSuiteName());
 
     	        shudiyunB2cOrderDTO.setRemark(dmpSoOutstockDetailEntity.getRemark());
-    	        shudiyunB2cOrderDTO.setWarehouse_no(dmpSoOutstockDetailEntity.getWarehouseId());
+    	        
+    	        Map<String, String> warehouseMap = cfgMaps.get("warehouse");
+				shudiyunB2cOrderDTO.setWarehouse_no(warehouseMap.get(dmpSoOutstockDetailEntity.getWarehouseId()));
     	        shudiyunB2cOrderDTO.setWarehouse_name(dmpSoOutstockDetailEntity.getWarehouseName());
 
     	        // 商品状态
