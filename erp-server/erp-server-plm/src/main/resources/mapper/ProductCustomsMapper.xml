@@ -180,9 +180,10 @@
         pd.images_url AS imagesUrl,
         pl.declare_chinese_name AS declareChineseName,
         pl.customs_code AS chinaCustomsCode,
-        pc.to_declare_price AS destDeclarePrice,
-        pc.to_currency AS destCurrency,
-        pc.to_currency_symbol AS destCurrencySymbol,
+        pc.country AS country,
+        pc.to_declare_price AS toDeclarePrice,
+        pc.to_currency AS toCurrency,
+        pc.to_currency_symbol AS toCurrencySymbol,
         pc.customs_code AS destinationCustomsCode,
         pc.tax_rate as taxRate,
         pc.destination_vat_rate as destinationVatRate,
@@ -190,6 +191,7 @@
         pc.destination_anti_dumping_duty_rate as destinationAntiDumpingDutyRate,
         pc.destination_other_tax_rate as destinationOtherTaxRate,
         pc.TYPE,
+        pc.destination_customs_en_name as destinationCustomsEnName,
         pl.declare_model as declareModel,
         pl.declare_element as declareElement
         FROM

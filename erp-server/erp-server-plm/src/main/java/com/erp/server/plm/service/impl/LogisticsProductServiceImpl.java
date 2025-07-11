@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -33,6 +35,7 @@ import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.plm.dto.excel.UpdateDeclarePriceExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
@@ -53,6 +56,7 @@ import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
+import com.erp.server.plm.listener.UpdateDeclarePriceExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -370,6 +374,91 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         return Boolean.TRUE;
     }
+
+
+    @Override
+    public Boolean importUpdateDeclarePrice(MultipartFile excelFile, HttpServletResponse response) {
+        UpdateDeclarePriceExcelListener excelListenerUtil = new UpdateDeclarePriceExcelListener();
+        try {
+            read(excelFile.getInputStream(), UpdateDeclarePriceExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入更新出口申报价！{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<UpdateDeclarePriceExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<UpdateDeclarePriceExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        //处理验证成功数据
+        List<UpdateDeclarePriceExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //sku no list
+        List<String> skuNoList = successList.stream().map(UpdateDeclarePriceExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
+
+        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
+
+        Map<String, ProductLogisticsEntity> productLogisticsMap = productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId, v -> v, (o1, o2) -> o1));
+
+        for (UpdateDeclarePriceExcelDTO dto : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            String skuNo = dto.getSkuNo();
+            String skuId = skuMap.getOrDefault(skuNo, "");
+            if(StringUtils.isBlank(skuId)){
+                errorMsgList.add("sku不存在或者sku未审核通过");
+            }
+
+            ProductLogisticsEntity productLogisticsEntity = productLogisticsMap.getOrDefault(skuId, null);
+            if(Objects.isNull(productLogisticsEntity)){
+                errorMsgList.add("物流产品信息不存在");
+            }
+
+            //报关申报价
+            String declarePriceStr = dto.getDeclarePrice();
+            String declareCurrency = dto.getDeclareCurrency();
+            String symbol = CurrencyEnum.getSymbolByCode(declareCurrency);
+            if(StringUtils.isBlank(symbol)){
+                errorMsgList.add("出口申报价币种不存在");
+            }
+
+            if(CollUtil.isNotEmpty(errorMsgList)){
+                dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(dto);
+                continue;
+            }
+
+            LambdaUpdateWrapper<ProductLogisticsEntity> queryWrapper = new LambdaUpdateWrapper<ProductLogisticsEntity>();
+            queryWrapper.set(ProductLogisticsEntity::getDeclarePrice, declarePriceStr);
+            queryWrapper.set(ProductLogisticsEntity::getDeclareCurrency, declareCurrency);
+            queryWrapper.set(ProductLogisticsEntity::getDeclareCurrencySymbol, symbol);
+            queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
+            productLogisticsService.update(queryWrapper);
+        }
+
+        if (errorList.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            String excelPath = "excel/declarePriceTemplate.xlsx";
+            String name = "declarePrice";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {

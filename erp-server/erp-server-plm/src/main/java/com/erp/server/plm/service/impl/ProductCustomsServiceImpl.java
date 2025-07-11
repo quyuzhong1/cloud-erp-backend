@@ -368,6 +368,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             log.error("导入拜访错误！", e);
             return Boolean.FALSE;
         }
+
         List<ProductCustomsExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "拜访错误信息";
@@ -403,6 +404,8 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             //新增sku国家默认的记录，如果有则不新增
             self.addDefaultCustoms(skuIds);
         }
+
+
         return Boolean.TRUE;
     }
 
