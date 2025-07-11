@@ -238,28 +238,29 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 if (ObjectUtil.isNotEmpty(expireDate)) {
                     credentialMap.put("expireDate", LocalDateTimeUtil.ofDate((TemporalAccessor) expireDate));
                 }
-            }
+                Object attachmentObject = credentialMap.get("attachment");
+                if (ObjectUtil.isEmpty(attachmentObject)) {
+                    processedList.add(credentialMap);
+                    continue;
+                }
+                // 处理附件
+                Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
+                List<String> attachmentUrlList = new ArrayList<>();
+                List<String> attachmentNameList = new ArrayList<>();
 
-            Object attachmentObject = credentialMap.get("attachment");
-            if (ObjectUtil.isEmpty(attachmentObject)) {
+                attachment.forEach((key, value) -> {
+                    attachmentNameList.add(key);
+                    attachmentUrlList.add(String.valueOf(value));
+                });
+
+                // 更新凭证对象
+                credentialMap.put("attachmentUrlList", attachmentUrlList);
+                credentialMap.put("attachmentNameList", attachmentNameList);
+
                 processedList.add(credentialMap);
-                continue;
             }
-            // 处理附件
-            Map<String, Object> attachment = JSONUtil.parseObj(attachmentObject).toBean(Map.class);
-            List<String> attachmentUrlList = new ArrayList<>();
-            List<String> attachmentNameList = new ArrayList<>();
 
-            attachment.forEach((key, value) -> {
-                attachmentNameList.add(key);
-                attachmentUrlList.add(String.valueOf(value));
-            });
 
-            // 更新凭证对象
-            credentialMap.put("attachmentUrlList", attachmentUrlList);
-            credentialMap.put("attachmentNameList", attachmentNameList);
-
-            processedList.add(credentialMap);
         }
 
         // 将处理后的列表更新回原始 map
