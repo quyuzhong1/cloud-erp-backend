@@ -13,6 +13,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
@@ -177,7 +178,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             return new PagingVO(pageData);
         }
         // 数据处理
-        fillList(pageData.getRecords());
+//        fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -226,6 +227,11 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                         ProductDetailEntity productDetailEntity = productDetailService.getById(skuId);
                         throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
                     }
+
+                    productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                    productCustomsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+
+                    productCustomsEntity.setType(CustomsTypeEnum.CLEARANCECUSTOMS.getCode());
 
                     self.save(productCustomsEntity);
                     // 操作日志
@@ -310,6 +316,11 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),productCustomsEntity.getCountryName());
                 }
 
+                productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+                productCustomsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+
+                productCustomsEntity.setType(CustomsTypeEnum.CLEARANCECUSTOMS.getCode());
+
                 if (StringUtils.isNotBlank(updateDTO.getId())) {
                     productCustomsEntity.setVersion(oldEntity.getVersion());
                     self.updateById(productCustomsEntity);
@@ -317,6 +328,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), "",format);
                 }else {
+
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());

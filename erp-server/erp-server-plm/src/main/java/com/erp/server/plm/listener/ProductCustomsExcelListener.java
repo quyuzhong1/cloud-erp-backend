@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.anno.FieldValid;
 import com.common.core.constant.CommonConstants;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
@@ -137,6 +138,9 @@ public class ProductCustomsExcelListener extends AnalysisEventListener<ProductCu
         if(StringUtils.isNotBlank(destinationOtherTaxRate)){
             entity.setDestinationOtherTaxRate(new BigDecimal(destinationOtherTaxRate));
         }
+
+        entity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
+        entity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
 
         entity.setType(CustomsTypeEnum.CLEARANCECUSTOMS.getCode());
         successList.add(entity);
