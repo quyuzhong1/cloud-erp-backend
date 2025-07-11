@@ -137,7 +137,8 @@ public interface FbaShipmentConverter {
             @Mapping(target = "handleUserId", constant = ""),
             @Mapping(target = "detailList", ignore = true),
             @Mapping(target = "handleUserName", constant = ""),
-            @Mapping(target = "requisitionWarehouseName", constant = "")
+            @Mapping(target = "requisitionWarehouseName", constant = ""),
+            @Mapping(target = "deliveryType", expression = "java(com.erp.model.wms.enums.ThirdDeliveryTypeEnum.SELF_TO_THIRD.getCode())")
     })
     RequisitionApplicationDTO.AddDTO DeliveryPlanGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 

@@ -19,10 +19,9 @@ public class MongoDBWdtSoInfo {
     public static void main(String[] args) {
         String mongoConn = "mongodb://ulanzi_developer:ulanzi_developer@172.16.100.10:27017";
         String dbName = "erp-dmp-prod";
-//        String pgUrl = "jdbc:postgresql://172.16.100.41:5433/prod-erp-dmp?autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8&stringtype=unspecified";
         String pgUrl = "jdbc:postgresql://172.16.100.17:5432/uat-erp-dmp?autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8&stringtype=unspecified";
         String username = "postgres";
-        String password = "admin@viji";
+        String password = "";
         int pageSize = 300000;
 
         try (MongoClient mongoClient = MongoClients.create(mongoConn);

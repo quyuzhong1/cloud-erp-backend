@@ -577,12 +577,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 物流商
         Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
 
-        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
-    	Map<String, BigDecimal> rateMap = new HashMap<>();
-    	rateMap.put("CNY", BigDecimal.ONE);
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
+        	String currentDate = data.getReconciliationMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        	Map<String, BigDecimal> rateMap = new HashMap<>();
+        	rateMap.put("CNY", BigDecimal.ONE);
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期

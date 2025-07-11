@@ -223,6 +223,12 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

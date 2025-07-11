@@ -884,6 +884,10 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 运输单号列表
          */
+        private String trackNos;
+        /**
+         * 运输单号列表
+         */
         private List<String> trackNoList;
 
 

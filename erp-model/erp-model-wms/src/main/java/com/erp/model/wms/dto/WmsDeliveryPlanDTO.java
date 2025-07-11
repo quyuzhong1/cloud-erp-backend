@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -141,6 +142,16 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String toWarehouseName;
 
         /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库中文名
+         */
+        private String fromWarehouseName;
+
+        /**
          * 国家
          */
         private String country;
@@ -247,6 +258,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 单据类型名称
          */
         private String typeName;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
+        /**
+         * 发货类型名称
+         */
+        private String deliveryTypeName;
 
         /**
          * 店铺id
@@ -315,6 +335,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 类型
          */
         private String type;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
+        /**
+         * 发货类型名称
+         */
+        private String deliveryTypeName;
 
         /**
          * 店铺id
@@ -350,6 +379,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 目的仓中文名
         */
         private String toWarehouseName;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库中文名
+         */
+        private String fromWarehouseName;
 
         /**
         * 国家二字码
@@ -365,6 +403,20 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 计划发货日期
         */
         private LocalDate planDeliveryDate;
+        /**
+         * 期望发货时间
+         */
+        private String expectDeliveryDate;
+
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
+
+        /**
+         * 期望物流方式名称
+         */
+        private String expectLogisticsMethodName;
 
         /**
         * 备注
@@ -426,6 +478,10 @@ public class WmsDeliveryPlanDTO implements Serializable {
         * 目的仓id
         */
         private String toWarehouseId;
+        /**
+         * 发货仓id
+         */
+        private String fromWarehouseId;
 
         /**
          * 店铺Id
@@ -456,6 +512,12 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        @NotBlank(message = "发货类型不能为空")
+        private String deliveryType;
     }
 
     /**
@@ -526,6 +588,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 状态
@@ -705,6 +772,21 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 目的仓名称
          */
         private String toWarehouseName;
+
+        /**
+         * 发货仓id
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 发货类型
+         * ThirdDeliveryTypeEnum
+         */
+        private String deliveryType;
 
         /**
          * 状态

@@ -136,6 +136,11 @@ public class SoB2cDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuNo;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
     }
 
     @Data
@@ -261,6 +266,11 @@ public class SoB2cDTO implements Serializable {
          * 是否全托管
          */
         private Boolean isFullyManaged;
+        
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     @Data
@@ -1851,6 +1861,8 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+        
+        private String dynamicDataSource;
 
     }
 
@@ -1993,6 +2005,8 @@ public class SoB2cDTO implements Serializable {
          * 物流方式集合
          */
         private List<String> logisticsChannelIdList;
+        
+        private String dynamicDataSource;
     }
 
     /**

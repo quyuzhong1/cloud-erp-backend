@@ -47,6 +47,10 @@ public class SmallBagCostAllocationDTO implements Serializable {
          * 主表id
          */
          private String  mainId;
+        /**
+         * 明细id
+         */
+        private String  detailId;
 
         /**
         * 小包费用id
