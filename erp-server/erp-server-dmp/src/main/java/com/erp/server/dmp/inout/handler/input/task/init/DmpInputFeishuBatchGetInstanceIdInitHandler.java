@@ -1,19 +1,17 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
-import com.lark.oapi.service.approval.v4.model.GetApprovalRespBody;
-import com.lark.oapi.service.approval.v4.model.ListInstanceResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -21,7 +19,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -42,31 +42,52 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-        List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntityList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
-                .isNotNull(ThirdProcessDefinitionEntity::getApprovalCode)
-                .eq(ThirdProcessDefinitionEntity::getEnableStatus , Boolean.TRUE)
-                .eq(ThirdProcessDefinitionEntity::getIsDeleted,Boolean.FALSE)
-                .ne(ThirdProcessDefinitionEntity::getApprovalCode , "")
-                .list();
+        //获取第三方审批定义
+        List<CfgThirdProcessEntity> cfgThirdProcessList = listCfgThirdProcess();
+        if (CollUtil.isEmpty(cfgThirdProcessList)) {
+            log.warn("无可用的第三方审批配置，handler: {}", this.getClass().getSimpleName());
+            return Collections.emptyList();
+        }
+
+        List<String> approvalCodeList = cfgThirdProcessList.stream().map(CfgThirdProcessEntity::getThirdProcessDefinitionCode).distinct().collect(Collectors.toList());
         JSONArray result = new JSONArray();
-        if (CollUtil.isNotEmpty(thirdProcessDefinitionEntityList)) {
-            for (ThirdProcessDefinitionEntity thirdProcessDefinitionEntity : thirdProcessDefinitionEntityList) {
-                String approvalCode = thirdProcessDefinitionEntity.getApprovalCode();
-                try {
-                    List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
-                    for (String id : ids) {
-                        JSONObject object = new JSONObject();
-                        object.put("instance_id", id);
-                        object.put("ulanzi_approval_code", approvalCode);
-                        result.add(object);
-                    }
-                } catch (Exception e) {
-                    throw new ServiceException("调用飞书失败");
+        for (String approvalCode : approvalCodeList) {
+            try {
+                List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
+                for (String id : ids) {
+                    JSONObject object = new JSONObject();
+                    object.put("instance_id", id);
+                    object.put("ulanzi_approval_code", approvalCode);
+                    result.add(object);
                 }
+            } catch (Exception e) {
+                throw new ServiceException("调用飞书失败");
             }
         }
         dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
         return dmpInputTaskInitDTOList;
     }
 
+    /**
+     * 获取第三方审批配置
+     * @author will
+     * @date 2025/7/14 16:30
+     * @return List<ThirdProcessDefinitionEntity>
+     */
+    private List<CfgThirdProcessEntity> listCfgThirdProcess () {
+
+        List<ThirdProcessDefinitionEntity> thirdProcessDefinitionList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
+                .eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
+                .eq(ThirdProcessDefinitionEntity::getEnableStatus, Boolean.TRUE)
+                .list();
+        if (CollUtil.isEmpty(thirdProcessDefinitionList)) {
+            log.warn("无可用的飞书审批定义，handler: {}", this.getClass().getSimpleName());
+            return Collections.emptyList();
+        }
+
+        //查询第三方审批
+        return FeignQuery.create(CfgThirdProcessEntity.class)
+                .eq(CfgThirdProcessEntity::getEnableStatus , Boolean.TRUE)
+                .list();
+    }
 }

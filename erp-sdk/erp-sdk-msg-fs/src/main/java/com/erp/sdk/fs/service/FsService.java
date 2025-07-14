@@ -2,6 +2,7 @@ package com.erp.sdk.fs.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -984,7 +985,7 @@ public class FsService {
         long startMillis = startTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long endMillis = endTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         // 构建client
-        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+        Client client = getClient();
 
         // 创建请求对象
         ListInstanceReq req = ListInstanceReq.newBuilder()
@@ -999,6 +1000,12 @@ public class FsService {
         try {
             ListInstanceResp resp = null;
             do {
+
+                if (ObjectUtil.isNotEmpty(resp) && CharSequenceUtil.isNotBlank(resp.getData().getPageToken())) {
+                    // 添加延迟，控制请求频率
+                    Thread.sleep(200);
+                }
+
                 resp = client.approval().v4().instance().list(req);
 
                 if (resp.success()) {
@@ -1032,7 +1039,7 @@ public class FsService {
         String fileCode = new String();
         try {
             // 创建 Client
-            Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+            Client client = getClient();
             FormData formData = new FormData();
             FormDataFile dataFile = new FormDataFile();
             dataFile.setFile(file);
@@ -1122,7 +1129,7 @@ public class FsService {
     public Boolean revoke(String approvalCode, String instanceCode, String userId) {
         try {
             // 构建client
-            Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+            Client client = getClient();
             // 创建请求对象
             CancelInstanceReq req = CancelInstanceReq.newBuilder()
                     .userIdType("user_id")
