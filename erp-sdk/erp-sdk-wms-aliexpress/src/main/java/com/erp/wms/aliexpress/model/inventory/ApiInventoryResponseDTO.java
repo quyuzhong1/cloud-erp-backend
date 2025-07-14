@@ -2,11 +2,9 @@ package com.erp.wms.aliexpress.model.inventory;
 
 import cn.hutool.core.annotation.Alias;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -25,6 +23,7 @@ public class ApiInventoryResponseDTO {
     @Alias("error_response")
     private ErrorResponse errorResponse;
 
+    private List<Result.Data.ItemsDTO> dataList = new ArrayList<>();
     // 判断是否成功的便捷方法
     public boolean isSuccess() {
         return result != null && result.success;
@@ -33,6 +32,8 @@ public class ApiInventoryResponseDTO {
     // 嵌套类：成功响应结构
     @Setter
     @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Result {
         private Data data;
         private boolean success;
