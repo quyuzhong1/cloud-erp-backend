@@ -271,11 +271,6 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         if(ObjectUtil.isEmpty(entity)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
-        //查询配置信息
-        CfgProcessRuleEntity processRuleEntity = cfgProcessRuleService.getByDefinitionId(disableDTO.getId());
-        if (ObjectUtil.isNotEmpty(processRuleEntity)) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_DISABLED_ERROR);
-        }
 
         entity.setDisabled(disableDTO.getDisabled());
         this.update(entity,getUpdateWrapper(entity.getId(),entity.getProcessVersion()));
