@@ -13,10 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -197,7 +194,9 @@ public class DictHsCodeDTO implements Serializable {
         * 出口退税率 (%)
         */
         @NotNull(message = "出口退税率 (%)不能为空")
-        @Digits(integer = 12, fraction = 2, message = "出口退税率 (%)整数位不能超过12位，小数位不能超过4位")
+        @Min(value = 0, message = "出口退税率 (%)不能为负数")
+        @Max(value = 100, message = "出口退税率 (%)不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "出口退税率 (%)整数位不能超过3位，小数位不能超过2位")
         private BigDecimal exportRebateRate;
 
         /**
