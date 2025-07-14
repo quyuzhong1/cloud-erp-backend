@@ -126,10 +126,14 @@ public class CfgRuleInvoiceProductAmountServiceImpl extends SuperServiceImpl<Cfg
         for (CfgRuleInvoiceProductAmountDTO.ViewDTO viewDTO : productAmountDTOList) {
             if (CharSequenceUtil.isBlank(viewDTO.getId())){
                 CfgRuleInvoiceProductAmountDTO.AddDTO addDTO = InvoiceSettingConverter.INSTANCE.toAddDTO(viewDTO);
+                addDTO.setCfgId(mainId);
+                addDTO.setName(InvoiceRuleEnum.getName(viewDTO.getDictInvoiceRule()));
                 addDTO.setConditionList(viewDTO.getConditionList());
                 this.add(addDTO);
             }else {
                 CfgRuleInvoiceProductAmountDTO.UpdateDTO updateDTO = InvoiceSettingConverter.INSTANCE.toUpdateDTO(viewDTO);
+                updateDTO.setCfgId(mainId);
+                updateDTO.setName(InvoiceRuleEnum.getName(viewDTO.getDictInvoiceRule()));
                 updateDTO.setConditionList(viewDTO.getConditionList());
                 this.update(updateDTO);
             }
