@@ -3766,16 +3766,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
-        if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        if (ObjectUtil.isNotEmpty(soB2cLogisticsEntity)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cLogisticsEntity));
         }
-        variablesMap.putAll(BeanUtil.beanToMap(soB2cLogisticsEntity));
+
         //买家信息
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(entity.getId());
-        if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
         }
-        variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
