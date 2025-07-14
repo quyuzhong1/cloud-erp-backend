@@ -569,6 +569,7 @@ public enum ApiError implements Serializable {
     ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
     ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
     ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
+    ERROR_96008(96008, "中国海关编码【{}】已存在"),
 
     /**
      * bi 错误

@@ -139,7 +139,7 @@ public class ProductCustomsController extends BaseController {
      * 详情
      * @author jack
      * @date:  2025-06-21
-     * @return ApiResult<SupplierCredentialDTO.ViewDTO>>
+     * @return ApiResult<ProductCustomsDTO.ViewDTO>>
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,

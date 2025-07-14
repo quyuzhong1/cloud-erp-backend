@@ -77,6 +77,9 @@ public class ExportTmsFeignController {
     @Resource
     private FirstMileChangeRecordService firstMileChangeRecordService;
 
+    @Resource
+    private DictHsCodeService dictHsCodeService;
+
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
@@ -372,5 +375,16 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
     public PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto){
         return firstMileChangeRecordService.paging(dto);
+    }
+
+    /**
+     * 出口申报要素导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportDictHsCode")
+    @WebAdvanceQuery
+    public PagingVO<DictHsCodeDTO.ListDTO> exportDictHsCode(@RequestBody  PagingDTO<DictHsCodeDTO.PagingParamDTO> dto){
+        return dictHsCodeService.paging(dto);
     }
 }

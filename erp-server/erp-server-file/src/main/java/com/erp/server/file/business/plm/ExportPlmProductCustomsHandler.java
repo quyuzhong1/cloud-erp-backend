@@ -17,9 +17,9 @@ import java.util.List;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_CUSTOMS;
 
 /**
- * 试产量产单导出
- * @date 2024-09-11
- * @author tanmujin
+ * 目的国清关信息导出
+ * @date 2025-07-09
+ * @author jack
  */
 @Component
 @Slf4j
