@@ -23,6 +23,7 @@ import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.CustomsTypeEnum;
+import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.listener.ProductCustomsExcelListener;
@@ -72,8 +73,6 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    private static final String PCCLASSPATH = String.valueOf(ProductCustomsEntity.class);
 
     @Override
     public List<ProductCustomsEntity> listByProductId(String productId) {
@@ -263,12 +262,12 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
+                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
                 }else {
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
+                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -292,7 +291,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                 // 操作日志
                 for (ProductCustomsEntity productCustomsEntity : remove) {
                     String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
+                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
                 }
             }
         }
@@ -397,6 +396,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         ProductCustomsEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到目的国清关信息"));
 
@@ -405,12 +405,18 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             throw new ServiceException("国家等于默认的明细行不允许删除");
         }
 
+        String productId = "";
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getId());
+        if(Objects.nonNull(productDetailEntity)){
+            productId = productDetailEntity.getProductId();
+        }
+
         // 删除主单数据
         super.removeById(id);
 
         // 删除日志数据
         String format = String.format("删除【%s】清关信息", StringUtils.isBlank(entity.getCountryName()) ? "默认" : entity.getCountryName());
-        sysLogService.addSysLogBySave(format, PCCLASSPATH, entity.getSkuId(), "");
+        sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), entity.getSkuId(), productId);
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo()+":"+entity.getCountryName(), OperationTypeEnum.DELETE);
     }
 
