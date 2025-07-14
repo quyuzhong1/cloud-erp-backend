@@ -178,77 +178,32 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             return new PagingVO(pageData);
         }
         // 数据处理
-//        fillList(pageData.getRecords());
+        fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
     private void fillList(List<ProductCustomsDTO.ListDTO> records) {
         for (ProductCustomsDTO.ListDTO record : records) {
             record.setTypeName(CustomsTypeEnum.getName(record.getType()));
+            if(record.getCountry().equals(CommonConstants.DEFAULT)){
+                record.setCountryName("默认");
+            }
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(ProductCustomsDTO.AddListDTO dto) {
-        if(Objects.isNull(dto) || CollectionUtil.isEmpty( dto.getList())){
-            return Boolean.FALSE;
-        }
-        //获取skuIds
-        List<ProductCustomsDTO.AddDTO> addList = dto.getList();
-        List<String> skuIds = addList.stream().map(ProductCustomsDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
-
-        List<ProductDetailEntity> productDetailEntities = productDetailService.listByIds(skuIds);
-        Map<String, ProductDetailEntity> skuMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
-
-        //国家信息
-        List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
-        Map<String, String> dictCountryMap = dictCountry.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn,(o1,o2)-> o1));
-
-        for (ProductCustomsDTO.AddDTO addDTO : addList) {
-            String skuId = addDTO.getSkuId();
-
-            List<ProductCustomsDTO.CommonDTO> detailDTOList = addDTO.getDetailDTOList();
-            if(CollUtil.isNotEmpty(detailDTOList)){
-                for (ProductCustomsDTO.CommonDTO commonDTO : detailDTOList) {
-                    ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
-                    BeanMapper.copy(commonDTO,productCustomsEntity);
-
-                    productCustomsEntity.setSkuId(skuId);
-                    //目的国海关编码
-                    productCustomsEntity.setCustomsCode(commonDTO.getDestinationCustomsCode());
-
-                    //查询国家
-                    String country = commonDTO.getCountry();
-                    if(StringUtils.isNotBlank(country)){
-                        productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
-                    }
-
-                    ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
-                    ProductDetailEntity productDetailEntity = skuMap.get(skuId);
-                    if(Objects.nonNull(oldEntity)){
-                        throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    }
-
-                    productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    productCustomsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-
-                    productCustomsEntity.setType(CustomsTypeEnum.CLEARANCECUSTOMS.getCode());
-
-                    self.save(productCustomsEntity);
-                    // 操作日志
-                    String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
-                }
-            }
-        }
-        return Boolean.TRUE;
+        return addOrUpdate(dto,Boolean.FALSE);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(ProductCustomsDTO.AddListDTO dto) {
+        return addOrUpdate(dto,Boolean.TRUE);
+    }
+
+    private Boolean addOrUpdate(ProductCustomsDTO.AddListDTO dto,Boolean isDelete) {
         if(Objects.isNull(dto) || CollectionUtil.isEmpty( dto.getList())){
             return Boolean.FALSE;
         }
@@ -262,7 +217,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         Map<String, List<ProductCustomsEntity>> oldSkuGroup = oldList.stream().collect(Collectors.groupingBy(ProductCustomsEntity::getSkuId));
 
         List<ProductDetailEntity> productDetailEntities = productDetailService.listByIds(skuIds);
-        Map<String, ProductDetailEntity> skuMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
+        Map<String, ProductDetailEntity> skuMap = productDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getId , e -> e));
 
         //国家信息
         List<DictCountryEntity> dictCountry = FeignQuery.create(DictCountryEntity.class).list();
@@ -277,64 +232,41 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
             List<ProductCustomsEntity> oldValue = oldSkuGroup.getOrDefault(skuId, null);
             Map<String, ProductCustomsEntity> oldMap = new HashMap<>();
-            if(CollUtil.isNotEmpty(oldValue)){
-                oldMap = oldValue.stream().collect(Collectors.toMap(ProductCustomsEntity::getId, e -> e, (o1, o2) -> o1));
+            if(CollUtil.isNotEmpty(oldValue)) {
+                //skuId ： country
+                oldMap = oldValue.stream().collect(Collectors.toMap(e -> e.getSkuId() +":"+e.getCountry(), e -> e, (o1, o2) -> o1));
+            }
 
-                // 处理删除的数据
-                List<String> newIds = value.stream().map(ProductCustomsDTO.CommonDTO::getId).collect(Collectors.toList());
-                List<ProductCustomsEntity> remove = oldValue.stream()
-                        .filter(old -> !newIds.contains(old.getId()))
-                        .collect(Collectors.toList());
-                if(CollUtil.isNotEmpty(remove)){
-                    List<String> removeIds = remove.stream().map(ProductCustomsEntity::getId).collect(Collectors.toList());
-                    lambdaUpdate().set(ProductCustomsEntity::getIsDeleted, Boolean.TRUE)
-                            .in(ProductCustomsEntity::getId,removeIds )
-                            .update();
-
-                    // 操作日志
-                    for (ProductCustomsEntity productCustomsEntity : remove) {
-                        String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                        sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
-                    }
-                }
+            if(Boolean.TRUE.equals(isDelete)){
+                //删除
+                deleteBySkuId(oldValue, value, productDetailEntity);
             }
 
             for (ProductCustomsDTO.CommonDTO updateDTO : value) {
                 ProductCustomsEntity productCustomsEntity = new ProductCustomsEntity();
-                ProductCustomsEntity oldEntity = new ProductCustomsEntity();
-                if (StringUtils.isNotBlank(updateDTO.getId())) {
-                    oldEntity = oldMap.get(updateDTO.getId());
-                }
-                BeanMapper.copy(dto,productCustomsEntity);
+                BeanMapper.copy(updateDTO,productCustomsEntity);
+                productCustomsEntity.setSkuId(skuId);
                 //目的国海关编码
                 productCustomsEntity.setCustomsCode(updateDTO.getDestinationCustomsCode());
                 //查询国家
-                String country = updateDTO.getCountry();
+                String country = productCustomsEntity.getCountry();
                 if(StringUtils.isNotBlank(country)){
-                    productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(dictCountry,""));
+                    productCustomsEntity.setCountryName(dictCountryMap.getOrDefault(country,""));
                 }
-
-                ProductCustomsEntity existEntity = oldList.stream()
-                        .filter(e ->  !e.getId().equals(updateDTO.getId()) && e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry()))
-                        .findFirst()
-                        .orElse(null);
-                if(Objects.nonNull(existEntity)){
-                    throw new ServiceException(ApiError.ERROR_95290,productDetailEntity.getSkuNo(),StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
-                }
-
                 productCustomsEntity.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                 productCustomsEntity.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
 
                 productCustomsEntity.setType(CustomsTypeEnum.CLEARANCECUSTOMS.getCode());
 
-                if (StringUtils.isNotBlank(updateDTO.getId())) {
+                ProductCustomsEntity oldEntity = oldMap.getOrDefault( productCustomsEntity.getSkuId() +":"+productCustomsEntity.getCountry(),null);
+                if (Objects.nonNull(oldEntity)) {
+                    productCustomsEntity.setId(oldEntity.getId());
                     productCustomsEntity.setVersion(oldEntity.getVersion());
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId(),format);
                 }else {
-
                     self.save(productCustomsEntity);
                     // 操作日志
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
@@ -343,6 +275,29 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             }
         }
         return Boolean.TRUE;
+    }
+
+
+    private void deleteBySkuId(List<ProductCustomsEntity> oldValue, List<ProductCustomsDTO.CommonDTO> value, ProductDetailEntity productDetailEntity) {
+        if(CollUtil.isNotEmpty(oldValue)){
+            // 处理删除的数据
+            List<String> newIds = value.stream().map(ProductCustomsDTO.CommonDTO::getId).collect(Collectors.toList());
+            List<ProductCustomsEntity> remove = oldValue.stream()
+                    .filter(old -> !newIds.contains(old.getId()))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(remove)){
+                List<String> removeIds = remove.stream().map(ProductCustomsEntity::getId).collect(Collectors.toList());
+                lambdaUpdate().set(ProductCustomsEntity::getIsDeleted, Boolean.TRUE)
+                        .in(ProductCustomsEntity::getId,removeIds )
+                        .update();
+
+                // 操作日志
+                for (ProductCustomsEntity productCustomsEntity : remove) {
+                    String format = String.format("删除【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogBySave(format, PCCLASSPATH, productCustomsEntity.getSkuId(), productDetailEntity.getProductId());
+                }
+            }
+        }
     }
 
     @Override
@@ -354,11 +309,6 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         ProductCustomsDTO.ViewDTO view = new ProductCustomsDTO.ViewDTO();
         ProductCustomsDTO.ViewDetailDTO viewDetailDTO = detailDTOList.get(0);
         BeanMapper.copy(viewDetailDTO,view);
-        detailDTOList.stream().forEach(e -> {
-            if(e.getCountry().equals(CommonConstants.DEFAULT)){
-                e.setCountryName("默认");
-            }
-        });
         view.setDetailDTOList(detailDTOList);
         return view;
     }

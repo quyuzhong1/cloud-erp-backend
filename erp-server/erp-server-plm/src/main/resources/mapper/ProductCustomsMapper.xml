@@ -118,9 +118,12 @@
         pd.images_url AS imagesUrl,
         pl.declare_chinese_name AS declareChineseName,
         pl.customs_code AS chinaCustomsCode,
-        pc.to_declare_price AS destDeclarePrice,
-        pc.to_currency AS destCurrency,
-        pc.to_currency_symbol AS destCurrencySymbol,
+        pc.destination_customs_en_name as destinationCustomsEnName,
+        pc.country as country,
+        pc.country_name as countryName,
+        pc.to_declare_price AS toDeclarePrice,
+        pc.to_currency AS toCurrency,
+        pc.to_currency_symbol AS toCurrencySymbol,
         pc.customs_code AS destinationCustomsCode,
         pc.tax_rate as taxRate,
         pc.destination_vat_rate as destinationVatRate,
@@ -157,7 +160,8 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pc.create_time DESC
+        pc.sku_id desc,
+        CASE WHEN pc.country = 'default' THEN 0 ELSE 1 END ASC
     </sql>
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductCustomsDTO$ListDTO">
@@ -170,7 +174,7 @@
         pd.ID AS skuId,
         pd.sku_no AS skuNo,
         pd.images_url AS imagesUrl,
-        pl.declare_chinese_name AS declareChineseName,
+        pl.declare_chinese_name AS declareName,
         pl.customs_code AS chinaCustomsCode,
         pc.country AS country,
         pc.country_name AS countryName,
@@ -199,7 +203,8 @@
         and pc.type = 'clearanceCustoms'
         and pd.id = #{skuId}
         ORDER BY
-        pd.id,pc.id DESC
+            CASE WHEN pc.country = 'default' THEN 0 ELSE 1 END ASC,
+            pc.id ASC
     </select>
     <select id="listByIds" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
         SELECT
