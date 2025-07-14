@@ -6,16 +6,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
-import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.model.workflow.enums.LocaleEnum;
@@ -32,10 +28,9 @@ import com.lark.oapi.core.request.FormDataFile;
 import com.lark.oapi.core.response.RawResponse;
 import com.lark.oapi.core.token.AccessTokenType;
 import com.lark.oapi.core.utils.Jsons;
-import com.lark.oapi.core.utils.OKHttps;
 import com.lark.oapi.service.approval.v4.model.*;
-import com.lark.oapi.service.contact.v3.model.*;
 import com.lark.oapi.service.contact.v3.model.User;
+import com.lark.oapi.service.contact.v3.model.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
@@ -43,13 +38,11 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -911,7 +904,7 @@ public class FsService {
      */
     public GetApprovalResp getApproval(String code) throws Exception {
         // 构建client
-        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+        Client client = getClient();
 
         // 创建请求对象
         GetApprovalReq req = GetApprovalReq.newBuilder()
@@ -941,7 +934,7 @@ public class FsService {
      */
     public String createInstance(CreateInstanceReq req) throws Exception {
         // 构建client
-        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+        Client client = getClient();
 
         // 发起请求
         CreateInstanceResp resp = client.approval().v4().instance().create(req);
@@ -960,7 +953,7 @@ public class FsService {
      */
     public GetInstanceResp getInstance(String instanceCode) throws Exception {
         // 构建client
-        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
+        Client client = getClient();
 
         // 创建请求对象
         GetInstanceReq req = GetInstanceReq.newBuilder()

@@ -513,6 +513,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //折扣总额，因为和明细折扣额一样需要改名称处理
+        variablesMap.put("discountAmountTotal", entity.getDiscountAmount());
+        //地址，主表只存了id没存名称
+        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(entity.getReceiveAddressId());
+        if (ObjectUtil.isNotEmpty(customerAddressEntity)) {
+            variablesMap.put("receiveAddress", customerAddressEntity.getAddress());
+        }
+
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
