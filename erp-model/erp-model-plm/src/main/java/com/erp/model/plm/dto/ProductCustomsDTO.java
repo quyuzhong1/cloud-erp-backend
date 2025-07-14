@@ -93,7 +93,7 @@ public class ProductCustomsDTO {
         /**
          * 报关中文名
          */
-        private String declareChineseName;
+        private String declareName;
 
         private List<ProductCustomsDTO.ViewDetailDTO> detailDTOList;
     }
@@ -118,7 +118,7 @@ public class ProductCustomsDTO {
 
         private String imagesUrl;
 
-        private String declareChineseName;
+        private String declareName;
 
         /**
          * 国家
@@ -398,7 +398,8 @@ public class ProductCustomsDTO {
          * 目的国申报价
          */
         @NotNull(message = "目的国申报价不能为空")
-        private BigDecimal toDeclarePrice;
+        @Min(value = 0, message = "目目的国申报价不能为负数")
+        private BigDecimal toDeclarePrice= BigDecimal.ZERO;;
 
         /**
          * 目的国海关编码
@@ -408,27 +409,43 @@ public class ProductCustomsDTO {
         /**
          * 目的国关税税率%
          */
-        private BigDecimal taxRate;
+
+        @Min(value = 0, message = "目的国关税税率不能为负数")
+        @Max(value = 100, message = "目的国关税税率不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "目的国关税税率整数位最多3位，小数位最多2位")
+        private BigDecimal taxRate= BigDecimal.ZERO;;
 
         /**
          * 目的国增值税税率%
          */
-        private BigDecimal destinationVatRate;
+        @Min(value = 0, message = "目的国增值税税率不能为负数")
+        @Max(value = 100, message = "目的国增值税税率不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "目的国增值税税率整数位最多3位，小数位最多2位")
+        private BigDecimal destinationVatRate= BigDecimal.ZERO;;
 
         /**
          * 目的国附加关税税率%
          */
-        private BigDecimal destinationAdditionalDutyRate;
+        @Min(value = 0, message = "目的国附加关税税率不能为负数")
+        @Max(value = 100, message = "目的国附加关税税率不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "目的国附加关税税率整数位最多3位，小数位最多2位")
+        private BigDecimal destinationAdditionalDutyRate= BigDecimal.ZERO;;
 
         /**
          * 目的国反倾销税税率%
          */
-        private BigDecimal destinationAntiDumpingDutyRate;
+        @Min(value = 0, message = "目的国反倾销税税率不能为负数")
+        @Max(value = 100, message = "目的国反倾销税税率不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "目的国反倾销税税率整数位最多3位，小数位最多2位")
+        private BigDecimal destinationAntiDumpingDutyRate= BigDecimal.ZERO;;
 
         /**
          * 目的国其他税率%
          */
-        private BigDecimal destinationOtherTaxRate;
+        @Min(value = 0, message = "目的国其他税率不能为负数")
+        @Max(value = 100, message = "目的国其他税率不能超过100")
+        @Digits(integer = 3, fraction = 2, message = "目的国其他税率整数位最多3位，小数位最多2位")
+        private BigDecimal destinationOtherTaxRate = BigDecimal.ZERO;
     }
 
     /**
