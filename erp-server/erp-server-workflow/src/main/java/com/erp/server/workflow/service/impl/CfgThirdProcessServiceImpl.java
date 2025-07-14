@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -106,6 +108,9 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         CfgThirdProcessEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "三方审批生成"));
         CfgThirdProcessEntity cfgThirdProcessEntity = BeanMapperUtils.map(CfgThirdProcessEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(cfgThirdProcessEntity);
         log.info("编辑 开始修改三方审批生成数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(cfgThirdProcessEntity);
         if (!save) {
@@ -199,5 +204,21 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
      * 新增修改处理数据
      */
     private void handleData(CfgThirdProcessEntity cfgThirdProcessEntity) {
+        //根据单据类型查询
+        CfgThirdProcessEntity oldEntity = this.getByBussinessKey(cfgThirdProcessEntity.getBussinessKey());
+        if (ObjectUtil.isNotEmpty(oldEntity) && !CharSequenceUtil.equals(cfgThirdProcessEntity.getId(),oldEntity.getId())) {
+            throw new ServiceException(ApiError.CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST, SourceTypeEnum.getName(cfgThirdProcessEntity.getBussinessKey()));
+        }
+    }
+
+    /**
+     * 根据单据类型查询
+     * @author will
+     * @date 2025/7/14 17:27
+     * @param bussinessKey
+     * @return CfgThirdProcessEntity
+     */
+    private CfgThirdProcessEntity getByBussinessKey(String bussinessKey) {
+        return lambdaQuery().eq(CfgThirdProcessEntity::getBussinessKey, bussinessKey).last("limit 1").one();
     }
 }
