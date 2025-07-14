@@ -81,8 +81,6 @@ public class ProductCustomsDTO {
     @NoArgsConstructor
     public static class ViewDTO {
 
-        private String id;
-
         private String SkuId;
         /**
          * sku
