@@ -341,6 +341,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         inStockEntity.setSalesOrgId(shopInfo.getSalesOrgId());
         inStockEntity.setSalesOrgName(shopInfo.getSalesOrgName());
+        inStockEntity.setShopId(shopInfo.getId());
         inStockEntity.setInventoryOrgId(company.getId());
         if (ObjectUtil.isNotEmpty(company)) {
             inStockEntity.setInventoryOrgName(company.getCompanyName());
