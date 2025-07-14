@@ -79,9 +79,9 @@
         from dict_hs_code dhc
         where
             ${params.sqlMap.default}
-          and  pc.is_deleted = FALSE
+          and  dhc.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size > 0">
-            and pc.id in
+            and dhc.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
