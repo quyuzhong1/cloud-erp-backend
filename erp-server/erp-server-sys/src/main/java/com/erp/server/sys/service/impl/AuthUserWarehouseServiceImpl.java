@@ -129,29 +129,46 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         	boolean isDoris = (StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.equals(DynamicDataSourceTypeEnum.DORIS.getCode()));
             if ("part".equals(authType)){
             	if(isDoris) {
-            		if (warehouseTableFieldSize == 1) {
-                    	sqlString.append(" AND ");
+                    if (warehouseTableFieldSize == 1) {
+                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
                         SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
+                        sqlString.append(" )) ");
                     } else {
-                    	sqlString.append(" AND (");
-                    	SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                        sqlString.append(" OR ");
+                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
                         for (int i = 1; i < warehouseTableFieldSize; i++) {
-                        	SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
+                            sqlString.append(" OR (");
+                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
                         }
-                        sqlString.append(" ) ");
-                    }
-            	}else {
-            		if (warehouseTableFieldSize == 1) {
-                        sqlString.append(" AND string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
-                    } else {
-                        sqlString.append(" AND (string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
-                        sqlString.append(" OR ");
+                        sqlString.append(" OR (");
+                        SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
+                        sqlString.append(" )");
                         for (int i = 1; i < warehouseTableFieldSize; i++) {
+                            sqlString.append(" OR (");
+                            SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(i), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
+                            sqlString.append(" )");
+                        }
+                        sqlString.append(" )");
+                    }
+                }else {
+                    if (warehouseTableFieldSize == 1) {
+                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
+                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
+                        sqlString.append(" )");
+                    } else {
+                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
+                        for (int i = 1; i < warehouseTableFieldSize; i++) {
+                            sqlString.append(" OR (");
+                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
+                        }
+                        sqlString.append(" OR (");
+                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
+                        for (int i = 1; i < warehouseTableFieldSize; i++) {
+                            sqlString.append(" OR (");
                             sqlString.append("string_to_array(").append(warehouseTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
                         }
+                        sqlString.append(" )");
                     }
-            	}
+                }
             }
         }
         return sqlString.toString();
