@@ -23,9 +23,12 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
@@ -123,6 +126,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private InvoiceTaxService invoiceTaxService;
 
+    @Lazy
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
@@ -139,7 +143,15 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
-
+    @Resource
+    @Lazy
+    private CfgInvoiceSettingService cfgInvoiceSettingService;
+    @Resource
+    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
+    @Resource
+    private RuleConditionService ruleConditionService;
+    @Resource
+    private SpElServer spElServer;
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -888,6 +900,65 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 }
             }
         }
+    }
+
+    @Override
+    public InvoiceInfoDTO.ProductAmountRuleResultDTO productAmountRule(SoB2cEntity soB2cEntity) {
+        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = new InvoiceInfoDTO.ProductAmountRuleResultDTO();
+        if (CharSequenceUtil.isBlank(soB2cEntity.getShopId()) || CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform())){
+            ruleResultDTO.setIsMatch(Boolean.FALSE);
+            ruleResultDTO.setMsg("店铺或平台类型为空");
+            return ruleResultDTO;
+        }
+        List<CfgInvoiceSettingDetailEntity> detailEntityList = cfgInvoiceSettingDetailService.listInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (CollUtil.isEmpty(detailEntityList)){
+            ruleResultDTO.setIsMatch(Boolean.FALSE);
+            ruleResultDTO.setMsg("无可以匹配的发票规则");
+            return ruleResultDTO;
+        }
+        //构建匹配参数
+        Map<String, Object> map = handleMatchJson(soB2cEntity);
+
+        List<String> cfgIds = detailEntityList.stream().map(CfgInvoiceSettingDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<CfgRuleInvoiceProductAmountEntity> ruleInvoiceProductAmountEntityList = cfgRuleInvoiceProductAmountService.listRuleByPriority(cfgIds);
+        List<String> ruleIdList = ruleInvoiceProductAmountEntityList.stream().map(CfgRuleInvoiceProductAmountEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        for (CfgRuleInvoiceProductAmountEntity ruleInvoiceProductAmountEntity : ruleInvoiceProductAmountEntityList) {
+            String ruleId = ruleInvoiceProductAmountEntity.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            if (matchResult){
+                ruleResultDTO.setIsMatch(Boolean.TRUE);
+                CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = detailEntityList.stream().filter(e -> e.getMainId().equals(ruleInvoiceProductAmountEntity.getCfgId())).findFirst().orElse(null);
+                ruleResultDTO.setInvoiceSettingDetail(cfgInvoiceSettingDetailEntity);
+                ruleResultDTO.setDictInvoiceRule(ruleInvoiceProductAmountEntity.getDictInvoiceRule());
+                ruleResultDTO.setRatio(ruleInvoiceProductAmountEntity.getRatio());
+                return ruleResultDTO;
+            }
+        }
+        ruleResultDTO.setIsMatch(Boolean.FALSE);
+        ruleResultDTO.setMsg("未匹配到符合条件规则");
+        return ruleResultDTO;
+    }
+
+    private Map<String, Object> handleMatchJson(SoB2cEntity soB2cEntity) {
+        Map<String, Object> map = new HashMap<>();
+        if (Objects.isNull(soB2cEntity)){
+            return map;
+        }
+        List<SoB2cReceiverEntity> receiverEntityList = soB2cReceiverService.listByMainIds(Collections.singletonList(soB2cEntity.getId()));
+        if (CollUtil.isEmpty(receiverEntityList)){
+            return map;
+        }
+        SoB2cReceiverEntity receiverEntity = receiverEntityList.get(0);
+        map.put("provinceName",receiverEntity.getProvinceName());
+        map.put("taxidType",receiverEntity.getTaxidType());
+        return map;
     }
 
     /**

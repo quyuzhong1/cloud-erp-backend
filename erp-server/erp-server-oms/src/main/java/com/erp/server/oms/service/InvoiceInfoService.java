@@ -194,4 +194,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType);
 
     void initNfeInvoiceKey();
+
+    InvoiceInfoDTO.ProductAmountRuleResultDTO productAmountRule(SoB2cEntity soB2cEntity);
 }

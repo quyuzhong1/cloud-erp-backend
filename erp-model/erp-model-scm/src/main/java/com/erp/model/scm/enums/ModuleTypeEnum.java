@@ -147,6 +147,7 @@ public enum ModuleTypeEnum {
     CFG_SUPPLIER_SALES("130", "销量设置"),
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+    CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
 
 
 

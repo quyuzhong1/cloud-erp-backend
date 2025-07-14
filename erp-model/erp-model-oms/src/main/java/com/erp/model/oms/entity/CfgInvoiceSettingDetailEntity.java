@@ -42,6 +42,7 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     private String shopId;
     /**
     * 开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额-佣金）后开票  枚举：CfgInvoiceSettingDetailDictInvoiceRuleEnum
+     * InvoiceRuleEnum
     */
     @TableField("dict_invoice_rule")
     private String dictInvoiceRule;

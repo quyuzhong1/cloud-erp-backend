@@ -7,6 +7,8 @@ package com.erp.server.oms.convert;
  */
 
 import com.common.business.mapper.ObjectMapperWork;
+import com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO;
+import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
@@ -15,6 +17,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @Author: hcg
@@ -57,4 +61,16 @@ public interface InvoiceSettingConverter {
             @Mapping(target = "tokenEmpresa", source = "token"),
     })
     UpdateCompanyDTO invoiceSettinToUpdateCompanyDTOTo(CfgInvoiceSettingEntity cfgVatInvoiceEntity);
+
+    CfgRuleInvoiceProductAmountDTO.AddDTO toAddDTO(CfgRuleInvoiceProductAmountDTO.ViewDTO viewDTO);
+
+    CfgRuleInvoiceProductAmountDTO.UpdateDTO toUpdateDTO(CfgRuleInvoiceProductAmountDTO.ViewDTO viewDTO);
+
+    @Mapping(target = "name", source = "value")
+    RuleConditionDTO.AddDTO conditionViewToAddDTO(RuleConditionDTO.ViewDTO condition);
+    List<RuleConditionDTO.AddDTO> conditionViewToAddDTO(List<RuleConditionDTO.ViewDTO> conditionList);
+
+    @Mapping(target = "name", source = "value")
+    RuleConditionDTO.UpdateDTO conditionViewToUpdateDTO(RuleConditionDTO.ViewDTO condition);
+    List<RuleConditionDTO.UpdateDTO> conditionViewToUpdateDTO(List<RuleConditionDTO.ViewDTO> conditionList);
 }
