@@ -297,7 +297,24 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         ProductLogisticsEntity productLogistics = new ProductLogisticsEntity();
         BeanMapper.copy(declareInfo, productLogistics);
         handleProductLogistics(productLogistics);
-        return productLogisticsService.saveOrUpdate(productLogistics);
+        boolean save = productLogisticsService.saveOrUpdate(productLogistics);
+        if (!save) {
+            throw new ServiceException("物流产品信息保存失败");
+        }
+        if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
+            ProductLogisticsEntity oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
+            if(Objects.nonNull(oldEntity)){
+                throw new ServiceException("物流产品信息不存在");
+            }
+
+            String msg = String.format("编辑【%s】物流产品信息", productLogistics.getSkuNo());
+            sysLogService.addSysLogByUpdate(oldEntity,productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "",msg);
+        }else{
+            // 记录操作日志
+            String msg = CharSequenceUtil.format("用户【{}】新增【{}】SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流产品信息", productLogistics.getSkuNo());
+            sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "");
+        }
+        return save;
     }
 
 
@@ -569,6 +586,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         log.info("提交 开始启动物流产品流程，id=：【{}】", entity.getId());
         startProcess(entity);
+        // 记录操作日志
+        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "物流产品信息");
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
 
@@ -592,6 +612,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
+
+        String msg = CharSequenceUtil.format("物流产品信息【{}】撤销流程", entity.getSkuNo());
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -613,6 +636,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         // 调用流程审核
         approveProcess(entity, dto);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        // 操作日志
+        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "物流产品信息", approveType.getName(), dto.getComment());
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -638,6 +664,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        String msg = CharSequenceUtil.format("物流产品信息【{}】反审核流程", entity.getSkuNo());
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
 
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
@@ -809,8 +838,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 });
                 continue;
             }
-            List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
-
             for (LogisticsProductExcelDTO item : value) {
                 List<String> errorMsgList = new ArrayList<>();
                 String id = logistics.getId();
@@ -821,8 +848,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String declarePriceStr = item.getDeclarePrice();
                 if (StringUtils.isNotBlank(declarePriceStr)) {
                     logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
-                    logistics.setDeclareCurrency(item.getDeclareCurrency());
-                    logistics.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(item.getDeclareCurrency()));
+
+                }
+                //申报价币种
+                String declareCurrency = item.getDeclareCurrency();
+                if(StringUtils.isNotBlank(declareCurrency)){
+                    logistics.setDeclareCurrency(declareCurrency);
+                    logistics.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(declareCurrency));
                 }
 
                 logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
@@ -859,9 +891,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 errorList.addAll(value);
                 continue;
             }
-
            productLogisticsService.saveOrUpdate(logistics);
-            productCustomsService.saveOrUpdateBatch(customsList);
             productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
 
