@@ -36,7 +36,7 @@ public class ProductCustomsExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "*目的国申报价$", index = 3)
-    @FieldValid(fieldName = "*目的国申报价$", isNotBlank = true ,formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "*目的国申报价$", isNotBlank = true ,formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String toDeclarePrice;
 
     @ColumnWidth(30)
@@ -46,27 +46,27 @@ public class ProductCustomsExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "目的国关税税率%", index = 5)
-    @FieldValid(fieldName = "目的国关税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "目的国关税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String taxRate;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "目的国增值税税率%", index = 6)
-    @FieldValid(fieldName = "目的国增值税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "目的国增值税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String destinationVatRate;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "目的国附加关税税率%", index = 7)
-    @FieldValid(fieldName = "目的国附加关税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "目的国附加关税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String destinationAdditionalDutyRate;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "目的国反倾销税税率%", index = 8)
-    @FieldValid(fieldName = "目的国反倾销税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "目的国反倾销税税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String destinationAntiDumpingDutyRate;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "目的国其他税率%", index = 9)
-    @FieldValid(fieldName = "目的国其他税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "目的国其他税率%",formatPattern= FieldFormatPatternTypeEnum.AMOUNT2)
     private String destinationOtherTaxRate;
 
     @ColumnWidth(30)
