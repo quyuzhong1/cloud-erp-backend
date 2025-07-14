@@ -6,10 +6,9 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.weishi.dto.request.WeiShiBaseRequest;
 import com.sdk.wms.weishi.dto.request.WeiShiProductRequest;
-import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
-import com.sdk.wms.weishi.dto.response.WeiShiProductResp;
-import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
-import com.sdk.wms.weishi.dto.response.WeiShiWarehouseResp;
+import com.sdk.wms.weishi.dto.request.WeiShiStockAgeRequest;
+import com.sdk.wms.weishi.dto.request.WeiShiStockRequest;
+import com.sdk.wms.weishi.dto.response.*;
 import com.sdk.wms.weishi.utils.WeiShiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -120,6 +119,116 @@ public class WeiShiService {
         return result;
     }
 
+
+    /**
+     * 查询库存
+     * @return
+     */
+    public WeiShiBaseResp<List<WeiShiStockResp.DataDTO.ListDTO>> getStockAll(WeiShiStockRequest weiShiStockRequest){
+        String action = "getStockAll";
+        Map<String, String> headerMap = buildHearderMap(weiShiStockRequest.getAuthMap());
+
+        int page = 1;
+        int limit = 100;
+        boolean hasMore = true;
+        List<WeiShiStockResp.DataDTO.ListDTO> allData = new ArrayList<>();
+        while (hasMore) {
+            weiShiStockRequest.setPage(page);
+            weiShiStockRequest.setLimit(limit);
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("action", action);
+            bodyMap.put("data", JSONUtil.toJsonStr(weiShiStockRequest));
+            String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+            WeiShiBaseResp<WeiShiStockResp> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiStockResp>>() {});
+            if (response.getCode() == 200) {
+                List<WeiShiStockResp.DataDTO.ListDTO> respList = response.getData().getData().getList();
+                if (respList == null || respList.isEmpty()) {
+                    hasMore = false;
+                    continue;
+                }
+                WeiShiStockResp.DataDTO weiShiStockResp = response.getData().getData();
+                if (weiShiStockResp.getTotal() != null && CollectionUtils.isNotEmpty(weiShiStockResp.getList())) {
+                    allData.addAll(respList);
+                    if (!BusinessCommonConstants.hasProfile("prod")){
+                        weiShiStockResp.setTotal(500);
+                    }
+                    if (weiShiStockResp.getTotal() <= page * limit) {
+                        hasMore = false;
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            }else{
+                // 如果请求失败，直接返回错误信息
+                WeiShiBaseResp<List<WeiShiStockResp.DataDTO.ListDTO>> errorResp = new WeiShiBaseResp<>();
+                errorResp.setCode(response.getCode());
+                errorResp.setMsg(response.getMsg());
+                errorResp.setSuccess(true);
+                return errorResp;
+            }
+        }
+        WeiShiBaseResp<List<WeiShiStockResp.DataDTO.ListDTO>> result = new WeiShiBaseResp<>();
+        result.setCode(200);
+        result.setData(allData);
+        return result;
+    }
+
+    /**
+     * 查询库龄
+     * @return
+     */
+    public WeiShiBaseResp<List<WeiShiStockAgeResp.ListDTO>> queryStockSkuAgeList(WeiShiStockAgeRequest weiShiStockAgeRequest){
+        String action = "queryStockSkuAgeList";
+        Map<String, String> headerMap = buildHearderMap(weiShiStockAgeRequest.getAuthMap());
+
+        int page = 1;
+        int limit = 100;
+        boolean hasMore = true;
+        List<WeiShiStockAgeResp.ListDTO> allData = new ArrayList<>();
+        while (hasMore) {
+            weiShiStockAgeRequest.setPage(page);
+            weiShiStockAgeRequest.setLimit(limit);
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("action", action);
+            bodyMap.put("data", JSONUtil.toJsonStr(weiShiStockAgeRequest));
+            String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+            WeiShiBaseResp<WeiShiStockAgeResp> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiStockAgeResp>>() {});
+            if (response.getCode() == 200) {
+                List<WeiShiStockAgeResp.ListDTO> respList = response.getData().getList();
+                if (respList == null || respList.isEmpty()) {
+                    hasMore = false;
+                    continue;
+                }
+                WeiShiStockAgeResp weiShiStockResp = response.getData();
+                if (weiShiStockResp.getTotal() != null && CollectionUtils.isNotEmpty(weiShiStockResp.getList())) {
+                    allData.addAll(respList);
+                    if (!BusinessCommonConstants.hasProfile("prod")){
+                        weiShiStockResp.setTotal(500);
+                    }
+                    if (weiShiStockResp.getTotal() <= page * limit) {
+                        hasMore = false;
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            }else{
+                // 如果请求失败，直接返回错误信息
+                WeiShiBaseResp<List<WeiShiStockAgeResp.ListDTO>> errorResp = new WeiShiBaseResp<>();
+                errorResp.setCode(response.getCode());
+                errorResp.setMsg(response.getMsg());
+                errorResp.setSuccess(true);
+                return errorResp;
+            }
+        }
+        WeiShiBaseResp<List<WeiShiStockAgeResp.ListDTO>> result = new WeiShiBaseResp<>();
+        result.setCode(200);
+        result.setData(allData);
+        return result;
+    }
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
