@@ -1,23 +1,14 @@
 package com.erp.server.plm.listener;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.FindUserDTO;
-import com.common.core.anno.FieldValid;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.oms.dto.excel.ProductCustomsExcelDTO;
+import com.erp.model.plm.dto.excel.ProductCustomsExcelDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.enums.CustomsTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.entity.SupplierEntity;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
