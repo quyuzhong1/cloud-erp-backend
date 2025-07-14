@@ -82,4 +82,6 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     List<CfgConditionDTO.ListDTO> listOrderHandleCondition();
 
     List<CfgConditionDTO.ListDTO> listInvoiceHandleCondition();
+
+    List<CfgConditionDTO.ListDTO> listHandleConditionByType(List<String> typeList);
 }

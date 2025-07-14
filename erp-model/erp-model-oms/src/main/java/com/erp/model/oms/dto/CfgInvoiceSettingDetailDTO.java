@@ -40,6 +40,10 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          * 发票设置对应的明细
          */
         List<DetailListDTO> detailDTOList;
+        /**
+         * 规则列表
+         */
+        private List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList;
     }
 
     /**
@@ -59,6 +63,10 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          *
          */
         List<DetailListDTO> detailDTOList;
+        /**
+         * 规则列表
+         */
+        private List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList;
     }
 
     /**
@@ -103,6 +111,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
 
         /**
          * 开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额-佣金）后开票
+         * InvoiceRuleEnum
          */
         private String dictInvoiceRule;
 
@@ -240,6 +249,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
 
         /**
          * 开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额-佣金）后开票
+         * InvoiceRuleEnum
          */
         private String dictInvoiceRule;
 

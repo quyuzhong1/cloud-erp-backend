@@ -89,7 +89,6 @@
         inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
         where cis.is_deleted = false and cis.disabled = false
         and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
-        limit 1
     </select>
     <!-- 可选：如果不想在Java代码中处理ratio乘以100的逻辑，可以在SQL中处理 -->
     <select id="selectDetailsByMainIdGroupByPlatformWithRatioAdjusted" resultMap="DetailGroupResultMap">

@@ -111,6 +111,8 @@ public class NfeInvoiceService {
     private FileFeign filefeign;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
 
     @Transactional(rollbackFor = Exception.class)
     public Boolean createInvoice(SoB2cEntity soB2cEntity) {
@@ -118,8 +120,26 @@ public class NfeInvoiceService {
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         //配置信息
-        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
-
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = null;
+        //发票规则
+        String dictInvoiceRule;
+        BigDecimal ratio;
+        //匹配产品总价计算规则
+        InvoiceInfoDTO.ProductAmountRuleResultDTO ruleResultDTO = invoiceInfoService.productAmountRule(soB2cEntity);
+        if (ruleResultDTO.getIsMatch()){
+            invoiceSettingDetail = ruleResultDTO.getInvoiceSettingDetail();
+            dictInvoiceRule = ruleResultDTO.getDictInvoiceRule();
+            ratio = ruleResultDTO.getRatio();
+        }else {
+            String msg = CharSequenceUtil.isNotBlank(ruleResultDTO.getMsg()) ? ruleResultDTO.getMsg() : "产品总价值规则匹配失败";
+            //开票失败更新开票状态
+            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setRemark(msg);
+            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
+            return Boolean.FALSE;
+        }
         NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
         try {
             createDTO.setEmailDev("gray@ulanzi.cn");
@@ -128,7 +148,7 @@ public class NfeInvoiceService {
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
-            getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
+            getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO,dictInvoiceRule, ratio);
             log.warn("税务信息已查询完成！");
             //token
             createDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
@@ -496,12 +516,15 @@ public class NfeInvoiceService {
 
     /**
      * 税务信息
+     *
+     * @param soB2cEntity
+     * @param dictInvoiceRule
+     * @param ratio
+     * @return List<NfeItensDTO>
      * @author will
      * @date 2025/4/11 16:21
-     * @param soB2cEntity
-     * @return List<NfeItensDTO>
      */
-    private void getNfeItensDTO(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail,NfeInvoiceDTO.NfeCreateDTO createDTO) {
+    private void getNfeItensDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, NfeInvoiceDTO.NfeCreateDTO createDTO, String dictInvoiceRule, BigDecimal ratio) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
 
         //财务信息
@@ -558,7 +581,7 @@ public class NfeInvoiceService {
             nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
-            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,invoiceSettingDetail));
+            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,dictInvoiceRule,ratio));
             itens.add(nfeItensDTO);
             valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
@@ -576,22 +599,24 @@ public class NfeInvoiceService {
      * @param soB2cEntity
      * @param detailEntity
      * @param invoiceSettingDetail
+     * @param dictInvoiceRule
+     * @param ratio
      * @return BigDecimal
      * @author will
      * @date 2025/4/14 14:42
      */
-    private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+    private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio) {
         BigDecimal price = detailEntity.getPrice();
-        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+        if (CharSequenceUtil.isEmpty(dictInvoiceRule)) {
             price = detailEntity.getPrice();
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.AMOUNT.getCode())) {
+        if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.AMOUNT.getCode())) {
             price = detailEntity.getPrice();
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.CUSTOM.getCode())) {
-            price = MathUtil.multiplyWithTwo(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
+        if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.CUSTOM.getCode())) {
+            price = MathUtil.multiplyWithTwo(detailEntity.getPrice(),ratio) ;
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.DEDUCT.getCode())) {
+        if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode())) {
             price = MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
         }
         String currency = detailEntity.getCurrency();
