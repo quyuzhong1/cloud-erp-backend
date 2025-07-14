@@ -11,7 +11,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.excel.DictHsCodeExcelDTO;
 import com.erp.model.tms.entity.DictHsCodeEntity;
@@ -102,6 +104,15 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             throw new ServiceException(ApiError.ERROR_96008,dictHsCodeEntity.getHsCode());
         }
 
+        //不相等时
+        if(!Objects.equals(old.getHsCode(), dictHsCodeEntity.getHsCode())){
+            //海关编码没有被物流产品信息引用时可以删除，否则提示：该海关编码已被使用，请修改物流产品线信息海关编码后删除
+            List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).eq(ProductLogisticsEntity::getCustomsCode, old.getHsCode()).list();
+            if(CollUtil.isNotEmpty(productLogisticsList)){
+                throw new ServiceException("该海关编码已被使用，请修改物流产品线信息海关编码后删除");
+            }
+        }
+
         log.info("编辑 开始修改出口申报要素单数据，id：【{}】", old.getId());
         boolean save = super.updateById(dictHsCodeEntity);
         if(!save) {
@@ -118,7 +129,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     public PagingVO<DictHsCodeDTO.ListDTO> paging(PagingDTO<DictHsCodeDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<ProductCustomsDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        IPage<DictHsCodeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
@@ -128,6 +139,13 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     @Override
     public BatchResultDTO delete(String id) {
         DictHsCodeEntity entity = getByIdOpt(id).orElseThrow(() -> new ServiceException("出库申报要素不存在"));
+
+        //海关编码没有被物流产品信息引用时可以删除，否则提示：该海关编码已被使用，请修改物流产品线信息海关编码后删除
+        List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).eq(ProductLogisticsEntity::getCustomsCode, entity.getHsCode()).list();
+        if(CollUtil.isNotEmpty(productLogisticsList)){
+            throw new ServiceException("该海关编码已被使用，请修改物流产品线信息海关编码后删除");
+        }
+
         // 删除主单数据
         super.removeById(id);
         // 删除日志数据

@@ -24,5 +24,5 @@ import javax.validation.constraints.NotNull;
 @Mapper
 public interface DictHsCodeMapper extends BaseMapper<DictHsCodeEntity> {
 
-    IPage<ProductCustomsDTO.ListDTO> paging(Page query, @Param("params")  DictHsCodeDTO. PagingParamDTO params);
+    IPage<DictHsCodeDTO.ListDTO> paging(Page query, @Param("params")  DictHsCodeDTO. PagingParamDTO params);
 }
