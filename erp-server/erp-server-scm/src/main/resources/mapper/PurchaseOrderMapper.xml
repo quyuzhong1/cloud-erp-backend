@@ -187,7 +187,8 @@
             so.code as subContractCode,
             po.source_id as sourceId,
             po.source_type as sourceType,
-            pod.warehouse_location as warehouseLocation
+            pod.warehouse_location as warehouseLocation,
+            po.contract_stamp_status as contractStampStatus
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false

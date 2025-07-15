@@ -84,4 +84,29 @@ public class BaseResultDTO implements Serializable {
          */
         private String content;
     }
+
+
+    /**
+     * 操作结果展示
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddAndSubmmitDTO {
+        /**
+         * 表 id
+         */
+        private String id;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 新增或编辑页面，是否关闭当前页面
+         */
+        private Boolean isClose = Boolean.TRUE;
+    }
 }

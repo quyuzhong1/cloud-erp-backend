@@ -165,7 +165,7 @@ public enum RocketMqTagEnum {
     WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
 
     /**
-     * 虚拟仓明细信息tag DMP_WECHAT_SUBSCRIBE_MSG
+     * 微信订阅消息tag DMP_WECHAT_SUBSCRIBE_MSG
      */
     DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
 
@@ -603,6 +603,24 @@ public enum RocketMqTagEnum {
      * 速帝云通用推送
      */
     SDY_GENERAL_PUSH_TAG(11006, RocketMqTagEnum.SYNC_WANGDIAN, "sdy_general_push_tag"),
+
+    //-----------------------------workflow 从12001开始------------------------------------------------------------------
+    /**
+     * workflow 同步飞书流程实例
+     */
+    WORKFLOW_SYNC_FS_INSTANCE_TAG(12001, RocketMqTagEnum.SYNC_WORKFLOW, "workflow_sync_fs_instance_tag"),
+
+
+
+    //-----------------------------sys 从13001开始------------------------------------------------------------------
+    /**
+     * sys 三方通知推送记录
+     */
+    SYS_SEND_THIRD_NOTICE_TAG(13001, RocketMqTagEnum.SYNC_SYS, "sys_send_third_notice_tag"),
+
+    SYS_RECEIVE_DDL_TO_MQ_TAG(13002, RocketMqTagEnum.SYNC_SYS, "sys_receive_ddl_to_mq_tag"),
+
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -627,6 +645,10 @@ public enum RocketMqTagEnum {
     public static final String SYNC_OMS = "sync_oms";
 
     public static final String SYNC_TMS = "sync_tms";
+
+    public static final String SYNC_SYS = "sync_sys";
+
+    public static final String SYNC_WORKFLOW = "sync_workflow";
 
     public static final String MSG_WARN = "msg_warn";
 

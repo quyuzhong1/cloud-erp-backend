@@ -325,10 +325,35 @@ public class RocketMqConsumerGroup {
 
 
     /**
-     * 异步组包发货
+     *
      */
     public static final String DMP_WECHAT_SUBSCRIBE_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_consumer";
 
+    /**
+     *
+     */
+    public static final String WORKFLOW_SYNC_FS_INSTANCE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_consumer";
+
+
+    /**
+     *
+     */
+    public static final String SYS_SEND_THIRD_NOTICE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-sys_send_third_notice_consumer";
+
+    /**
+     *
+     */
+    public static final String SYS_RECEIVE_DDL_TO_MQ_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-sys_receive_ddl_to_mq_consumer";
+
+    /**
+     *
+     */
+    public static final String WORKFLOW_FS_APPROVALS_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_fs_approvals_consumer";
+
+    /**
+     *
+     */
+    public static final String WORKFLOW_FS_INSTANCES_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_fs_instances_consumer";
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料

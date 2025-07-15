@@ -166,4 +166,13 @@ public class RocketMqNewConsumerGroup {
      * 新中台第三方物流渠道
      */
     public static final String DMP_THIRD_LOGISTICS_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_third_logistics_to_dmp_group";
+
+    /**
+     * 新中台飞书对接
+     */
+    public static final String DMP_FS_APPROVALS_TO_WORKFLOW_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_approvals_to_workflow_group";
+    /**
+     * 新中台飞书对接
+     */
+    public static final String DMP_FS_INSTANCES_TO_WORKFLOW_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_instances_to_workflow_group";
 }

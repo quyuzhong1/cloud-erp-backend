@@ -206,12 +206,12 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderDTO.setExtendData(orderExtendJson.toJSONString());
 
         PlatformOrderExtendDTO platformOrderExtendDTO = new PlatformOrderExtendDTO();
-        if (extendDataJson.containsKey("requiredDeliveryTime")) {
+        if (extendDataJson.containsKey("requiredDeliveryTime") && Long.parseLong(extendDataJson.get("requiredDeliveryTime") + "") != 0) {
             LocalDateTime requiredDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(extendDataJson.get("requiredDeliveryTime") + "")), ZoneId.systemDefault());
 
             platformOrderExtendDTO.setRequiredDeliveryTime(requiredDeliveryTime);
         }
-        if (extendDataJson.containsKey("requiredReceiveTime")) {
+        if (extendDataJson.containsKey("requiredReceiveTime") && Long.parseLong(extendDataJson.get("requiredReceiveTime") + "") != 0) {
             LocalDateTime requiredReceiveTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(extendDataJson.get("requiredReceiveTime") + "")), ZoneId.systemDefault());
 
             platformOrderExtendDTO.setRequiredReceiveTime(requiredReceiveTime);

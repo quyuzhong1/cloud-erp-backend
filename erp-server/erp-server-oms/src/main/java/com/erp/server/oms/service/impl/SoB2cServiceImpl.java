@@ -24,6 +24,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
@@ -555,6 +556,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
+        //查询支付方式是否需要填写付款时间
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(soB2cEntity);
+        if(!isFlag && Objects.isNull(soB2cEntity.getPayTime())){
+            throw new ServiceException("付款时间不能为空");
+        }
         if (StrUtil.isEmpty(soB2cEntity.getSourceType())) {
             soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
@@ -1288,7 +1294,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             userId = "0";
         }
         approveDTO.setUserId(userId);
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -3214,6 +3220,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+        	dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        pagingParamDTO.getParams().setDynamicDataSource(dynamicDataSource);
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoB2cDTO.MergeListDTO> pageData = this.baseMapper.mergePaging(query, pagingParamDTO.getParams());
         List<SoB2cDTO.MergeListDTO> records = pageData.getRecords();
@@ -3725,11 +3737,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         startDTO.setBusinessName(entity.getCode());
         String userId = UserContext.getDefaultLoginUser().getUid();
         startDTO.setUserId(userId);
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoB2cEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        if (ObjectUtil.isNotEmpty(soB2cLogisticsEntity)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cLogisticsEntity));
+        }
+
+        //买家信息
+        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(entity.getId());
+        if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
+        }
+        //总销售数量
+        Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+        return variablesMap;
     }
 
     /**
@@ -4695,6 +4738,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         mergeParamDTO.setWarehouseIdList(warehouseIdList);
         mergeParamDTO.setLogisticsChannelIdList(logisticsChannelIdList);
         mergeParamDTO.setPermissionSql(permissionSql);
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if(dynamicDataSourceTypeEnum != null) {
+        	dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        mergeParamDTO.setDynamicDataSource(dynamicDataSource);
         List<SoB2cDTO.MergeMainDTO> mergeMainList = baseMapper.listMerge(mergeParamDTO);
         if (CollectionUtils.isEmpty(mergeMainList)) {
             return;
@@ -6402,11 +6451,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 自发货订单状态不更新(由ERP系统决定)
             if (!oldEntity.hasPlatformWarehouseOrder()) {
-                dto.setBillStatus(oldEntity.getBillStatus());
-            }
-            // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
-            if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
-                dto.setBillStatus(oldEntity.getBillStatus());
+                //1、当ERP订单状态是待配货 或者 配货中  推过来冻结中的状态 就直接改订单状态为冻结中，增加冻结标识；
+                //2、当ERP订单状态是除了待配货和配货中  就不改为冻结中的状态
+                String oldStatus = oldEntity.getBillStatus();
+                String newStatus = dto.getBillStatus();
+                // 处理冻结状态转换
+                if (newStatus.equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())) {
+                    // 只有待配货和配货中状态可以转为冻结
+                    if (!oldStatus.equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) &&
+                            !oldStatus.equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
+                        // 非待配货/配货中状态，保持原状态
+                        dto.setBillStatus(oldStatus);
+                    }
+                }
+                // 处理解冻状态转换
+                else if (oldStatus.equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())) {
+                    // 从冻结状态转出，默认回到待配货
+                    dto.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                } else {
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
             }
 
             // 自发货订单的平台状态作废：如果订单状态是(待发货/已发货/部分发货)=已有发货单不作废，只添加平台作废记录

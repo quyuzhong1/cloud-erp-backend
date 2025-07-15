@@ -129,6 +129,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(detailDto.getSkuId());
                 detailEntity.setSkuNo(detailDto.getSkuNo());
+                detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
@@ -286,8 +287,15 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(detailDto.getSkuId());
                 detailEntity.setSkuNo(detailDto.getSkuNo());
+                detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -309,11 +317,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 //签收单数量
                 Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                    if (Objects.isNull(detailDto.getIsCheckReceiveQty()) || detailDto.getIsCheckReceiveQty()){
+                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                    }
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
-                        detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
+                        detailEntity.setReturnTypeDict(CharSequenceUtil.isBlank(detailEntity.getReturnTypeDict()) ? soB2cReturnEntity.getType() : detailEntity.getReturnTypeDict());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
                     }
                 }

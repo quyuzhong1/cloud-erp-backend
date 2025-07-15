@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 流程结束返回参数信息
@@ -53,6 +54,11 @@ public class EndProcessDTO {
      */
     private String comment;
 
+    /**
+     * 流程参数map
+     */
+    private Map<String,Object> variablesMap;
+
     public EndProcessDTO(ProcessManagementDTO.RevokeDTO dto) {
         this.businessKey = dto.getBusinessKey();
         this.businessId = dto.getBusinessId();
@@ -62,7 +68,7 @@ public class EndProcessDTO {
         this.comment = dto.getRemark();
     }
 
-    public EndProcessDTO(ProcessManagementEntity entity, String approveTypeCode, LocalDateTime approveTime, String lastApprover, String comment, LocalDate deliveryDate) {
+    public EndProcessDTO(ProcessManagementEntity entity, String approveTypeCode, LocalDateTime approveTime, String lastApprover, String comment, LocalDate deliveryDate, Map<String,Object> variablesMap) {
         this.businessKey = entity.getBusinessKey();
         this.businessId = entity.getBusinessId();
         this.approveStatus = ApproveTypeEnum.getByCode(approveTypeCode);
@@ -70,5 +76,6 @@ public class EndProcessDTO {
         this.approveTime = approveTime;
         this.comment = comment;
         this.deliveryDate = deliveryDate;
+        this.variablesMap = variablesMap;
     }
 }

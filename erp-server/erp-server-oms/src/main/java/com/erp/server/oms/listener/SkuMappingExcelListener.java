@@ -29,10 +29,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -142,6 +139,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         this.invoiceTaxService = invoiceTaxService;
     }
 
+    private Set<String> existSet = new HashSet<>();
+
     /**
      * 每解析一行执行一次
      *
@@ -174,6 +173,17 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
+        }
+
+        String key = skuMappingImportExcelDTO.getPlatformName() + skuMappingImportExcelDTO.getShopName() + skuMappingImportExcelDTO.getPlatformSkuNo() + skuMappingImportExcelDTO.getPlatformProductId();
+
+        if(existSet.contains(key)){
+            errorMsgList.add("平台名称、店铺名称、平台sku、平台产品ID重复");
+            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMappingImportExcelDTO);
+            return;
+        } else {
+            existSet.add(key);
         }
 
         //单位
@@ -278,21 +288,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
                 .findFirst().orElse(null);
 
-//        if (Objects.nonNull(listingInfoEntity)) {
-//            listingId = listingInfoEntity.getId();
-//            if (listingInfoEntity.getMatchResult()){
-//                //存在错误数据则直接返回
-//                errorMsgList.add("平台sku已存在匹配关系");
-//                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-//                errorList.add(skuMappingImportExcelDTO);
-//                return;
-//            }
-//        }
-
-
         //已对应的平台sku
         String finalListingId = listingId;
-        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> CharSequenceUtil.equals(s.getListingId(),finalListingId)
+        List<String> existListingIds = listDto.stream().filter(e -> !e.getIsExpire()).map(v->v.getListingId()).collect(Collectors.toList());
+        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> existListingIds.contains(s.getListingId())
                 && CharSequenceUtil.equals(dictPlatform,s.getDictPlatform())
                 && platformType.equals(s.getType())
         ).collect(Collectors.toList());
@@ -300,12 +299,14 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         if (CollectionUtils.isNotEmpty(excelList)) {
             // 修改对应关系
             SkuMappingEntity skuMappingEntity = excelList.stream().findFirst().orElse(null);
-            if (null != skuMappingEntity){
+            excelList.forEach(v->{
                 //删除原来的，再新增一条，与编辑逻辑保持一致
-                skuMappingEntity.setExpireTime(LocalDateTime.now());
-                skuMappingEntity.setIsExpire(Boolean.TRUE);
-                skuMappingEntity.setIsDeleted(true);
-                removeIds.add(skuMappingEntity.getId());
+                v.setExpireTime(LocalDateTime.now());
+                v.setIsExpire(Boolean.TRUE);
+                v.setIsDeleted(true);
+                removeIds.add(v.getId());
+            });
+            if (null != skuMappingEntity){
 
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
                 addSkuMapping.setShopId(skuMappingEntity.getShopId());

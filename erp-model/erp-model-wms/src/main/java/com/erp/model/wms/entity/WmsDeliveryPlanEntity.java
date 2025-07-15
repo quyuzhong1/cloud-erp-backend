@@ -84,6 +84,16 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
     @TableField("to_warehouse_name")
     private String toWarehouseName;
     /**
+     * 发货仓库id
+     */
+    @TableField("from_warehouse_id")
+    private String fromWarehouseId;
+    /**
+     * 发货仓库名称
+     */
+    @TableField("from_warehouse_name")
+    private String fromWarehouseName;
+    /**
     * 国家二字码
     */
     @TableField("country")
@@ -140,6 +150,12 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
      */
     @TableField("expect_logistics_method")
     private String expectLogisticsMethod;
+    /**
+     * 发货类型
+     * ThirdDeliveryTypeEnum
+     */
+    @TableField("delivery_type")
+    private String deliveryType;
 
     public static final String CODE = "code";
 

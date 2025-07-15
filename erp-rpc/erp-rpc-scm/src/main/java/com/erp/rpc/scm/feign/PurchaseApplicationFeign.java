@@ -33,6 +33,17 @@ public interface PurchaseApplicationFeign {
     BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto);
 
     /**
+     * 新增或审核
+     * @author will
+     * @date 2025/7/7 18:22
+     * @param addDTO
+     * @return BatchResultDTO
+     */
+    @PostMapping("/addAndApprove")
+    BatchResultDTO addAndApprove(PurchaseApplicationDTO.InsertDTO addDTO);
+
+
+    /**
      * 根据来源ID查询采购申请单
      * @param sourceIds 来源单据ID
      * @return 采购申请单实体
@@ -59,4 +70,14 @@ public interface PurchaseApplicationFeign {
      */
     @PostMapping("/listStockInQty")
     List<PurchaseApplicationDTO.ListDTO> listStockInQty(@RequestBody List<PurchaseApplicationDTO.ListDTO> purchaseList);
+
+    @PostMapping("/listByCodes")
+    List<PurchaseApplicationEntity> listByCodes(@RequestBody List<String> list);
+
+//    @PostMapping("/updateApproveStatus")
+//    void updateApproveStatus(@RequestBody PurchaseApplicationEntity one, String approveStatus);
+
+    @PostMapping ("/updatePA")
+    void updatePA(@RequestBody PurchaseApplicationDTO.updatePADTO updateDTO);
+
 }

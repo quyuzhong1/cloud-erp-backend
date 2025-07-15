@@ -33,7 +33,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-17 15:12
      */
-    String addSupplier(SupplierDTO.AddDTO dto);
+    SupplierEntity addSupplier(SupplierDTO.AddDTO dto);
 
 
     /**
@@ -94,12 +94,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 批量提交审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-20 19:07
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SupplierEntity entity);
 
 
     /**
@@ -118,14 +118,13 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @param entity
      * @return Boolean
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 12:02
      */
-    Boolean approveEnd(SupplierEntity entity,String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd(SupplierEntity entity,String type, String comment);
 
 
     /**
@@ -340,4 +339,8 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 
     Boolean updateVoucherNo(List<String> ids, String voucherNo);
+
+    SupplierEntity add(SupplierDTO.InsertDTO addDTO);
+
+    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
 }

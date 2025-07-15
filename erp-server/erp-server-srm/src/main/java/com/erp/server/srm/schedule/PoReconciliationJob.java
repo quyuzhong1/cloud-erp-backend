@@ -1,12 +1,9 @@
 package com.erp.server.srm.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
@@ -47,7 +44,15 @@ public class PoReconciliationJob {
      */
     @XxlJob("autoGeneratePoReconciliation")
     public ReturnT autoGeneratePoReconciliation() {
-        XxlJobHelper.log("====开始生成对账单=====");
+        String jobParam = XxlJobHelper.getJobParam();
+        LocalDate nowDate = LocalDate.now();
+        int dayOfMonth = nowDate.getDayOfMonth();
+        //有传参就取传参值
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            nowDate = LocalDate.parse(jobParam);
+            dayOfMonth = nowDate.getDayOfMonth();
+        }
+        XxlJobHelper.log("====开始生成对账单,dayOfMonth = {} =====", dayOfMonth);
         //查询系统配置
         CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.PO_RECONCILIATION.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
@@ -57,20 +62,18 @@ public class PoReconciliationJob {
         CfgSettingValueDTO.PoReconciliationSettingDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);
         //自然月生成
         if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getReconciliationType())) {
-            int dayOfMonth = LocalDate.now().getDayOfMonth();
             if (dayOfMonth != MathUtil.ONE.intValue()) {
                 return ReturnT.SUCCESS;
             }
-            LocalDate startDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate startDate = nowDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endDate = nowDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         } else {
-            int dayOfMonth = LocalDate.now().getDayOfMonth();
             if (dayOfMonth != Integer.valueOf(dto.getEndDate()).intValue() ) {
                 return ReturnT.SUCCESS;
             }
-            LocalDate endDate = LocalDate.now().minusDays(1);
-            LocalDate startDate = LocalDate.now().minusMonths(1);
+            LocalDate endDate = nowDate.minusDays(1);
+            LocalDate startDate = nowDate.minusMonths(1);
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         }
         XxlJobHelper.log("====结束生成对账单====");

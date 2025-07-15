@@ -1,6 +1,6 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -8,11 +8,11 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -74,12 +74,19 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author Will
      * @date: 2023/3/15 18:20
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param dto
 
      */
-    BatchResultDTO approve(PurchaseApplicationEntity entity, String type, String comment, Boolean isNeedProcess);
+    BatchResultDTO approve(PurchaseApplicationEntity entity, ApproveOneDTO dto);
+    /**
+     * 审核通过
+     * @author will
+     * @date 2025/7/7 17:40
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, PurchaseApplicationEntity entity);
     /**
      * @description: 批量反审核
      * @author Will
@@ -208,4 +215,51 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * 单提交
      */
     BatchResultDTO submitEntity(PurchaseApplicationEntity entity);
+    /**
+     * 销售订单下推采购申请保存
+     * @author will
+     * @date 2025/5/30 14:51
+     * @param dto
+     * @return Boolean
+     */
+    Boolean pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO dto);
+    /**
+     * 上查
+     * @author will
+     * @date 2025/5/30 16:19
+     * @param ids
+     * @return List<CheckUpDTO>
+     */
+    List<PurchaseApplicationDTO.CheckUpDTO> checkUp(List<String> ids);
+
+    List<PurchaseApplicationEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus);
+
+    void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO);
+    /**
+     * 查询数量
+     * @author will
+     * @date 2025/6/4 14:33
+     * @param soIds
+     * @return Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
+    /**
+     * 新增并且审核
+     * @author will
+     * @date 2025/7/7 18:23
+     * @param dto
+     * @return PurchaseApplicationEntity
+     */
+    PurchaseApplicationEntity addAndApprove(PurchaseApplicationDTO.InsertDTO dto);
+    /**
+     * 第三方审核结束
+     * @author will
+     * @date 2025/7/7 18:31
+     * @param updateApproveStatusDTO
+     * @return Boolean
+     */
+    Boolean thirdApproveEnd(PurchaseApplicationDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+
 }

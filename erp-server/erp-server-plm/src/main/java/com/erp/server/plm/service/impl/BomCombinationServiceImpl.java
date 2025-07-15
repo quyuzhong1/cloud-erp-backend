@@ -7,8 +7,12 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -434,7 +438,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //审核通过后需要反审核
         Boolean isApprove = Boolean.FALSE;
         if (ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailDTO.getStatus()) ) {
-            productDetailService.deApprove(productDetailDTO.getId());
+            ProductDetailEntity productDetailEntity = productDetailService.getById(productDetailDTO.getId());
+            productDetailService.disApprove(productDetailEntity);
             isApprove = Boolean.TRUE;
         }
         //更新名称
@@ -546,15 +551,16 @@ public class BomCombinationServiceImpl implements BomCombinationService {
      */
     private void skuSubmitApprove (String id) {
         //提交
-        Boolean submit = productDetailService.submit(Arrays.asList(id),Boolean.FALSE);
-        if (!submit) {
+        BatchResultDTO submit = productDetailService.submit(id,Boolean.FALSE);
+        if (!submit.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
         //审核
-        ProductDetailOperateDTO dto = new ProductDetailOperateDTO();
+        ApproveOneDTO dto = new ApproveOneDTO();
         dto.setId(id);
-        Boolean approve = productDetailService.approvalPass(dto,Boolean.FALSE);
-        if (!approve) {
+        dto.setType(ApproveTypeEnum.PASS.getStatus());
+        BatchResultDTO resultDTO = productDetailService.approve(dto,Boolean.FALSE);
+        if (!resultDTO.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
     }
@@ -622,7 +628,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-        if (!BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.WAIT_AUDIT.getState().equals(bomInfoEntity.getState())) {
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_ING.getState().equals(bomInfoEntity.getState())) {
             throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_STATE);
         }
         //解除归档
@@ -687,13 +693,14 @@ public class BomCombinationServiceImpl implements BomCombinationService {
      */
     private Boolean bomSubmitApprove (String bomId) {
         //提交
-        Boolean submit = bomInfoService.submitAudit(bomId);
-        if (!submit) {
+        BatchResultDTO resultDTO = bomInfoService.submitAudit(bomId,Boolean.FALSE);
+        if (!resultDTO.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
-        AuditParamDTO dto = new AuditParamDTO();
+        ApproveOneDTO dto = new ApproveOneDTO();
         dto.setId(bomId);
-        bomInfoService.approvalPass(dto);
+        dto.setType(ApproveType.PASS);
+        bomInfoService.approve(dto);
         return Boolean.TRUE;
     }
 

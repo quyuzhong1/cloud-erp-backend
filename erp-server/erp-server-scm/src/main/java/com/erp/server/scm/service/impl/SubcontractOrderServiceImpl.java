@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -66,6 +68,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -348,7 +351,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //提交流程
-        startProcess(Collections.singletonList(entity));
+        startProcess(entity);
 
        // 更新单据审核状态
        log.info("提交 开始修改委外订单状态数据，id集合：【{}】", toJSONString(entity.getId()));
@@ -413,14 +416,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateForApprove(Arrays.asList(entity.getId()), approveStatus.getStatus());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
@@ -805,19 +801,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
-
-        //提交
-        Boolean submit = purchaseOrderService.submit(poIds, Boolean.FALSE);
-        if (!submit) {
-            throw new ServiceException(ApiError.ERROR_98076);
-        }
-        //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(poIds);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        Boolean approve = purchaseOrderService.autoBatchApprove(baseApproveParamDTO);
-        if (!approve) {
-            throw new ServiceException(ApiError.ERROR_98077);
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
+        for (String poId : poIds) {
+            PurchaseOrderEntity entity = entityMap.get(poId);
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            //提交
+            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
+            if (!submit.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_98076);
+            }
+            //审核
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(poId);
+            approveOneDTO.setType(ApproveType.PASS);
+            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
+            if (!approve.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_98077);
+            }
         }
     }
 
@@ -1220,22 +1222,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @description: 启动流程
      * @author Will
      * @date: 2023/7/11 12:19
-     * @param list
+     * @param entity
      */
-    private void startProcess(List<SubcontractOrderEntity> list) {
+    private void startProcess(SubcontractOrderEntity entity) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
@@ -1255,7 +1253,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1266,6 +1264,45 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SubcontractOrderEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //价税合计
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxPriceTotal", taxPriceTotal);
+        //不含税合计
+        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.divide(obj.getPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate())),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("notTaxPriceTotal", notTaxPriceTotal);
+        //总计采购数量
+        Integer qtyTotal = detailList.stream().map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgentTotal", isUrgent);
+        //存在赠品
+        Boolean isGift = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsGift);
+        variablesMap.put("isGiftTotal", isGift);
+        //SKU
+        String skuNo = detailList.stream().map(SubcontractOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //供应商Id
+        String supplierId = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.joining(","));
+        variablesMap.put("supplierId", supplierId);
+        return variablesMap;
     }
 
     /**
@@ -1534,6 +1571,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //更新采购申请单的生成状态
             purchaseOrderService.updateCreatePoType(poIds);
         }
+    }
+
+    @Override
+    public List<SubcontractOrderEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<SubcontractOrderEntity>().lambda().in(SubcontractOrderEntity::getCode, list).eq(SubcontractOrderEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+         SubcontractOrderEntity subcontractOrderEntity = updateApprovalStatusDTO.getSubcontractOrderEntity();
+         lambdaUpdate().in(SubcontractOrderEntity::getId, Collections.singletonList(subcontractOrderEntity.getId()))
+                .set(SubcontractOrderEntity::getApproveStatus, approveStatus)
+                .set(SubcontractOrderEntity::getApproveUserId, subcontractOrderEntity.getApproveUserId())
+                .set(SubcontractOrderEntity::getApproveUserName, subcontractOrderEntity.getApproveUserName())
+                .set(SubcontractOrderEntity::getApproveTime, subcontractOrderEntity.getApproveTime())
+                .update();
     }
 
 }
