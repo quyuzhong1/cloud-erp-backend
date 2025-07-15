@@ -2,9 +2,11 @@ package com.erp.server.workflow.controller.fsCallback;
 
 import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
 import com.erp.server.workflow.handler.CfgApproveSyncCallbackHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -22,14 +24,9 @@ public class FsCallbackApiController {
     @ResponseBody
     public ApiResult<Object> approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
     	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
-        try{
-            Boolean b = handler.quickApproveCallbackHandler(req);
-        }catch (Exception e){
-            log.error("飞书回调异常：{}", e);
-            throw e;
-        }
+        String msg = handler.quickApproveCallbackHandler(req);
         log.info("飞书回调结束");
-        return ApiResult.success();
+        return  StringUtils.isBlank(msg) ? ApiResult.success() : ApiResult.error(ApiError.ERROR_94006.msg);
     }
 
 
