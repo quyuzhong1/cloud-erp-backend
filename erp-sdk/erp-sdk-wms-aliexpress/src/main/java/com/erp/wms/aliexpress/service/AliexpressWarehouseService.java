@@ -195,6 +195,9 @@ public class AliexpressWarehouseService {
         String accessToken = aliexpressAuthDTO.getAccessToken();
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         List<ApiInventoryResponseDTO.Result.Data.ItemsDTO> itemsDTOS = new ArrayList<>();
+        Integer pageSize = 100;
+        Integer currentPage = 1;
+        Integer totalCount = 0;
         do {
             IopRequest request = new IopRequest();
             request.setApiName("cainiao.cnap.stock.query");
