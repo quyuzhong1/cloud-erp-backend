@@ -245,7 +245,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         String url = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format("erp-{}", model) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
         try {
             List<CfgQueryOptionEntity> results = new ArrayList<>();
-            Connection conn = DriverManager.getConnection(url, "postgres", "admin@viji");
+            Connection conn = DriverManager.getConnection(url, "", "");
             String format = StrUtil.format(sql, tableName);
             PreparedStatement stmt = conn.prepareStatement(format);
             ResultSet rs = stmt.executeQuery();

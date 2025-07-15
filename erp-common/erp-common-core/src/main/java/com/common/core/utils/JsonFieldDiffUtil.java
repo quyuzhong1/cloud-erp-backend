@@ -47,6 +47,9 @@ public class JsonFieldDiffUtil {
 
             Object beforeVal = before.getOrDefault(key,null);
             Object afterVal = after.getOrDefault(key,null);
+
+            if (Objects.isNull(beforeVal)|| Objects.isNull(afterVal)) continue;
+
             if (!Objects.equals(beforeVal, afterVal)) {
                 changedFields.add(key);
             }
