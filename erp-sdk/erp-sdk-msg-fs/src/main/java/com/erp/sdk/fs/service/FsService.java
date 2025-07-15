@@ -1026,6 +1026,7 @@ public class FsService {
             } while (StrUtil.isNotBlank(resp.getData().getPageToken()));
         } catch (InterruptedException e) {
             log.error("获取审批实例ID异常", e);
+            Thread.currentThread().interrupt();
             throw new ServiceException("获取审批实例ID异常", e);
         }
         return allInstanceCodes;

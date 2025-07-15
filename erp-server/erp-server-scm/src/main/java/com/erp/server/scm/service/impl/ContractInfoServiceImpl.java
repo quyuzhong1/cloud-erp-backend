@@ -511,6 +511,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
                 } catch (InterruptedException e) {
                     log.error("审核后数据状态更新异常", e);
+                    Thread.currentThread().interrupt();
+                    throw new ServiceException("审核后数据状态更新异常", e);
                 }
             }
         });
