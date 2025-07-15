@@ -132,8 +132,8 @@
         <if test="param.curApproveId != null and param.curApproveId != ''">
             and pp.cur_approve_id = #{param.curApproveId}
         </if>
-        <if test="params.dateList != null and params.dateList.size > 0">
-            and pp.approve_time >= #{params.dateList[0]} and  #{params.dateList[1]} >= pp.approve_time
+        <if test="param.dateList != null and param.dateList.size > 0">
+            and pp.createTime >= #{param.dateList[0]} and  #{param.dateList[1]} >= pp.createTime
         </if>
         order by pp.createTime desc
     </sql>
