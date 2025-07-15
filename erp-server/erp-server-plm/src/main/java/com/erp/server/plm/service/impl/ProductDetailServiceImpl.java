@@ -6801,7 +6801,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
-        successList.removeAll(errorList);
 
         String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
