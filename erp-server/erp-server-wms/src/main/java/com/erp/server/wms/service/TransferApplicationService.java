@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -10,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
-import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
 import java.util.List;
@@ -76,10 +74,10 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 提交
      * @author Will
      * @date: 2023/5/10 18:55
-     * @param ids 
+     * @param entity
      * @return Boolean 
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(TransferApplicationEntity entity);
     /**
      * @description: 查看详情
      * @author Will
@@ -221,4 +219,8 @@ public interface TransferApplicationService extends SuperService<TransferApplica
     Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list);
 
     PagingVO<TransferApplicationDTO.ListDTO> exportTransferApplication(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto);
+
+    List<TransferApplicationEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(TransferApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

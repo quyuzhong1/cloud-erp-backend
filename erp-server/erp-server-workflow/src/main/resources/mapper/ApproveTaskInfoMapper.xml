@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ApproveTaskInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ApproveTaskInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="type" property="type" />
+       <result column="third_definniation_name" property="thirdDefinniationName" />
+       <result column="third_instance_id" property="thirdInstanceId" />
+       <result column="third_approval_code" property="thirdApprovalCode" />
+       <result column="bussiness_key" property="bussinessKey" />
+       <result column="bussiness_code" property="bussinessCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ati.id,
+        ati.create_user_id as createUserId ,
+        ati.create_user_name as createUserName,
+        ati.create_time as createTime,
+        ati.update_user_id as updateUserId,
+        ati.update_user_name as updateUserName,
+        ati.update_time as updateTime,
+        ati.version,
+        ati.is_deleted as isDeleted,
+        ati.source_platform as sourcePlatform ,
+        ati.type,
+        ati.third_definniation_name as thirdDefinniationName,
+        ati.third_instance_id as thirdInstanceId,
+        ati.third_approval_code as thirdApprovalCode,
+        ati.bussiness_key as bussinessKey,
+        ati.bussiness_code as bussinessCode,
+        ati.happen_time as happenTime,
+        ati.status,
+        ati.reason
+    </sql>
+
+    <!-- tab列表 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ApproveTaskInfoDTO$TabListDTO">
+        select
+            ati.status as tabFlag,
+            count(0) as count
+        from approve_task_info ati
+        where ati.is_deleted = false
+        group by ati.status
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.workflow.dto.ApproveTaskInfoDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"/>
+            ,tpi.serial_number as serialNumber
+        from approve_task_info ati
+        left join third_process_instance tpi on ati.third_instance_id = tpi.instance_code and tpi.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and ati.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            ati.id desc
+        </where>
+    </select>
+
+
+</mapper>

@@ -8,11 +8,13 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -48,14 +50,17 @@ import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticePurItemRoleEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
@@ -147,6 +152,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private ProcessTaskManagementFeign processTaskManagementFeign;
+
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     /**
      * 添加采购价目变更
@@ -648,16 +656,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (ObjectUtils.isEmpty(entity)) {
             return BatchResultDTO.success();
         }
-        Boolean result;
-        if (type.equals(ScmConstant.PASS)) {
-            //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
-        } else {
-            //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
+        Boolean  result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
+
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -942,7 +943,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             startDTO.setBusinessName(obj.getCode());
             startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
@@ -968,7 +969,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
@@ -992,6 +993,29 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return approveEnd(entity, type,comment,isNeedProcess);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchasePriceChangeEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PURCHASEPRICECHANGE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        List<PurchasePriceChangeDetailEntity> detailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.PRICE_NOT_EXIST);
+        }
+        //新品首批
+        String skuNo = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        return variablesMap;
     }
 
 
@@ -1127,6 +1151,20 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public List<PurchasePriceChangeEntity> listByCodes(List<String> codes) {
+        return this.list(new QueryWrapper<PurchasePriceChangeEntity>().lambda().in(PurchasePriceChangeEntity::getCode, codes).eq(PurchasePriceChangeEntity::getIsDeleted,false));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO) {
+        PurchasePriceChangeEntity entity = updateApprovalStatusDTO.getPurchasePricechangeEntity();
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        updateApproveStatus(Collections.singletonList(entity), approveStatus);
     }
 
     /**

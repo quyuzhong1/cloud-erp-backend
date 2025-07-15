@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -275,6 +274,15 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/getPushDownBySourceIds")
     Integer getPushDownBySourceIds(List<String> soIds);
+    /**
+     * 根据销售订单ids查询采购申请
+     * @author will
+     * @date 2025/6/5 14:29
+     * @param soIds
+     * @return List<PurchaseApplicationEntity>
+     */
+    @PostMapping("feign/purchaseApplication/listBySourceIds")
+    List<PurchaseApplicationEntity> listPurchaseApplicationBySourceIds(List<String> soIds);
 
     /**
      * 根据采购订单编号获取采购订单信息

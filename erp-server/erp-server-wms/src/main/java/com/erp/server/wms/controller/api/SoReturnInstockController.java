@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -14,9 +15,17 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoB2cReturnFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.query.SoReturnInstockQueryHandler;
 import com.erp.server.wms.service.SoReturnInstockService;
@@ -31,6 +40,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售退货入库单
@@ -45,6 +55,10 @@ public class SoReturnInstockController extends BaseController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
+    @Resource
+    private SoB2cReturnFeign soB2cReturnFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
     /**
      * 列表查询
      * @Author Luo_WG
@@ -456,5 +470,41 @@ public class SoReturnInstockController extends BaseController {
     public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = soReturnInstockService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+    /**
+     * 下推退货入库单保存
+     * @param dtos
+     * @return
+     */
+    @PostMapping("/returnInstockSave")
+    public ApiResult<List<BatchResultDTO>> returnInstockSave(@RequestBody @Valid ValidList<SoB2cReturnDTO.ReturnInstockDTO> dtos) {
+        if (dtos.isEmpty()) {
+            return success();
+        }
+        List<String> ids = dtos.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cReturnEntity> returnEntityList = soB2cReturnFeign.listByIds(ids);
+        List<SoB2cReturnDetailEntity> returnDetailEntityList = soB2cReturnFeign.listDetailByMainIds(ids);
+        List<String> soIds = returnEntityList.stream().map(SoB2cReturnEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids){
+            List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS = dtos.stream().filter(e -> e.getId().equals(id)).collect(Collectors.toList());
+            SoB2cReturnEntity soB2cReturnEntity = returnEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(soB2cReturnEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id, returnInstockDTOS.get(0).getCode(), "退货订单不存在"));
+                continue;
+            }
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equals(soB2cReturnEntity.getSoId())).findFirst().orElse(null);
+            List<SoB2cReturnDetailEntity> detailEntityList = returnDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            List<SoB2cDetailEntity> b2cDetailEntityList = soB2cDetailEntityList.stream().filter(e -> e.getMainId().equals(soB2cReturnEntity.getSoId())).collect(Collectors.toList());
+            try {
+                resultDTOS.add(soReturnInstockService.returnInstockSave(soB2cReturnEntity,detailEntityList,returnInstockDTOS,soB2cEntity,b2cDetailEntityList));
+            }catch (Exception e) {
+                resultDTOS.add(BatchResultDTO.fail(id, soB2cReturnEntity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

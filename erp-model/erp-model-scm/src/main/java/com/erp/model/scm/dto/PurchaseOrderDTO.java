@@ -1,10 +1,13 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -358,6 +361,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 合同盖章状态 ContractStampStatusEnum
+         */
+        private String contractStampStatus;
+
+        private String contractStampStatusName;
+
         /**
          * 采购申请单id集合
          */
@@ -1840,6 +1851,62 @@ public class PurchaseOrderDTO implements Serializable {
         private List<String> supplierIdList;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ContractStampStatusParamsDTO extends BaseIdsDTO.IdsDTO{
+
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateContractStampStatusParamsDTO{
+        /**
+         * 唯一键name
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String field;
+
+        /**
+         * 唯一键value
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String value;
+
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+     public static class InsertDTO extends AddDTO {
+
+        private String approveStatus;
+
+        private LocalDateTime approveTime;
+
+        private String approveUserId;
+
+        private String approveUserName;
+     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private PurchaseOrderEntity purchaseOrderEntity;
+        private String approveStatus;
+    }
     @Data
     @NoArgsConstructor
     public static class SupplierSkuDTO {

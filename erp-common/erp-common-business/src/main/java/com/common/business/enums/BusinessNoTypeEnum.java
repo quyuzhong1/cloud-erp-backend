@@ -115,7 +115,12 @@ public enum BusinessNoTypeEnum {
     CODE_XNKC(88, "XNKC","虚拟库存调整",BusinessNoConstant.XNKC),
     CODE_GYSHT(88, "GYSHT","合同管理编码",BusinessNoConstant.GYSHT),
 
+    CODE_LCWT(87, "LCWT","委托审批",BusinessNoConstant.LCWT),
+    CODE_SFSP(88, "SFSP","ERP审批同步配置",BusinessNoConstant.SFSP),
+    CODE_LCPZ(89, "LCPZ","流程配置",BusinessNoConstant.LCPZ),
     CODE_WFHD(88, "whud","b2c三方仓发货单",BusinessNoConstant.WFHD),
+    CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC)
+
     ;
 
 

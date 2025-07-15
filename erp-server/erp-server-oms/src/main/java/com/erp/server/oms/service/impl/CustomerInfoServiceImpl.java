@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -34,8 +35,6 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
@@ -45,11 +44,6 @@ import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
@@ -862,14 +856,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return Boolean.TRUE;
         }
         LoginUser user = UserContext.getDefaultLoginUser();
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(list, approveStatus, user.getUserName());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
@@ -1954,7 +1941,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             } else {
                 startDTO.setUserId(userInfo.getUid());
             }
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
@@ -1986,7 +1973,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            approveDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(approveDTO);
         });
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
@@ -2005,6 +1992,22 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             List<CustomerInfoEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(CustomerInfoEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,entity.getCountryId()).list();
+        if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
+            variablesMap.put("partitionName", cfgCountryPartitionEntity.get(0).getPartitionName());
+        }
+        return variablesMap;
     }
 
     @Override
@@ -2404,5 +2407,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
         }
         return new VirtualWarehouseDTO.VwDTO();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<CustomerInfoEntity>().lambda().in(CustomerInfoEntity::getCode, list).eq(CustomerInfoEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(CustomerInfoEntity entity) {
+        this.updateById(entity);
     }
 }

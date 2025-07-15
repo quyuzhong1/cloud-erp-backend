@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -60,7 +61,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 11:23
-     * @param ids
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO delete(PurchaseOrderEntity entity);
@@ -73,22 +74,14 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
     /**
-     * 自动批量审核
-     * @author will
-     * @date 2024/12/4 15:23
-     * @param baseApproveParamDTO
-     * @return Boolean
-     */
-    Boolean autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO);
-    /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 14:21
      * @param dto
-     * @param list
+     * @param entity
      * @return Boolean
      */
-    Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list);
+    Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity);
 
     /**
      * @description: 批量反审核
@@ -102,7 +95,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/16 11:27
-     * @param ids
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO cancelProcess(PurchaseOrderEntity entity);
@@ -138,13 +131,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto);
     /**
+     * @param entity
+     * @return Boolean
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:11
-     * @param ids
-     * @return Boolean
      */
-    Boolean submit(List<String> ids,Boolean isStartProcess);
+    BatchResultDTO submit(PurchaseOrderEntity entity, Boolean isStartProcess);
     /**
      * @description: 新增并提交
      * @author Will
@@ -501,9 +494,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 
     /**
-     * 单提交
+     * 合同状态更新
+     * @author jack
+     * @date: 2025/5/12
+     * @param dto
+     * @return ApiResult
      */
-    BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
+    void updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
 
     /**
      * 定时任务 ： (供应商 + 采购订单 + sku )采购数量计算

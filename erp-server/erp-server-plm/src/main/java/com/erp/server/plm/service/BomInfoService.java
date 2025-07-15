@@ -2,15 +2,15 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,9 +36,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean deleteById(String bomId);
 
-    Boolean submitAudit(String bomId);
-
-    Boolean restartAudit(String bomId);
+    BatchResultDTO submitAudit(String bomId,Boolean isStartProcess);
 
     Boolean freeze(String bomId);
 
@@ -47,8 +45,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     Boolean scrap(String bomId);
 
     Boolean recover(String id);
-
-    Boolean startChange(UpdateBomDTO dto);
 
     List<BomVO> getByIds(List<String> bomIdList);
 
@@ -62,21 +58,10 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     void exportExcel(SearchPagingDTO dto);
 
-    void approvalNoPass(AuditParamDTO dto);
-
-    void approvalPass(AuditParamDTO dto);
-
-    void bomProcessPass(ProcessPassDTO dto);
-
     void changeBom(BomDTO bom);
 
     List<ApproveNodeRecordVO> auditInfo(String id);
 
-    void checkAuditor(List<BomSkuDTO> skuList);
-
-    List<String> getSkuIdList(List<BomSkuDTO> skuList);
-
-    String getExcelUpdateContent(List<BomSkuEntity> newBomList, List<BomSkuEntity> oldBomList);
 
      String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList);
     /**
@@ -109,4 +94,29 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @param dto 分页条件
      */
     PagingVO<BomExportExcelVO> exportBom(PagingDTO<SearchPagingDTO> dto);
+    /**
+     * 审核
+     * @author will
+     * @date 2025/5/16 15:02
+     * @param approveOneDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
+    /**
+     * 审核结束
+     * @author will
+     * @date 2025/5/16 15:18
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, BomInfoEntity entity);
+    /**
+     * 撤销流程
+     * @author will
+     * @date 2025/5/16 16:06
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(String id);
 }

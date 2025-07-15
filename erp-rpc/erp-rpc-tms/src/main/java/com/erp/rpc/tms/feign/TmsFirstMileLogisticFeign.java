@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,13 @@ public interface TmsFirstMileLogisticFeign {
      **/
     @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileLogistic")
     BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+
+
+    /**
+     * 获取有预警的物流单
+     **/
+    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
 
     /**
      * 根据来源id和业务类型查询头程费用分摊记录

@@ -60,4 +60,6 @@ public interface FirstMileDeliveryConverter {
     })
     WmsCartonDetailDTO.AddDTO importToSoOutstockPackingSku(SoOutstockPackingExcelDTO data);
     List<WmsCartonDetailDTO.AddDTO> importToSoOutstockPackingSku(List<SoOutstockPackingExcelDTO> data);
+
+    TransferInfoDetailDTO.AddDTO detailAddDto(TransferInfoDetailDTO.AddDTO detailAddDto);
 }

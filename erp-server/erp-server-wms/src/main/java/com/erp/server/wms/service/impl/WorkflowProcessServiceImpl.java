@@ -1,10 +1,15 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.business.dto.base.ApproveOneDTO;
+import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.wms.entity.*;
+import com.common.business.factory.ApproveEndHandlerFactory;
+import com.common.business.handler.AbstractApproveHandler;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -18,263 +23,39 @@ import javax.annotation.Resource;
 public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
-    private TransferApplicationService transferApplicationService;
-    @Resource
-    private StocktakingPlanService stocktakingPlanService;
+    private ApproveEndHandlerFactory approveEndHandlerFactory;
 
-    @Resource
-    private StocktakingTaskService stocktakingTaskService;
-
-    @Resource
-    private StocktakingProfitLossService  stocktakingProfitLossService;
-
-    @Resource
-    private FirstMileDeliveryService firstMileDeliveryService;
-
-    @Resource
-    private WmsDeliveryPlanService wmsDeliveryPlanService;
-
-    @Resource
-    private TransferInfoService transferInfoService;
-
-    @Resource
-    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
-
-    @Resource
-    private RequisitionApplicationChangeService requisitionApplicationChangeService;
-
-    @Resource
-    private TransferInService transferInService;
-
-    @Resource
-    private TransferOutService transferOutService;
-    @Resource
-    private VirtualAdjustService virtualAdjustService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
-        switch (SourceTypeEnum.getByCode(businessKey)) {
-            case TRANSFER_APPLICATION:
-                //调拨申请
-                transferApplicationApproveEnd(dto);
-                break;
-            case STOCKTAKING_PLAN:
-                //调拨申请
-                StocktakingPlanApproveEnd(dto);
-                break;
-            case STOCKTAKING_TASK:
-                //盘点任务
-                stocktakingTaskApproveEnd(dto);
-                break;
-            case STOCKTAKING_PROFIT_LOSS:
-                //盘盈盘亏单
-                stocktakingProfitLossApproveEnd(dto);
-                break;
-            case FIRST_MILE_DELIVERY:
-                //头程发货单
-                fbaDeliveryApproveEnd(dto);
-                break;
-            case DELIVERY_PLAN:
-                //海外发货计划
-                deliveryPlanApproveEnd(dto);
-                break;
-            case TRANSFER_INFO:
-                //直接调拨单
-                transferInfoApproveEnd(dto);
-                break;
-            case TRANSFER_IN:
-                //调入单
-                transferInApproveEnd(dto);
-                break;
-            case TRANSFER_OUT:
-                //调出单
-                transferOutApproveEnd(dto);
-                break;
-            case SO_DELIVERY_NOTICE_CHANGE:
-                //销售发货通知变更单
-                deliveryNoticeChangeApproveEnd(dto);
-                break;
-            case REQUISITION_APPLICATION_CHANGE:
-                //要货申请变更单
-                requisitionApplicationChangeEnd(dto);
-                break;
-            case VIRTUAL_ADJUST:
-                //虚拟库存调整
-                virtualAdjustEnd(dto);
-                break;
-            default:
-                break;
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,dto.getApproveStatus().getName(),businessKey);
         }
-        return Boolean.TRUE;
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approveEnd(BeanUtil.toBean(dto, ApproveDTO.EndProcessDTO.class));
     }
 
-    /**
-     * 盘盈盘亏单审核通过
-     * @param dto
-     */
-    private Boolean stocktakingProfitLossApproveEnd(EndProcessDTO dto) {
-        StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOne = new ApproveOneDTO();
-        approveOne.setType(dto.getApproveStatus().getStatus());
-        approveOne.setId(dto.getBusinessId());
-        return stocktakingProfitLossService.approveEnd(approveOne,entity);
+    @Override
+    public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.DIS_APPROVE.getName(),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.disApprove(dto);
     }
 
-
-    /**
-     * 盘点任务单审核通过
-     * @author yl
-     * @date 2023-08-18 8:56
-     * @param dto
-     * @return void
-     */
-    private Boolean stocktakingTaskApproveEnd(EndProcessDTO dto) {
-
-        StocktakingTaskEntity entity = stocktakingTaskService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOne = new ApproveOneDTO();
-        approveOne.setType(dto.getApproveStatus().getStatus());
-        approveOne.setId(dto.getBusinessId());
-        return stocktakingTaskService.approveEnd(approveOne,entity);
+    @Override
+    public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.REVOKE.getName(),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.cancelProcess(dto);
     }
-
-    /**
-     * @description: 直接调拨单
-     * @author Will
-     * @date: 2023/8/2 16:13
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean transferApplicationApproveEnd(EndProcessDTO dto) {
-        //直接调拨单
-        TransferApplicationEntity entity = transferApplicationService.getById(dto.getBusinessId());
-        return transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", null);
-    }
-
-    /**
-     * @description: 直接调拨单
-     * @author Will
-     * @date: 2023/8/2 16:13
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean StocktakingPlanApproveEnd(EndProcessDTO dto) {
-        //直接调拨单
-        StocktakingPlanEntity entity = stocktakingPlanService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOne = new ApproveOneDTO();
-        approveOne.setType(dto.getApproveStatus().getStatus());
-        approveOne.setId(dto.getBusinessId());
-        return stocktakingPlanService.approveEnd(approveOne,entity);
-    }
-
-    /**
-     * FBA发货单
-     * @Author Luo_WG
-     * @Date 2023/11/15 17:56
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private Boolean fbaDeliveryApproveEnd(EndProcessDTO dto) {
-        //FBA发货单
-        FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOne = new ApproveOneDTO();
-        approveOne.setType(dto.getApproveStatus().getStatus());
-        approveOne.setId(dto.getBusinessId());
-        approveOne.setDeliveryDate(dto.getDeliveryDate());
-        approveOne.setComment(dto.getComment());
-        return firstMileDeliveryService.approveEnd(approveOne,entity);
-    }
-
-    /**
-     * 海外发货计划
-     * @Author Luo_WG
-     * @Date 2023/11/17 16:14
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private Boolean deliveryPlanApproveEnd(EndProcessDTO dto) {
-        //FBA发货单
-        WmsDeliveryPlanEntity entity = wmsDeliveryPlanService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOne = new ApproveOneDTO();
-        approveOne.setType(dto.getApproveStatus().getStatus());
-        approveOne.setId(dto.getBusinessId());
-        return wmsDeliveryPlanService.approveEnd(approveOne,entity);
-    }
-
-    /**
-     * 直接调拨单
-     * @Author Luo_WG
-     * @Date 2024/9/6 18:18
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private Boolean transferInfoApproveEnd(EndProcessDTO dto) {
-        //直接调拨单
-        TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
-        return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
-    }
-
-    /**
-     * 调入单
-     * @author will
-     * @date 2025/4/22 16:22
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean transferInApproveEnd(EndProcessDTO dto) {
-        //调入单
-        TransferInEntity entity = transferInService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        return transferInService.approveEnd(approveOneDTO,entity);
-    }
-
-    /**
-     * 调出单
-     * @author will
-     * @date 2025/4/22 16:22
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean transferOutApproveEnd(EndProcessDTO dto) {
-        //调入单
-        TransferOutEntity entity = transferOutService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        return transferOutService.approveEnd(approveOneDTO,entity);
-    }
-    /**
-     * 发货通知变更
-     * @Author Luo_WG
-     * @Date 2024/9/6 18:18
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private Boolean deliveryNoticeChangeApproveEnd(EndProcessDTO dto) {
-        //发货通知变更
-        SoDeliveryNoticeChangeEntity entity = soDeliveryNoticeChangeService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        return soDeliveryNoticeChangeService.approveEnd(approveOneDTO,entity);
-    }
-
-    /**
-     * 要货申请变更
-     **/
-    private Boolean requisitionApplicationChangeEnd(EndProcessDTO dto) {
-        RequisitionApplicationChangeEntity entity = requisitionApplicationChangeService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        return requisitionApplicationChangeService.approveEnd(approveOneDTO,entity);
-    }
-    /**
-     * 虚拟库存调整
-     **/
-    private Boolean virtualAdjustEnd(EndProcessDTO dto) {
-        VirtualAdjustEntity entity = virtualAdjustService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        return virtualAdjustService.approveEnd(approveOneDTO,entity);
-    }
-
 }

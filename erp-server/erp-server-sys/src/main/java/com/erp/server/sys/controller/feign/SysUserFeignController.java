@@ -16,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -27,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -372,6 +374,14 @@ public class SysUserFeignController extends BaseController {
     public List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds) {
         return sysUserThirdService.getUnionByPlatformAndUserIds(platform, userIds);
     }
+    /**
+     * 根据第三方平台和用户id获取对应的第三方信息
+     * @return
+     */
+    @PostMapping("/getThirdByUserIds")
+    public List<ThirdUnionDTO> getThirdByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds) {
+        return sysUserThirdService.getThirdByUserIds(platform, userIds);
+    }
 
     /**
      * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
@@ -561,5 +571,22 @@ public class SysUserFeignController extends BaseController {
     @GetMapping("/getUserDatePermissionByMenuCode")
     public Boolean getUserDatePermissionByMenuCode(@RequestParam("menuCode") String menuCode) {
         return userDatePermissionService.getUserDatePermissionByMenuCode( menuCode);
+    }
+
+
+    /**
+     * 根据第三方平台和id查询用户
+     **/
+    @PostMapping("/getUserByThird")
+    public SysUserThirdEntity getUserByThird(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId)  {
+        return sysUserThirdService.getUserByThird( platform,thirdId);
+    }
+
+    /**
+     * 根据第三方平台和id查询用户
+     **/
+    @PostMapping("/getUserByThirdIdList")
+    public List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds)  {
+        return sysUserThirdService.getUserByThirdIdList( platform,thirdIds);
     }
 }

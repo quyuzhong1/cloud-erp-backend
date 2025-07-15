@@ -39,6 +39,21 @@ public class BankAccountController extends BaseController {
     }
 
     /**
+     * 查询所有账号
+     * @author will
+     * @date 2025/6/25 17:02
+     * @return ApiResult<List<DisabledDTO>>
+     */
+    @GetMapping("/selectAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> selectAll() {
+        List<BankAccountEntity> list = bankAccountService.list();
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream().sorted(Comparator.comparing(BankAccountEntity::getDisabled))
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getId(), x.getBankAccountNo()+"      "+x.getAccountName(),x.getDisabled()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
      * 分页列表
      *
      * @param dto

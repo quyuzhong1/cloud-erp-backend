@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -314,7 +315,10 @@ public class SoInfoDTO implements Serializable {
          * 剩余数量
          */
         private Integer waitQty;
-
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
 
         /**
          * 单位
@@ -2310,6 +2314,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货数量
          */
+        @NotNull(message = "退货数量不能为空")
         private Integer returnQty;
 
         /**
@@ -2320,7 +2325,9 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
+         * ReturnTypeEnum
          */
+        @NotBlank(message = "退货类型不能为空")
         private String returnTypeDict;
 
         /**
@@ -2331,10 +2338,12 @@ public class SoInfoDTO implements Serializable {
         /**
          * 退货日期
          */
+        @NotNull(message = "退货日期不能为空")
         private LocalDate returnDate;
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓库名称
@@ -2357,10 +2366,12 @@ public class SoInfoDTO implements Serializable {
         /**
          *退货金额
          */
+        @NotNull(message = "退货金额不能为空")
         private BigDecimal returnAmount;
         /**
          *含税退货金额
          */
+        @NotNull(message = "含税退货金额不能为空")
         private BigDecimal taxReturnAmount;
         /**
          *销售金额
@@ -2382,6 +2393,11 @@ public class SoInfoDTO implements Serializable {
          * 库存组织id
          */
         private String warehouseOrgId;
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
     }
 
     @Data
@@ -2945,5 +2961,13 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer returnQty;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private SoInfoEntity soInfoEntity;
+        private BillApproveStatusEnum  billApproveStatusEnum;
     }
 }

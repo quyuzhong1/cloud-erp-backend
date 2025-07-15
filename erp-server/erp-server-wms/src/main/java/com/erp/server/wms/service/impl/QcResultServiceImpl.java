@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson2.JSONObject;
@@ -380,14 +381,29 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Override
 //    @Async
     public void sendQcResultMsg(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
+        List<QcResultDTO.QcNoticeDTO> list = listQcResultMsg(ids);
+        if(CollUtil.isEmpty(list)){
+            return ;
+        }
+
+        //以新 老品分组
+        Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct())));
+        for (Map.Entry<Boolean, List<QcResultDTO.QcNoticeDTO>> entry : map.entrySet()) {
+            //是否新品 true 是
+            Boolean isFirstMassProduct = entry.getKey();
+            List<QcResultDTO.QcNoticeDTO> value = entry.getValue();
+            sendMsg(isFirstMassProduct, value);
+        }
+    }
+
+    @Override
+    public List<QcResultDTO.QcNoticeDTO> listQcResultMsg(List<String> qcInfoIds) {
+        if(CollUtil.isEmpty(qcInfoIds)){
+            return Collections.emptyList();
         }
         //根据主表id 获取到发送质检的信息
-        List<QcResultDTO.QcNoticeDTO> list = baseMapper.listQcResultMsg(ids);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
+        List<QcResultDTO.QcNoticeDTO> list = baseMapper.listQcResultMsg(qcInfoIds);
+
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -415,16 +431,50 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 item.setFirstMassProduct(entity.getFirstMassProduct());
             }
         }
-        //以新 老品分组
-        Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct())));
-        for (Map.Entry<Boolean, List<QcResultDTO.QcNoticeDTO>> entry : map.entrySet()) {
-            //是否新品 true 是
-            Boolean isFirstMassProduct = entry.getKey();
-            List<QcResultDTO.QcNoticeDTO> value = entry.getValue();
-            sendMsg(isFirstMassProduct, value);
+        return list;
+    }
 
+    @Override
+    public Map<String, String> listQcItemRolePeople( QcResultDTO.QcItemRolePeopleDTO dto ) {
+
+
+        if(Objects.isNull(dto) || CollUtil.isEmpty(dto.getQcInfoIds())){
+            return Collections.emptyMap();
         }
 
+        List<QcResultDTO.QcNoticeDTO> list = listQcResultMsg(dto.getQcInfoIds());
+        //以新 老品分组
+        Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct())));
+        list = map.get(dto.getIsFirstMassProduct());
+        if(CollUtil.isEmpty(list)){
+            return Collections.emptyMap();
+        }
+
+        List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
+        //根据sku 获取角色的
+        List<ProductInfoDTO.ProductRolePeopleDTO> rolePeopleList = plmTaskFeign.listProductRolePeople(skuIdList);
+        if(CollUtil.isEmpty(rolePeopleList)){
+            return Collections.emptyMap();
+        }
+
+        Set<String> projectCharge = new HashSet<>();
+        Set<String> productCharge = new HashSet<>();
+        for (ProductInfoDTO.ProductRolePeopleDTO peopleDTO : rolePeopleList) {
+            //项目经理
+            List<String> projectChargeIdList = peopleDTO.getProjectChargeIdList();
+            projectCharge.addAll(projectChargeIdList);
+            //产品经理
+            List<String> productChargeIdList = peopleDTO.getProductChargeIdList();
+            productCharge.addAll(productChargeIdList);
+        }
+        Map<String, String> resulst = new HashMap<>();
+        if(CollUtil.isNotEmpty(projectCharge)){
+            resulst.put("projectCharge",String.join(",", projectCharge));
+        }
+        if(CollUtil.isNotEmpty(productCharge)){
+            resulst.put("productCharge",String.join(",", productCharge));
+        }
+        return resulst;
     }
 
     @Override

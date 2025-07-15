@@ -18,7 +18,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_MANAGEM
 
 @Component
 @Slf4j
-public class ExportWorkflowProcessManagementHandler extends AbstractPageFileEventHandler<ProcessManagementDTO.PagingResultDTO, ProcessManagementDTO.ExportDTO> {
+public class ExportWorkflowProcessManagementHandler extends AbstractPageFileEventHandler<ProcessManagementDTO.PagingResultDTO, ProcessManagementDTO.SearchDTO> {
     @Resource
     private ExportWorkflowFeign exportWorkflowFeign;
     @Override
@@ -33,13 +33,13 @@ public class ExportWorkflowProcessManagementHandler extends AbstractPageFileEven
 
     @Override
     protected List<ProcessManagementDTO.PagingResultDTO> getData(FileTask fileTask) {
-        ProcessManagementDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProcessManagementDTO.ExportDTO>() {
+        ProcessManagementDTO.SearchDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProcessManagementDTO.SearchDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
+    protected PagingVO<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
         return exportWorkflowFeign.exportProcessManagement(dto);
     }
 }

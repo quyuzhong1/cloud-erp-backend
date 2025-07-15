@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -13,7 +14,9 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
@@ -148,10 +151,44 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:add",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
-        PurchasePriceChangeEntity entity = purchasePriceChangeService.addAndSubmit(dto);
-        purchasePriceChangeService.sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
-        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
+    public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        //新增
+        PurchasePriceChangeEntity entity;
+        try {
+            entity  = purchasePriceChangeService.add(dto);
+            if (null == entity) {
+                return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            }
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        }
+        //提审
+        try {
+            entity = purchasePriceChangeService.getById(entity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购价目变更");
+            }
+            purchasePriceChangeService.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        }
+        //发送消息
+        try {
+            //消息发送
+            purchasePriceChangeService.sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
+        } catch (Exception e) {
+            log.error("发送消息失败，ID: {}", entity.getId(), e);
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
     }
 
 
@@ -205,10 +242,39 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:update",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
-        Boolean result = purchasePriceChangeService.updateAndSubmit(dto);
-        purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
-        return result == true ? success() : failure();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+        String id="";
+        try {
+            id = purchasePriceChangeService.updatePurchasePriceChange(dto);
+            if (StringUtils.isBlank(id)) {
+                return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            }
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        }
+        //提审
+        try {
+            purchasePriceChangeService.submitApprove(Arrays.asList(id), Boolean.TRUE);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", id, e);
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", id, e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        }
+
+        //发送消息
+        try {
+            //消息发送
+            purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
+        } catch (Exception e) {
+            log.error("发送消息失败，ID: {}", id, e);
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
 

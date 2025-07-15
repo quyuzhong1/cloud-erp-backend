@@ -272,7 +272,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
             if (matchResult) {
                 ruleMatch.setFlowStatus(item.getFlowStatus());
                 String categoryDetailId = item.getCategoryDetailId();

@@ -170,6 +170,13 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     @TableField(exist = false)
     private BigDecimal destDeclarePrice;
 
+    /**
+     * 是否下推旺店通
+     */
+    @TableField(exist = false)
+    private Boolean isPushWdt;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

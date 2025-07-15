@@ -4,10 +4,13 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -562,5 +565,13 @@ public class TransferInfoDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private TransferInfoEntity transferInfoEntity;
+        private String approveStatus;
     }
 }

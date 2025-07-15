@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -80,10 +81,10 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @description: 提交
      * @author Will
      * @date: 2023/5/17 15:15
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id,Boolean isProcess);
     /**
      * @description: 查询详情
      * @author Will
@@ -119,6 +120,16 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @date: 2023/12/5 11:58
      */
     BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt);
+
+    /**
+     * 结束审核
+     * @author will
+     * @date 2025/5/16 10:28
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, OtherInstockEntity entity);
     /**
      * @param id
      * @param isPushWdt
@@ -224,4 +235,8 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * 其他入库
      */
     PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto);
+
+    List<OtherInstockEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

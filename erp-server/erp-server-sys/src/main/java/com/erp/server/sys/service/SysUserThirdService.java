@@ -8,6 +8,7 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ import java.util.List;
 public interface SysUserThirdService extends IService<SysUserThirdEntity> {
 
 
-    void bindingThirdParty(String uid, String flagId, String bindingPlatform);
+    void bindingThirdParty(String uid, String flagId,String thirdOpenId,String thirdUserId, String bindingPlatform);
 
     SysUserThirdEntity findByUnionId(String flagId);
 
@@ -52,6 +53,10 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
      */
     List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds);
 
+    List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds);
+
+    SysUserThirdEntity getUserByThird(String platform, String thirdId);
+
     /**
      * 获取第三方绑定的用户
      * @author yl
@@ -60,5 +65,13 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listThirdBindUser();
+
+    /**
+     * 批量获取获取第三方绑定的用户
+     * @param platform
+     * @param thirdIds
+     * @return
+     */
+    List<SysUserThirdEntity> getUserByThirdIdList(String platform, ArrayList<String> thirdIds);
 }
 

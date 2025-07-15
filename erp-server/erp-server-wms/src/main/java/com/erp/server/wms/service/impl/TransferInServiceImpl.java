@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -46,7 +47,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInService;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
-import jodd.util.StringUtil;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -369,7 +369,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -382,6 +382,22 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
     }
 
+    /**
+     * variablesMap值赋值
+     * @author jack
+     * @date 2025/5/27 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(TransferInEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<TransferInDetailEntity> detailList = transferInDetailService.lambdaQuery().eq(TransferInDetailEntity::getMainId,entity.getId()).list();
+        if (CollUtil.isNotEmpty(detailList)) {
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        return variablesMap;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -389,17 +405,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-
-            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
-            this.updateQcNoticePutaway(entity,Boolean.TRUE);
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         LoginUser user = UserContext.getDefaultLoginUser();
         Boolean result = this.updateApproveInfo(Arrays.asList(entity), approveStatus,user.getUserName());
         if (!result) {
@@ -407,6 +413,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(entity);
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(entity,Boolean.TRUE);
         }
         return Boolean.TRUE;
     }
@@ -512,7 +520,16 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        //TODO 撤销流程
+        //撤销现有流程
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.WAIT_SUBMIT, "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("分布式调入单【%s】取消流程", ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "取消流程操作");

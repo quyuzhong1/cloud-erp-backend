@@ -37,10 +37,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -71,6 +68,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Lambda
@@ -124,6 +122,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private SysPartitionFeign sysPartitionFeign;
+    @Resource
+    private DictBasicService dictBasicService;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -251,8 +251,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_WAREHOUSE_MAPPING, entity.getWarehouseName());
         }
         List<String> skuNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toList());
+        List<String> suiteNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSuiteNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(suiteNoList)){
+            skuNoList = Stream.concat(skuNoList.stream(),suiteNoList.stream()).collect(Collectors.toList());
+        }
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
+        if (ObjectUtil.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_FOUND, warehouseList.get(0).getSysName());
+        }
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
         //组织信息
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
@@ -285,10 +292,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setInvalidStatus(false);
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
-
+        List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock,entity.getDetailList());
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
-        for (WdtSoOutStockDetailDTO detailDTO : entity.getDetailList()) {
+        for (WdtSoOutStockDetailDTO detailDTO : wdtSoOutStockDetailDTOS) {
             List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
 			if (CollectionUtils.isEmpty(positionDetailsList)){
                 //暂时使用空仓位
@@ -392,6 +399,47 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //推送数帝云
         this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
+
+    /**
+     * 如果是京东官方仓 就需要合并SKU
+     * @param soOutstock
+     * @param detailList
+     * @return
+     */
+    private List<WdtSoOutStockDetailDTO> buildOutStockDetail(SoOutstockEntity soOutstock, List<WdtSoOutStockDetailDTO> detailList) {
+        //获取仓库配置
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("mergeSkuWarehouse"));
+        if (CollectionUtils.isEmpty(dictList)) {
+            return detailList;
+        }
+        DictBasicEntity basicEntity = dictList.stream().filter(e -> e.getValue().equals(soOutstock.getWarehouseId())).findFirst().orElse(null);
+        if (Objects.isNull(basicEntity)) {
+            return detailList;
+        }
+        //兼容历史数据，没有组合sku和数量就不合并
+        Map<String, List<WdtSoOutStockDetailDTO>> suiteMap = detailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo()) && Objects.nonNull(e.getSuiteQty())).collect(Collectors.groupingBy(e -> e.getSuiteNo() + "-" + e.getSuiteQty()));
+        //存在仓库配置
+        List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS = new ArrayList<>();
+        for (String key : suiteMap.keySet()) {
+            List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS1 = suiteMap.get(key);
+            WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO = soOutStockDetailDTOS1.get(0);
+            wdtSoOutStockDetailDTO.setSkuNo(wdtSoOutStockDetailDTO.getSuiteNo());
+            wdtSoOutStockDetailDTO.setPlanQty(wdtSoOutStockDetailDTO.getSuiteQty());
+            wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
+            wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
+            wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+            List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
+            wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
+            //单价处理 明细*qty之和 / 合并数量
+            BigDecimal totalPrice = soOutStockDetailDTOS1.stream().map(e -> e.getPrice().multiply(new BigDecimal(e.getActualQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+            wdtSoOutStockDetailDTO.setPrice(totalPrice.divide(new BigDecimal(wdtSoOutStockDetailDTO.getSuiteQty()), 2, RoundingMode.HALF_UP));
+
+            soOutStockDetailDTOS.add(wdtSoOutStockDetailDTO);
+        }
+        soOutStockDetailDTOS.addAll(detailList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSuiteNo()) || Objects.isNull(e.getSuiteQty())).collect(Collectors.toList()));
+        return soOutStockDetailDTOS;
+    }
+
     private void syncToSdy(SoOutstockEntity entity, String operate) {
         //推送数帝云
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));

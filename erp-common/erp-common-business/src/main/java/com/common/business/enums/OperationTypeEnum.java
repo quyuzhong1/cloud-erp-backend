@@ -43,6 +43,14 @@ public enum OperationTypeEnum {
     EXECUTE("execute", "执行"),
 
     LOCKING("locking", "锁定"),
+    CLOSE("close", "终止操作"),
+
+    PASS("pass", "通过操作"),
+    REJECT("reject", "驳回操作"),
+    RESTORE("restore", "恢复操作"),
+    SUSPEND("suspend", "暂停操作"),
+
+
     MANUAL_GENERATE("manualGenerate", "手动生成"),
 
     ;

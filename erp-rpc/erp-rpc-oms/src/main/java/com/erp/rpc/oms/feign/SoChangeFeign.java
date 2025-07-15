@@ -3,6 +3,8 @@ package com.erp.rpc.oms.feign;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.entity.SoChangeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,4 +24,18 @@ public interface SoChangeFeign {
      **/
     @PostMapping("feign/soChange/approve")
     ApiResult<List<BatchResultDTO>> approve(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 根据变更单号查询变更单信息
+     * @param list
+     */
+    @PostMapping("feign/soChange/listByCodes")
+    List<SoChangeEntity> listByCodes(List<String> list);
+
+
+    /**
+     *  根据变更单号查询变更单信息
+     */
+    @PostMapping ("feign/soChange/updateApproveStatus")
+    void updateApproveStatus(SoChangeEntity entity);
 }

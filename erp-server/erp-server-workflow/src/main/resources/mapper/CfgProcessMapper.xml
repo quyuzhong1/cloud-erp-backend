@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgProcessMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgProcessEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="bussiness_key" property="bussinessKey"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, name, bussiness_key
+    </sql>
+
+    <resultMap id="flatProcessWithRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessViewDTO">
+        <id property="id" column="process_id"/>
+        <result property="code" column="process_code"/>
+        <result property="name" column="process_name"/>
+        <result property="bussinessKey" column="process_bussiness_key"/>
+
+        <!-- 以下是来自规则表 (cfg_process_rule) 或其关联表的信息 -->
+        <result property="type" column="rule_type"/>
+        <result property="processDefinitionName" column="process_definition_name"/>
+        <result property="ruleDesc" column="aggregated_exp_desc"/> <!-- 聚合后的表达式描述 -->
+        <result property="disabled" column="rule_disabled"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="createTime" column="rule_create_time"/>
+        <result property="createUserName" column="rule_create_user_name"/>
+        <result property="updateTime" column="rule_update_time"/>
+        <result property="updateUserName" column="rule_update_user_name"/>
+    </resultMap>
+
+    <select id="getProcessWithRuleAndAggregatedExps" resultMap="flatProcessWithRuleResultMap">
+        SELECT
+        p.id AS process_id,
+        p.code AS process_code,
+        p.name AS process_name,
+        wm.module_classify AS process_bussiness_key,
+
+        r.id AS rule_id,
+        db.name AS rule_type,
+        r.disabled AS rule_disabled,
+        r.create_time AS rule_create_time,
+        r.create_user_name AS rule_create_user_name,
+        r.update_time AS rule_update_time,
+        r.update_user_name AS rule_update_user_name,
+
+        CASE
+        WHEN r.type = 'fsProcess' THEN tpd.name
+        WHEN r.type = 'erpProcess' THEN pd.process_name
+        ELSE NULL
+        END AS process_definition_name,
+
+        STRING_AGG(
+        CONCAT_WS(' ',
+        COALESCE(e.left_bracket, ''),
+        COALESCE(cqo.condition_field_name, ''),
+        COALESCE(drc.value, ''),
+        COALESCE(e.name, ''),
+        COALESCE(e.right_bracket, ''),
+        COALESCE(e.logic, '')
+        ),
+        ''
+        ORDER BY e.index
+        ) AS aggregated_exp_desc
+
+        FROM public.cfg_process p
+        LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
+        LEFT JOIN public.third_process_definition tpd ON r.type = 'fsProcess' AND r.process_definition_id = tpd.approval_code AND tpd.is_deleted = false
+        LEFT JOIN public.process_definition pd ON r.type = 'erpProcess' AND r.process_definition_id = pd.id AND pd.is_deleted = false AND pd.is_deploy = true
+        LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
+        LEFT JOIN public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
+        LEFT JOIN public.cfg_query_option cqo ON p.bussiness_key = cqo.bussiness_key AND e.field = cqo.condition_field AND cqo.is_deleted = false and cqo.use_type = 'cfgProcess'
+        LEFT JOIN public.dict_basic db ON r.type = db.value AND db.is_deleted = false
+        LEFT JOIN public.work_menu wm ON wm.module_code = p.bussiness_key AND wm.is_deleted = false
+
+        WHERE
+        ${params.sqlMap.default}
+        AND p.is_deleted = false
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+        GROUP BY
+        p.id,
+        p.code,
+        p.name,
+        p.bussiness_key,
+        r.id,
+        r.type,
+        r.disabled,
+        r.create_time,
+        r.create_user_name,
+        r.update_time,
+        r.update_user_name,
+        tpd.name,
+        pd.process_name,
+        wm.module_classify,
+        db.name
+
+        ORDER BY p.code DESC, r.create_time ASC
+    </select>
+
+    <!-- 主流程 resultMap -->
+    <resultMap id="viewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ViewDTO">
+        <id property="id" column="process_id"/>
+        <result property="code" column="process_code"/>
+        <result property="name" column="process_name"/>
+        <result property="bussinessKey" column="process_bussiness_key"/>
+
+        <collection property="processRuleDTOList" ofType="com.erp.model.workflow.dto.CfgProcessRuleDTO$ViewDTO"
+                    resultMap="ruleViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 规则 resultMap -->
+    <resultMap id="ruleViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessRuleDTO$ViewDTO">
+        <id property="id" column="rule_id"/>
+        <result property="type" column="rule_type"/>
+        <result property="cfgProcessId" column="cfg_process_id"/>
+        <result property="processDefinitionId" column="r_process_definition_id"/>
+        <result property="processDefinitionVersion" column="process_definition_version"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="disabled" column="disabled"/>
+        <result property="ruleDesc" column="exp_desc"/>
+
+        <collection property="processExpDTOList" ofType="com.erp.model.workflow.dto.CfgProcessExpDTO$ViewDTO"
+                    resultMap="expViewDTOResultMap"/>
+        <collection property="processFieldMapDTOList" ofType="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO"
+                    resultMap="fieldViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 表达式 resultMap -->
+    <resultMap id="expViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessExpDTO$ViewDTO">
+        <id property="id" column="exp_id"/>
+        <result property="ruleId" column="rule_id_for_exp"/>
+        <result property="leftBracket" column="left_bracket"/>
+        <result property="field" column="field"/>
+        <result property="fieldName" column="field_name"/>
+        <result property="compare" column="compare"/>
+        <result property="value" column="value"/>
+        <result property="rightBracket" column="right_bracket"/>
+        <result property="logic" column="logic"/>
+        <result property="index" column="exp_index"/>
+        <result property="name" column="exp_name"/>
+    </resultMap>
+
+    <!-- 字段映射 resultMap -->
+    <resultMap id="fieldViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO">
+        <id property="id" column="field_map_id"/>
+        <result property="thirdField" column="third_field"/>
+        <result property="thirdFieldType" column="third_field_type"/>
+        <result property="thirdFieldRequired" column="third_field_required"/>
+        <result property="sysField" column="sys_field"/>
+        <result property="sysFieldType" column="sys_field_type"/>
+        <result property="sysFieldRequired" column="sys_field_required"/>
+        <result property="cfgId" column="cfg_id"/>
+        <result property="defaultValue" column="field_default_value"/>
+        <result property="isUnique" column="is_unique"/>
+        <result property="cfgType" column="cfg_type"/>
+        <result property="thirdFieldId" column="third_field_id"/>
+        <result property="isDetailField" column="is_detail_field"/>
+        <result property="thirdParentId" column="thirdParentId"/>
+        <result property="sysParentId" column="sys_parent_id"/>
+        <result property="groupType" column="group_type"/>
+        <result property="index" column="index"/>
+
+        <collection property="processValueMapDTOList"
+                    ofType="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO"
+                    column="field_map_id"
+                    select="listValueMapByFieldMapId"/>
+
+    </resultMap>
+
+    <!-- 值映射 resultMap -->
+    <resultMap id="valueViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO">
+        <id property="id" column="value_map_id"/>
+        <result property="fieldMapId" column="value_field_map_id"/>
+        <result property="thirdValue" column="third_value"/>
+        <result property="sysValue" column="sys_value"/>
+        <result property="defaultValue" column="map_defaultValue"/>
+    </resultMap>
+
+    <!-- 主查询：根据流程ID获取完整视图 -->
+    <select id="getViewDTOById" resultMap="viewDTOResultMap">
+        SELECT p.id                             AS process_id,
+               p.code                           AS process_code,
+               p.name                           AS process_name,
+               p.bussiness_key                  AS process_bussiness_key,
+
+               r.id                             AS rule_id,
+               r.type                           AS rule_type,
+               r.cfg_process_id                 AS cfg_process_id,
+               r.process_definition_id          AS r_process_definition_id,
+               pd.process_version               AS process_definition_version,
+               r.is_default                     AS is_default,
+               r.disabled                       AS disabled,
+
+               (SELECT STRING_AGG(
+                               CONCAT_WS(' ',
+                                         COALESCE(sub_e.left_bracket, ''),
+                                         COALESCE(sub_cqo.condition_field_name, ''),
+                                         COALESCE(sub_drc.value, ''),
+                                         COALESCE(sub_e.name, ''),
+                                         COALESCE(sub_e.right_bracket, ''),
+                                         COALESCE(sub_e.logic, '')
+                               ),
+                               E''
+                               ORDER BY sub_e.index ASC
+                       )
+                FROM public.cfg_process_exp sub_e
+                         LEFT JOIN public.dict_rule_condition sub_drc
+                                   ON sub_e.compare = sub_drc.key AND sub_drc.is_deleted = false
+                         LEFT JOIN public.cfg_query_option sub_cqo
+                                   ON p.bussiness_key = sub_cqo.bussiness_key
+                                       AND sub_e.field = sub_cqo.condition_field
+                                       AND sub_cqo.is_deleted = false
+                                       and sub_cqo.use_type = 'cfgProcess'
+                WHERE sub_e.rule_id = r.id
+                  AND sub_e.is_deleted = false) AS exp_desc,
+
+               e.id                             AS exp_id,
+               e.rule_id                        AS rule_id_for_exp,
+               e.left_bracket                   AS left_bracket,
+               e.field                          AS field,
+               e.field_name                     AS fieldName,
+               e.compare                        AS compare,
+               e.value                          AS value,
+               e.right_bracket                  AS right_bracket,
+               e.logic                          AS logic,
+               e.index                          AS exp_index,
+               e.name                           AS exp_name,
+
+               fm.id                            AS field_map_id,
+               fm.third_field                   AS third_field,
+               fm.third_field_type              AS third_field_type,
+               fm.third_field_required          AS third_field_required,
+               fm.sys_field                     AS sys_field,
+               fm.sys_field_type                AS sys_field_type,
+               fm.sys_field_required            AS sys_field_required,
+               fm.cfg_id                        AS cfg_id,
+               fm.default_value                 AS field_default_value,
+               fm.is_unique                     AS is_unique,
+               fm.cfg_type                      AS cfg_type,
+               fm.third_field_id                AS third_field_id,
+               fm.is_detail_field               AS is_detail_field,
+               fm.third_parent_id               AS third_parent_id,
+               fm.sys_parent_id                 AS sys_parent_id,
+               fm.group_type                    AS group_type,
+               fm.index                         AS index
+        FROM public.cfg_process p
+                 LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
+                 LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
+                 LEFT JOIN public.cfg_process_field_map fm ON r.id = fm.cfg_id AND fm.is_deleted = false
+                 LEFT JOIN public.process_definition pd ON r.process_definition_id = pd.id AND pd.is_deleted = false AND pd.is_deploy = true
+        WHERE p.id = #{id}
+          AND p.is_deleted = false
+        ORDER BY p.id ASC,
+                 r.create_time ASC, r.id ASC,
+                 e.index ASC, e.id ASC,
+                 fm.id ASC
+    </select>
+
+    <select id="listValueMapByFieldMapId" resultMap="valueViewDTOResultMap">
+        SELECT
+            vm.id            AS value_map_id,
+            vm.field_map_id  AS value_field_map_id,
+            vm.third_value   AS third_value,
+            vm.sys_value     AS sys_value,
+            vm.default_value AS map_defaultValue
+        FROM public.cfg_process_value_map vm
+        WHERE vm.field_map_id = #{fieldMapId}
+          AND vm.is_deleted = false
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.workflow.dto.CfgProcessDTO$TabListDTO">
+        SELECT
+        cpr.disabled AS tabFlag,
+        count(1) AS count
+        FROM cfg_process as cp
+        left join cfg_process_rule cpr on cp.id = cpr.cfg_process_id
+        WHERE cpr.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY cpr.disabled
+    </select>
+</mapper>

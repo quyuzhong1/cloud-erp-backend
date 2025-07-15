@@ -15,9 +15,11 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +42,12 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * @date 2022-07-21 14:06
      */
     @Override
-    public void bindingThirdParty(String uid, String flagId, String bindingPlatform) {
+    public void bindingThirdParty(String uid, String flagId,String thirdOpenId,String thirdUserId, String bindingPlatform) {
         SysUserThirdEntity thirdEntity = new SysUserThirdEntity();
         thirdEntity.setUserId(uid);
         thirdEntity.setThirdUnionId(flagId);
+        thirdEntity.setThirdOpenId(thirdOpenId);
+        thirdEntity.setThirdUserId(thirdUserId);
         thirdEntity.setThirdPartyType(bindingPlatform);
         this.save(thirdEntity);
     }
@@ -184,6 +188,46 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
             thirdUnionDTO.setUserName(userMap.get(thirdUnionDTO.getUserId()));
         });
         return thirdUnionDTOs;
+    }
+
+    @Override
+    public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
+        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(userIds)){
+            return Collections.emptyList();
+        }
+        List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
+                .in(SysUserThirdEntity::getUserId, userIds)
+                .ne(SysUserThirdEntity::getThirdOpenId, "")
+                .ne(SysUserThirdEntity::getThirdUserId, "")
+                .ne(SysUserThirdEntity::getThirdUnionId, "")
+                .list();
+        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
+        if(CollUtil.isEmpty(thirdUnionDTOs)){
+            return Collections.emptyList();
+        }
+        List<FindUserDTO> userList = sysUserInfoService.getUserListByUserIds(thirdUnionDTOs.stream().map(ThirdUnionDTO::getUserId).collect(Collectors.toList()));
+        Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+        thirdUnionDTOs.forEach(thirdUnionDTO -> {
+            thirdUnionDTO.setUserName(userMap.get(thirdUnionDTO.getUserId()));
+        });
+        return thirdUnionDTOs;
+    }
+
+
+    @Override
+    public SysUserThirdEntity getUserByThird(String platform, String thirdId) {
+        if(StringUtils.isBlank(platform) || StringUtils.isBlank(thirdId)){
+            return null;
+        }
+        return baseMapper.getUserByThird(platform, thirdId);
+    }
+
+    @Override
+    public List<SysUserThirdEntity> getUserByThirdIdList(String platform, ArrayList<String> thirdIds) {
+        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(thirdIds)){
+            return null;
+        }
+        return baseMapper.getUserByThirdList(platform, thirdIds);
     }
 
     /**

@@ -23,4 +23,8 @@ public class FsProperties {
 
     private String redirectBindingUri;
 
+    private String appId;
+
+    private String appSecret;
+
 }

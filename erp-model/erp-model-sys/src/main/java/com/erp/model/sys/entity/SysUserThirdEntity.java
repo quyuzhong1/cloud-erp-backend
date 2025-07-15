@@ -36,6 +36,14 @@ public class SysUserThirdEntity implements Serializable {
 	 */
 	private String thirdUnionId;
 	/**
+	 * 第三方用户对应的open_id
+	 */
+	private String thirdOpenId;
+	/**
+	 * 第三方用户对应的user_id
+	 */
+	private String thirdUserId;
+	/**
 	 * 创建时间
 	 */
 	@TableField(fill= FieldFill.INSERT)

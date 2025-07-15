@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ThirdProcessDefinitionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approval_code" property="approvalCode" />
+       <result column="enable_status" property="enableStatus" />
+       <result column="name" property="name" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="form_json" property="formJson" />
+       <result column="dict_approval_group" property="dictApprovalGroup" />
+       <result column="type" property="type" />
+        <result column="code" property="code" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        approval_code, enable_status, name, source_platform, form_json, dict_approval_group, type
+    </sql>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ThirdProcessDefinitionDTO$ListDTO">
+        select
+        tpd.approval_code,
+        tpd.id,
+        tpd.name,
+        tpd.dict_approval_group,
+        db.name as approval_group_name,
+        tpd.enable_status,
+        tpd.create_time,
+        tpd.create_user_name,
+        tpd.update_time,
+        tpd.update_user_name,
+        tpd.type
+        from public.third_process_definition as tpd
+        left join public.dict_basic as db on tpd.dict_approval_group = db.value and db.is_deleted = false
+        where ${params.sqlMap.default}
+        and tpd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by tpd.create_time desc
+    </select>
+
+
+</mapper>

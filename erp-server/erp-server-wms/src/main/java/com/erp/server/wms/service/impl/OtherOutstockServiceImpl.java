@@ -1,7 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -11,12 +14,15 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -25,6 +31,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -34,6 +41,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.CustomerDTO;
@@ -61,8 +69,12 @@ import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -76,6 +88,7 @@ import com.erp.server.wms.query.OtherOutstockQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -256,7 +269,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Collections.singletonList(id));
+        this.submit(id,Boolean.TRUE);
         return id;
     }
 
@@ -270,7 +283,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Collections.singletonList(id));
+        this.submit(id,Boolean.FALSE);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Collections.singletonList(id));
@@ -316,29 +329,57 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Collections.singletonList(dto.getId()));
+        BatchResultDTO submit = this.submit(dto.getId(), Boolean.TRUE);
+        return  submit.getSuccess();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id,Boolean isProcess) {
         //根据ids查询
-        List<OtherOutstockEntity> list = getList(ids);
-        //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
+        OtherOutstockEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99061);
+        }
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        log.info("其他出库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-
-        //启动流程 TODO
-
+        log.info("提交 开始修改其他出库单状态数据，id：【{}】", id);
         //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个其他出库单【%s】", ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "提交操作");
-        return Boolean.TRUE;
+        updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+
+        log.info("提交 开始启动其他出库单流程，id=：【{}】", entity.getId());
+        if (isProcess) {
+            startProcess(entity);
+        }
+        // 记录操作日志
+        log.info("提交 开始记录其他出库单日志数据，id：【{}】", id);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "其他出库单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    /**
+     * 启动流程
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
+
+    public void startProcess(OtherOutstockEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
     }
 
     @Override
@@ -476,16 +517,86 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
+        // 调用流程审核
+        ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
+        approveProcess(entity, dto);
         log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
 
-        //审核通过
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            log.info("其他出库单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
-            //审核通过 TODO(判断是否存在流程)
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他出库单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单审核");
+    }
 
-            //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.APPROVE.getStatus());
+    /**
+     * 审核流程处理
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(OtherOutstockEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(OtherOutstockEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
+        //出库客户信息
+        OtherOutstockCustomerEntity otherOutstockCustomerEntity = otherOutstockCustomerService.getByMainId(entity.getId());
+        if (ObjectUtil.isEmpty(otherOutstockCustomerEntity)) {
+            throw new ServiceException(ApiError.ERROR_99063);
+        }
+        Map<String, Object> customerMap = BeanUtil.beanToMap(otherOutstockCustomerEntity);
+        variablesMap.putAll(customerMap);
+        //SKU
+        String skuNo = detailList.stream().map(OtherOutstockDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //总计数量
+        Integer actualQtyTotal = detailList.stream().map(OtherOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("actualQtyTotal", actualQtyTotal);
+        return variablesMap;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, OtherOutstockEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        //更新单据状态
+        updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
+
+        //审核通过
+        if (dto.getType().equals(ApproveType.PASS)) {
             //更新库存
             updateInventoryTransCore(entity);
 
@@ -497,16 +608,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             }else {
                 syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }
-        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
-            //中止当前审核流程
-
-            //更新单据状态
-            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.REJECT.getStatus());
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他出库单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "审核操作");
-        return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单审核");
+        return Boolean.TRUE;
     }
 
 
@@ -562,7 +665,14 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         log.info("其他出库单撤销流程，id=【{}】", ids);
 
         //撤销现有流程
-        workflowFeign.cancelProcess(ids);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
 
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -719,9 +829,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     /**
      * 更新审核状态
      */
-    private void updateApproveStatus(List<String> ids, String approveStatus) {
+    private void updateApproveStatus(String id, String approveStatus) {
         //更新审核状态
-        lambdaUpdate().in(OtherOutstockEntity::getId, ids)
+        lambdaUpdate().eq(OtherOutstockEntity::getId, id)
                 .set(OtherOutstockEntity::getApproveStatus, approveStatus)
                 .update();
     }
@@ -1349,6 +1459,23 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OtherOutstockEntity> listByCodes(List<String> list) {
+        return this.list(new QueryWrapper<OtherOutstockEntity>().lambda().in(OtherOutstockEntity::getCode, list).eq(OtherOutstockEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(OtherOutstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        OtherOutstockEntity otherOutstockEntity = updateApprovalStatusDTO.getOtherOutstockEntity();
+        this.lambdaUpdate().in(OtherOutstockEntity::getId, Collections.singletonList( otherOutstockEntity.getId()))
+                .set(OtherOutstockEntity::getApproveUserId, otherOutstockEntity.getApproveUserId())
+                .set(OtherOutstockEntity::getApproveUserName, otherOutstockEntity.getApproveUserName())
+                .set(OtherOutstockEntity::getApproveStatus, approveStatus)
+                .set(OtherOutstockEntity::getApproveTime, otherOutstockEntity.getApproveTime())
+                .update();
     }
 
     private String getTypeNameByCode(String code){

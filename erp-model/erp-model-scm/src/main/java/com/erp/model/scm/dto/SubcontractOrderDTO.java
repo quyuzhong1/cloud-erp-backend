@@ -5,6 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -899,5 +900,13 @@ public class SubcontractOrderDTO implements Serializable {
          * 批量校验结果
          */
         private List<BatchResultDTO> batchResultDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private SubcontractOrderEntity subcontractOrderEntity;
+        private String approveStatus;
     }
 }

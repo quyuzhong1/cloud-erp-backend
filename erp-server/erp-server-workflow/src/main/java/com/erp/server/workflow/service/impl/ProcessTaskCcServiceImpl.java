@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -99,5 +100,15 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
         mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
         // 审批完成后发送抄送消息更新抄送状态
         updateCcStatus(entity.getTaskId());
+    }
+
+    @Override
+    public List<ProcessTaskCcEntity> listTackCc(List<String> taskManagementIds) {
+        if(CollectionUtils.isNotEmpty(taskManagementIds)){
+            return lambdaQuery()
+                    .in(ProcessTaskCcEntity::getTaskManagementId, taskManagementIds)
+                    .list();
+        }
+        return Collections.emptyList();
     }
 }

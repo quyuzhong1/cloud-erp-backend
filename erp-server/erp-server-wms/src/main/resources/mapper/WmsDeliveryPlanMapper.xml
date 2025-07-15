@@ -70,6 +70,9 @@
             odpd.platform_spu as platformProductId,
             odpd.platform_fn_sku as platformFnSku,
             odp.type,
+            odp.delivery_type as deliveryType,
+            odp.from_warehouse_id as fromWarehouseId,
+            odp.from_warehouse_name as fromWarehouseName,
             odp.shop_id as shopId,
             odp.shop_name as shopName,
             odp.expect_delivery_date as expectDeliveryDate,
@@ -118,6 +121,9 @@
         odp.approve_user_name,
         odp.create_time,
         odp.approve_time,
+        odp.delivery_type as deliveryType,
+        odp.from_warehouse_id as fromWarehouseId,
+        odp.from_warehouse_name as fromWarehouseName,
         op.code AS sourcePlatformCode,
         odpd.platform_sku as thirdWarehouseSku,
         odpd.platform_sku as  platformSku,
@@ -181,6 +187,7 @@
             odp.type as deliveryPlanType,
             odp.shop_id as shopId,
             odp.shop_name as shopName,
+            odp.delivery_type as deliveryType,
         (select COALESCE(sum(rad.requisition_qty),0) from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ra.is_deleted = false and ra.invalid_status = 'false' and rad.source_detail_id = odpd.id) as alreadyRequisitionQty
@@ -205,6 +212,9 @@
         odp.country_name,
         odp.to_warehouse_id,
         odp.to_warehouse_name,
+        odp.delivery_type,
+        odp.from_warehouse_id,
+        odp.from_warehouse_name,
         odp.approve_status AS approveStatus,
         odpd.sku_id,
         odpd.sku_no,

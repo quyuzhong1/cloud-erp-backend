@@ -18,5 +18,14 @@
         <result column="warehouse_area_id" property="warehouseAreaId" />
         <result column="warehouse_location_id" property="warehouseLocationId" />
     </resultMap>
+    <select id="viewStaging" resultType="com.erp.model.wms.dto.CfgRulePickingStagingDTO$StagingDTO">
+        SELECT *
+        FROM crosstab(
+                     'SELECT warehouse_id, bill_type, warehouse_location_id
+                      FROM cfg_rule_picking_staging where is_deleted = false
+                      ORDER BY 1, 2',
+                     'SELECT DISTINCT bill_type FROM cfg_rule_picking_staging ORDER BY 1'
+             ) AS ct (warehouseId text, "b2bWarehouseLocationId" text, "fbaWarehouseLocationId" text, "thirdWarehouseLocationId" text)
+    </select>
 
 </mapper>

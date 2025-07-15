@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -173,20 +176,27 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             //采购组织名称
             String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
+            if (CharSequenceUtil.isBlank(purchaseOrgName)) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_ORG_NOT_FOUND);
+            }
             entity.setPurchaseOrgName(purchaseOrgName);
 
             //收料组织名称
             String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
+            if (CharSequenceUtil.isBlank(receiveOrgName)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
+            }
             entity.setReceiveOrgName(receiveOrgName);
 
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
-            if (!org.springframework.util.ObjectUtils.isEmpty(skuVO)) {
-                entity.setSkuNo(skuVO.getSkuNo());
-                entity.setProductName(skuVO.getSkuName());
-                entity.setVariantProperty(skuVO.getVariantProperty());
-                entity.setSupplierId(skuVO.getSupplierId());
+            if (ObjectUtil.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
             }
+            entity.setSkuNo(skuVO.getSkuNo());
+            entity.setProductName(skuVO.getSkuName());
+            entity.setVariantProperty(skuVO.getVariantProperty());
+            entity.setSupplierId(skuVO.getSupplierId());
 
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
@@ -219,5 +229,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     public List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList) {
         return baseMapper.listByMergeIdList(purchaseMergeIdList);
+    }
+
+    @Override
+    public List<PurchaseApplicationDetailEntity> listBySourceDetailIdList(List<String> soDetailIdList) {
+        if (CollectionUtils.isEmpty(soDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PurchaseApplicationDetailEntity::getSourceDetailId,soDetailIdList).list();
     }
 }

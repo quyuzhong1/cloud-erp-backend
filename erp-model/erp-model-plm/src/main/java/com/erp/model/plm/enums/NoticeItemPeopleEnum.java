@@ -19,7 +19,10 @@ public enum NoticeItemPeopleEnum {
     PRODUCT_MANAGER("productCharge", "产品经理"),
     AUDITOR("auditor", "审核人"),
     TASK_CHARGE("taskCharge", "任务负责人"),
-    FOLLOWER("concern", "关注人");
+    FOLLOWER("concern", "关注人"),
+    SHOP_CHARGE("shopCharge", "店铺负责人"),
+    CREATOR("creator", "创建人"),
+    ;
 
     private String flag;
     private String name;

@@ -167,6 +167,15 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
                     dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
                     dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
 
+                    // 子状态
+                    String substatus = shipmentMap.getOrDefault("substatus", "").toString();
+                    // 延迟发货
+                    if ("buffered".equalsIgnoreCase(substatus)) {
+                        dmpDataMap.put("sellRemark", "延迟发货");
+                    } else {
+                        dmpDataMap.put("sellRemark", "");
+                    }
+
                     //订单状态
                     String orderStatus = String.valueOf(statusObj);
                     dmpDataMap.put("platformOriginalStatus", orderStatus);
@@ -275,6 +284,8 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
             } else {
                 return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
             }
+        } else if ("pending".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
         } else {
             return SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode();
         }

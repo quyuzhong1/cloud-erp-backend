@@ -66,6 +66,7 @@
             sbrd.remark,
             sbr.create_time as sysCreateTime,
             sbr.sys_return_time as sysReturnTime,
+            sbr.return_logistic_code as returnLogisticCode,
             sbr.update_time as updateTime
         from so_b2c_return sbr
         inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
@@ -84,6 +85,7 @@
         sbr.code,
         sbr.so_id as soId,
         sbr.status,
+        sbr.return_logistic_code as returnLogisticCode,
         sbr.dict_platform as platform,
         sbr.shop_id as shopId,
         sbrd.id as detailId,
@@ -129,6 +131,91 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </select>
+    <select id="selectLogisticsCodePreview"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$ReturnLogisticsDTO">
+        select
+            sbr.id,
+            sbr.code,
+            sbr.dict_platform,
+            sbr.shop_id,
+            sbr.platform_order_no,
+            sbr.platform_return_no,
+            sbr.return_logistic_code,
+            sbr.so_id,
+            sbr.so_code
+        from so_b2c_return sbr
+        where  sbr.is_deleted = false
+            and sbr.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="selectReturnInstockPreview"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$ReturnInstockDTO">
+        select
+        sbr.id,
+        sbr.code,
+        sbr.dict_platform,
+        sbr.shop_id,
+        sbr.platform_order_no,
+        sbr.platform_return_no,
+        sbr.return_logistic_code,
+        sbr.so_id,
+        sbr.so_code,
+        sbrd.id as detailId,
+        sbrd.sku_id,
+        sbrd.sku_no,
+        sbrd.return_qty,
+        sbrd.sale_qty
+        from so_b2c_return sbr
+        left join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id
+        where  sbr.is_deleted = false and sbrd.is_deleted = false
+        and sbrd.id in
+        <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        sr.so_id AS sourceId,
+--         sr.customer_id,
+        sd.warehouse_id,
+        sr.currency,
+--         sr.currency_Symbol,
+        si.ID AS soId,
+        sd.warehouse_org_id AS inventoryOrgId,
+        CASE WHEN sd.qty > 0 THEN sd.qty ELSE 0 END AS salesQty,
+        CASE WHEN sd.amount > 0 THEN sd.amount ELSE 0 END AS salesAmount,
+        sd.is_gift,
+--         sd.is_close,
+        srd.ID,
+        srd.main_id,
+        srd.sku_id,
+        srd.sku_no,
+        srd.remark,
+        sr.type as returnTypeDict,
+        sr.reason as returnReasonDict,
+        srd.platform_sku_no
+        FROM
+        so_b2c_return sr
+        INNER JOIN so_b2c_return_detail srd ON srd.main_id = sr.ID AND  srd.is_deleted =FALSE
+        LEFT JOIN so_b2c si ON sr.so_id = si.ID AND  si.is_deleted = FALSE
+        LEFT JOIN so_b2c_detail sd ON srd.so_detail_id = sd.ID AND sd.is_deleted = FALSE
+        WHERE
+        sr.is_deleted =FALSE
+        <if test="dto.id != null and dto.id != ''">
+            AND sr.id = #{dto.id}
+        </if>
+        <if test="dto.skuNoList != null and dto.skuNoList.size > 0">
+            AND srd.sku_no IN
+            <foreach collection="dto.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="dto.remoteSearchSku != null  and dto.remoteSearchSku != ''">
+            AND srd.sku_no ILIKE concat('%',#{dto.remoteSearchSku}::text,'%')
+        </if>
     </select>
 
 

@@ -67,8 +67,11 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
-    FIRST_MILE_DELIVERY_TO_ULANZI("firstMileDeliveryToUlanzi", "头程发货单（发货仓->优蓝子中转仓）","first_mile_delivery_to_ulanzi"),
-    FIRST_MILE_DELIVERY_FROM_ULANZI("firstMileDeliveryFromUlanzi", "头程发货单（优蓝子中转仓->目的在途仓）","first_mile_delivery_from_ulanzi"),
+    //当前仓可用减少，中转仓冻结增加
+    FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD("firstMileDeliveryTransferToThird", "头程发货单-中转（三方仓发三方仓）", "first_mile_delivery"),
+    FIRST_MILE_DELIVERY_TO_ULANZI("firstMileDeliveryToUlanzi", "头程发货单（发货仓->优蓝子中转仓）","first_mile_delivery"),
+    FIRST_MILE_DELIVERY_TO_THIRD("firstMileDeliveryToThird", "头程发货单中转（三方仓发三方仓）","first_mile_delivery"),
+    FIRST_MILE_DELIVERY_FROM_ULANZI("firstMileDeliveryFromUlanzi", "头程发货单（优蓝子中转仓->目的在途仓）","first_mile_delivery"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
     DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
@@ -85,6 +88,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
+    WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
 
     //OMS
@@ -170,6 +174,7 @@ public enum SourceTypeEnum {
     SMALL_BAG_COST_ALLOCATION("smallBagCostAllocation", "小包费用分摊","small_bag_cost_allocation"),
     TRANSFER_DECLARE_COST_ALLOCATION("transferDeclareCostAllocation", "中转费用分摊","transfer_declare_cost_allocation"),
     FIRST_MILE_COST_ALLOCATION("firstMileCostAllocation", "头程费用分摊","first_mile_cost_allocation"),
+    PRODUCT_REGISTRATION("productRegistration", "备案通知","product_registration"),
 
 
 
@@ -295,7 +300,7 @@ public enum SourceTypeEnum {
 
     public static String getName(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
-            if (type.equals(sourceTypeEnum.getCode())) {
+            if (sourceTypeEnum.getCode().equals(type)) {
                 return sourceTypeEnum.getName();
             }
         }

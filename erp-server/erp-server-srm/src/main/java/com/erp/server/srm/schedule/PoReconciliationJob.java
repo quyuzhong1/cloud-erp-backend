@@ -45,9 +45,12 @@ public class PoReconciliationJob {
     @XxlJob("autoGeneratePoReconciliation")
     public ReturnT autoGeneratePoReconciliation() {
         String jobParam = XxlJobHelper.getJobParam();
-        int dayOfMonth = LocalDate.now().getDayOfMonth();
+        LocalDate nowDate = LocalDate.now();
+        int dayOfMonth = nowDate.getDayOfMonth();
+        //有传参就取传参值
         if (CharSequenceUtil.isNotBlank(jobParam)) {
-            dayOfMonth = Integer.parseInt(jobParam);
+            nowDate = LocalDate.parse(jobParam);
+            dayOfMonth = nowDate.getDayOfMonth();
         }
         XxlJobHelper.log("====开始生成对账单,dayOfMonth = {} =====", dayOfMonth);
         //查询系统配置
@@ -62,15 +65,15 @@ public class PoReconciliationJob {
             if (dayOfMonth != MathUtil.ONE.intValue()) {
                 return ReturnT.SUCCESS;
             }
-            LocalDate startDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
-            LocalDate endDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate startDate = nowDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+            LocalDate endDate = nowDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         } else {
             if (dayOfMonth != Integer.valueOf(dto.getEndDate()).intValue() ) {
                 return ReturnT.SUCCESS;
             }
-            LocalDate endDate = LocalDate.now().minusDays(1);
-            LocalDate startDate = LocalDate.now().minusMonths(1);
+            LocalDate endDate = nowDate.minusDays(1);
+            LocalDate startDate = nowDate.minusMonths(1);
             poReconciliationDetailScmService.autoGeneratePoReconciliation(startDate,endDate);
         }
         XxlJobHelper.log("====结束生成对账单====");
