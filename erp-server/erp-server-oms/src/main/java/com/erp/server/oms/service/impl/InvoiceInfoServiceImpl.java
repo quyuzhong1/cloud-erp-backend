@@ -931,7 +931,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                     sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map, "");
             if (matchResult){
                 ruleResultDTO.setIsMatch(Boolean.TRUE);
                 CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = detailEntityList.stream().filter(e -> e.getMainId().equals(ruleInvoiceProductAmountEntity.getCfgId())).findFirst().orElse(null);
