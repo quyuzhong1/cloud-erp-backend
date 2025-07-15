@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,6 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
 import com.erp.model.workflow.entity.CfgProcessExpEntity;
@@ -18,12 +20,15 @@ import com.erp.server.workflow.mapper.CfgProcessExpMapper;
 import com.erp.server.workflow.service.CfgProcessExpService;
 import com.erp.server.workflow.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -44,15 +49,10 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
     @Override
     public BaseResultDTO.AddDTO add( String cfgProcessId, String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> addDTO) {
         log.info("开始新增流程设置审核条件");
-        //遍历addDTO,按照顺序赋值index
-        for (int i = 0; i < addDTO.size(); i++) {
-            CfgProcessExpDTO.AddOrUpdateDTO dto = addDTO.get(i);
-            dto.setIndex(String.valueOf(i + 1));
-        }
         List<CfgProcessExpEntity> processExpEntities = BeanUtil.copyToList(addDTO, CfgProcessExpEntity.class);
-        //过滤CfgProcessExpEntity的field为空的entiy,并将ruleId赋值为ruleId
-        processExpEntities.removeIf(entity -> StrUtil.isBlank(entity.getField()));
-        processExpEntities.forEach(entity -> entity.setRuleId(ruleId));
+        //数据处理
+        handleAddData(processExpEntities, ruleId);
+
         this.saveBatch(processExpEntities);
         // 操作日志
         String msg = StrUtil.format("新增流程设置审核条件");
@@ -65,54 +65,38 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.UpdateDTO  addOrUpdate( String cfgProcessId,String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> addOrUpdateDTO) {
-        //遍历addDTO，id为空的保存，id不为空的更新，使用ruleId查询ruleId的记录，如果查询的结果数小于addDTO数量，那么找出结果中未包含于addDTO的中的id，然后将此id对应的entiy删除
-        // 查询数据库中与 ruleId 关联的记录
-        List<CfgProcessExpEntity> existingEntities = this.list(
-                new LambdaQueryWrapper<CfgProcessExpEntity>()
-                        .eq(CfgProcessExpEntity::getRuleId, ruleId)
-                        .eq(CfgProcessExpEntity::getIsDeleted, false)
-        );
-
-        // 提取 addDTO 中的 id
-        List<String> addDTOIds = addOrUpdateDTO.stream()
-                .map(CfgProcessExpDTO.AddOrUpdateDTO::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        // 找出 existingEntities 中未包含于 addDTOIds 的记录
-        List<String> idsToDelete = existingEntities.stream()
-                .map(CfgProcessExpEntity::getId)
-                .filter(id -> !addDTOIds.contains(id))
-                .collect(Collectors.toList());
-
-        //处理更新中的add
-        List<CfgProcessExpDTO.AddOrUpdateDTO> addDTOS = addOrUpdateDTO.stream()
-                .filter(dto -> StrUtil.isEmpty(dto.getId()))
-                .collect(Collectors.toList());
-        add(cfgProcessId, ruleId,addDTOS);
-        addOrUpdateDTO.removeAll(addDTOS);
-
-        // 删除未包含的记录
-        if (!idsToDelete.isEmpty()) {
-            this.removeByIds(idsToDelete);
-            log.info("删除流程设置审核条件: {}", idsToDelete);
+    public BaseResultDTO.UpdateDTO  addOrUpdate( String cfgProcessId,String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> addOrUpdateList) {
+        //查询历史数据
+        List<CfgProcessExpEntity> oldList = listByRuleIdList(Collections.singletonList(ruleId));
+        List<CfgProcessExpEntity> list = CollUtil.isEmpty(addOrUpdateList) ? Collections.emptyList() : BeanMapperUtils.copyList(CfgProcessExpEntity.class, addOrUpdateList);
+        //删除字段条件为空的数据
+        List<CfgProcessExpEntity> needAddList =  list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getField())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(needAddList)) {
+            //删除历史数据
+            if (CollUtil.isNotEmpty(oldList)) {
+                List<String> idsToDelete = oldList.stream()
+                        .map(CfgProcessExpEntity::getId)
+                        .collect(Collectors.toList());
+                this.removeByIds(idsToDelete);
+                log.info("删除流程设置审核条件: {}", idsToDelete);
+            }
+            return new BaseResultDTO.UpdateDTO();
         }
 
-        // 遍历 addDTO，id 为空的保存，id 不为空的更新
-        List<CfgProcessExpEntity> updateEntitys = addOrUpdateDTO.stream().map(item -> {
-            CfgProcessExpEntity cfgProcessExpEntity = new CfgProcessExpEntity();
-            BeanUtil.copyProperties(item, cfgProcessExpEntity);
-            cfgProcessExpEntity.setRuleId(ruleId);
-            return cfgProcessExpEntity;
-        }).collect(Collectors.toList());
-        log.info("开始新增流程设置审核条件");
-        this.saveOrUpdateBatch(updateEntitys);
+        List<String> deleteIds = getDeleteIds(needAddList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        //数据处理
+        handleAddData(needAddList,ruleId);
 
-        Map<String, CfgProcessExpEntity> expEntityMap = updateEntitys.stream()
+        log.info("开始新增流程设置审核条件");
+        this.saveOrUpdateBatch(needAddList);
+
+        Map<String, CfgProcessExpEntity> expEntityMap = oldList.stream()
                 .collect(Collectors.toMap(CfgProcessExpEntity::getId, entity -> entity));
         // 操作日志
-        existingEntities.forEach(existingEntity -> {
+        needAddList.forEach(existingEntity -> {
             CfgProcessExpEntity updateEntity = expEntityMap.get(existingEntity.getId());
             if (ObjectUtil.isNotEmpty(updateEntity)) {
                 operateLogService.addModuleOperateLogByObj(existingEntity, updateEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "编辑审核条件");
@@ -159,6 +143,43 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
             return Collections.emptyList();
         }
         return lambdaQuery().in(CfgProcessExpEntity::getRuleId,ruleIdList).list();
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<CfgProcessExpEntity> newList, List<CfgProcessExpEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
+                map(CfgProcessExpEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(CfgProcessExpEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     *  数据处理
+     * @author will
+     * @date 2025/7/15 12:26
+     * @param list
+     * @param ruleId
+     * @return List<CfgProcessExpEntity>
+     */
+    private  List<CfgProcessExpEntity> handleAddData (List<CfgProcessExpEntity> list,String ruleId) {
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<CfgProcessExpEntity> resultList = new ArrayList<>();
+        Integer index = MathUtil.ONE;
+        for (CfgProcessExpEntity expEntity : list) {
+            // 字段为空的无需新增
+            if (CharSequenceUtil.isBlank(expEntity.getField())) {
+                continue;
+            }
+            expEntity.setIndex(index);
+            expEntity.setRuleId(ruleId);
+            resultList.add(expEntity);
+            index += 1;
+        }
+        return resultList;
     }
 
 

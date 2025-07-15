@@ -68,7 +68,7 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     * 序号
     */
     @TableField("index")
-    private String index;
+    private Integer index;
     /**
     * 值对应名称
     */
