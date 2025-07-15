@@ -287,6 +287,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
+        if (ObjectUtil.isEmpty(processDefinition) || processDefinition.getDisabled()) {
+            log.warn("为找到流程定义, processDefinitionId={}", processDefinitionId);
+            return new ProcessManagementDTO.StartResultDTO(dto);
+        }
 
         // 绑定流程发起人
         identityService.setAuthenticatedUserId(dto.getUserId());

@@ -78,7 +78,7 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 序号
         */
-        private String index;
+        private Integer index;
 
         /**
         * 值对应名称
@@ -160,9 +160,8 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 序号
         */
-        @NotBlank(message = "序号不能为空")
-        @Size(max = 100,message = "序号最大长度不能超过100位")
-        private String index;
+        @NotNull(message = "序号不能为空")
+        private Integer index;
 
         /**
         * 值对应名称
