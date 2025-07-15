@@ -281,6 +281,10 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField(value = "collect_end_time")
     private LocalDateTime collectEndTime;
 
+
+    @TableField(exist = false)
+    private String base64Str;
+
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String SOURCE_CODE = "source_code";

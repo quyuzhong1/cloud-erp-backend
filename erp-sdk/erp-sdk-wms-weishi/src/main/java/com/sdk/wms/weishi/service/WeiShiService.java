@@ -4,10 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.weishi.dto.request.WeiShiBaseRequest;
-import com.sdk.wms.weishi.dto.request.WeiShiProductRequest;
-import com.sdk.wms.weishi.dto.request.WeiShiStockAgeRequest;
-import com.sdk.wms.weishi.dto.request.WeiShiStockRequest;
+import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.*;
 import com.sdk.wms.weishi.utils.WeiShiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -228,6 +225,50 @@ public class WeiShiService {
         result.setCode(200);
         result.setData(allData);
         return result;
+    }
+    /**
+     * 创建入库单
+     * @return
+     */
+    public WeiShiBaseResp<String> createInbound(WeiShiCreateInboundRequest weiShiCreateInboundRequest,Map<String,Object> authMap){
+        String action = "createInboundOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
+        log.warn("纬狮创建入库单请求参数: {}", JSONUtil.toJsonStr(bodyMap));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
+    }
+
+    /**
+     * 更新入库单
+     * @return
+     */
+    public WeiShiBaseResp<String> updateInbound(WeiShiCreateInboundRequest weiShiCreateInboundRequest,Map<String,Object> authMap){
+        String action = "updateInboundOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
+        log.warn("纬狮更新入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
+    }
+
+    /**
+     * 取消入库单
+     * @return
+     */
+    public WeiShiBaseResp<String> cancelInbound(WeiShiCancelInboundRequest weiShiCancelInboundRequest,Map<String,Object> authMap){
+        String action = "cancelInboundOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
+        log.warn("纬狮取消入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {

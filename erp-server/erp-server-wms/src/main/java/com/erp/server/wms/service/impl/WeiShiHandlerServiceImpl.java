@@ -9,8 +9,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.erp.wms.aliexpress.util.Constants;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
@@ -19,15 +21,19 @@ import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import com.sdk.wms.weishi.dto.request.WeiShiBaseRequest;
+import com.sdk.wms.weishi.dto.request.WeiShiCancelInboundRequest;
+import com.sdk.wms.weishi.dto.request.WeiShiCreateInboundRequest;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
 import com.sdk.wms.weishi.dto.response.WeiShiReturnOrderResp;
 import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
+import com.sdk.wms.weishi.enums.WeiShiEnums;
 import com.sdk.wms.weishi.service.WeiShiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -60,18 +66,90 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return null;
+        WeiShiCreateInboundRequest weiShiCreateInboundRequest = this.buildInboundDto(createInboundReq);
+        WeiShiBaseResp<String> resp = weiShiService.createInbound(weiShiCreateInboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData());
+    }
+
+    private WeiShiCreateInboundRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+        List<ThirdWarehouseCreateInboundReq.Item> items = createInboundReq.getItems();
+        Map<Integer, List<ThirdWarehouseCreateInboundReq.Item>> itemMap = items.stream()
+                .collect(Collectors.groupingBy(
+                        ThirdWarehouseCreateInboundReq.Item::getBoxNo,
+                        LinkedHashMap::new,  // 指定有序 Map 实现
+                        Collectors.toList()
+                ));
+        List<WeiShiCreateInboundRequest.InboundBoxListDTO> boxList = new ArrayList<>();
+        itemMap.forEach((boxNo,itemList) -> {
+            WeiShiCreateInboundRequest.InboundBoxListDTO boxListDTO = new WeiShiCreateInboundRequest.InboundBoxListDTO();
+            ThirdWarehouseCreateInboundReq.Item firstItem = itemList.get(0);
+            if(firstItem.getWeightUnit().equals(UnitEnum.WeightUnitEnum.G.code)){
+                boxListDTO.setBoxWeight(firstItem.getPackageWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP).toString());
+            }else{
+                boxListDTO.setBoxWeight(firstItem.getPackageWeight().toString());
+            }
+            boxListDTO.setBoxLength(firstItem.getBoxLength().toString());
+            boxListDTO.setBoxWidth(firstItem.getBoxWidth().toString());
+            boxListDTO.setBoxHeight(firstItem.getBoxHeight().toString());
+            boxListDTO.setBoxCode(createInboundReq.getReferenceNo() + "-" + boxNo);
+            boxListDTO.setSysBoxSeq(boxNo);
+            List<WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO> skuVosDTOS = new ArrayList<>();
+            for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
+                WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO skuVosDTO = new WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO();
+                skuVosDTO.setSkuCode(item.getProductSku());
+                skuVosDTO.setQuantity(item.getQuantity());
+                skuVosDTOS.add(skuVosDTO);
+            }
+            boxListDTO.setInboundSkuList(skuVosDTOS);
+            boxList.add(boxListDTO);
+        });
+        WeiShiCreateInboundRequest request = WeiShiCreateInboundRequest.builder()
+                .inboundType("SKU")
+                .inboundMode(WeiShiEnums.TransitTypeEnum.getCodeByErp(createInboundReq.getReceivingType()))
+                .transportType(createInboundReq.getReceivingType().equals(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode())?WeiShiEnums.ProductCodeEnum.LOCAL_DELIVERY.getCode():WeiShiEnums.ProductCodeEnum.getCodeByErp(createInboundReq.getReceivingShippingType()))
+                .contact(WeiShiCreateInboundRequest.ContactDTO.builder()
+                        .city(createInboundReq.getCollect().getCollectCityName())
+                        .contactName(createInboundReq.getCollect().getContacterName())
+                        .countryCode(createInboundReq.getCollect().getCollectCountryCode())
+                        .phone(createInboundReq.getCollect().getContactPhone())
+                        .state(createInboundReq.getCollect().getCollectStateName())
+                        .street(createInboundReq.getCollect().getCollectStreet())
+                        .build())
+                .trackingNo(createInboundReq.getTrackingNumber())
+                .destWarehouseCode(createInboundReq.getWarehouseCode())
+                .expectedArriveDate(createInboundReq.getEtaDate() == null?"":createInboundReq.getEtaDate().format(DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT)))
+                .remark(createInboundReq.getRemark())
+                .appointmentPickingStartTime(createInboundReq.getCollectStartTime() == null?"":createInboundReq.getCollectStartTime().format(DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT)))
+                .appointmentPickingEndTime(createInboundReq.getCollectEndTime() == null?"":createInboundReq.getCollectEndTime().format(DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT)))
+                .deliveryVoucherBase64(createInboundReq.getFileBase64())
+                .inboundBoxList(boxList)
+                .build();
+        return request;
     }
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        throw new ServiceException("该仓库入库单不允许修改，请取消入库单后重新创建");
+        WeiShiCreateInboundRequest weiShiCreateInboundRequest = this.buildInboundDto(createInboundReq);
+        weiShiCreateInboundRequest.setOrderNo(createInboundReq.getReceivingCode());
+        WeiShiBaseResp<String> resp = weiShiService.updateInbound(weiShiCreateInboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData());
     }
 
     @Override
     protected ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
-
-        return success();
+        WeiShiCancelInboundRequest weiShiCancelInboundRequest = new WeiShiCancelInboundRequest();
+        weiShiCancelInboundRequest.setOrderNo(cancelInboundReq.getReceivingCode());
+        WeiShiBaseResp<String> resp = weiShiService.cancelInbound(weiShiCancelInboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData());
     }
 
     @Override

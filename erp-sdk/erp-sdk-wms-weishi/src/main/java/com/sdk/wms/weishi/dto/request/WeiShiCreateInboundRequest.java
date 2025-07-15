@@ -1,6 +1,6 @@
 package com.sdk.wms.weishi.dto.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,53 +17,92 @@ import java.util.List;
 @SuperBuilder
 public class WeiShiCreateInboundRequest {
 
-    @JSONField(name = "erpNo")
-    private String erpNo;
-    @JSONField(name = "trackingNo")
+    private String orderNo;
+    @JsonProperty("inboundType")
+    private String inboundType;
+    @JsonProperty("inboundMode")
+    private String inboundMode;
+    @JsonProperty("transportType")
+    private String transportType;
+    @JsonProperty("trackingNo")
     private String trackingNo;
-    @JSONField(name = "expectedTime")
-    private String expectedTime;
-    @JSONField(name = "warehouse")
-    private String warehouse;
-    @JSONField(name = "remark")
+    @JsonProperty("destWarehouseCode")
+    private String destWarehouseCode;
+    @JsonProperty("expectedArriveDate")
+    private String expectedArriveDate;
+    @JsonProperty("batchNo")
+    private String batchNo;
+    @JsonProperty("remark")
     private String remark;
-    @JSONField(name = "receiptType")
-    private Integer receiptType;
-    @JSONField(name = "skuList")
-    private List<SkuListDTO> skuList;
-    @JSONField(name = "boxList")
-    private List<BoxListDTO> boxList;
+    @JsonProperty(" transportSize")
+    private String transportSize;
+    @JsonProperty("deliveryVoucherBase64")
+    private String deliveryVoucherBase64;
+    @JsonProperty("contact")
+    private ContactDTO contact;
+    @JsonProperty("appointmentPickingStartTime")
+    private String appointmentPickingStartTime;
+    @JsonProperty("appointmentPickingEndTime")
+    private String appointmentPickingEndTime;
+    @JsonProperty("inboundBoxList")
+    private List<InboundBoxListDTO> inboundBoxList;
 
-    @NoArgsConstructor
     @Data
-    public static class SkuListDTO {
-        @JSONField(name = "sku")
-        private String sku;
-        @JSONField(name = "count")
-        private Integer count;
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @SuperBuilder
+    public static class ContactDTO {
+        @JsonProperty("city")
+        private String city;
+        @JsonProperty("contactName")
+        private String contactName;
+        @JsonProperty("countryCode")
+        private String countryCode;
+        @JsonProperty("phone")
+        private String phone;
+        @JsonProperty("state")
+        private String state;
+        @JsonProperty("street")
+        private String street;
     }
 
-    @NoArgsConstructor
     @Data
-    public static class BoxListDTO {
-        @JSONField(name = "length")
-        private Integer length;
-        @JSONField(name = "width")
-        private Integer width;
-        @JSONField(name = "height")
-        private Integer height;
-        @JSONField(name = "weight")
-        private Integer weight;
-        @JSONField(name = "skuVos")
-        private List<SkuVosDTO> skuVos;
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @SuperBuilder
+    public static class InboundBoxListDTO {
+        @JsonProperty("fbaProofCode")
+        private String fbaProofCode;
+        @JsonProperty("boxCode")
+        private String boxCode;
+        @JsonProperty("boxLength")
+        private String boxLength;
+        @JsonProperty("boxWidth")
+        private String boxWidth;
+        @JsonProperty("boxHeight")
+        private String boxHeight;
+        @JsonProperty("boxWeight")
+        private String boxWeight;
+        @JsonProperty("sysBoxSeq")
+        private Integer sysBoxSeq;
+        @JsonProperty("boxRemark")
+        private String boxRemark;
+        @JsonProperty("pltWarehouseCode")
+        private String pltWarehouseCode;
+        @JsonProperty("sellerId")
+        private String sellerId;
+        @JsonProperty("inboundSkuList")
+        private List<InboundSkuListDTO> inboundSkuList;
 
-        @NoArgsConstructor
         @Data
-        public static class SkuVosDTO {
-            @JSONField(name = "sku")
-            private String sku;
-            @JSONField(name = "count")
-            private Integer count;
+        @AllArgsConstructor
+        @NoArgsConstructor
+        @SuperBuilder
+        public static class InboundSkuListDTO {
+            @JsonProperty("skuCode")
+            private String skuCode;
+            @JsonProperty("quantity")
+            private Integer quantity;
         }
     }
 }

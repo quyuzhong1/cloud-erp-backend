@@ -2,8 +2,7 @@ package com.sdk.wms.weishi.enums;
 
 
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
-import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.*;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
@@ -20,6 +19,72 @@ public enum WeiShiEnums {
         this.fieldName = fieldName;
         this.enumClz = enumClz;
     }
+
+    /**
+     * 运输方式
+     */
+    @Getter
+    public enum ProductCodeEnum {
+        AIR_TRANSPORT("AIRLIFT","空运", LogisticsMethodEnum.AIRFREIGHT),
+        EXPRESS("EXPRESS","快递", LogisticsMethodEnum.EXPRESS),
+        SEA_FREIGHT_BULK_CARGO("SEA_FREIGHT","海运散货", LogisticsMethodEnum.OCEAN_FREIGHT_BULK),
+        RAIL_TRANSPORT_FULL_CONTAINER("SEA_FREIGHT","铁运整柜", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL),
+        OCEAN_FREIGHT_FULL_CONTAINER("SEA_FREIGHT","海运整柜", LogisticsMethodEnum.OCEAN_FREIGHT_FCL),
+        RAIL_FREIGHT_BULK_CARGO("SEA_FREIGHT","铁运散货", LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK),
+        LOCAL_DELIVERY("LOCAL_DELIVERY","本地发运", null),
+        ;
+        private final String code;
+        private final String name;
+        private final LogisticsMethodEnum erpEnum;
+
+        ProductCodeEnum(String code, String name, LogisticsMethodEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static String getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(ProductCodeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(ProductCodeEnum::getCode)
+                    .orElse(null);
+        }
+    }
+
+    /**
+     * 入库类型 D:自发头程,T中转代发
+     */
+    @Getter
+    public enum TransitTypeEnum {
+        SPONTANEOUS("CUSTOMER","自发头程", OverseasInstockTypeEnum.SELF_HEADWAY),
+        TRANSFER("WAREHOUSE","中转代发",OverseasInstockTypeEnum.TRANSFER_AGENT)
+        ;
+        private final String code;
+        private final String name;
+        private final OverseasInstockTypeEnum erpEnum;
+
+        TransitTypeEnum(String code, String name, OverseasInstockTypeEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static String getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(TransitTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(TransitTypeEnum::getCode)
+                    .orElse(null);
+        }
+    }
+
     /**
      * 出库单状态
      */
