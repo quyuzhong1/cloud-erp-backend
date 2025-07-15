@@ -35,10 +35,10 @@ public class FsCallbackApiController {
     	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
         String message = handler.quickApproveCallbackHandler(req);
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
-        if(StringUtil.isNotBlank(message)){
-            resp.setMessage(message);
+//        if(StringUtil.isNotBlank(message)){
+            resp.setMessage("cescesces");
             resp.setCode(400);
-        }
+//        }
 //        mqProducerService.syncClassMsg(RocketMqTopic.WORKFLOW_FS_APPROVE_TOPIC, RocketMqTagEnum.WORKFLOW_FS_APPROVE_TAG.getName(),req , req.getMessageId());
         log.info("飞书回调结束");
         return  resp;
