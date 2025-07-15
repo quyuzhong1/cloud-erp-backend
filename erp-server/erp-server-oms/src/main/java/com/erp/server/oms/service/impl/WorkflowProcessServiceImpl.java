@@ -63,6 +63,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //b2c销售订单
                 SoB2cApproveEnd(dto);
                 break;
+            case TIK_TOK_FULLY:
+                //b2c销售订单
+                SoB2cApproveEnd(dto);
+                break;
             case CUSTOMER_B2B_CHANGE_SELLER:
                 //客户信息销售员变更
                 customerB2bChangeSellerApproveEnd(dto);
