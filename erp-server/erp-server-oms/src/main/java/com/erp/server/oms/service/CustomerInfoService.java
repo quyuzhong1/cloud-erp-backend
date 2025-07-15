@@ -391,4 +391,8 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     void initHistoryCustomerDeptId();
 
     VirtualWarehouseDTO.VwDTO getVirtualWarehouseByCustomerId(CustomerDTO.VirtualDTO dto);
+
+    List<CustomerInfoEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(CustomerInfoEntity entity);
 }

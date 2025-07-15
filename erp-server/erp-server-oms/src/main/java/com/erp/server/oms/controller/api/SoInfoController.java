@@ -188,8 +188,22 @@ public class SoInfoController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.submit(dto.getIds());
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.submit(entity));
+            }catch (Exception e){
+                log.error("销售订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -423,7 +437,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.disApprove(dto, entity,soChangeList ));
+                resultDTOS.add(soInfoService.disApprove(entity,soChangeList ));
             }catch (Exception e){
                 log.error("B2B销售订单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -900,5 +914,18 @@ public class SoInfoController extends BaseController {
     public ApiResult<BatchResultDTO> singleUploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) {
         BatchResultDTO result = soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId());
         return result.getSuccess() ? success(result) : failure(result);
+    }
+
+    /**
+     * 下推采购申请单数据显示
+     * @author will
+     * @date 2025/5/29 15:19
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/viewPushPurchaseApplication")
+    public ApiResult<List<SoB2cDTO.ViewPushPurchaseApplicationDTO>> viewPushPurchaseApplication(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = soInfoService.viewPushPurchaseApplication(dto.getIds());
+        return success(list);
     }
 }

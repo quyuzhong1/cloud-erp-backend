@@ -271,7 +271,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                             sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
                     List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                     //获取到表达式,判断表达式是否匹配
-                    return spElServer.matchExpressionByConditionList(conditionElementList, map);
+                    return spElServer.matchExpressionByConditionList(conditionElementList, map,"");
                 }).collect(Collectors.toList());
         log.warn("单据【{}】完成过滤拣货策略，完成时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
         List<String> warehouseIds = actions.parallelStream().map(CfgRulePackingActionEntity::getWarehouseId).distinct().collect(Collectors.toList());

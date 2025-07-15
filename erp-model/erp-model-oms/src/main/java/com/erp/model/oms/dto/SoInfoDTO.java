@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -314,7 +315,10 @@ public class SoInfoDTO implements Serializable {
          * 剩余数量
          */
         private Integer waitQty;
-
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
 
         /**
          * 单位
@@ -2953,5 +2957,13 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer returnQty;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private SoInfoEntity soInfoEntity;
+        private BillApproveStatusEnum  billApproveStatusEnum;
     }
 }

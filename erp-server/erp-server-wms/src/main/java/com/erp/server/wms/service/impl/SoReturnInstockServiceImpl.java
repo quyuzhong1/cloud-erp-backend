@@ -1684,8 +1684,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         if (CollectionUtils.isNotEmpty(ids)) {
-            //提交
-            transferInfoService.submit(ids, Boolean.TRUE);
+            List<TransferInfoEntity> transferInfoList = transferInfoService.listByIds(ids);
+            if (CollUtil.isNotEmpty(transferInfoList)) {
+                //提交
+                transferInfoList.forEach(obj -> transferInfoService.submit(obj, Boolean.TRUE));
+            }
         }
     }
 

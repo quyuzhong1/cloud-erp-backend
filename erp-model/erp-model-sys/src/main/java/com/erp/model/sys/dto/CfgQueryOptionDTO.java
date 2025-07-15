@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -268,6 +270,4 @@ public class CfgQueryOptionDTO implements Serializable {
         private String apiType;
 
     }
-
-
 }

@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -14,6 +13,7 @@ import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +21,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -876,4 +875,48 @@ public class SupplierDTO implements Serializable {
         private SupplierAccountEntity accountEntity;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class InsertDTO extends AddDTO{
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approvalStatus;
+        /**
+         * 第三方审核人
+         */
+        private String thirdApprovalUserId;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApproveStatusDTO {
+
+        /**
+         * 第三方审核人
+         */
+        private String thirdApprovalUserId;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
+
+        /**
+         * 供应商id
+         */
+        private SupplierEntity supplierEntity;
+
+        /**
+         * 审核状态
+         *
+         */
+        //校验数据枚举类型
+        @StateEnumValue(strValues = {"waitSubmit","approveIng","reject","approve"}, message = "审核类型有误")
+        private ApproveStatusEnum approveStatus;
+    }
 }

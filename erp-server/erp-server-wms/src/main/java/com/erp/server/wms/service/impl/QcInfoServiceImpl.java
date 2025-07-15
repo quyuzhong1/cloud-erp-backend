@@ -24,6 +24,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -203,7 +204,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private QcNoticeService qcNoticeService;
-
+    @Resource
+    private QcEffectivenessService qcEffectivenessService;
     /**
      * 保存 质检单
      *
@@ -2652,6 +2654,40 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         }
         return new PagingVO<>(resultList, (int)page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public String getFsQcNoticeTitle(String title) {
+        QcEffectivenessDTO.CommonSearchParamDTO paramDTO = new  QcEffectivenessDTO.CommonSearchParamDTO();
+        LocalDate now = LocalDate.now();
+        paramDTO.setDateList(Arrays.asList(now, now));
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcEffectivenessService.listQcBillGroupQcStatus(paramDTO);
+        //质检单总计
+        Integer totalCount = list.stream().map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).reduce(MathUtil.ZERO,Integer::sum);
+        //已质检数量
+        Integer hasQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
+                        || CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
+                .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
+                .reduce(MathUtil.ZERO,Integer::sum);
+        //未质检数量
+        Integer notQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
+                        ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
+                        ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
+                .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
+                .reduce(MathUtil.ZERO,Integer::sum);
+        //累计未质检
+        QcEffectivenessDTO.CountQcParamDTO qcParamDTO = new QcEffectivenessDTO.CountQcParamDTO();
+        qcParamDTO.setQcStatusList(Arrays.asList(QcBillStatusEnum.WAIT_QC.getCode(),QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_RE_QC.getCode()));
+        Integer notQcTotalCount = countTotalNotQc(qcParamDTO);
+
+        //超时未质检
+        qcParamDTO.setIsTimeOut(Boolean.TRUE);
+        Integer timeOutTotalCount = countTotalNotQc(qcParamDTO);
+
+        //已质检比例
+        String rate = MathUtil.divide(new BigDecimal(hasQcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString() + "%";
+        title = CharSequenceUtil.format(title,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
+        return title;
     }
 
     /**

@@ -87,9 +87,21 @@ public enum ApproveStatusEnum implements EnumMessage  {
         return approveType.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode()) || approveType.equals(ApproveStatusEnum.REJECT.getCode());
     }
     public static ApproveStatusEnum transferApproveType(ApproveTypeEnum approveType) {
-        return Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
+        if (Objects.equals(ApproveTypeEnum.PASS, approveType)) {
+            return ApproveStatusEnum.APPROVE;
+        } else if (Objects.equals(ApproveTypeEnum.CANCEL, approveType)) {
+            return  ApproveStatusEnum.WAIT_SUBMIT;
+        } else {
+            return  ApproveStatusEnum.REJECT;
+        }
     }
     public static ApproveStatusEnum transferApproveType(String approveType) {
-        return Objects.equals(ApproveTypeEnum.PASS.getStatus(), approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
+        if (Objects.equals(ApproveTypeEnum.PASS.getStatus(), approveType)) {
+            return ApproveStatusEnum.APPROVE;
+        } else if (Objects.equals(ApproveTypeEnum.CANCEL.getStatus(), approveType)) {
+            return  ApproveStatusEnum.WAIT_SUBMIT;
+        } else {
+            return  ApproveStatusEnum.REJECT;
+        }
     }
 }

@@ -18,12 +18,10 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
-import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.server.wms.query.TransferApplicationQueryHandler;
 import com.erp.server.wms.service.TransferApplicationService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +29,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -178,9 +177,23 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:submit",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferApplicationService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferApplicationEntity> entityMap = transferApplicationService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferApplicationEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"调拨申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferApplicationService.submit(entity));
+            }catch (Exception e){
+                log.error("调拨申请单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -168,17 +168,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/bomInfoApprovalPass")
-    void bomInfoApprovalPass(@RequestBody @Validated AuditParamDTO dto);
-
-    /**
-     * bom  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("feign/plmWorkOption/bomInfoApprovalNoPass")
-    void bomInfoApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+    @PostMapping("feign/plmWorkOption/bomInfoApprove")
+    Boolean bomInfoApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * 产品信息-状态操作-审核通过
@@ -186,18 +177,8 @@ public interface PlmTaskFeign {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("feign/plmWorkOption/productDetailApprovalPass")
-    Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto);
-
-    /**
-     * 产品信息-状态操作-审核不通过
-     *
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("feign/plmWorkOption/productDetailApprovalNoPass")
-    Boolean productDetailApprovalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto);
-
+    @PostMapping("feign/plmWorkOption/productDetailApprove")
+    Boolean productDetailApprove(@RequestBody @Validated ApproveOneDTO dto);
     /**
      * 项目任务-任务分页列表 -状态操作-审核通过
      *
@@ -220,17 +201,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/productChangeApprovalPass")
-    void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto);
-
-    /**
-     * change  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
-    void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+    @PostMapping("feign/plmWorkOption/productChangeApprove")
+    void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * @param skuIds
@@ -628,6 +600,24 @@ public interface PlmTaskFeign {
 
     @GetMapping("/feign/product/getBrandByQuerySql")
     List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
+
+    /**
+     * @description:
+     * @author jack
+     * @date: 2025-05-30
+     * @param preTaskIds
+     */
+    @PostMapping("/feign/projectTask/listProjectTaskByTaskIds")
+    List<ProjectTaskEntity> listProjectTaskByTaskIds(@RequestBody List<String> preTaskIds);
+
+    /**
+     * @description:
+     * @author jack
+     * @date: 2025-05-30
+     * @param preTaskIds
+     */
+    @PostMapping("/feign/projectTask/listTaskFollowerByTaskIds")
+    List<TaskFollowerEntity> listTaskFollowerByTaskIds(@RequestBody List<String> preTaskIds);
 
     /**
      * 根据sku no 获取所有状态信息

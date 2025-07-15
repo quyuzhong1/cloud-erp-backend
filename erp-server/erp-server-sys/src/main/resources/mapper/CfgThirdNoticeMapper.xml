@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.CfgThirdNoticeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.CfgThirdNoticeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="business_type" property="businessType" />
+       <result column="notice_node" property="noticeNode" />
+       <result column="method" property="method" />
+       <result column="notice_status" property="noticeStatus" />
+       <result column="title" property="title" />
+       <result column="notice_type" property="noticeType" />
+       <result column="url" property="url" />
+       <result column="cron" property="cron" />
+       <result column="role_type" property="roleType" />
+       <result column="specific_person" property="specificPerson" />
+       <result column="notice_method" property="noticeMethod" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        business_type, notice_node, method, notice_status, title, notice_type, url, cron, role_type, specific_person, notice_method
+    </sql>
+    <select id="tabList" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$TabListDTO">
+        SELECT
+        ctn.notice_status AS tabFlag,
+        count(1)  AS count
+        FROM  cfg_third_notice as ctn
+        WHERE ctn.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY ctn.notice_status
+    </select>
+
+    <sql id="paging_sql">
+        SELECT
+        ctn.id as id,
+        ctn.create_user_id as createUserId,
+        ctn.create_user_name as createUserName,
+        ctn.create_time as createTime,
+        ctn.update_user_id as updateUserId,
+        ctn.update_user_name as updateUserName,
+        ctn.update_time as updateTime,
+        ctn.version as version,
+        ctn.is_deleted as isDeleted,
+        ctn.business_type as businessType,
+        ctn.notice_node as noticeNode,
+        ctn.method as method,
+        ctn.notice_status as noticeStatus,
+        ctn.title as title,
+        ctn.notice_type as noticeType,
+        ctn.url as url,
+        ctn.cron as cron,
+        ctn.role_type as roleType,
+        ctn.specific_person as specificPerson,
+        ctn.notice_method as noticeMethod,
+        ctn.post as post
+        FROM
+        cfg_third_notice AS ctn
+        WHERE
+        ${params.sqlMap.default}
+        AND ctn.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and ctn.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ctn.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+</mapper>

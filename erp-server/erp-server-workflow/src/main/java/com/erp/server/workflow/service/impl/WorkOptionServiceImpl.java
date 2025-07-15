@@ -11,7 +11,6 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -22,8 +21,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.dto.AuditParamDTO;
-import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -517,24 +514,18 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.pilotApprovalPass(approveOneDTO);
                 break;
             case PRODUCT_BOM_INFO:
-                AuditParamDTO auditParamDTO = new AuditParamDTO();
-                auditParamDTO.setId(dto.getId());
-                auditParamDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.bomInfoApprovalPass(auditParamDTO);
-                } else {
-                    plmTaskFeign.bomInfoApprovalNoPass(auditParamDTO);
-                }
+                ApproveOneDTO bomApproveOneDTO = new ApproveOneDTO();
+                bomApproveOneDTO.setId(dto.getId());
+                bomApproveOneDTO.setComment(dto.getComment());
+                bomApproveOneDTO.setType(dto.getType());
+                plmTaskFeign.bomInfoApprove(bomApproveOneDTO);
                 break;
             case PRODUCT_DETAIL:
-                ProductDetailOperateDTO paramDTO = new ProductDetailOperateDTO();
+                ApproveOneDTO paramDTO = new ApproveOneDTO();
                 paramDTO.setId(dto.getId());
                 paramDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.productDetailApprovalPass(paramDTO);
-                } else {
-                    plmTaskFeign.productDetailApprovalNoPass(paramDTO);
-                }
+                paramDTO.setType(dto.getType());
+                plmTaskFeign.productDetailApprove(paramDTO);
                 break;
             case PROJECT_TASK:
                 LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -554,14 +545,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.projectTaskApprovalPass(taskOperateDTO);
                 break;
             case PRODUCT_CHANGE:
-                AuditParamDTO approveDTO = new AuditParamDTO();
+                ApproveOneDTO approveDTO = new ApproveOneDTO();
                 approveDTO.setId(dto.getId());
                 approveDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.productChangeApprovalPass(approveDTO);
-                } else {
-                    plmTaskFeign.productChangeApprovalNoPass(approveDTO);
-                }
+                approveDTO.setType(dto.getType());
+                plmTaskFeign.productChangeApprove(approveDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
@@ -578,6 +566,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getType());
         approveOneDTO.setId(dto.getId());
+        approveOneDTO.setComment(dto.getComment());
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
@@ -653,6 +642,18 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case REQUISITION_APPLICATION_CHANGE:
                 resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                break;
+            case OTHER_INSTOCK:
+                resultDTOList = wmsTaskFeign.otherInstockApprove(baseApproveParamDTO);
+                break;
+            case OTHER_OUTSTOCK:
+                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
+                break;
+            case TRANSFER_IN:
+                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
+                break;
+            case TRANSFER_OUT:
+                resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

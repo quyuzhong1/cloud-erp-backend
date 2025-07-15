@@ -67,6 +67,17 @@ public class WmsWorkOptionFeignController {
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
 
+    @Resource
+    private OtherInstockService otherInstockService;
+
+    @Resource
+    private OtherOutstockService otherOutstockService;
+
+    @Resource
+    private TransferInService transferInService;
+
+    @Resource
+    private TransferOutService transferOutService;
     /**
      * 根据入参查询单据数量
      *
@@ -317,6 +328,86 @@ public class WmsWorkOptionFeignController {
                 resultDTOS.add(requisitionApplicationChangeService.approve(entity.getId(),new ArrayList<>(), dto.getType()));
             }catch (Exception e){
                 log.error("发货通知变更单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/otherInstockApprove")
+    public List<BatchResultDTO> otherInstockApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<OtherInstockEntity> entityList = otherInstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            OtherInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"其他入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(otherInstockService.approve(entity.getId(),dto.getType(),dto.getComment(), Boolean.TRUE));
+            }catch (Exception e){
+                log.error("其他入库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/otherOutstockApprove")
+    public List<BatchResultDTO> otherOutstockApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<OtherOutstockEntity> entityList = otherOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            OtherOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"其他出库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(otherOutstockService.approve(entity.getId(),dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("其他出库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/transferInApprove")
+    public List<BatchResultDTO> transferInApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferInEntity> entityList = transferInService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分步式调入库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), entity));
+            }catch (Exception e){
+                log.error("分步式调入库审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    @PostMapping("/transferOutApprove")
+    public List<BatchResultDTO> transferOutApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TransferOutEntity> entityList = transferOutService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferOutEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"分步式调出库记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferOutService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), entity));
+            }catch (Exception e){
+                log.error("分步式调出库审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }

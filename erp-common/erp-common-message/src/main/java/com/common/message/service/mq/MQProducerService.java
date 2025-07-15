@@ -217,6 +217,31 @@ public class MQProducerService<T> {
     }
 
     /**
+     * 异步发送对象消息
+     * @param topic
+     * @param tag
+     * @param entity
+     * @param key
+     */
+    public void asyncClassMsgByDelayLevel(String topic, String tag, T entity, String key,int delayLevel) {
+        Message<T> msg = MessageBuilder.withPayload(entity)
+                .setHeader(RocketMQHeaders.KEYS, key)
+                .build();
+        String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
+        rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+            }
+            @Override
+            public void onException(Throwable throwable) {
+                log.error("MQService:destination={} entity={} e={}",destination, JSONUtil.toJsonStr(entity), ExceptionUtils.getStackTrace(throwable));
+                throw new RuntimeException(String.format("消息发送失败 topic_tag:%s", destination));
+            }
+        },10000,delayLevel);
+    }
+
+
+    /**
      * 往消息中心发送MQ任务消息
      * @param msgInfoDTO
      * @param isSync（true为同步，其他则为异步）

@@ -1,19 +1,13 @@
 package com.erp.model.workflow.entity;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
@@ -21,6 +15,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -33,7 +32,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("process_task_management")
+@TableName(value = "process_task_management")
 @NoArgsConstructor
 public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagementEntity> {
 
@@ -132,6 +131,17 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField(exist = false)
     private String businessId;
 
+    /**
+     * 原审批人id（委托审批后存原始值）
+     */
+    @TableField("original_approve_id")
+    private String originalApproveId;
+
+    /**
+     * 标识json
+     */
+    @TableField(value = "label_json", jdbcType = JdbcType.OTHER)
+    private JSONObject labelJson;
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
@@ -158,7 +168,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName,JSONObject labelJson) {
         this.processInstanceId = processInstanceId;
         this.curActivityId = activityId;
         this.taskId = taskId;
@@ -171,6 +181,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
         this.curActivityName = activityName;
+        this.labelJson = labelJson;
     }
 
     public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId, String targetUserName) {

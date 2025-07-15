@@ -3,18 +3,21 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -35,9 +38,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.MachineTypeEnum;
@@ -66,7 +70,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_APPLICATION;
 
@@ -211,8 +214,15 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        TransferApplicationEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
         //提交
-        this.submit(Collections.singletonList(id));
+        BatchResultDTO submit = this.submit(entity);
+        if (!submit.getSuccess()) {
+            throw new ServiceException(ApiError.ERROR_1042,"调拨申请单");
+        }
         return id;
     }
 
@@ -254,38 +264,36 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     public Boolean updateAndSubmit(TransferApplicationDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
+        TransferApplicationEntity entity = this.getById(dto.getId());
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
         //提交
-        return this.submit(Collections.singletonList(dto.getId()));
+        BatchResultDTO submit = this.submit(entity);
+        return submit.getSuccess();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        //根据ids查询
-        List<TransferApplicationEntity> list = getList(ids);
+    public BatchResultDTO submit(TransferApplicationEntity entity) {
         //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //验证调出入仓库是否相同
-        for (TransferApplicationEntity entity : list) {
-            if (entity.getInWarehouseId().equals(entity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
-            }
+        if (entity.getInWarehouseId().equals(entity.getOutWarehouseId())) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
         }
 
-        log.info("调拨申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("调拨申请单提交，id=【{}】", entity.getId());
 
         //提交流程
-        startProcess(list);
-
+        startProcess(entity);
         //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "提交操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog("提交了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @Override
@@ -865,6 +873,21 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<TransferApplicationEntity> listByCodes(List<String> list) {
+        return this.list(new QueryWrapper<TransferApplicationEntity>().lambda().in(TransferApplicationEntity::getCode, list).eq(TransferApplicationEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(TransferApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        TransferApplicationEntity transferApplicationEntity = updateApprovalStatusDTO.getTransferApplicationEntity();
+        lambdaUpdate().in(TransferApplicationEntity::getId, Collections.singletonList(transferApplicationEntity.getId()))
+                .set(TransferApplicationEntity::getApproveUserId, transferApplicationEntity.getApproveUserId())
+                .set(TransferApplicationEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
     /**
      * @description: 下推数据查询
      * @author Will
@@ -1201,42 +1224,17 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @description: 启动审核流程
      * @author Will
      * @date: 2023/8/2 14:51
-     * @param list
+     * @param entity
      */
-    private void startProcess(List<TransferApplicationEntity> list) {
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-
-        List<String> applyUserIdList = list.stream().map(TransferApplicationEntity::getApplyUserId).collect(Collectors.toList());
-        List<SysDepartmentUserNumberDTO> deptList = sysUserFeign.listDeptUserByUserIdList(applyUserIdList);
-        List<String> warehouseIds = list.stream()
-                .flatMap(entity -> Stream.of(entity.getInWarehouseId(), entity.getOutWarehouseId())) // 合并两个字段
-                .distinct() // 去重
-                .collect(Collectors.toList()); // 收集到 List 中
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
-        Map<String, String> warehouseChargeIdMap = warehouseEntityList.stream()
-                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getChargeId));
-
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(obj.getApplyUserId());
-            Map<String, Object> map = BeanUtil.beanToMap(obj);
-            //申请人一级部门
-            if (CollectionUtils.isNotEmpty(deptList)) {
-                List<String> deptIdList = deptList.stream().filter(e -> e.getUserId().equals(obj.getApplyUserId())).map(e -> e.getDepartmentId()).distinct().collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(deptIdList)) {
-                    map.put("deptId",deptIdList.get(0));
-                }
-            }
-            map.put("inWarehouseChargeId", warehouseChargeIdMap.get(obj.getInWarehouseId()));
-            map.put("outWarehouseChargeId", warehouseChargeIdMap.get(obj.getOutWarehouseId()));
-            startDTO.setVariablesMap(map);
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+    private void startProcess(TransferApplicationEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(entity.getApplyUserId());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
@@ -1259,7 +1257,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
@@ -1271,4 +1269,26 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
     }
 
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(TransferApplicationEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99044);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //总计数量
+        Integer qtyTotal = detailList.stream().map(TransferApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+        //SKU
+        String skuNo = detailList.stream().map(TransferApplicationDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        return variablesMap;
+    }
 }

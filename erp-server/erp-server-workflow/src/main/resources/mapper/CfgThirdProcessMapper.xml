@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgThirdProcessMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgThirdProcessEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="bussiness_key" property="bussinessKey" />
+       <result column="operate_type" property="operateType" />
+       <result column="source_platform" property="sourcePlatform" />
+       <result column="enable_status" property="enableStatus" />
+       <result column="enable_time" property="enableTime" />
+        <result column="third_process_definition_code" property="thirdProcessDefinitionCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ctp.id,
+        ctp.create_user_id,
+        ctp.create_user_name,
+        ctp.create_time,
+        ctp.update_user_id,
+        ctp.update_user_name,
+        ctp.update_time,
+        ctp.version,
+        ctp.is_deleted,
+        ctp.code, ctp.name, ctp.bussiness_key, ctp.operate_type, ctp.source_platform, ctp.enable_status, ctp.enable_time
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$TabListDTO">
+        SELECT
+        ctp.enable_status AS tabFlag,
+        count(1)  AS count
+        FROM  cfg_third_process as ctp
+        WHERE ctp.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY ctp.enable_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+            ,wm.module_classify AS bussiness_key_name,
+            db.name AS source_platform,
+            tpe.name AS third_process_definition_name
+        from cfg_third_process as ctp
+        LEFT JOIN public.work_menu wm ON wm.module_code = ctp.bussiness_key AND wm.is_deleted = false
+        LEFT JOIN public.dict_basic db ON db.type = 'sourcePlatform' AND db.is_deleted = false AND db.value = ctp.source_platform
+        LEFT JOIN public.third_process_definition AS tpe ON tpe.approval_code= ctp.third_process_definition_code AND tpe.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and ctp.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by ctp.create_time desc
+    </select>
+
+    <!-- 主表 resultMap -->
+    <resultMap id="viewDTOResultMap" type="com.erp.model.workflow.dto.CfgThirdProcessDTO$ViewDTO">
+        <id property="id" column="process_id"/>
+        <result property="code" column="process_code"/>
+        <result property="name" column="process_name"/>
+        <result property="bussinessKey" column="process_bussiness_key"/>
+        <result property="operateType" column="process_operate_type"/>
+        <result property="sourcePlatform" column="process_source_platform"/>
+        <result property="enableStatus" column="process_enable_status"/>
+        <result property="enableTime" column="process_enable_time"/>
+        <result property="thirdProcessDefinitionCode" column="thirdProcessDefinitionCode"/>
+
+        <!-- 字段映射 -->
+        <collection property="fieldMapList" ofType="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO"
+                    resultMap="fieldMapViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 字段映射 resultMap -->
+    <resultMap id="fieldMapViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO">
+        <id property="id" column="field_map_id"/>
+        <result property="thirdField" column="field_map_third_field"/>
+        <result property="thirdFieldType" column="field_map_third_field_type"/>
+        <result property="thirdFieldRequired" column="field_map_third_field_required"/>
+        <result property="sysField" column="field_map_sys_field"/>
+        <result property="sysFieldType" column="field_map_sys_field_type"/>
+        <result property="sysFieldRequired" column="field_map_sys_field_required"/>
+        <result property="cfgId" column="field_map_cfg_id"/>
+        <result property="defaultValue" column="field_map_default_value"/>
+        <result property="isUnique" column="field_map_is_unique"/>
+        <result property="cfgType" column="field_map_cfg_type"/>
+        <result property="thirdFieldId" column="field_map_third_field_id"/>
+        <result property="isDetailField" column="field_map_is_detail_field"/>
+        <result property="thirdParentId" column="field_map_parent_id"/>
+         <result property="groupType" column="field_map_group_type"/>
+         <result property="sysParentId" column="sys_parent_id"/>
+        <result property="index" column="field_map_index"/>
+        <result property="thirdFieldTypeName" column="thirdFieldTypeName"/>
+        <result property="sysFieldTypeName" column="sysFieldTypeName"/>
+
+        <!-- 值映射 -->
+        <collection property="processValueMapDTOList"
+                    ofType="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO"
+                    resultMap="valueMapViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 值映射 resultMap -->
+    <resultMap id="valueMapViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO">
+        <id property="id" column="value_map_id"/>
+        <result property="fieldMapId" column="value_map_field_map_id"/>
+        <result property="thirdValue" column="value_map_third_value"/>
+        <result property="sysValue" column="value_map_sys_value"/>
+        <result property="defaultValue" column="value_map_default_value"/>
+    </resultMap>
+
+    <select id="getView" resultMap="viewDTOResultMap">
+        SELECT
+            -- 主表字段
+            p.id AS process_id,
+            p.code AS process_code,
+            p.name AS process_name,
+            p.bussiness_key AS process_bussiness_key,
+            p.operate_type AS process_operate_type,
+            p.source_platform AS process_source_platform,
+            p.enable_status AS process_enable_status,
+            p.enable_time AS process_enable_time,
+            p.third_process_definition_code AS thirdProcessDefinitionCode,
+
+
+            -- 字段映射表字段
+            fm.id AS field_map_id,
+            fm.third_field AS field_map_third_field,
+            fm.third_field_type AS field_map_third_field_type,
+            fm.third_field_required AS field_map_third_field_required,
+            fm.sys_field AS field_map_sys_field,
+            fm.sys_field_type AS field_map_sys_field_type,
+            fm.sys_field_required AS field_map_sys_field_required,
+            fm.cfg_id AS field_map_cfg_id,
+            fm.default_value AS field_map_default_value,
+            fm.is_unique AS field_map_is_unique,
+            fm.cfg_type AS field_map_cfg_type,
+            fm.third_field_id AS field_map_third_field_id,
+            fm.is_detail_field AS field_map_is_detail_field,
+            fm.third_parent_id AS field_map_parent_id,
+            fm.group_type AS field_map_group_type,
+            fm.sys_parent_id AS sys_parent_id,
+            fm.index AS field_map_index,
+            b1.value AS thirdFieldTypeName,
+            b2.value AS sysFieldTypeName,
+
+            -- 值映射表字段
+            vm.id AS value_map_id,
+            vm.field_map_id AS value_map_field_map_id,
+            vm.third_value AS value_map_third_value,
+            vm.sys_value AS value_map_sys_value,
+            vm.default_value AS value_map_default_value
+
+        FROM
+            cfg_third_process p
+                LEFT JOIN
+            cfg_process_field_map fm ON p.id = fm.cfg_id AND fm.is_deleted = FALSE
+                LEFT JOIN
+            cfg_process_value_map vm ON fm.id = vm.field_map_id AND vm.is_deleted = FALSE
+                LEFT JOIN
+            dict_basic  b1 ON b1.type = 'field_type' AND b1.name = fm.third_field_type AND b1.is_deleted = FALSE
+                LEFT JOIN
+            dict_basic  b2 ON b2.type = 'field_type' AND b2.name = fm.sys_field_type AND b2.is_deleted = FALSE
+
+        WHERE
+            p.id = #{id}
+            And p.is_deleted = FALSE
+        ORDER BY
+            fm.create_time ASC
+    </select>
+
+
+</mapper>

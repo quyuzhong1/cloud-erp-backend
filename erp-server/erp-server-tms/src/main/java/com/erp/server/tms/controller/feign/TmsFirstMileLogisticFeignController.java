@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.FirstMileCostAllocationService;
@@ -44,6 +45,15 @@ public class TmsFirstMileLogisticFeignController {
     BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsFirstMileLogisticService.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
     }
+
+    /**
+     *获取有预警的物流单
+     **/
+    @PostMapping("/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO){
+        return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
+    }
+
     /**
      * 根据来源id和业务类型查询头程费用分摊记录
      * @param detailDTO

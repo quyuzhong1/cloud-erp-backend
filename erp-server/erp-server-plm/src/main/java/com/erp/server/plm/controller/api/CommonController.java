@@ -195,7 +195,7 @@ public class CommonController extends BaseController {
      * @return
      */
     @GetMapping("enumDropDownBatch")
-    public ApiResult<Map<String,List<Map<String,Object>>>> enumSelect(@RequestParam(value = "types")List<String> types) {
+    public ApiResult<Map<String,List<Map<String,Object>>>> enumDropDownBatch(@RequestParam(value = "types")List<String> types) {
         Map<String,List<Map<String,Object>>> typeMaps = Maps.newHashMap();
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         if(CollUtil.isNotEmpty(types)) {
