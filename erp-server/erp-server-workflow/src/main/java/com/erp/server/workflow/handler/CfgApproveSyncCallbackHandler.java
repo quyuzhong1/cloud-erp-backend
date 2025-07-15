@@ -131,19 +131,10 @@ public class CfgApproveSyncCallbackHandler {
                 dto.setUserId(sysUserThirdEntity.getUserId());
                 dto.setVariablesMap(variablesMap);
                 log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
-//                try {
-//
-//                } catch (ServiceException e) {
-//                    log.error("调用各个系统的approveEnd方法失败，数据={}", e);
-//                    msg = e.getMsg();
-//                    return msg;
-//                }
                 ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
                 if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
                     //调用各个系统的approveEnd方法
                     processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO);
-                }else {
-                    throw new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST);
                 }
             }
         }

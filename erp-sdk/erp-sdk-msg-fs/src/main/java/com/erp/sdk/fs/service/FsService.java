@@ -787,7 +787,7 @@ public class FsService {
         List<Map<String, Object>> actionConfigs = new ArrayList<>();
         Map<String, Object> actionConfigMap1 = new HashMap<>();
         actionConfigMap1.put("action_type", "APPROVE");
-        actionConfigMap1.put("is_need_reason", false);
+        actionConfigMap1.put("is_need_reason", true);
         actionConfigMap1.put("is_reason_required", false);
         actionConfigMap1.put("is_need_attachment", false);
         actionConfigMap1.put("next_status", FSApprovalStatusEnum.APPROVED.getCode());
