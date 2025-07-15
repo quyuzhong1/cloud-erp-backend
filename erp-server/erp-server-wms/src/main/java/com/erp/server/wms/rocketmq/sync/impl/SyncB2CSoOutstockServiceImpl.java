@@ -398,7 +398,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    @DistributeLocker(keyName = "entity.platformOrderCode")
+    @DistributeLocker(keyName = "entity.platformOrderCode,entity.detailList.platformSkuNo")
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),"");
