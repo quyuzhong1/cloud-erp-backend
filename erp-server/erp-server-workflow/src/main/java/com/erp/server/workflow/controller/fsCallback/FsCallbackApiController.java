@@ -32,14 +32,14 @@ public class FsCallbackApiController {
     @PostMapping("/approve")
     @ResponseBody
     public FsCallbackApiRespDTO approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
-    	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
+    	log.info("飞书回调开始：{}", JSON.toJSONString(req));
         String message = handler.quickApproveCallbackHandler(req);
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
         if(StringUtil.isNotBlank(message)){
-            resp.setMessage("message");
-            resp.setCode(400);
+            resp.setMessage(message);
+            resp.setCode(40004);
         }
-        log.info("飞书回调结束");
+        log.info("飞书回调结束：{}",JSON.toJSONString(resp));
         return  resp;
     }
 
