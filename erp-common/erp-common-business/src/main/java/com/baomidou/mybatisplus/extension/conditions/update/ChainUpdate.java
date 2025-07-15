@@ -62,7 +62,7 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
     		}
     		if(entity == null) {
     			String sqlSet = lambdaUpdateWrapper.getSqlSet();
-        		if(StringUtils.isNotBlank(sqlSet) && !sqlSet.replace(" ", "").contains("update_time=")) {
+        		if(StringUtils.isNotBlank(sqlSet)) {
         			String notBlankSqlSet = sqlSet.replace(" ", "");
         			Object object = null;
 					try {
