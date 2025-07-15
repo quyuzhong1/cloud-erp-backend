@@ -23,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -44,6 +45,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
+import com.erp.model.tms.entity.DictHsCodeEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -135,7 +137,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SysLogService sysLogService;
-    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -816,9 +817,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        //海关编码集合
+        List<String> customsCodeList = successList.stream()
+                .map(LogisticsProductExcelDTO::getCustomsCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class).in(DictHsCodeEntity::getHsCode, customsCodeList).list();
+        Map<String, DictHsCodeEntity> hsCodeMap = hsCodeList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, e -> e, (o1, o2) -> o1));
+
         //sku no list
         List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
@@ -857,6 +865,19 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     logistics.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(declareCurrency));
                 }
 
+                //海关编码
+                String customsCode = item.getCustomsCode();
+                DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
+                if(Objects.isNull(dictHsCodeEntity)){
+                    errorMsgList.add("中国海关编码不存在于出口申报要素");
+                }
+                //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
+                logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDeclareNameCn() : logistics.getDeclareChineseName());
+
+                logistics.setDeclareUnit(isBlank(logistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : logistics.getDeclareUnit());
+
+                logistics.setDeclareElement(isBlank(logistics.getDeclareElement()) ? dictHsCodeEntity.getDeclareElement() : logistics.getDeclareElement());
+
                 logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
                 logistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
                 if (StringUtils.isBlank(skuId)) {
@@ -892,10 +913,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 continue;
             }
            productLogisticsService.saveOrUpdate(logistics);
-            productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
-
-
     }
 
     private List<String> handleCustoms(List<ProductCustomsEntity> productCustomsList) {
