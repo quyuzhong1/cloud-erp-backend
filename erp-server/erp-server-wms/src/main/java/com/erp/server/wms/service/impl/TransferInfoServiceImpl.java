@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -312,15 +311,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         TransferInfoEntity entity = this.getById(id);
-        if (ObjUtil.isEmpty(entity)) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_99047);
         }
         //提交
         this.submit(entity, Boolean.FALSE);
+
         //审核
-        if (Objects.nonNull(entity)){
-            this.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+        TransferInfoEntity approveEntity = this.getById(entity.getId());
+        if (ObjectUtil.isEmpty(approveEntity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
         }
+        this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         return id;
     }
 
