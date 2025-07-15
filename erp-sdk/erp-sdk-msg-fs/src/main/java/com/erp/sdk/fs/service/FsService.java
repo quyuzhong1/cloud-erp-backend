@@ -1024,8 +1024,9 @@ public class FsService {
                     throw new ServiceException("调用飞书API失败：" + resp.getMsg());
                 }
             } while (StrUtil.isNotBlank(resp.getData().getPageToken()));
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             log.error("获取审批实例ID异常", e);
+            Thread.currentThread().interrupt();
             throw new ServiceException("获取审批实例ID异常", e);
         }
         return allInstanceCodes;

@@ -5,6 +5,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
@@ -18,9 +19,11 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -44,6 +47,10 @@ public class CfgApproveSyncCallbackHandler {
     private ProcessTaskManagementExtService processTaskManagementExtService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
+
+    // 算法名称
+    private static final String CBC_MODE = "AES/CBC/PKCS5Padding";
+
     /**
      *
      * @author jack
@@ -145,7 +152,12 @@ public class CfgApproveSyncCallbackHandler {
             messageDigest.reset();
             messageDigest.update(key.getBytes());
             SecretKeySpec skeySpec = new SecretKeySpec(messageDigest.digest(), "AES");
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding"); // "算法/模式/补码方式"
+            Cipher cipher = null;
+            try {
+                Cipher.getInstance(CBC_MODE); // Noncompliant
+            } catch(NoSuchAlgorithmException|NoSuchPaddingException e) {
+                throw new ServiceException("Cipher init error");
+            }
             // 从密文前 16 个字节提取出 IV
             byte[] ivBytes = new byte[16];
             System.arraycopy(ciphertext, 0, ivBytes, 0, ivBytes.length);
@@ -156,68 +168,8 @@ public class CfgApproveSyncCallbackHandler {
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
             byte[] decrypted = cipher.doFinal(actualCiphertext);
             return new String(decrypted);
-        } catch (Exception e) {
+        }  catch (Exception e) {
+            throw new ServiceException("Cipher decryption error");
         }
-        return null;
     }
-    /**
-     * 加密
-     * @param key 密钥
-     * @param source 明文
-     * @return 密文
-     */
-    public String CBCEncrypter(String key, String source){
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.reset();
-            messageDigest.update(key.getBytes());
-            SecretKeySpec skeySpec = new SecretKeySpec(messageDigest.digest(), "AES");
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");//"算法/模式/补码方式"
-            byte[] sSrcBytes = source.getBytes();
-            byte[] newSrc =  new byte[sSrcBytes.length + 16];
-            byte[] cSrc = new byte[16];
-            System.arraycopy(cSrc, 0, newSrc, 0, cSrc.length);
-            System.arraycopy(sSrcBytes, 0, newSrc, 16, sSrcBytes.length);
-            IvParameterSpec iv = new IvParameterSpec(cSrc);//使用CBC模式，需要一个向量iv，可增加加密算法的强度
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-            byte[] encrypted = cipher.doFinal(newSrc);
-            return Base64.getEncoder().encodeToString(encrypted);//此处使用BASE64做转码功能，同时能起到2次加密的作用。
-        } catch (Exception e) {
-            //handle Exception
-        }
-        return null;
-    }
-
-    public static void main(String[] args) {
-        try {
-            String key = "9527";
-            String source ="{\n" +
-                    "  \"action_type\": \"REJECT\",\n" +
-                    "  \"user_id\": \"1319c76g\",\n" +
-                    "  \"approval_code\": \"0F625108-DBA7-4B25-B85D-0BBE76CD8ABC\",\n" +
-                    "  \"message_id\": \"7514304574156046364\",\n" +
-                    "  \"reason\": \"1234564894654\"\n" +
-                    "}";
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.reset();
-            messageDigest.update(key.getBytes());
-            SecretKeySpec skeySpec = new SecretKeySpec(messageDigest.digest(), "AES");
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");//"算法/模式/补码方式"
-            byte[] sSrcBytes = source.getBytes();
-            byte[] newSrc =  new byte[sSrcBytes.length + 16];
-            byte[] cSrc = new byte[16];
-            System.arraycopy(cSrc, 0, newSrc, 0, cSrc.length);
-            System.arraycopy(sSrcBytes, 0, newSrc, 16, sSrcBytes.length);
-            IvParameterSpec iv = new IvParameterSpec(cSrc);//使用CBC模式，需要一个向量iv，可增加加密算法的强度
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-            byte[] encrypted = cipher.doFinal(newSrc);
-            String str = Base64.getEncoder().encodeToString(encrypted);//此处使用BASE64做转码功能，同时能起到2次加密的作用。
-            System.out.println("encrypted====="+str);
-        } catch (Exception e) {
-            //handle Exception
-        }
-
-
-    }
-
 }
