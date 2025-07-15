@@ -148,7 +148,8 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(taskInfoEntity)){
                 PurchaseApplicationEntity applicationEntity = FeignQuery.getById(PurchaseApplicationEntity.class, taskInfoEntity.getBussinessId());
                 if (ObjectUtil.isNotEmpty(applicationEntity)) {
-                    throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("采购申请单{}",applicationEntity.getCode()));
+                    log.warn(CharSequenceUtil.format("采购申请单【{}】已存在，直接标记消费成功",applicationEntity.getCode()));
+                    return;
                 }
                 //判断是否存在三方生成查询数据，存在则删除
                 approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());

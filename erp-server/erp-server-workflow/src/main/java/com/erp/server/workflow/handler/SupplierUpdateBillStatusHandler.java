@@ -144,7 +144,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(taskInfoEntity)) {
                 SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfoEntity.getBussinessId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                    throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("供应商{}",supplierEntity.getCode()));
+                    log.warn(CharSequenceUtil.format("供应商【{}】已存在，直接标记消费成功",supplierEntity.getCode()));
+                    return;
                 }
                 //判断是否存在三方生成查询数据，存在则删除
                 approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
