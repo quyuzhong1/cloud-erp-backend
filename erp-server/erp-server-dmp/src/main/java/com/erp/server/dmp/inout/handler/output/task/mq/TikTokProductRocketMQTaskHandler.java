@@ -72,6 +72,9 @@ public class TikTokProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			if(CollUtil.isEmpty(dmpSkuInfoEntityList)) {
+				continue;
+			}
 			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
 				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {
@@ -86,6 +89,9 @@ public class TikTokProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
      * 解析订单数据
      **/
     public PlatformProductDTO convert(DmpProductInfoEntity dmpProductInfoEntity , DmpSkuInfoEntity dmpSkuInfoEntity , String cfgOutputId) {
+    	if(dmpProductInfoEntity == null) {
+    		return null;
+    	}
     	if(this.validateDataBlack(dmpSkuInfoEntity, cfgOutputId)) {
     		return null;
     	}
