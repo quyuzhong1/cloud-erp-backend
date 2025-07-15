@@ -36,7 +36,7 @@ public class FsCallbackApiController {
         String message = handler.quickApproveCallbackHandler(req);
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
         if(StringUtil.isNotBlank(message)){
-            resp.setMessage("message");
+            resp.setMessage(message);
             resp.setCode(40004);
         }
         log.info("飞书回调结束：{}",JSON.toJSONString(resp));
