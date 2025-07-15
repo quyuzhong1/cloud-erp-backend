@@ -129,6 +129,12 @@
         <if test="param.isDelegate != null and param.isDelegate == true">
             and (pp.label_json ->> 'isDelegate')::boolean is true
         </if>
+        <if test="param.curApproveId != null and param.curApproveId != ''">
+            and pp.cur_approve_id = #{param.curApproveId}
+        </if>
+        <if test="params.dateList != null and params.dateList.size > 0">
+            and pp.approve_time >= #{params.dateList[0]} and  #{params.dateList[1]} >= pp.approve_time
+        </if>
         order by pp.createTime desc
     </sql>
 
