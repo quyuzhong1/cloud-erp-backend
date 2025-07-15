@@ -9,15 +9,13 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
-import com.erp.server.oms.service.SoB2cCoreService;
-import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -54,6 +52,8 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
     @Resource
     private SoB2cService soB2cService;
     @Resource
+    private SoB2cDetailService soB2cDetailService;
+    @Resource
     private SoB2cCoreService soB2cCoreService;
 
     @Override
@@ -80,6 +80,10 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
         boolean isShipped = shipped.equals(billStatus);
         //如果是已发货且是平台仓订单 就生成销售出库单
         if (isShipped && hasPlatformWarehouse) {
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
+            if(CollectionUtils.isEmpty(soB2cDetailEntityList) || soB2cDetailEntityList.stream().allMatch(v->StringUtils.isBlank(v.getWarehouseId()))){
+                return true;
+            }
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
                 //平台仓拆分
@@ -97,6 +101,7 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
                 addError.setReturnJson("");
                 addError.setMainId(mainEntity.getId());
                 addError.setMessage(e.getMessage());
+                addError.setDetailId(soB2cDetailEntityList.get(0).getId());
                 soB2cErrorService.add(addError);
             }
         }
