@@ -84,7 +84,6 @@ public class ThirdWarehouseRefreshTokenJob {
         overseasProviderEntityList = overseasProviderService.list();
         overseasProviderEntityList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
-                    overseasProviderEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode());
                     Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
                     if (authMap == null || authMap.isEmpty() || !authMap.containsKey("expireIn")) {
                         return false;
