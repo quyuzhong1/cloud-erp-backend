@@ -22,7 +22,12 @@ public class FsCallbackApiController {
     @ResponseBody
     public ApiResult<Object> approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
     	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
-        Boolean b = handler.quickApproveCallbackHandler(req);
+        try{
+            Boolean b = handler.quickApproveCallbackHandler(req);
+        }catch (Exception e){
+            log.error("飞书回调异常：{}", e);
+            throw e;
+        }
         log.info("飞书回调结束");
         return ApiResult.success();
     }
