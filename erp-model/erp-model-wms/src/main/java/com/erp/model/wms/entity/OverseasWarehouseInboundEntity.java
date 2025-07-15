@@ -269,6 +269,18 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField(exist = false)
     private Integer count;
 
+    /**
+     * 揽收时间起
+     */
+    @TableField(value = "collect_start_time")
+    private LocalDateTime collectStartTime;
+
+    /**
+     * 揽收时间止
+     */
+    @TableField(value = "collect_end_time")
+    private LocalDateTime collectEndTime;
+
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String SOURCE_CODE = "source_code";
