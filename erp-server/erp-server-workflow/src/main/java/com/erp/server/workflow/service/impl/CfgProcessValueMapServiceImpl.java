@@ -170,7 +170,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                 dropDownDTO.setName(entry.getValue());
                 dropDownDTO.setValue(entry.getKey());
                 dropDownDTOS.add(dropDownDTO);
-                redisService.setNx(entry.getKey(), entry.getValue(),10*60,  TimeUnit.SECONDS);
+                redisService.setNx(entry.getKey(), entry.getValue(),10 * 60L,  TimeUnit.SECONDS);
             }
 
             return dropDownDTOS;
