@@ -378,7 +378,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 } finally {
                     // 清理临时文件
                     if (tempFile != null && tempFile.exists()) {
-                        tempFile.delete();
+                        boolean delete = tempFile.delete();
+                        if (!delete) {
+                            log.error("附件清理失败" );
+                        }
                     }
                 }
             }
