@@ -36,19 +36,20 @@ public class JsonFieldDiffUtil {
      * @param ignoreFields       需要忽略的字段列表
      */
     public static List<String> compare(Map<String, Object> before, Map<String, Object> after, Set<String> ignoreFields) {
+        List<String> changedFields = new ArrayList<>();
+        if (Objects.isNull(before)|| Objects.isNull(after)) {
+            return changedFields;
+        }
+
         Set<String> allKeys = new HashSet<>();
         if (before != null) allKeys.addAll(before.keySet());
         if (after != null) allKeys.addAll(after.keySet());
-
-        List<String> changedFields = new ArrayList<>();
 
         for (String key : allKeys) {
             if (null != ignoreFields && ignoreFields.contains(key)) continue;
 
             Object beforeVal = before.getOrDefault(key,null);
             Object afterVal = after.getOrDefault(key,null);
-
-            if (Objects.isNull(beforeVal)|| Objects.isNull(afterVal)) continue;
 
             if (!Objects.equals(beforeVal, afterVal)) {
                 changedFields.add(key);

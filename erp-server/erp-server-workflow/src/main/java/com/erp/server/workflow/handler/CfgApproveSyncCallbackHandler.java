@@ -5,6 +5,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
@@ -151,7 +152,12 @@ public class CfgApproveSyncCallbackHandler {
             messageDigest.reset();
             messageDigest.update(key.getBytes());
             SecretKeySpec skeySpec = new SecretKeySpec(messageDigest.digest(), "AES");
-            Cipher cipher = Cipher.getInstance(CBC_MODE); // "算法/模式/补码方式"
+            Cipher cipher = null;
+            try {
+                Cipher.getInstance(CBC_MODE); // Noncompliant
+            } catch(NoSuchAlgorithmException|NoSuchPaddingException e) {
+                throw new ServiceException("Cipher init error");
+            }
             // 从密文前 16 个字节提取出 IV
             byte[] ivBytes = new byte[16];
             System.arraycopy(ciphertext, 0, ivBytes, 0, ivBytes.length);
@@ -162,11 +168,8 @@ public class CfgApproveSyncCallbackHandler {
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
             byte[] decrypted = cipher.doFinal(actualCiphertext);
             return new String(decrypted);
-        } catch(NoSuchAlgorithmException | NoSuchPaddingException e) {
-
-        } catch (Exception e) {
-
+        }  catch (Exception e) {
+            throw new ServiceException("Cipher decryption error");
         }
-        return null;
     }
 }
