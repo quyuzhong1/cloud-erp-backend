@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -349,6 +350,23 @@ public interface SysUserFeign {
     List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
 
     /**
+     * 批量根据用户id获取第三方平台账号信息
+     * @param platform
+     * @param userIds
+     * @return
+     */
+    @PostMapping("feign/user/getThirdByUserIds")
+    List<ThirdUnionDTO> getThirdByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
+
+    /**
+     * @param platform
+     * @param thirdId
+     * @return
+     */
+    @PostMapping("feign/user/getUserByThird")
+    SysUserThirdEntity getUserByThird(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId);
+
+    /**
      * 根据主键获取消息配置信息
      *
      * @param id
@@ -588,4 +606,12 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/dept/getDeptEntityList")
     List<SysDepartmentEntity> getDeptEntityList();
+
+    /**
+     * @param platform
+     * @param thirdIds
+     * @return
+     */
+    @PostMapping("feign/user/getUserByThirdIdList")
+    List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
 }

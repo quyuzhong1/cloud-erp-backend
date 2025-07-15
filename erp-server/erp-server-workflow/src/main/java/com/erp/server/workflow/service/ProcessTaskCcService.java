@@ -46,4 +46,10 @@ public interface ProcessTaskCcService extends SuperService<ProcessTaskCcEntity> 
      * @param content
      */
     void sendCcMsg(ProcessTaskManagementEntity entity,String title,String content);
+
+    /**
+     *
+     * @param taskManagementIds
+     */
+    List<ProcessTaskCcEntity> listTackCc(List<String> taskManagementIds);
 }

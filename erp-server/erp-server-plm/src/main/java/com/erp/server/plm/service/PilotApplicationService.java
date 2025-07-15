@@ -260,4 +260,8 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @return
      */
     BatchResultDTO unInvalid(String id);
+
+    List<PilotApplicationEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

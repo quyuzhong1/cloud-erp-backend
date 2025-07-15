@@ -36,7 +36,6 @@ public class ProcessFeignController extends BaseController {
     @Resource
     public WorkflowService workflowService;
 
-
     @Resource
     private ProcessTaskService processTaskService;
 
@@ -287,7 +286,7 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/start")
     public ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto) {
         log.info("#####ProcessFeignController :::::start>>>>> 流程启动入参 dto={}", JSONUtil.toJsonStr(dto));
-        ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
+        ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcessManagement(dto);
         return success(startResultDTO);
     }
 
@@ -411,6 +410,13 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/listProcessByBusinessKey")
     public List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto) {
         return processManagementTaskService.listProcessByBusinessKey(dto);
+    }
+    /**
+     * 根据BusinessKey,businessId判断当前单据是否提审操作
+     */
+    @PostMapping("/checkSubmitByBusinessId")
+    Boolean checkSubmitByBusinessId(@RequestBody ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto){
+        return processManagementService.checkSubmitByBusinessId(dto);
     }
 
 }

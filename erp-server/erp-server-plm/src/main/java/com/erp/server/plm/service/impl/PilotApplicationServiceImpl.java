@@ -8,11 +8,13 @@ import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -20,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -29,8 +32,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -40,18 +45,22 @@ import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -130,6 +139,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductPurchaseService productPurchaseService;
     @Resource
     private ProductPackService productPackService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+
     @Resource
     private ScmTaskFeign scmTaskFeign;
     private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
@@ -473,9 +486,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        Map<String, Object> map = BeanUtil.beanToMap(entity);
-        map.put("attachmentList", baseApproveDTO.getAttachmentList());
-        approveDTO.setVariablesMap(map);
+        Map<String, Object> variablesMap = getVariablesMap(entity);
+        variablesMap.put("attachmentList", baseApproveDTO.getAttachmentList());
+        approveDTO.setVariablesMap(variablesMap);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -486,6 +499,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author jack
+     * @date 2025-06-09
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PilotApplicationEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -572,6 +599,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getNonLoginUser().getUid());
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if (CollUtil.isNotEmpty(detailList)) {
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        revokeDTO.setVariablesMap(variablesMap);
+
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -610,7 +644,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         startDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -1442,6 +1476,25 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("取消作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UN_INVALID);
+    }
+
+    @Override
+    public List<PilotApplicationEntity> listByCodes(List<String> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            return super.list(new LambdaQueryWrapper<PilotApplicationEntity>().in(PilotApplicationEntity::getCode, list).eq( PilotApplicationEntity::getIsDeleted, Boolean.FALSE));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void updateApproveStatus(PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        PilotApplicationEntity pilotApplicationEntity = updateApprovalStatusDTO.getEntity();
+
+        lambdaUpdate().eq(PilotApplicationEntity::getId, pilotApplicationEntity.getId())
+                .set(PilotApplicationEntity::getApproveUserId, pilotApplicationEntity.getApproveUserId())
+                .set(PilotApplicationEntity::getApproveStatus, approveStatus)
+                .update(new PilotApplicationEntity());
     }
 
     /**

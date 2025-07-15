@@ -317,7 +317,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             Map<String, Object> map = handleRuleData(soB2cDataDTO, channelEntity, soB2cDeliveryEntity, deliveryDetailList);
             List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
             //获取到表达式,判断表达式是否匹配
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
             if (matchResult) {
                 compliantList.add(soB2cDeliveryEntity);
             }

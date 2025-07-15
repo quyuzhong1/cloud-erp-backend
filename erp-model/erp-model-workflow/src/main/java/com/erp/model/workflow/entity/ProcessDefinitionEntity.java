@@ -3,6 +3,7 @@ package com.erp.model.workflow.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
@@ -78,6 +79,11 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
     @TableField("is_deploy")
     private Boolean isDeploy;
 
+    /**
+     * 是否禁用，false否，true是
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
     public static final String PROCESS_NAME = "process_name";
 
@@ -102,6 +108,15 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
         this.bpmnXml = dto.getBpmnXml();
         this.remark = dto.getRemark();
         this.reviewSetting = dto.getReviewSetting();
+    }
+
+    public ProcessDefinitionEntity(ProcessDefinitionDTO.ProcessChangeDTO dto) {
+        super(dto.getId());
+        this.processName = dto.getProcessName();
+        this.bpmnXml = dto.getBpmnXml();
+        this.remark = dto.getRemark();
+        this.reviewSetting = dto.getReviewSetting();
+        this.processVersion = MathUtil.add(dto.getProcessVersion(),MathUtil.ONE);
     }
 
     public ProcessDefinitionEntity(ProcessDTO.DeployDTO dto, String deploymentId, Date deploymentTime, int version) {

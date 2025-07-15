@@ -526,4 +526,14 @@ public class QcInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据质检单id 获取（产品经理 + 项目经理）推送消息人员
+     * @Author jack
+     * @Date 2025-07-03
+     **/
+    @PostMapping("/listQcItemRolePeople")
+    public ApiResult<Map<String, String>> listQcItemRolePeople(@RequestBody QcResultDTO.QcItemRolePeopleDTO dto ) {
+        return success(qcResultService.listQcItemRolePeople(dto));
+    }
+
 }

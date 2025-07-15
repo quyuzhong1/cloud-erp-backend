@@ -134,4 +134,18 @@ public class SupplierFeignController extends BaseController {
     List<SupplierEntity> listByCodes(@RequestBody List<String> codeList){
         return supplierService.listByCodes(codeList);
     }
+
+    /**
+     * 根据供应商编号查询
+     */
+    @PostMapping("/add")
+    BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO){
+        SupplierEntity entity = supplierService.add(addDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+
+     @PostMapping("/updateApproveStatus")
+    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO){
+        supplierService.updateApproveStatus(updateApproveStatusDTO);
+    }
 }

@@ -30,7 +30,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.common.core.controller.vo.ApiResult;
-import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;

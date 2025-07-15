@@ -150,7 +150,8 @@
             sui.uid,
             sui.user_name,
             sd."id" AS deptId,
-            sd."name" AS deptName
+            sd."name" AS deptName,
+            sui.user_state as userState
         FROM sys_user_info sui
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         LEFT JOIN sys_department sd ON sd."id" = sdu.department_id

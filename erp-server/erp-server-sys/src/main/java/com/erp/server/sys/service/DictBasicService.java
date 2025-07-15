@@ -44,4 +44,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return java.util.List<com.erp.model.sys.entity.DictBasicEntity>
      */
     List<DictBasicEntity> listByValues(List<String> itemRoleValueList);
+
+    DictBasicEntity getByTypeAndValue(String value, String key);
 }

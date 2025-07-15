@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgQueryOptionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="condition_field_name" property="conditionFieldName" />
+       <result column="api_url" property="apiUrl" />
+       <result column="request_method" property="requestMethod" />
+       <result column="param" property="param" />
+       <result column="select_label" property="selectLabel" />
+       <result column="select_value" property="selectValue" />
+       <result column="select_disabled" property="selectDisabled" />
+       <result column="search_key_field" property="searchKeyField" />
+       <result column="api_type" property="apiType" />
+       <result column="field_type" property="fieldType" />
+       <result column="is_required" property="isRequired" />
+       <result column="bussiness_key" property="bussinessKey" />
+       <result column="condition_field" property="conditionField" />
+       <result column="field_belongs_type" property="fieldBelongsType" />
+       <result column="logic" property="logic" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,create_user_id,create_user_name,create_time,update_user_id,update_user_name,update_time,version,is_deleted,condition_field_name,api_url,request_method,param,select_label,select_value,select_disabled,search_key_field,api_type,field_type,is_required,bussiness_key,condition_field,field_belongs_type,logic,controls,parent_id,class_path,value_type,use_type,table_name,sys_classify,table_cn_name,extend_type
+    </sql>
+    <select id="proDropDown" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
+        SELECT condition_field,
+               condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               select_label as label,
+               select_value as value,
+               search_key_field as searchKey,
+               select_value as remoteLabel,
+               value_type as valueType
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE AND bussiness_key = #{bussinessKey} and use_type = #{useType}
+
+    </select>
+    <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+        SELECT condition_field,
+               case
+                   when field_belongs_type = 'main' then '基础信息-' || condition_field_name
+                   else table_cn_name || '-' || condition_field_name
+                   end AS condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               api_type,
+               select_label,
+               select_value,
+               search_key_field,
+               select_value,
+               field_type,
+               is_required,
+               logic,
+               field_belongs_type,
+               bussiness_key,
+               field_belongs_type
+        FROM public.cfg_query_option cqo
+        WHERE cqo.is_deleted = FALSE
+          AND bussiness_key = #{bussinessKey} and use_type = #{useType}
+    </select>
+    <select id="listByMqParams" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM
+            cfg_query_option
+        WHERE
+            is_deleted = FALSE and use_type = #{params.useType}
+          AND( bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE and use_type = #{params.useType} AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify } LIMIT 1 ) or field_belongs_type = 'common')
+    </select>
+    <select id="proDropDownByMain" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
+        SELECT condition_field,
+               condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               select_label as label,
+               select_value as value,
+               search_key_field as searchKey,
+               select_value as remoteLabel,
+               value_type as valueType
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE AND bussiness_key = #{bussinessKey} and use_type = #{useType}
+            AND field_belongs_type = 'main'
+        ORDER BY create_time
+    </select>
+</mapper>

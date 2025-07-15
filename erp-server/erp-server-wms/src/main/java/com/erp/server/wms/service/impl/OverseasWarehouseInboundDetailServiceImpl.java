@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -269,10 +270,13 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             // 生成直接调拨单
             String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
             if (CharSequenceUtil.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
-                //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
+                if (ObjUtil.isEmpty(entity)) {
+                    throw new ServiceException(ApiError.ERROR_99047);
+                }
+                //提交
+                transferInfoService.submit(entity, Boolean.FALSE);
+                //审核
                 if (Objects.nonNull(entity)){
                     try {
                         transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);

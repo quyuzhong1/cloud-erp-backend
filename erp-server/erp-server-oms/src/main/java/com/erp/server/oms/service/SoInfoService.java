@@ -9,9 +9,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -42,12 +40,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 提交
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoInfoEntity entity);
 
 
     /**
@@ -138,22 +136,21 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Author Luo_WG
      * @Date 2023/7/4 10:55
      * @param dto
-     * @param list
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean approveEnd(BaseApproveParamDTO dto,List<SoInfoEntity> list);
+    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity);
 
     /**
      * 反审核
      *
-     * @param dto
      * @param entity
      * @param soChangeEntityList
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:48
      */
-    BatchResultDTO disApprove(BaseIdsDTO.IdsDTO dto, SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList);
+    BatchResultDTO disApprove(SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList);
 
     /**
      * 撤销流程
@@ -514,4 +511,16 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     BatchResultDTO singleUploadLogisticLabel(MultipartFile file, String id);
+    /**
+     * 查询采购申请数据
+     * @author will 
+     * @date 2025/5/29 15:43
+     * @param ids
+     * @return List<ViewPushPurchaseApplicationDTO>
+     */
+    List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids);
+
+    List<SoInfoEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

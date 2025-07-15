@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -516,4 +517,13 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private LocalDateTime createTime;
     }
+
+
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class UpdateApprovalStatusDTO {
+         private PurchasePriceChangeEntity purchasePricechangeEntity;
+         private ApproveStatusEnum approveStatus;
+     }
 }

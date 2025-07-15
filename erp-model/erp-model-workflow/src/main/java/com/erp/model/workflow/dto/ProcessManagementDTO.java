@@ -1,8 +1,9 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -28,6 +29,31 @@ import java.util.Map;
 public class ProcessManagementDTO {
 
     private ProcessManagementDTO() {
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 
     @Data
@@ -65,6 +91,7 @@ public class ProcessManagementDTO {
         /**
          * 流程参数map
          */
+        @NotNull(message = "流程参数Map不能为空")
         private Map<String,Object> variablesMap;
     }
 
@@ -614,6 +641,11 @@ public class ProcessManagementDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 流程参数map
+         */
+        private Map<String,Object> variablesMap;
     }
 
     @Data
@@ -661,15 +693,6 @@ public class ProcessManagementDTO {
     @Data
     @NoArgsConstructor
     public static class SearchDTO extends SortDTO {
-
-        private List<String> businessNames;
-
-        private List<ProcessStatusEnum> processStatus;
-
-        private Integer processVersion;
-
-        private String processName;
-
         /**
          * 页面高级查询
          */
@@ -679,6 +702,11 @@ public class ProcessManagementDTO {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * 是否委托
+         */
+        private Boolean isDelegate;
     }
 
     @Data
@@ -709,8 +737,14 @@ public class ProcessManagementDTO {
     @Data
     @NoArgsConstructor
     public static class PagingResultDTO {
-
+        /**
+         * 任务id
+         */
         private String id;
+        /**
+         * 流程节点id
+         */
+        private String managementId;
 
         /**
          * 流程实例ID
@@ -745,6 +779,26 @@ public class ProcessManagementDTO {
          */
         private String businessName;
 
+        /**
+         * 业务类型KEY
+         */
+        private String businessKey;
+        /**
+         * 单据名称
+         */
+        private String businessKeyName;
+        /**
+         * 审核来源
+         */
+        private String sourcePlatform;
+        /**
+         * 审核来源名称
+         */
+        private String sourcePlatformName;
+        /**
+         * 标签标识,isDelegate委托
+         */
+        private JSONObject labelJson;
         /**
          * 当前节点id
          */
@@ -814,7 +868,184 @@ public class ProcessManagementDTO {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 流程节点结束时间
+         */
+        private LocalDateTime endTime;
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class MainPagingResultDTO {
+
+        /**
+         * 流程节点id
+         */
+        private String id;
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+
+        /**
+         * 流程定义版本
+         */
+        private Integer processVersion;
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 业务ID
+         */
+        private String businessId;
+
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+
+        /**
+         * 业务名称
+         */
+        private String businessName;
+
+        /**
+         * 业务类型KEY
+         */
+        private String businessKey;
+        /**
+         * 单据名称
+         */
+        private String businessKeyName;
+        /**
+         * 审核来源
+         */
+        private String sourcePlatform;
+        /**
+         * 审核来源名称
+         */
+        private String sourcePlatformName;
+        /**
+         * 当前节点id
+         */
+        private String curActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
+
+        /**
+         * 流程状态
+         */
+        private ProcessStatusEnum processStatus;
+
+        /**
+         * 流程状态
+         */
+        private String processStatusName;
+
+        /**
+         * 流程引擎流程实例ID
+         */
+        private String actProcessDefinitionId;
+
+        /**
+         * 详情地址
+         */
+        private String detailUrl;
+
+        /**
+         * 项目名称
+         */
+        private String sysClassify;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 流程节点结束时间
+         */
+        private LocalDateTime endTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailPagingResultDTO {
+        /**
+         * 任务表id
+         */
+        private String id;
+
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 当前节点id
+         */
+        private String curActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
+
+        /**
+         * 审批人id
+         */
+        private String curApproveId;
+
+        /**
+         * 审批人名称
+         */
+        private String curApproveName;
+
+        /**
+         * 标签标识,isDelegate委托
+         */
+        private JSONObject labelJson;
+
+        /**
+         * 任务状态
+         */
+        @Dict
+        private ApproveStatusEnum taskStatus;
+
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailSearchDTO {
+        /**
+         * 审核来源
+         */
+        @NotBlank(message = "审核来源不能为空")
+        private String sourcePlatform;
+
+        /**
+         * 主键id
+         */
+        private String id;
     }
 
 
@@ -1008,6 +1239,22 @@ public class ProcessManagementDTO {
          */
         @NotBlank(message = "任务状态不能为空")
         private String taskStatus;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckSubmitByBusinessIdDTO {
+        /**
+         * 业务类型key
+         */
+        private String businessKey;
+
+        /**
+         * 业务id
+         */
+        private String businessId;
+
 
     }
 }

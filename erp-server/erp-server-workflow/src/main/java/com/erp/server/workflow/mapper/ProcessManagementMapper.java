@@ -3,6 +3,7 @@ package com.erp.server.workflow.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.validator.ValidList;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
@@ -48,14 +49,6 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     IPage<ProcessManagementDTO.PagingResultDTO> paging(Page<?> page, @Param("param") ProcessManagementDTO.SearchDTO params);
 
     /**
-     * 导出
-     * @param dto
-     * @return
-     */
-    List<ProcessManagementDTO.PagingResultDTO> export(@Param("param") ProcessManagementDTO.ExportDTO dto);
-    Page<ProcessManagementDTO.PagingResultDTO> export(@Param("page") Page<ProcessManagementDTO.PagingResultDTO> page, @Param("param") ProcessManagementDTO.ExportDTO dto);
-
-    /**
      * 根据业务id和业务类型获取流程管理信息
      */
     List<ProcessManagementDTO.ManagementTaskDTO> listProcessTask(@Param("taskId") String taskId,@Param("timeoutStatus")String timeoutStatus);
@@ -82,9 +75,38 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     List<ProcessManagementDTO.CurApproveInfoDTO> listApproverByApprover(@Param("list") ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
 
     /**
-     * 根据流程实例查询待
-     * @param processInstanceId
-     * @return
+     * tab数据查询
+     * @author will
+     * @date 2025/5/15 18:03
+     * @param params
+     * @return List<TabListDTO>
      */
-    List<ProcessManagementDTO.ManagementTaskDTO> listTaskByProcessInstanceId(String processInstanceId);
+    List<ProcessManagementDTO.TabListDTO> tabList(@Param("params") PermissionsDTO params);
+    /**
+     * 查询ERP明细信息
+     * @author will
+     * @date 2025/6/4 10:50
+     * @param params
+     * @return List<DetailPagingResultDTO>
+     */
+    List<ProcessManagementDTO.DetailPagingResultDTO> listErpDetail(@Param("params") ProcessManagementDTO.DetailSearchDTO params);
+    /**
+     * 查询飞书明细信息
+     * @author will
+     * @date 2025/6/4 11:31
+     * @param params
+     * @return List<DetailPagingResultDTO>
+     */
+    List<ProcessManagementDTO.DetailPagingResultDTO> listFsDetail(@Param("params") ProcessManagementDTO.DetailSearchDTO params);
+    /**
+     * 主表分页查询
+     * @author will
+     * @date 2025/6/4 14:45
+     * @param query
+     * @param params
+     * @return IPage<MainPagingResultDTO>
+     */
+    IPage<ProcessManagementDTO.MainPagingResultDTO> mainPaging(Page query, @Param("params")ProcessManagementDTO.SearchDTO params);
+
+    List<String> getTestList( @Param("businessType")String businessType);
 }

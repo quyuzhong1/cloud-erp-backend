@@ -220,4 +220,8 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @param dto 参数
      */
     PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(PagingDTO<SoChangeDTO.PagingParamDTO> dto);
+
+    List<SoChangeEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(SoChangeEntity entity);
 }

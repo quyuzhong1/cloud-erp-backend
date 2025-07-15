@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -818,5 +819,13 @@ public class PurchasePriceDTO implements Serializable {
             this.supplierId = supplierId;
             this.purchaseOrgId = purchaseOrgId;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private PurchasePriceEntity  purchasePriceEntity;
+        private ApproveStatusEnum approveStatus;
     }
 }

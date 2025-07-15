@@ -2,12 +2,15 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -26,12 +29,10 @@ import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -821,6 +822,18 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SoChangeEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<SoChangeEntity>().lambda().in(SoChangeEntity::getCode, list).eq(SoChangeEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(SoChangeEntity entity) {
+        if (ObjectUtil.isNotEmpty(entity)) {
+            this.updateById(entity);
+        }
+    }
+
 
     /**
      * 审核
@@ -866,14 +879,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return Boolean.TRUE;
         }
         LoginUser user = UserContext.getDefaultLoginUser();
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
@@ -1050,7 +1056,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 startDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
                 startDTO.setBusinessName(obj.getCode());
                 startDTO.setUserId(sellerId);
-                startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+                startDTO.setVariablesMap(getVariablesMap(obj));
                 resultList.add(startDTO);
             }
 
@@ -1080,7 +1086,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            approveDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(approveDTO);
         });
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
@@ -1099,6 +1105,29 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             List<SoChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoChangeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoChangeDetailEntity> detailList = soChangeDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_92036);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //SKU
+        String skuNo = detailList.stream().map(SoChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //变更类型
+        String changeType = detailList.stream().map(obj -> obj.getChangeType().getCode()).collect(Collectors.joining(","));
+        variablesMap.put("changeType", changeType);
+        return variablesMap;
     }
 
     /**

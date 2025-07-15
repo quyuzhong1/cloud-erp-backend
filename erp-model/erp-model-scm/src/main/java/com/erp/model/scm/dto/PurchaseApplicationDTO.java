@@ -4,8 +4,10 @@ import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -342,11 +344,33 @@ public class PurchaseApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class  AddDTO extends CommonDTO {
+
         /**
          * 采购申请明细
          */
         @Valid
         private List<PurchaseApplicationDetailDTO.AddDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class  InsertDTO extends AddDTO {
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approvalStatus;
+
+        /**
+         * 审核人，拉取数据时使用
+         */
+        private String thirdApproveUserId;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
+
     }
 
     @Data
@@ -1150,5 +1174,113 @@ public class PurchaseApplicationDTO implements Serializable {
          * 批量校验结果
          */
         private List<BatchResultDTO> batchResultDTOList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckUpDTO {
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 上游单据数量
+         */
+        private Integer oldQty;
+        /**
+         * 已申请数量
+         */
+        private Integer applyQty;
+        /**
+         * 待申请数量
+         */
+        private Integer unApplyQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+     public static class updatePADTO extends UpdateDTO{
+        /**
+         * 唯一键name
+         */
+        private String field;
+
+        /**
+         * 唯一键value
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddPADTO extends AddDTO{
+        /**
+         * 审核状态
+         */
+        private String approvalStatus;
+
+        /**
+         * 审核人id
+         */
+        private String approvalUserId;
+
+        /**
+         * 审核人名
+         */
+        private String approvalUserName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApproveStatusDTO {
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approvalStatus;
+
+        /**
+         * 审核人，拉取数据时使用
+         */
+        private String thirdApproveUserId;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime thirdApproveTime;
+
+        /**
+         * 供应商id
+         */
+        private PurchaseApplicationEntity purchaseApplicationEntity;
+
+        /**
+         * 审核状态
+         *
+         */
+        //校验数据枚举类型
+        @StateEnumValue(strValues = {"waitSubmit","approveIng","reject","approve"}, message = "审核类型有误")
+        private ApproveStatusEnum approveStatus;
     }
 }

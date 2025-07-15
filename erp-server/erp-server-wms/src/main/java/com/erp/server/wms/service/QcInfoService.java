@@ -9,8 +9,10 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -314,4 +316,6 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     PagingVO<QcInfoDTO.QcDailyReportDTO> exportDailyQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto);
 
     PagingVO<QcBillExportExcelDTO> exportQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto);
+
+    String getFsQcNoticeTitle(String title);
 }

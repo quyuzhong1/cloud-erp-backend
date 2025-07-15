@@ -4,7 +4,9 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -754,5 +756,13 @@ public class PilotApplicationDTO implements Serializable {
          * 审批状态
          */
         private ApproveStatusEnum approveStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+     public static class UpdateApprovalStatusDTO{
+         private PilotApplicationEntity entity;
+         private ApproveStatusEnum  approveStatus;
     }
 }

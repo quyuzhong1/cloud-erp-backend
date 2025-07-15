@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -18,10 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
-import com.erp.model.plm.entity.ProductDetailApproverEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -34,7 +32,6 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -853,52 +850,6 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-状态操作-审核通过
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2022/11/28 16:37
-     */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息-状态操作-审核通过")
-    @PostMapping("/approvalPass")
-    public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalPass(dto,Boolean.TRUE);
-        return result == true ? success() : failure();
-    }
-
-    /**
-     * 产品信息-状态操作-审核不通过
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2022/11/28 16:37
-     */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息-状态操作-审核不通过")
-    @PostMapping("/approvalReject")
-    public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalReject(dto);
-        return result == true ? success() : failure();
-    }
-
-    /**
-     * 产品信息-反审核
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2022/12/1 16:56
-     */
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品信息-反审核")
-    @PostMapping("/deApprove")
-    public ApiResult deApprove(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.deApprove(dto.getId());
-        return result == true ? success() : failure();
-    }
-
-
-    /**
      * 产品信息-申请变更
      *
      * @param dto
@@ -912,38 +863,6 @@ public class ProductDetailController extends BaseController {
         Boolean result = productDetailService.applyChange(dto.getId());
         return result == true ? success() : failure();
     }
-
-
-    /**
-     * 产品信息-重启审核流程
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2022/12/1 15:55
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-重启审核流程:产品信息id={id}")
-    @PostMapping("/restartProcessPass")
-    public ApiResult restartProcessPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.restartProcessPass(dto);
-        return result == true ? success() : failure();
-    }
-
-    /**
-     * 产品信息-审核完成监听调用
-     *
-     * @param processId
-     * @return ApiResult
-     * @author Will
-     * @date: 2022/12/1 15:21
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-审核完成监听调用:流程id={processId}")
-    @PostMapping("/productDetailProcessPass")
-    public ApiResult productDetailProcessPass(String processId) {
-        Boolean result = productDetailService.productDetailProcessPass(processId);
-        return result == true ? success() : failure();
-    }
-
 
     /**
      * 搜索sku
@@ -1036,37 +955,6 @@ public class ProductDetailController extends BaseController {
         ProductSmallestUnitDTO sku = productDetailService.getSkuBySkuId(skuId);
         return success(sku);
     }
-
-    /**
-     * 产品信息-提交
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2023/2/9 13:34
-     */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品信息-提交")
-    @PostMapping("/commit")
-    public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = productDetailService.commit(dto.getId());
-        return result == true ? success() : failure();
-    }
-
-    /**
-     * 产品信息-反提交
-     *
-     * @param dto
-     * @return ApiResult
-     * @author Will
-     * @date: 2023/2/9 13:34
-     */
-    @LogAction(value = LogActionEnum.CANCEL, desc = "产品信息-撤销")
-    @PostMapping("/unCommit")
-    public ApiResult unCommit(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = productDetailService.unCommit(dto.getId());
-        return result == true ? success() : failure();
-    }
-
     /**
      * 产品信息-发送金蝶数据
      *
@@ -1118,8 +1006,24 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "产品详情提交")
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.submit(dto.getIds(), Boolean.TRUE);
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = productDetailService.submit(id,Boolean.TRUE);
+            }catch (Exception e){
+                log.error("产品信息单 提交审核失败",e);
+                ProductDetailEntity entity = productDetailService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "产品信息单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -1133,20 +1037,23 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "产品详情批量审核")
     @PostMapping("/approve")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<ProductDetailEntity> entityList = productDetailService.listByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            ProductDetailEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"产品记录不存在"));
-                continue;
-            }
+        for (String id : ids) {
+            BatchResultDTO approveResult;
             try {
-                resultDTOS.add(productDetailService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+                approveResult = productDetailService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()),Boolean.TRUE);
             }catch (Exception e){
-                log.error("产品sku审核失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage()));
+                log.error("产品信息审核失败",e);
+                ProductDetailEntity entity = productDetailService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "产品信息单不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
             }
+            resultDTOS.add(approveResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -1191,8 +1098,24 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "产品详情取消流程")
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.cancelProcess(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = productDetailService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("产品信息撤回流程失败",e);
+                ProductDetailEntity entity = productDetailService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "产品信息不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

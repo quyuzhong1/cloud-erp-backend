@@ -20,7 +20,7 @@
         <result column="task_status" property="taskStatus" />
         <result column="timeout_status" property="timeoutStatus" />
         <result column="timeout_warn_time" property="timeoutWarnTime" />
-
+        <result column="label_json" property="labelJson" jdbcType="OTHER" typeHandler="com.erp.server.workflow.handler.ObjectJsonHandler"/>
     </resultMap>
 
     <select id="listByProcessInstanceId" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
