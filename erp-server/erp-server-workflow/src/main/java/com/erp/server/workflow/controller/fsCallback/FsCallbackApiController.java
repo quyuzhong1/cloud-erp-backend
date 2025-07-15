@@ -1,10 +1,16 @@
 package com.erp.server.workflow.controller.fsCallback;
 
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
+import com.erp.model.workflow.dto.FsCallbackApiRespDTO;
 import com.erp.server.workflow.handler.CfgApproveSyncCallbackHandler;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
@@ -18,15 +24,24 @@ import javax.servlet.http.HttpServletRequest;
 public class FsCallbackApiController {
 
     @Resource
+    private MQProducerService mqProducerService;
+
+    @Resource
     private CfgApproveSyncCallbackHandler handler;
 
     @PostMapping("/approve")
     @ResponseBody
-    public ApiResult<Object> approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
+    public FsCallbackApiRespDTO approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
     	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
-        String msg = handler.quickApproveCallbackHandler(req);
+        String message = handler.quickApproveCallbackHandler(req);
+        FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();
+        if(StringUtil.isNotBlank(message)){
+            resp.setMessage(message);
+            resp.setCode(400);
+        }
+//        mqProducerService.syncClassMsg(RocketMqTopic.WORKFLOW_FS_APPROVE_TOPIC, RocketMqTagEnum.WORKFLOW_FS_APPROVE_TAG.getName(),req , req.getMessageId());
         log.info("飞书回调结束");
-        return  StringUtils.isBlank(msg) ? ApiResult.success() : ApiResult.error(ApiError.ERROR_94006.msg);
+        return  resp;
     }
 
 
