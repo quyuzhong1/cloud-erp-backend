@@ -497,6 +497,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
+            soOutstock.setCustomerRemark(customerInfo.getRemark());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号
@@ -549,6 +550,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             Integer actualQty = Integer.parseInt(realQty.split("\\.")[0]);
             detailEntity.setActualQty(actualQty);
             detailEntity.setPlanQty(actualQty);
+            detailEntity.setRemark(detail.getFEntryNote());
             String note = detail.getFNote();
             if (CharSequenceUtil.isNotBlank(note)) {
                 detailEntity.setPlatformCode(note.trim());

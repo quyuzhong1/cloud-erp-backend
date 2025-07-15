@@ -44,6 +44,8 @@
         sod.id as detailId,
         so.sales_dept_id AS salesDeptId,
         so.shop_id AS shopId,
+        so.remark AS remark,
+        so.customer_remark AS customerRemark,
         sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
@@ -60,6 +62,7 @@
         sod.source_detail_id AS sourceDetailId,
         sod.warehouse_location AS warehouseLocation,
         sod.virtual_warehouse_id as virtualWarehouseId,
+        sod.remark as detailRemark,
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name

@@ -405,6 +405,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSellerId(soCustomer.getSellerId());
         soOutstock.setSellerName(soCustomer.getSellerName());
         soOutstock.setCountry(soCustomer.getCountryId());
+        soOutstock.setRemark(soCustomer.getSoRemark());
+        soOutstock.setCustomerRemark(soCustomer.getCustomerRemark());
         if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
             soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
         }
