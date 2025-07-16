@@ -304,7 +304,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
             ProductLogisticsEntity oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
-            if(Objects.nonNull(oldEntity)){
+            if(Objects.isNull(oldEntity)){
                 throw new ServiceException("物流产品信息不存在");
             }
 
@@ -587,8 +587,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         log.info("提交 开始启动物流产品流程，id=：【{}】", entity.getId());
         startProcess(entity);
+
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
         // 记录操作日志
-        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSkuNo(), "物流产品信息");
+        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】提交审核 ", UserContext.getDefaultLoginUser().getUserName(), productDetailEntity.getSkuNo());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
@@ -614,7 +616,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
 
-        String msg = CharSequenceUtil.format("物流产品信息【{}】撤销流程", entity.getSkuNo());
+
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+
+        String msg = CharSequenceUtil.format("物流产品信息【{}】撤销流程", productDetailEntity.getSkuNo());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -666,7 +671,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        String msg = CharSequenceUtil.format("物流产品信息【{}】反审核流程", entity.getSkuNo());
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+
+        String msg = CharSequenceUtil.format("物流产品信息【{}】反审核流程", productDetailEntity.getSkuNo());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
 
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
@@ -822,7 +829,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 .map(LogisticsProductExcelDTO::getCustomsCode)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class).in(DictHsCodeEntity::getHsCode, customsCodeList).list();
+        //查询中国海关编码
+        List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class)
+                .eq(DictHsCodeEntity::getCountry,"CN")
+                .in(DictHsCodeEntity::getHsCode, customsCodeList).list();
         Map<String, DictHsCodeEntity> hsCodeMap = hsCodeList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, e -> e, (o1, o2) -> o1));
 
         //sku no list
@@ -872,7 +882,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     errorMsgList.add("中国海关编码不存在于出口申报要素");
                 }
                 //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
-                logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDeclareNameCn() : logistics.getDeclareChineseName());
+                logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : logistics.getDeclareChineseName());
 
                 logistics.setDeclareUnit(isBlank(logistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : logistics.getDeclareUnit());
 
@@ -955,18 +965,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         //报关币种
         String declareCurrency = productLogistics.getDeclareCurrency();
-        //目的国币种
-        String destCurrency = productLogistics.getDestCurrency();
 
-        List<String> currencyCodeList = Arrays.asList(declareCurrency, destCurrency);
+        List<String> currencyCodeList = Arrays.asList(declareCurrency);
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         String declareCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(declareCurrency)).findFirst().
                 map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
         productLogistics.setDeclareCurrencySymbol(declareCurrencySymbol);
-
-        String destCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(destCurrency)).findFirst().
-                map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
-        productLogistics.setDestCurrencySymbol(destCurrencySymbol);
     }
 
     /**
@@ -1009,6 +1013,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
             item.setIsCombination(isCombination);
             item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
+
+            item.setCustomsStatusName(LogisticsProductCustomsStatusEnum.getName(item.getCustomsStatus()));
         }
     }
 

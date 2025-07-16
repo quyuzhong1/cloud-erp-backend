@@ -25,6 +25,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import jodd.util.StringUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -75,6 +76,10 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             throw new ServiceException(ApiError.ERROR_96008,dictHsCodeEntity.getHsCode());
         }
 
+        if(StringUtil.isBlank(addDTO.getCountry())){
+            //默认中国
+            dictHsCodeEntity.setCountry("CN");
+        }
         log.info("开始新增出口申报要素单");
         boolean save = super.save(dictHsCodeEntity);
         if(!save) {
@@ -111,6 +116,11 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             if(CollUtil.isNotEmpty(productLogisticsList)){
                 throw new ServiceException("该海关编码已被使用，请修改物流产品线信息海关编码后删除");
             }
+        }
+
+        if(StringUtil.isBlank(addOrUpdateDTO.getCountry())){
+            //默认中国
+            dictHsCodeEntity.setCountry("CN");
         }
 
         log.info("编辑 开始修改出口申报要素单数据，id：【{}】", old.getId());
@@ -202,6 +212,11 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 }
                 DictHsCodeEntity entity = new DictHsCodeEntity();
                 BeanMapper.copy(dto, entity);
+
+                if(StringUtil.isBlank(entity.getCountry())){
+                    //默认中国
+                    entity.setCountry("CN");
+                }
                 addList.add(entity);
             }
         }
