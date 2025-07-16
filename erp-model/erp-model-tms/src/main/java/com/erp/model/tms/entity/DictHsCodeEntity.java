@@ -32,15 +32,15 @@ public class DictHsCodeEntity extends BaseEntity<DictHsCodeEntity> {
     @TableField("hs_code")
     private String hsCode;
     /**
-    * 报关中文名
+    * 报关名
     */
-    @TableField("declare_name_cn")
-    private String declareNameCn;
+    @TableField("description")
+    private String description;
     /**
-    * 报关英文名
+    * 国家
     */
-    @TableField("declare_name_en")
-    private String declareNameEn;
+    @TableField("country")
+    private String country;
     /**
     * 第一法定单位
     */
@@ -105,9 +105,9 @@ public class DictHsCodeEntity extends BaseEntity<DictHsCodeEntity> {
 
     public static final String HS_CODE = "hs_code";
 
-    public static final String DECLARE_NAME_CN = "declare_name_cn";
+    public static final String COUNTRY = "country";
 
-    public static final String DECLARE_NAME_EN = "declare_name_en";
+    public static final String DESCRIPTION = "description";
 
     public static final String FIRST_DECLARE_UNIT = "first_declare_unit";
 
