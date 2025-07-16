@@ -60,8 +60,7 @@ public class CfgApproveSyncCallbackHandler {
      * @date 2025-05-22
      */
     @Transactional(rollbackFor = Exception.class)
-    public String quickApproveCallbackHandler(FsCallbackApiReqDTO req ) {
-        String msg ="";
+    public void quickApproveCallbackHandler(FsCallbackApiReqDTO req ) {
         Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
         if (Objects.nonNull(dataJson)) {
             String str = CBCDecrypter(String.valueOf(dataJson.get("actionCallbackKey")), req.getEncrypt());
@@ -73,8 +72,7 @@ public class CfgApproveSyncCallbackHandler {
                     callbackData = objectMapper.readValue(str, FsCallbackApiReqDTO.class);
                 } catch (JsonProcessingException ex) {
                     log.error("调用quickApproveCallbackHandler 数据转换异常失败，数据={}", ex);
-                    msg = "数据转换异常失败";
-                    return msg ;
+                    throw new ServiceException("数据转换异常失败");
                 }
                 //消息id
                 String messageId = callbackData.getMessageId();
@@ -86,35 +84,28 @@ public class CfgApproveSyncCallbackHandler {
                 String thirdUserId = callbackData.getUserId();
                 SysUserThirdEntity sysUserThirdEntity = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), thirdUserId);
                 if (Objects.isNull(sysUserThirdEntity)) {
-                    msg = "用户未绑定飞书";
-                    return msg ;
+                    throw new ServiceException("用户未绑定飞书");
                 }
 
                 ProcessTaskManagementExtEntity processTaskManagementExtEntity = processTaskManagementExtService.lambdaQuery().eq(ProcessTaskManagementExtEntity::getMessageId, messageId).last("limit 1").one();
                 if (Objects.isNull(processTaskManagementExtEntity)) {
-                    msg = ApiError.ERROR_94000.msg;
-                    return msg ;
+                    throw new ServiceException(ApiError.ERROR_94000);
                 }
 
                 String processTaskManagementId = processTaskManagementExtEntity.getProcessTaskManagementId();
                 ProcessTaskManagementEntity processTaskManagementEntity = processTaskManagementService.getById(processTaskManagementId);
                 if (Objects.isNull(processTaskManagementEntity)) {
-                    msg = ApiError.ERROR_94000.msg;;
-                    return msg ;
+                    throw new ServiceException(ApiError.ERROR_94000);
                 }
                 //判断流程节点状态是可以审批状态
                 if (!processTaskManagementEntity.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)) {
-                    msg = ApiError.ERROR_98006.msg;
-                    return msg ;
+                    throw new ServiceException(ApiError.ERROR_98006);
                 }
                 String processInstanceId = processTaskManagementEntity.getProcessInstanceId();
-                List<ProcessTaskManagementEntity> processTaskManagementList = processTaskManagementService.lambdaQuery().eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId).list();
-
                 //流程实例管理
                 ProcessManagementEntity processManagementEntity = processManagementService.getByProcessInstanceId(processInstanceId);
                 if (Objects.isNull(processManagementEntity)) {
-                    msg = ApiError.ERROR_PROCESS_NOT_EXIST.msg;
-                    return msg ;
+                    throw new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST);
                 }
                 //调用各个系统的approveEnd方法
                 EndProcessDTO endProcessDTO = new EndProcessDTO();
@@ -134,11 +125,12 @@ public class CfgApproveSyncCallbackHandler {
                 ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
                 if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
                     //调用各个系统的approveEnd方法
-                    processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO);
+                    if(processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO)){
+                        throw new ServiceException("审批失败");
+                    }
                 }
             }
         }
-        return msg;
     }
 
     /**
