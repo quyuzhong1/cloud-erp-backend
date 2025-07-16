@@ -41,7 +41,8 @@
         cisd.is_contain_ship_fee,
         cisd.tax_type,
         cisd.invoice_node,
-        cisd.is_auto_upload
+        cisd.is_auto_upload,
+        cisd.dict_verify_type
     </sql>
 
     <!-- 结果映射 -->
