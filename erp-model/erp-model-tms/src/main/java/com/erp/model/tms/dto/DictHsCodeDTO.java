@@ -48,9 +48,9 @@ public class DictHsCodeDTO implements Serializable {
         private String hsCode;
 
         /**
-        * 报关中文名
+        * 报关名
         */
-        private String declareNameCn;
+        private String description;
 
         /**
         * 第一法定单位
@@ -123,18 +123,18 @@ public class DictHsCodeDTO implements Serializable {
         private String hsCode;
 
         /**
-        * 报关中文名
+        * 报关名
         */
-        @NotBlank(message = "报关中文名不能为空")
-        @Size(max = 200,message = "报关中文名最大长度不能超过200位")
-        private String declareNameCn;
+        @NotBlank(message = "报关名不能为空")
+        @Size(max = 200,message = "报关名最大长度不能超过200位")
+        private String description;
 
         /**
-        * 报关英文名
+        * 国家
         */
-//        @NotBlank(message = "报关英文名不能为空")
-//        @Size(max = 200,message = "报关英文名最大长度不能超过200位")
-        private String declareNameEn;
+//        @NotBlank(message = "国家不能为空")
+//        @Size(max = 32,message = "报关英文名最大长度不能超过32位")
+        private String country;
 
         /**
         * 第一法定单位
@@ -276,9 +276,9 @@ public class DictHsCodeDTO implements Serializable {
         private String hsCode;
 
         /**
-         * 报关中文名
+         * 报关名
          */
-        private String declareNameCn;
+        private String description;
 
         /**
          * 第一法定单位

@@ -13,8 +13,8 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="hs_code" property="hsCode" />
-       <result column="declare_name_cn" property="declareNameCn" />
-       <result column="declare_name_en" property="declareNameEn" />
+       <result column="country" property="country" />
+       <result column="description" property="description" />
        <result column="first_declare_unit" property="firstDeclareUnit" />
        <result column="second_declare_unit" property="secondDeclareUnit" />
        <result column="declare_element" property="declareElement" />
@@ -41,8 +41,8 @@
 	    dhc.version AS version,
 	    dhc.is_deleted AS isDeleted,
 	    dhc.hs_code AS hsCode,
-	    dhc.declare_name_cn AS declareNameCn,
-	    dhc.declare_name_en AS declareNameEn,
+	    dhc.country AS country,
+	    dhc.description AS description,
 	    dhc.first_declare_unit AS firstDeclareUnit,
 	    dhc.second_declare_unit AS secondDeclareUnit,
     	dhc.declare_element AS declareElement,
@@ -69,7 +69,8 @@
             dhc.version AS version,
             dhc.is_deleted AS isDeleted,
             dhc.hs_code AS hsCode,
-            dhc.declare_name_cn AS declareNameCn,
+            dhc.country AS country,
+            dhc.description AS description,
             dhc.first_declare_unit AS firstDeclareUnit,
             dhc.declare_element AS declareElement,
             dhc.export_rebate_rate AS exportRebateRate,
