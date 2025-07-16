@@ -118,6 +118,8 @@
            so.sales_org_name AS salesOrgName,
            so.customer_name AS customerName,
            so.country AS countryId,
+           so.remark AS remark,
+           so.customer_remark AS customerRemark,
            sod.id as detailId,
            sod.sku_id AS skuId,
            sod.sku_no AS skuNo,
@@ -133,7 +135,8 @@
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
         sod.virtual_warehouse_id as virtualWarehouseId,
-           sod.warehouse_location AS warehouseLocation
+           sod.warehouse_location AS warehouseLocation,
+           sod.remark AS detailRemark
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         WHERE
