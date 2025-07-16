@@ -16,6 +16,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
@@ -57,6 +58,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private WarehouseMappingService warehouseMappingService;
 
+    private List<DictCountryDTO.ListDTO> countryList;
 
     /**
      * 错误信息
@@ -65,14 +67,14 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
 
     public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicEntity> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO.CodeDTO> orgList
-            , List<WarehouseEntity> existList, WarehouseMappingService warehouseMappingService) {
+            , List<WarehouseEntity> existList, WarehouseMappingService warehouseMappingService,List<DictCountryDTO.ListDTO> countryList) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;
         this.orgList = orgList;
         this.existList = existList;
         this.warehouseMappingService = warehouseMappingService;
-
+        this.countryList = countryList;
     }
 
     /**
@@ -245,7 +247,18 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             }
             addDTO.setOpenTime(openTime);
         }
-        
+
+        //国家
+        if(StringUtils.isNotBlank(warehouseExcelDTO.getCountry())){
+            DictCountryDTO.ListDTO country = countryList.stream().filter(v->v.getNameCn().equals(warehouseExcelDTO.getCountry()) || v.getId().equals(warehouseExcelDTO.getCountry())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(country)) {
+                errorMsgList.add("国家不存在");
+            } else {
+                addDTO.setContacts(country.getId());
+            }
+        }
+
+
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(addDTO, warehouse);
         if(warehouseService.checkOpenCloseTime(warehouse)) {

@@ -884,6 +884,15 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String zipcode;
 
         /**
+         * 揽收时间起
+         */
+        private LocalDateTime collectStartTime;
+
+        /**
+         * 揽收时间止
+         */
+        private LocalDateTime collectEndTime;
+        /**
          * 所有ID
          */
         public List<String> getAllDictCityId() {
