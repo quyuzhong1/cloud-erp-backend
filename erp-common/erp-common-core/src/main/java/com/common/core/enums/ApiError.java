@@ -291,7 +291,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
     CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
     FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
-    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，请检查流程图是否配置正确"),
+    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，错误信息：{}"),
 
     PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
     PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
