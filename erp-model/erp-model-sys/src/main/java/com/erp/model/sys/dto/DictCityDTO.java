@@ -367,11 +367,18 @@ public class DictCityDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
+        /**
+         * 主键id
+         */
         private String id;
-
+        /**
+         * 名称
+         */
         private String name;
-
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
         /**
          * 父级id
          */
