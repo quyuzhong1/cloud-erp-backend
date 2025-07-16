@@ -350,7 +350,13 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             self.checkDate(entity);
             //获取状态
             self.getCredentialStatuses(entity);
-            saveOrUpdateList.add(entity);
+            if(StringUtils.isNotBlank(item.getId())){//编辑
+                saveOrUpdateList.add(entity);
+            }else {//新增
+                entity.setId(IdWorker.getIdStr());
+                self.save(entity);
+            }
+
             //附件集合
             List<String> attachmentUrlList = item.getAttachmentUrlList();
             List<String> attachmentNameList = item.getAttachmentNameList();
