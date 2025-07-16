@@ -192,4 +192,14 @@ public class DictHsCodeController extends BaseController {
         return success();
     }
 
+    /**
+     * 模糊搜索
+     *
+     * @return
+     */
+    @PostMapping("/searchByKey")
+    public ApiResult<List<DictHsCodeDTO.SearchDTO>> searchByKey(@RequestBody DictHsCodeDTO.SearchParamDTO dto) {
+        return success(dictHsCodeService.searchByKey(dto));
+    }
+
 }

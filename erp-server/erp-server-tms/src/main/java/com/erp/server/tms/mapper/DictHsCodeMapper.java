@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Param;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 
 /**
@@ -25,4 +26,6 @@ import javax.validation.constraints.NotNull;
 public interface DictHsCodeMapper extends BaseMapper<DictHsCodeEntity> {
 
     IPage<DictHsCodeDTO.ListDTO> paging(Page query, @Param("params")  DictHsCodeDTO. PagingParamDTO params);
+
+    List<DictHsCodeDTO.SearchDTO> searchByKey(@Param("params")  DictHsCodeDTO.SearchParamDTO params);
 }

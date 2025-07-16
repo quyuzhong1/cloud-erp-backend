@@ -255,4 +255,9 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
+
+    @Override
+    public List<DictHsCodeDTO.SearchDTO> searchByKey(DictHsCodeDTO.SearchParamDTO dto) {
+        return baseMapper.searchByKey(dto);
+    }
 }
