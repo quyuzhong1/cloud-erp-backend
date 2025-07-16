@@ -286,6 +286,20 @@ public class WeiShiService {
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiInboundResp>>() {});
     }
 
+    /**
+     * 查询物流产品
+     * @return
+     */
+    public WeiShiBaseResp<List<WeiShiChannelResp>> getLogisticProductList(WeiShiLogisticProductRequest weiShiCancelInboundRequest,Map<String,Object> authMap){
+        String action = "getProductList";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiChannelResp>>>() {});
+    }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Authorization", authMap.get("accessToken").toString());

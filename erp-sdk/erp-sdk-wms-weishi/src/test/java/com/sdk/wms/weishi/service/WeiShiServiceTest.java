@@ -155,4 +155,18 @@ public class WeiShiServiceTest {
         WeiShiBaseResp<WeiShiInboundResp>  resp = weiShiService.getInbound(weiShiProductRequest,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
+
+    @Test
+    public void getLogisticProductList() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiLogisticProductRequest weiShiProductRequest = new WeiShiLogisticProductRequest();
+        weiShiProductRequest.setWarehouseCode("DGCK");
+        weiShiProductRequest.setIsMultiPackage(0);
+        WeiShiBaseResp<List<WeiShiChannelResp>>  resp = weiShiService.getLogisticProductList(weiShiProductRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
 }
