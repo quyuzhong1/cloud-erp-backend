@@ -1,5 +1,8 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -14,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.DictCityDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.ThirdpartyRefBusinessEntity;
@@ -55,6 +59,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     private String city = "city";
 
+    private String district = "district";
 
     @Resource
     private SyncKingdeeProvinceService syncKingdeeProvinceService;
@@ -406,6 +411,38 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         return lambdaQuery().in(DictCityEntity::getName,names).list();
     }
 
+    @Override
+    public List<DictCityDTO.ListDTO> countryTreeList() {
+        //根据 国家code 获取城市信息
+        List<DictCountryDTO.ListDTO> countryList = dictCountryService.listCountry();
+        if (CollUtil.isEmpty(countryList)) {
+            return Collections.emptyList();
+        }
+        List<String> countryCodeList = countryList.stream().map(DictCountryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<DictCityEntity> dictCityList = this.listByCountryCodeList(countryCodeList);
+        //只需要到市，无需县级数据
+        Map<String, List<DictCityEntity>> cityMap = CollUtil.isEmpty(dictCityList) ? new HashMap<>() : dictCityList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getType(),district)).collect(Collectors.groupingBy(DictCityEntity::getCountryCode));
+
+        List<DictCityDTO.ListDTO> resultList = new ArrayList<>();
+        for (DictCountryDTO.ListDTO listDTO : countryList) {
+            DictCityDTO.ListDTO country = BeanUtil.toBean(listDTO, DictCityDTO.ListDTO.class);
+            country.setName(listDTO.getNameCn());
+            List<DictCityEntity> thisCityList = cityMap.get(listDTO.getId());
+            if (CollUtil.isNotEmpty(thisCityList)) {
+                List<DictCityDTO.ListDTO> flagList = BeanMapper.copyList(thisCityList, DictCityDTO.ListDTO.class);
+                List<DictCityDTO.ListDTO> treeList = flagList.stream().
+                        filter(item -> "0".equals(item.getParentId())).
+                        map(obj -> {
+                            obj.setChildrenList(getChildren(obj, flagList));
+                            return obj;
+                        }).collect(Collectors.toList());
+                country.setChildrenList(treeList);
+            }
+            resultList.add(country);
+        }
+        return resultList;
+    }
+
     public void handleData(DictCityEntity entity) {
         String id = entity.getId();
         Integer level = entity.getLevel();
@@ -451,6 +488,17 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         return list;
     }
 
+    /**
+     * 根据国家编码集合查询
+     * @author will
+     * @date 2025/7/16 15:04
+     * @param countryCodeList
+     * @return List<DictCityEntity>
+     */
+    private List<DictCityEntity> listByCountryCodeList(List<String> countryCodeList) {
+        List<DictCityEntity> list = this.lambdaQuery().in(DictCityEntity::getCountryCode, countryCodeList).list();
+        return list;
+    }
 
     /**
      * 保存树结构
