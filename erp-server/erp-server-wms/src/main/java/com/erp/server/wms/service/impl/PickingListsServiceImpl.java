@@ -445,6 +445,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     //客户PO号
                     String customerPO = "";
                     String toCountry = "";
+                    String pickRemark = "";
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                             .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetail.getSkuId())
@@ -457,7 +458,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO,toCountry);
+                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO,toCountry, pickRemark);
                         if (ObjectUtil.isEmpty(printSkuSingleView.getWarehouseLocation())) {
                             printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -477,7 +478,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, toCountry);
+                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, toCountry, pickRemark);
                         if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
                             combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -505,6 +506,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
                     String customerPO = soDetailEntity.getCustomerPO();
                     String toCountry = soDetailEntity.getToCountry();
+                    String pickRemark = soDetailEntity.getRemark();
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
                     if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
@@ -531,7 +533,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO, toCountry);
+                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO, toCountry,pickRemark);
                         if (ObjectUtil.isEmpty(printSkuSingleView.getWarehouseLocation())) {
                             printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -547,7 +549,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, toCountry);
+                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO, toCountry, pickRemark);
                         if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
                             combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -618,27 +620,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             printSkuViewList.addAll(groupSkuViewList);
         }
         return printSkuViewList;
-
-//        return printSkuCombinationViewList.stream()
-//                .filter(e -> e.getGroupName().equals(groupName))
-//                .collect(Collectors.groupingBy(
-//                        v -> v.getThirdSku() + ":" + v.getParentSkuNo() + ":" + v.getChildSkuNo()
-//                                + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
-//                        Collectors.collectingAndThen(Collectors.toList(), list -> {
-//                            PickingListsDTO.PrintSkuView view = list.get(0);
-//                            List<String> deliveryDetailIds = list.stream().map(PickingListsDTO.PrintSkuView::getSourceDetailId).distinct().collect(Collectors.toList());
-//                            view.setParentSkuQty(deliveryDetailIds.stream().map(deliveryDetailIdMap::get).reduce(0, Math::addExact));
-//                            view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
-//                            return view;
-//                        })
-//                ))
-//                .values().stream()
-//                .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
-//                        .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
-//                        .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
-//                )
-//                .collect(Collectors.toList());
-
     }
 
     /**
@@ -946,6 +927,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
                     //客户PO号
                     String customerPO = "";
+                    String pickRemark = "";
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
                             .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetail.getSkuId())
@@ -958,7 +940,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO,"");
+                        printSkuSingleView.getPrintView(picking, detail, skuName, customerPO,"", pickRemark);
                         if (ObjectUtil.isEmpty(printSkuSingleView.getWarehouseLocation())) {
                             printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -976,7 +958,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,"");
+                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,"", pickRemark);
                         if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
                             combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -1001,6 +983,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_DELIVERY_NOTICE_DETAIL));
                     SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
                     String customerPO = soDetailEntity.getCustomerPO();
+                    String toCountry = soDetailEntity.getToCountry();
+                    String pickRemark = soDetailEntity.getRemark();
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
                     if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
@@ -1027,7 +1011,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,"");
+                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,toCountry, pickRemark);
                         if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
                             combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
@@ -1041,7 +1025,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).distinct().findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_FOUND_SKU, detail.getSkuNo()));
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
-                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,"");
+                        combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO,toCountry, pickRemark);
                         if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
                             combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                         }
