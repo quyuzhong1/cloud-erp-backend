@@ -22,6 +22,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -37,6 +38,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -123,6 +125,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private FileFeign fileFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -190,6 +195,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (!overseasWarehouseInboundDetailService.saveBatch(detailEntityList)) {
             throw new ServiceException("海外仓入库单明细保存失败");
         }
+        String base64 = null;
         if (!CollectionUtils.isEmpty(addDTO.getAttachUrlList())) {
             //保存附件
             Class<OverseasWarehouseInboundEntity> aClass = OverseasWarehouseInboundEntity.class;
@@ -197,6 +203,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             //获取到表名
             String type = tableName.value();
             wmsAttachmentService.batchSave(addDTO.getAttachUrlList(), addDTO.getAttachNameList(), type, mainEntity.getId());
+            byte[] content = fileFeign.downloadFile(addDTO.getAttachUrlList().get(0));
+            if (content != null) {
+                base64 = Base64.getEncoder().encodeToString(content);
+                mainEntity.setBase64Str(base64);
+            }
         }
 
         // 推送到第三方草稿
@@ -274,6 +285,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .referenceNo(mainEntity.getSourceCode())
                 .shopId(shopId)
                 .ownerCode(providerEntity.getOwnerCode())
+                .fileBase64(mainEntity.getBase64Str())
                 // 交货方式，0自送，1揽收
                 .incomeType(collectingService)
                 .receivingType(inStockType)
@@ -285,6 +297,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .trackingNumber(CharSequenceUtil.isBlank(mainEntity.getTrackingNo()) ?  mainEntity.getExpressNo() : mainEntity.getTrackingNo())
                 .warehouseCode(mainEntity.getPlatformToWarehouseCode())
                 .etaDate(mainEntity.getEstimatedArrivalDate())
+                .collectStartTime(mainEntity.getCollectStartTime())
+                .collectEndTime(mainEntity.getCollectEndTime())
                 // 入库单创建时取0，发货单审核通过更新为1
                 .verify(verifyCode)
                 .transitWarehouseCode(mainEntity.getPlatformTransferWarehouseCode())
@@ -390,6 +404,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         String type = tableName.value();
         wmsAttachmentService.batchSave(updateDTO.getAttachUrlList(), updateDTO.getAttachNameList(), type, old.getId());
 
+        String base64 = null;
+        if (!CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
+            byte[] content = fileFeign.downloadFile(updateDTO.getAttachUrlList().get(0));
+            if (content != null) {
+                base64 = Base64.getEncoder().encodeToString(content);
+                mainEntity.setBase64Str(base64);
+            }
+        }
         // 推送到第三方
         if (null != providerEntity) {
             if (CharSequenceUtil.isBlank(mainEntity.getCode())) {
