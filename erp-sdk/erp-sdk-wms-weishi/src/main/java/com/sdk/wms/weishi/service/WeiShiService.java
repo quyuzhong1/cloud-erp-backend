@@ -236,7 +236,7 @@ public class WeiShiService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
-        log.warn("纬狮创建入库单请求参数: {}", JSONUtil.toJsonStr(bodyMap));
+        log.warn("纬狮创建入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
         String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
@@ -269,6 +269,21 @@ public class WeiShiService {
         log.warn("纬狮取消入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
         String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
+    }
+
+    /**
+     * 查询入库单
+     * @return
+     */
+    public WeiShiBaseResp<WeiShiInboundResp> getInbound(WeiShiQueryInboundRequest weiShiCancelInboundRequest,Map<String,Object> authMap){
+        String action = "getInboundOrderDetails";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
+        log.warn("纬狮查询入库单请求参数: {}", JSONUtil.toJsonStr(bodyMap));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiInboundResp>>() {});
     }
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {

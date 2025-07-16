@@ -122,7 +122,7 @@ public class WeiShiServiceTest {
                 .remark("123")
                 .appointmentPickingStartTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
                 .appointmentPickingEndTime(LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
-                .deliveryVoucherBase64("base64")
+//                .deliveryVoucherBase64("base64")
                 .build();
         WeiShiBaseResp<String>  resp = weiShiService.createInbound(request,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
@@ -138,6 +138,21 @@ public class WeiShiServiceTest {
         WeiShiCancelInboundRequest weiShiProductRequest = new WeiShiCancelInboundRequest();
         weiShiProductRequest.setOrderNo("RV2408170007");
         WeiShiBaseResp<String>  resp = weiShiService.cancelInbound(weiShiProductRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void getInbound() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiQueryInboundRequest weiShiProductRequest = new WeiShiQueryInboundRequest();
+        weiShiProductRequest.setOrderNoList(Arrays.asList("RV2409190001"));
+        weiShiProductRequest.setPageSize(50);
+        weiShiProductRequest.setPageNum(1);
+        WeiShiBaseResp<WeiShiInboundResp>  resp = weiShiService.getInbound(weiShiProductRequest,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }

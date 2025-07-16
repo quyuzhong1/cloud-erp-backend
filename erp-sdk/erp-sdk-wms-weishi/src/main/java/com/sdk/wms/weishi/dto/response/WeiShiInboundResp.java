@@ -1,6 +1,6 @@
 package com.sdk.wms.weishi.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,101 +17,148 @@ import java.util.List;
 @SuperBuilder
 public class WeiShiInboundResp {
 
-    @JSONField(name = "warehouseCode")
-    private String warehouseCode;
-    @JSONField(name = "inboundNo")
-    private String inboundNo;
-    @JSONField(name = "status")
-    private Integer status;
-    @JSONField(name = "signTime")
-    private String signTime;
-    @JSONField(name = "receiveLastTime")
-    private String receiveLastTime;
-    @JSONField(name = "putawayLastTime")
-    private String putawayLastTime;
-    @JSONField(name = "finishTime")
-    private String finishTime;
-    @JSONField(name = "receiveStatus")
-    private Integer receiveStatus;
-    @JSONField(name = "putawayStatus")
-    private Integer putawayStatus;
-    @JSONField(name = "checkOutLogistics")
-    private String checkOutLogistics;
-    @JSONField(name = "checkOutTrackingNo")
-    private String checkOutTrackingNo;
-    @JSONField(name = "forceFinish")
-    private Integer forceFinish;
-    @JSONField(name = "receiptType")
-    private Integer receiptType;
-    @JSONField(name = "trackingNoList")
-    private List<String> trackingNoList;
-    @JSONField(name = "skuList")
-    private List<SkuListDTO> skuList;
-    @JSONField(name = "boxList")
-    private List<BoxListDTO> boxList;
+    @JsonProperty("total")
+    private Integer total;
+    @JsonProperty("rows")
+    private List<RowsDTO> rows;
 
     @NoArgsConstructor
     @Data
-    public static class SkuListDTO {
-        private String putawayLastTime;
-        @JSONField(name = "sku")
-        private String sku;
-        @JSONField(name = "count")
-        private Integer count;
-        @JSONField(name = "receiveCount")
-        private Integer receiveCount;
-        @JSONField(name = "putawayCount")
-        private Integer putawayCount;
-        @JSONField(name = "goodCount")
-        private Integer goodCount;
-        @JSONField(name = "badCount")
-        private Integer badCount;
-        @JSONField(name = "actualWeight")
-        private Integer actualWeight;
-        @JSONField(name = "actualVolume")
-        private Integer actualVolume;
-    }
-
-    @NoArgsConstructor
-    @Data
-    public static class BoxListDTO {
-
-        @JSONField(name = "boxNumber")
-        private Integer boxNumber;
-        @JSONField(name = "boxNo")
-        private String boxNo;
-        @JSONField(name = "skuCount")
-        private Integer skuCount;
-        @JSONField(name = "length")
-        private Integer length;
-        @JSONField(name = "width")
-        private Integer width;
-        @JSONField(name = "height")
-        private Integer height;
-        @JSONField(name = "weight")
-        private Integer weight;
-        @JSONField(name = "skuList")
-        private List<SkuListDTO> skuList;
+    public static class RowsDTO {
+        @JsonProperty("orderNo")
+        private String orderNo;
+        @JsonProperty("inboundType")
+        private String inboundType;
+        @JsonProperty("inboundMode")
+        private String inboundMode;
+        @JsonProperty("trackingNo")
+        private String trackingNo;
+        @JsonProperty("batchNo")
+        private String batchNo;
+        @JsonProperty("transportType")
+        private String transportType;
+        @JsonProperty("transportSize")
+        private String transportSize;
+        @JsonProperty("destWarehouseCode")
+        private String destWarehouseCode;
+        @JsonProperty("warehouseCode")
+        private String warehouseCode;
+        @JsonProperty("status")
+        private String status;
+        @JsonProperty("remark")
+        private String remark;
+        @JsonProperty("forecastBoxQty")
+        private String forecastBoxQty;
+        @JsonProperty("forecastSkuKindsQty")
+        private String forecastSkuKindsQty;
+        @JsonProperty("forecastSkuQty")
+        private String forecastSkuQty;
+        @JsonProperty("receiptBoxQty")
+        private String receiptBoxQty;
+        @JsonProperty("receiptSkuKindsQty")
+        private String receiptSkuKindsQty;
+        @JsonProperty("receiptSkuQty")
+        private String receiptSkuQty;
+        @JsonProperty("receiptQty")
+        private String receiptQty;
+        @JsonProperty("putawayBoxQty")
+        private Integer putawayBoxQty;
+        @JsonProperty("putawaySkuQty")
+        private Integer putawaySkuQty;
+        @JsonProperty("createTime")
+        private String createTime;
+        @JsonProperty("expectedArriveDate")
+        private String expectedArriveDate;
+        @JsonProperty("localReceiptFirstTime")
+        private String localReceiptFirstTime;
+        @JsonProperty("receiptFirstTime")
+        private String receiptFirstTime;
+        @JsonProperty("localReceiptLastTime")
+        private String localReceiptLastTime;
+        @JsonProperty("receiptLastTime")
+        private String receiptLastTime;
+        @JsonProperty("localFinishPutawayTime")
+        private String localFinishPutawayTime;
+        @JsonProperty("finishPutawayTime")
+        private String finishPutawayTime;
+        @JsonProperty("appointmentPickingStartTime")
+        private String appointmentPickingStartTime;
+        @JsonProperty("appointmentPickingEndTime")
+        private String appointmentPickingEndTime;
+        @JsonProperty("deliveryVoucherUrl")
+        private String deliveryVoucherUrl;
+        @JsonProperty("contacts")
+        private ContactsDTO contacts;
+        @JsonProperty("inboundBoxList")
+        private List<InboundBoxListDTO> inboundBoxList;
 
         @NoArgsConstructor
         @Data
-        public static class SkuListDTO {
-            @JSONField(name = "sku")
-            private String sku;
-            @JSONField(name = "count")
-            private Integer count;
-            @JSONField(name = "receiveCount")
-            private Integer receiveCount;
-            @JSONField(name = "putawayCount")
-            private Integer putawayCount;
-            @JSONField(name = "goodCount")
-            private Integer goodCount;
-            @JSONField(name = "badCount")
-            private Integer badCount;
-            @JSONField(name = "actualWeight")
-            private Integer actualWeight;
-            @JSONField(name = "actualVolume")
-            private Integer actualVolume;
+        public static class ContactsDTO {
+            @JsonProperty("contactName")
+            private String contactName;
+            @JsonProperty("phone")
+            private String phone;
+            @JsonProperty("countryCode")
+            private String countryCode;
+            @JsonProperty("state")
+            private String state;
+            @JsonProperty("city")
+            private String city;
+            @JsonProperty("street")
+            private String street;
+        }
+
+        @NoArgsConstructor
+        @Data
+        public static class InboundBoxListDTO {
+            @JsonProperty("fbaProofCode")
+            private String fbaProofCode;
+            @JsonProperty("boxCode")
+            private String boxCode;
+            @JsonProperty("systemBoxCode")
+            private String systemBoxCode;
+            @JsonProperty("boxLength")
+            private String boxLength;
+            @JsonProperty("boxWidth")
+            private String boxWidth;
+            @JsonProperty("boxHeight")
+            private String boxHeight;
+            @JsonProperty("boxWeight")
+            private String boxWeight;
+            @JsonProperty("boxActualLength")
+            private String boxActualLength;
+            @JsonProperty("boxActualWidth")
+            private String boxActualWidth;
+            @JsonProperty("boxActualHeight")
+            private String boxActualHeight;
+            @JsonProperty("boxActualWeight")
+            private String boxActualWeight;
+            @JsonProperty("status")
+            private String status;
+            @JsonProperty("boxRemark")
+            private Object boxRemark;
+            @JsonProperty("sellerId")
+            private Object sellerId;
+            @JsonProperty("pltWarehouseCode")
+            private Object pltWarehouseCode;
+            @JsonProperty("finishPutawayTime")
+            private String finishPutawayTime;
+            @JsonProperty("inboundSkuList")
+            private List<InboundSkuListDTO> inboundSkuList;
+
+            @NoArgsConstructor
+            @Data
+            public static class InboundSkuListDTO {
+                @JsonProperty("skuCode")
+                private String skuCode;
+                @JsonProperty("quantity")
+                private Integer quantity;
+                @JsonProperty("checkQty")
+                private Integer checkQty;
+                @JsonProperty("putawayQty")
+                private Integer putawayQty;
+            }
         }
     }
 }
