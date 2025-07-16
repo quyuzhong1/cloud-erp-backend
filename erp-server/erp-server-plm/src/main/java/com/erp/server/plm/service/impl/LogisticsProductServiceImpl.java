@@ -302,6 +302,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (!save) {
             throw new ServiceException("物流产品信息保存失败");
         }
+
         if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
             ProductLogisticsEntity oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
             if(Objects.isNull(oldEntity)){
@@ -871,8 +872,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 //申报价币种
                 String declareCurrency = item.getDeclareCurrency();
                 if(StringUtils.isNotBlank(declareCurrency)){
-                    logistics.setDeclareCurrency(declareCurrency);
-                    logistics.setDeclareCurrencySymbol(CurrencyEnum.getSymbolByCode(declareCurrency));
+                    CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(declareCurrency);
+                    if(Objects.isNull(currencyEnum)){
+                        errorMsgList.add("【"+declareCurrency+"】币种不存在");
+                    }else {
+                        logistics.setDeclareCurrency(currencyEnum.getCurrencyCode());
+                        logistics.setDeclareCurrencySymbol(currencyEnum.getCurrencySymbol());
+                    }
                 }
 
                 //海关编码
@@ -880,13 +886,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
                     errorMsgList.add("中国海关编码不存在于出口申报要素");
+                }else {
+                    //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
+                    logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : logistics.getDeclareChineseName());
+
+                    logistics.setDeclareUnit(isBlank(logistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : logistics.getDeclareUnit());
+
+                    logistics.setDeclareElement(isBlank(logistics.getDeclareElement()) ? dictHsCodeEntity.getDeclareElement() : logistics.getDeclareElement());
                 }
-                //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
-                logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : logistics.getDeclareChineseName());
-
-                logistics.setDeclareUnit(isBlank(logistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : logistics.getDeclareUnit());
-
-                logistics.setDeclareElement(isBlank(logistics.getDeclareElement()) ? dictHsCodeEntity.getDeclareElement() : logistics.getDeclareElement());
 
                 logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
                 logistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));

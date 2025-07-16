@@ -98,6 +98,32 @@
         </if>
         dhc.create_time DESC
     </select>
+    <select id="searchByKey" resultType="com.erp.model.tms.dto.DictHsCodeDTO$SearchDTO">
+        select
+        dhc.id AS id,
+        dhc.hs_code AS hsCode,
+        dhc.country AS country,
+        dhc.description AS description,
+        dhc.first_declare_unit AS firstDeclareUnit,
+        dhc.declare_element AS declareElement,
+        dhc.export_rebate_rate AS exportRebateRate,
+        dhc.disabled AS disabled
+        from dict_hs_code dhc
+        where dhc.is_deleted = false
+        <if test="params.country != null and params.country != ''">
+            and dhc.country = #{params.country}
+        </if>
+        <if test="params.searchKey != null and params.searchKey != ''">
+            and dhc.hs_code ILIKE concat('%',#{params.searchKey}::text,'%')
+        </if>
+        order by
+        case
+        when dhc.hs_code = #{params.searchKey} THEN 0
+        when dhc.hs_code ILIKE concat(#{params.searchKey}::text,'%') THEN 1
+        when dhc.hs_code ILIKE concat('%',#{params.searchKey}::text) THEN 2
+        when dhc.hs_code ILIKE concat('%',#{params.searchKey}::text,'%') THEN 3
+        end , dhc.hs_code
+    </select>
 
 
 </mapper>

@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.DictHsCodeDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -76,4 +77,10 @@ public interface DictHsCodeService extends SuperService<DictHsCodeEntity> {
      * @return
      */
     void downloadTemplate(HttpServletResponse response);
+    /**
+     * 模糊搜索
+     *
+     * @return
+     */
+    List<DictHsCodeDTO.SearchDTO> searchByKey(DictHsCodeDTO.SearchParamDTO dto);
 }

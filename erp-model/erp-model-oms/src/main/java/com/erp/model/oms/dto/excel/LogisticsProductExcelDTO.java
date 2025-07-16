@@ -51,8 +51,8 @@ public class LogisticsProductExcelDTO {
     private String declareUnit;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "中国海关编码", index = 7)
-    @FieldValid(fieldName = "中国海关编码")
+    @ExcelProperty(value = "*中国海关编码", index = 7)
+    @FieldValid(fieldName = "*中国海关编码", isNotBlank = true)
     private String customsCode;
 
     @ColumnWidth(30)

@@ -197,4 +197,14 @@ public enum CurrencyEnum {
         }
         return null;
     }
+
+    public static CurrencyEnum getByNameOrCode(String currency) {
+        CurrencyEnum[] values = values();
+        for (CurrencyEnum value : values) {
+            if (value.currencyCode.equals(currency) || value.currencyName.equals(currency)) {
+                return value;
+            }
+        }
+        return null;
+    }
 }

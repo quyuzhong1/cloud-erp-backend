@@ -338,5 +338,66 @@ public class DictHsCodeDTO implements Serializable {
 
     }
 
+    /**
+     * 模糊搜索查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO{
+        /**
+         * 海关编码
+         */
+        private String searchKey;
+        /**
+         * 归属国家
+         */
+        private String country;
+
+    }
+
+    /**
+     * 模糊搜索查询结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO{
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 中国海关编码
+         */
+        private String hsCode;
+
+        /**
+         * 报关名
+         */
+        private String description;
+
+        /**
+         * 第一法定单位
+         */
+        private String firstDeclareUnit;
+
+
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+
+        /**
+         * 出口退税率 (%)
+         */
+        private BigDecimal exportRebateRate;
+
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
+    }
+
 
 }
