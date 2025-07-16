@@ -113,6 +113,7 @@ public class SupplierUserController extends BaseController {
         if (Objects.isNull(userInfo) || Objects.isNull(userInfo.getIsSupper()) || !userInfo.getIsSupper()){
             throw new ServiceException(ApiError.NO_PERMISSION);
         }
+        sysUserInfoDTO.setRealName(sysUserInfoDTO.getUserName());
         supplierUserFeign.updateSrm(sysUserInfoDTO);
         return success();
     }
