@@ -482,7 +482,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 taskService.complete(managementTask.getTaskId(), variablesMap);
             } catch (Exception e) {
                 log.error("审核失败，msg ={}",e.getMessage());
-                throw new ServiceException(ApiError.ERROR_TASK_COMPLETE_FAIL);
+                throw new ServiceException(ApiError.ERROR_TASK_COMPLETE_FAIL,e.getMessage());
             }
         }
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
