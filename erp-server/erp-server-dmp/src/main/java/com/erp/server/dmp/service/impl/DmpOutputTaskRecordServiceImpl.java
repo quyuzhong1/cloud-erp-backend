@@ -752,7 +752,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
-    public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
+    public List<DmpOutputTaskRecordEntity> getOutputTaskRecord(String sourceCode, String outputClass) {
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
 

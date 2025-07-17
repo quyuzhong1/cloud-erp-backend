@@ -106,6 +106,7 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 					detailExtendJson = dmpInputHotfixCreateRequest.getDetailExtendJson();
 				}
 				dmpInputTaskEntity.setExtendJson(detailExtendJson);
+				dmpInputTaskEntity.setNextExecTime(dmpInputHotfixCreateRequest.getNextExecTime());
 				
 				dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			}

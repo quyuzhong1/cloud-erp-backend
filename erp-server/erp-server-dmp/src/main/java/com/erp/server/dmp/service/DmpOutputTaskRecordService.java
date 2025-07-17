@@ -148,7 +148,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @param outputClass
      * @return
      */
-    DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass);
+    List<DmpOutputTaskRecordEntity> getOutputTaskRecord(String sourceCode, String outputClass);
 
     List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType);
 

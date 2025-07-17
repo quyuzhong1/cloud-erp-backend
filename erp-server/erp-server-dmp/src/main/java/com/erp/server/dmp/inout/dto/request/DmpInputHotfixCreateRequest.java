@@ -47,6 +47,11 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
      * DmpInputTaskTaskTypeEnum
      */
     private String taskType;
+    
+    /**
+     * 下次执行任务时间
+     */
+    private LocalDateTime nextExecTime;
 
     public String checkAndGetTaskType() {
         DmpInputTaskTaskTypeEnum taskTypeEnum = DmpInputTaskTaskTypeEnum.getByType(this.taskType);
