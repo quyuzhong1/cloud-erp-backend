@@ -170,7 +170,10 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
         Gson gson = new Gson();
         CfgQueryOptionExtDTO.EnumDTO enumDTO = gson.fromJson(dataJson, CfgQueryOptionExtDTO.EnumDTO.class);
         StringBuffer sb = new StringBuffer();
-        ApiResult enumSelect = FeignQuery.invoke(ApiResult.class, "com.erp.server."+enumDTO.getSysClassify()+".controller.api.CommonController", "enumSelect", Arrays.asList(enumDTO.getEnumName()));
+        String enumName = enumDTO.getEnumName();
+        List<Object> list = new ArrayList<>();
+        list.add(enumName);
+        ApiResult enumSelect = FeignQuery.invoke(ApiResult.class, "com.erp.server."+enumDTO.getSysClassify()+".controller.api.CommonController", "enumSelect", list);
         if(Objects.nonNull(enumSelect)){
             List<Map<String,Object>> data = (List<Map<String, Object>>) enumSelect.getData();
             if(CollUtil.isNotEmpty(data)){
