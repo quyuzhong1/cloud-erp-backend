@@ -212,6 +212,28 @@
                 (#{item.businessId}, #{item.businessKey})
             </foreach>
         GROUP BY pm.business_id, pm.business_code, pm.business_key,pm.process_instance_id, pm.business_name
+
+        union all
+
+        select
+        tpm.process_instance_id,
+        tpm.business_id,
+        tpm.business_code,
+        tpm.business_key,
+        '' as business_name,
+        string_agg(tptm.node_id,',') as activityId,
+        string_agg(tptm.node_name,',') as nodeName,
+        string_agg(tptm.sys_user_id,',') as curApproveId,
+        '' as curApproveName
+        from third_process_management tpm
+        inner join third_process_task_management tptm on tpm.id = tptm.main_id and tptm.is_deleted = false and tptm.task_status = 'approveIng'
+        where tpm.is_deleted = false  and status = 'running'
+        and (tpm.business_id, tpm.business_key) in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.businessId}, #{item.businessKey})
+        </foreach>
+        GROUP BY tpm.business_id, tpm.business_code, tpm.business_key,tpm.process_instance_id
+
     </select>
 
     <select id="listApproverByApprover" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
