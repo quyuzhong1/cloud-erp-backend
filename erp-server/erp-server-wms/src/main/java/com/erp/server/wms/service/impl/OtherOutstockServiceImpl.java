@@ -7,11 +7,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -28,6 +23,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -54,10 +50,7 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -753,6 +746,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
         List<DictKingdeeDTO.ListDTO> typeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
+
+        //最新审核人
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = listCurApprove(records);
+
         for (OtherOutstockDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
@@ -768,6 +765,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                obj.setApproveUserName(curApprove);
+            }
         }
     }
 
@@ -1506,4 +1509,28 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         return listDTO.getName();
     }
 
+
+    /**
+     * 查询当前审核人
+     * @author will
+     * @date 2025/7/17 14:53
+     * @param records
+     * @return ApiResult<List<CurApproveInfoDTO>>
+     */
+    private  ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listCurApprove (List<OtherOutstockDTO.ListDTO> records) {
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        records.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.OTHER_OUTSTOCK.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+        return listApiResult;
+    }
 }

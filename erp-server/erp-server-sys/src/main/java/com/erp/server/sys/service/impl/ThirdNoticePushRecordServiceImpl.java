@@ -274,7 +274,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据参数判断一下通知的单据类型
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        String[] split = dto.getDb().split("-");
+        String sysClassify = split[split.length - 1];
+        mqParamsDTO.setSysClassify(sysClassify);
         //查询出common 、表头、明细的配置
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
@@ -502,7 +504,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据参数判断一下通知的单据类型
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        String[] split = dto.getDb().split("-");
+        String sysClassify = split[split.length - 1];
+        mqParamsDTO.setSysClassify(sysClassify);
         //查询出common 、表头、明细的配置
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
@@ -859,7 +863,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         if(Boolean.FALSE.equals(allMatch)){
                             return Boolean.FALSE;
                         }
-
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
                     //新增
