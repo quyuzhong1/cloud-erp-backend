@@ -20,10 +20,9 @@ import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
-import com.sdk.wms.weishi.dto.request.WeiShiBaseRequest;
-import com.sdk.wms.weishi.dto.request.WeiShiCancelInboundRequest;
-import com.sdk.wms.weishi.dto.request.WeiShiCreateInboundRequest;
+import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
+import com.sdk.wms.weishi.dto.response.WeiShiCreateOutboundResp;
 import com.sdk.wms.weishi.dto.response.WeiShiReturnOrderResp;
 import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
 import com.sdk.wms.weishi.enums.WeiShiEnums;
@@ -164,17 +163,61 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
-        return null;
+        return success();
     }
 
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
+        WeiShiBaseResp<WeiShiCreateOutboundResp> resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData().getOrderNo());
+    }
+
+    private WeiShiCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        List<WeiShiCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
+            WeiShiCreateOutboundRequest.SkuListDTO skuListDTO = new WeiShiCreateOutboundRequest.SkuListDTO();
+            skuListDTO.setSkuCode(item.getProductSku());
+            skuListDTO.setQuantity(item.getQuantity());
+            skuListDTOS.add(skuListDTO);
+        }
+        WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = WeiShiCreateOutboundRequest.builder()
+                .referNo(createOutboundReq.getReferenceNo())
+                .warehouseCode(createOutboundReq.getWarehouseCode())
+                .platformCode("OTHER")
+                .orderType(createOutboundReq.isOnlineFlag()?2:0)
+                .productCode(createOutboundReq.getShippingMethod())
+                .remark(StringUtils.isNotBlank(createOutboundReq.getPlatformCode())?createOutboundReq.getPlatformCode():createOutboundReq.getSoCode())
+                .useSpecifiedMaterial("false")
+                .skuList(skuListDTOS)
+                .recipient(WeiShiCreateOutboundRequest.RecipientDTO.builder()
+                        .name(createOutboundReq.getReceiverInfo().getName())
+                        .taxno(createOutboundReq.getReceiverInfo().getTaxNumber())
+                        .postcode(createOutboundReq.getReceiverInfo().getZipCode())
+                        .mobile(createOutboundReq.getReceiverInfo().getPhone())
+                        .email(createOutboundReq.getReceiverInfo().getEmail())
+                        .state(createOutboundReq.getReceiverInfo().getProvince())
+                        .city(createOutboundReq.getReceiverInfo().getCity())
+                        .street(createOutboundReq.getReceiverInfo().getAddress1()+createOutboundReq.getReceiverInfo().getAddress2())
+                        .countrycode(createOutboundReq.getReceiverInfo().getCountryCode())
+                        .build())
+                .build();
+        return weiShiCreateOutboundRequest;
     }
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return null;
+        WeiShiCancelOutboundRequest weiShiCancelOutboundRequest = new WeiShiCancelOutboundRequest();
+        weiShiCancelOutboundRequest.setOrderNo(cancelOutboundReq.getOrderCode());
+        weiShiCancelOutboundRequest.setReason(cancelOutboundReq.getReason());
+        WeiShiBaseResp<String> resp = weiShiService.cancelOutbound(weiShiCancelOutboundRequest,ThirdWarehouseContext.getAuthMap());
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success();
     }
 
     @Override
