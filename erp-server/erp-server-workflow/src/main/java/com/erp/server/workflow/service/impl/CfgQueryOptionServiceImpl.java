@@ -200,11 +200,10 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                         .eq(refEntity.getConditionField(), mainValue)
                         .list();
 
-                if (CollUtil.isEmpty(detailList)) {
-                    throw new ServiceException(entry.getKey() + "明细列表数据不存在");
+                if (CollUtil.isNotEmpty(detailList)) {
+                    //明细数据
+                    variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
                 }
-                //明细数据
-                variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
             }
         }
         return variablesMap;
