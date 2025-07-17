@@ -198,7 +198,9 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         processManagementDTO.setBusinessCode(one.getBussinessCode());
         processManagementDTO.setBusinessKey(one.getBussinessKey());
 
-        processManagementDTO.setStatus(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        //主表状态
+        String mainStatus = DictBasicEnum.getByCode(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode())).getType();
+        processManagementDTO.setStatus(mainStatus);
 
         processManagementDTO.setProcessInstanceName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
         processManagementDTO.setSourcePlatform(sourcePlatform);
