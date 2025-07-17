@@ -20,8 +20,9 @@
        <result column="form" property="form" />
        <result column="approval_code" property="approvalCode" />
        <result column="instance_code" property="instanceCode" />
-        <result column="is_complete" property="isComplete" />
-        <result column="task_list" property="taskList" />
+       <result column="is_complete" property="isComplete" />
+       <result column="task_list" property="taskList" />
+       <result column="third_json" jdbcType="OTHER" property="thirdJson" typeHandler="com.erp.server.workflow.handler.ObjectJsonHandler" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

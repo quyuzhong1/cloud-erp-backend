@@ -1,13 +1,15 @@
 package com.erp.model.workflow.entity;
 
+import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
 
 
 /**
@@ -74,6 +76,12 @@ public class ThirdProcessInstanceEntity extends BaseEntity<ThirdProcessInstanceE
      */
     @TableField("task_list")
     private String taskList;
+
+    /**
+     * 三方数据json
+     */
+    @TableField(value = "third_json", jdbcType = JdbcType.OTHER)
+    private JSONObject thirdJson;
 
 
     public static final String APPROVAL_NAME = "approval_name";
