@@ -301,10 +301,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
      * mappingList 填充数据
      */
     private void mappingListFillData(List<LogisticsMappingDTO.ViewDTO> mappingList) {
-        if (mappingList.stream().allMatch(e-> StringUtils.isBlank(e.getCarrierCode()))){
-            return;
+
+        List<TmsCarrierEntity> carrierList = null;
+        if (!mappingList.stream().allMatch(e-> StringUtils.isBlank(e.getCarrierCode()))){
+            carrierList = tmsCarrierService.list();
         }
-        List<TmsCarrierEntity> carrierList = tmsCarrierService.list();
         List<String> saleChannelIds = mappingList.stream().map(LogisticsMappingDTO.ViewDTO::getPlatformLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = logisticsSaleChannelService.listByIds(saleChannelIds);
         Map<String, String> saleChannelMap = logisticsSaleChannelEntities.stream().collect(Collectors.toMap(LogisticsSaleChannelEntity::getId, LogisticsSaleChannelEntity::getCnName));
