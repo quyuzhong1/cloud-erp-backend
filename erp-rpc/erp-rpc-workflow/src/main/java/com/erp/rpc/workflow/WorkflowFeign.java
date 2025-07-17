@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow;
 
+import com.common.business.config.ExportFeignConfig;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
@@ -22,7 +23,7 @@ import java.util.List;
  * @Date 2022-10-18 17:00
  * @Created by yl
  */
-@FeignClient("erp-workflow")
+@FeignClient(name ="erp-workflow", contextId = "workflowFeign", configuration = ExportFeignConfig.class)
 public interface WorkflowFeign {
 
 
@@ -275,4 +276,10 @@ public interface WorkflowFeign {
      */
     @PostMapping("/feign/process/listProcessByBusinessKey")
     List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto);
+
+    /**
+     * 根据BusinessKey,businessId判断当前单据是否提审操作
+     */
+    @PostMapping("/feign/process/checkSubmitByBusinessId")
+    Boolean checkSubmitByBusinessId(@RequestBody ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto);
 }

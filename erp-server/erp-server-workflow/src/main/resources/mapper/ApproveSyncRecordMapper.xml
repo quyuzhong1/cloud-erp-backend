@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ApproveSyncRecordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ApproveSyncRecordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="cfg_approve_sync_id" property="cfgApproveSyncId" />
+       <result column="notice_type" property="noticeType" />
+       <result column="business_type" property="businessType" />
+       <result column="business_code" property="businessCode" />
+       <result column="notice_method" property="noticeMethod" />
+       <result column="receiver_id" property="receiverId" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="send_time" property="sendTime" />
+       <result column="title" property="title" />
+       <result column="status" property="status" />
+       <result column="error_reason" property="errorReason" />
+        <result property="dataJson" column="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        cfg_approve_sync_id, notice_type, business_type, business_code, notice_method, receiver_id, receiver_name, send_time, title, status, error_reason
+    </sql>
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO approve_sync_record (
+        id, cfg_approve_sync_id, notice_type, business_type, business_code,
+        notice_method, receiver_id, receiver_name, send_time, title,
+        status, error_reason, notice_node, data_json,
+        create_user_id, create_user_name, create_time,
+        update_user_id, update_user_name, update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},
+            #{item.cfgApproveSyncId},
+            #{item.noticeType},
+            #{item.businessType},
+            #{item.businessCode},
+            #{item.noticeMethod},
+            #{item.receiverId},
+            #{item.receiverName},
+            #{item.sendTime},
+            #{item.title},
+            #{item.status},
+            #{item.errorReason},
+            #{item.noticeNode},
+            CAST(
+            #{item.dataJson, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler}
+            AS jsonb
+            ),
+            #{item.createUserId},
+            #{item.createUserName},
+            #{item.createTime},
+            #{item.updateUserId},
+            #{item.updateUserName},
+            #{item.updateTime}
+            )
+        </foreach>
+    </insert>
+
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ApproveSyncRecordDTO$TabListDTO">
+        SELECT
+        asr.status AS tabFlag,
+        count(1)  AS count
+        FROM  approve_sync_record as asr
+        WHERE asr.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY asr.status
+    </select>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ApproveSyncRecordDTO$ListDTO">
+        select
+            asr.id as id,
+            asr.create_user_id as createUserId,
+            asr.create_user_name as createUserName,
+            asr.create_time as createTime,
+            asr.update_user_id as updateUserId,
+            asr.update_user_name as updateUserName,
+            asr.update_time as updateTime,
+            asr.version as version,
+            asr.is_deleted as isDeleted,
+            asr.cfg_approve_sync_id as cfgApproveSyncId,
+            asr.notice_type as noticeType,
+            asr.business_type as businessType,
+            asr.business_code as businessCode,
+            asr.notice_method as noticeMethod,
+            asr.receiver_id as receiverId,
+            asr.receiver_name as receiverName,
+            asr.send_time as sendTime,
+            asr.title as title,
+            asr.status as status,
+            asr.error_reason as errorReason,
+            asr.notice_node as noticeNode
+        from approve_sync_record as asr
+        WHERE
+            ${params.sqlMap.default}
+          AND asr.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and asr.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        asr.create_time DESC
+    </select>
+</mapper>

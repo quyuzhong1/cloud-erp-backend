@@ -88,4 +88,13 @@ public interface SupplierFeign {
      */
     @PostMapping("/feign/supplier/listByCodes")
     List<SupplierEntity> listByCodes(@RequestBody List<String> codeList);
+
+    /**
+     * add
+     */
+    @PostMapping("/feign/supplier/add")
+    BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO);
+
+    @PostMapping("/feign/supplier/updateApproveStatus")
+    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
 }

@@ -1,11 +1,13 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 
@@ -56,10 +58,68 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
 
     /**
      * 删除流程定义
-     * @param ids
+     * @param id
      * @return
      */
-    boolean deleteByIds(List<String> ids);
+    BatchResultDTO deleteByIds(String id,Integer processVersion,Boolean isValidate);
 
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
+
+    List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey);
+    /**
+     * 更新启禁用状态
+     * @author will
+     * @date 2025/5/15 15:56
+     * @param disableDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateDisabled(ProcessDefinitionDTO.DisableDTO disableDTO);
+    /**
+     * 查询tab数量
+     * @author will
+     * @date 2025/5/15 16:03
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<ProcessDefinitionDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     *  高级查询下拉
+     * @param type
+     * @return
+     */
+    List<ProcessDefinitionDTO.DropDownDTO> dropDown(String type);
+
+    /**
+     * 界面下拉
+     * @return
+     */
+    List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
+
+    /**
+     * 变更流程
+     * @author will
+     * @date 2025/5/23 19:04
+     * @param dto
+     * @return Boolean
+     */
+    Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto);
+    /**
+     * 查询已发布流程设计
+     * @author will
+     * @date 2025/5/27 16:38
+     * @param id
+     * @return ProcessDefinitionEntity
+     */
+    ProcessDefinitionEntity getIsDeployEntityById(String id);
+
+    /**
+     * 根据id和版本查询
+     * @author will
+     * @date 2025/5/30 16:35
+     * @param id
+     * @param processVersion
+     * @return ProcessDefinitionEntity
+     */
+    ProcessDefinitionEntity getProcessVersionEntity(String id,Integer processVersion);
 }

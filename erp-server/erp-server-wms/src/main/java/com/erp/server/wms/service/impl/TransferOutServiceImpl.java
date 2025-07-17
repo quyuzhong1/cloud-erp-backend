@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -56,7 +57,6 @@ import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -328,7 +328,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -341,6 +341,22 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
     }
 
+    /**
+     * variablesMap值赋值
+     * @author jack
+     * @date 2025/5/27 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(TransferOutEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<TransferOutDetailEntity> detailList = transferOutDetailService.lambdaQuery().eq(TransferOutDetailEntity::getMainId,entity.getId()).list();
+        if (CollUtil.isNotEmpty(detailList)) {
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        return variablesMap;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -348,15 +364,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
-         this.updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getCode());
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        this.updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getCode());
 
         if (!dto.getType().equals(ApproveType.PASS)) {
             return Boolean.TRUE;
@@ -435,7 +444,15 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持撤销流程"));
         });
         log.info("撤销  开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
-        workflowFeign.cancelProcess(ids);
+        //撤销现有流程
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
 
         log.info("撤销 开始修改分布式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
         updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());

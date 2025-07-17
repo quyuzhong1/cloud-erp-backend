@@ -1,21 +1,26 @@
 package com.erp.server.workflow.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.BatchSysDepartUserDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.server.workflow.query.ProcessManagementQueryHandler;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +48,18 @@ public class ProcessManagementController extends BaseController {
     private ProcessManagementService processManagementService;
 
     /**
+     * 获取状态统计
+     * @author will
+     * @date 2025/5/12 16:10
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<ProcessManagementDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(processManagementService.tabList(dto));
+    }
+
+    /**
      * 启动流程
      * @param dto
      * @return
@@ -50,7 +67,7 @@ public class ProcessManagementController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启动流程,业务名称={businessName},业务表id={businessId}")
     @PostMapping("/start")
     public ApiResult<ProcessManagementDTO.StartResultDTO> startProcess(@RequestBody @Valid ProcessManagementDTO.StartDTO dto) {
-        ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
+        ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcessManagement(dto);
         return success(result);
     }
 
@@ -123,7 +140,7 @@ public class ProcessManagementController extends BaseController {
         for (String id : dto.getIds()) {
             ProcessManagementDTO.ManagementTaskDTO entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"流程管理不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id, ApiError.TASK_NOT_EXIST.msg));
                 continue;
             }
             try {
@@ -161,6 +178,7 @@ public class ProcessManagementController extends BaseController {
         List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
         return success(resultList);
     }
+
     /**
      * 流程管理分页列表
      */
@@ -168,6 +186,33 @@ public class ProcessManagementController extends BaseController {
     @WebAdvanceQuery(handler = ProcessManagementQueryHandler.class)
     public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
         PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 流程管理分页列表
+     * @author will
+     * @date 2025/6/4 14:15
+     * @param dto
+     * @return ApiResult<PagingVO<MainPagingResultDTO>>
+     */
+    @PostMapping("/mainPaging")
+    @WebAdvanceQuery(handler = ProcessManagementQueryHandler.class)
+    public ApiResult<PagingVO<ProcessManagementDTO.MainPagingResultDTO>> mainPaging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
+        PagingVO<ProcessManagementDTO.MainPagingResultDTO> resultList = processManagementService.mainPaging(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 明细数据
+     * @author will
+     * @date 2025/6/4 10:48
+     * @param dto
+     * @return ApiResult<PagingVO<DetailPagingResultDTO>>
+     */
+    @PostMapping("/listDetail")
+    public ApiResult<List<ProcessManagementDTO.DetailPagingResultDTO>> listDetail(@RequestBody @Valid ProcessManagementDTO.DetailSearchDTO dto) {
+        List<ProcessManagementDTO.DetailPagingResultDTO> resultList = processManagementService.listDetail(dto);
         return success(resultList);
     }
 
@@ -199,6 +244,17 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
+     * 批量查询流程当前审批人
+     */
+    @PostMapping("/getCurApprover")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> getCurApprover(@RequestBody ProcessManagementDTO.HistoryActivityDTO dto) {
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(dto);
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApprover(dtoList);
+        return success(resultList);
+    }
+
+    /**
      * 批量查询当前待审核业务单据
      */
     @PostMapping("/batchCurApproverByApprove")
@@ -207,4 +263,119 @@ public class ProcessManagementController extends BaseController {
         return success(resultList);
     }
 
+    /**
+     * 强制通过
+     * @author will
+     * @date 2025/5/15 17:22
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/processPass")
+    public ApiResult<List<BatchResultDTO>> processPass(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = processManagementService.processPass(id);
+            }catch (Exception e){
+                log.error("流程管理强制通过失败",e);
+                ProcessManagementEntity entity = processManagementService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "流程管理数据不存在, 强制通过失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 强制驳回
+     * @author will
+     * @date 2025/5/15 17:22
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/processReject")
+    public ApiResult<List<BatchResultDTO>> processReject(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = processManagementService.processReject(id);
+            }catch (Exception e){
+                log.error("流程管理强制驳回失败",e);
+                ProcessManagementEntity entity = processManagementService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "流程管理数据不存在, 强制驳回失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 恢复
+     * @author will
+     * @date 2025/5/15 17:22
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/processRestore")
+    public ApiResult<List<BatchResultDTO>> processRestore(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = processManagementService.processRestore(id);
+            }catch (Exception e){
+                log.error("流程管理恢复失败",e);
+                ProcessManagementEntity entity = processManagementService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "流程管理数据不存在, 恢复失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 暂停
+     * @author will
+     * @date 2025/5/15 17:22
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/processSuspend")
+    public ApiResult<List<BatchResultDTO>> processSuspend(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = processManagementService.processSuspend(id);
+            }catch (Exception e){
+                log.error("流程管理暂停失败",e);
+                ProcessManagementEntity entity = processManagementService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "流程管理数据不存在, 暂停失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

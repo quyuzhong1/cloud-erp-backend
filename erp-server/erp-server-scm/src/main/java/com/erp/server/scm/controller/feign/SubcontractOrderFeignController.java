@@ -113,4 +113,14 @@ public class SubcontractOrderFeignController {
     public List<SubcontractOrderDTO.ListDTO> listByBomSku(@RequestBody String bomSkuId) {
         return subcontractOrderService.listByBomSku(bomSkuId);
     }
+
+    @PostMapping("/listBySourceId")
+    public List<SubcontractOrderEntity> listByCodes(@RequestBody List<String> list) {
+        return subcontractOrderService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(@RequestBody SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        subcontractOrderService.updateApproveStatus(updateApprovalStatusDTO);
+    }
 }

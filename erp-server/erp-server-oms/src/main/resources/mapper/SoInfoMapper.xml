@@ -385,4 +385,24 @@
                                           inner join customer_info ci on si.customer_id = ci.id
         where si.is_deleted  = false and ci.is_deleted = false and si.partition_id = ''
     </select>
+
+    <!-- 下推采购申请数据查询 -->
+    <select id="viewPushPurchaseApplication"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$ViewPushPurchaseApplicationDTO">
+        select
+            sd.id as soDetailId,
+            si.id as soId,
+            si.code as soCode,
+            sd.sku_id as skuId,
+            sd.sku_no as skuNo,
+            pd.name as productName,
+            sd.qty as qty
+        from so_detail sd
+        inner join so_info si on sd.main_id = si.id and si.is_deleted = false
+        left join foreign_product_detail pd on pd.id = sd.sku_id and pd.is_deleted = false
+        where sd.is_deleted = false and si.approve_status = 'approve' and sd.id in
+        <foreach collection="ids" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

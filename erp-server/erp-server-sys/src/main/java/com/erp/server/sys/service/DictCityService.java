@@ -137,4 +137,11 @@ public interface DictCityService extends SuperService<DictCityEntity> {
     PagingVO<DictCityDTO.PagingViewDTO> exportCityProvince(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto);
 
     List<DictCityEntity> listCityByNames(List<String> names);
+    /**
+     * 全部国家级联
+     * @author will
+     * @date 2025/7/16 14:57
+     * @return List<ListDTO>
+     */
+    List<DictCityDTO.ListDTO> countryTreeList();
 }

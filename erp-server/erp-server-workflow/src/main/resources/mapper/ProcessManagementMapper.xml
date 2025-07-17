@@ -61,54 +61,81 @@
     </sql>
 
     <sql id="List_Process_Management">
-        SELECT
-            ptm.id,
-            pm.process_instance_id,
-            pm.process_definition_id,
-            pm.process_version ,
-            pm.process_status ,
-            pd.process_name ,
-            pm.business_id ,
-            pm.business_code ,
-            pm.business_name ,
-            pm.act_process_definition_id ,
-            ptm.cur_approve_id ,
-            ptm.cur_activity_id,
-            ptm.cur_activity_name,
-            ptm.task_id,
-            ptm.task_status,
-            ptm.cur_approve_name AS cur_approve_name,
-            concat(wm.detail_url,pm.business_id) as detail_url,
-            pm.create_time as createTime,
-            pm.update_time as updateTime
-        FROM process_task_management AS ptm
-                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
-                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
-                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
-        where ${param.sqlMap.default} and ptm.is_deleted = false
-          <if test="null != param and null != param.processName and param.processName != ''">
-              and pd.process_name ilike concat('%', #{param.processName}::text,'%')
-          </if>
-          <if test="null != param and null != param.businessNames and param.businessNames.size() > 0">
-              and pm.business_name in
-              <foreach collection="param.businessNames" item="businessName" open="(" separator="," close=")">
-                  #{businessName}
-              </foreach>
-          </if>
-          <if test="null != param and null != param.processVersion">
-              and pm.process_version = #{param.processVersion}
-          </if>
-          <if test="null != param and null == param.processStatus or param.processStatus.size() == 0">
-              and ptm.task_status = 'approveIng'
-          </if>
-
-          <if test="null != param and null != param.processStatus and param.processStatus.size() > 0">
-          and pm.process_status in
-            <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
-                #{processStatus}
-            </foreach>
-          </if>
-
+       select * from (
+           SELECT
+                ptm.id,
+                pm.id as managementId,
+                pm.process_instance_id,
+                pm.process_definition_id,
+                pm.process_version ,
+                pm.process_status ,
+                pm.process_name ,
+                pm.business_id ,
+                pm.business_code ,
+                pm.business_name ,
+                pm.business_key,
+                pm.act_process_definition_id ,
+                ptm.cur_approve_id ,
+                ptm.cur_activity_id,
+                ptm.cur_activity_name,
+                ptm.task_id,
+                ptm.task_status,
+                ptm.cur_approve_name AS cur_approve_name,
+                concat(wm.detail_url,pm.business_id) as detail_url,
+                pm.create_time as createTime,
+                pm.update_time as updateTime,
+                pm.create_user_id as createUserId,
+                ptm.label_json,
+                ptm.approve_time,
+                pm.end_time,
+                'erp' as sourcePlatform
+            FROM process_task_management AS ptm
+             LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+             LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
+            where  ptm.is_deleted = false
+            union all
+            select
+                tptm.id,
+                tpm.id as managementId,
+                tpm.process_instance_id,
+                tpm.process_definition_id,
+                null as process_version ,
+                tpm.status as process_status ,
+                tpm.process_instance_name as process_name ,
+                tpm.business_id ,
+                tpm.business_code ,
+                '' as business_name ,
+                tpm.business_key,
+                '' as act_process_definition_id ,
+                tptm.sys_user_id as cur_approve_id ,
+                tptm.node_id as  cur_activity_id,
+                tptm.node_name as cur_activity_name,
+                tptm.task_id,
+                tptm.task_status,
+                '' AS cur_approve_name,
+                '' as detail_url,
+                tpm.create_time as createTime,
+                tpm.update_time as updateTime,
+                tpm.create_user_id as createUserId,
+                null as label_json,
+                case when tptm.task_status = 'approve' then tptm.end_time else null end as approve_time,
+                tpm.end_time,
+                'fs' as sourcePlatform
+            from third_process_task_management tptm
+            inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
+            where tptm.is_deleted = false
+            ) pp
+        where ${param.sqlMap.default}
+        <if test="param.isDelegate != null and param.isDelegate == true">
+            and (pp.label_json ->> 'isDelegate')::boolean is true
+        </if>
+        <if test="param.curApproveId != null and param.curApproveId != ''">
+            and pp.cur_approve_id = #{param.curApproveId}
+        </if>
+        <if test="param.dateList != null and param.dateList.size > 0">
+            and pp.createTime >= #{param.dateList[0]} and  #{param.dateList[1]} >= pp.createTime
+        </if>
+        order by pp.createTime desc
     </sql>
 
     <select id="getTaskByBusiness"
@@ -151,19 +178,8 @@
 
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
        <include refid="List_Process_Management"/>
-        order by ptm.create_time desc
     </select>
 
-    <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
-        <include refid="List_Process_Management"/>
-        <if test="null != param.ids and param.ids.size() > 0">
-            and ptm.id in
-            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        order by ptm.create_time desc
-    </select>
     <select id="listProcessTaskByIds"
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
         <include refid="Get_Task_Management"/>
@@ -189,12 +205,35 @@
             string_agg(ptm.cur_approve_name,',') AS curApproveName
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
-        WHERE pm.is_deleted = false AND
-            (pm.business_id, pm.business_key) in
+        WHERE pm.is_deleted = false
+              and pm.process_status = 'running'
+              and (pm.business_id, pm.business_key) in
             <foreach collection="list" item="item" open="(" separator="," close=")">
                 (#{item.businessId}, #{item.businessKey})
             </foreach>
         GROUP BY pm.business_id, pm.business_code, pm.business_key,pm.process_instance_id, pm.business_name
+
+        union all
+
+        select
+        tpm.process_instance_id,
+        tpm.business_id,
+        tpm.business_code,
+        tpm.business_key,
+        '' as business_name,
+        string_agg(tptm.node_id,',') as activityId,
+        string_agg(tptm.node_name,',') as nodeName,
+        string_agg(tptm.sys_user_id,',') as curApproveId,
+        '' as curApproveName
+        from third_process_management tpm
+        inner join third_process_task_management tptm on tpm.id = tptm.main_id and tptm.is_deleted = false and tptm.task_status = 'approveIng'
+        where tpm.is_deleted = false  and tpm.status = 'running'
+        and (tpm.business_id, tpm.business_key) in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.businessId}, #{item.businessKey})
+        </foreach>
+        GROUP BY tpm.business_id, tpm.business_code, tpm.business_key,tpm.process_instance_id
+
     </select>
 
     <select id="listApproverByApprover" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
@@ -210,11 +249,169 @@
         ptm.cur_approve_name AS curApproveName
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
-        WHERE pm.is_deleted = false AND
-        (ptm.cur_approve_id, pm.business_key) in
+        WHERE pm.is_deleted = false  and pm.process_status = 'running'
+        and (ptm.cur_approve_id, pm.business_key) in
         <foreach collection="list" item="item" open="(" separator="," close=")">
             (#{item.curApproveId}, #{item.businessKey})
         </foreach>
+
+        union all
+
+        select
+        tpm.process_instance_id,
+        tpm.business_id,
+        tpm.business_code,
+        tpm.business_key,
+        '' as business_name,
+        tptm.node_id as activityId,
+        tptm.node_name as nodeName,
+        tptm.sys_user_id as curApproveId,
+        '' as curApproveName
+        from third_process_management tpm
+        inner join third_process_task_management tptm on tpm.id = tptm.main_id and tptm.is_deleted = false and tptm.task_status = 'approveIng'
+        where tpm.is_deleted = false  and tpm.status = 'running'
+        and (tptm.sys_user_id, tpm.business_key) in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.curApproveId}, #{item.businessKey})
+        </foreach>
+    </select>
+
+    <!-- tab数据查询 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$TabListDTO">
+        SELECT
+        pm.process_status as tabFlag,
+        count(pm.id) as count
+        FROM process_task_management AS ptm
+        LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+        WHERE ptm.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pm.process_status
+    </select>
+
+    <!-- 查询ERP明细 -->
+    <select id="listErpDetail" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$DetailPagingResultDTO">
+        select
+            ptm.id,
+            pm.process_name,
+            ptm.cur_activity_id,
+            ptm.cur_activity_name,
+            ptm.cur_approve_id,
+            ptm.cur_approve_name,
+            ptm.task_status,
+            ptm.approve_time,
+            ptm.label_json
+        from process_task_management ptm
+        inner join process_management pm on pm.process_instance_id = ptm.process_instance_id and pm.is_deleted = false
+        <where>
+            ptm.is_deleted = false and pm.id = #{params.id}
+        </where>
+    </select>
+
+    <!--查询FS明细 -->
+    <select id="listFsDetail"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$DetailPagingResultDTO">
+        select
+            tptm.id,
+            tpm.process_instance_name as process_name ,
+            tptm.sys_user_id as cur_approve_id ,
+            tptm.node_id as  cur_activity_id,
+            tptm.node_name as cur_activity_name,
+            '' AS cur_approve_name,
+            tptm.task_status,
+            null as label_json,
+            tpm.end_time as approveTime
+        from third_process_task_management tptm
+        inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
+        where tptm.is_deleted = false  and tpm.id = #{params.id}
+    </select>
+
+    <!-- 主表分页查询 -->
+    <select id="mainPaging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$MainPagingResultDTO">
+        SELECT * FROM (
+              -- 第一部分：内部流程数据
+              SELECT
+                  pm.id,
+                  pm.process_instance_id,
+                  pm.process_definition_id,
+                  pm.process_version,
+                  pm.process_status,
+                  pm.process_name,
+                  pm.business_id,
+                  pm.business_code,
+                  pm.business_name,
+                  pm.business_key,
+                  pm.act_process_definition_id,
+                  CONCAT(wm.detail_url, pm.business_id) AS detail_url,
+                  pm.create_time AS createTime,
+                  pm.update_time AS updateTime,
+                  pm.create_user_id AS createUserId,
+                  pm.end_time,
+                  'erp' AS sourcePlatform,
+                  case when  pm.process_status = 'running' then latest_task.cur_activity_id else '' end as cur_activity_id,
+                  case when  pm.process_status = 'running' then latest_task.cur_activity_name else '' end as cur_activity_name
+              FROM process_management pm
+              LEFT JOIN (
+                  SELECT DISTINCT ON (process_instance_id)
+                      process_instance_id,
+                      cur_activity_id,
+                      cur_activity_name
+                  FROM process_task_management
+                  WHERE is_deleted = false
+                  ORDER BY process_instance_id, id DESC
+              ) latest_task ON pm.process_instance_id = latest_task.process_instance_id
+               LEFT JOIN work_menu wm
+               ON pm.business_key = wm.module_code AND wm.is_deleted = false
+              WHERE pm.is_deleted = false
+
+              UNION ALL
+
+              -- 第二部分：第三方流程数据
+              SELECT
+                  tpm.id,
+                  tpm.process_instance_id,
+                  tpm.process_definition_id,
+                  NULL AS process_version,
+                  tpm.status AS process_status,
+                  tpm.process_instance_name AS process_name,
+                  tpm.business_id,
+                  tpm.business_code,
+                  '' AS business_name,
+                  tpm.business_key,
+                  '' AS act_process_definition_id,
+                  '' AS detail_url,
+                  tpm.create_time AS createTime,
+                  tpm.update_time AS updateTime,
+                  tpm.create_user_id AS createUserId,
+                  tpm.end_time,
+                  'fs' AS sourcePlatform,
+                  case when   tpm.status = 'running' then latest_third_task.cur_activity_id else '' end as cur_activity_id,
+                  case when   tpm.status = 'running' then latest_third_task.cur_activity_name else '' end as cur_activity_name
+              FROM third_process_management tpm
+              LEFT JOIN (
+                  SELECT DISTINCT ON (main_id)
+                      main_id,
+                      node_id AS cur_activity_id,
+                      node_name AS cur_activity_name
+                  FROM third_process_task_management
+                  WHERE is_deleted = false
+                  ORDER BY main_id, id DESC
+              ) latest_third_task ON tpm.id = latest_third_task.main_id
+              WHERE tpm.is_deleted = false
+                      ) pp
+        WHERE ${params.sqlMap.default}
+        <if test="params.isDelegate != null and params.isDelegate == true">
+            and (pp.label_json ->> 'isDelegate')::boolean is true
+        </if>
+        ORDER BY pp.createTime DESC
+    </select>
+    <select id="getTestList" resultType="java.lang.String">
+        select id from process_management where business_key = #{businessType} and create_time between '2025-05-12' and '2025-06-06'
+    </select>
+    <select id="getCurApprover" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
+
+
     </select>
 
 </mapper>

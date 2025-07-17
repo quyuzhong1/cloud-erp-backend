@@ -88,6 +88,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
+    WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
 
     //OMS
@@ -173,6 +174,7 @@ public enum SourceTypeEnum {
     SMALL_BAG_COST_ALLOCATION("smallBagCostAllocation", "小包费用分摊","small_bag_cost_allocation"),
     TRANSFER_DECLARE_COST_ALLOCATION("transferDeclareCostAllocation", "中转费用分摊","transfer_declare_cost_allocation"),
     FIRST_MILE_COST_ALLOCATION("firstMileCostAllocation", "头程费用分摊","first_mile_cost_allocation"),
+    PRODUCT_REGISTRATION("productRegistration", "备案通知","product_registration"),
 
 
 
@@ -298,7 +300,7 @@ public enum SourceTypeEnum {
 
     public static String getName(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
-            if (type.equals(sourceTypeEnum.getCode())) {
+            if (sourceTypeEnum.getCode().equals(type)) {
                 return sourceTypeEnum.getName();
             }
         }

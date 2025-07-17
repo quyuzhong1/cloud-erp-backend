@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -131,4 +132,16 @@ public interface PurchaseOrderFeign {
      */
     @PostMapping("/feign/purchaseOrder/listAllPurchaseBySkuIdAndSupplier")
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+    /**
+     * 根据id更新合同状态
+     */
+    @PostMapping("/feign/purchaseOrder/updateContractStatusById")
+    void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO);
+
+    @PostMapping("/feign/purchaseOrder/save")
+    void save( PurchaseOrderEntity purchaseOrderEntity );
+
+    @PostMapping("/feign/purchaseOrder/saveAndUpdate")
+    void saveAndUpdate(PurchaseOrderEntity purchaseOrderEntity);
 }

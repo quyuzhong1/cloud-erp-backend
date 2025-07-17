@@ -4,16 +4,15 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -65,6 +64,12 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
      */
     @TableField("process_status")
     private ProcessStatusEnum processStatus;
+
+    /**
+     * 原因
+     */
+    @TableField("option")
+    private String option;
 
     /**
      * 开始时间

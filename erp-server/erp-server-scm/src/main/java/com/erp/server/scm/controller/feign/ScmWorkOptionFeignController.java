@@ -216,7 +216,7 @@ public class ScmWorkOptionFeignController {
                 continue;
             }
             try {
-                resultDTOS.add(purchaseApplicationService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+                resultDTOS.add(purchaseApplicationService.approve(entity,new ApproveOneDTO(entity.getId(),dto.getType(),dto.getComment(),dto.getIsNeedProcess())));
             }catch (Exception e){
                 log.error("采购申请单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

@@ -291,5 +291,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return ApiResult
      */
     PagingVO<UserSelectDto.PageSelectDTO> pagingSelect(PagingDTO<UserSelectDto.SelectDTO> dto);
+
+    void syncFsUser();
 }
 

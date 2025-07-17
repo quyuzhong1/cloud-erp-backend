@@ -368,6 +368,38 @@ public interface WmsTaskFeign {
     List<BatchResultDTO> requisitionChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 
     /**
+     * 其他入库单
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/otherInstockApprove")
+    List<BatchResultDTO> otherInstockApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 其他出库单
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/otherOutstockApprove")
+    List<BatchResultDTO> otherOutstockApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 分步式调入
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/transferInApprove")
+    List<BatchResultDTO> transferInApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 分步式调出
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/transferOutApprove")
+    List<BatchResultDTO> transferOutApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
      * 波次状态自动更新
      * @author jack
      * @date 2024/11/28
@@ -382,6 +414,28 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/wmsSyncTask/newFindDataSendSyncTask")
     Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+
+    /**
+     *
+     */
+    @PostMapping("/feign/qcBill/getFsQcNoticeTitle")
+    String getFsQcNoticeTitle(@RequestParam("title") String title);
+    /**
+     *
+     */
+    @GetMapping("/feign/warehouseLocationReplenish/listTabInfo")
+    List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
+
+    /**
+     * 根据质检单id 查询质检结果
+     * @param qcInfoIds
+     * @return List<QcResultDTO.QcNoticeDTO>
+     */
+    @PostMapping("/feign/qcBill/listQcResultMsg")
+    List<QcResultDTO.QcNoticeDTO> listQcResultMsg(@RequestBody List<String> qcInfoIds);
+
+
     /**
      * 根据ids查询收货信息
      * @author will

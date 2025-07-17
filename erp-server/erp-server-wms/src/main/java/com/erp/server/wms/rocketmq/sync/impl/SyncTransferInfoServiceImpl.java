@@ -1,14 +1,14 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
@@ -119,16 +119,18 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
      * @param id
      */
     private void submitAndApprove(String id) {
+        TransferInfoEntity entity = transferInfoService.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
+
         //提交
-        Boolean submit = transferInfoService.submit(Collections.singletonList(id), Boolean.FALSE);
-        if (!submit) {
+        BatchResultDTO submit = transferInfoService.submit(entity, Boolean.FALSE);
+        if (!submit.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
         //审核
-        TransferInfoEntity entity = transferInfoService.getById(id);
-        if (Objects.nonNull(entity)){
-            transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
-        }
+        transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
     }
 
 

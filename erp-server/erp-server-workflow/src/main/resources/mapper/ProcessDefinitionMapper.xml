@@ -36,6 +36,9 @@
         <if test="null != params and  null !=  params.isDeploy">
             and pd.is_deploy = #{params.isDeploy}
         </if>
+        <if test="null != params.processVersion ">
+            and pd.process_version = #{params.processVersion}
+        </if>
         order by pd.create_time desc
     </sql>
 
@@ -54,7 +57,8 @@
         pb.id as businessId,
         pb.business_key,
         pd.remark,
-        pd.review_setting
+        pd.review_setting,
+        pd.disabled
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
@@ -78,7 +82,8 @@
         case  WHEN pd.is_deploy THEN '是' else '否' END as isDeploy,
         pb.business_key,
         pd.remark,
-        db.name AS reviewSetting
+        db.name AS reviewSetting,
+        pd.disabled
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
@@ -92,6 +97,32 @@
             </foreach>
         </if>
         <include refid="query_list_sql"/>
+    </select>
+    <select id="getProcessDefinition" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$DropDTO">
+        SELECT
+        pd.id,
+        pd.process_name,
+        pd.is_deploy as isDeploy
+        FROM
+        process_definition pd
+        LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
+        where pd.is_deleted = false
+          and pd.is_deploy = true
+          and pb.business_key = '${businessKey}'
+        --         缺少启用状态
+    </select>
+
+    <!-- 查询tab数据 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$TabListDTO">
+        SELECT
+        pd.disabled as tabFlag,
+        count(pd.id) as count
+        FROM  process_definition pd
+        WHERE pd.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pd.disabled
     </select>
 
 </mapper>

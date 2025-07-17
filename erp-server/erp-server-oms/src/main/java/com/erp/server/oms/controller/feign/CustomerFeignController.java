@@ -222,4 +222,17 @@ public class CustomerFeignController extends BaseController {
     public List<CustomerInfoEntity> getCustomerByCodeAndName(@RequestParam(value = "code") String code,@RequestParam(value = "name") String name) {
         return customerInfoService.lambdaQuery().eq(CustomerInfoEntity::getCode, code).eq(CustomerInfoEntity::getName, name).list();
     }
+
+    @PostMapping("/listByCodes")
+    public List<CustomerInfoEntity> listByCodes(@RequestBody List<String> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return customerInfoService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(CustomerInfoEntity entity) {
+        customerInfoService.updateApproveStatus(entity);
+    }
 }

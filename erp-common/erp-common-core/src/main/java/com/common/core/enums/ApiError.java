@@ -119,9 +119,14 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
+    ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
+    ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
+    RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
+
     ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
-
+    ERROR_NOT_FOUND(1067,"{}未找到"),
 
 
 
@@ -183,6 +188,10 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
     MOBILE_IS_EXIST(9054,"手机号已注册"),
+
+
+    ERROR_CRON(9055, "cron表达式不合法"),
+    ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
 
 
     /**
@@ -250,6 +259,42 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
     // 流程未完成部署，请先完成流程部署
     PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
+
+    PROCESS_DELEGATE_CLOSE(94032,"仅支持运行中/待执行可操作终止"),
+    PROCESS_DELEGATE_CLOSE_ERROR(94033,"委托审批单终止失败"),
+    PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
+    PROCESS_DELEGATE_TIME_ERROR(94035,"委托失效时间不可小于生效时间"),
+    PROCESS_DELEGATE_BUSINESS_KEY_ERROR(94036,"委托审批单【{}】已存在此流程"),
+    PROCESS_DELEGATE_BUSINESS_KEY_EXIST(94037,"委托流程【{}】已存在"),
+    PROCESS_MANAGEMENT_NOT_EXIST(94038,"流程管理不存在"),
+    PROCESS_MANAGEMENT_PASS_ERROR(94039,"强制通过操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_REJECT_ERROR(94040,"强制驳回操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_RESTORE_ERROR(94041,"恢复操作仅针对暂停状态的流程实例有效"),
+    PROCESS_MANAGEMENT_SUSPEND_ERROR(94042,"暂停操作仅针对状态为“运行中”的流程有效"),
+    PROCESS_DEFINITION_DISABLED_ERROR(94043,"关联流程配置有关联启用流程时，不可操作停用"),
+    PROCESS_RULE_REPEAT_ERROR(94044,"{}流程设置下存在多条符合条件的规则，请检查"),
+    PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR(94045,"流程状态为【{}】不支持审核"),
+    PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR(94046,"流程定义已发布不支持编辑"),
+    PROCESS_DEFINITION_CHANGE_ERROR(94047,"流程定义未发布不支持变更"),
+    PROCESS_DEFINITION_ADD_ERROR(94048,"流程定义已存在，不支持新增"),
+    PROCESS_APPROVE_TASK_NOT_EXIST(94049,"三方生成查询不存在"),
+    PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST(94050,"三方生成查询明细不存在"),
+    PROCESS_DEFINITION_CHANGE_EXIST_NOT_DEPLOY(94051,"流程定义已存在未发布数据不支持再次变更"),
+    PROCESS_PROCESS_DELEGATE_OVERLAP(94052,"委托审批单发起人+委托流程+时间区间重复不支持操作"),
+    FS_USER_NOT_BIND(94053,"飞书未绑定"),
+    FS_FOUNDER_NOT_EXIST(94054,"飞书流程发起人未找到:{}"),
+    CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
+    CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
+    FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
+    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，错误信息：{}"),
+
+    PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
+    PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
+    PROCESS_QUERY_THIRD_SUER_NOT_EXIST(94060,"未找到提审用户的飞书账号，请绑定飞书账号"),
+    PROCESS_APPROVE_FS_PROCESS(94061,"当前单据审核流程为飞书流程，请前往飞书审核"),
+    CFG_PROCESS_RULE_TYPE_NOT_EXIST(94062,"未找到流程配置规则类型"),
+    CFG_PROCESS_RULE_DELETE(94063,"{}已被单据使用,不可删除"),
+    CFG_THIRD_PROCESS_BUSSINESSKEY_EXIST(94064,"单据类型【{}】下已存在第三方配置，暂不支持再次添加"),
 
     /**
      * PLM 错误
@@ -791,7 +836,7 @@ public enum ApiError implements Serializable {
 
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
-
+    ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
 
     /**
      * WMS 错误
@@ -843,7 +888,7 @@ public enum ApiError implements Serializable {
     ERROR_99043(99043,"未找到调拨申请单"),
     ERROR_99044(99044,"未找到调拨申请明细"),
     ERROR_99045(99045,"调拨申请单已下推直接调拨单，不支持反审核"),
-    ERROR_99046(99046,"调拨申请单已下推分布式调出单，不支持反审核"),
+    ERROR_99046(99046,"调拨申请单已下推分步式调出单，不支持反审核"),
     ERROR_99047(99047,"未找到直接调拨单"),
     ERROR_99048(99048,"未找到直接调拨明细"),
     ERROR_99049(99049,"未找到调拨方向"),
@@ -863,7 +908,8 @@ public enum ApiError implements Serializable {
     ERROR_99063(99063,"未找到其他出库客户信息"),
     ERROR_99064(99064,"只有已审核调拨申请单支持下推单据"),
     ERROR_99065(99065,"调入数量不能大于调出数量"),
-    ERROR_99066(99066,"未找到分布式调入单"),
+    ERROR_99066(99066,"未找到分步式调入单"),
+    ERROR_NOT_EXIST_TRANSFER_OUT(99066,"未找到分步式调出单"),
     ERROR_99067(99067,"调出仓库不能修改"),
     ERROR_99068(99068,"已下推销售退货签收单，不能反审核"),
     ERROR_99069(99068,"调入数量+途损数量 不能超过计划调入数量"),
@@ -945,6 +991,7 @@ public enum ApiError implements Serializable {
     ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
     ERROR_99090(99090,"盘点任务明细为空"),
     NOT_EXIST_BILL(99091, "{}单据不存在"),
+    ERROR_EXIST_BILL(99091, "{}单据已存在"),
     STOCKTAKING_TASK_STARTED(99091, "盘点任务已开始, 无法反审核"),
     // 仓位不能为空
     WAREHOUSE_LOCATION_IS_NULL(99092, "仓位不能为null"),
@@ -1504,7 +1551,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
     ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
-    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到采购价目明细"),
+    ERROR_NOT_FOUND_SO_PRICE(98099,"未找到销售价目表数据"),
+    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到销售价目明细"),
     ERROR_SO_PRICE_ID_REPEAT(98100,"请选择同一销售价目表下明细进行变更"),
     ERROR_SO_ORDER_ID_REPEAT(98101,"请选择同一销售订单下明细进行变更"),
     SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),
@@ -1530,6 +1578,7 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_CREATE_JSON_HANDLE(92190,"NF-e创建发票json解析失败"),
     ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
     ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
+    ERROR_SO_INFO_EXIST_REF_BILL(92193,"销售订单已存在关联单据【{}】，不支持该操作"),
 
 
 
@@ -1707,7 +1756,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_END(1000000, "系统错误");
+    ;
 
     public Integer code;
     public String msg;

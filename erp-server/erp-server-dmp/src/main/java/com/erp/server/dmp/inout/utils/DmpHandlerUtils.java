@@ -358,7 +358,7 @@ public class DmpHandlerUtils {
 		for(String arr : arrStr) {
 			List<Object> listElement = new ArrayList<>();
 			String[] split = arr.split("@");
-			Map<String, Object> element = null;
+			Map<String, Object> element = new HashMap<>();
 			
 			String key = "";
 			for(Map<String , Object> result : resultList) {

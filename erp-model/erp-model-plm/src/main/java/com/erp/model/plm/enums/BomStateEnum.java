@@ -10,8 +10,7 @@ package com.erp.model.plm.enums;
  */
 public enum BomStateEnum  {
 
-    WAIT_SUBMIT_AUDIT(0, "待提交审核"),
-    WAIT_AUDIT(1, "待审核"),
+    WAIT_SUBMIT_AUDIT(0, "待提交"),
     AUDIT_ING(2, "审核中"),
     AUDIT_NO_PASS(3, "审核不通过"),
     AUDIT_PASS(4, "已归档"),

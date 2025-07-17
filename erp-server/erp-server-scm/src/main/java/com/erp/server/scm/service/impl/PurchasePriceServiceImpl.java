@@ -3,9 +3,11 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -42,12 +44,15 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceExcelListener;
@@ -141,6 +146,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Lazy
     @Resource
     private PurchaseSkuOrgRefService purchaseSkuOrgRefService;
@@ -486,7 +493,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-        approveProcess(entity, type, comment, isNeedProcess);
+        approveProcess(entity, type, comment);
         //添加日志
         moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
@@ -496,7 +503,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
@@ -504,20 +510,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+    public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment) {
         if (ObjectUtils.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        Boolean result;
-        if (type.equals(ScmConstant.PASS)) {
-            //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
-        } else {
-            //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -1094,6 +1092,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    @Override
+    public List<PurchasePriceEntity> listByCodes(List<String> codes) {
+        return this.list(new LambdaQueryWrapper<PurchasePriceEntity>().in(PurchasePriceEntity::getCode, codes).eq(PurchasePriceEntity::getIsDeleted, false));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        PurchasePriceEntity purchasePriceEntity = updateApprovalStatusDTO.getPurchasePriceEntity();
+        updateApproveStatus(Collections.singletonList(purchasePriceEntity), approveStatus);
+    }
+
     /**
      * @description: 提交流程
      * @author Will
@@ -1110,7 +1122,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
             startDTO.setBusinessName(obj.getCode());
             startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
@@ -1126,9 +1138,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      */
-    private void approveProcess (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+    private void approveProcess (PurchasePriceEntity entity, String type, String comment) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -1136,12 +1147,40 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
+        ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(entity,type,comment);
+        }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchasePriceEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PURCHASEPRICE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listDetailByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.PRICE_NOT_EXIST);
+        }
+        //SKU
+        String skuNo = detailList.stream().map(PurchasePriceDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        return variablesMap;
     }
 
     /**

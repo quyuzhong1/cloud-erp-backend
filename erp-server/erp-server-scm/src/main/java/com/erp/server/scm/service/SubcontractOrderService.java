@@ -249,4 +249,8 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @date: 2025-02-18
      */
     void  updateCreatePoTypeBySubcontractOrderIds(List<String> idList);
+
+    List<SubcontractOrderEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

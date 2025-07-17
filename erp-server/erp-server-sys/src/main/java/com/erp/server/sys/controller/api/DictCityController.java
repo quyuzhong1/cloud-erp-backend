@@ -7,15 +7,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCityDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCityService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,6 +183,18 @@ public class DictCityController extends BaseController {
     @GetMapping("/treeList")
     public ApiResult<List<DictCityDTO.ListDTO>> list(@RequestParam("countryCode") String countryCode) {
         List<DictCityDTO.ListDTO> list = dictCityService.listCity(countryCode);
+        return success(list);
+    }
+
+    /**
+     * 全部国家级联
+     * @author will
+     * @date 2025/7/16 14:52
+     * @return ApiResult<List<ListDTO>>
+     */
+    @GetMapping("/countryTreeList")
+    public ApiResult<List<DictCityDTO.ListDTO>> countryTreeList() {
+        List<DictCityDTO.ListDTO> list = dictCityService.countryTreeList();
         return success(list);
     }
 

@@ -31,7 +31,11 @@ public class RocketMqNewTopic {
      * 新中台旺店通销售出库单
      */
     public static final String DMP_WDT_SO_OUTSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_so_outstock_to_wms_topic";
-    
+    /**
+     * 新中台TeMu销售出库单
+     */
+    public static final String DMP_TEMU_SO_OUTSTOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_temu_so_outstock_to_wms_topic";
+
     /**
      * 新中台平台商品
      */
@@ -168,4 +172,9 @@ public class RocketMqNewTopic {
      * 新中台第三方物流渠道
      */
     public static final String DMP_THIRD_LOGISTICS_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_third_logistics_to_dmp_topic";
+
+    /**
+     * 新中台同步飞书审批定义
+     */
+    public static final String DMP_FS_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fs_approvals_to_workflow_topic";
 }

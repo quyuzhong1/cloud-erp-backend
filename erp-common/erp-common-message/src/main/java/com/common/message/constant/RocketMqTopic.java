@@ -14,6 +14,15 @@ public class RocketMqTopic {
     public static final String SYNC_ERP_LOG_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_erp_log_to_sys_topic";
 
     /**
+     * 接收ddl 的变化后的数据库数据
+     */
+    public static final String RECEIVE_DDL_TO_MQ_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-receive_ddl_to_mq_sys_topic";
+    /**
+     * 推送三方通知
+     */
+    public static final String SEND_THIRD_NOTICE_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_sys_topic";
+
+    /**
      * dmp 拉取第三方ERP订单topic
      */
     public static final String DMP_ERP_ORDER_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_erp_pull_topic";
@@ -146,4 +155,13 @@ public class RocketMqTopic {
      */
     public static final String DMP_WECHAT_SUBSCRIBE_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_topic";
 
+    /**
+     *  workflow 同步飞书流程实例
+     */
+    public static final String WORKFLOW_SYNC_FS_INSTANCE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_topic";
+
+    /**
+     *   workflow 同步飞书审批定义
+     */
+    public static final String DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_approvals_to_workflow_topic";
 }

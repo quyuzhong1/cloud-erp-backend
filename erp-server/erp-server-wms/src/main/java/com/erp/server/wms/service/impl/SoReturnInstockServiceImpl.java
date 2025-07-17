@@ -285,12 +285,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(obj.getSoId())).findFirst().orElse(new SoB2cEntity());
                     List<SoB2cDetailEntity> soB2cDetailEntity = soB2cDetailEntityList.stream().filter(detail -> detail.getMainId().equals(soB2cEntity.getId()) && detail.getSkuId().equals(obj.getSkuId())).collect(Collectors.toList());
                     obj.setSalesQty(soB2cDetailEntity.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
-                    if (SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode().equalsIgnoreCase(obj.getSourceType())){
-                        // 平台来源
-                        obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
-                    } else {
-                        obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
-                    }
+                    obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
 
                     obj.setPlatformOrderCode(soB2cEntity.getPlatformCode());
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail ->CharSequenceUtil.isNotBlank(obj.getSoId()) && detail.getSoId().equals(obj.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1684,8 +1679,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         if (CollectionUtils.isNotEmpty(ids)) {
-            //提交
-            transferInfoService.submit(ids, Boolean.TRUE);
+            List<TransferInfoEntity> transferInfoList = transferInfoService.listByIds(ids);
+            if (CollUtil.isNotEmpty(transferInfoList)) {
+                //提交
+                transferInfoList.forEach(obj -> transferInfoService.submit(obj, Boolean.TRUE));
+            }
         }
     }
 
