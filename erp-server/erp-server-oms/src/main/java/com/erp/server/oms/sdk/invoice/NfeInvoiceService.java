@@ -142,10 +142,12 @@ public class NfeInvoiceService {
             return Boolean.FALSE;
         }
         NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
+        String invoiceAddress = "";
         try {
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
+            invoiceAddress = nfeClienteDTO.getRua();
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
@@ -165,6 +167,7 @@ public class NfeInvoiceService {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -211,6 +214,7 @@ public class NfeInvoiceService {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(e.getMessage());
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(e.getMessage(), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -222,6 +226,7 @@ public class NfeInvoiceService {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(JSONUtil.toJsonStr(resultDTO));
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("返回信息：{}",JSONUtil.toJsonStr(resultDTO)), ModuleTypeEnum.INVOICE_INFO.getCode(), soB2cEntity.getId(),"开票失败");
             return Boolean.FALSE;
@@ -237,6 +242,7 @@ public class NfeInvoiceService {
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
         invoiceInfoEntity.setNo(resultDTO.getSerie());
         invoiceInfoEntity.setStartCode(String.valueOf(resultDTO.getNumeroNfe()));
+        invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
 
         //上传xml、pdf
@@ -614,7 +620,7 @@ public class NfeInvoiceService {
             price = detailEntity.getPrice();
         }
         if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.CUSTOM.getCode())) {
-            price = MathUtil.multiplyWithTwo(detailEntity.getPrice(),ratio) ;
+            price = MathUtil.divide(MathUtil.multiplyWithTwo(detailEntity.getPrice(),ratio), MathUtil.BigDecimal_100);
         }
         if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode())) {
             price = MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;

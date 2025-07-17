@@ -154,6 +154,11 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
      */
     @TableField("start_code")
     private String startCode;
+    /**
+     * 发票地址
+     */
+    @TableField(exist = false)
+    private String invoiceAddress;
 
     public static final String CODE = "code";
 

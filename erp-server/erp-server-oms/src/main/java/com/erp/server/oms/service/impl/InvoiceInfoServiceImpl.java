@@ -866,6 +866,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             nfeInvoiceStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
         }
         soB2cService.updateNfeInvoiceStatus(invoiceInfoEntity.getSoId(),nfeInvoiceStatus);
+        soB2cReceiverService.updateInvoiceAddress(invoiceInfoEntity.getSoId(),invoiceInfoEntity.getInvoiceAddress());
         //更新开票清单数据
         this.updateById(invoiceInfoEntity);
     }
