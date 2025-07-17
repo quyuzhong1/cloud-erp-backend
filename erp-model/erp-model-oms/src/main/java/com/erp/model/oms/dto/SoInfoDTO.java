@@ -413,6 +413,10 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
 
         /**
          * 汇率

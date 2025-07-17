@@ -506,7 +506,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
                     String customerPO = soDetailEntity.getCustomerPO();
                     String toCountry = soDetailEntity.getToCountry();
-                    String pickRemark = soDetailEntity.getRemark();
+                    String pickRemark = soDetailEntity.getPickRemark();
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
                     if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
@@ -984,7 +984,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     SoDetailEntity soDetailEntity = finalSoDetailEntityList.stream().filter(v -> v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST));
                     String customerPO = soDetailEntity.getCustomerPO();
                     String toCountry = soDetailEntity.getToCountry();
-                    String pickRemark = soDetailEntity.getRemark();
+                    String pickRemark = soDetailEntity.getPickRemark();
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
                     if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
