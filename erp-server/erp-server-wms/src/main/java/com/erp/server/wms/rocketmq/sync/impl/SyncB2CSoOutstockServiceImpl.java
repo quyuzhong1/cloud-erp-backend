@@ -27,7 +27,9 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -466,13 +468,24 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SoB2cDetailEntity> handleDetailList = new ArrayList<>();
         for (TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO : detailList) {
             String erpWarehouseId = warehouseMappingDTOS.stream().filter(v->v.getThirdWarehouseCode().equals(teMuSoOutStockDetailDTO.getPlatformWarehouseCode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).findFirst().orElse(null);
-            if(StringUtils.isBlank(erpWarehouseId)){
-                throw new ServiceException("Temu平台仓库映射未配置，平台仓库编码：{}",teMuSoOutStockDetailDTO.getPlatformWarehouseCode());
-            }
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
             if(Objects.isNull(soB2cDetailEntity)){
                 log.warn("同步temu销售出库单失败，未查询到对应的销售订单明细，平台订单号：{}，平台sku编号：{}", entity.getPlatformOrderCode(), teMuSoOutStockDetailDTO.getPlatformSkuNo());
                 continue;
+            }
+            if(StringUtils.isBlank(erpWarehouseId)){
+                String soB2cId = soB2cEntity.getId();
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                String paramJson = JSONUtil.toJsonStr(entity);
+                String message = "Temu平台仓库映射未配置，平台仓库编码："+teMuSoOutStockDetailDTO.getPlatformWarehouseCode();
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(soB2cId);
+                addError.setMessage(message);
+                addError.setParamJson(paramJson);
+                addError.setDetailId(soB2cDetailEntity.getId());
+                soB2cFeign.addSoB2cError(addError);
+                throw new ServiceException("Temu平台仓库映射未配置，平台仓库编码：{}",teMuSoOutStockDetailDTO.getPlatformWarehouseCode());
             }
             soB2cDetailEntity.setWarehouseId(erpWarehouseId);
             WarehouseEntity warehouse = warehouseEntityList.stream().filter(w->w.getId().equals(soB2cDetailEntity.getWarehouseId())).findFirst().orElse(null);
