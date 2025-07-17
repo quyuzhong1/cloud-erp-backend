@@ -374,6 +374,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return;
         }
 
+        // //保存mq消费记录
+        String id = mqConsumerRecordService.addMqRecord(dto);
+        if (StringUtils.isBlank(id)) {
+            log.error("保存MQ消费记录失败");
+            return;
+        }
+
         List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
 
         //三方通知配置--规则条件
@@ -392,12 +399,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //获取到符合条件的配置
         if(isQualifiedCfgIds.size() > 0){
             dto.setIsQualifiedCfgIds(isQualifiedCfgIds);
-            // //保存mq消费记录
-            String id = mqConsumerRecordService.addMqRecord(dto);
-            if (StringUtils.isBlank(id)) {
-                log.error("保存MQ消费记录失败");
-                return;
-            }
             //设置记录ID并触发通知
             dto.setMqConsumerRecordId(id);
             sendThirdNoticeByMq(dto);
@@ -584,10 +585,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         if(CollUtil.isEmpty(fieldList)){
             return;
         }
-//        //校验规则条件
-//        if (!checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
-//            return ;
-//        }
         //根据通知方式查找人员 目前只有飞书
         if (StringUtils.isNotBlank(noticeEntity.getNoticeMethod())) {
             List<String> noticeMethodList = Arrays.asList(noticeEntity.getNoticeMethod().split(","));
