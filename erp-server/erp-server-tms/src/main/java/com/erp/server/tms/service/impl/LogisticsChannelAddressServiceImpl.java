@@ -1,9 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
 import com.erp.model.tms.entity.LogisticsChannelAddressEntity;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
@@ -15,7 +19,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -71,8 +77,18 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
 
     @Override
     public List<LogisticsChannelAddressDTO.ViewDTO> listByChannelId(String channelId) {
-
-        return baseMapper.listByChannelId(channelId);
+        List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = baseMapper.listByChannelId(channelId);
+        if (CollUtil.isEmpty(viewDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> shopIdList = viewDTOS.stream().map(LogisticsChannelAddressDTO.ViewDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(shopIdList)){
+            return viewDTOS;
+        }
+        List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+        Map<String, String> shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        viewDTOS.forEach(obj -> obj.setShopName(shopNameMap.get(obj.getShopId())));
+        return viewDTOS;
     }
 
     @Override
