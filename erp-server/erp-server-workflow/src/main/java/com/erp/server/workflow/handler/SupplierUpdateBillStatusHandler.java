@@ -371,6 +371,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);
             approveTaskInfoService.updateById(taskInfo);
+
+            //添加三方流程记录
+            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+                thirdProcessManagementService.addOrUpdate(instanceEntity.getThirdJson(), thirdProcessEntity.getSourcePlatform());
+            }
         }
     }
 

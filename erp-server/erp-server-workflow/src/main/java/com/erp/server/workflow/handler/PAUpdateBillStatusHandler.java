@@ -310,6 +310,11 @@ public class PAUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setReason(reason);
             //保存三方生成查询
             taskInfoService.updateById(taskInfo);
+
+            //添加三方流程记录
+            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+                thirdProcessManagementService.addOrUpdate(instanceEntity.getThirdJson(), thirdProcessEntity.getSourcePlatform());
+            }
         }
     }
 
