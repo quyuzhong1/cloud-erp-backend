@@ -1754,12 +1754,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             List<String> uids = sysUserThird.stream().map(SysUserThirdEntity::getUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             //获取飞书平台
             List<SysUserInfoEntity> list = lambdaQuery()
-                    .eq(SysUserInfoEntity::getUid, uids)
+                    .in(SysUserInfoEntity::getUid, uids)
                     .eq(SysUserInfoEntity::getUserState, 1)
-                    .list()
-                    .stream().filter(e -> StringUtils.isNotBlank(e.getMobile()))
+                    .list();
+            list = list.stream().filter(e -> StringUtils.isNotBlank(e.getMobile()))
                     .collect(Collectors.toList());
-
             if(CollUtil.isNotEmpty(list)){
                 // 分割为每 50 条数据一个子列表
                 List<List<SysUserInfoEntity>> partitions = splitList(list, 50);
