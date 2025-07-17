@@ -10,6 +10,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -27,7 +28,7 @@ import com.erp.server.workflow.service.ApproveTaskInfoService;
 import com.erp.server.workflow.service.CfgProcessFieldMapService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.erp.server.workflow.service.ThirdProcessManagementService;
-import groovy.util.logging.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -106,6 +107,9 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             contractStampStatusParamsDTO.setIds(Arrays.asList(list.get(0).getId()));
             //根据审核状态更新合同盖章状态
             handleContractStatus(contractStampStatusParamsDTO,status);
+
+            log.warn("采购订单数据转换完成，单据信息：{}", JSONUtil.toJsonStr(contractStampStatusParamsDTO));
+
             //查询三方生成查询
             ApproveTaskInfoEntity taskInfoEntity = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode())).eq(ApproveTaskInfoEntity::getIsDeleted, false));
             if (ObjectUtil.isEmpty(taskInfoEntity)){
@@ -158,6 +162,8 @@ public class POUpdateBillStatusHandler implements CreateBillHandler {
             PurchaseOrderDTO.ContractStampStatusParamsDTO contractStampStatusParamsDTO = new PurchaseOrderDTO.ContractStampStatusParamsDTO();
             contractStampStatusParamsDTO.setIds(Arrays.asList(list.get(0).getId()));
             handleContractStatus(contractStampStatusParamsDTO,taskInfo.getStatus());
+
+            log.warn("采购订单数据转换完成，单据信息：{}", JSONUtil.toJsonStr(contractStampStatusParamsDTO));
             try {
                 purchaseOrderFeign.updateContractStatusById(contractStampStatusParamsDTO);
                 taskInfo.setBussinessCode(list.get(0).getCode());
