@@ -27,6 +27,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.dto.excel.B2CCustomerImportExcelDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -339,6 +340,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     public void updateInvoiceAddress(String soId, String invoiceAddress) {
         if (CharSequenceUtil.isNotBlank(soId)){
             this.lambdaUpdate().eq(SoB2cReceiverEntity::getMainId,soId).set(SoB2cReceiverEntity::getInvoiceAddress,invoiceAddress).update();
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单开票地址为：{}", invoiceAddress), ModuleTypeEnum.SO_B2C.getCode(), soId,"更新开票地址");
         }
     }
 
