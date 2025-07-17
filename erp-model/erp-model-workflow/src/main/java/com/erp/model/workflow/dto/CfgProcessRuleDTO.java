@@ -55,7 +55,7 @@ public class CfgProcessRuleDTO implements Serializable {
         /**
         * 版本
         */
-        private String processDefinitionVersion;
+        private Integer processDefinitionVersion;
 
         /**
         * 是否默认
@@ -129,9 +129,8 @@ public class CfgProcessRuleDTO implements Serializable {
         /**
         * 版本
         */
-        @NotBlank(message = "版本不能为空")
-        @Size(max = 100,message = "版本最大长度不能超过100位")
-        private String processDefinitionVersion;
+        @NotNull(message = "版本不能为空")
+        private Integer processDefinitionVersion;
 
         /**
         * 是否默认

@@ -208,10 +208,10 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
                 // 分组后计算分组的数量
                 Map<String, Long> groupCountMap = processManagementEntities.stream()
-                        .collect(Collectors.groupingBy(ProcessManagementEntity::getProcessDefinitionId, Collectors.counting()));
+                        .collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getProcessDefinitionId(),obj.getProcessVersion()), Collectors.counting()));
 
                 for (CfgProcessRuleEntity item : value) {
-                    Long a = groupCountMap.get(item.getProcessDefinitionId());
+                    Long a = groupCountMap.get( CharSequenceUtil.format("{}-{}",item.getProcessDefinitionId(),item.getProcessDefinitionVersion()));
                     if (a != null && a.compareTo(0L) > 0) {
                         errmsg.append(dIdToNameMap.get(CharSequenceUtil.format("{}-{}",item.getProcessDefinitionId(),item.getProcessDefinitionVersion())));
                     }
@@ -366,7 +366,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         //erp流程定义id
         List<String> processDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
         //erp流程定义版本
-        List<Integer> processDefinitionVersionList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(obj -> Integer.parseInt(obj.getProcessDefinitionVersion())).distinct().collect(Collectors.toList());
+        List<Integer> processDefinitionVersionList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.ERPPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionVersion).distinct().collect(Collectors.toList());
         //fs流程定义id
         List<String> fsProcessDefinitionIdList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgProcessRuleTypeEnum.FSPROCESS.getCode())).map(CfgProcessRuleEntity::getProcessDefinitionId).distinct().collect(Collectors.toList());
 
