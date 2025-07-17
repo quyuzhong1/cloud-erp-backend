@@ -32,6 +32,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String platformCode;
 
     /**
+     * erp销售订单号
+     */
+    private String soCode;
+
+    /**
      * 店铺id
      */
     private String shopId;
@@ -72,6 +77,8 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 是否线上订单
      */
     private boolean onlineFlag;
+
+    private String fileData;
 
     /**
      * 线上订单物流单号

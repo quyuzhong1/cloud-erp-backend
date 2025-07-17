@@ -20,6 +20,49 @@ public enum WeiShiEnums {
         this.enumClz = enumClz;
     }
 
+
+    /**
+     * 出库单状态
+     */
+    @Getter
+    public enum OrderStatusEnum {
+        PENDING_MOVES("0","草稿", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        TO_BE_GENERATED("1","提交", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        TO_BE_PICKED("2","待拣货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        TO_BE_PACKED("3","拣货中", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        IN_THE_PACKAGE("4","拣货完成", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        TO_BE_SHIPPED("5","打包完成", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
+        SHIPPED("6","出库完成", SoB2cBillStatusEnum.ENUM_SHIPPED),
+        CANCELED("9","已取消", SoB2cBillStatusEnum.ENUM_DISUSE),
+        ;
+        private final String code;
+        private final String name;
+        private final SoB2cBillStatusEnum erpSoStatus;
+
+        OrderStatusEnum(String code, String name,SoB2cBillStatusEnum erpSoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpSoStatus;
+        }
+
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OrderStatusEnum::getErpSoStatus)
+                    .map(SoB2cBillStatusEnum::getCode)
+                    .orElse("");
+        }
+
+        public static String getName(String code){
+            return Arrays.stream(OrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(OrderStatusEnum::getName)
+                    .orElse(null);
+        }
+    }
+
     /**
      * 运输方式
      */
@@ -85,50 +128,6 @@ public enum WeiShiEnums {
         }
     }
 
-    /**
-     * 出库单状态
-     */
-    @Getter
-    public enum OrderStatusEnum {
-        PENDING_MOVES("1","待移货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        TO_BE_GENERATED("2","待生成", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        TO_BE_PICKED("3","待拣货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        TO_BE_PACKED("4","待包装", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        IN_THE_PACKAGE("5","包装中", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        TO_BE_SHIPPED("6","待发货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        SHIPPED("7","已发货", SoB2cBillStatusEnum.ENUM_SHIPPED),
-        ABNORMAL("8","异常", SoB2cBillStatusEnum.ENUM_EXCEPTION),
-        CANCELED("9","已取消", SoB2cBillStatusEnum.ENUM_EXCEPTION),
-        GETTING_IT("10","获取中",SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
-        FAILED_TO_GET("11","获取失败",SoB2cBillStatusEnum.ENUM_EXCEPTION),
-        ;
-        private final String code;
-        private final String name;
-        private final SoB2cBillStatusEnum erpSoStatus;
-
-        OrderStatusEnum(String code, String name,SoB2cBillStatusEnum erpSoStatus) {
-            this.code = code;
-            this.name = name;
-            this.erpSoStatus = erpSoStatus;
-        }
-
-        public static String getErpOrderStatus(String code){
-            return Arrays.stream(OrderStatusEnum.values())
-                    .filter(item -> code.equals(item.getCode()))
-                    .findFirst()
-                    .map(OrderStatusEnum::getErpSoStatus)
-                    .map(SoB2cBillStatusEnum::getCode)
-                    .orElse("");
-        }
-
-        public static String getName(String code){
-            return Arrays.stream(OrderStatusEnum.values())
-                    .filter(item -> code.equals(item.getCode()))
-                    .findFirst()
-                    .map(OrderStatusEnum::getName)
-                    .orElse(null);
-        }
-    }
     /**
      * 出库单拦截状态
      */

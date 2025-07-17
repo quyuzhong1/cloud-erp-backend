@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OverseasInstockStatusEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -52,8 +54,11 @@ public class WeiShiInboundInitHandler extends DmpInputInitHandler {
         List<WeiShiInboundResp.RowsDTO> allResult = new ArrayList<>();
         
         if(CollUtil.isNotEmpty(receiveCodeList)) {
-            
-            List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.JIFENG.getCode()));
+
+			List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+					.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+					.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEI_SHI.getCode())
+					.list();
             if(CollUtil.isEmpty(overseasProviderEntityList)) {
             	throw new ServiceException("纬狮授权信息不存在");
             }
@@ -75,15 +80,15 @@ public class WeiShiInboundInitHandler extends DmpInputInitHandler {
 				if(!weiShiInboundResp.getCode().equals(200)){
 					throw new ServiceException("纬狮获取入库单列表失败: " + weiShiInboundResp.getMsg());
 				}
-				if (CollUtil.isEmpty(weiShiInboundResp.getData().getRows())) {
+				if (CollUtil.isEmpty(weiShiInboundResp.getData().getList())) {
 					return Collections.emptyList();
 				}
-				weiShiInboundResp.getData().getRows().forEach(v->{
+				weiShiInboundResp.getData().getList().forEach(v->{
 					v.getInboundBoxList().forEach(box -> {
 						box.setFinishPutawayTime(v.getFinishPutawayTime());
 					});
 				});
-				allResult.addAll(weiShiInboundResp.getData().getRows());
+				allResult.addAll(weiShiInboundResp.getData().getList());
 			}
             
         }

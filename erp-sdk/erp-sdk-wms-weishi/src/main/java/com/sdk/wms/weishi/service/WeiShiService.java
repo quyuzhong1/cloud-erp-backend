@@ -21,9 +21,9 @@ import java.util.Map;
 @Component
 public class WeiShiService {
 
-    private final String preUrl = "http://218.17.123.141:808/prod-api";
+    private final String preUrl = "https://test8.toms.360lion.com:2444";
 
-    private final String api = "/omsapi/api";
+    private final String api = "/prod-api/omsapi/api";
 
     private final String apiUrl = preUrl + api;
 
@@ -40,7 +40,7 @@ public class WeiShiService {
     }
 
     public WeiShiBaseResp<WeiShiTokenResp> accessToken(Map<String,Object> authMap){
-        String path = "/omsapi/auth/omsLoginBySecretKey/" + authMap.get("appKey").toString();
+        String path = "/prod-api/omsapi/auth/omsLoginBySecretKey/" + authMap.get("appKey").toString();
         String bodyStr = OkHttpUtils.doGet(preUrl +path, new HashMap<>(), new HashMap<>());
         return WeiShiUtils.parseToJiFengResp(bodyStr, WeiShiTokenResp.class);
     }
@@ -299,6 +299,53 @@ public class WeiShiService {
         String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiChannelResp>>>() {});
     }
+
+
+    /**
+     * 创建出库单
+     * @return
+     */
+    public WeiShiBaseResp<WeiShiCreateOutboundResp> createOutbound(WeiShiCreateOutboundRequest weiShiCreateOutboundRequest,Map<String,Object> authMap){
+        String action = "createSkuOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateOutboundRequest));
+        bodyMap.put("version", "2.0");
+        log.warn("纬狮创建出库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateOutboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiCreateOutboundResp>>() {});
+    }
+
+    /**
+     * 取消出库单
+     * @return
+     */
+    public WeiShiBaseResp<String> cancelOutbound(WeiShiCancelOutboundRequest weiShiCancelOutboundRequest,Map<String,Object> authMap){
+        String action = "cancelSkuOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
+        log.warn("纬狮取消出库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
+    }
+
+    /**
+     * 出库单查询
+     * @return
+     */
+    public WeiShiBaseResp<WeiShiOutboundResp> getOutbound(WeiShiGetOutboundRequest weiShiGetOutboundRequest,Map<String,Object> authMap){
+        String action = "getSkuOrderDetail";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiOutboundResp>>() {});
+    }
+
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
