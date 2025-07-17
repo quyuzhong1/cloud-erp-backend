@@ -19,8 +19,8 @@ public class WeiShiInboundResp {
 
     @JsonProperty("total")
     private Integer total;
-    @JsonProperty("rows")
-    private List<RowsDTO> rows;
+    @JsonProperty("list")
+    private List<RowsDTO> list;
 
     @NoArgsConstructor
     @Data

@@ -106,7 +106,7 @@ public class WeiShiServiceTest {
                         .street("测试街道")
                         .build())
                 .trackingNo("1234567890")
-                .destWarehouseCode("MXW1")
+                .destWarehouseCode("WTST")
                 .expectedArriveDate(LocalDateTime.now().plusDays(2).format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
                 .inboundBoxList(Arrays.asList(
                         WeiShiCreateInboundRequest.InboundBoxListDTO.builder()
@@ -118,7 +118,7 @@ public class WeiShiServiceTest {
                                 .sysBoxSeq(1)
                                 .inboundSkuList(Arrays.asList(
                                         WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO.builder()
-                                                .skuCode("TQ029")
+                                                .skuCode("Bar_PQ008")
                                                 .quantity(10)
                                                 .build()
                                 ))
@@ -155,7 +155,7 @@ public class WeiShiServiceTest {
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
         WeiShiQueryInboundRequest weiShiProductRequest = new WeiShiQueryInboundRequest();
-        weiShiProductRequest.setOrderNoList(Arrays.asList("RV2409190001"));
+        weiShiProductRequest.setOrderNoList(Arrays.asList("RV012507170007"));
         weiShiProductRequest.setPageSize(50);
         weiShiProductRequest.setPageNum(1);
         WeiShiBaseResp<WeiShiInboundResp>  resp = weiShiService.getInbound(weiShiProductRequest,authMap);
@@ -171,29 +171,43 @@ public class WeiShiServiceTest {
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = WeiShiCreateOutboundRequest.builder()
                 .referNo("WJTEST0717001")
-                .warehouseCode("DGCK")
+                .warehouseCode("WTST")
                 .platformCode("OTHER")
                 .orderType(0)
-                .productCode("WBR1006")
+                .productCode("WMX1008")
                 .remark("123456")
                 .useSpecifiedMaterial("false")
                 .skuList(Arrays.asList(WeiShiCreateOutboundRequest.SkuListDTO.builder()
-                                .skuCode("TETS0001")
+                                .skuCode("PQ008")
                                 .quantity(1)
                         .build()))
                 .recipient(WeiShiCreateOutboundRequest.RecipientDTO.builder()
-                        .name("测试")
-                        .taxno("1234567890")
-                        .postcode("123415")
-                        .mobile("13800138000")
-                        .email("TETS0001")
-                        .state("广东省")
-                        .city("深圳市")
-                        .street("测试街道")
-                        .countrycode("CN")
+                        .name("Bryan Emilio Garces")
+                        .taxno("")
+                        .postcode("93230")
+                        .mobile("5538039447")
+                        .email("123456@163.com")
+                        .state("Veracruz")
+                        .city("Poza Rica De Hidalgo")
+                        .street("Las Palmas  Referencia: En Restaurante Leggero Entre: Calle 3 y Calle 7")
+                        .countrycode("MX")
                         .build())
                 .build();
         WeiShiBaseResp<WeiShiCreateOutboundResp>  resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void cancelOutbound() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiCancelOutboundRequest weiShiCreateOutboundRequest = new WeiShiCancelOutboundRequest();
+        weiShiCreateOutboundRequest.setOrderNo("SU0151982327016");
+        weiShiCreateOutboundRequest.setReason("测试");
+        WeiShiBaseResp<String>  resp = weiShiService.cancelOutbound(weiShiCreateOutboundRequest,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
@@ -205,7 +219,7 @@ public class WeiShiServiceTest {
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
         WeiShiLogisticProductRequest weiShiProductRequest = new WeiShiLogisticProductRequest();
-        weiShiProductRequest.setWarehouseCode("DGCK");
+        weiShiProductRequest.setWarehouseCode("WTST");
         weiShiProductRequest.setIsMultiPackage(0);
         WeiShiBaseResp<List<WeiShiChannelResp>>  resp = weiShiService.getLogisticProductList(weiShiProductRequest,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
