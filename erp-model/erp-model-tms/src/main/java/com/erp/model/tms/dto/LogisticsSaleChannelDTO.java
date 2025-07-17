@@ -243,6 +243,10 @@ public class LogisticsSaleChannelDTO implements Serializable {
          */
         @NotBlank(message = "服务系统不能为空")
         private String servicePlatform;
+        /**
+         * 模糊搜索
+         */
+        private String searchKeyword;
     }
 
     @Data
