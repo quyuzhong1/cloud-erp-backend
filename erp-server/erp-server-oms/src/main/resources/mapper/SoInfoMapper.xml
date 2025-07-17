@@ -399,7 +399,7 @@
             sd.qty as qty
         from so_detail sd
         inner join so_info si on sd.main_id = si.id and si.is_deleted = false
-        left join product_detail pd on pd.id = sd.sku_id and pd.is_deleted = false
+        left join foreign_product_detail pd on pd.id = sd.sku_id and pd.is_deleted = false
         where sd.is_deleted = false and si.approve_status = 'approve' and sd.id in
         <foreach collection="ids" open="(" close=")" separator="," item="item">
             #{item}
