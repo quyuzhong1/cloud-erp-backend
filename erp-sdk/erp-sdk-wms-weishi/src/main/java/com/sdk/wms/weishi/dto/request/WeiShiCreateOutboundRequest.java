@@ -1,6 +1,7 @@
 package com.sdk.wms.weishi.dto.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,77 +18,81 @@ import java.util.List;
 @SuperBuilder
 public class WeiShiCreateOutboundRequest {
 
-    @JSONField(name = "warehouse")
-    private String warehouse;
-    @JSONField(name = "erpNo")
-    private String erpNo;
-    @JSONField(name = "platform")
-    private String platform;
-    @JSONField(name = "platformOrderNo")
-    private String platformOrderNo;
-    @JSONField(name = "buyerName")
-    private String buyerName;
-    @JSONField(name = "buyerPhone")
-    private String buyerPhone;
-    @JSONField(name = "recipientCountry")
-    private String recipientCountry;
-    @JSONField(name = "recipientProvince")
-    private String recipientProvince;
-    @JSONField(name = "recipientCity")
-    private String recipientCity;
-    @JSONField(name = "recipientArea")
-    private String recipientArea;
-    @JSONField(name = "recipientAddress")
-    private String recipientAddress;
-    @JSONField(name = "recipientAddress2")
-    private String recipientAddress2;
-    @JSONField(name = "recipientEmail")
-    private String recipientEmail;
-    @JSONField(name = "zipCode")
-    private String zipCode;
-    @JSONField(name = "taxId")
-    private String taxId;
-    @JSONField(name = "recipientCompany")
-    private String recipientCompany;
-    @JSONField(name = "type")
-    private Integer type;
-    @JSONField(name = "logisticsId")
-    private Integer logisticsId;
-    @JSONField(name = "logisticsName")
-    private String logisticsName;
-    @JSONField(name = "amount")
-    private Integer amount;
-    @JSONField(name = "currency")
-    private String currency;
-    @JSONField(name = "trackingNo")
-    private String trackingNo;
-    @JSONField(name = "labelUrl")
-    private String labelUrl;
-    @JSONField(name = "expireTime")
-    private String expireTime;
-    @JSONField(name = "skuList")
+    @JsonProperty("referNo")
+    private String referNo;
+    @JsonProperty("warehouseCode")
+    private String warehouseCode;
+    @JsonProperty("platformCode")
+    private String platformCode;
+    @JsonProperty("orderType")
+    private Integer orderType;
+    @JsonProperty("hasAddedServices")
+    private String hasAddedServices;
+    @JsonProperty("addedServicesDetail")
+    private AddedServicesDetailDTO addedServicesDetail;
+    @JsonProperty("pickupTime")
+    private String pickupTime;
+    @JsonProperty("productCode")
+    private String productCode;
+    @JsonProperty("remark")
+    private String remark;
+    @JsonProperty("labelFile")
+    private Object labelFile;
+    @JsonProperty("useSpecifiedMaterial")
+    private String useSpecifiedMaterial;
+    @JsonProperty("materialCode")
+    private String materialCode;
+    @JsonProperty("skuList")
     private List<SkuListDTO> skuList;
-    @JSONField(name = "packageType")
-    private Integer packageType;
-    @JSONField(name = "pickingNote")
-    private String pickingNote;
+    @JsonProperty("recipient")
+    private RecipientDTO recipient;
 
-    @NoArgsConstructor
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @SuperBuilder
+    public static class AddedServicesDetailDTO {
+        @JsonProperty("addedServicesAmount")
+        private Double addedServicesAmount;
+        @JsonProperty("addedServicesCurrency")
+        private String addedServicesCurrency;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @SuperBuilder
+    public static class RecipientDTO {
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("taxno")
+        private String taxno;
+        @JsonProperty("company")
+        private Object company;
+        @JsonProperty("postcode")
+        private String postcode;
+        @JsonProperty("mobile")
+        private String mobile;
+        @JsonProperty("email")
+        private String email;
+        @JsonProperty("state")
+        private String state;
+        @JsonProperty("city")
+        private String city;
+        @JsonProperty("street")
+        private String street;
+        @JsonProperty("countrycode")
+        private String countrycode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @SuperBuilder
     public static class SkuListDTO {
-        @JSONField(name = "skuId")
-        private Integer skuId;
-        @JSONField(name = "sku")
-        private String sku;
-        @JSONField(name = "num")
-        private Integer num;
-        @JSONField(name = "unitPrice")
-        private Integer unitPrice;
-        @JSONField(name = "itemNameEn")
-        private String itemNameEn;
-        @JSONField(name = "itemNameCn")
-        private String itemNameCn;
-        @JSONField(name = "hsCode")
-        private String hsCode;
+        @JsonProperty("skuCode")
+        private String skuCode;
+        @JsonProperty("quantity")
+        private Integer quantity;
     }
 }

@@ -33,13 +33,9 @@ public class WeiShiServiceTest {
     }
 
     @Test
-    public void getWarehouseList() {
-    }
-
-    @Test
     public void querySkuList() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -51,10 +47,24 @@ public class WeiShiServiceTest {
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
+
+    @Test
+    public void getWarehouseList() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiStockRequest weiShiProductRequest = new WeiShiStockRequest();
+        weiShiProductRequest.setAuthMap(authMap);
+        WeiShiBaseResp<List<WeiShiWarehouseResp>>  resp = weiShiService.getWarehouseList(authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
     @Test
     public void getStockAll() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -67,7 +77,7 @@ public class WeiShiServiceTest {
     @Test
     public void queryStockSkuAgeList() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -79,7 +89,7 @@ public class WeiShiServiceTest {
     @Test
     public void createInbound() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -96,11 +106,11 @@ public class WeiShiServiceTest {
                         .street("测试街道")
                         .build())
                 .trackingNo("1234567890")
-                .destWarehouseCode("DGCK")
+                .destWarehouseCode("MXW1")
                 .expectedArriveDate(LocalDateTime.now().plusDays(2).format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
                 .inboundBoxList(Arrays.asList(
                         WeiShiCreateInboundRequest.InboundBoxListDTO.builder()
-                                .boxCode("BOX001")
+                                .boxCode("FHDTEST0717001")
                                 .boxLength("1")
                                 .boxWeight("2")
                                 .boxHeight("3")
@@ -108,12 +118,8 @@ public class WeiShiServiceTest {
                                 .sysBoxSeq(1)
                                 .inboundSkuList(Arrays.asList(
                                         WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO.builder()
-                                                .skuCode("A001-red-testttt")
+                                                .skuCode("TQ029")
                                                 .quantity(10)
-                                                .build(),
-                                        WeiShiCreateInboundRequest.InboundBoxListDTO.InboundSkuListDTO.builder()
-                                                .skuCode("A001-red-ddddd")
-                                                .quantity(5)
                                                 .build()
                                 ))
                                 .build()
@@ -131,7 +137,7 @@ public class WeiShiServiceTest {
     @Test
     public void cancelInbound() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -144,7 +150,7 @@ public class WeiShiServiceTest {
     @Test
     public void getInbound() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
@@ -157,9 +163,44 @@ public class WeiShiServiceTest {
     }
 
     @Test
+    public void createOutbound() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = WeiShiCreateOutboundRequest.builder()
+                .referNo("WJTEST0717001")
+                .warehouseCode("DGCK")
+                .platformCode("OTHER")
+                .orderType(0)
+                .productCode("WBR1006")
+                .remark("123456")
+                .useSpecifiedMaterial("false")
+                .skuList(Arrays.asList(WeiShiCreateOutboundRequest.SkuListDTO.builder()
+                                .skuCode("TETS0001")
+                                .quantity(1)
+                        .build()))
+                .recipient(WeiShiCreateOutboundRequest.RecipientDTO.builder()
+                        .name("测试")
+                        .taxno("1234567890")
+                        .postcode("123415")
+                        .mobile("13800138000")
+                        .email("TETS0001")
+                        .state("广东省")
+                        .city("深圳市")
+                        .street("测试街道")
+                        .countrycode("CN")
+                        .build())
+                .build();
+        WeiShiBaseResp<WeiShiCreateOutboundResp>  resp = weiShiService.createOutbound(weiShiCreateOutboundRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
     public void getLogisticProductList() {
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
         WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
