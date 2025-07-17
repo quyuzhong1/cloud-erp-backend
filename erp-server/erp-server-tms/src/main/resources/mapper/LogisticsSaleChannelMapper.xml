@@ -89,14 +89,13 @@
             <if test="params.servicePlatform != null and params.servicePlatform != ''">
                 AND t.service_platform ILIKE concat('%',#{params.servicePlatform}::text,'%')
             </if>
-            group by t.code
-
+            group by t.code,t.cn_name
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 order by
                 case when t.cn_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
                 when t.cn_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
                 when t.cn_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-                end , t.cn_name,
+                end , t.cn_name
             </if>
         ) wls
     </select>
