@@ -37,8 +37,8 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
-import lombok.extern.slf4j.Slf4j;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -171,8 +171,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);
             approveTaskInfoService.add(taskInfo);
+            //添加三方流程记录
+            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+                thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
+            }
         }
-        thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
     /**
