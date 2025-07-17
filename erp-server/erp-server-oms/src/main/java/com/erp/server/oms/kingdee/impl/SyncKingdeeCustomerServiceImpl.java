@@ -208,7 +208,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));
-        String useOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getUseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+//        String useOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getUseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+        String useOrgCode = "100";//客户是分配机制，所以要固定传递到唯迹，然后进行分配
         //使用组织
         resultMap.put("useOrgCode", useOrgCode);
         List<DictBasicDTO.ViewDTO> customerCompanyCategory = dictBasicService.getByKey("customerCompanyCategory");

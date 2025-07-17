@@ -31,6 +31,33 @@
         is_deleted,
         code, logistics_track_url, name, sales_platform
     </sql>
+    <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$CommonDTO">
+        select id,code,name as value
+        from
+        (
+            select
+            lc.id,
+            lc.code,
+            lc.name
+            from tms_carrier lc
+            where
+            lc.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and lc.name ilike concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+            <if test="params.salesPlatform != null and params.salesPlatform != ''">
+                and lc.sales_platform=#{params.salesPlatform}
+            </if>
+            order by
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , lc.name,
+            </if>
+            lc.update_time desc
+        ) wls
+    </select>
 
 
 </mapper>

@@ -174,6 +174,13 @@ public class LogisticsAddressController extends BaseController {
         List<LogisticsAddressDTO.ListDTO> list = logisticsAddressService.listByType(type);
         return success(list);
     }
-
+    /**
+     * 根据地址类型获取地址列表远程搜索
+     * @return
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<LogisticsAddressDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.SelectDTO> dto){
+        return success(logisticsAddressService.pagingSelect(dto));
+    }
 
 }
