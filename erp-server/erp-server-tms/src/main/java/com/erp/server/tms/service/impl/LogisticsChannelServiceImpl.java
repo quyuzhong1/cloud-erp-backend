@@ -305,7 +305,12 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return;
         }
         List<TmsCarrierEntity> carrierList = tmsCarrierService.list();
+        List<String> saleChannelIds = mappingList.stream().map(LogisticsMappingDTO.ViewDTO::getPlatformLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = logisticsSaleChannelService.listByIds(saleChannelIds);
+        Map<String, String> saleChannelMap = logisticsSaleChannelEntities.stream().collect(Collectors.toMap(LogisticsSaleChannelEntity::getId, LogisticsSaleChannelEntity::getCnName));
+
         for (LogisticsMappingDTO.ViewDTO viewDTO : mappingList) {
+            viewDTO.setPlatformLogisticsChannelName(saleChannelMap.get(viewDTO.getPlatformLogisticsChannelId()));
             if (StringUtils.isBlank(viewDTO.getCarrierCode())) {
                 continue;
             }
