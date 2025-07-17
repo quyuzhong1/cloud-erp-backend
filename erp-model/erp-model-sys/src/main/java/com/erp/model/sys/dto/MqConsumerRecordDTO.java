@@ -169,4 +169,15 @@ public class MqConsumerRecordDTO implements Serializable {
          */
         private List<String> isQualifiedCfgIds;
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TestPushDTO {
+
+        private Object json;
+
+    }
 }
