@@ -332,6 +332,20 @@ public class WeiShiService {
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
+    /**
+     * 出库单查询
+     * @return
+     */
+    public WeiShiBaseResp<WeiShiOutboundResp> getOutbound(WeiShiGetOutboundRequest weiShiGetOutboundRequest,Map<String,Object> authMap){
+        String action = "getSkuOrderDetail";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", action);
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiOutboundResp>>() {});
+    }
+
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();

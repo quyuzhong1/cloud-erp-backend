@@ -211,6 +211,20 @@ public class WeiShiServiceTest {
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
+
+    @Test
+    public void getOutbound() {
+        Map<String,Object> authMap = new HashMap<>();
+        authMap.put("appKey","38aff6340627409da49ddf0bf3cbe854");
+        WeiShiBaseResp<WeiShiTokenResp> tokenRespWeiShiBaseResp = weiShiService.accessToken(authMap);
+        System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
+        authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
+        WeiShiGetOutboundRequest weiShiCreateOutboundRequest = new WeiShiGetOutboundRequest();
+        weiShiCreateOutboundRequest.setReferNo("WJTEST0717001_SU0151982327016");
+        WeiShiBaseResp<WeiShiOutboundResp>  resp = weiShiService.getOutbound(weiShiCreateOutboundRequest,authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
     @Test
     public void getLogisticProductList() {
         Map<String,Object> authMap = new HashMap<>();
