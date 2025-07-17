@@ -1507,6 +1507,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .collect(Collectors.toMap(k -> CharSequenceUtil.format("{}_{}", k.getBusinessId(), k.getBusinessKey()), e -> e));
         // 查询当前任务
         List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByBusiness(dtoList);
+        //处理数据
+        handleCurApproveInfo(resultList);
+
         paramMap.keySet().forEach(paramKey -> {
             List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = resultList.stream()
                     .filter(item -> paramKey.equals(CharSequenceUtil.format("{}_{}", item.getBusinessId(), item.getBusinessKey())))
@@ -1517,6 +1520,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         });
         return resultList;
     }
+
 
     @Override
     public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
@@ -1977,4 +1981,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .list();
     }
 
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/7/17 12:08
+     * @param resultList
+     * @return void
+     */
+    private void handleCurApproveInfo (List<ProcessManagementDTO.CurApproveInfoDTO> resultList) {
+        if (CollUtil.isEmpty(resultList)) {
+            return;
+        }
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+
+        for (ProcessManagementDTO.CurApproveInfoDTO curApproveInfoDTO : resultList) {
+            //飞书流程业务名称为空需要处理
+            curApproveInfoDTO.setBusinessName(CharSequenceUtil.isNotBlank(curApproveInfoDTO.getBusinessName()) ? curApproveInfoDTO.getBusinessName() : SourceTypeEnum.getName(curApproveInfoDTO.getBusinessKey()));
+            //飞书流程人员名称为空需要处理
+            if (CharSequenceUtil.isBlank(curApproveInfoDTO.getCurApproveName())) {
+                curApproveInfoDTO.setCurApproveName(userMap.get(curApproveInfoDTO.getCurApproveId()));
+            }
+        }
+    }
 }
