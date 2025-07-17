@@ -1534,6 +1534,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 查询当前任务
         List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByApprover(dtoList);
+        //处理数据
+        handleCurApproveInfo(resultList);
         return resultList;
     }
 
@@ -2004,8 +2006,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             //飞书流程业务名称为空需要处理
             curApproveInfoDTO.setBusinessName(CharSequenceUtil.isNotBlank(curApproveInfoDTO.getBusinessName()) ? curApproveInfoDTO.getBusinessName() : SourceTypeEnum.getName(curApproveInfoDTO.getBusinessKey()));
             //飞书流程人员名称为空需要处理
-            if (CharSequenceUtil.isBlank(curApproveInfoDTO.getCurApproveName())) {
-                curApproveInfoDTO.setCurApproveName(userMap.get(curApproveInfoDTO.getCurApproveId()));
+            if (CharSequenceUtil.isBlank(curApproveInfoDTO.getCurApproveName()) && CharSequenceUtil.isNotBlank(curApproveInfoDTO.getCurApproveId())) {
+                String[] curApproveIds = curApproveInfoDTO.getCurApproveId().split(",");
+                String curApproveName = Arrays.stream(curApproveIds).map(userMap::get).collect(Collectors.joining(","));
+                curApproveInfoDTO.setCurApproveName(curApproveName);
             }
         }
     }
