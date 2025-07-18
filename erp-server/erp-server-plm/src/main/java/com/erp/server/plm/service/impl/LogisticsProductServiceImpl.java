@@ -293,9 +293,18 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(LogisticsProductDTO.UpdateDTO dto) {
+        ProductLogisticsEntity oldEntity = null ;
+        if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())) {
+            oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
+            if (Objects.isNull(oldEntity)) {
+                throw new ServiceException("物流产品信息不存在");
+            }
+        }
         //报关信息
         LogisticsProductDTO.DeclareInfoDTO declareInfo = dto.getDeclareInfo();
         ProductLogisticsEntity productLogistics = new ProductLogisticsEntity();
+        BeanMapper.copy(oldEntity, productLogistics);
+
         BeanMapper.copy(declareInfo, productLogistics);
         handleProductLogistics(productLogistics);
         boolean save = productLogisticsService.saveOrUpdate(productLogistics);
@@ -304,12 +313,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
 
         if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
-            ProductLogisticsEntity oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
-            if(Objects.isNull(oldEntity)){
-                throw new ServiceException("物流产品信息不存在");
-            }
-
-            String msg = String.format("编辑【%s】物流产品信息", productLogistics.getSkuNo());
+            String msg = String.format("编辑【%s】物流产品信息", oldEntity.getSkuNo());
             sysLogService.addSysLogByUpdate(oldEntity,productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "",msg);
         }else{
             // 记录操作日志
