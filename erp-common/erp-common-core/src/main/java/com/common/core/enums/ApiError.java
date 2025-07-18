@@ -1303,6 +1303,9 @@ public enum ApiError implements Serializable {
     ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
     ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
     ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
+    ERROR_92280(92280, "仅限未作废已审核通过的B2B订单类型的销售出库单"),
+    ERROR_92281(92281, "仅限未作废已审核通过的头程发货单"),
+    ERROR_92282(92282, "装箱未完成"),
 
     /**
      * OMS 错误
