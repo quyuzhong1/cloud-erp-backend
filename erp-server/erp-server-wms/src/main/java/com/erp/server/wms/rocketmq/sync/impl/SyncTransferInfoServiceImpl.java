@@ -129,8 +129,12 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         if (!submit.getSuccess()) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
+        TransferInfoEntity approveEntity = transferInfoService.getById(id);
+        if (ObjUtil.isEmpty(approveEntity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
         //审核
-        transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
+        transferInfoService.approve(approveEntity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
     }
 
 

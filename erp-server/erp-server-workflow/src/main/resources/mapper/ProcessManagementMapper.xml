@@ -307,6 +307,7 @@
         <where>
             ptm.is_deleted = false and pm.id = #{params.id}
         </where>
+        order by ptm.id desc
     </select>
 
     <!--查询FS明细 -->
@@ -325,6 +326,7 @@
         from third_process_task_management tptm
         inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
         where tptm.is_deleted = false  and tpm.id = #{params.id}
+        order by tptm.start_time desc
     </select>
 
     <!-- 主表分页查询 -->
