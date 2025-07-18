@@ -16,6 +16,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
 import com.erp.server.tms.query.TmsCfgSailingQueryHandler;
@@ -23,8 +24,10 @@ import com.erp.server.tms.service.TmsCfgSailingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -142,5 +145,52 @@ public class TmsCfgSailingController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-07-17
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsCfgSailing:export",
+            tableAlias = "tcs"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
+    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated TmsCfgSailingDTO.PagingParamDTO dto, HttpServletResponse response) {
+        tmsCfgSailingService.exportList(dto, response);
+        return success();
+    }
+    /**
+     * 导入
+     * @author jack
+     * @date:  2025-07-17
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入截单开船")
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = tmsCfgSailingService.importFile(excelFile, response);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-07-17
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板截单开船")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        tmsCfgSailingService.downloadTemplate(response);
+        return success();
     }
 }

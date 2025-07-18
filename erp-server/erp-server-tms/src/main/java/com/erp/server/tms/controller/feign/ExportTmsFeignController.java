@@ -80,6 +80,9 @@ public class ExportTmsFeignController {
     @Resource
     private DictHsCodeService dictHsCodeService;
 
+    @Resource
+    private TmsCfgSailingService tmsCfgSailingService;
+
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
@@ -386,5 +389,11 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery
     public PagingVO<DictHsCodeDTO.ListDTO> exportDictHsCode(@RequestBody  PagingDTO<DictHsCodeDTO.PagingParamDTO> dto){
         return dictHsCodeService.paging(dto);
+    }
+
+    @PostMapping("/exportTmsCfgSailing")
+    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
+    PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto){
+        return tmsCfgSailingService.paging(dto);
     }
 }
