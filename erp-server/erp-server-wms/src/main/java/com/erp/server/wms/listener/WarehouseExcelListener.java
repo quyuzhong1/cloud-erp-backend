@@ -254,7 +254,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             if (ObjectUtil.isEmpty(country)) {
                 errorMsgList.add("国家不存在");
             } else {
-                addDTO.setContacts(country.getId());
+                addDTO.setCountry(country.getId());
             }
         }
 

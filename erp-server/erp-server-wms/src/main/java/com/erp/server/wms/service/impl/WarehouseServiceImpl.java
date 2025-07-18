@@ -741,6 +741,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if(dto.getChannelAffiliation() == null) {
         	warehouse.setChannelAffiliation("");
         }
+        if(StringUtils.isBlank(dto.getCountry())) {
+        	warehouse.setCountry("");
+        }
         Boolean result = this.updateById(warehouse);
         if (result) {
             //如果设置了第三方仓绑定
