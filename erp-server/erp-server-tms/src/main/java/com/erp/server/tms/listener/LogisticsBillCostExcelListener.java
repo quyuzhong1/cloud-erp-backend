@@ -9,6 +9,8 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsBillService;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.events.Event;
@@ -18,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
-
+    private static final int BATCH_COUNT = 1000;
     /**
      * 错误信息
      */
@@ -26,12 +28,14 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
+    private List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>(BATCH_COUNT);
 
     /**
      * 成功信息
      */
     private List<LogisticsBillCostExcelDTO> successList = new ArrayList<>();
+
+    private LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
 
     public LogisticsBillCostExcelListener() {
 
@@ -48,23 +52,23 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     @Transactional(rollbackFor = Exception.class)
     public void invoke(LogisticsBillCostExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //添加数据用于判断是否为空
-        dataList.add(excelDTO);
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
-        excelDTO.setPayType(excelDTO.getPayType().equals("付款") ? "pay" : "refund");
+        excelDTO.setPayType(excelDTO.getPayTypeName().equals("付款") ? "pay" : "refund");
         successList.add(excelDTO);
-
+        if (successList.size() >= BATCH_COUNT){
+            logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+            successList.clear();
+        }
     }
 
     public List<LogisticsBillCostExcelDTO> getErrorList(){
@@ -87,6 +91,8 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if (!successList.isEmpty()) {
+            logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+        }
     }
 }

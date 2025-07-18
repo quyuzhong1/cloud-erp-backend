@@ -30,4 +30,27 @@ public class BaseDTO implements Serializable {
         private Integer qty;
 
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportDTO implements Serializable {
+        /**
+         * 文件URL
+         */
+        private String fileUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportResultDTO implements Serializable {
+        /**
+         * 失败文件URL
+         */
+        private String errorUrl;
+        /**
+         * 数据总条数
+         */
+        private Integer count;
+    }
 }

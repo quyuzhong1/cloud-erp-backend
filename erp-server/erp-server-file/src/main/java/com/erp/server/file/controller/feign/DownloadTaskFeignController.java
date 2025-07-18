@@ -14,7 +14,7 @@ public class DownloadTaskFeignController {
     @Resource
     private FileTaskContext fileTaskContext;
 
-    @PostMapping
+    @PostMapping("/saveDownloadTask")
     String saveDownloadTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params) {
         //单据名称+年月日时分秒
 

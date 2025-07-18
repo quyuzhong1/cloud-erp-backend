@@ -53,7 +53,7 @@ public class FileTaskContext {
         // 创建文件任务
         FileTask fileTask = FileTask.create(fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
         LoginUser loginUser = UserContext.getLoginUser();
-        fileTask.setType(FileTaskTypeEnum.MANUAL.getCode());
+        fileTask.setType(FileTaskTypeEnum.ASYNC_EXPORT.getCode());
         // 保存文件任务
         fileTaskRepository.save(fileTask);
         log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());

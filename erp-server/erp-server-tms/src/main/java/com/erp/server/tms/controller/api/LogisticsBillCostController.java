@@ -221,7 +221,19 @@ public class LogisticsBillCostController extends BaseController {
         Boolean result = logisticsBillCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
-
+    /**
+     *  异步导入
+     * @author zdy
+     * @date: 2025/07/18 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
+    @PostMapping(value = "/asyncImportExcel")
+    public ApiResult<Object>asyncExportExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = logisticsBillCostService.asyncImportExcel(dto);
+        return flag == true ? success() : failure();
+    }
     /**
      *  导出
      * @author Will

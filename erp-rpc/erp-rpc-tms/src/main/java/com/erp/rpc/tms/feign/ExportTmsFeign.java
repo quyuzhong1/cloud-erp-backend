@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.*;
@@ -36,6 +37,9 @@ public interface ExportTmsFeign {
     PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(@RequestBody PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
     @PostMapping("/feign/export/logisticsBillCost")
     PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/import/logisticsBillCost")
+    BaseDTO.ImportResultDTO importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto);
     @PostMapping("/feign/export/smallBagCostAllocation")
     PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/transferDeclareCostAllocation")

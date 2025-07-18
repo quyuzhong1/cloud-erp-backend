@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 @RestController
@@ -50,5 +51,11 @@ public class FileFeignController {
     public byte[] downloadFile(@RequestParam("fileId") String fileId){
         FileService fileService = fileRegistry.getHandler();
         return fileService.downloadFile(fileId);
+    }
+
+    @PostMapping("/getInputStream")
+    public InputStream getInputStream(@RequestParam("fileId") String fileId){
+        FileService fileService = fileRegistry.getHandler();
+        return fileService.getInputStream(fileId);
     }
 }

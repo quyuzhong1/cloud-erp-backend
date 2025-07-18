@@ -1,9 +1,6 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -235,4 +232,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * 删除没有物流单的物流费用
      */
     void deleteLogisticsBillCostNoBill();
+
+    Boolean asyncImportExcel(BaseDTO.ImportDTO dto);
+
+    BaseDTO.ImportResultDTO importLogisticsBillCost(BaseDTO.ImportDTO dto);
 }

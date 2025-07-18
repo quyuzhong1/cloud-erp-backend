@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient("erp-file")
 public interface DownloadTaskFeign {
 
-    @PostMapping("/feign/downloadTask")
+    @PostMapping("/feign/downloadTask/saveDownloadTask")
     String saveDownloadTask(@RequestParam String fileName,@RequestParam String event,@RequestBody Object params);
 
 }
