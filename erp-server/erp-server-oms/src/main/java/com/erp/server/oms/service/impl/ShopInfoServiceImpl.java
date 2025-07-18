@@ -16,7 +16,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -921,14 +920,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     /**
      * 启用或者禁用店铺
      *
-     * @param shop     店铺信息
-     * @param disabled 禁用状态
+     * @param shop       店铺信息
+     * @param disabled   禁用状态
+     * @param enableTime
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled) {
+    public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled, LocalDateTime enableTime) {
         if (Objects.nonNull(shop)) {
             //数据库的禁用状态
             Boolean dbDisabled = shop.getDisabled();
@@ -945,7 +945,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             	customerInfoService.lambdaUpdate()
 	            	.eq(CustomerInfoEntity::getId, customerId)
 	            	.set(CustomerInfoEntity::getDisabled, disabled)
-	            	.set(CustomerInfoEntity::getEnableTime, shop.getEnableTime())
+	            	.set(CustomerInfoEntity::getEnableTime, enableTime)
 	            	.set(CustomerInfoEntity::getDownTime, shop.getDownTime())
 	            	.update();
             }

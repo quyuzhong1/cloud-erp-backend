@@ -263,9 +263,6 @@ public class ShopInfoController extends BaseController {
                     if (Objects.isNull(shop)) {
                         submit = BatchResultDTO.fail(id, id, "店铺不存在");
                     } else {
-                    	if(!disabled) {
-                    		shop.setEnableTime(dto.getEnableTime());
-                    	}
                         //仓库下绑定第三方店铺不能修改为禁用状态
                         if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                             Boolean flag = checkDmpThirdMapping(id);
@@ -273,11 +270,11 @@ public class ShopInfoController extends BaseController {
                                 submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
                             }else{
                                 flagCode = shop.getName();
-                                submit = shopInfoService.updateStatus(shop, disabled);
+                                submit = shopInfoService.updateStatus(shop, disabled,dto.getEnableTime());
                             }
                         }else {
                             flagCode = shop.getName();
-                            submit = shopInfoService.updateStatus(shop, disabled);
+                            submit = shopInfoService.updateStatus(shop, disabled,dto.getEnableTime());
                         }
                     }
                 } catch (Exception e) {
