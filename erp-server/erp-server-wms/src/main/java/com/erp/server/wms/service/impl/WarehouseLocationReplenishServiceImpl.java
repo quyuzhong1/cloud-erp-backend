@@ -305,6 +305,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     备注：仓位流水查询通过“出入库流水”查询
                 */
                 inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
+                if(Objects.isNull(inventoryEntity)){
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                }
                 String toWarehouseLocation = inventoryEntity.getWarehouseLocation();
                 replenishItem.setToWarehouseLocation(toWarehouseLocation);
                 //推荐补货库区
