@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,10 +17,12 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -50,12 +53,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -297,6 +303,8 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
 
         List<DictBasicEntity> dictList  = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.WEEK.getType(), DictBasicEnum.MONTH.getType(),"dateType"));
 
+        DateTimeFormatter dataForamt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         for (TmsCfgSailingDTO.ListDTO listDTO : list) {
 
            //物流商名称
@@ -321,6 +329,11 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             String dateTypeName = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), "dateType") && CharSequenceUtil.equals(obj.getCode(), listDTO.getDateType()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setDateTypeName(dateTypeName);
+
+            if(Objects.nonNull(listDTO.getEffectiveDate())){
+                String effectiveDateStr = listDTO.getEffectiveDate().format(dataForamt);
+                listDTO.setEffectiveDateStr(effectiveDateStr);
+            }
        }
 
     }
@@ -349,9 +362,20 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         }
         List<TmsCfgSailingExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
-            String fileName = "截单开船错误信息";
-            ExcelUtil.export(fileName, "tmsCfgSailingError", errorList, TmsCfgSailingExcelDTO.class, response);
-            return Boolean.FALSE;
+            String excelPath = "excel/tmsCfgSailingError.xlsx";
+            String name = "tmsCfgSailingError";
+            try {
+                new ExcelPrintUtils().patchExport(errorList,
+                        response,
+                        StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                        excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+//
+//            String fileName = "截单开船错误信息";
+//            ExcelUtil.export(fileName, "tmsCfgSailingError", errorList, TmsCfgSailingExcelDTO.class, response);
+//            return Boolean.FALSE;
         }
 
         List<TmsCfgSailingEntity> successList = excelListenerUtil.getSuccessList();

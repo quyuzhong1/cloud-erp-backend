@@ -152,7 +152,8 @@ public class TmsCfgSailingDTO implements Serializable {
          * 生效日期
          */
         @JsonFormat(pattern = "yyyy-MM-dd")
-        private LocalDateTime  effectiveDate;
+        private LocalDate  effectiveDate;
+        private String  effectiveDateStr;
     }
 
 
