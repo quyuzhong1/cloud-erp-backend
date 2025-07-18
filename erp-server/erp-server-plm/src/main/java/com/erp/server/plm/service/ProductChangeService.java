@@ -1,16 +1,16 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.model.plm.dto.AuditParamDTO;
 
 import java.util.List;
 
@@ -34,14 +34,6 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     ProductChangeDTO details(String id);
 
     Boolean edit(UpdateChangeDTO dto);
-
-    void approvalPass(AuditParamDTO dto);
-
-    void approvalNoPass(AuditParamDTO dto);
-
-    void processPass(ProcessPassDTO dto);
-
-    Boolean restartAudit(String id);
 
     ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity);
 
@@ -84,4 +76,38 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      *
      */
     void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity, String propertyId , String skuId) ;
+    /**
+     * 审核
+     * @author will
+     * @date 2025/5/16 18:13
+     * @param approveOneDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
+    /**
+     * 审核结束
+     * @author will
+     * @date 2025/5/16 18:25
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity);
+    /**
+     * 取消流程
+     * @author will
+     * @date 2025/5/19 09:20
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(String id);
+    /**
+     * 提交
+     * @author will
+     * @date 2025/5/19 09:57
+     * @param id
+     * @param isProcess
+     * @return BatchResultDTO
+     */
+    BatchResultDTO submit(String id, Boolean isProcess);
 }

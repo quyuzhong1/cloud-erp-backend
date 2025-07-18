@@ -28,10 +28,7 @@
     <select id="listByType" resultType="com.erp.model.oms.dto.ListingInfoDTO$ListDTO">
             SELECT
                 id,
-                platform_sku_no,
-                platform_product_name,
-                sku_no AS warehouseSkuNo,
-                product_name AS warehouseProductName
+                platform_sku_no
             FROM listing_info WHERE is_deleted=FALSE
             AND type=#{type}
     </select>

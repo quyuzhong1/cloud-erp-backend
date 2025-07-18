@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.server.oms.service.SoChangeService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,4 +60,14 @@ public class SoChangeFeignController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    @PostMapping("feign/soChange/listByCodes")
+     List<SoChangeEntity> listByCodes(List<String> list){
+        return soChangeService.listByCodes(list);
+    }
+
+     @PostMapping ("feign/soChange/updateApproveStatus")
+     void updateApproveStatus(SoChangeEntity entity){
+         soChangeService.updateApproveStatus(entity);
+     }
 }

@@ -1,6 +1,7 @@
 package com.erp.model.workflow.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.FsApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
@@ -43,5 +44,25 @@ public enum ProcessStatusEnum {
         return Arrays.stream(ProcessStatusEnum.values())
                 .filter(state -> code.equals(state.getCode()))
                 .findFirst().orElse(null);
+    }
+
+    /**
+     * 根据飞书状态转换
+     * @author will
+     * @date 2025/7/17 09:59
+     * @param fsApproveStatusEnum
+     * @return ProcessStatusEnum
+     */
+    public static String getByCode(FsApproveStatusEnum fsApproveStatusEnum) {
+        if (FsApproveStatusEnum.PENDING.equals(fsApproveStatusEnum)) {
+            return RUNNING.getCode();
+        }
+        if (FsApproveStatusEnum.CANCELED.equals(fsApproveStatusEnum) || FsApproveStatusEnum.REJECTED.equals(fsApproveStatusEnum)) {
+            return TERMINATION.getCode();
+        }
+        if (FsApproveStatusEnum.TRANSFERRED.equals(fsApproveStatusEnum) || FsApproveStatusEnum.APPROVED.equals(fsApproveStatusEnum) || FsApproveStatusEnum.DONE.equals(fsApproveStatusEnum)) {
+            return FINISH.getCode();
+        }
+        return "";
     }
 }

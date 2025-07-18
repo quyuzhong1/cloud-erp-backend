@@ -342,7 +342,7 @@ public class PurchaseOrderController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchaseOrderService.submitEntity(entity, Boolean.TRUE));
+                resultDTOS.add(purchaseOrderService.submit(entity, Boolean.TRUE));
             }catch (Exception e){
                 log.error("采购订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -884,6 +884,23 @@ public class PurchaseOrderController extends BaseController {
         purchaseOrderService.exportPurchaseContractPdf(dto.getId(),response);
     }
 
+    /**
+     * 合同状态更新
+     * @author jack
+     * @date: 2025/5/12
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateContractStampStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:updateContractStampStatus",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
+    public ApiResult<?> updateContractStampStatus(@RequestBody @Validated PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
+        purchaseOrderService.updateContractStampStatus(dto);
+        return success();
+    }
     /**
      * (供应商 + 采购订单 + sku )采购数量计算
      * @author jack

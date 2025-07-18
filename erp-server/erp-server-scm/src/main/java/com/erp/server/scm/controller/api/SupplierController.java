@@ -1,6 +1,8 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -15,16 +17,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -99,8 +101,8 @@ public class SupplierController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加供应商")
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        String supplierId = supplierService.addSupplier(dto);
-        return StringUtils.isNotBlank(supplierId) ? success() : failure();
+        SupplierEntity supplierEntity = supplierService.addSupplier(dto);
+        return Objects.nonNull(supplierEntity) ? success() : failure();
     }
 
 
@@ -113,8 +115,35 @@ public class SupplierController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交供应商")
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        Boolean result = supplierService.addAndSubmit(dto);
-        return result == true ? success() : failure();
+        SupplierEntity entity;
+        try {
+            entity = supplierService.addSupplier(dto);
+            if (Objects.isNull(entity)) {
+                return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+            }
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        }
+
+        try {
+            entity = supplierService.getById(entity.getId());
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"供应商");
+            }
+            supplierService.submit(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
     }
 
     /**
@@ -183,7 +212,7 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
-    public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         //增加校验
         SupplierEntity supplier = supplierService.getById(dto.getId());
         if (Objects.isNull(supplier)) {
@@ -197,8 +226,35 @@ public class SupplierController extends BaseController {
                 msg = "SRM协同开启后，下月生效";
             }
         }
-        Boolean result = supplierService.updateAndSubmit(dto);
-        return result == true ? successMsg(msg) : failure();
+
+        String supplierId="";
+        try {
+            supplierId = supplierService.updateSupplier(dto);
+            if (StringUtils.isBlank(supplierId)) {
+                return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+            }
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        }
+        //提审
+        try {
+            SupplierEntity entity = supplierService.getById(supplierId);
+            if (ObjUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98031);
+            }
+            supplierService.submit(entity);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
 
@@ -257,8 +313,22 @@ public class SupplierController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierService.submit(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SupplierEntity> entityMap = supplierService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.submit(entity));
+            }catch (Exception e){
+                log.error("采购订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

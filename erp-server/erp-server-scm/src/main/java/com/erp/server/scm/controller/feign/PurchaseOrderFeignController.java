@@ -16,8 +16,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,6 +49,9 @@ public class PurchaseOrderFeignController {
 
     @Resource
     private SalesDemandService salesDemandService;
+
+    @Resource
+    private PurchaseApplicationService purchaseApplicationService;
 
     /**
      * 根据id查询采购订单
@@ -537,6 +540,14 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listAllPurchaseBySkuIdAndSupplier")
     public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
         return purchaseOrderService.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO);
+    }
+
+    /**
+     * 根据id更新合同状态
+     */
+    @PostMapping("/updateContractStatusById")
+    public void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO) {
+        purchaseOrderService.updateContractStampStatus(contractStampStatusParamsDTO);
     }
 
     /**

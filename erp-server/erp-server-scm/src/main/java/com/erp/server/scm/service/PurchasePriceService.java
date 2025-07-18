@@ -111,10 +111,9 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd (PurchasePriceEntity entity, String type, String comment);
 
     /**
      * 取消流程
@@ -229,4 +228,8 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
 
     BatchResultDTO updateOutPlatformCode(PurchasePriceEntity entity, String outPlatformCode);
+
+    List<PurchasePriceEntity> listByCodes(List<String> codes);
+
+    void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

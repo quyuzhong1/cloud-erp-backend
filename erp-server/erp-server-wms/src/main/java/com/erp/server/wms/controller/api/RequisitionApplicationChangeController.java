@@ -11,7 +11,9 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.erp.server.wms.service.RequisitionApplicationChangeService;
@@ -130,9 +132,30 @@ public class RequisitionApplicationChangeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
-        BaseResultDTO.AddDTO result = requisitionApplicationChangeService.addAndSubmit(dto);
-        return success(result);
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> addAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
+        // 新增
+        BaseResultDTO.AddDTO resultAdd;
+        try {
+            resultAdd = requisitionApplicationChangeService.add(dto);
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1019.msg,new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        }
+        //提审
+        try {
+            requisitionApplicationChangeService.submit(resultAdd.getId());;
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", resultAdd.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(),resultAdd.getCode(),Boolean.TRUE));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(resultAdd.getId(), resultAdd.getCode(),Boolean.TRUE));
     }
 
     /**
@@ -148,9 +171,27 @@ public class RequisitionApplicationChangeController extends BaseController {
             menuCode = "wms:requisitionApplicationChange:updateAndSubmit",
             serviceClass = RequisitionApplicationChangeService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
-        requisitionApplicationChangeService.updateAndSubmit(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
+        try {
+            requisitionApplicationChangeService.update(dto);
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        }
+        //提审
+        try {
+            requisitionApplicationChangeService.submit(dto.getId());
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
     /**

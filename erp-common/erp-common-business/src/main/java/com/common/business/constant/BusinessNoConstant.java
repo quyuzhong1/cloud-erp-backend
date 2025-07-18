@@ -180,6 +180,16 @@ public interface BusinessNoConstant {
     //售后
     String SHSQ = "SHSQ";
     String TCTZ = "TCTZ";
+
+    //委托审批
+    String LCWT = "LCWT";
+
+    String SFSP = "SFSP";
+
+    //流程配置
+    String LCPZ = "LCPZ";
+    //三方审批生成
+    String SFSC = "SFSC";
     String XNKC = "XNKC";
 
     //合同管理

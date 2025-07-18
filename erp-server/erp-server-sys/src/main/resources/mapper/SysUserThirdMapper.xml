@@ -22,4 +22,37 @@
       ON t.user_id=u.uid
       WHERE u.delete_state=1
     </select>
+    <select id="getUserByThird" resultType="com.erp.model.sys.entity.SysUserThirdEntity">
+        SELECT id,
+               user_id,
+               third_party_type,
+               third_union_id,
+               third_open_id,
+               third_user_id,
+               create_time,
+               update_time
+        FROM
+            sys_user_third
+        WHERE
+            third_party_type = #{platform} and ( third_open_id = #{thirdId}   OR  third_user_id = #{thirdId}  OR  third_union_id = #{thirdId}  )
+            LIMIT 1
+    </select>
+    <select id="getUserByThirdList" resultType="com.erp.model.sys.entity.SysUserThirdEntity">
+        SELECT id,
+               user_id,
+               third_party_type,
+               third_union_id,
+               third_open_id,
+               third_user_id,
+               create_time,
+               update_time
+        FROM
+            sys_user_third
+        WHERE
+            third_party_type = #{platform} and (
+                <foreach collection="thirdIds" item="item" open="(" close=")" separator="OR">
+                    third_open_id = #{item}  OR  third_user_id  = #{item} OR  third_union_id = #{item}
+                </foreach>
+                )
+    </select>
 </mapper>

@@ -13,12 +13,12 @@ import org.springframework.stereotype.Component;
 public class WaveListPdaAdvanceQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("status".equals(field)){
+        if("status".equals(field) || "wl.status".equals(field)){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
                 if(value.equals(WaveStatusEnum.HANG_UP.getCode()) || value.equals(WaveStatusEnum.PICK_ING.getCode())){
-                    return "status in ('hangUp','pickIng')";
+                    return "wl.status in ('hangUp','pickIng')";
                 }else {
-                    super.buildDefaultDTO("status", value);
+                    super.buildDefaultDTO("wl.status", value);
                     return super.getSplicingSQL();
                 }
             }

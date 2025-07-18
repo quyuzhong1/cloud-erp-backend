@@ -66,8 +66,14 @@ public class TemuOrderDTO {
 
         private Boolean hasWarehouse = false;
 
+        private TemuLogisticShipmentDTO.ShipmentInfoDTODTO shipmentInfoDTODTO;
         private String trackNo;
 
+        private String shopId;
+        private String shopName;
+        private String parentOrderSn;
+        private String nextLevelId;
+        private String soDetailId;
         @NoArgsConstructor
         @Data
         public static class OrderListDTO {

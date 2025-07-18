@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ProcessDelegateMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ProcessDelegateEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="business_key" property="businessKey" />
+       <result column="start_user_id" property="startUserId" />
+       <result column="delegate_user_id" property="delegateUserId" />
+       <result column="effective_time" property="effectiveTime" />
+       <result column="expire_time" property="expireTime" />
+       <result column="closed_time" property="closedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        pd.id,
+        pd.create_user_id as createUserId,
+        pd.create_user_name as createUserName,
+        pd.create_time as createTime,
+        pd.update_user_id as updateUserId,
+        pd.update_user_name as updateUserName,
+        pd.update_time as updateTime,
+        pd.version,
+        pd.is_deleted as isDeleted,
+        pd.code,
+        pd.status,
+        pd.business_key as businessKey,
+        pd.start_user_id as startUserId,
+        pd.delegate_user_id as delegateUserId ,
+        pd.effective_time as effectiveTime,
+        pd.expire_time as expireTime,
+        pd.closed_time as closedTime,
+        pd.is_auto as isAuto
+    </sql>
+
+    <!-- 查询tab列表 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessDelegateDTO$TabListDTO">
+        SELECT
+            pd.status as tabFlag,
+            count(pd.id) as count
+        FROM  process_delegate pd
+        WHERE pd.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pd.status
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessDelegateDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from process_delegate pd
+        <where>
+            ${params.sqlMap.default}
+            and pd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pd.id desc
+        </where>
+    </select>
+
+    <!-- 根据流程定义id查询委托审批信息 -->
+    <select id="getByProcessDefinitionId" resultType="com.erp.model.workflow.entity.ProcessDelegateEntity">
+        WITH processBusiness AS (
+            select distinct business_key from process_business where is_deleted = false and process_definition_id = #{processDefinitionId}
+        )
+        select
+            <include refid="Base_Column_List" />
+        from process_delegate pd
+        inner join processBusiness pb on pb.business_key = pd.business_key
+        where pd.is_deleted = false  and pd.status in ('pending','running') and now() >= pd.effective_time and pd.expire_time > now() limit 1
+    </select>
+
+
+</mapper>

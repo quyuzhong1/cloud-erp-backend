@@ -1,15 +1,21 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.factory.ApproveEndHandlerFactory;
+import com.common.business.handler.AbstractApproveHandler;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.scm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 
 /**
  * @author Will
@@ -21,119 +27,38 @@ import java.util.Collections;
 public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
-    private PurchasePriceService purchasePriceService;
-
-    @Resource
-    private PurchasePriceChangeService purchasePriceChangeService;
-
-    @Resource
-    private SupplierService supplierService;
-
-    @Resource
-    private PurchaseOrderService purchaseOrderService;
-
-    @Resource
-    private SubcontractOrderService subcontractOrderService;
-
+    private ApproveEndHandlerFactory approveEndHandlerFactory;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
-        switch (SourceTypeEnum.getByCode(businessKey)) {
-            case PURCHASE_PRICE:
-                //采购价目
-                purchasePriceApproveEnd(dto);
-                break;
-            case PURCHASE_PRICE_CHANGE:
-                //采购调价
-                purchasePriceChangeApproveEnd(dto);
-                break;
-            case SUPPLIER:
-                //供应商
-                supplierApproveEnd(dto);
-                break;
-            case PURCHASE_ORDER:
-                //采购订单
-                purchaseOrderApproveEnd(dto);
-                break;
-            case SUBCONTRACT_ORDER:
-                //委外订单
-                subcontractOrderApproveEnd(dto);
-                break;
-            default:
-                break;
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,dto.getApproveStatus().getName(),businessKey);
         }
-        return Boolean.TRUE;
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.approveEnd(BeanUtil.toBean(dto, ApproveDTO.EndProcessDTO.class));
     }
 
-    /**
-     * 采购价目审核结束
-     * @Author Will
-     * @Date 2023/7/4 11:26
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private Boolean purchasePriceApproveEnd(EndProcessDTO dto) {
-        //销售变更单
-        PurchasePriceEntity entity = purchasePriceService.getById(dto.getBusinessId());
-        return purchasePriceService.approveEnd(entity,dto.getApproveStatus().getStatus(),"", null);
+    @Override
+    public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.DIS_APPROVE.getName(),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.disApprove(dto);
     }
 
-    /**
-     * 采购调价审核结束
-     * @Author Will
-     * @Date 2023/7/4 11:26
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-    private BatchResultDTO purchasePriceChangeApproveEnd(EndProcessDTO dto) {
-        //销售变更单
-        PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
-        return purchasePriceChangeService.approveEnd(entity,dto.getApproveStatus().getStatus(), "", null);
-    }
-
-    /**
-     * @description: 供应商审核结束
-     * @author Will
-     * @date: 2023/7/11 12:13
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean supplierApproveEnd(EndProcessDTO dto) {
-        //供应商
-        SupplierEntity entity = supplierService.getById(dto.getBusinessId());
-        return supplierService.approveEnd(entity,dto.getApproveStatus().getStatus(),"", null);
-    }
-
-    /**
-     * @description: 采购订单结束审核
-     * @author Will
-     * @date: 2023/7/11 14:06
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean purchaseOrderApproveEnd(EndProcessDTO dto) {
-        //供应商
-        PurchaseOrderEntity entity = purchaseOrderService.getById(dto.getBusinessId());
-        ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
-        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-        baseApproveParamDTO.setId(dto.getBusinessId());
-        return purchaseOrderService.approveEnd(baseApproveParamDTO, Collections.singletonList(entity));
-    }
-
-    /**
-     * @description: 委外订单结束审核
-     * @author Will
-     * @date: 2023/7/11 14:06
-     * @param dto
-     * @return Boolean
-     */
-    private Boolean subcontractOrderApproveEnd(EndProcessDTO dto) {
-        //供应商
-        SubcontractOrderEntity entity = subcontractOrderService.getById(dto.getBusinessId());
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(dto.getApproveStatus().getStatus());
-        approveOneDTO.setId(dto.getBusinessId());
-        return subcontractOrderService.approveEnd(approveOneDTO,entity);
+    @Override
+    public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String businessKey = dto.getBusinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY, ApproveTypeEnum.REVOKE.getName(),businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        return  handler.cancelProcess(dto);
     }
 }

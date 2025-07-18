@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -13,7 +14,9 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.query.TransferInfoQueryHandler;
@@ -26,6 +29,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -117,8 +121,34 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
-        String id = transferInfoService.addAndSubmit(dto);
-        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
+        // 新增
+        TransferInfoEntity entity;
+        try {
+            String id = transferInfoService.add(dto);
+            entity = transferInfoService.getById(id);
+            if (ObjUtil.isNull(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"直接调拨单");
+            }
+        } catch (ServiceException e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("新增失败，dto: {}", dto, e);
+            return  failure(ApiError.ERROR_1019.msg, new BaseResultDTO.AddAndSubmmitDTO("","",Boolean.FALSE));
+        }
+
+        //提审
+        try {
+            transferInfoService.submit(entity, Boolean.TRUE);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", entity.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(entity.getId(),entity.getCode(),Boolean.TRUE));
+        }
+
+        return success(new BaseResultDTO.AddAndSubmmitDTO(entity.getId(), entity.getCode(),Boolean.TRUE));
     }
 
     /**
@@ -154,9 +184,32 @@ public class TransferInfoController extends BaseController {
             menuCode = "wms:transferInfo:update",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated TransferInfoDTO.UpdateDTO dto) {
-        Boolean flag = transferInfoService.updateAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated TransferInfoDTO.UpdateDTO dto) {
+        try {
+            transferInfoService.update(dto);
+        } catch (ServiceException e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(e.getMessage(), new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        } catch (Exception e) {
+            log.error("更新失败，dto: {}", dto, e);
+            return failure(ApiError.ERROR_1020.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.FALSE));
+        }
+        //提审
+        try {
+            TransferInfoEntity entity = transferInfoService.getById(dto.getId());
+            if (ObjUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_99047);
+            }
+            //提交
+            BatchResultDTO submit = transferInfoService.submit(entity, Boolean.TRUE);
+        } catch (ServiceException e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure( e.getMessage(),new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        } catch (Exception e) {
+            log.error("提交审批失败，ID: {}", dto.getId(), e);
+            return failure(ApiError.RETRY_SUBMIT_ERROR.msg,new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
+        }
+        return success(new BaseResultDTO.AddAndSubmmitDTO(dto.getId(),"",Boolean.TRUE));
     }
 
     /**
@@ -173,9 +226,23 @@ public class TransferInfoController extends BaseController {
             menuCode = "wms:transferInfo:submit",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.submit(dto.getIds(), Boolean.TRUE);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferInfoEntity> entityMap = transferInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("直接调拨单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

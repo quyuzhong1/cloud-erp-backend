@@ -5,6 +5,7 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -1668,11 +1669,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
             }
+            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
+            if (ObjUtil.isEmpty(entity1)) {
+                throw new ServiceException(ApiError.ERROR_99047);
+            }
             //提交
-            transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
+            transferInfoService.submit(entity1, Boolean.FALSE);
 
             //审核
-            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
             if (Objects.nonNull(entity1)){
                 transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
             }

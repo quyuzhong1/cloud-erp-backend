@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.service.TransferInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * feign控制器
@@ -29,5 +31,15 @@ public class TransferInfoFeignController extends BaseController{
     @PostMapping("/addAndApprove")
     public String addAndApprove(@RequestBody @Validated TransferInfoDTO.AddDTO dto){
         return transferInfoService.addAndApprove(dto);
+    }
+
+    @PostMapping("/listByCodes")
+    List<TransferInfoEntity> listByCodes(@RequestBody @Validated List<String> list){
+        return transferInfoService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(@RequestBody @Validated TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        transferInfoService.updateApproveStatus(updateApprovalStatusDTO);
     }
 }

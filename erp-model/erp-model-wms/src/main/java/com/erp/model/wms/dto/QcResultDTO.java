@@ -540,4 +540,22 @@ public class QcResultDTO {
 
 
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcItemRolePeopleDTO {
+        /**
+         * 质检单id
+         */
+        private List<String> qcInfoIds;
+
+        /**
+         * 是否新品, true 是
+         */
+        private Boolean isFirstMassProduct;
+    }
+
 }

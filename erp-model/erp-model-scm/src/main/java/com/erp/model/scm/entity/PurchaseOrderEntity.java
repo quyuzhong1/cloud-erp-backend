@@ -180,6 +180,13 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("supplier_account_id")
     private String supplierAccountId;
+
+    /**
+     * 合同盖章状态 ContractStampStatusEnum
+     */
+    @TableField("contract_stamp_status")
+    private String contractStampStatus;
+
     @Override
     public Serializable pkVal() {
         return null;

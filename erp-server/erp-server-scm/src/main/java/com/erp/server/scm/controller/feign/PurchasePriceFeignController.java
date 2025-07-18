@@ -1,7 +1,9 @@
 package com.erp.server.scm.controller.feign;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.dto.PurchaseSkuOrgRefDTO;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.server.scm.service.PurchasePriceService;
@@ -62,6 +64,16 @@ public class PurchasePriceFeignController {
     public List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return purchasePriceService.batchGetPurchasePrice(list);
     }
+
+     @PostMapping("/listByCodes")
+    public List<PurchasePriceEntity> listByCodes(@RequestBody List<String> codes) {
+        return purchasePriceService.listByCodes(codes);
+    }
+
+     @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(@RequestBody PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        purchasePriceService.updateApproveStatus(updateApprovalStatusDTO);
+     }
     /**
      * 根据sku获取采购组织关系
      */

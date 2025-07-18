@@ -217,4 +217,14 @@ public class SoInfoFeignController extends BaseController {
     public void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO) {
         soInfoService.sdyFieldOrderHandler(soInfoToSdyDTO.getSoId(), soInfoToSdyDTO.getOperateEnum());
     }
+
+    @PostMapping("/listByCodes")
+    public List<SoInfoEntity> listByCodes(List<String> list) {
+        return soInfoService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        soInfoService.updateApproveStatus(updateApprovalStatusDTO);
+    }
 }

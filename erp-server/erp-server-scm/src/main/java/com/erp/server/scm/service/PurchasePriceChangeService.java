@@ -179,4 +179,8 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
     List<PurchasePriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     PagingVO<PurchasePriceChangeExportExcelDTO> exportPurchasePriceChange(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
+
+    List<PurchasePriceChangeEntity> listByCodes(List<String> codes);
+
+    void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO);
 }

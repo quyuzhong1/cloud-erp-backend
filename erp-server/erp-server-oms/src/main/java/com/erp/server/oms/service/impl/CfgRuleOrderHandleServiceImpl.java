@@ -242,7 +242,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
             if (Boolean.TRUE.equals(matchResult)) {
                 ruleMatch.setApproveSuccess(Boolean.TRUE);
                 ruleMatch.setRuleName(item.getName());

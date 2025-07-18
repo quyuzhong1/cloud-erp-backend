@@ -168,4 +168,19 @@ public interface CustomerFeign {
      */
     @PostMapping("feign/customer/getCustomerByCodeAndName")
     List<CustomerInfoEntity> getCustomerByCodeAndName(@RequestParam(value = "code") String code,@RequestParam(value = "name") String name);
+
+    /**
+     * 根据客户编码获取客户详情
+     * @param list
+     * @return
+     */
+    @PostMapping("feign/customer/listByCodes")
+    List<CustomerInfoEntity> listByCodes(List<String> list);
+
+    /**
+     * 更新 客户信息审核状态
+     * @param entity
+     */
+    @PostMapping("feign/customer/updateApproveStatus")
+    void updateApproveStatus(CustomerInfoEntity entity);
 }

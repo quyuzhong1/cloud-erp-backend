@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
@@ -109,4 +110,15 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return List<ProcessTaskManagementEntity>
      **/
     List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto);
+
+    List<ProcessTaskManagementEntity> listTask(String processInstanceId);
+    /**
+     * 更新任务状态
+     * @author will
+     * @date 2025/5/23 09:34
+     * @param processInstanceId
+     * @param approveStatusEnum
+     * @return Boolean
+     */
+    Boolean updateTaskStatus(String processInstanceId, ApproveStatusEnum approveStatusEnum);
 }
