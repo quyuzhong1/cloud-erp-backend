@@ -79,7 +79,7 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         //物流商
         String logisticsSupplierName = excelDTO.getLogisticsSupplierName();
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierList.stream().filter(l -> l.getSupplierName().equals(logisticsSupplierName) || l.getShortName().equals(logisticsSupplierName)).findFirst().orElse(null);
-        if(Objects.isNull(logisticsSupplierEntity)){
+        if(Objects.nonNull(logisticsSupplierEntity)){
             entity.setLogisticsSupplierId(logisticsSupplierEntity.getId());
         }else {
             errorMsgList.add("物流商不存在");
@@ -87,11 +87,14 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         //渠道
         String logisticsChannelName = excelDTO.getLogisticsChannelName();
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelList.stream().filter(l -> l.getMainId().equals(entity.getLogisticsSupplierId()) && l.getName().equals(logisticsChannelName)).findFirst().orElse(null);
-        if(Objects.isNull(logisticsChannelEntity)){
+        if(Objects.nonNull(logisticsChannelEntity)){
             entity.setLogisticsChannelId(logisticsChannelEntity.getId());
         }else {
             errorMsgList.add("物流渠道不存在");
         }
+
+        entity.setDateValue(excelDTO.getDateValue());
+
         //截单周期单位
         String dateTypeName = excelDTO.getDateTypeName();
         String dateType = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), "dateType") && CharSequenceUtil.equals(obj.getName(), dateTypeName))
@@ -113,6 +116,12 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         //截单时间
         String endStr = excelDTO.getEndTime();
         try {
+            // 统计冒号数量
+            long colonCount = endStr.chars().filter(ch -> ch == ':').count();
+            // 如果只有一个冒号(格式为HH:mm)，则补全秒数
+            if (colonCount == 1) {
+                endStr = endStr + ":00";
+            }
             LocalTime endTime = StringUtils.isBlank(endStr) ? null : LocalTime.parse(endStr, timeForamt);
             entity.setEndTime(endTime);
         }catch (Exception e){
@@ -128,9 +137,15 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
             errorMsgList.add("开船日错误或不存在");
         }
         //开船时间
-        String startTimeStr = excelDTO.getStartTime();
+        String startStr = excelDTO.getStartTime();
         try {
-            LocalTime startTime = StringUtils.isBlank(startTimeStr) ? null : LocalTime.parse(startTimeStr, timeForamt);
+            // 统计冒号数量
+            long colonCount = startStr.chars().filter(ch -> ch == ':').count();
+            // 如果只有一个冒号(格式为HH:mm)，则补全秒数
+            if (colonCount == 1) {
+                startStr = startStr + ":00";
+            }
+            LocalTime startTime = StringUtils.isBlank(startStr) ? null : LocalTime.parse(startStr, timeForamt);
             entity.setStartTime(startTime);
         }catch (Exception e){
             errorMsgList.add("开船时间格式错误");
@@ -152,6 +167,7 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         }
         //添加数据用于判断是否为空
         allList.add(excelDTO);
+        successList.add(entity);
     }
 
     public List<TmsCfgSailingExcelDTO> getExcelDateList(){
