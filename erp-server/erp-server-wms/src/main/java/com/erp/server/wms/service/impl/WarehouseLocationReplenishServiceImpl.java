@@ -253,7 +253,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .in("parent_id", pickAreaIds)
                     .eq("is_deleted", false)
             );
-            List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
+            List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if(pickLocationCodeList.isEmpty()){
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
             }
