@@ -605,6 +605,8 @@ public enum ApiError implements Serializable {
     ERROR_95282(95282,"获取供应商采购价目表失败: sku：{}，数量：{}"),
     ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
+
+    ERROR_95290(95290,"【{}】已存在【{}】国家"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -617,6 +619,7 @@ public enum ApiError implements Serializable {
     ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
     ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
     ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
+    ERROR_96008(96008, "中国海关编码【{}】已存在"),
 
     /**
      * bi 错误
@@ -1303,6 +1306,9 @@ public enum ApiError implements Serializable {
     ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
     ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
     ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
+    ERROR_92280(92280, "仅限未作废已审核通过的B2B订单类型的销售出库单"),
+    ERROR_92281(92281, "仅限未作废已审核通过的头程发货单"),
+    ERROR_92282(92282, "装箱未完成"),
 
     /**
      * OMS 错误

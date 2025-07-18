@@ -90,6 +90,34 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     @TableField("to_currency_symbol")
     private String toCurrencySymbol;
 
+    /**
+     * 目的国清关英文名
+     */
+    @TableField("destination_customs_en_name")
+    private String destinationCustomsEnName;
+
+    /**
+     * 目的国增值税税率
+     */
+    @TableField("destination_vat_rate")
+    private BigDecimal destinationVatRate;
+    /**
+     * 目的国附加关税税率
+     */
+    @TableField("destination_additional_duty_rate")
+    private BigDecimal destinationAdditionalDutyRate;
+    /**
+     *目的国反倾销税税率
+     */
+    @TableField("destination_anti_dumping_duty_rate")
+    private BigDecimal destinationAntiDumpingDutyRate;
+    /**
+     *目的国其他税率
+     */
+    @TableField("destination_other_tax_rate")
+    private BigDecimal destinationOtherTaxRate;
+
+
     public static final String SKU_ID = "sku_id";
 
     public static final String FIELD_COUNTRY = "country";

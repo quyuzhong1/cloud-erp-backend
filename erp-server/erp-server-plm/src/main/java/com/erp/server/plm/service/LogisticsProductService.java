@@ -147,4 +147,6 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
     List<BatchResultDTO>  pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto);
 
     PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(PagingDTO<LogisticsProductDTO.ExportDTO> dto);
+
+    Boolean importUpdateDeclarePrice(MultipartFile excelFile, HttpServletResponse response);
 }
