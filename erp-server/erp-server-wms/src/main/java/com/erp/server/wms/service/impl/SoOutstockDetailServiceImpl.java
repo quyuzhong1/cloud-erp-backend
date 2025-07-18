@@ -877,6 +877,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 }
             }
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
+            detailEntity.setRemark(soDetailEntity.getRemark());
         }
     }
 
