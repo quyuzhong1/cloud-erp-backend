@@ -46,6 +46,11 @@ public class TmsCfgSailingDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 主键id
+         */
+        private List<String> ids;
     }
 
     /**
@@ -81,9 +86,16 @@ public class TmsCfgSailingDTO implements Serializable {
         private String  logisticsChannelName;
 
         /**
+         * 日期值
+         */
+        private Integer  dateValue;
+
+        /**
          * 日期类型【可排序】
          */
         private String  dateType;
+
+        private String  dateTypeName;
 
         /**
          * 开船日期【可排序】
@@ -96,6 +108,12 @@ public class TmsCfgSailingDTO implements Serializable {
         private String  startDateName;
 
         /**
+         * 开船日期时间
+         */
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime startTime;
+
+        /**
          * 截单日期【可排序】
          */
         private Integer endDate;
@@ -104,6 +122,12 @@ public class TmsCfgSailingDTO implements Serializable {
          * 截单日期（名词）
          */
         private String  endDateName;
+
+        /**
+         * 截单日期时间
+         */
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime endTime;
 
         /**
          * 创建人名称【可排序】
@@ -124,6 +148,11 @@ public class TmsCfgSailingDTO implements Serializable {
          * 更新时间【可排序】
          */
         private LocalDateTime  updateTime;
+        /**
+         * 生效日期
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDateTime  effectiveDate;
     }
 
 
