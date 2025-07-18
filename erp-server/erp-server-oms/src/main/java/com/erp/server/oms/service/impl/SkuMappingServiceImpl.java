@@ -729,7 +729,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (Objects.isNull(overseasProviderEntity)) {
                 throw new ServiceException("三方仓账号不存在");
             }
-            if(!overseasProviderEntity.getIsProductSync()){
+            if(!overseasProviderEntity.getIsProductSync() &&  overseasProviderEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
                 throw new ServiceException("该服务商未开启API推送，请开启后操作");
             }
             platform = overseasProviderEntity.getCode();

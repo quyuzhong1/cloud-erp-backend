@@ -131,6 +131,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
     private CfgRuleOutService cfgRuleOutService;
     @Resource
     private MQProducerService mqProducerService;
@@ -2289,8 +2292,19 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //要货申请
             RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
             if (Objects.nonNull(firstMileDelivery)){
-                printDTO.setCountryId(firstMileDelivery.getCountryId());
-                printDTO.setCountryName(firstMileDelivery.getCountryName());
+                if( CharSequenceUtil.isBlank(firstMileDelivery.getCountryId()) && StringUtils.isNotBlank(firstMileDelivery.getDestWarehouseId())){
+                    WarehouseEntity warehouseEntity = warehouseService.getById(firstMileDelivery.getDestWarehouseId());
+                    if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
+                        DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+                        printDTO.setCountryId(warehouseEntity.getCountry());
+                        if (Objects.nonNull(country)){
+                            printDTO.setCountryName(country.getNameCn());
+                        }
+                    }
+                }else{
+                    printDTO.setCountryId(firstMileDelivery.getCountryId());
+                    printDTO.setCountryName(firstMileDelivery.getCountryName());
+                }
                 printDTO.setShopId(firstMileDelivery.getShopId());
                 printDTO.setShopName(firstMileDelivery.getShopName());
                 if (CharSequenceUtil.isNotBlank(firstMileDelivery.getShopId())){
@@ -2311,6 +2325,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     printDTO.setShopName(shopInfo.getName());
                     printDTO.setChargeId(shopInfo.getChargeId());
                     printDTO.setChargeName(shopInfo.getChargeName());
+                }
+            }else if (Objects.nonNull(requisitionApplication)  && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
+                WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
+                if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
+                    DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
+                    printDTO.setCountryId(warehouseEntity.getCountry());
+                    if (Objects.nonNull(country)){
+                        printDTO.setCountryName(country.getNameCn());
+                    }
                 }
             }
         }

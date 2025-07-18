@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -27,4 +28,6 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     ThirdWarehouseDeliveryEntity getLatestBySoId(String soId);
 
     ThirdWarehouseDeliveryEntity getLatestByCode(String code);
+
+    PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
 }
