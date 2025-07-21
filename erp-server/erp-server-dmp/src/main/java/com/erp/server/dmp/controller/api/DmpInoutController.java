@@ -21,6 +21,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.enums.*;
+import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,9 +62,6 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
@@ -144,6 +145,15 @@ public class DmpInoutController extends BaseController {
     @Autowired
 	@Qualifier("dmpSdyOutputPushExecutorPool")
 	private ExecutorService dmpSdyOutputPushExecutorPool;
+
+	@Autowired
+	private DmpInputTaskFactory dmpInputTaskFactory;
+	@Autowired
+	private DmpInputTaskService dmpInputTaskService;
+	@Autowired
+	@Qualifier("dmpInputExecutorPool")
+	private ExecutorService dmpInputExecutorPool;
+
 
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
@@ -771,5 +781,84 @@ public class DmpInoutController extends BaseController {
         	log.warn("完成重推数帝云erp退货入库单，系统：" + sourceSystem);
     	}
     }
+
+
+	@PostMapping("doInputNormalTask")
+	public void doInputTask(@RequestBody String jobParam) {
+		String size = "1000";
+		List<String> cfgInputIds = null;
+		List<String> ids = null;
+		DmpInputTaskTaskTypeEnum dmpInputTaskTaskTypeEnum = DmpInputTaskTaskTypeEnum.NORMAL;
+		List<String> execStatusList = Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode()
+				, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
+				, DmpInputTaskStatusEnum.DMP.getCode());
+		if(StringUtils.isNotBlank(jobParam)) {
+			JSONObject parseObject = JSON.parseObject(jobParam);
+			String sizeParam = parseObject.getString("size");
+			if(StringUtils.isNotBlank(sizeParam)) {
+				size = sizeParam;
+			}
+			String mainIdsParam = parseObject.getString("cfgInputIds");
+			if(StringUtils.isNotBlank(mainIdsParam)) {
+				cfgInputIds = Arrays.asList(mainIdsParam.split(","));
+			}
+			String idsParam = parseObject.getString("ids");
+			if(StringUtils.isNotBlank(idsParam)) {
+				ids = Arrays.asList(idsParam.split(","));
+				if(CollUtil.isNotEmpty(ids)) {
+					List<DmpInputTaskEntity> errorList = dmpInputTaskService.lambdaQuery()
+							.in(DmpInputTaskEntity::getId, ids)
+							.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+							.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+							.list();
+					List<DmpInputTaskEntity> updateList = new ArrayList<>();
+					if(CollUtil.isNotEmpty(errorList)) {
+						for(DmpInputTaskEntity e : errorList) {
+							String errorMessage = e.getErrorMessage();
+							if(StringUtils.isNotBlank(errorMessage)) {
+								String[] split = errorMessage.split("@@");
+								if(split.length > 1) {
+									String status = split[0];
+									if(execStatusList.contains(status)) {
+										e.setErrorCount(0);
+										e.setStatus(status);
+										updateList.add(e);
+									}
+								}
+							}
+						}
+					}
+					if(CollUtil.isNotEmpty(updateList)) {
+						dmpInputTaskService.updateBatchById(updateList);
+					}
+				}
+			}
+		}
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
+				.in(DmpInputTaskEntity::getStatus, execStatusList)
+				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
+				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
+				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
+				.orderByAsc(DmpInputTaskEntity::getUpdateTime)
+				.last(dmpInputTaskTaskTypeEnum != DmpInputTaskTaskTypeEnum.COMPENSATE , " limit " + size)
+				.list();
+		if(dmpInputTaskTaskTypeEnum == DmpInputTaskTaskTypeEnum.COMPENSATE) {
+			Map<String, List<DmpInputTaskEntity>> cfgInputNextLevelMaps = list.stream().collect(Collectors.groupingBy(l -> l.getCfgInputId() + "_" + l.getNextLevelId()));
+			list = new ArrayList<>();
+			for(Map.Entry<String, List<DmpInputTaskEntity>> cfgInputNextLevelMap : cfgInputNextLevelMaps.entrySet()) {
+				list.add(cfgInputNextLevelMap.getValue().get(0));
+			}
+		}
+
+		for(DmpInputTaskEntity l : list) {
+			dmpInputExecutorPool.execute(() -> {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(l.getId());
+				dmpInputFinishRequest.setExecTimeout(l.getExecTimeout());
+				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			});
+		}
+	}
 
 }
