@@ -90,7 +90,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
 
     @Override
     public Boolean exportExcelProjectReportForms(ProjectReportFormsDTO.PagingParam dto) {
-        downloadTaskFeign.saveExportTask("项目报表", EXPORT_PLM_PROJECT_REPORT_PURCHASE_BUSINESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("项目报表", EXPORT_PLM_PROJECT_REPORT_PURCHASE_BUSINESS.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -115,7 +115,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         List<String> ids = pagingViews.stream().map(ProjectReportFormsDTO.PagingView::getId).distinct().collect(Collectors.toList());
         ProjectReportFormsDTO.TaskDetailParam param = new ProjectReportFormsDTO.TaskDetailParam();
         param.setIds(ids);
-        downloadTaskFeign.saveExportTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), param);
         return Boolean.TRUE;
     }
 

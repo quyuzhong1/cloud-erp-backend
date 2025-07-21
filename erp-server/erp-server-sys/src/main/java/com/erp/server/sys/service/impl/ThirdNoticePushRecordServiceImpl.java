@@ -195,7 +195,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
     @Override
     public void exportList(ThirdNoticePushRecordDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("三方通知推送记录导出", EXPORT_SYS_THIRD_NOTICE_RECORD.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("三方通知推送记录导出", EXPORT_SYS_THIRD_NOTICE_RECORD.getCode(), param);
     }
 
     /**

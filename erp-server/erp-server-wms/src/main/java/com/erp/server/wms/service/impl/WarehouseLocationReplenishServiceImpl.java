@@ -186,7 +186,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto) {
-        downloadTaskFeign.saveExportTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
         return Boolean.TRUE;
     }
 

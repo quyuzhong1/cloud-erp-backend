@@ -708,7 +708,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     @Override
     public void exportList(SupplierCredentialDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("供应商证照管理导出", EXPORT_SCM_SUPPLIER_CREDENTIAL_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("供应商证照管理导出", EXPORT_SCM_SUPPLIER_CREDENTIAL_REPORT.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

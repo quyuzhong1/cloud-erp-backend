@@ -520,7 +520,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public void exportExcel(InventoryDTO.ExportSearchParamDTO param) {
-        downloadTaskFeign.saveExportTask("即时库存导出", EXPORT_WMS_INVENTORY.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("即时库存导出", EXPORT_WMS_INVENTORY.getCode(), param);
     }
 
     private static void dealExportParams(InventoryDTO.ExportSearchParamDTO param) {
@@ -564,7 +564,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO) {
-        downloadTaskFeign.saveExportTask("库龄计算表数据", EXPORT_WMS_INVENTORY_AGE.getCode(), paramDTO);
+        downloadTaskFeign.saveDownloadTask("库龄计算表数据", EXPORT_WMS_INVENTORY_AGE.getCode(), paramDTO);
     }
 
     @Override

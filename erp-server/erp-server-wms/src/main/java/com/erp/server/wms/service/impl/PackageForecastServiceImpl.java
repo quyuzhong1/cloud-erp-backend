@@ -1074,7 +1074,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("组包预报列表", EXPORT_WMS_PACKAGE_FORECAST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("组包预报列表", EXPORT_WMS_PACKAGE_FORECAST.getCode(), dto);
         return Boolean.TRUE;
 
     }

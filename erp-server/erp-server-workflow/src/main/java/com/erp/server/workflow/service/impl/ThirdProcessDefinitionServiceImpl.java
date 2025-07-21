@@ -162,7 +162,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
 
     @Override
     public void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("审批定义导出", EXPORT_THIRD_PROCESS_DEFINITION.getCode(), dto);
     }
 
 

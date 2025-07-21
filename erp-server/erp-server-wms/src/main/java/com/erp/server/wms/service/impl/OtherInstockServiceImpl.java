@@ -663,7 +663,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     public Boolean exportExcel(OtherInstockDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("其他入库单导出", EXPORT_WMS_OTHER_IN_STOCK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("其他入库单导出", EXPORT_WMS_OTHER_IN_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

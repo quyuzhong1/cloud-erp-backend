@@ -164,7 +164,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
     @Override
     public boolean exportExcel(WarehouseLocationSafetyInventoryDTO.exportParamDTO dto) {
-        downloadTaskFeign.saveExportTask("仓位安全库存", EXPORT_WMS_WAREHOUSE_LOCATION_SAFETY_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("仓位安全库存", EXPORT_WMS_WAREHOUSE_LOCATION_SAFETY_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 

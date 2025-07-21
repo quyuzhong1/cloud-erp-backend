@@ -522,7 +522,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     public void export(CustomerB2bSellerChangeDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("客户b2b销售变更单", EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("客户b2b销售变更单", EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE.getCode(), dto);
     }
 
     @Override

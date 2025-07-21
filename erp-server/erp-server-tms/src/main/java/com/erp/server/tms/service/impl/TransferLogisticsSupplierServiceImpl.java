@@ -233,7 +233,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
     @Override
     public Boolean export(TransferLogisticsSupplierDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("中转报关服务商列表", EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("中转报关服务商列表", EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER.getCode(), dto);
         return Boolean.TRUE;
     }
 

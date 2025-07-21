@@ -87,7 +87,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("虚拟仓库库存信息", EXPORT_WMS_VIRTUAL_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("虚拟仓库库存信息", EXPORT_WMS_VIRTUAL_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 

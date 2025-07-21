@@ -125,7 +125,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
 
     @Override
     public void exportList(OverseasHistoryInventoryDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("海外仓每日库存", FileTaskEventEnum.EXPORT_MRP_OVERSEAS_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("海外仓每日库存", FileTaskEventEnum.EXPORT_MRP_OVERSEAS_INVENTORY.getCode(), dto);
     }
 
     @Override

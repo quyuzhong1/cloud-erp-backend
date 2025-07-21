@@ -247,7 +247,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params) {
-        downloadTaskFeign.saveExportTask("盘盈盘亏单", EXPORT_WMS_STOCKTAKING_PROFIT_LOSS.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("盘盈盘亏单", EXPORT_WMS_STOCKTAKING_PROFIT_LOSS.getCode(), params);
         return Boolean.TRUE;
     }
 

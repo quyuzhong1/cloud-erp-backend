@@ -375,7 +375,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
 
     @Override
     public void exportList(DictGlobalAreaDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("区域Excel导出", EXPORT_SYS_GLOBAL_AREA.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("区域Excel导出", EXPORT_SYS_GLOBAL_AREA.getCode(), dto);
     }
 
     @Override

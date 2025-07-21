@@ -193,7 +193,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
     @Override
     public void exportList(ApproveTaskInfoDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveExportTask("三方生成查询导出", EXPORT_APPROVE_TASK.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("三方生成查询导出", EXPORT_APPROVE_TASK.getCode(), param);
     }
 
     @Override

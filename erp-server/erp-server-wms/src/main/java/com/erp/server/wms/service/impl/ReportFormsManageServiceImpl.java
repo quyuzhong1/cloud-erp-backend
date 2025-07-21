@@ -97,7 +97,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     }
     @Override
     public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("采购业务汇总表", EXPORT_WMS_PURCHASE_BUSINESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("采购业务汇总表", EXPORT_WMS_PURCHASE_BUSINESS.getCode(), dto);
         return Boolean.TRUE;
     }
 

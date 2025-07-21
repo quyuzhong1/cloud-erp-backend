@@ -147,7 +147,7 @@ public class ReportManagerServiceImpl implements ReportManagerService {
      */
     @Override
     public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params) {
-        downloadTaskFeign.saveExportTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
         return Boolean.TRUE;
     }
 

@@ -352,7 +352,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
     @Override
     public Boolean exportExcel(LogisticsProductDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("物流产品列表", EXPORT_PLM_LOGISTICS_PRODUCT.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("物流产品列表", EXPORT_PLM_LOGISTICS_PRODUCT.getCode(), dto);
         return Boolean.TRUE;
     }
 

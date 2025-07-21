@@ -229,7 +229,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     public void exportList(SubcontractIssueDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveExportTask("委外发料单导出", EXPORT_WMS_SUBCONTRACT_ISSUE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("委外发料单导出", EXPORT_WMS_SUBCONTRACT_ISSUE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

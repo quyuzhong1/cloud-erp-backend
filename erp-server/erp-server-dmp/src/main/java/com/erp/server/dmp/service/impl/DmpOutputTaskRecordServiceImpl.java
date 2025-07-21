@@ -305,7 +305,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public Boolean exportExcel(DmpOutputTaskRecordDTO.ExpotParamDTO dto) {
-        downloadTaskFeign.saveExportTask("中台推送任务表", EXPORT_NEW_DMP_PUSH_TASK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("中台推送任务表", EXPORT_NEW_DMP_PUSH_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -149,7 +149,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public void exportList(FbaInventoryDTO.ExportDTO param) {
-        downloadTaskFeign.saveExportTask("FBA库存导出", EXPORT_WMS_FBA_INVENTORY.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("FBA库存导出", EXPORT_WMS_FBA_INVENTORY.getCode(), param);
     }
 
     @Override

@@ -246,7 +246,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
     @Override
     public void exportList(SoDeliveryNoticeChangeDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveExportTask("发货通知变更单导出", EXPORT_WMS_SO_DELIVERY_NOTICE_CHANGE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("发货通知变更单导出", EXPORT_WMS_SO_DELIVERY_NOTICE_CHANGE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

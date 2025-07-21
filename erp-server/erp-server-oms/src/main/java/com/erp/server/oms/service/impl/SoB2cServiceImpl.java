@@ -8335,7 +8335,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean exportExcel(SoB2cDTO.ExportParamDTO params) {
-        downloadTaskFeign.saveExportTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -8754,7 +8754,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveExportTask("B2C异常销售订单", EXPORT_OMS_SO_B2C_ABNORMAL.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("B2C异常销售订单", EXPORT_OMS_SO_B2C_ABNORMAL.getCode(), params);
         return Boolean.TRUE;
     }
 

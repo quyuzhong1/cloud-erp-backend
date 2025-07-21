@@ -129,7 +129,7 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
 
     @Override
     public void exportList(FbaHistoryInventoryDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("FBA每日库存", FileTaskEventEnum.EXPORT_MRP_FBA_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("FBA每日库存", FileTaskEventEnum.EXPORT_MRP_FBA_INVENTORY.getCode(), dto);
     }
 
     @Override

@@ -2396,7 +2396,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
+        downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
     }
 
     @Override

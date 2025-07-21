@@ -104,7 +104,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
 
     @Override
     public Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("中台推送任务历史表", EXPORT_PUSH_TASK_HISTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("中台推送任务历史表", EXPORT_PUSH_TASK_HISTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 

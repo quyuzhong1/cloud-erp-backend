@@ -241,7 +241,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public void exportList(CfgProcessDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("流程配置导出", EXPORT_PROCESS_CFG_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_PROCESS_CFG_PROCESS.getCode(), dto);
     }
 
     @Override

@@ -706,7 +706,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public Boolean exportExcel(SoReturnNoticeDTO.PagingParam dto) {
-        downloadTaskFeign.saveExportTask("销售退货通知单", EXPORT_WMS_SO_RETURN_NOTICE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售退货通知单", EXPORT_WMS_SO_RETURN_NOTICE.getCode(), dto);
         return Boolean.TRUE;
     }
 

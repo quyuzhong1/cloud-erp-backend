@@ -238,7 +238,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Override
     public void exportList(RequisitionApplicationChangeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("要货申请通知变更单导出", EXPORT_WMS_REQUISITION_APPLICATION_CHANGE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("要货申请通知变更单导出", EXPORT_WMS_REQUISITION_APPLICATION_CHANGE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

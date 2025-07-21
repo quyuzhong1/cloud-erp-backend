@@ -236,7 +236,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
     }
 
     @Override

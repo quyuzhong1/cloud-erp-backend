@@ -343,7 +343,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     public void export(VirtualWarehouseAllocationDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("分货单导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("分货单导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), dto);
     }
 
     /**
@@ -948,7 +948,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
     @Override
     public void exportStatistics(VirtualWarehouseAllocationDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("分货统计导出", EXPORT_WMS_VIRTUAL_STATISTICS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("分货统计导出", EXPORT_WMS_VIRTUAL_STATISTICS.getCode(), dto);
     }
 
     @Override

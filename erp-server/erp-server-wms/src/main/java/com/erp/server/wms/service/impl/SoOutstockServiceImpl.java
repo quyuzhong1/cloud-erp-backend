@@ -1706,7 +1706,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -317,7 +317,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Override
     public void exportExcel(SoB2cReturnDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("b2c退货订单导出", EXPORT_OMS_SO_B2C_RETURN.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("b2c退货订单导出", EXPORT_OMS_SO_B2C_RETURN.getCode(), dto);
     }
 
     @Override

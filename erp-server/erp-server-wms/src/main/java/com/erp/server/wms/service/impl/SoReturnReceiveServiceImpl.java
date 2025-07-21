@@ -692,7 +692,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto) {
-        downloadTaskFeign.saveExportTask("销售退货签收单", EXPORT_WMS_SO_RETURN_RECEIVE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售退货签收单", EXPORT_WMS_SO_RETURN_RECEIVE.getCode(), dto);
         return true;
     }
 

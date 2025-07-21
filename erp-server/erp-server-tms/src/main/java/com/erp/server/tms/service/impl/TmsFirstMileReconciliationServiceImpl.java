@@ -216,7 +216,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
     @Override
     public void exportList(TmsFirstMileReconciliationDTO.ExportDTO param) {
-        downloadTaskFeign.saveExportTask("头程对账单导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("头程对账单导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

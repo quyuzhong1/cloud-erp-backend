@@ -332,7 +332,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
         builder.append("试产量产单导出").append(date);
-        downloadTaskFeign.saveExportTask(builder.toString(), EXPORT_PLM_PILOT_APPLICATION.getCode(), param);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PILOT_APPLICATION.getCode(), param);
     }
 
 

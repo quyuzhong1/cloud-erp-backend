@@ -124,7 +124,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     @Override
     public void exportList(FirstMileChangeRecordDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("头程调整记录导出", EXPORT_TMS_FIRST_MILE_CHANGE_RECORD.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程调整记录导出", EXPORT_TMS_FIRST_MILE_CHANGE_RECORD.getCode(), dto);
     }
 
     @Override

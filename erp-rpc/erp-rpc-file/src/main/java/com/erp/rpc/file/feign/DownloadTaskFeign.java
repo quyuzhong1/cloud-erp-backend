@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface DownloadTaskFeign {
 
     @PostMapping("/feign/downloadTask/saveExportTask")
-    String saveExportTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);
+    String saveDownloadTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);
 
     @PostMapping("/feign/downloadTask/saveImportTask")
     String saveImportTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params);

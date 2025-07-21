@@ -556,7 +556,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params) {
-        downloadTaskFeign.saveExportTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
         return Boolean.TRUE;
     }
 

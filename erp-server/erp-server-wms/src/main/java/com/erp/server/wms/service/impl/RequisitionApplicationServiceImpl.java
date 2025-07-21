@@ -1105,7 +1105,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public void exportExcel(RequisitionApplicationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("要货申请单导出", EXPORT_WMS_REQUISITION_APPLICATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("要货申请单导出", EXPORT_WMS_REQUISITION_APPLICATION.getCode(), dto);
     }
 
     @Override

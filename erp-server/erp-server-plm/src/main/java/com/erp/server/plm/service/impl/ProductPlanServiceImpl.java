@@ -311,7 +311,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO) {
-        downloadTaskFeign.saveExportTask("产品规划", EXPORT_PLM_PRODUCT_PLAN.getCode(), productPlanSearchDTO);
+        downloadTaskFeign.saveDownloadTask("产品规划", EXPORT_PLM_PRODUCT_PLAN.getCode(), productPlanSearchDTO);
         return Boolean.TRUE;
     }
 

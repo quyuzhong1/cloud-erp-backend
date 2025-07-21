@@ -510,7 +510,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
 
     @Override
     public void export(SoPriceChangeDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("销售调价数据", EXPORT_SO_PRICE_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售调价数据", EXPORT_SO_PRICE_CHANGE.getCode(), dto);
     }
 
     /**

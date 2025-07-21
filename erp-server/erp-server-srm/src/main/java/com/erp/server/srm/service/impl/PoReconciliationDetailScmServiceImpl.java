@@ -249,7 +249,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
     @Override
     public void exportList(PoReconciliationDetailDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("对账明细导出", EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM.getCode(), dto);
     }
 
 

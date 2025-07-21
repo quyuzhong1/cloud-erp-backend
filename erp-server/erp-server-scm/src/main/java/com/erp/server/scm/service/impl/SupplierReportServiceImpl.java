@@ -71,7 +71,7 @@ public class SupplierReportServiceImpl implements SupplierReportService {
 
     @Override
     public void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO) {
-        downloadTaskFeign.saveExportTask("供应商报表导出", EXPORT_SCM_SUPPLIER_REPORT.getCode(), paramDTO);
+        downloadTaskFeign.saveDownloadTask("供应商报表导出", EXPORT_SCM_SUPPLIER_REPORT.getCode(), paramDTO);
     }
 
     @Override

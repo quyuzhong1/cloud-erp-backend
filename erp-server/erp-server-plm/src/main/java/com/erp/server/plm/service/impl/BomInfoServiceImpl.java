@@ -1032,7 +1032,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void exportExcel(SearchPagingDTO dto) {
-        downloadTaskFeign.saveExportTask("BOM数据", EXPORT_PLM_BOM.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("BOM数据", EXPORT_PLM_BOM.getCode(), dto);
     }
 
     /**

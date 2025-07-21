@@ -466,7 +466,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     public Boolean exportErrorPools() {
-        downloadTaskFeign.saveExportTask("B2C异常销售订单错误池", EXPORT_OMS_SO_B2C_ABNORMAL_POOLS.getCode(),new SoB2cAbnormalDTO.PagingParamDTO());
+        downloadTaskFeign.saveDownloadTask("B2C异常销售订单错误池", EXPORT_OMS_SO_B2C_ABNORMAL_POOLS.getCode(),new SoB2cAbnormalDTO.PagingParamDTO());
         return Boolean.TRUE;
     }
 

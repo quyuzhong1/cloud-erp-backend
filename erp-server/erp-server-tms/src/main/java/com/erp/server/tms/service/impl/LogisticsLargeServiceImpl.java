@@ -1256,7 +1256,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     public Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("物流大表", EXPORT_TMS_LOGISTICS_LARGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("物流大表", EXPORT_TMS_LOGISTICS_LARGE.getCode(), dto);
         return Boolean.TRUE;
     }
 

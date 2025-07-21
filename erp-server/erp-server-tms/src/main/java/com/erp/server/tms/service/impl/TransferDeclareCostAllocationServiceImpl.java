@@ -342,7 +342,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 	@Override
 	public Boolean exportExcel(PagingParamDTO dto) {
-		downloadTaskFeign.saveExportTask("中转费用分摊列表", FileTaskEventEnum.EXPORT_TRANSFER_DECLARE_COST_ALLOCATION.getCode(), dto);
+		downloadTaskFeign.saveDownloadTask("中转费用分摊列表", FileTaskEventEnum.EXPORT_TRANSFER_DECLARE_COST_ALLOCATION.getCode(), dto);
         return Boolean.TRUE;
 	}
 

@@ -249,7 +249,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public void exportList(WmsDeliveryPlanDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveExportTask("发货计划导出", EXPORT_WMS_OVERSEAS_DELIVERY_PLAN.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("发货计划导出", EXPORT_WMS_OVERSEAS_DELIVERY_PLAN.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -773,15 +773,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public void exportPacking(PackingTaskDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("装箱任务导出", EXPORT_WMS_PACKING_TASK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("装箱任务导出", EXPORT_WMS_PACKING_TASK.getCode(), dto);
     }
 
     @Override
     public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
         if (Objects.isNull(dto.getMergeCarton()) || !dto.getMergeCarton()){
-            downloadTaskFeign.saveExportTask("装箱清单导出(同箱规不合并)", EXPORT_WMS_PACKING_TASK_DETAIL.getCode(), dto);
+            downloadTaskFeign.saveDownloadTask("装箱清单导出(同箱规不合并)", EXPORT_WMS_PACKING_TASK_DETAIL.getCode(), dto);
         }else {
-            downloadTaskFeign.saveExportTask("装箱清单导出(同箱规合并)", EXPORT_WMS_PACKING_TASK_DETAIL_MERGE.getCode(), dto);
+            downloadTaskFeign.saveDownloadTask("装箱清单导出(同箱规合并)", EXPORT_WMS_PACKING_TASK_DETAIL_MERGE.getCode(), dto);
         }
     }
 
@@ -2544,7 +2544,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public void exportUnPackingDetail(PackingTaskDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("未装箱明细导出", EXPORT_WMS_UN_PACKING_TASK_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("未装箱明细导出", EXPORT_WMS_UN_PACKING_TASK_DETAIL.getCode(), dto);
     }
 
     @Override

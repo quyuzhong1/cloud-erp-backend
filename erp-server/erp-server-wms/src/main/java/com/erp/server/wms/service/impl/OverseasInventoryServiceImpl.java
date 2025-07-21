@@ -239,7 +239,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
     @Override
     public Boolean exportExcel(OverseasInventoryDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("海外仓库数据", EXPORT_WMS_OVERSEAS_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("海外仓库数据", EXPORT_WMS_OVERSEAS_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 

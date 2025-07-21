@@ -571,7 +571,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
 
     @Override
     public void exportExcel(FbaTransitCalculateReportDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("FBA在途核对列表导出", EXPORT_WMS_FBA_TRANSIT_REPORT.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("FBA在途核对列表导出", EXPORT_WMS_FBA_TRANSIT_REPORT.getCode(), dto);
     }
 
     @Override

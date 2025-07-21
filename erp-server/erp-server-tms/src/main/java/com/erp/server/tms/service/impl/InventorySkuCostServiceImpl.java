@@ -293,7 +293,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public void exportExcel(InventorySkuCostDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("SKU成本导出", EXPORT_TMS_INVENTORY_SKU_COST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("SKU成本导出", EXPORT_TMS_INVENTORY_SKU_COST.getCode(), dto);
     }
 
     @Override

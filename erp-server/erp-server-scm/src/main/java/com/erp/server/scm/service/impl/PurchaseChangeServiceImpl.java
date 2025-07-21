@@ -354,7 +354,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("采购变更数据", EXPORT_SCM_PURCHASE_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("采购变更数据", EXPORT_SCM_PURCHASE_CHANGE.getCode(), dto);
         return Boolean.TRUE;
     }
 

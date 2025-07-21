@@ -226,7 +226,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
     @Override
     public void exportTransFlow(InventoryDTO.ExportInvFlowSearchParamDTO param) {
-        downloadTaskFeign.saveExportTask("库存流水明细导出", EXPORT_WMS_INVENTORY_TRANS_FLOW.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("库存流水明细导出", EXPORT_WMS_INVENTORY_TRANS_FLOW.getCode(), param);
     }
 
     @Override
@@ -241,7 +241,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param) {
-        downloadTaskFeign.saveExportTask("出入库流水数据", EXPORT_WMS_INVENTORY_IN_OUT_STOCK.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("出入库流水数据", EXPORT_WMS_INVENTORY_IN_OUT_STOCK.getCode(), param);
     }
 
     @Override
@@ -285,7 +285,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportTransportExcel(InventoryReportDTO.ExportTransportSearchParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveExportTask("在途库存导出", EXPORT_WMS_INVENTORY_TRANSPORT.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveDownloadTask("在途库存导出", EXPORT_WMS_INVENTORY_TRANSPORT.getCode(), pagingParamDTO);
     }
 
     @Override
@@ -342,7 +342,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params) {
-        downloadTaskFeign.saveExportTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
     }
 
     @Override

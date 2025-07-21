@@ -1078,7 +1078,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public void exportWarehouse(WarehouseDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("仓库数据", EXPORT_WMS_WAREHOUSE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("仓库数据", EXPORT_WMS_WAREHOUSE.getCode(), dto);
     }
 
 

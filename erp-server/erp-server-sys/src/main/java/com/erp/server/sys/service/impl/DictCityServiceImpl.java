@@ -379,12 +379,12 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     @Override
     public void provinceExport(DictCityDTO.ProvincePagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("省份Excel导出", EXPORT_SYS_CITY_PROVINCE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("省份Excel导出", EXPORT_SYS_CITY_PROVINCE.getCode(), dto);
     }
 
     @Override
     public void cityExport(DictCityDTO.ProvincePagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("城市Excel导出", EXPORT_SYS_CITY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("城市Excel导出", EXPORT_SYS_CITY.getCode(), dto);
     }
 
     @Override

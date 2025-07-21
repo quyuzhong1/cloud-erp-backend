@@ -562,7 +562,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     public Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("调拨申请单导出", EXPORT_WMS_TRANSFER_APPLICATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("调拨申请单导出", EXPORT_WMS_TRANSFER_APPLICATION.getCode(), dto);
         return Boolean.TRUE;
     }
 

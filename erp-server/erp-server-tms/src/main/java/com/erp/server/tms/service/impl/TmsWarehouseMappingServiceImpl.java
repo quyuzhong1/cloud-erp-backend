@@ -197,7 +197,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Override
     public Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("仓库匹配列表", EXPORT_TMS_TMS_WAREHOUSE_MAPPING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("仓库匹配列表", EXPORT_TMS_TMS_WAREHOUSE_MAPPING.getCode(), dto);
         return Boolean.TRUE;
     }
 

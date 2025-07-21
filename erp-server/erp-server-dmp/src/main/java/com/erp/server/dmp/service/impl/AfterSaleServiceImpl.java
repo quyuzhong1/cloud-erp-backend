@@ -556,7 +556,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public void exportList(AfterSaleDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("售后申请导出", EXPORT_DMP_AFTER_SALE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("售后申请导出", EXPORT_DMP_AFTER_SALE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

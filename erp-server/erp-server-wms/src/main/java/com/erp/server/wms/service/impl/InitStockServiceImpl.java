@@ -171,7 +171,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Override
     public void exportExcel(InitStockDTO.ExportSearchParamDTO param) {
-        downloadTaskFeign.saveExportTask("期初库存数据", EXPORT_WMS_INIT_STOCK.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("期初库存数据", EXPORT_WMS_INIT_STOCK.getCode(), param);
     }
 
     @Override

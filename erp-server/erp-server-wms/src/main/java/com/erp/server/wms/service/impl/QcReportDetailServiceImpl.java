@@ -263,7 +263,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
      */
     @Override
     public void exportReportByMainId(BaseIdDTO dto) {
-        downloadTaskFeign.saveExportTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
     }
 
     @Override

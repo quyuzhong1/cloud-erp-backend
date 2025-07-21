@@ -1061,7 +1061,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public Boolean exportExcel(SoReturnDTO.PagingParam dto) {
 
-        downloadTaskFeign.saveExportTask("销售退货订单", EXPORT_OMS_SO_RETURN.getCode() ,dto);
+        downloadTaskFeign.saveDownloadTask("销售退货订单", EXPORT_OMS_SO_RETURN.getCode() ,dto);
         return true;
     }
 

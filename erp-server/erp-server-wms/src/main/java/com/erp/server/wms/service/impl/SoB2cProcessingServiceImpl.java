@@ -102,7 +102,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
 
     @Override
     public Boolean exportExcel(SoB2cProcessingDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("B2C虚拟仓列表信息", EXPORT_WMS_SO_B2C_PROCESSING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("B2C虚拟仓列表信息", EXPORT_WMS_SO_B2C_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
     }
 

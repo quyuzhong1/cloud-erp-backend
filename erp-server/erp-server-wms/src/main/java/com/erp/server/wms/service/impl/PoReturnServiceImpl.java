@@ -1542,7 +1542,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      **/
     @Override
     public Boolean exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("退货单", EXPORT_WMS_PURCHASE_RETURN_ORDER.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("退货单", EXPORT_WMS_PURCHASE_RETURN_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 

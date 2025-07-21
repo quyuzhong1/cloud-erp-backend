@@ -248,7 +248,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public void exportList(FirstMileCostAllocationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("费用分摊明细导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("费用分摊明细导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
     }
 
     @Override

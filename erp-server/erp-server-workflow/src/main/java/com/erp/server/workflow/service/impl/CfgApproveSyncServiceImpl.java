@@ -634,7 +634,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Override
 
     public void exportList(CfgApproveSyncDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
     }
 
     @Override

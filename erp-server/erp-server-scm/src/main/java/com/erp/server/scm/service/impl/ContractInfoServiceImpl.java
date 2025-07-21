@@ -430,7 +430,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
     @Override
     public void exportList(ContractInfoDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("合同管理单导出", EXPORT_SCM_CONTRACT_INFO_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("合同管理单导出", EXPORT_SCM_CONTRACT_INFO_REPORT.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -355,7 +355,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void exportSalesInfo(CalcSalesInfoDimDTO.ExportSalesInfoDTO dto) {
-        downloadTaskFeign.saveExportTask("销量试算导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销量试算导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC.getCode(), dto);
     }
 
     @Override
@@ -633,7 +633,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void exportSalesInfoList(CalcSalesInfoDimDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("销量试算任务列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_LIST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销量试算任务列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_LIST.getCode(), dto);
     }
 
     @Override
@@ -711,7 +711,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void exportSalesInfoTemplateList(CalcSalesInfoDimDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("销量试算模板列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_TEMPLATE_LIST.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销量试算模板列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_TEMPLATE_LIST.getCode(), dto);
 
     }
 

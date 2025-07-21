@@ -156,7 +156,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
 
     @Override
     public Boolean exportList(RemotePostcodeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("偏远邮编", FileTaskEventEnum.EXPORT_WMS_REMOTE_POSTCODE.getCode() ,param);
+        downloadTaskFeign.saveDownloadTask("偏远邮编", FileTaskEventEnum.EXPORT_WMS_REMOTE_POSTCODE.getCode() ,param);
         return true;
     }
 

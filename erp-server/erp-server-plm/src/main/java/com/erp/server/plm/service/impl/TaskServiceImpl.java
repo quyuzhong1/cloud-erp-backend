@@ -98,7 +98,7 @@ public class TaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskE
      */
     @Override
     public Boolean exportTask(TaskPagingDTO.ExportDTO params) {
-        downloadTaskFeign.saveExportTask("产品任务列表", EXPORT_PLM_TASK.getCode(), params);
+        downloadTaskFeign.saveDownloadTask("产品任务列表", EXPORT_PLM_TASK.getCode(), params);
         return Boolean.TRUE;
     }
 

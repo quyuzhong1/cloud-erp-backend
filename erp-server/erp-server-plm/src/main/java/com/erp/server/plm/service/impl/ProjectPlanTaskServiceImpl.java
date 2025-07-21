@@ -268,7 +268,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      */
     @Override
     public Boolean exportExcel(ProjectPlanTaskConditionDTO dto) {
-        downloadTaskFeign.saveExportTask("项目计划", EXPORT_PLM_SCHEDULE_TASK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("项目计划", EXPORT_PLM_SCHEDULE_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 

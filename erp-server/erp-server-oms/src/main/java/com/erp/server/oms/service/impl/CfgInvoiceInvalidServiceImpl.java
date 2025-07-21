@@ -85,7 +85,7 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
 
     @Override
     public Boolean export(CustomerDTO.@Valid ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("作废发票号", EXPORT_INVOICE_INVALID.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("作废发票号", EXPORT_INVOICE_INVALID.getCode(), dto);
         return null;
     }
 

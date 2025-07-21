@@ -860,7 +860,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("采购订单数据", EXPORT_SCM_PURCHASE_ORDER.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("采购订单数据", EXPORT_SCM_PURCHASE_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 

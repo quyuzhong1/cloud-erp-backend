@@ -273,7 +273,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("中台拉取任务表", EXPORT_PULL_TASK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("中台拉取任务表", EXPORT_PULL_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 

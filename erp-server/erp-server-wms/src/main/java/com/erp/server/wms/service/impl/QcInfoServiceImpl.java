@@ -491,7 +491,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     public void exportQcBill(QcInfoDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("质检单数据", EXPORT_WMS_QC_BILL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("质检单数据", EXPORT_WMS_QC_BILL.getCode(), dto);
     }
 
 
@@ -2134,7 +2134,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public void exportDailyExcel(QcInfoDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("质检日报数据", EXPORT_WMS_DAILY_QC_BILL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("质检日报数据", EXPORT_WMS_DAILY_QC_BILL.getCode(), dto);
     }
 
     /**

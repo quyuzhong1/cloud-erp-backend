@@ -186,7 +186,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public void exportList(TransferOutDTO.ExportDTO param) {
-        downloadTaskFeign.saveExportTask("分布式调出订单", EXPORT_WMS_TRANSFER_OUT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("分布式调出订单", EXPORT_WMS_TRANSFER_OUT.getCode(), param);
     }
 
     @Override

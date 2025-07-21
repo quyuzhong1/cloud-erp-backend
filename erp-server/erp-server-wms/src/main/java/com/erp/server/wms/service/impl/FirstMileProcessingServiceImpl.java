@@ -130,7 +130,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
 
     @Override
     public Boolean exportExcel(FirstMileProcessingDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("头程虚拟仓列表信息", EXPORT_WMS_FIRST_MILE_PROCESSING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程虚拟仓列表信息", EXPORT_WMS_FIRST_MILE_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
     }
 

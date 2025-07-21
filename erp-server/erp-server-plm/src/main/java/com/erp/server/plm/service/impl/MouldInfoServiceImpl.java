@@ -803,7 +803,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void export(MouldInfoDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("模具管理导出", EXPORT_PLM_MOULD_INFO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("模具管理导出", EXPORT_PLM_MOULD_INFO.getCode(), dto);
     }
 
     @Override
@@ -909,7 +909,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void orderTrackingExport(MouldInfoDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("下单跟踪导出", EXPORT_PLM_ORDER_TRACKING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("下单跟踪导出", EXPORT_PLM_ORDER_TRACKING.getCode(), dto);
     }
 
     @Override
@@ -924,7 +924,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void orderTrackingDetailExport(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
-        downloadTaskFeign.saveExportTask("下单跟踪明细导出", EXPORT_PLM_ORDER_TRACKING_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("下单跟踪明细导出", EXPORT_PLM_ORDER_TRACKING_DETAIL.getCode(), dto);
     }
 
     @Override

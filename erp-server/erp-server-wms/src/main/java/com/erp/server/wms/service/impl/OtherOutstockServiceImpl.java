@@ -677,7 +677,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     public Boolean exportExcel(OtherOutstockDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("其他出库单导出", EXPORT_WMS_OTHER_OUT_STOCK.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("其他出库单导出", EXPORT_WMS_OTHER_OUT_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

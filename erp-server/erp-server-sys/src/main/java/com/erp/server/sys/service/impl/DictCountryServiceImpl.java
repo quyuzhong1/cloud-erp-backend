@@ -477,7 +477,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     public void exportList(DictCountryDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("国家Excel导出", EXPORT_SYS_COUNTRY.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("国家Excel导出", EXPORT_SYS_COUNTRY.getCode(), dto);
     }
 
     @Override

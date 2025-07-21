@@ -199,7 +199,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Override
     public Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto) {
-        downloadTaskFeign.saveExportTask("流程设计记录", EXPORT_PROCESS_DEFINITION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("流程设计记录", EXPORT_PROCESS_DEFINITION.getCode(), dto);
         return Boolean.TRUE;
     }
 

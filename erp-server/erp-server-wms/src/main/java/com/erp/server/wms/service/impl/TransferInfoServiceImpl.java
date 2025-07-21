@@ -1281,7 +1281,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("直接调拨单导出", EXPORT_WMS_TRANSFER_INFO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("直接调拨单导出", EXPORT_WMS_TRANSFER_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
 

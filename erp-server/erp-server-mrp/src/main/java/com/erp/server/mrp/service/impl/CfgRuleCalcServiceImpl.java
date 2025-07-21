@@ -308,7 +308,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
 
     @Override
     public void downloadHistorySales(CfgRuleCalcDTO.DownloadDTO dto) {
-        downloadTaskFeign.saveExportTask("历史销量导出(销量试算)", FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_CALC.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("历史销量导出(销量试算)", FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_CALC.getCode(), dto);
     }
 
     @Override

@@ -273,7 +273,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveExportTask("备货申请单数据", EXPORT_SCM_SALES_DEMAND.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("备货申请单数据", EXPORT_SCM_SALES_DEMAND.getCode(), dto);
         return Boolean.TRUE;
     }
 

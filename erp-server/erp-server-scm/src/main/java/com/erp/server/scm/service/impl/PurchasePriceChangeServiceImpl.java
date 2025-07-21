@@ -860,7 +860,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public void export(PurchasePriceChangeDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("采购调价数据", EXPORT_SCM_PURCHASE_PRICE_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("采购调价数据", EXPORT_SCM_PURCHASE_PRICE_CHANGE.getCode(), dto);
     }
 
     /**

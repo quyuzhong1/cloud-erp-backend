@@ -433,7 +433,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Override
     public Boolean exportExcel(TransferDeclareDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("中转报关单导出", EXPORT_TMS_TRANSFER_DECLARE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("中转报关单导出", EXPORT_TMS_TRANSFER_DECLARE.getCode(), dto);
         return Boolean.TRUE;
     }
 

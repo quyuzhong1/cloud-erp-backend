@@ -79,7 +79,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     public Boolean exportExcel(StocktakingTaskDTO.BaseIdDTO dto) {
         dto.checkAndGetMainId();
-        downloadTaskFeign.saveExportTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -1687,7 +1687,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public void export(FbaShipmentDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("FBA货件导出", EXPORT_WMS_FBA_SHIPMENT.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("FBA货件导出", EXPORT_WMS_FBA_SHIPMENT.getCode(), dto);
     }
 
     private List<FbaShipmentDTO.ExportDTO> fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {

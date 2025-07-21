@@ -151,7 +151,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
     @Override
     public Boolean exportExcel(LogisticsAddressDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("物流地址列表", EXPORT_TMS_LOGISTICS_ADDRESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("物流地址列表", EXPORT_TMS_LOGISTICS_ADDRESS.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -578,7 +578,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      */
     @Override
     public void exportSoPrice(SoPriceDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("销售价目数据", EXPORT_SO_PRICE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售价目数据", EXPORT_SO_PRICE.getCode(), dto);
     }
 
     /**

@@ -1044,7 +1044,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public void export(ProcessManagementDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("流程管理", EXPORT_PROCESS_MANAGEMENT.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("流程管理", EXPORT_PROCESS_MANAGEMENT.getCode(), dto);
     }
 
     @Override

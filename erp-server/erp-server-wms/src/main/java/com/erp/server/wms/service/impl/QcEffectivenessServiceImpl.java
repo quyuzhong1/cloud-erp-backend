@@ -199,11 +199,11 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         //导出类型
         String type = dto.getType();
         if (QcReportExportExcelTypeEnum.PERSONNEL.getCode().equals(type)) {
-            downloadTaskFeign.saveExportTask("按人员导出", EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL.getCode(), dto);
+            downloadTaskFeign.saveDownloadTask("按人员导出", EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL.getCode(), dto);
 
         }
         if (QcReportExportExcelTypeEnum.DOCUMENT.getCode().equals(type)) {
-            downloadTaskFeign.saveExportTask("按单据导出", EXPORT_WMS_QC_EFFECTIVENESS_DOCUMENT.getCode(), dto);
+            downloadTaskFeign.saveDownloadTask("按单据导出", EXPORT_WMS_QC_EFFECTIVENESS_DOCUMENT.getCode(), dto);
 
         }
         return Boolean.TRUE;

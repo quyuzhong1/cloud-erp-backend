@@ -103,7 +103,7 @@ public class ListingPushRecordServiceImpl extends SuperServiceImpl<ListingInfoMa
 
     @Override
     public Boolean export(ListingPushRecordDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("sku对照表推送记录", EXPORT_OMS_LISTING_PUSH.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("sku对照表推送记录", EXPORT_OMS_LISTING_PUSH.getCode(), dto);
         return Boolean.TRUE;
     }
 }

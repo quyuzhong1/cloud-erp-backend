@@ -1793,7 +1793,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     public void listExport(ShopDTO.ExportDTO dto) {
-        downloadTaskFeign.saveExportTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
+        downloadTaskFeign.saveDownloadTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {

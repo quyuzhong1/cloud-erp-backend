@@ -552,7 +552,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public void exportList(SupplierVisitDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
     }
 
     @Override

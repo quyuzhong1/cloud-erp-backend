@@ -16,7 +16,7 @@ public class DownloadTaskFeignController {
     private FileTaskContext fileTaskContext;
 
     @PostMapping("/saveExportTask")
-    public String saveExportTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params) {
+    public String saveDownloadTask(@RequestParam String fileName, @RequestParam String event, @RequestBody Object params) {
         //单据名称+年月日时分秒
         fileName = fileName + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         return fileTaskContext.addExport(new FileTaskDTO(event,fileName, params));

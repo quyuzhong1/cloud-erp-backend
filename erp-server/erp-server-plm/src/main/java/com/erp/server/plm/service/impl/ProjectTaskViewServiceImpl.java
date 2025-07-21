@@ -276,7 +276,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
 
     @Override
     public void exportExcel(ProductTaskViewSearchDTO dto) {
-        downloadTaskFeign.saveExportTask("任务视图", EXPORT_PLM_TASK_VIEW.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("任务视图", EXPORT_PLM_TASK_VIEW.getCode(), dto);
     }
 
     @Override

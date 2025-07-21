@@ -794,7 +794,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public Boolean exportExcel(SoDeliveryNoticeDTO.PagingParam dto) {
-        downloadTaskFeign.saveExportTask("销售发货通知单", EXPORT_WMS_SO_DELIVERY_NOTICE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售发货通知单", EXPORT_WMS_SO_DELIVERY_NOTICE.getCode(), dto);
         return Boolean.TRUE;
     }
 

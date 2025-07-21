@@ -612,7 +612,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
     @Override
     public void exportList(CfgThirdNoticeDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveExportTask("三方通知配置导出", EXPORT_SYS_THIRD_NOTICE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("三方通知配置导出", EXPORT_SYS_THIRD_NOTICE.getCode(), param);
     }
 
     @Override

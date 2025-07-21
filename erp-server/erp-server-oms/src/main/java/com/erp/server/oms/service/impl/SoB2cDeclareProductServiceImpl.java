@@ -175,7 +175,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
 
     @Override
     public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto) {
-        downloadTaskFeign.saveExportTask("申报信息", EXPORT_OMS_SO_B2C_DECLARE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("申报信息", EXPORT_OMS_SO_B2C_DECLARE.getCode(), dto);
         return Boolean.TRUE;
     }
 

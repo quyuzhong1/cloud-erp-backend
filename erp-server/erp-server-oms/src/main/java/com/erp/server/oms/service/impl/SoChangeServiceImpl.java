@@ -517,7 +517,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveExportTask("销售变更单列表",EXPORT_OMS_SO_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售变更单列表",EXPORT_OMS_SO_CHANGE.getCode(), dto);
         return true;
     }
 

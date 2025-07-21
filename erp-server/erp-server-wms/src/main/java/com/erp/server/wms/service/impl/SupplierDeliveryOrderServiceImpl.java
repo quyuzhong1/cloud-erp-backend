@@ -51,7 +51,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
     private DownloadTaskFeign downloadTaskFeign;
     @Override
     public Boolean export(DeliveryOrderDTO.ParamDTO dto) {
-        downloadTaskFeign.saveExportTask("供应商送货单", EXPORT_WMS_SUPPLIER_DELIVERY_ORDER.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("供应商送货单", EXPORT_WMS_SUPPLIER_DELIVERY_ORDER.getCode(), dto);
         return true;
     }
 
