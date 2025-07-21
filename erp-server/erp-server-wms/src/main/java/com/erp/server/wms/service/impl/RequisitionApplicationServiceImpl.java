@@ -102,8 +102,6 @@ import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1107,7 +1105,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public void exportExcel(RequisitionApplicationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("要货申请单导出", EXPORT_WMS_REQUISITION_APPLICATION.getCode(), dto);
+        downloadTaskFeign.saveExportTask("要货申请单导出", EXPORT_WMS_REQUISITION_APPLICATION.getCode(), dto);
     }
 
     @Override

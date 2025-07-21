@@ -104,7 +104,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public Boolean exportExcel(VirtualInventoryDiffDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("库存差异列表信息", EXPORT_WMS_VIRTUAL_INVENTORY_DIFF.getCode(), dto);
+        downloadTaskFeign.saveExportTask("库存差异列表信息", EXPORT_WMS_VIRTUAL_INVENTORY_DIFF.getCode(), dto);
         return Boolean.TRUE;
     }
 

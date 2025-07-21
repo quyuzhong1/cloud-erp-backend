@@ -2,9 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.PagingDTO;
@@ -29,8 +27,6 @@ import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
 import com.erp.server.wms.service.WmsCartonService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,7 +160,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Override
     public void packingExport(FbaShipmentDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("FBA货件装箱清单导出", EXPORT_WMS_FBA_SHIPMENT_PACKING.getCode(), dto);
+        downloadTaskFeign.saveExportTask("FBA货件装箱清单导出", EXPORT_WMS_FBA_SHIPMENT_PACKING.getCode(), dto);
     }
 
     @Override

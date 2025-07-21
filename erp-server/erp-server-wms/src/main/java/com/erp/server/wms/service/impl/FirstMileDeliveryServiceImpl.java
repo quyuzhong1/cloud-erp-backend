@@ -90,8 +90,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -371,7 +369,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     @Transactional
     public void exportList(FirstMileDeliveryDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("发货单导出", EXPORT_WMS_FBA_DELIVERY.getCode(), param);
+        downloadTaskFeign.saveExportTask("发货单导出", EXPORT_WMS_FBA_DELIVERY.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -2184,7 +2182,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public void exportBox(PackingTaskDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("箱号对照表清单导出", EXPORT_WMS_FIRST_MILE_PACKING_BOX.getCode(), dto);
+        downloadTaskFeign.saveExportTask("箱号对照表清单导出", EXPORT_WMS_FIRST_MILE_PACKING_BOX.getCode(), dto);
     }
 
     @Override
@@ -2210,7 +2208,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("发货单装箱清单导出", EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("发货单装箱清单导出", EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL.getCode(), dto);
     }
 
     @Override

@@ -1,11 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -31,7 +27,6 @@ import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -84,7 +79,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     public Boolean exportExcel(StocktakingTaskDTO.BaseIdDTO dto) {
         dto.checkAndGetMainId();
-        downloadTaskFeign.saveDownloadTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
 

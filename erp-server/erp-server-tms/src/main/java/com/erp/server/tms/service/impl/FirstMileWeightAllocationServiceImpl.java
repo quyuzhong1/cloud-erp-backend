@@ -172,7 +172,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Override
     public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto) {
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        downloadTaskFeign.saveDownloadTask("头程重量分摊导出" + date, EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveExportTask("头程重量分摊导出" + date, EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
     }
 
     @Override

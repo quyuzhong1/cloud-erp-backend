@@ -155,9 +155,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -8337,7 +8335,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean exportExcel(SoB2cDTO.ExportParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
+        downloadTaskFeign.saveExportTask("B2C销售订单", EXPORT_OMS_SO_B2C.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -8756,7 +8754,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("B2C异常销售订单", EXPORT_OMS_SO_B2C_ABNORMAL.getCode(), params);
+        downloadTaskFeign.saveExportTask("B2C异常销售订单", EXPORT_OMS_SO_B2C_ABNORMAL.getCode(), params);
         return Boolean.TRUE;
     }
 

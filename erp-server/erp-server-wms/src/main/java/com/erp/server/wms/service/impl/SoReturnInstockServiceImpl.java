@@ -971,7 +971,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public Boolean exportExcel(SoReturnInstockDTO.PagingParam dto) {
-        downloadTaskFeign.saveDownloadTask("销售退货入库单", EXPORT_WMS_SO_RETURN_IN_STOCK.getCode(), dto);
+        downloadTaskFeign.saveExportTask("销售退货入库单", EXPORT_WMS_SO_RETURN_IN_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

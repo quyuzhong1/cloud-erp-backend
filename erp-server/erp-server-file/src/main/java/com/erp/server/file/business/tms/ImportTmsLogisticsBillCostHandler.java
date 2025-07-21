@@ -35,9 +35,10 @@ public class ImportTmsLogisticsBillCostHandler extends AbstractImportEventHandle
     }
 
     @Override
-    protected BaseDTO.ImportResultDTO getData(FileTask fileTask) {
+    protected void getData(FileTask fileTask) {
         BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {
         });
-        return exportTmsFeign.importLogisticsBillCost(dto);
+        dto.setTaskId(fileTask.getId());
+        exportTmsFeign.importLogisticsBillCost(dto);
     }
 }

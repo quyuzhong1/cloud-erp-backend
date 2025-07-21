@@ -867,7 +867,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
     public Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("海外入库单数据", EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND.getCode(), dto);
+        downloadTaskFeign.saveExportTask("海外入库单数据", EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND.getCode(), dto);
         return Boolean.TRUE;
     }
 

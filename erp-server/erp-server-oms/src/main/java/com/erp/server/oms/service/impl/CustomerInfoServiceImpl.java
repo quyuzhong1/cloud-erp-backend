@@ -976,7 +976,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     public Boolean exportExcel(CustomerDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("客户列表", EXPORT_OMS_CUSTOMER.getCode(), dto);
+        downloadTaskFeign.saveExportTask("客户列表", EXPORT_OMS_CUSTOMER.getCode(), dto);
         return Boolean.TRUE;
     }
 

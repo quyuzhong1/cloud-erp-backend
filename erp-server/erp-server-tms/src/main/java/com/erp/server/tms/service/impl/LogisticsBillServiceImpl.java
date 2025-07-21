@@ -395,7 +395,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Override
     public Boolean exportExcel(LogisticsBillDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("自发货物流单列表", EXPORT_TMS_LOGISTICS_BILL.getCode(), params);
+        downloadTaskFeign.saveExportTask("自发货物流单列表", EXPORT_TMS_LOGISTICS_BILL.getCode(), params);
         return Boolean.TRUE;
 
     }

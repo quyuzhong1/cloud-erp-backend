@@ -44,7 +44,6 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_DECLARE;
 
@@ -176,7 +175,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
 
     @Override
     public Boolean exportExcel(SoB2cDeclareProductDTO.ListDTO dto) {
-        downloadTaskFeign.saveDownloadTask("申报信息", EXPORT_OMS_SO_B2C_DECLARE.getCode(), dto);
+        downloadTaskFeign.saveExportTask("申报信息", EXPORT_OMS_SO_B2C_DECLARE.getCode(), dto);
         return Boolean.TRUE;
     }
 

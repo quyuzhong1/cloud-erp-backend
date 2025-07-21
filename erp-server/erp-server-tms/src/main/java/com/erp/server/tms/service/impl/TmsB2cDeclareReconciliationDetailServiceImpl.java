@@ -342,7 +342,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 
     @Override
     public void exportDetailList(TmsB2cDeclareReconciliationDetailDTO.ExportDTO param) {
-        downloadTaskFeign.saveDownloadTask("b2c报关对账单明细导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL.getCode(), param);
+        downloadTaskFeign.saveExportTask("b2c报关对账单明细导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL.getCode(), param);
     }
 
     @Override

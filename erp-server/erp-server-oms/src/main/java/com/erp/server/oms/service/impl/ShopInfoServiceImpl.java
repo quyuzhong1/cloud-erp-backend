@@ -16,7 +16,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -1794,7 +1793,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     public void listExport(ShopDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
+        downloadTaskFeign.saveExportTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {

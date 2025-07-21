@@ -144,7 +144,7 @@ public class LocalHistoryInventoryServiceImpl extends SuperServiceImpl<LocalHist
 
     @Override
     public void exportExcel(LocalHistoryInventoryDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("本地仓每日库存", FileTaskEventEnum.EXPORT_MRP_LOCAL_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveExportTask("本地仓每日库存", FileTaskEventEnum.EXPORT_MRP_LOCAL_INVENTORY.getCode(), dto);
     }
 
     @Override

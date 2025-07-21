@@ -11,7 +11,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -28,7 +27,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.model.scm.enums.SupplierVisitEnum;
-import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -554,7 +552,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Override
     public void exportList(SupplierVisitDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
+        downloadTaskFeign.saveExportTask("供应商现场考察导出", EXPORT_SCM_SUPPLIER_VISIT_REPORT.getCode(), param);
     }
 
     @Override

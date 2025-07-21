@@ -176,7 +176,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Override
     public void exportList(SubcontractChangeDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("委外变更单导出", EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER.getCode(), param);
+        downloadTaskFeign.saveExportTask("委外变更单导出", EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER.getCode(), param);
     }
 
     @Override

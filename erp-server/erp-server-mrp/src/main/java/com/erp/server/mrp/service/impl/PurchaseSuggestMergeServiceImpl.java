@@ -295,7 +295,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Override
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("采购建议（合并）", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION_MERGE_ENTITY.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("采购建议（合并）", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION_MERGE_ENTITY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 

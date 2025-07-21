@@ -179,7 +179,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      */
     @Override
     public void exportExcel(InitFirstMileAllocationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("期初头程分摊导出", EXPORT_TMS_INIT_FIRST_MILE_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveExportTask("期初头程分摊导出", EXPORT_TMS_INIT_FIRST_MILE_ALLOCATION.getCode(), dto);
     }
 
     @Override

@@ -718,7 +718,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     public Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("加工单导出", EXPORT_WMS_MACHINE_INFO.getCode(), dto);
+        downloadTaskFeign.saveExportTask("加工单导出", EXPORT_WMS_MACHINE_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
 

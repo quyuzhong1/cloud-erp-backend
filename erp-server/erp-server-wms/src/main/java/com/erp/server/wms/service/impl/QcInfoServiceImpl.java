@@ -24,7 +24,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -492,7 +491,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     public void exportQcBill(QcInfoDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("质检单数据", EXPORT_WMS_QC_BILL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("质检单数据", EXPORT_WMS_QC_BILL.getCode(), dto);
     }
 
 
@@ -2135,7 +2134,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public void exportDailyExcel(QcInfoDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("质检日报数据", EXPORT_WMS_DAILY_QC_BILL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("质检日报数据", EXPORT_WMS_DAILY_QC_BILL.getCode(), dto);
     }
 
     /**

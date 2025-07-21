@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_BILL;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_DECLARE_BILL;
 
 /**
  * B2B报关单
@@ -257,7 +256,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单列表")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     public ApiResult<Object>export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("B2B报关单列表", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("B2B报关单列表", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
 

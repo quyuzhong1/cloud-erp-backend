@@ -259,7 +259,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
 
     @Override
     public Boolean exportSupplierUser(UserPagingSearchDTO dto) {
-        downloadTaskFeign.saveDownloadTask("供应商协同用户列表", EXPORT_SCM_SUPPLIER_USER.getCode(), dto);
+        downloadTaskFeign.saveExportTask("供应商协同用户列表", EXPORT_SCM_SUPPLIER_USER.getCode(), dto);
 
         return Boolean.TRUE;
     }

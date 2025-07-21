@@ -131,7 +131,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
 
     @Override
     public Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("对账字段配置数据", EXPORT_TMS_CFG_RECONCILIATION_FIELD.getCode(), dto);
+        downloadTaskFeign.saveExportTask("对账字段配置数据", EXPORT_TMS_CFG_RECONCILIATION_FIELD.getCode(), dto);
         return Boolean.TRUE;
     }
 

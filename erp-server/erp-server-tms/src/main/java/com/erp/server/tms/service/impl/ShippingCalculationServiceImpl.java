@@ -435,7 +435,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
     @Override
     public Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("运费计算列表", EXPORT_TMS_SHIPPING_CALCULATION.getCode(), params);
+        downloadTaskFeign.saveExportTask("运费计算列表", EXPORT_TMS_SHIPPING_CALCULATION.getCode(), params);
         return Boolean.TRUE;
     }
 

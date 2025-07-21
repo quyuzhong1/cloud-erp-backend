@@ -593,7 +593,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     public Boolean export(InvoiceInfoDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("发票管理", EXPORT_INVOICE_INFO.getCode(), dto);
+        downloadTaskFeign.saveExportTask("发票管理", EXPORT_INVOICE_INFO.getCode(), dto);
         return Boolean.TRUE;
     }
 

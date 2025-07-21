@@ -2,7 +2,6 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -13,10 +12,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
-import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
-import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
-import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
@@ -26,17 +21,14 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
-import com.erp.server.workflow.handler.CfgApproveSyncSendHandler;
 import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessManagementService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
@@ -48,7 +40,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_APPROVE_SYNC_RECORD;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
 
 /**
  * <p>
@@ -125,7 +116,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Override
     public void exportList(ApproveSyncRecordDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("三方推送记录导出", EXPORT_PROCESS_APPROVE_SYNC_RECORD.getCode(), param);
+        downloadTaskFeign.saveExportTask("三方推送记录导出", EXPORT_PROCESS_APPROVE_SYNC_RECORD.getCode(), param);
     }
 
     @Override

@@ -39,7 +39,7 @@ public interface ExportTmsFeign {
     PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/import/logisticsBillCost")
-    BaseDTO.ImportResultDTO importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto);
+    void importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto);
     @PostMapping("/feign/export/smallBagCostAllocation")
     PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/transferDeclareCostAllocation")

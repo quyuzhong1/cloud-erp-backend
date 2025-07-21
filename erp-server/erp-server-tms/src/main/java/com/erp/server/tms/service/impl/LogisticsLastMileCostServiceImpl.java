@@ -22,7 +22,6 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -49,7 +48,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -402,7 +400,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("尾程费用列表", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
+        downloadTaskFeign.saveExportTask("尾程费用列表", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 

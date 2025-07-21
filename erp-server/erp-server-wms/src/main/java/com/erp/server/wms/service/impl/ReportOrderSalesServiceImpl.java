@@ -126,7 +126,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Override
     public Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售看板", EXPORT_WMS_REPORT_ORDER_SALES.getCode(), dto);
+        downloadTaskFeign.saveExportTask("销售看板", EXPORT_WMS_REPORT_ORDER_SALES.getCode(), dto);
         return Boolean.TRUE;
     }
 

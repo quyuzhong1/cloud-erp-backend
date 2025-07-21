@@ -1,6 +1,5 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
@@ -491,7 +490,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto) {
-        downloadTaskFeign.saveDownloadTask("头程暂估账单导出", EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("头程暂估账单导出", EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
     }
 
     @Override

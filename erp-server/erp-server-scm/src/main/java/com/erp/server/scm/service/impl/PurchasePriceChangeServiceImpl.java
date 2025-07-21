@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -861,7 +860,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public void export(PurchasePriceChangeDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("采购调价数据", EXPORT_SCM_PURCHASE_PRICE_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveExportTask("采购调价数据", EXPORT_SCM_PURCHASE_PRICE_CHANGE.getCode(), dto);
     }
 
     /**

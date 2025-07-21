@@ -207,20 +207,20 @@ public class LogisticsBillCostController extends BaseController {
         return success();
     }
 
-    /**
-     * 导入
-     * @author Will
-     * @date: 2023/11/13 15:14
-     * @param excelFile
-     * @param response
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
-    @PostMapping("/import")
-    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsBillCostService.importFile(excelFile, response);
-        return result ? success() : failure();
-    }
+//    /**
+//     * 导入
+//     * @author Will
+//     * @date: 2023/11/13 15:14
+//     * @param excelFile
+//     * @param response
+//     * @return ApiResult
+//     */
+//    @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
+//    @PostMapping("/import")
+//    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+//        Boolean result = logisticsBillCostService.importFile(excelFile, response);
+//        return result ? success() : failure();
+//    }
     /**
      *  异步导入
      * @author zdy
@@ -228,7 +228,6 @@ public class LogisticsBillCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/asyncImportExcel")
     public ApiResult<Object>asyncExportExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean flag = logisticsBillCostService.asyncImportExcel(dto);
@@ -261,7 +260,7 @@ public class LogisticsBillCostController extends BaseController {
      * 新增付款/退款（仅创建）
      * @author Will
      * @date:  2023-11-06
-     * @param dto
+     * @param dtoList
      * @return ApiResult
      */
      @PostMapping("/addPayAndRefund")
@@ -312,7 +311,7 @@ public class LogisticsBillCostController extends BaseController {
       * 编辑付款/退款 保存
       * @author Will
       * @date:  2023-11-06
-      * @param dto
+      * @param dtoList
       * @return ApiResult
       */
      @PostMapping("/edit")

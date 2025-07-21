@@ -1709,7 +1709,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("发货单导出", EXPORT_WMS_B2C_DELIVERY_ORDER.getCode(), dto);
+        downloadTaskFeign.saveExportTask("发货单导出", EXPORT_WMS_B2C_DELIVERY_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 

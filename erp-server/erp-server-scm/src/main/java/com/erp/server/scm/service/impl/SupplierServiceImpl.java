@@ -947,7 +947,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public void exportSupplier(SupplierDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
+        downloadTaskFeign.saveExportTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
     }
 
     /**

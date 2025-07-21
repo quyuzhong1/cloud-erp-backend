@@ -876,7 +876,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public void export(PickingListsDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("拣货单", EXPORT_WMS_PICKING_LISTS.getCode(), dto);
+        downloadTaskFeign.saveExportTask("拣货单", EXPORT_WMS_PICKING_LISTS.getCode(), dto);
     }
 
     @Override

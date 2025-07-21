@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -198,7 +197,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Override
     public Boolean exportExcel(TmsWarehouseMappingDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("仓库匹配列表", EXPORT_TMS_TMS_WAREHOUSE_MAPPING.getCode(), dto);
+        downloadTaskFeign.saveExportTask("仓库匹配列表", EXPORT_TMS_TMS_WAREHOUSE_MAPPING.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -105,7 +105,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     public Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("库龄流水", EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("库龄流水", EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
     @Override

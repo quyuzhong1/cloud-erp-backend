@@ -1,11 +1,10 @@
 package com.erp.rpc.file.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import feign.Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
@@ -56,6 +55,6 @@ public interface FileFeign {
      * @param fileId
      * @return
      */
-    @PostMapping("/feign/file/getInputStream")
-    InputStream getInputStream(@RequestParam("fileId") String fileId);
+    @GetMapping("/feign/file/getInputStream/{fileId}")
+    Response getInputStream(@PathVariable("fileId") String fileId);
 }

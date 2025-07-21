@@ -38,7 +38,7 @@ public class FileTaskController extends BaseController {
      */
     @PostMapping
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody FileTaskDTO fileTaskDTO){
-        String id = fileTaskContext.add(fileTaskDTO);
+        String id = fileTaskContext.addExport(fileTaskDTO);
         return success(new BaseResultDTO.AddDTO(id, ""));
     }
 

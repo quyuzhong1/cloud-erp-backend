@@ -12,7 +12,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -27,8 +26,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
@@ -100,7 +97,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     }
     @Override
     public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("采购业务汇总表", EXPORT_WMS_PURCHASE_BUSINESS.getCode(), dto);
+        downloadTaskFeign.saveExportTask("采购业务汇总表", EXPORT_WMS_PURCHASE_BUSINESS.getCode(), dto);
         return Boolean.TRUE;
     }
 

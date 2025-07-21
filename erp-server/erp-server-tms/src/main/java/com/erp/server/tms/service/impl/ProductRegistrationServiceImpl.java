@@ -409,7 +409,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
 
     @Override
     public void export(ProductRegistrationDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("备案列表", EXPORT_TMS_PRODUCT_REGISTRATION.getCode(), dto);
+        downloadTaskFeign.saveExportTask("备案列表", EXPORT_TMS_PRODUCT_REGISTRATION.getCode(), dto);
     }
 
     @Override

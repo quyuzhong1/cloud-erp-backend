@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -255,7 +254,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO param) {
-        downloadTaskFeign.saveDownloadTask("头程对账单明细导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL.getCode(), param);
+        downloadTaskFeign.saveExportTask("头程对账单明细导出", EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION_DETAIL.getCode(), param);
     }
 
     private void fillExportInfo(List<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> list) {

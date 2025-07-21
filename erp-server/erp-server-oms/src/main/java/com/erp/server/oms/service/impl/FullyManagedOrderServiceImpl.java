@@ -271,7 +271,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
 
     @Override
     public Boolean exportExcel(SoB2cDTO.ExportParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("全托管销售订单", EXPORT_OMS_FULLY_MANAGED.getCode(), params);
+        downloadTaskFeign.saveExportTask("全托管销售订单", EXPORT_OMS_FULLY_MANAGED.getCode(), params);
         return Boolean.TRUE;
     }
 

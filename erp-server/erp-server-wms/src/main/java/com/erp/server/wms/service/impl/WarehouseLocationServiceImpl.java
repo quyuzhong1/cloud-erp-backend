@@ -785,7 +785,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public void exportExcel(WarehouseLocationDTO.exportParamDto dto) {
-        downloadTaskFeign.saveDownloadTask("仓位数据导出", EXPORT_WMS_WAREHOUSE_LOCATION.getCode(), dto);
+        downloadTaskFeign.saveExportTask("仓位数据导出", EXPORT_WMS_WAREHOUSE_LOCATION.getCode(), dto);
     }
 
     @Transactional(rollbackFor = Exception.class)

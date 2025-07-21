@@ -95,7 +95,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
 
     @Override
     public Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto) {
-        downloadTaskFeign.saveDownloadTask("工时统计", EXPORT_PLM_TASK_TIME_RECORD.getCode(), dto);
+        downloadTaskFeign.saveExportTask("工时统计", EXPORT_PLM_TASK_TIME_RECORD.getCode(), dto);
         return Boolean.TRUE;
     }
 

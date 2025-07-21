@@ -1,14 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -39,7 +37,6 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +50,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -227,7 +223,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
     @Override
     public void exportList(SubcontractReturnDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("委外退料单导出", EXPORT_WMS_SUBCONTRACT_RETURN.getCode(), param);
+        downloadTaskFeign.saveExportTask("委外退料单导出", EXPORT_WMS_SUBCONTRACT_RETURN.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -327,7 +327,7 @@ public class SupplierRefWarehouseServiceImpl extends SuperServiceImpl<SupplierRe
 
     @Override
     public Boolean exportExcel(SupplierRefWarehouseDTO.PagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("仓库绑定", EXPORT_SCM_SUPPLIER_REF_WAREHOUSE.getCode(), params);
+        downloadTaskFeign.saveExportTask("仓库绑定", EXPORT_SCM_SUPPLIER_REF_WAREHOUSE.getCode(), params);
         return Boolean.TRUE;
     }
 

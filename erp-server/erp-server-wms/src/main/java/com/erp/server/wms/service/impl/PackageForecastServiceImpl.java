@@ -88,7 +88,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.Pack;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -1075,7 +1074,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     public Boolean exportExcel(PackageForecastDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("组包预报列表", EXPORT_WMS_PACKAGE_FORECAST.getCode(), dto);
+        downloadTaskFeign.saveExportTask("组包预报列表", EXPORT_WMS_PACKAGE_FORECAST.getCode(), dto);
         return Boolean.TRUE;
 
     }

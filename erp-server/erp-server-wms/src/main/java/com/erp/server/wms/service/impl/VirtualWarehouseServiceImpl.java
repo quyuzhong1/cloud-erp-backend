@@ -561,7 +561,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
     @Override
     public Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("虚拟仓库设置导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT.getCode(), dto);
+        downloadTaskFeign.saveExportTask("虚拟仓库设置导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT.getCode(), dto);
         return Boolean.TRUE;
     }
 

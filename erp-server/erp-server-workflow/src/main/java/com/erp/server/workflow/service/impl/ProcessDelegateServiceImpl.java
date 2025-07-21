@@ -181,7 +181,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
 
     @Override
     public void exportList(ProcessDelegateDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("委托审批单导出", EXPORT_PROCESS_DELEGATE.getCode(), param);
+        downloadTaskFeign.saveExportTask("委托审批单导出", EXPORT_PROCESS_DELEGATE.getCode(), param);
     }
 
     @Override

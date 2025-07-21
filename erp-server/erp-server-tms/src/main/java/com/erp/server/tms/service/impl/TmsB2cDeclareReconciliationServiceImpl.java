@@ -27,12 +27,10 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationPayStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -48,7 +46,6 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -206,7 +203,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Override
     public void exportList(TmsB2cDeclareReconciliationDTO.ExportDTO param) {
-        downloadTaskFeign.saveDownloadTask("b2c报关对账单导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION.getCode(), param);
+        downloadTaskFeign.saveExportTask("b2c报关对账单导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

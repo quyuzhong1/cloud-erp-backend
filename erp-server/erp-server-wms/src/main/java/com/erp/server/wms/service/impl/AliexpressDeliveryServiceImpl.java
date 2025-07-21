@@ -141,7 +141,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
 
     @Override
     public Boolean exportExcel(AliexpressDeliveryDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("速卖通发货单", EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT.getCode(), dto);
+        downloadTaskFeign.saveExportTask("速卖通发货单", EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT.getCode(), dto);
         return Boolean.TRUE;
     }
 

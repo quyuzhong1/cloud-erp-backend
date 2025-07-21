@@ -3,10 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -31,9 +29,7 @@ import com.erp.server.wms.service.ReportOrderDemandDetailService;
 import com.erp.server.wms.service.VirtualWarehouseService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -96,7 +92,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
     @Override
     public Boolean exportExcel(ReportOrderDemandDetailDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("订单需求明细", EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("订单需求明细", EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
 

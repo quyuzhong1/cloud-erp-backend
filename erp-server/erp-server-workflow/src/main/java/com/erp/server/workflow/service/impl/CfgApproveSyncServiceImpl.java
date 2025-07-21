@@ -10,14 +10,12 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
@@ -45,7 +43,6 @@ import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -637,7 +634,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Override
 
     public void exportList(CfgApproveSyncDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
+        downloadTaskFeign.saveExportTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
     }
 
     @Override

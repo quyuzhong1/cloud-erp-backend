@@ -79,7 +79,7 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
 
     @Override
     public Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("中台拉取任务历史表", EXPORT_PULL_TASK_HISTORY.getCode(), dto);
+        downloadTaskFeign.saveExportTask("中台拉取任务历史表", EXPORT_PULL_TASK_HISTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 

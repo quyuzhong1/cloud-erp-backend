@@ -34,7 +34,6 @@ import com.erp.server.wms.service.WmsAttachmentService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -264,7 +263,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
      */
     @Override
     public void exportReportByMainId(BaseIdDTO dto) {
-        downloadTaskFeign.saveDownloadTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
+        downloadTaskFeign.saveExportTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
     }
 
     @Override

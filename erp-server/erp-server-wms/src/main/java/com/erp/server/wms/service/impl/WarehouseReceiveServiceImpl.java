@@ -939,7 +939,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     public Boolean exportExcel(WarehouseReceiveDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("仓库收货单", EXPORT_WMS_WAREHOUSE_RECEIVE.getCode(), dto);
+        downloadTaskFeign.saveExportTask("仓库收货单", EXPORT_WMS_WAREHOUSE_RECEIVE.getCode(), dto);
         return Boolean.TRUE;
     }
 

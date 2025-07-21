@@ -2,7 +2,7 @@ package com.erp.server.file.vo;
 
 import com.common.business.annotation.Dict;
 import com.common.business.enums.FileTaskEventEnum;
-import com.erp.server.file.enums.FileTaskStatusEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.server.file.enums.FileTaskTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;

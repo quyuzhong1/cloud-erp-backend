@@ -20,7 +20,6 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcNoticeDetailExcelListener;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.*;
@@ -237,7 +236,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
+        downloadTaskFeign.saveExportTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
     }
 
     @Override

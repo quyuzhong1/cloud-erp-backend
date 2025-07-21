@@ -860,25 +860,25 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public Boolean exportReplenishmentRule(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("补货规则", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("补货规则", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportHistorySalesQty(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("历史销量", FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_QTY.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("历史销量", FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_QTY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportPurchaseSuggestion(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("补货计划_采购建议", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("补货计划_采购建议", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportDeliverySuggest(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("补货计划_发货建议", FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("补货计划_发货建议", FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 
@@ -1426,7 +1426,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public void exportCalcData(BaseIdDTO dto) {
-        downloadTaskFeign.saveDownloadTask("补货建议计算数据", FileTaskEventEnum.EXPORT_MRP_SUGGESTION_CALC_DATA.getCode(), dto);
+        downloadTaskFeign.saveExportTask("补货建议计算数据", FileTaskEventEnum.EXPORT_MRP_SUGGESTION_CALC_DATA.getCode(), dto);
     }
 
     @Override

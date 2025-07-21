@@ -36,23 +36,19 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationMainFeeSourceEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferDeclareCostAllocationReportStatusEnum;
@@ -346,7 +342,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 	@Override
 	public Boolean exportExcel(PagingParamDTO dto) {
-		downloadTaskFeign.saveDownloadTask("中转费用分摊列表", FileTaskEventEnum.EXPORT_TRANSFER_DECLARE_COST_ALLOCATION.getCode(), dto);
+		downloadTaskFeign.saveExportTask("中转费用分摊列表", FileTaskEventEnum.EXPORT_TRANSFER_DECLARE_COST_ALLOCATION.getCode(), dto);
         return Boolean.TRUE;
 	}
 

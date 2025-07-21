@@ -354,7 +354,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      */
     @Override
     public Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_PLATFORM_SKU.getCode(), dto);
+        downloadTaskFeign.saveExportTask("sku对照列表", EXPORT_OMS_PLATFORM_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -668,7 +668,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      */
     @Override
     public Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto) {
-        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_WAREHOUSE_SKU.getCode(), dto);
+        downloadTaskFeign.saveExportTask("sku对照列表", EXPORT_OMS_WAREHOUSE_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -2095,7 +2095,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_CUSTOMER_SKU.getCode(), dto);
+        downloadTaskFeign.saveExportTask("sku对照列表", EXPORT_OMS_CUSTOMER_SKU.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -1166,7 +1166,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     @Override
     public void listExport(WarehouseLocationMoveDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("仓库移动导出", EXPORT_WMS_PDA_WAREHOUSE_LOCATION_MOVE_INFO.getCode(), dto);
+        downloadTaskFeign.saveExportTask("仓库移动导出", EXPORT_WMS_PDA_WAREHOUSE_LOCATION_MOVE_INFO.getCode(), dto);
     }
 
     private void dataProcess(List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS, List<SkuVO> skuVOList, List<String> warehouseIds) {

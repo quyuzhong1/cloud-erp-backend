@@ -170,7 +170,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
 
     @Override
     public void exportList(CfgThirdProcessDTO.PagingParamDTO dto, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("三方审批生成导出", EXPORT_PROCESS_THIRD_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveExportTask("三方审批生成导出", EXPORT_PROCESS_THIRD_PROCESS.getCode(), dto);
     }
 
     @Override

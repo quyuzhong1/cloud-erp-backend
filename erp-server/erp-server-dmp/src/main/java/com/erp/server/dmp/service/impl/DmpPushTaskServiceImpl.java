@@ -265,7 +265,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
     @Override
     public Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("中台推送任务表", EXPORT_PUSH_TASK.getCode(), dto);
+        downloadTaskFeign.saveExportTask("中台推送任务表", EXPORT_PUSH_TASK.getCode(), dto);
         return Boolean.TRUE;
     }
 

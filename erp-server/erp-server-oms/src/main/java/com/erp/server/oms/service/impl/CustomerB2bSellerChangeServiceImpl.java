@@ -16,7 +16,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -33,10 +32,7 @@ import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -526,7 +522,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     public void export(CustomerB2bSellerChangeDTO.ParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("客户b2b销售变更单", EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveExportTask("客户b2b销售变更单", EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE.getCode(), dto);
     }
 
     @Override

@@ -2,13 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -59,7 +56,6 @@ import com.erp.server.wms.query.SubcontractIssueQueryHandler;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -233,7 +229,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     public void exportList(SubcontractIssueDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("委外发料单导出", EXPORT_WMS_SUBCONTRACT_ISSUE.getCode(), param);
+        downloadTaskFeign.saveExportTask("委外发料单导出", EXPORT_WMS_SUBCONTRACT_ISSUE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -199,7 +199,7 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
 
     @Override
     public void exportList(VirtualInventoryHistoryDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("虚拟仓库历史库存信息", EXPORT_MRP_VIRTUAL_INVENTORY.getCode(), dto);
+        downloadTaskFeign.saveExportTask("虚拟仓库历史库存信息", EXPORT_MRP_VIRTUAL_INVENTORY.getCode(), dto);
     }
 
     @Override

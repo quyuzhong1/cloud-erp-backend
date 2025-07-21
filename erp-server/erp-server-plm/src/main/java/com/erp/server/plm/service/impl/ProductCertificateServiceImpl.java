@@ -41,7 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -557,7 +556,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Override
     public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
+        downloadTaskFeign.saveExportTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
         return Boolean.TRUE;
     }
 

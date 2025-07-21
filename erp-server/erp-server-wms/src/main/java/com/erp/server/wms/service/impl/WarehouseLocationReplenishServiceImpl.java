@@ -28,7 +28,6 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -187,7 +186,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
+        downloadTaskFeign.saveExportTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
         return Boolean.TRUE;
     }
 

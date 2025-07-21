@@ -480,7 +480,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             default:
                 ;
         }
-        downloadTaskFeign.saveDownloadTask(fileName, FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask(fileName, FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 

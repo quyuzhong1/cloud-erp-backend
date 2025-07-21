@@ -95,15 +95,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
-    /**
-     * @description: 导入
-     * @author Will
-     * @date: 2023/11/13 15:37
-     * @param excelFile
-     * @param response
-     * @return Boolean
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+//    /**
+//     * @description: 导入
+//     * @author Will
+//     * @date: 2023/11/13 15:37
+//     * @param excelFile
+//     * @param response
+//     * @return Boolean
+//     */
+//    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
      * @param dto
      * @return Boolean
@@ -235,5 +235,5 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     Boolean asyncImportExcel(BaseDTO.ImportDTO dto);
 
-    BaseDTO.ImportResultDTO importLogisticsBillCost(BaseDTO.ImportDTO dto);
+    void importLogisticsBillCost(BaseDTO.ImportDTO dto);
 }

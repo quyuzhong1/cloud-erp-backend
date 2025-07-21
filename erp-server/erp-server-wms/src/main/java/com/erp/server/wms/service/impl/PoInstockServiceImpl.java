@@ -1052,7 +1052,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public Boolean exportExcel(PoInstockDTO.ExportParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("采购入库单数据", EXPORT_WMS_PO_IN_STOCK.getCode(), dto);
+        downloadTaskFeign.saveExportTask("采购入库单数据", EXPORT_WMS_PO_IN_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }
 

@@ -18,9 +18,7 @@ public abstract class AbstractImportEventHandler<T> implements FileEventHandler 
 
     @Override
     public void handle(FileTask fileTask) {
-        BaseDTO.ImportResultDTO resultDTO = getData(fileTask);
-        fileTask.setCount(resultDTO.getCount());
-        fileTask.setFileUrl(resultDTO.getErrorUrl());
+        getData(fileTask);
     }
 
     /**
@@ -28,7 +26,7 @@ public abstract class AbstractImportEventHandler<T> implements FileEventHandler 
      *
      * @param fileTask 入参
      */
-    protected abstract BaseDTO.ImportResultDTO getData(FileTask fileTask);
+    protected abstract void getData(FileTask fileTask);
 
     /**
      * 获取excel路径

@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -13,15 +12,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.CfgSupplierSalesConditionDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
 import com.erp.server.scm.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -563,7 +559,7 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
 
     @Override
     public void exportList(CfgSupplierSalesDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("销量设置导出", EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveExportTask("销量设置导出", EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT.getCode(), pagingParamDTO);
     }
 
     //查询所有的启动未删除的销量设置

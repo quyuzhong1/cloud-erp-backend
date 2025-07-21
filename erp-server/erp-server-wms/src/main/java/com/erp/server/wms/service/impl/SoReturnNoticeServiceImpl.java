@@ -40,7 +40,6 @@ import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -707,7 +706,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public Boolean exportExcel(SoReturnNoticeDTO.PagingParam dto) {
-        downloadTaskFeign.saveDownloadTask("销售退货通知单", EXPORT_WMS_SO_RETURN_NOTICE.getCode(), dto);
+        downloadTaskFeign.saveExportTask("销售退货通知单", EXPORT_WMS_SO_RETURN_NOTICE.getCode(), dto);
         return Boolean.TRUE;
     }
 

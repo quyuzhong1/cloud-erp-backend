@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 @RestController
@@ -53,9 +56,15 @@ public class FileFeignController {
         return fileService.downloadFile(fileId);
     }
 
-    @PostMapping("/getInputStream")
-    public InputStream getInputStream(@RequestParam("fileId") String fileId){
+    @GetMapping("/getInputStream/{fileId}")
+    public void getInputStream(@PathVariable("fileId") String fileId, HttpServletResponse response) throws IOException {
         FileService fileService = fileRegistry.getHandler();
-        return fileService.getInputStream(fileId);
+        InputStream input = fileService.getInputStream(fileId);
+        OutputStream out = response.getOutputStream();
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = input.read(buffer)) != -1) {
+            out.write(buffer, 0, bytesRead);
+        }
     }
 }

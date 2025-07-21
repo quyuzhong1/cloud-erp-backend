@@ -18,14 +18,12 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.excel.FbaTransitExcelDTO;
-import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity;
@@ -48,7 +46,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,7 +57,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_TRANSIT_REPORT;
 
 /**
@@ -575,7 +571,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
 
     @Override
     public void exportExcel(FbaTransitCalculateReportDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("FBA在途核对列表导出", EXPORT_WMS_FBA_TRANSIT_REPORT.getCode(), dto);
+        downloadTaskFeign.saveExportTask("FBA在途核对列表导出", EXPORT_WMS_FBA_TRANSIT_REPORT.getCode(), dto);
     }
 
     @Override

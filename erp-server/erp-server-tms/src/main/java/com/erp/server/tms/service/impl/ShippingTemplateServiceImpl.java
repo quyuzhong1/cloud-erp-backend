@@ -568,7 +568,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
     @Override
     public Boolean exportExcel(ShippingTemplateDTO.ExportExcelParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("运费模板列表", EXPORT_TMS_SHIPPING_TEMPLATE.getCode(), params);
+        downloadTaskFeign.saveExportTask("运费模板列表", EXPORT_TMS_SHIPPING_TEMPLATE.getCode(), params);
         return Boolean.TRUE;
     }
 

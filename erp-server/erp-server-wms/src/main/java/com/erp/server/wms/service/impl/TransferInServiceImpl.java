@@ -676,7 +676,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     public Boolean exportExcel(TransferInDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("分布式调入订单列表", EXPORT_WMS_TRANSFER_IN.getCode(), dto);
+        downloadTaskFeign.saveExportTask("分布式调入订单列表", EXPORT_WMS_TRANSFER_IN.getCode(), dto);
         return Boolean.TRUE;
 
     }

@@ -2,7 +2,6 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -242,7 +241,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public void exportList(CfgProcessDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_PROCESS_CFG_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveExportTask("流程配置导出", EXPORT_PROCESS_CFG_PROCESS.getCode(), dto);
     }
 
     @Override

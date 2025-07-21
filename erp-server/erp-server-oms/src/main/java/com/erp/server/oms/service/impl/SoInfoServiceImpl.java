@@ -1851,7 +1851,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售订单", EXPORT_OMS_SO.getCode(), dto);
+        downloadTaskFeign.saveExportTask("销售订单", EXPORT_OMS_SO.getCode(), dto);
         return Boolean.TRUE;
     }
 
