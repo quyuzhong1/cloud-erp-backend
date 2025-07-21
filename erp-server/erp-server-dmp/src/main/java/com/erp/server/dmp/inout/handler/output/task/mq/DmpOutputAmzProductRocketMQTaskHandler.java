@@ -183,6 +183,8 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
 
         //父平台产品ID（父ASIN）
         product.setPlatformParentSkuId(dmpSkuInfoEntity.getPlatformParentSkuId());
+        //平台的Listing状态
+        product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
         return product;
     }
 
