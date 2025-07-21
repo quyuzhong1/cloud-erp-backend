@@ -29,7 +29,7 @@ public class OrderProcessingServiceImpl implements OrderProcessingService {
         //查询最新的关账时间
        LocalDate minClosedDate = inventoryClosedRecordService.getMinClosedDate();
        if (ObjectUtil.isNull(startDate)) {
-           startDate = minClosedDate.minusMonths(3L);
+           startDate = minClosedDate.minusMonths(10L);
        }
         //b2b销售订单更新订单跟踪
         soB2bProcessingService.autoUpdateSoB2bProcessing(startDate);

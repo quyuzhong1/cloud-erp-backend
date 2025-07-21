@@ -611,6 +611,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -648,6 +649,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -676,6 +678,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -695,6 +698,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp配货单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -708,6 +712,7 @@ public class DmpInoutController extends BaseController {
     		}
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -725,6 +730,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp出库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -741,6 +747,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp物流单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -757,6 +764,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp退货入库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));

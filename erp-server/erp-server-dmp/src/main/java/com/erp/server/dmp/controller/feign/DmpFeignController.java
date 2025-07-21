@@ -305,9 +305,9 @@ public class DmpFeignController extends BaseController {
      * @return Boolean
      */
     @GetMapping("/outputTaskRecord/getOutputTaskRecord")
-    public DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode") String sourceCode, @RequestParam(value = "outputClass") String outputClass) {
+    public List<DmpOutputTaskRecordEntity> getOutputTaskRecord(@RequestParam(value = "sourceCode") String sourceCode, @RequestParam(value = "outputClass") String outputClass) {
         if (CharSequenceUtil.isAllBlank(sourceCode,outputClass)){
-            return null;
+            return new ArrayList<>();
         }
         return dmpOutputTaskRecordService.getOutputTaskRecord(sourceCode, outputClass);
     }

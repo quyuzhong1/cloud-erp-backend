@@ -120,11 +120,11 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     		if(deliveryTime != null) {
     			deliverTimeFormat = localDateTime.format(deliveryTime);
     		}
+    		String signTimeFormat = "";
     		LocalDateTime signTime = dmpSoLogisticsEntity.getSignTime();
-    		if (signTime == null) {
-    			signTime = LocalDateTime.now();
+    		if (signTime != null) {
+    			signTimeFormat = localDateTime.format(signTime);
     		}
-    		String signTimeFormat = localDateTime.format(signTime);
     		for(DmpSoLogisticsDetailEntity dmpSoLogisticsDetailEntity : dmpSoLogisticsDetailEntityList) {
     			if(validateDataBlack(dmpSoLogisticsDetailEntity, cfgOutputId)) {
     				continue;

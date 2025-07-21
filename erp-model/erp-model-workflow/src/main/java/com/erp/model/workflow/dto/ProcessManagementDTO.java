@@ -707,6 +707,14 @@ public class ProcessManagementDTO {
          * 是否委托
          */
         private Boolean isDelegate;
+        /**
+         * 审批人
+         */
+        private String curApproveId;
+        /**
+         * 审批时间
+         */
+        private List<LocalDateTime> dateList;
     }
 
     @Data

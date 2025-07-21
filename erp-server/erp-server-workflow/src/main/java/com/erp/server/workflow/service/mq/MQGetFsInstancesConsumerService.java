@@ -133,6 +133,7 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         entity.setInstanceCode(jsonObject.getStr(FsRequestBodyAttributesEnum.INSTANCECODE.getCode()));
         entity.setApprovalName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
         entity.setTaskList(jsonObject.getStr(FsRequestBodyAttributesEnum.TASKLIST.getCode()));
+        entity.setThirdJson(jsonObject);
         return entity;
     }
 

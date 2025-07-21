@@ -22,6 +22,7 @@ import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
+import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
 import com.erp.server.workflow.service.ApproveTaskInfoService;
@@ -156,7 +157,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
             return Collections.emptyList();
         }
         return lambdaQuery().in(ThirdProcessManagementEntity::getProcessDefinitionId,processDefinitionIdList)
-                .eq(ThirdProcessManagementEntity::getStatus, FsApproveStatusEnum.PENDING.getStatus())
+                .eq(ThirdProcessManagementEntity::getStatus, ProcessStatusEnum.RUNNING.getCode())
                 .list();
     }
 
@@ -198,7 +199,9 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         processManagementDTO.setBusinessCode(one.getBussinessCode());
         processManagementDTO.setBusinessKey(one.getBussinessKey());
 
-        processManagementDTO.setStatus(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        //主表状态
+        FsApproveStatusEnum fsApproveStatusEnum = FsApproveStatusEnum.getByCode(jsonObject.getStr(FsRequestBodyAttributesEnum.STATUS.getCode()));
+        processManagementDTO.setStatus(ProcessStatusEnum.getByCode(fsApproveStatusEnum));
 
         processManagementDTO.setProcessInstanceName(jsonObject.getStr(FsRequestBodyAttributesEnum.APPROVALNAME.getCode()));
         processManagementDTO.setSourcePlatform(sourcePlatform);

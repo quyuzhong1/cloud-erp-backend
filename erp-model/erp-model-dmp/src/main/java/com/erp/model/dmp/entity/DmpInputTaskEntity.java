@@ -84,6 +84,12 @@ public class DmpInputTaskEntity extends BaseEntity<DmpInputTaskEntity> {
      */
      @TableField("exec_timeout")
      private Integer execTimeout;
+     
+     /**
+      * 下次执行任务时间
+      */
+     @TableField("next_exec_time")
+     private LocalDateTime nextExecTime;
 
     public static final String INPUT_DETAIL_ID = "input_detail_id";
 
