@@ -2146,21 +2146,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
 
-        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
+        Map<String, List<TransferInfoDetailDTO.ApproveDTO>> detailMap = transferInfoDetailService.listApproveByMainIds(Collections.singletonList(entity.getId()),Boolean.TRUE);
+
+        List<TransferInfoDetailDTO.ApproveDTO> detailList = detailMap.get(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
+        variablesMap.put("detailList", detailList);
         //调拨总数
-        Integer qtyTotal = detailList.stream().map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer qtyTotal = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
         //调入仓库
-        String inWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getInWarehouseId).collect(Collectors.joining(","));
+        String inWarehouseId = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getInWarehouseId).collect(Collectors.joining(","));
         variablesMap.put("inWarehouseId", inWarehouseId);
         //调出仓库
-        String outWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getOutWarehouseId).collect(Collectors.joining(","));
+        String outWarehouseId = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getOutWarehouseId).collect(Collectors.joining(","));
         variablesMap.put("outWarehouseId", outWarehouseId);
         //SKU
-        String skuNo = detailList.stream().map(TransferInfoDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        String skuNo = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }
