@@ -18,6 +18,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -25,6 +26,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
@@ -48,6 +50,7 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
@@ -63,22 +66,21 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.ThirdNoticePushRecordMapper;
 import com.erp.server.sys.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
 import com.google.gson.Gson;
 import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.redisson.executor.CronExpression;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -86,10 +88,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
 import static com.erp.server.sys.rocketmq.consumer.MqRecordConsumerService.TABLE_BUSINESS_KEY;
@@ -913,7 +911,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         .collect(Collectors.toList());
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
-                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
+                Boolean match = spElServer.matchExpressionDefaultByConditionList(conditionElementList, map,"");
                 if(Boolean.FALSE.equals(match)){
                     return Boolean.FALSE;
                 }

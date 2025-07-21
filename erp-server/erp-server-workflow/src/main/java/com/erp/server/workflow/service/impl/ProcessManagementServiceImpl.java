@@ -243,7 +243,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 Set<String> keySet = cfgQueryOptionEntities.stream().map(CfgQueryOptionEntity::getFieldBelongsType).collect(Collectors.toSet());
                 Boolean matchResult = false;
                 for (String key : keySet) {
-                    if (spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap(), key)) {
+                    if (spElServer.matchExpressionDefaultByConditionList(conditionElementList, dto.getVariablesMap(), key)) {
                         matchResult = true;
                         break;
                     }
