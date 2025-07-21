@@ -66,6 +66,11 @@ public class DmpOutputTaskRequest extends DmpOutputRequest{
 	/**
 	 * 是否校验数据
 	 */
-	private boolean isNotValidate = false; 
+	private boolean isNotValidate = false;
+	
+	/**
+	 * 是否重推
+	 */
+	private boolean isRetryPush = false;
 	
 }
