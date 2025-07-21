@@ -507,6 +507,18 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SoB2cErrorEntity> listSoB2cErrorByMainIds(List<String> errorSoIds) {
+        if (CollectionUtils.isEmpty(errorSoIds)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cErrorEntity> soB2cErrorEntities = this.lambdaQuery()
+                .in(SoB2cErrorEntity::getMainId, errorSoIds)
+                .orderByDesc(SoB2cErrorEntity::getCreateTime)
+                .list();
+        return soB2cErrorEntities;
+    }
+
     /**
     * 新增修改处理数据
     */

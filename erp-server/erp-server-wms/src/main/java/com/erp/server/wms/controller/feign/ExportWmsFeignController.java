@@ -178,6 +178,9 @@ public class ExportWmsFeignController {
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+    @Resource
     private SupplierInventoryService supplierInventoryService;
 
     @PostMapping("/b2cDelivery")
@@ -1045,4 +1048,11 @@ public class ExportWmsFeignController {
     public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
         return supplierInventoryService.paging(dto);
     }
+
+    @PostMapping("/exportThirdWarehouseDelivery")
+    @WebAdvanceQuery
+    public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
+        return thirdWarehouseDeliveryService.paging(dto);
+    }
+
 }
