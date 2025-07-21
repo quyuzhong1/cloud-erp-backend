@@ -1,5 +1,6 @@
 package com.erp.model.scm.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -196,6 +197,38 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("voucher_no")
     private String voucherNo;
+
+    /**
+     * 供货识别码
+     */
+    @TableField("identification_code")
+    private String identificationCode;
+
+    /**
+     * 注册资金(万)
+     */
+    @TableField("registered_capital")
+    private BigDecimal registeredCapital;
+
+    /**
+     * 供应商属性Json
+     */
+    @TableField("property_json")
+    private JSONArray propertyJson;
+
+    /**
+     * 供应商产品品类idJson
+     */
+    @TableField("product_category_json")
+    private JSONArray productCategoryJson;
+
+    /**
+     * 供应商体系认证Json
+     */
+    @TableField("certificate_json")
+    private JSONArray certificateJson;
+
+
 
     @Override
     public Serializable pkVal() {
