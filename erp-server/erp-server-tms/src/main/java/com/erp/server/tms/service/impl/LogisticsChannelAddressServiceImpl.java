@@ -87,7 +87,13 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
         }
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
         Map<String, String> shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
-        viewDTOS.forEach(obj -> obj.setShopName(shopNameMap.get(obj.getShopId())));
+        viewDTOS.forEach(obj -> {
+            if ("all".equals(obj.getShopId())){
+                obj.setShopName("全部店铺");
+            }else {
+                obj.setShopName(shopNameMap.get(obj.getShopId()));
+            }
+        });
         return viewDTOS;
     }
 
