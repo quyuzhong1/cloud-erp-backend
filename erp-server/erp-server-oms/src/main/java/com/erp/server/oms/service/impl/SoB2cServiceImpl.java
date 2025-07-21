@@ -155,9 +155,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -4914,7 +4912,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         } else {
             //标识异常并且审核不通过
-            updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
+            updateAbnormalTypeApprove(id,entity.getCode(), ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
         }
         resultMap.put("isMatch", isMatch);
         resultMap.put("isPass", isPass);
@@ -5122,7 +5120,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("toProvince", Objects.nonNull(receiverEntity) ?receiverEntity.getProvinceName():"");
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiplyWithTwo(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-            detailMap.put("orderProfitRate", financialInfo.getProfitRate());
+            detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
@@ -5932,6 +5930,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * @param id
+     * @param code
      * @param approveStatusEnum
      * @param soB2cAbnormalTypeEnum
      * @return Boolean
@@ -5939,7 +5938,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/24 15:14
      */
-    private Boolean updateAbnormalTypeApprove(String id, ApproveStatusEnum approveStatusEnum, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
+    private Boolean updateAbnormalTypeApprove(String id, String code, ApproveStatusEnum approveStatusEnum, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
+        // 操作日志
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核规则都不匹配", UserContext.getDefaultLoginUser().getUserName(), code, "B2C销售订单表", approveStatusEnum.getName());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "审核操作");
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(ObjectUtils.isNotEmpty(approveStatusEnum), SoB2cEntity::getApproveStatus, approveStatusEnum.getCode())
                 .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
