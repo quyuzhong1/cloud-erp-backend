@@ -40,7 +40,7 @@ public class BaseDTO implements Serializable {
          */
         private String fileUrl;
         /**
-         * 任务id
+         * 任务id[后端使用]
          */
         private String taskId;
     }

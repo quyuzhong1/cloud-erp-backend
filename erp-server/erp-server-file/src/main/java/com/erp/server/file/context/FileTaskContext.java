@@ -105,6 +105,20 @@ public class FileTaskContext {
         }
     }
 
+    /**
+     * 文件任务删除
+     * 基于乐观锁版本，多服务器需优化为分布式锁
+     */
+    public void cancel(String id) {
+        FileTask fileTask = fileTaskRepository.getById(id);
+        ExceptionUtils.emptyThrow(fileTask, String.format("文件任务不存在[%s],请联系IT检查请求", id));
+        // 加锁执行删除
+        fileTask.setStatus(FileTaskStatusEnum.CANCEL.name());
+        fileTask.setFinishTime(LocalDateTime.now());
+        fileTask.setRemark("手动取消");
+        fileTaskRepository.updateById(fileTask);
+    }
+
 
     /**
      * 文件任务处理
