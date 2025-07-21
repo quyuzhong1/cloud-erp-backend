@@ -10,15 +10,19 @@ import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.ASINIdentifier;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.IdentifierType;
+import com.erp.server.dmp.service.DmpProductInfoService;
+import com.erp.server.dmp.service.DmpSkuInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -44,6 +48,13 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
     public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
 
     public static final String AMAZON_LISTING_PRICING_DATA = "amazon_listing_pricing_data";
+
+
+    @Resource
+    private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private DmpProductInfoService dmpProductInfoService;
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
@@ -125,6 +136,12 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                 }
             }
 
+            String listingMongoDataReportId = listingMongoDataItem.getOrDefault(REPORT_ID, "").toString();
+            if(StringUtils.isNotBlank(listingMongoDataReportId) && StringUtils.isNotBlank(reportId) && !listingMongoDataReportId.equalsIgnoreCase(reportId)){
+                //标记为删除状态
+                listingMongoDataItem.put("status", "delete");
+            }
+
             // 匹配明细
             Map<String, Object> detailMap = listingDetailMongoData
                     .stream()
@@ -176,6 +193,20 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                         listingMongoDataItem.put("packageLength", lengthStr);
                         listingMongoDataItem.put("packageWidth", widthStr);
                         listingMongoDataItem.put("grossWeight", weightStr);
+                    }
+                }
+            }
+            //记录父平台产品id
+            Object relationshipsObj = detailMap.get("relationships");
+            if(null != relationshipsObj){
+                List<ItemRelationshipsByMarketplace> itemRelationshipsByMarketplace = JSONUtil.toList(JSONUtil.toJsonStr(relationshipsObj), ItemRelationshipsByMarketplace.class);
+                if(CollectionUtils.isNotEmpty(itemRelationshipsByMarketplace)){
+                    List<ItemRelationship> relationships = itemRelationshipsByMarketplace.get(0).getRelationships();
+                    if(CollectionUtils.isNotEmpty(relationships)){
+                        List<String> parentAsins = relationships.get(0).getParentAsins();
+                        if(CollectionUtils.isNotEmpty(parentAsins) && StringUtils.isNotBlank(parentAsins.get(0))){
+                            listingMongoDataItem.put("platformParentSkuId", parentAsins.get(0));
+                        }
                     }
                 }
             }

@@ -155,6 +155,18 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("label_source_type")
     private String labelSourceType;
 
+    /**
+     * 父平台产品ID（父ASIN）
+     */
+    @TableField("platform_parent_sku_id")
+    private String platformParentSkuId;
+
+    /**
+     * ture:父产品
+     */
+    @TableField("is_parent")
+    private Boolean isParent;
+
     public static final String SKU_NO = "sku_no";
 
     public static final String PRODUCT_NAME = "product_name";

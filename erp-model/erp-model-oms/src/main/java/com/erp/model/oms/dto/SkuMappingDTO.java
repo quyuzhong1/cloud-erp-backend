@@ -674,6 +674,12 @@ public class SkuMappingDTO implements Serializable {
          * 开票产品名称
          */
         private String invoiceProductName;
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
+
     }
 
 
@@ -806,6 +812,12 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime updateTime;
 
         private LocalDateTime effectiveTime;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
     }
 
 
@@ -937,6 +949,12 @@ public class SkuMappingDTO implements Serializable {
          * 失效时间
          */
         private LocalDateTime expireTime;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
     }
 
 
