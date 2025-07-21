@@ -5122,7 +5122,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("toProvince", Objects.nonNull(receiverEntity) ?receiverEntity.getProvinceName():"");
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiplyWithTwo(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
-            detailMap.put("orderProfitRate", financialInfo.getProfitRate());
+            detailMap.put("orderProfitRate", financialInfo.getProfitRateFlag());
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
