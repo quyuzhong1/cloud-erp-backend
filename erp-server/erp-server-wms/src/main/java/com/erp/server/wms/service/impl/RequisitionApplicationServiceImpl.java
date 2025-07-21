@@ -102,8 +102,6 @@ import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -3137,21 +3135,28 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollUtil.isEmpty(detailEntityList)){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单明细不存在");
         }
-        dtoList.forEach(dto ->{
-            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equals(dto.getDetailId())).findFirst().orElse(null);
+
+        //释放冻结数量时需要根据要货申请明细id合计释放
+        Map<String, List<RequisitionApplicationDTO.InventoryDTO>> inventoryMap = dtoList.stream().collect(Collectors.groupingBy(obj -> obj.getDetailId()));
+        for  (Map.Entry<String, List<RequisitionApplicationDTO.InventoryDTO>> entry : inventoryMap.entrySet()) {
+            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(e -> e.getId().equals(entry.getKey())).findFirst().orElse(null);
             if (Objects.isNull(detailEntity)){
                 throw new ServiceException("要货申请单明细不存在");
             }
-            //释放数量不能大于冻结数量
-            if (!Objects.equals(dto.getVirtualFrozenQty(), dto.getPackQty())){
-                throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】释放数量【{}】需要和装箱数量【{}】相等", entity.getCode(), detailEntity.getSkuNo()),dto.getVirtualFrozenQty(),dto.getPackQty());
+            for (RequisitionApplicationDTO.InventoryDTO dto : entry.getValue()) {
+                //释放数量不能大于冻结数量
+                if (!Objects.equals(dto.getVirtualFrozenQty(), dto.getPackQty())){
+                    throw new ServiceException(CharSequenceUtil.format("要货申请单【{}】SKU【{}】释放数量【{}】需要和装箱数量【{}】相等", entity.getCode(), detailEntity.getSkuNo()),dto.getVirtualFrozenQty(),dto.getPackQty());
+                }
+                //记录日志
+                String msg = CharSequenceUtil.format("处理了【{}】号箱【{}】库存释放，释放数量【{}】", dto.getBoxNo(), detailEntity.getSkuNo(), dto.getVirtualFrozenQty());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(),"编辑操作");
             }
+            //合计冻结数量
+            Integer totalFrozenQty = entry.getValue().stream().map(RequisitionApplicationDTO.InventoryDTO::getVirtualFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
             //更新要货申请释放标识，并更新明细冻结数量
-            updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
-            //记录日志
-            String msg = CharSequenceUtil.format("处理了【{}】号箱【{}】库存释放，释放数量【{}】", dto.getBoxNo(), detailEntity.getSkuNo(), dto.getVirtualFrozenQty());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(),"编辑操作");
-        });
+            updateEntityLockStatus(entity,detailEntity,totalFrozenQty);
+        }
         //虚拟仓库存释放
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         stockParamDTO.setParamList(lockVirtualInventory(entity,detailEntityList,dtoList));
