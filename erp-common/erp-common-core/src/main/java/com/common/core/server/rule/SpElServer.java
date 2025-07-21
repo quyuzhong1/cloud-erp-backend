@@ -66,6 +66,14 @@ public interface SpElServer {
     Boolean matchDetailExpressionByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj);
 
     /**
+     * 匹配表达式结果(默认，流程走)
+     * @param conditionList
+     * @param obj
+     * @return
+     */
+    Boolean matchExpressionDefaultByConditionList(List<ConditionElement> conditionList, Map<String,Object> obj, String key);
+
+    /**
      * 获取字段
      * @author will
      * @date 2024/7/3 15:28
