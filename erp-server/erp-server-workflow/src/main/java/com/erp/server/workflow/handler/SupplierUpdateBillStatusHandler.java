@@ -37,8 +37,8 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.service.*;
-import groovy.util.logging.Slf4j;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +57,6 @@ import java.util.Map;
  *@Description:
  *@Version: 1.0
  */
-@lombok.extern.slf4j.Slf4j
 @Component
 @Slf4j
 public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
@@ -125,6 +124,9 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), fieldMapList, valueMapList);
             //处理附件信息
             handleSupplierData(map,Boolean.TRUE);
+
+            log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
+
             //生成三方生成查询明细
             List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray(FsRequestBodyAttributesEnum.FORM.getCode()), map, fieldMapList);
             //值映射
@@ -144,7 +146,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             if (ObjectUtil.isNotEmpty(taskInfoEntity)) {
                 SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class, taskInfoEntity.getBussinessId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                    throw new ServiceException(ApiError.ERROR_EXIST_BILL, CharSequenceUtil.format("供应商{}",supplierEntity.getCode()));
+                    log.warn(CharSequenceUtil.format("供应商【{}】已存在，直接标记消费成功",supplierEntity.getCode()));
+                    return;
                 }
                 //判断是否存在三方生成查询数据，存在则删除
                 approveTaskInfoService.deleteByThird(taskInfo.getType(),taskInfo.getThirdInstanceId(),taskInfo.getThirdApprovalCode());
@@ -168,8 +171,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);
             approveTaskInfoService.add(taskInfo);
+            //添加三方流程记录
+            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+                thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
+            }
         }
-        thirdProcessManagementService.addOrUpdate(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
     /**
@@ -334,6 +340,8 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             //处理附件信息
             handleSupplierData(map,Boolean.FALSE);
 
+            log.warn("供应商数据转换完成，单据信息：{}", JSONUtil.toJsonStr(map));
+
             //值映射
             SupplierDTO.InsertDTO addDTO = BeanUtil.toBean(map, SupplierDTO.InsertDTO.class);
             //第一条账户设置成默认
@@ -363,6 +371,11 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             taskInfo.setStatus(taskStatus);
             taskInfo.setReason(reason);
             approveTaskInfoService.updateById(taskInfo);
+
+            //添加三方流程记录
+            if (ApproveTaskStatusEnum.SUCCESS.getCode().equals(taskStatus)) {
+                thirdProcessManagementService.addOrUpdate(instanceEntity.getThirdJson(), thirdProcessEntity.getSourcePlatform());
+            }
         }
     }
 

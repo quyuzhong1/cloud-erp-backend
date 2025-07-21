@@ -344,7 +344,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
             dco.output_class = #{outputClass}
           AND dotr.source_code = #{sourceCode}
           AND dotr.is_deleted = FALSE
-          AND dor.is_deleted = FALSE ORDER BY dotr.create_time desc LIMIT 1
+          AND dor.is_deleted = FALSE ORDER BY dotr.create_time desc
     </select>
     
     <select id="outputErrorCountMsg" resultType="java.lang.String">

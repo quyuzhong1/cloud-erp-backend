@@ -24,6 +24,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -733,6 +734,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
+        //最新审核人
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = listCurApprove(records);
+
         for (OtherInstockDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
@@ -744,8 +748,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setTypeName(InstockTypeEnum.getByCode(obj.getType()));
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && org.apache.commons.lang3.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                obj.setApproveUserName(curApprove);
+            }
         }
     }
+
 
     /**
      * 处理数据id
@@ -1498,5 +1509,29 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
 
         abstractWdtService.transfer(operateEnum, entity.getId(), entity.getCode(), goodsList, SourceTypeEnum.OTHER_OUTSTOCK);
+    }
+
+    /**
+     * 查询当前审核人
+     * @author will
+     * @date 2025/7/17 14:53
+     * @param records
+     * @return ApiResult<List<CurApproveInfoDTO>>
+     */
+    private  ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listCurApprove (List<OtherInstockDTO.ListDTO> records) {
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        records.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.OTHER_INSTOCK.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+        return listApiResult;
     }
 }

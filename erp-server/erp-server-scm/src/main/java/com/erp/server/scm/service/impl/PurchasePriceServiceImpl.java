@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -12,7 +13,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -493,7 +493,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-        approveProcess(entity, type, comment, isNeedProcess);
+        approveProcess(entity, type, comment);
         //添加日志
         moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PURCHASE_PRICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
@@ -503,7 +503,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
@@ -511,7 +510,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+    public Boolean approveEnd(PurchasePriceEntity entity, String type, String comment) {
         if (ObjectUtils.isEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -1139,9 +1138,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      */
-    private void approveProcess (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess) {
+    private void approveProcess (PurchasePriceEntity entity, String type, String comment) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -1154,6 +1152,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         Integer code = result.getCode();
         if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(entity,type,comment);
         }
     }
 

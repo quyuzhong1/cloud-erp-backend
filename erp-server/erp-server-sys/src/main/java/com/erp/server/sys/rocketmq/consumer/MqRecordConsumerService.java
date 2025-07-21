@@ -60,7 +60,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             return;
         }
         // 建议：增加debug日志
-        log.debug("接收到MQ消息内容: {}", jsonStr);
+        log.info("接收到MQ消息内容: {}", jsonStr);
 
         Gson gson = new Gson();
         List<Map<String, Map<String, Object>>> list = new ArrayList<>();
@@ -82,17 +82,19 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
 
         for (Map<String, Map<String, Object>> jsonMap : list) {
             if (Objects.isNull(jsonMap)) {
-                log.warn("解析后的jsonMap为null");
+                log.error("解析后的jsonMap为null");
                 continue;
             }
             Map<String, Object> before = jsonMap.getOrDefault("before", null);
             Map<String, Object> after = jsonMap.getOrDefault("after", null);
             if (Objects.isNull(after)) {
+                log.error("解析后的after为null");
                 continue;
             }
             //获取变动字段
             List<String> diffFields = JsonFieldDiffUtil.compare(before, after);
             if (CollUtil.isEmpty(diffFields)) {
+                log.error("解析后的diffFields为null");
                 continue;
             }
             //转驼峰

@@ -109,6 +109,7 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     private String queryResult;
     /**
      * 发票性质
+     * InvoiceNatureEnum
      */
     @TableField("invoice_nature")
     private String invoiceNature;

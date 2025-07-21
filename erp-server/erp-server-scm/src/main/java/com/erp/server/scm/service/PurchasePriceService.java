@@ -3,7 +3,6 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -112,10 +111,9 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param entity
      * @param type
      * @param comment
-     * @param isNeedProcess
      * @return Boolean
      */
-    Boolean approveEnd (PurchasePriceEntity entity, String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd (PurchasePriceEntity entity, String type, String comment);
 
     /**
      * 取消流程

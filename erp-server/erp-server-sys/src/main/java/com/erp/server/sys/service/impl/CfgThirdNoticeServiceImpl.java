@@ -482,7 +482,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             if (StringUtils.isNotBlank(record.getRoleType())) {
 
                 List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.list();
-                Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getField, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
+                Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getId, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
                 List<String> roleTypes = Arrays.asList(record.getRoleType().split(","));
                 if (CollUtil.isNotEmpty(roleTypes)) {
                     record.setRoleTypeList(roleTypes);
