@@ -110,7 +110,14 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		temuOrderReq.setToken(shopInfoEntity.getAccessToken());
 		temuOrderReq.setAppKey(extendMap.get("clientId").toString());
 		temuOrderReq.setAppSecret(extendMap.get("clientSecret").toString());
-		TemuResp<TemuOrderDTO> temuResp = temuClient.getOrderList(temuOrderReq);
+		TemuResp<TemuOrderDTO> temuResp;
+		try {
+			temuResp = temuClient.getOrderList(temuOrderReq);
+		}catch (Exception e){
+			log.error("查询temu异常,{}",e.getMessage());
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
+			throw new ServiceException("查询temu异常,{}",e.getMessage());
+		}
 		if(!temuResp.getSuccess()){
 			log.error("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
 			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
@@ -126,6 +133,10 @@ public class DmpInputTeMuSoOutstockInitHandler extends DmpInputInitHandler{
 		if(Objects.isNull(pageItemsDTO)){
 			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
 			throw new ServiceException("查询temu订单数据内容为空");
+		}
+		if(Objects.isNull(pageItemsDTO.getParentOrderMap()) ||Objects.isNull(pageItemsDTO.getParentOrderMap().getParentShippingTime())){
+			dmpInputTaskService.updateNextExecTime(inputTaskId, LocalDateTimeUtil.offset(LocalDateTime.now(), 4, ChronoUnit.HOURS));
+			throw new ServiceException("查询temu订单数据没有发货时间");
 		}
 		List<TemuOrderDTO.PageItemsDTO.OrderListDTO> orderListDTOList = pageItemsDTO.getOrderList();
 		orderListDTOList = orderListDTOList.stream().filter(v->v.getProductList().get(0).getExtCode().equals(dmpSoDetailEntity.getPlatformSku())).collect(Collectors.toList());

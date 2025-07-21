@@ -98,6 +98,9 @@ public class TemuClient {
 
     public TemuResp<TemuOrderDTO> getOrderList(TemuOrderReq temuOrderReq){
         TemuEnum temuEnum = TemuEnum.getByCode(temuOrderReq.getAreaCode());
+        if(temuEnum == null){
+            throw new ServiceException("temu区域编码错误，请检查店铺区域参数");
+        }
         this.checkShopInfo(temuOrderReq);
         String api = "bg.order.list.v2.get";
         Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
