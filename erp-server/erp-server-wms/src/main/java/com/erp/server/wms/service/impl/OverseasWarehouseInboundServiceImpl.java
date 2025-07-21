@@ -474,12 +474,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             // 查询设置中转仓信息
             transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
             if (null == transferEntity) {
-                throw new ServiceException("未找到中转仓");
+                if (OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
+                    transferEntity = new OverseasTransferWarehouseEntity();
+                }else{
+                    throw new ServiceException("未找到中转仓");
+                }
             }
             commonDTO.setTransferWarehouseName(transferEntity.getName());
             // 自送货物
             if (OverseasDeliveryModeEnum.SELF_DELIVERY.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())) {
-                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId())) {
+                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId()) && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 if (CharSequenceUtil.isBlank(commonDTO.getExpressNo())) {
@@ -509,13 +513,17 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
             // 上门揽收
             if (OverseasDeliveryModeEnum.COLLECT_AT_HOME.getCode().equalsIgnoreCase(commonDTO.getDeliveryMode())) {
-                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId())) {
+                if (CharSequenceUtil.isBlank(commonDTO.getTransferWarehouseId())  && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
                     throw new ServiceException("【transferWarehouseId】中转仓ID不能为空");
                 }
                 // 查询设置中转仓信息
                 transferEntity = overseasTransferWarehouseService.getById(commonDTO.getTransferWarehouseId());
                 if (null == transferEntity) {
-                    throw new ServiceException("未找到中转仓");
+                    if (OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
+                        transferEntity = new OverseasTransferWarehouseEntity();
+                    }else{
+                        throw new ServiceException("未找到中转仓");
+                    }
                 }
                 commonDTO.setTransferWarehouseName(transferEntity.getName());
 
@@ -548,20 +556,22 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【dictCityId】城市ID不能为空");
                 }
 
-                if (CharSequenceUtil.isBlank(commonDTO.getDictDistrictId())) {
+                if (CharSequenceUtil.isBlank(commonDTO.getDictDistrictId()) && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
                     throw new ServiceException("【dictDistrictId】地区ID不能为空");
                 }
-                // 查询和校验地区
-                Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
-                        commonDTO.getDictProvinceId(),
-                        commonDTO.getDictCityId(),
-                        commonDTO.getDictDistrictId());
-                // 省
-                commonDTO.setDictProvinceName(dictCityEntityMap.get(commonDTO.getDictProvinceId()).getName());
-                // 市
-                commonDTO.setDictCityName(dictCityEntityMap.get(commonDTO.getDictCityId()).getName());
-                // 区
-                commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
+                if(!OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)){
+                    // 查询和校验地区
+                    Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
+                            commonDTO.getDictProvinceId(),
+                            commonDTO.getDictCityId(),
+                            commonDTO.getDictDistrictId());
+                    // 省
+                    commonDTO.setDictProvinceName(dictCityEntityMap.get(commonDTO.getDictProvinceId()).getName());
+                    // 市
+                    commonDTO.setDictCityName(dictCityEntityMap.get(commonDTO.getDictCityId()).getName());
+                    // 区
+                    commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
+                }
                 // iml
                 if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
                 || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
