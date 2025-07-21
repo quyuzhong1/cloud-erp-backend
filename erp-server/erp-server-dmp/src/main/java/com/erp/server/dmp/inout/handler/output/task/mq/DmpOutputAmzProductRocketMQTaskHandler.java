@@ -180,6 +180,9 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         if (null != dmpFbaInventoryEntity){
             product.setPlatformFnSku(dmpFbaInventoryEntity.getFnSku());
         }
+
+        //父平台产品ID（父ASIN）
+        product.setPlatformParentSkuId(dmpSkuInfoEntity.getPlatformParentSkuId());
         return product;
     }
 

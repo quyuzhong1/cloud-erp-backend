@@ -372,10 +372,6 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             } catch (IOException e) {
                 throw new ServiceException(ApiError.ERROR_95125);
             }
-//
-//            String fileName = "截单开船错误信息";
-//            ExcelUtil.export(fileName, "tmsCfgSailingError", errorList, TmsCfgSailingExcelDTO.class, response);
-//            return Boolean.FALSE;
         }
 
         List<TmsCfgSailingEntity> successList = excelListenerUtil.getSuccessList();
