@@ -28,6 +28,7 @@ public enum SkuMappingRuleEnum implements EnumMessage{
     EXTRACT_FIRST_TO_LAST_DIGITS("extractFirstToLast","截取第几位到第几位",SkuMappingRuleEnum::getExtractFirstToLastRegex,SkuMappingRuleEnum::handleSubStrRegex),
     EXTRACT_BETWEEN_START_AND_END("extractBetweenStartAndEnd","截取两个字符之间的SKU",SkuMappingRuleEnum::getExtractBetweenStartAndEndRegex,SkuMappingRuleEnum::handleRegex),
     MATCH_COMBINE("matchCombine","捆绑商品智能拆分匹配",v-> new ArrayList<>(),SkuMappingRuleEnum::handleRegex),
+    NO_MATCH("noMatch","无需匹配",v-> new ArrayList<>(),SkuMappingRuleEnum::handleRegex),
     ;
     private final String code;
     private final String name;

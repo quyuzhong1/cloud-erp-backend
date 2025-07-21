@@ -1260,6 +1260,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             //原产地名称
             item.setDictOriginName(originMap.get(item.getDictOrigin()));
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
     }
 
