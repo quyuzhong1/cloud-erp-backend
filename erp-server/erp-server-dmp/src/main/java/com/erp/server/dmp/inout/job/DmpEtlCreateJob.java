@@ -14,6 +14,7 @@ import com.erp.server.dmp.inout.dto.request.DmpEtlCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpEtlCreateFactory;
 import com.erp.server.dmp.service.DmpCfgEtlService;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
 import cn.hutool.core.collection.CollUtil;
@@ -36,14 +37,16 @@ public class DmpEtlCreateJob {
 	 * 创建Etl任务
 	 * @return
 	 */
-	@XxlJob("createEtlTask")
-	public ReturnT createEtlTaskBySystem(){
+	@XxlJob("createEtlTaskByAppId")
+	public ReturnT createEtlTaskByAppId(){
+		String appId = XxlJobHelper.getJobParam();
 		List<DmpCfgEtlEntity> list = dmpCfgEtlService.lambdaQuery()
 				.eq(DmpCfgEtlEntity::getDisabled, false)
+				.eq(DmpCfgEtlEntity::getAppId, appId)
 				.list();
 		if(CollUtil.isNotEmpty(list)) {
 			for(DmpCfgEtlEntity l : list) {
-				String processName = l.getProcessName();
+				String flowName = l.getFlowName();
 				String id = l.getId();
 				String redisKey = "dmp:etl:create:id:" + id;
 				if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
@@ -52,12 +55,12 @@ public class DmpEtlCreateJob {
 						dmpRequest.setCfgEtlId(id);
 						dmpEtlCreateFactory.createEtlTask(dmpRequest);
 					} catch (Exception e) {
-						log.error("Etl任务生成错误processName={}" , processName , e);
+						log.error("Etl任务生成错误flowName={}" , flowName , e);
 					} finally {
 						redisTemplate.delete(redisKey);
 					}
 				}else {
-					log.error("Etl任务生成正在执行中processName={}" , processName);
+					log.error("Etl任务生成正在执行中flowName={}" , flowName);
 				}
 			}
 		}

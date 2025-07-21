@@ -13,8 +13,9 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="disabled" property="disabled" />
-       <result column="process_code" property="processCode" />
-       <result column="process_name" property="processName" />
+       <result column="app_id" property="appId" />
+       <result column="flow_code" property="flowCode" />
+       <result column="flow_name" property="flowName" />
        <result column="last_time" property="lastTime" />
        <result column="next_time" property="nextTime" />
        <result column="interval_time" property="intervalTime" />
@@ -37,7 +38,7 @@
         update_user_id,
         version,
         is_deleted,
-        disabled, process_code, process_name, last_time, next_time, interval_time, override_time, max_retry_count, exec_timeout, dealy_time, max_interval_time, extend_json
+        disabled, app_id, flow_code, flow_name, last_time, next_time, interval_time, override_time, max_retry_count, exec_timeout, dealy_time, max_interval_time, extend_json
     </sql>
 
 

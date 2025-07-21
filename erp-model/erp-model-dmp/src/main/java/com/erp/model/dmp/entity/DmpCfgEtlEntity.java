@@ -31,15 +31,20 @@ public class DmpCfgEtlEntity extends BaseEntity<DmpCfgEtlEntity> {
     @TableField("disabled")
     private Boolean disabled;
     /**
+    * 应用id
+    */
+    @TableField("app_id")
+    private String appId;
+    /**
     * 流程编号
     */
-    @TableField("process_code")
-    private String processCode;
+    @TableField("flow_code")
+    private String flowCode;
     /**
     * 流程名称
     */
-    @TableField("process_name")
-    private String processName;
+    @TableField("flow_name")
+    private String flowName;
     /**
     * 最后成功时间
     */
@@ -76,7 +81,7 @@ public class DmpCfgEtlEntity extends BaseEntity<DmpCfgEtlEntity> {
     @TableField("dealy_time")
     private Integer dealyTime;
     /**
-    * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间
+    * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间-延迟时间  枚举：DmpCfgEtlMaxIntervalTimeEnum
     */
     @TableField("max_interval_time")
     private Integer maxIntervalTime;
@@ -89,9 +94,11 @@ public class DmpCfgEtlEntity extends BaseEntity<DmpCfgEtlEntity> {
 
     public static final String DISABLED = "disabled";
 
-    public static final String PROCESS_CODE = "process_code";
+    public static final String APP_ID = "app_id";
 
-    public static final String PROCESS_NAME = "process_name";
+    public static final String FLOW_CODE = "flow_code";
+
+    public static final String FLOW_NAME = "flow_name";
 
     public static final String LAST_TIME = "last_time";
 

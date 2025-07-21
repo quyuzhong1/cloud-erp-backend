@@ -71,7 +71,7 @@ public abstract class DmpEtlBaseCreateHandler extends DmpEtlHandler{
 		
 		Boolean disabled = dmpCfgEtlEntity.getDisabled();
 		if(Boolean.TRUE.equals(disabled)) {
-			msg = "Etl信息数据代码【"+ dmpCfgEtlEntity.getProcessCode() +"】被禁用";
+			msg = "Etl信息数据代码【"+ dmpCfgEtlEntity.getFlowCode() +"】被禁用";
 			log.warn(msg);
 			if(throwException) {
 				throw new ServiceException(msg);

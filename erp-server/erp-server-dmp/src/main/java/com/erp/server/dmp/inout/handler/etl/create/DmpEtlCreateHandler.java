@@ -54,7 +54,7 @@ public class DmpEtlCreateHandler extends DmpEtlBaseCreateHandler{
 				.last(" and next_time <= NOW() - (INTERVAL '1 seconds' *  dealy_time) ")
 				.list();
 		if(CollUtil.isEmpty(dmpCfgEtlEntityList)) {
-			log.info("输入信息数据代码【{}】没有符合条件的任务" ,  dmpCfgEtlEntity.getProcessCode());
+			log.info("输入信息数据代码【{}】没有符合条件的任务" ,  dmpCfgEtlEntity.getFlowCode());
 			return null;
 		}
 		
@@ -70,7 +70,7 @@ public class DmpEtlCreateHandler extends DmpEtlBaseCreateHandler{
 				String id = iterator.next().getId();
 				if(cfgEtlIdSet.contains(id)) {
 					iterator.remove();
-					log.info("ETL信息代码【{}】，名称【{}】下，还有正在执行中的{}，此次不生成任务" ,  dmpCfgEtlEntity.getProcessCode() , dmpCfgEtlEntity.getProcessName());
+					log.info("ETL信息代码【{}】，名称【{}】下，还有正在执行中的{}，此次不生成任务" ,  dmpCfgEtlEntity.getFlowCode() , dmpCfgEtlEntity.getFlowName());
 				}
 			}
 		}
