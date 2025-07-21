@@ -63,4 +63,28 @@ public class ThirdWarehouseDeliveryController extends BaseController {
         PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> pagingVO = thirdWarehouseDeliveryService.paging(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 导出
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
+    public ApiResult export(@RequestBody @Validated ThirdWarehouseDeliveryDTO.PagingParamDTO dto) {
+        thirdWarehouseDeliveryService.export(dto);
+        return success(true);
+    }
+
+    /**
+     * 详情
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/view")
+    public ApiResult<ThirdWarehouseDeliveryDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        return success(thirdWarehouseDeliveryService.view(dto.getId()));
+    }
 }

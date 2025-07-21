@@ -30,4 +30,8 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     ThirdWarehouseDeliveryEntity getLatestByCode(String code);
 
     PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
+
+    ThirdWarehouseDeliveryDTO.ViewDTO view(String id);
+
+    void export(ThirdWarehouseDeliveryDTO.PagingParamDTO dto);
 }

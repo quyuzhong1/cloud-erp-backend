@@ -3,6 +3,8 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import jnr.ffi.annotations.In;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -39,11 +41,24 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
          * 表id
          */
         private String id;
-
+        /**
+         * 销售订单id
+         */
+        private String soId;
         /**
          * 发货单号
          */
         private String code;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 跟踪号
+         */
+        private String trackNo;
 
         /**
          * 平台
@@ -60,6 +75,7 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
          */
         private String shopId;
 
+        private String signOrderError;
         /**
          * 店铺名称
          */
@@ -146,6 +162,8 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        private List<String> ids;
     }
 
 
@@ -154,44 +172,115 @@ public class ThirdWarehouseDeliveryDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class ViewDTO {
+        /**
+         * 表id
+         */
+        private String id;
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
-        * 三方仓出库单号
-        */
+         * 发货单号
+         */
         private String code;
 
         /**
-        * 销售单号
-        */
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 销售单号
+         */
         private String soCode;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
+        /**
+         * 三方仓订单号
+         */
+        private String thirdCode;
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 状态名
+         */
+        private String statusName;
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+
 
         /**
-        * 销售id
-        */
-        private String soId;
+         * 发货仓库Id
+         */
+        private String warehouseId;
 
         /**
-        * 平台
-        */
-        private String dictPlatform;
+         * 发货仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 明细
+         */
+        private List<ViewDetailDTO> viewDetailDTOList;
+    }
+    /**
+     * 详情明细
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ViewDetailDTO {
+
+        private String id;
 
         /**
-        * 平台订单号
-        */
-        private String platformCode;
+         * sku
+         */
+        private String skuNo;
 
         /**
-        * 三方仓平台
-        */
-        private String thirdWarehousePlatform;
+         * 产品名称
+         */
+        private String productName;
 
+        /**
+         * 库存sku
+         */
+        private String platformSkuNo;
 
+        /**
+         * 库存sku
+         */
+        private String platformSkuName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
     /**

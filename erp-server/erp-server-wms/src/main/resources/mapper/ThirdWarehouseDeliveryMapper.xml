@@ -36,6 +36,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO$PagingViewDTO">
         select
             twd.id,
+            twd.so_id as soId,
             twd.code,
             twd.dict_platform as platform,
             sb.shop_id as shopId,
@@ -43,6 +44,8 @@
             twd.platform_code as platformOrderCode,
             sb.shipping_order_no as thirdCode,
             twd.status,
+            sbl.code as transportNo,
+            sbl.track_no as trackNo,
             sbl.logistics_channel_id as channelId,
             sbl.logistics_channel_name as channelName,
             twdd.sku_no as skuNo,
@@ -50,12 +53,14 @@
             twdd.delivery_qty as qty,
             twdd.warehouse_id as warehouseId,
             twd.create_time as createTime,
-            sb.so_outstock_date as outstockDate
+            sb.so_outstock_date as outstockDate,
+            sb.sign_order_error as signOrderError
         from third_warehouse_delivery twd
         inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
         inner join so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
         inner join so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
-        where twd.is_deleted = false
+        where  ${params.sqlMap.default}
+            and twd.is_deleted = false
     </select>
 
 
