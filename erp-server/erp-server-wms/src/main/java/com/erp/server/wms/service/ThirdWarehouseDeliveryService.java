@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 三方仓发货单 服务类
@@ -34,4 +36,6 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     ThirdWarehouseDeliveryDTO.ViewDTO view(String id);
 
     void export(ThirdWarehouseDeliveryDTO.PagingParamDTO dto);
+
+    List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList();
 }

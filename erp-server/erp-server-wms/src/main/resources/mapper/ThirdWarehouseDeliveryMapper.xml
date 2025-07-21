@@ -62,6 +62,13 @@
         where  ${params.sqlMap.default}
             and twd.is_deleted = false
     </select>
+    <select id="listCount" resultType="com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO$TabListDTO">
+        select status as tabFlag,
+               count(1) as count
+        from third_warehouse_delivery
+        where  is_deleted = false
+        group by status
+    </select>
 
 
 </mapper>

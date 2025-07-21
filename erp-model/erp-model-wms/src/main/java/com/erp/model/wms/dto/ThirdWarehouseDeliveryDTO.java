@@ -29,7 +29,25 @@ import java.util.Map;
 @NoArgsConstructor
 public class ThirdWarehouseDeliveryDTO implements Serializable {
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
 
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 
     /**
      * 分页视图

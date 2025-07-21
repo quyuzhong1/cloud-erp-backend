@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -21,4 +23,6 @@ import org.apache.ibatis.annotations.Param;
 public interface ThirdWarehouseDeliveryMapper extends BaseMapper<ThirdWarehouseDeliveryEntity> {
 
     IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(Page query, @Param("params") ThirdWarehouseDeliveryDTO.PagingParamDTO params);
+
+    List<ThirdWarehouseDeliveryDTO.TabListDTO> listCount();
 }

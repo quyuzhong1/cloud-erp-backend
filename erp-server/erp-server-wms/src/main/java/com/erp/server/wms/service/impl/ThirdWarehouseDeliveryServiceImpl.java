@@ -217,4 +217,23 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         downloadTaskFeign.saveDownloadTask("三方仓发货单导出", EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT.getCode(),dto);
     }
 
+    @Override
+    public List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList() {
+        List<ThirdWarehouseDeliveryDTO.TabListDTO> tabListDTOS = this.baseMapper.listCount();
+        SoB2cWarehouseDeliveryStatusEnum[] tabEnums = SoB2cWarehouseDeliveryStatusEnum.values();
+        List<ThirdWarehouseDeliveryDTO.TabListDTO> result = new ArrayList<>();
+        for (SoB2cWarehouseDeliveryStatusEnum tabEnum : tabEnums) {
+            ThirdWarehouseDeliveryDTO.TabListDTO tabListDTO = new ThirdWarehouseDeliveryDTO.TabListDTO();
+            tabListDTO.setTabFlag(tabEnum.getCode());
+            tabListDTO.setTabFlagName(tabEnum.getName());
+            tabListDTO.setCount(tabListDTOS.stream().
+                    filter(v -> v.getTabFlag().equals(tabEnum.getCode()))
+                    .map(ThirdWarehouseDeliveryDTO.TabListDTO::getCount)
+                    .findFirst()
+                    .orElse(0));
+            result.add(tabListDTO);
+        }
+        return result;
+    }
+
 }
