@@ -119,6 +119,12 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
      */
     @TableField("pay_time")
     private LocalDateTime payTime;
+    /**
+     * 对账单类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
+     * FirstReconciliationTypeEnum
+     */
+    @TableField("reconciliation_type")
+    private String reconciliationType;
 
 
     public static final String FIELD_CODE = "code";
