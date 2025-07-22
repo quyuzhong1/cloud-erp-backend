@@ -60,7 +60,14 @@ public class FileTaskContext {
         // 保存文件任务
         fileTaskRepository.save(fileTask);
         log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());
-        exportProcess(fileTask.getId(), loginUser);
+        // 完成新增数据事务提交之后,异步执行
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                CompletableFuture.runAsync(() -> exportProcess(fileTask.getId(), loginUser), threadPoolTaskExecutor);
+                log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
+            }
+        });
         return fileTask.getId();
     }
     /**
