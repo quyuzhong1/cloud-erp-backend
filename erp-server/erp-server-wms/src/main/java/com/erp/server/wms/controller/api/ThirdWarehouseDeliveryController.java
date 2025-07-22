@@ -57,6 +57,17 @@ public class ThirdWarehouseDeliveryController extends BaseController {
      * @param
      * @return
      */
+    @PostMapping("/tabList")
+    public ApiResult<List<ThirdWarehouseDeliveryDTO.TabListDTO>> tabList() {
+        return success(thirdWarehouseDeliveryService.tabList());
+    }
+
+    /**
+     * 三方仓发货单
+     *
+     * @param
+     * @return
+     */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
     public ApiResult<PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
