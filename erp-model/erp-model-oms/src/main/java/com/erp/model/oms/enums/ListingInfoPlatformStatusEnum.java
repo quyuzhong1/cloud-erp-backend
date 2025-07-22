@@ -10,11 +10,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum ListingInfoPlatformStatusEnum implements EnumMessage {
     ACTIVE("Active",	"在售"),
-    INACTIVE("Inactive",	"停售"),
+    INACTIVE3("Inactive",	"停售"),
     INCOMPLETE("Incomplete",	"草稿"),
-    DELETE("delete",	"删除"),
-    ACTIVE1("1",	"在售"),
-    INACTIVE3("3",	"停售"),
+    DELETE("Delete",	"删除"),
     ;
     /**
      * 类型

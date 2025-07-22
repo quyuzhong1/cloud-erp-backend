@@ -476,6 +476,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listing.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         listing.setRemark("");
         listing.setPlatformSpuNo(dto.getPlatformSpuNo());
+        if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+            listing.setPlatformStatus(dto.getPlatformStatus());
+        }
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
@@ -736,6 +739,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 listingInfo.setPlatform(platform);
             }
             listingInfo.setAuthId(dto.getAuthId());
+            if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+                listingInfo.setPlatformStatus(dto.getPlatformStatus());
+            }
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
@@ -2067,6 +2073,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             existsEntity.setLabelSourceType(LabelSourceTypeEnum.CUSTOMER.getCode());
             String msg1 =  CharSequenceUtil.format("用户【{}】编辑【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelFileName(),dto.getLabelUrl());
             operateLogService.addModuleOperateLog(msg1, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "编辑操作");
+        }
+        if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+            existsEntity.setPlatformStatus(dto.getPlatformStatus());
         }
         listingInfoService.updateById(existsEntity);
 
