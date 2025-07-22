@@ -415,7 +415,9 @@
         li.platform_spu_name,
         li.platform_fn_sku,
         li.platform_sku_id as platformSkuId,
-        li.auth_id as authId
+        li.auth_id as authId,
+        li.platform_status as platformStatus,
+        li.is_parent as isParent
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

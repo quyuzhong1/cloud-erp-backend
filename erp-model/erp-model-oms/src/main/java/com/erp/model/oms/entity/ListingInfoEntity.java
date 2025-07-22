@@ -158,7 +158,7 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     private String labelSourceType;
 
     /**
-     * 父平台产品ID（父ASIN）
+     * 父平台产品ID（父ASIN） ListingInfoPlatformStatusEnum
      */
     @TableField("platform_parent_sku_id")
     private String platformParentSkuId;
