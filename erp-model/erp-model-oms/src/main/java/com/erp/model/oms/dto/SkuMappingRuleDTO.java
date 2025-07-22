@@ -187,6 +187,10 @@ public class SkuMappingRuleDTO implements Serializable {
          */
         private String childQtySplitSymbol;
 
+        /**
+         * 无需匹配勾选项集合 平台父产品parent 停售 inactive  删除  delete 草稿incomplete
+         */
+        private List<String> noMatchList;
     }
     /**
      * 扩展规则条件
