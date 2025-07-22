@@ -189,6 +189,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getThirdBarcode())) {
                         oldEntity.setThirdBarcode(entity.getThirdBarcode());
                     }
+                    if (StringUtils.isNotBlank(entity.getPlatformParentSkuId())) {
+                        oldEntity.setPlatformParentSkuId(entity.getPlatformParentSkuId());
+                    }
+                    if (StringUtils.isNotBlank(entity.getPlatformStatus())) {
+                        oldEntity.setPlatformStatus(entity.getPlatformStatus());
+                    }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);
 //                    if (!listingInfoService.updateById(oldEntity)) {
@@ -208,13 +214,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private void updatePlateformParentSku(String platformParentSkuId) {
         if(StringUtils.isNotBlank(platformParentSkuId)){
             ListingInfoEntity platformParentSku = listingInfoService.lambdaQuery()
-                    .eq(ListingInfoEntity::getPlatformParentSkuId, platformParentSkuId)
+                    .eq(ListingInfoEntity::getPlatformSkuId, platformParentSkuId)
                     .eq(ListingInfoEntity::getIsParent, Boolean.FALSE)
                     .last("limit 1")
                     .one();
             if(Objects.nonNull(platformParentSku)){
                 listingInfoService.lambdaUpdate()
-                        .eq(ListingInfoEntity::getPlatformParentSkuId, platformParentSkuId)
+                        .eq(ListingInfoEntity::getId, platformParentSku.getId())
                         .set(ListingInfoEntity::getIsParent, Boolean.TRUE)
                         .update();
 
