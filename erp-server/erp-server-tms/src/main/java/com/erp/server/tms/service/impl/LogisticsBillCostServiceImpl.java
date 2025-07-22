@@ -2042,7 +2042,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("自发货列表导入", IMPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
+        downloadTaskFeign.saveImportTask("自发货列表导入", IMPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
