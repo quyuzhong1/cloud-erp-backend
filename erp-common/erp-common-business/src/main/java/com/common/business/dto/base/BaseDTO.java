@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -66,6 +67,14 @@ public class BaseDTO implements Serializable {
         /**
          * 异常描述
          */
-        private String msg;
+        private String remark;
+        /**
+         * 开始时间
+         */
+        private LocalDateTime startTime;
+        /**
+         * 结束时间
+         */
+        private LocalDateTime finishTime;
     }
 }

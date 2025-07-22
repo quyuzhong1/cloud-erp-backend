@@ -8,9 +8,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
 import lombok.Getter;
 
@@ -136,7 +134,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
         importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
-        importResultDTO.setMsg("处理中");
+        importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
     }

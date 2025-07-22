@@ -686,4 +686,33 @@ public class ExcelUtil {
             log.error(" downloadTemplate 下载失败 e={}", e.getMessage());throw new ServiceException(ApiError.ERROR_95131);
         }
     }
+    public static File customExportUtil(String fileName, List<JSONObject> list, List<String> heads) {
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(s));
+        }
+        List<List<String>> list2 = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            List<String> objects = new ArrayList<>();
+            JSONObject map = list.get(i);
+            for (int j = 0; j < heads.size(); j++) {
+                Object str = map.get(String.valueOf(j));
+                objects.add(ObjectUtil.isEmpty(str) ? "" : str.toString());
+            }
+            list2.add(objects);
+        }
+
+        try {
+            File tempFile = File.createTempFile(fileName, ".xlsx");
+            EasyExcel.write(tempFile)
+                    .head(hs)
+                    .registerWriteHandler(getStyleStrategy())
+                    .sheet(fileName)
+                    .doWrite(list2);
+            return tempFile;
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
+    }
+
 }

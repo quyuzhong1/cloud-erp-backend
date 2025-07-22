@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @RestController
@@ -34,7 +33,7 @@ public class ImportTmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setMsg(e.getMessage());
+            importResultDTO.setRemark(e.getMessage());
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }
@@ -47,7 +46,7 @@ public class ImportTmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setMsg(e.getMessage());
+            importResultDTO.setRemark(e.getMessage());
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }

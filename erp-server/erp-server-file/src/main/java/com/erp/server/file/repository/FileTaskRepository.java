@@ -37,21 +37,13 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
 
     @Override
     public void updateTask(BaseDTO.ImportResultDTO importResultDTO) {
-        FileTask old = this.getById(importResultDTO.getTaskId());
-        if (Objects.isNull(old)) {
-            log.error("文件任务[{}]不存在", importResultDTO.getTaskId());
-            return;
-        }
-        //文件已取消已删除不做更新
-        if (old.getStatus().equals(FileTaskStatusEnum.STOP.getCode()) || old.getStatus().equals(FileTaskStatusEnum.CANCEL.getCode())) {
-            log.error("文件任务[{}]已取消或已停止", importResultDTO.getTaskId());
-            return;
-        }
-        this.lambdaUpdate().set(FileTask::getFileUrl, CharSequenceUtil.isNotBlank(importResultDTO.getErrorUrl()) ? importResultDTO.getErrorUrl() : "")
-                .set(FileTask::getCount, Objects.nonNull(importResultDTO.getCount()) ? importResultDTO.getCount() : 0)
+        this.lambdaUpdate()
+                .set(CharSequenceUtil.isNotBlank(importResultDTO.getErrorUrl()), FileTask::getFileUrl, importResultDTO.getErrorUrl())
+                .set(Objects.nonNull(importResultDTO.getCount()), FileTask::getCount,importResultDTO.getCount())
                 .set(FileTask::getStatus, importResultDTO.getStatus())
-                .set(FileTask::getRemark, importResultDTO.getMsg())
-                .set(FileTask::getFinishTime, LocalDateTime.now())
+                .set(CharSequenceUtil.isNotBlank(importResultDTO.getRemark()), FileTask::getRemark, importResultDTO.getRemark())
+                .set(Objects.nonNull(importResultDTO.getStartTime()), FileTask::getStartTime, importResultDTO.getStartTime())
+                .set(Objects.nonNull(importResultDTO.getFinishTime()), FileTask::getFinishTime, importResultDTO.getFinishTime())
                 .eq(FileTask::getId, importResultDTO.getTaskId())
                 .update();
     }

@@ -2070,6 +2070,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }

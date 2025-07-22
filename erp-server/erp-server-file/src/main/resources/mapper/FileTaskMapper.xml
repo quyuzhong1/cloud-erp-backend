@@ -22,6 +22,9 @@
         type
         from file_task ft
         where ${params.sqlMap.default} and is_deleted = false
+        <if test="params.type != null and params.type != ''">
+            ft.type = #{params.type}
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

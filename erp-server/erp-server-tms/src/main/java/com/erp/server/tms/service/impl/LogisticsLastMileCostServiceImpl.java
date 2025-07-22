@@ -414,12 +414,13 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "尾程费用错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, excelListenerUtil.getHeadList());
+            File file = ExcelUtil.customExportUtil(fileName, errorList, excelListenerUtil.getHeadList());
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
         importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }

@@ -95,7 +95,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
         importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
-        importResultDTO.setMsg("处理中");
+        importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
     }
