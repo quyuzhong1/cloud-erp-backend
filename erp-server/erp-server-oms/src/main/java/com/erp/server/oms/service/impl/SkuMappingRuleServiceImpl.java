@@ -436,7 +436,40 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             }
                         }
                     }
-                }else{
+                }if (SkuMappingRuleEnum.NO_MATCH.equals(skuMappingRuleEnum)) {
+                    // 无需匹配类型针对的是 listingInfo 中的 platformStatus 和 isParent 字段
+                    if (!skuVOMap.containsKey(handlePlatformSkuNo)) {
+                        continue;
+                    }
+                    Map<String, Object> ruleContent = skuMappingRuleEntity.getRuleContent();
+                    Object obj = ruleContent.get("noMatchList");
+                    if (obj == null) {
+                        continue;
+                    }
+                    List<String> noMatch = JSONObject.parseObject(obj.toString(), new TypeReference<List<String>>() {}.getType());
+                    if (CollectionUtils.isEmpty(noMatch)) {
+                        continue;
+                    }
+                    Boolean matched = Boolean.FALSE;
+                    Boolean isParent = listingInfoWithSkuMappingDTO.getIsParent();
+                    if (noMatch.contains("parent") && Boolean.TRUE.equals(isParent)) {
+                        matched = Boolean.TRUE;
+                    } else {
+                        String platformStatus = listingInfoWithSkuMappingDTO.getPlatformStatus();
+                        if (StringUtils.isNotBlank(platformStatus)) {
+                            if (noMatch.contains(platformStatus.toLowerCase())) {
+                                matched = Boolean.TRUE;
+                            }
+                        }
+                    }
+                    if (matched) {
+                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                        listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                        listingInfoEntity.setRemark("");
+                        updateListingList.add(listingInfoEntity);
+                    }
+                } else{
                     String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
                     String[] ruleRegexList = ruleRegexArrStr.split(", ");
                     for(String ruleRegex : ruleRegexList){
