@@ -55,7 +55,7 @@ public class OtherInstockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
@@ -75,7 +75,7 @@ public class OtherInstockController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
@@ -95,7 +95,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增其他入库单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:add",
             serviceClass = OtherInstockService.class,
             keyIdName = "id")
@@ -114,7 +114,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交其他入库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:add",
             serviceClass = OtherInstockService.class,
             keyIdName = "id")
@@ -133,7 +133,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改其他入库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:update",
             serviceClass = OtherInstockService.class,
             keyIdName = "id")
@@ -152,7 +152,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交其他入库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:update",
             serviceClass = OtherInstockService.class,
             keyIdName = "id")
@@ -171,7 +171,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交其他入库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:submit",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
@@ -206,7 +206,7 @@ public class OtherInstockController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:view",
             serviceClass = OtherInstockService.class,
             keyIdName = "id")
@@ -226,7 +226,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除其他入库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:delete",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
@@ -245,7 +245,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废其他入库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:invalid",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
@@ -264,7 +264,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核其他入库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:approve",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
@@ -301,7 +301,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核其他入库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:disApprove",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
@@ -338,7 +338,7 @@ public class OtherInstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销其他入库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:cancelProcess",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
