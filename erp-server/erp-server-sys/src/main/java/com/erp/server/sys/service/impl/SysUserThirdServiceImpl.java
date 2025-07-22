@@ -89,17 +89,15 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * 检查是否绑定
      *
      * @param uid
-     * @param flagId
      * @param bindingPlatform
      * @return boolean
      * @author yl
      * @date 2022-07-26 10:54
      */
     @Override
-    public boolean checkIfBinding(String uid, String flagId, String bindingPlatform) {
+    public boolean checkIfBinding(String uid, String bindingPlatform) {
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserThirdEntity::getUserId, uid);
-        queryWrapper.eq(SysUserThirdEntity::getThirdUnionId, flagId);
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingPlatform);
         return this.getOne(queryWrapper) == null ? false : true;
 
@@ -120,7 +118,8 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingThird);
         queryWrapper.eq(SysUserThirdEntity::getUserId, loginUser.getUid());
-        return baseMapper.delete(queryWrapper) > 0 ? true : false;
+        baseMapper.delete(queryWrapper);
+        return Boolean.TRUE;
     }
 
 
