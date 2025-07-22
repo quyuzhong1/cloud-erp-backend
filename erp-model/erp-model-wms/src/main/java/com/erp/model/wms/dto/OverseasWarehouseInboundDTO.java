@@ -910,7 +910,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         public void setBlankOtherByTransferAgentAndSelfDelivery() {
             this.setLogisticsMethod(null);
-            this.setTrackingNo("");
             setBankWithoutCollectAtHome();
         }
 
@@ -927,7 +926,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         public void setBlankOtherByTransferAgentAndCollectAtHome() {
             this.setLogisticsMethod(null);
-            this.setTrackingNo("");
             this.setExpressNo("");
         }
     }
