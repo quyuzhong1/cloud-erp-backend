@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -498,6 +499,42 @@ public class SupplierDTO implements Serializable {
         @Size(max = 200, message = "付款公司名称最大200字符")
         private String paymentCompanyName;
 
+        /**
+         * 公司注册资金（万）
+         */
+        @NotNull(message = "注册资金不能为空")
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合
+         */
+        @NotEmpty(message = "供应商属性不能为空")
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合
+         */
+        @NotEmpty(message = "供应商属性不能为空")
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        @NotEmpty(message = "产品分类不能为空")
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合
+         */
+        @NotEmpty(message = "应用分类不能为空")
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 工厂所在地
+         */
+        @NotEmpty(message = "工厂所在地不能为空")
+        @Valid
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
     }
 
 

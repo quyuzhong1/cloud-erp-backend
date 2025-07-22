@@ -232,6 +232,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
         addEntity.setCode(code);
+        //生成供应商代码
+        getByIdentificationCode(getIdentificationCode());
+
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
@@ -268,6 +271,32 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
         return null;
+    }
+
+    /**
+     * 获取供应商代码
+     * @author will
+     * @date 2025/7/21 19:12
+     * @return String
+     */
+    private String getIdentificationCode () {
+        String identificationCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
+        SupplierEntity entity = getByIdentificationCode(identificationCode);
+        if (ObjectUtil.isNotEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_HAS_EXIST, CharSequenceUtil.format("供应商代码{}",identificationCode));
+        }
+        return identificationCode;
+    }
+
+    /**
+     * 根据供应商代码查询
+     * @author will
+     * @date 2025/7/21 19:09
+     * @param identificationCode
+     * @return SupplierEntity
+     */
+    private SupplierEntity getByIdentificationCode (String identificationCode) {
+       return lambdaQuery().eq(SupplierEntity::getIdentificationCode,identificationCode).last("limit 1").one();
     }
 
     /**

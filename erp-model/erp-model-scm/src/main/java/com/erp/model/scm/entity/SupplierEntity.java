@@ -208,7 +208,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      * 注册资金(万)
      */
     @TableField("registered_capital")
-    private BigDecimal registeredCapital;
+    private Integer registeredCapital;
 
     /**
      * 供应商属性Json
@@ -221,6 +221,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("product_category_json")
     private JSONArray productCategoryJson;
+
+    /**
+     * 供应商应用分类idJson
+     */
+    @TableField("application_category_json")
+    private JSONArray applicationCategoryJson;
 
     /**
      * 供应商体系认证Json
