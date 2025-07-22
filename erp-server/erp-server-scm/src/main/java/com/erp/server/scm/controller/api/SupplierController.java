@@ -19,13 +19,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -63,6 +63,8 @@ public class SupplierController extends BaseController {
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    @Resource
+    private SupplierContactService supplierContactService;
 
     /**
      * 供应商分页列表
@@ -541,4 +543,15 @@ public class SupplierController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 获取电话号码
+     * @author will
+     * @date 2025/7/22 15:58
+     * @param contactId
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getTelNumber")
+    public ApiResult<String> getTelNumber(@RequestParam("contractId") String contactId) {
+        return success(supplierContactService.getTelNumber(contactId));
+    }
 }

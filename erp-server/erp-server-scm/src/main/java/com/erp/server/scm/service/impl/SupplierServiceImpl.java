@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -350,6 +351,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         result.setPaymentConditionName(paymentConditionName);
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
+        //隐藏电话中间数字*
+        handleContact(contactList);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息
@@ -1772,4 +1775,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         });
     }
 
+
+    /**
+     * 隐藏电话中间数字
+     * @author will
+     * @date 2025/7/22 15:53
+     * @param contactList
+     * @return void
+     */
+    private void handleContact (List<SupplierContactDTO.UpdateDTO> contactList) {
+        if (CollUtil.isEmpty(contactList)) {
+            return;
+        }
+        for (SupplierContactDTO.UpdateDTO updateDTO : contactList) {
+            //隐藏电话
+            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber())) {
+                updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
+            }
+        }
+    }
 }

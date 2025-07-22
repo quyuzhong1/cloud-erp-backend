@@ -84,4 +84,12 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @date 2023-03-31 9:11
      */
     List<SupplierContactEntity> transform(String supplierId, List<SupplierContactDTO.ImportAddDTO> accountList);
+    /**
+     * 获取电话号码
+     * @author will
+     * @date 2025/7/22 15:59
+     * @param contactId
+     * @return String
+     */
+    String getTelNumber(String contactId);
 }

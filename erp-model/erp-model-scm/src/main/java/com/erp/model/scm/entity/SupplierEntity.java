@@ -10,6 +10,7 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -213,25 +214,25 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     /**
      * 供应商属性Json
      */
-    @TableField("property_json")
+    @TableField(value = "property_json", jdbcType = JdbcType.OTHER)
     private JSONArray propertyJson;
 
     /**
      * 供应商产品品类idJson
      */
-    @TableField("product_category_json")
+    @TableField(value = "product_category_json", jdbcType = JdbcType.OTHER)
     private JSONArray productCategoryJson;
 
     /**
      * 供应商应用分类idJson
      */
-    @TableField("application_category_json")
+    @TableField(value = "application_category_json", jdbcType = JdbcType.OTHER)
     private JSONArray applicationCategoryJson;
 
     /**
      * 供应商体系认证Json
      */
-    @TableField("certificate_json")
+    @TableField(value = "certificate_json", jdbcType = JdbcType.OTHER)
     private JSONArray certificateJson;
 
 
