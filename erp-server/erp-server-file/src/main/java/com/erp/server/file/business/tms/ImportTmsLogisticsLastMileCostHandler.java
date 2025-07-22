@@ -26,8 +26,7 @@ public class ImportTmsLogisticsLastMileCostHandler extends AbstractImportEventHa
 
     @Override
     protected void getData(FileTask fileTask) {
-        BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {
-        });
+        BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {});
         dto.setTaskId(fileTask.getId());
         importTmsFeign.importLogisticsLastMileCost(dto);
     }

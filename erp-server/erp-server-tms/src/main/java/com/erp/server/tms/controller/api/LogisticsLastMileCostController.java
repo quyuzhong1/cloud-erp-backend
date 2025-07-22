@@ -297,7 +297,7 @@ public class LogisticsLastMileCostController extends BaseController {
       * 编辑付款/退款 保存
       * @author Will
       * @date:  2023-11-06
-      * @param dto
+      * @param dtoList
       * @return ApiResult
       */
      @PostMapping("/edit")

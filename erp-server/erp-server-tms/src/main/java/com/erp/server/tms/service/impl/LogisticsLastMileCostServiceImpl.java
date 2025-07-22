@@ -59,6 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LAST_MILE_COST;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_LAST_MILE_COST;
 
 /**
  * @author Will
@@ -390,7 +391,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        downloadTaskFeign.saveImportTask("尾程费用列表", EXPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
+        downloadTaskFeign.saveImportTask("尾程费用列表", IMPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
         return Boolean.TRUE;
     }
 
