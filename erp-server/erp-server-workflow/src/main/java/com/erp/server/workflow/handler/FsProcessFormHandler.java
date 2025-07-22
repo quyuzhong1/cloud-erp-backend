@@ -197,7 +197,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         // 执行值映射处理
         Object finalValue = mapFieldValue(fieldId, fieldType, rawValue, tidToIdListMap, valueMapListMap);
-        if (finalValue == null) {
+        if (finalValue == null && entity.getThirdFieldRequired()) {
             throw new ServiceException("字段映射错误,未获取到{}对应的值，请检查单据数据是否有缺陷", sysField);
         }
 
