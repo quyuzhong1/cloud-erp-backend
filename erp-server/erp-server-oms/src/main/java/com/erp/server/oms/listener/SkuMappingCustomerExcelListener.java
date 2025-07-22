@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.LabelSourceTypeEnum;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -31,6 +32,7 @@ import com.erp.server.oms.service.SkuMappingService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -146,6 +148,10 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("通过导入修改客户sku，客户sku名称从【{}】修改为【{}】，产品sku从【{}】修改为【{}】", existEntity.getPlatformSkuName(), excelDTO.getPlatformSkuName(), skuMapping.getProductSkuNo(), excelDTO.getPlatformSkuNo()),ModuleTypeEnum.LISTING_INFO.getCode(), existEntity.getId(), "导入更新"));
                 existEntity.setPlatformSkuName(excelDTO.getPlatformSkuName());
                 existEntity.setProductSkuNo(excelDTO.getSkuNo());
+                if(StringUtils.isNotBlank(excelDTO.getPlatformStatusName())){
+                    String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(excelDTO.getPlatformStatusName());
+                    existEntity.setPlatformStatus(platformStatus);
+                }
                 updateListingList.add(existEntity);
 
                 LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime());
@@ -229,6 +235,10 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         listingInfoEntity.setAuthId(customerInfo.getId());
         listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         listingInfoEntity.setProductSkuNo(skuVO.getSkuNo());
+        if(StringUtils.isNotBlank(excelDTO.getPlatformStatusName())){
+            String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(excelDTO.getPlatformStatusName());
+            listingInfoEntity.setPlatformStatus(platformStatus);
+        }
         addListingList.add(listingInfoEntity);
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setType(RuleTypeEnum.CUSTOMER);
