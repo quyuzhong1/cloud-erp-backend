@@ -139,20 +139,7 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             String listingMongoDataReportId = listingMongoDataItem.getOrDefault(REPORT_ID, "").toString();
             if(StringUtils.isNotBlank(listingMongoDataReportId) && StringUtils.isNotBlank(reportId) && !listingMongoDataReportId.equalsIgnoreCase(reportId)){
                 //标记为删除状态
-                listingMongoDataItem.put("status", "8");
-            }else {
-                //状态
-                Object statusObj = listingMongoDataItem.get("status");
-                if (statusObj != null) {
-                    String status = String.valueOf(statusObj);
-                    if ("Active".equalsIgnoreCase(status)) {
-                        listingMongoDataItem.put("status", "1");
-                    }else if("Inactive".equalsIgnoreCase(status)){
-                        listingMongoDataItem.put("status", "3");
-                    }else if("Incomplete".equalsIgnoreCase(status)){
-                        listingMongoDataItem.put("status", "5");
-                    }
-                }
+                listingMongoDataItem.put("status", "Delete");
             }
 
             // 匹配明细

@@ -82,10 +82,18 @@ public class SkuMappingWarehouseImportExcelDTO {
     private String account;
 
     /**
+     * 平台状态
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "平台状态", index = 8)
+    @FieldValid(fieldName = "平台状态")
+    private String platformStatusName;
+
+    /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 9)
     private String errorMsg;
 
     @ExcelIgnore
