@@ -124,7 +124,10 @@ public class MercadoProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
         // 平台唯一标识=平台skuId + 店铺ID
         String uniqueId = StrUtil.format("{}_{}", dmpSkuInfoEntity.getSkuId(), dmpProductInfoEntity.getNextLevelId());
         product.setUniqueId(uniqueId);
-    	
+		//父平台产品ID（父ASIN）
+		product.setPlatformParentSkuId(dmpSkuInfoEntity.getPlatformParentSkuId());
+		//平台的Listing状态
+		product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
         return product;
     }
     

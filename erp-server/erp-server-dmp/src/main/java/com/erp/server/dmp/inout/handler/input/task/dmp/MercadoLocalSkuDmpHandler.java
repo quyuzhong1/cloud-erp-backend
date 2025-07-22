@@ -66,10 +66,16 @@ public class MercadoLocalSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                 if (statusObj != null) {
                     String status = String.valueOf(statusObj);
                     if ("active".equalsIgnoreCase(status)) {
-                        dmpDataMap.put("status", "1");
+                        dmpDataMap.put("status", "1"); //在售
                     } else {
-                        dmpDataMap.put("status", "3");
+                        dmpDataMap.put("status", "3");//停售
                     }
+                }
+
+                //父平台产品id
+                Object parentId = mongoDataMap.get("parentId");
+                if (parentId != null) {
+                    dmpDataMap.put("platformParentSkuId", String.valueOf(parentId));
                 }
 
                 //规格属性
