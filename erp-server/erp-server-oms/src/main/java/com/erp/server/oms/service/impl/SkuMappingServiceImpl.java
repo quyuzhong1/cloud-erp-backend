@@ -1116,6 +1116,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             item.setProductName(skuName);
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
 
     }
@@ -1142,6 +1145,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     item.setLabelUrlStr(FastDFSClientUtil.publicUrl + "/" + item.getLabelUrl());
                 }
             }
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
 
     }
