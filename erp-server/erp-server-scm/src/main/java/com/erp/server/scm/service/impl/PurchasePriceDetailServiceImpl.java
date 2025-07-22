@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -17,6 +18,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -29,6 +32,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
@@ -55,6 +59,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,6 +97,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private SupplierService supplierService;
+    @Resource
+    private BomSkuFeign bomSkuFeign;
 
     /**
      * 添加明细
@@ -823,6 +830,65 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             return Collections.emptyList();
         }
         return baseMapper.batchGetTaxPrice(dto);
+    }
+
+    @Override
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+        if(CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuFeign.getSingleBomInfo(skuIds);
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = new ArrayList<>();
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto : list) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = null;
+            if(Objects.nonNull(singleBomMap) && singleBomMap.containsKey(dto.getSkuId())) { //不校验
+                BigDecimal taxPrice = BigDecimal.ZERO;
+                List<BomDTO.BomSku> skuList = singleBomMap.get(dto.getSkuId());
+                for (BomDTO.BomSku childSku : skuList) {
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                    priceSearchDTO.setSkuId(childSku.getSkuId());
+                    priceSearchDTO.setSkuNo(childSku.getSkuNo());
+                    priceSearchDTO.setPurchaseQty(dto.getPurchaseQty() * childSku.getQty());
+                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList = getTaxPrice(priceSearchDTO);
+                    if (CollUtil.isNotEmpty(taxPriceList)) {
+                        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                            if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                                if(Objects.isNull(purchaseTaxPriceViewDTO)){
+                                    purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
+                                    BeanMapper.copy(priceViewDTO,purchaseTaxPriceViewDTO);
+                                }
+                                BigDecimal multiply = priceViewDTO.getTaxPrice().multiply(new BigDecimal(childSku.getQty()));
+                                taxPrice = taxPrice.add(multiply);
+                            }
+                        }
+                    }
+                }
+                if(Objects.nonNull(purchaseTaxPriceViewDTO)){
+                    purchaseTaxPriceViewDTO.setSkuId(dto.getSkuId());
+                    purchaseTaxPriceViewDTO.setSkuNo(dto.getSkuNo());
+                    purchaseTaxPriceViewDTO.setPurchaseQty(dto.getPurchaseQty());
+                    purchaseTaxPriceViewDTO.setTaxPrice(taxPrice);
+                    resultList.add(purchaseTaxPriceViewDTO);
+                }
+            }else {
+                purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = getTaxPrice(dto);
+                if (CollUtil.isNotEmpty(taxPriceList)) {
+                    for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                        if (dto.getPurchaseQty() >= priceViewDTO.getMinQty() && dto.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                            BeanMapper.copy(priceViewDTO,purchaseTaxPriceViewDTO);
+                            purchaseTaxPriceViewDTO.setSkuId(dto.getSkuId());
+                            purchaseTaxPriceViewDTO.setSkuNo(dto.getSkuNo());
+                            purchaseTaxPriceViewDTO.setPurchaseQty(dto.getPurchaseQty());
+                            resultList.add(purchaseTaxPriceViewDTO);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return resultList;
     }
 
 

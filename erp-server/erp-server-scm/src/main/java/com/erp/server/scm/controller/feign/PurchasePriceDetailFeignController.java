@@ -35,4 +35,15 @@ public class PurchasePriceDetailFeignController {
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto){
         return purchasePriceDetailService.getTaxPrice(dto);
     }
+    /**
+     * 批量查询含税单价
+     * @param
+     * @return
+     * @date: 2025-07-22
+     * @author: jack
+     */
+    @PostMapping("/listTaxPrice")
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(@RequestBody @Validated List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list){
+        return purchasePriceDetailService.listTaxPrice(list);
+    }
 }
