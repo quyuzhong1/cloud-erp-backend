@@ -783,7 +783,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     		reconciliationMonth = LocalDate.now();
     	}
     	
-		String currentDate = reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+		String currentDate = reconciliationMonth.withDayOfMonth(reconciliationMonth.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
     	Map<String, BigDecimal> rateMap = new HashMap<>();
     	rateMap.put("CNY", BigDecimal.ONE);
@@ -802,8 +802,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -821,8 +821,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -840,8 +840,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -859,8 +859,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -883,8 +883,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -902,8 +902,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -920,8 +920,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}
@@ -938,8 +938,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 		if(rate == null) {
 			rate = dmpTaskFeign.getRate(currentDate, currency);
 			if(rate == null) {
-				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
-                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                log.error("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
+                throw new ServiceException("日期【{}】币别【{}】,汇率为空，请维护汇率后再提交",currentDate,currency);
 			}
 			rateMap.put(currency, rate);
 		}

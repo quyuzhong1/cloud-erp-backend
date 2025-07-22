@@ -1280,7 +1280,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						String key = reportDate + "_" + allocatedCurrency;
 						BigDecimal rate = rateMap.get(key);
 						if(rate == null) {
-							rate = dmpTaskFeign.getRate(reportDate + "-01", allocatedCurrency);
+                            LocalDate localDate = LocalDate.parse(reportDate + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                            rate = dmpTaskFeign.getRate(localDate.withDayOfMonth(localDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
 							if(ObjectUtil.isEmpty(rate)){
 					            log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
 					            throw new ServiceException("汇率为空，请维护汇率后再查询");
