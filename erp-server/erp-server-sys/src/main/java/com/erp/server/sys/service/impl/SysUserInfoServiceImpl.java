@@ -533,7 +533,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (StringUtils.isNotBlank(flagId)) {
             LoginUser loginUser = UserContext.getLoginUser();
             String uid = loginUser.getUid();
-            boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
+            boolean ifBinding = sysUserThirdService.checkIfBinding(uid, bindingPlatform);
             if (ifBinding) {
                 throw new ServiceException(ApiError.ERROR_9020);
             }
