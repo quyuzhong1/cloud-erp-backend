@@ -228,6 +228,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private CfgRuleOutService cfgRuleOutService;
 
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @Lazy
     @Resource
@@ -2634,9 +2636,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 generateB2cDTO.setDetailList(newDetailList);
             } else if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(generateB2cDTO.getSourceType())){
+                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(generateB2cDTO.getSoId());
+                List<String> sourceCodes = new ArrayList<>();
+                sourceCodes.add(generateB2cDTO.getSoCode());
+                if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                    sourceCodes.add(thirdWarehouseDeliveryEntity.getCode());
+                }
                 // 海外仓出库信息补充
                 List<DmpThirdOutboundEntity> list = FeignQuery.create(DmpThirdOutboundEntity.class)
-                        .eq(DmpThirdOutboundEntity::getReferenceNo, generateB2cDTO.getSoCode())
+                        .in(DmpThirdOutboundEntity::getReferenceNo, sourceCodes)
                         .list();
                 if (CollectionUtils.isEmpty(list)){
                     ServiceException.runError("未找到海外仓出库信息:ReferenceNo=" + generateB2cDTO.getSourceCode());

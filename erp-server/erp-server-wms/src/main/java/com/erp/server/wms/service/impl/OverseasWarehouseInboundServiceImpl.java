@@ -556,22 +556,20 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     throw new ServiceException("【dictCityId】城市ID不能为空");
                 }
 
-                if (CharSequenceUtil.isBlank(commonDTO.getDictDistrictId()) && !OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)) {
+                if (CharSequenceUtil.isBlank(commonDTO.getDictDistrictId()) ) {
                     throw new ServiceException("【dictDistrictId】地区ID不能为空");
                 }
-                if(!OmsPlatformEnum.WEI_SHI.getCode().equalsIgnoreCase(dictPlatform)){
-                    // 查询和校验地区
-                    Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
-                            commonDTO.getDictProvinceId(),
-                            commonDTO.getDictCityId(),
-                            commonDTO.getDictDistrictId());
-                    // 省
-                    commonDTO.setDictProvinceName(dictCityEntityMap.get(commonDTO.getDictProvinceId()).getName());
-                    // 市
-                    commonDTO.setDictCityName(dictCityEntityMap.get(commonDTO.getDictCityId()).getName());
-                    // 区
-                    commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
-                }
+                // 查询和校验地区
+                Map<String, DictCityEntity> dictCityEntityMap = sysDictService.mapAndCheckDictCityIds(
+                        commonDTO.getDictProvinceId(),
+                        commonDTO.getDictCityId(),
+                        commonDTO.getDictDistrictId());
+                // 省
+                commonDTO.setDictProvinceName(dictCityEntityMap.get(commonDTO.getDictProvinceId()).getName());
+                // 市
+                commonDTO.setDictCityName(dictCityEntityMap.get(commonDTO.getDictCityId()).getName());
+                // 区
+                commonDTO.setDictDistrictName(dictCityEntityMap.get(commonDTO.getDictDistrictId()).getName());
                 // iml
                 if (OmsPlatformEnum.OMS_IML.getCode().equalsIgnoreCase(dictPlatform)
                 || OmsPlatformEnum.OMS_ANTU.getCode().equalsIgnoreCase(dictPlatform)) {
