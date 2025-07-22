@@ -15,9 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -161,5 +160,21 @@ public class BomSkuFeignController {
             return Collections.emptyList();
         }
         return bomSkuService.checkExistAndListCombinationSku(skuNos);
+    }
+
+    /**
+     * @description: 查询单品bom
+     * @author jack
+     * @date: 2025-07-22
+     * @param skuIds
+     * @return Map<String, List<BomDTO.BomSku>>
+     */
+    @PostMapping("/getSingleBomInfo")
+    public Map<String, List<BomDTO.BomSku>> getSingleBomInfo(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return new HashMap<>();
+        }
+        return bomSkuService.getSingleBomInfo(skuIds).stream()
+                .collect(Collectors.groupingBy(BomDTO.BomSku::getParentSkuId));
     }
 }
