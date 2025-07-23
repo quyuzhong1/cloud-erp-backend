@@ -3754,6 +3754,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
             variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
         }
+        //分类信息
+        List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cRefCategoryList));
+        }
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
