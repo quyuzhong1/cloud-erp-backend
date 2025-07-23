@@ -23,7 +23,7 @@ public class DictHsCodeExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*报关中文名" , index = 0)
     @FieldValid(fieldName = "*报关中文名",isNotBlank = true ,maxLength = 200)
-    private String  declareNameCn;
+    private String  description;
 
     /**
      * 中国海关编码
