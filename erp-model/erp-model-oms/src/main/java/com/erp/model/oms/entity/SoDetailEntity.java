@@ -248,6 +248,22 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(exist = false)
     private Integer index;
 
+    /**
+     * 产品名称
+     */
+    @TableField(exist = false)
+    private String productName;
+    /**
+     * 销售单价-本位币
+     */
+    @TableField(exist = false)
+    private BigDecimal basePrice;
+    /**
+     * 含税单价-本位币
+     */
+    @TableField(exist = false)
+    private BigDecimal baseTaxPrice;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

@@ -3738,6 +3738,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private Map<String,Object> getVariablesMap(SoB2cEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+
+        //店铺名称
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getId());
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            variablesMap.put("shopName", shopInfoEntity.getName());
+        }
+        //销售平台名称
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            String name = dictList.stream().filter(obj -> obj.getValue().equals(entity.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            variablesMap.put("dictPlatformName", name);
+        }
+
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);

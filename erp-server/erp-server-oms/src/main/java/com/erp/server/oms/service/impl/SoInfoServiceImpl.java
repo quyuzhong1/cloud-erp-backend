@@ -530,11 +530,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
             variablesMap.put("customerName", customerInfoEntity.getName());
         }
-
-
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        //产品名称
+        List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = CollUtil.isEmpty(productDetailList) ? new HashMap<>() : productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        for (SoDetailEntity detailEntity : detailList) {
+            //产品名称
+            String productName = skuMap.get(detailEntity.getSkuId());
+            detailEntity.setProductName(productName);
+            //销售单价-本位币
+            detailEntity.setBasePrice(MathUtil.multiplyWithFour(detailEntity.getPrice(), detailEntity.getExchangeRate()));
+            //含税单价-本位币
+            detailEntity.setBaseTaxPrice(MathUtil.multiplyWithFour(detailEntity.getTaxPrice(), detailEntity.getExchangeRate()));
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //折扣总额，因为和明细折扣额一样需要改名称处理
