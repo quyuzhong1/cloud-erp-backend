@@ -804,6 +804,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     /**
+     * 查询采购价目表，设置实际含税单价，实际不含税单价
+     */
+    private void fillActualCost(PilotApplicationDetailDTO.ViewDTO detailDTO) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+        searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+        searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+        searchDTO.setSkuId(detailDTO.getSkuId());
+        searchDTO.setSkuNo(detailDTO.getSkuNo());
+        try {
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
+            for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                if (detailDTO.getApplyQty() >= priceViewDTO.getMinQty() && detailDTO.getApplyQty() <= priceViewDTO.getMaxQty()) {
+                    detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                    BigDecimal divide = priceViewDTO.getTaxRate().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    BigDecimal add = divide.add(BigDecimal.ONE);
+                    detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(add, 4, RoundingMode.HALF_UP));
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            log.error("没有找到价目表：{} {}", detailDTO.getSkuNo(), detailDTO.getMainSupplierName());
+        }
+    }
+
+    /**
      * 获取审核记录
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
