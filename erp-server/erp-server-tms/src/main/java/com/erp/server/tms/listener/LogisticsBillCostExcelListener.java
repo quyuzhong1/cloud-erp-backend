@@ -32,7 +32,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
+    private final List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
@@ -40,8 +40,8 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     @Getter
     private List<LogisticsBillCostExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    private LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
-    private DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+    private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
     public LogisticsBillCostExcelListener(String taskId) {
         this.taskId = taskId;

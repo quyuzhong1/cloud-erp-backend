@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
@@ -45,6 +46,7 @@ import static com.common.core.enums.ApiError.EXCEL_PARSING_FIELD_EXCEPTION;
  */
 @Slf4j
 public class ExcelUtil {
+    private final static Integer BATCH_COUNT = 5000;
 
     /**
      * 导出数据为excel文件
@@ -388,8 +390,16 @@ public class ExcelUtil {
     public static File exportFile(String fileName, String sheetName, List<?> dataResult, Class<?> clazz) {
         File tempDirectory = FileUtils.getTempDirectory();
         File filePath = new File(tempDirectory,fileName);
-        //生成本地文件
-        EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
+        if (dataResult.size() > BATCH_COUNT){
+            List<? extends List<?>> partition = ListUtil.partition(dataResult, BATCH_COUNT);
+            for (int i = 0; i < partition.size(); i++) {
+                List<?> list = partition.get(i);
+                EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName + i).doWrite(list);
+            }
+        }else {
+            //生成本地文件
+            EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
+        }
         return filePath;
 
     }
@@ -704,11 +714,23 @@ public class ExcelUtil {
 
         try {
             File tempFile = File.createTempFile(fileName, ".xlsx");
-            EasyExcel.write(tempFile)
-                    .head(hs)
-                    .registerWriteHandler(getStyleStrategy())
-                    .sheet(fileName)
-                    .doWrite(list2);
+            if (list2.size() > BATCH_COUNT){
+                List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
+                for (int i = 0; i < partition.size(); i++) {
+                    EasyExcel.write(tempFile)
+                            .head(hs)
+                            .registerWriteHandler(getStyleStrategy())
+                            .sheet(fileName)
+                            .doWrite(partition.get(i));
+                }
+            }else {
+                EasyExcel.write(tempFile)
+                        .head(hs)
+                        .registerWriteHandler(getStyleStrategy())
+                        .sheet(fileName)
+                        .doWrite(list2);
+            }
+
             return tempFile;
         } catch (Exception e) {
             throw new ServiceException(ApiError.DEFAULT);
