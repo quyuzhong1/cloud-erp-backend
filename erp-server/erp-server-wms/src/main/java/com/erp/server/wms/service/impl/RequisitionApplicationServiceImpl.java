@@ -3339,9 +3339,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //货件明细
         List<FbaShipmentDetailEntity> fbaDetailList = fbaShipmentDetailService.listByMainIds(Collections.singletonList(shipmentEntity.getId()));
         //校验明细数量是否一致
-        if (planDetailEntityList.size() != fbaDetailList.size()){
-            throw new ServiceException("FBA货件【"+dto.getFbaShipmentCode()+"】和发货计划单【"+planEntity.getCode()+"】的明细数量不一致");
-        }
+//        if (planDetailEntityList.size() != fbaDetailList.size()){
+//            throw new ServiceException("FBA货件【"+dto.getFbaShipmentCode()+"】和发货计划单【"+planEntity.getCode()+"】的明细数量不一致");
+//        }
         List<String> skuIdList = fbaDetailList.stream().map(FbaShipmentDetailEntity::getSkuId).collect(Collectors.toList());
         //获取sku信息
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
