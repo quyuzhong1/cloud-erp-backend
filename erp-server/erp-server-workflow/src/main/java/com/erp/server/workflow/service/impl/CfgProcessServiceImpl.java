@@ -319,9 +319,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
-        if (CollUtil.isEmpty(valueMapList)) {
-            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
-        }
+
         //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity processDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         if (ObjectUtil.isEmpty(processDefinition)) {

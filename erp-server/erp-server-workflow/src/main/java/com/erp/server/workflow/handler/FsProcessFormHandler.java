@@ -11,6 +11,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -113,6 +114,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     private Map<String, List<CfgProcessValueMapEntity>> buildValueMapGroupByFieldId(List<CfgProcessValueMapEntity> valueMapList) {
+        if (CollUtil.isEmpty(valueMapList)) {
+            return new HashMap<>();
+        }
         return valueMapList.stream().collect(Collectors.groupingBy(
                 CfgProcessValueMapEntity::getFieldMapId
         ));
@@ -408,6 +412,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
     private Object mapFieldValue(String fieldId, String fieldType, Object rawValue,
                                  Map<String, List<String>> tidToIdListMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
+        //无值映射直接返回
+        if (ObjUtil.isEmpty(valueMapListMap)) {
+            return rawValue;
+        }
 
         List<String> fieldMapId = tidToIdListMap.get(fieldId);
         List<CfgProcessValueMapEntity> valueMappings = Collections.emptyList();
