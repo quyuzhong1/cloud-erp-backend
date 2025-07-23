@@ -3742,6 +3742,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
+        Map<String, String> map = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        //产品名称
+        for (SoB2cDetailEntity detailEntity :detailList) {
+            String productName = map.get(detailEntity.getSkuId());
+            detailEntity.setProductName(productName);
+        }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
