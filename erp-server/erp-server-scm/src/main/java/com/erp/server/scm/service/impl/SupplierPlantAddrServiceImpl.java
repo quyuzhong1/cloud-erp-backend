@@ -3,23 +3,23 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.scm.entity.SupplierPlantAddrEntity;
-import com.erp.server.scm.mapper.SupplierPlantAddrMapper;
-import com.erp.server.scm.service.SupplierPlantAddrService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.scm.service.OperateLogService;
-import com.erp.server.scm.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
+import com.erp.model.scm.entity.SupplierPlantAddrEntity;
+import com.erp.server.scm.mapper.SupplierPlantAddrMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.SupplierPlantAddrService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.scm.dto.SupplierPlantAddrDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 供应商工厂地信息 服务实现类
@@ -32,7 +32,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlantAddrMapper, SupplierPlantAddrEntity> implements SupplierPlantAddrService {
     @Autowired
-    private OperateLogService operateLogService;
+    private ModuleOperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -82,7 +82,7 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
             log.info("编辑 开始记录供应商工厂地信息日志数据，id：【{}】", supplierPlantAddrEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), supplierPlantAddrEntity.getId(), "供应商工厂地信息");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, supplierPlantAddrEntity, null, supplierPlantAddrEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, supplierPlantAddrEntity, null, supplierPlantAddrEntity.getId(),"", msg);
         return Boolean.TRUE;
     }
 
