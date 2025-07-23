@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.core.utils.*;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.excel.EasyExcel;
@@ -307,7 +309,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         log.info("编辑 开始修改自发货费用数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsBillCostEntity);
         if(!save) {
-            throw new ServiceException("自发货费用保存失败");
+            throw new ServiceException("自发货费用保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
         }
         //更新费用明细
         tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
@@ -849,7 +851,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param successList
      * @param errorList
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     @Override
     public void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList,List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution) {
         if (CollectionUtils.isEmpty(successList)) {
