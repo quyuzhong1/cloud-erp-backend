@@ -61,6 +61,7 @@
         inner join so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
         where  ${params.sqlMap.default}
             and twd.is_deleted = false
+        order by twd.create_time desc
     </select>
     <select id="listCount" resultType="com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO$TabListDTO">
         select status as tabFlag,
