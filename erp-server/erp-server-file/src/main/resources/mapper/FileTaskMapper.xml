@@ -19,6 +19,7 @@
         remark,
         start_time,
         finish_time,
+        count,
         type
         from file_task ft
         where ${params.sqlMap.default} and is_deleted = false

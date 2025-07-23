@@ -61,6 +61,10 @@ public class FileTaskVO {
      */
     private String remark;
     /**
+     * 任务的处理数量
+     */
+    private Integer count;
+    /**
      * 任务开始时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
