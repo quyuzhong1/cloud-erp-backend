@@ -8,9 +8,11 @@ import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -18,11 +20,11 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -33,23 +35,23 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LAST_MILE_COST;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_LAST_MILE_COST;
 
 /**
  * @author Will
@@ -84,6 +87,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private TmsCostDetailService tmsCostDetailService;
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -163,54 +168,21 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         return jsonObject;
     }
 
-    @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener();
-        try {
-            EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
-        } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
-        }
-        //验证导入数据是否为空
-        List<JSONObject> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        //导出错误数据
-        List<JSONObject> errorList = excelListenerUtil.getErrorList();
-
-        //处理验证成功数据
-        handleImportSuccessList(excelListenerUtil, errorList);
-
-        if (errorList.size() > 0) {
-            String fileName = "尾程费用错误数据.xlsx";
-            ExcelUtil.customExportUtil(excelListenerUtil.getHeadList(), errorList, fileName, response);
-        }
-        return Boolean.TRUE;
-    }
-
     /**
      * @description: 导入数据处理
      * @author Will
      * @date: 2024/5/10 18:41
-     * @param excelListenerUtil
-     * @param errorList
+     * @param successList 成功数据
+     * @param errorList 错误数据
+     * @param headList 表头
+     * @param headMap 表头
      */
-    private void handleImportSuccessList (LogisticsLastMileCostExcelListener excelListenerUtil, List<JSONObject> errorList) {
+    @Override
+    public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,Map<Integer,String> headMap) {
 
-        //导入数据处理
-        List<JSONObject> successList = excelListenerUtil.getSuccessList();
-        //表头
-        List<String> headList = excelListenerUtil.getHeadList();
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {
             throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_HEAD_EXIST);
         }
-        //表头Map
-        Map<Integer,String> headMap = excelListenerUtil.getHeadMap();
 
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -415,6 +387,42 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             logisticsBillCostService.handleDataPaging(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        downloadTaskFeign.saveImportTask("尾程费用列表", IMPORT_TMS_LOGISTICS_LAST_MILE_COST.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void importLogisticsLastMileCost(BaseDTO.ImportDTO dto) {
+        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();
+        }catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        //导出错误数据
+        List<JSONObject> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "尾程费用错误数据.xlsx";
+            File file = ExcelUtil.customExportUtil(fileName, errorList, excelListenerUtil.getHeadList());
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     /**
