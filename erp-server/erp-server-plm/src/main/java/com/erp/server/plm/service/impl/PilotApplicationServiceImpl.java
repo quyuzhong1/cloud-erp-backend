@@ -512,7 +512,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (ObjectUtil.isNotEmpty(attachmentList)) {
             HashMap<String,Object> attachmentMap = new HashMap<>();
             for (PlmAttachmentEntity obj : attachmentList) {
-                attachmentMap.put(obj.getAttachName(), FastDFSClientUtil.publicUrl + obj.getAttachUrl());
+                attachmentMap.put(obj.getAttachName(),  obj.getAttachUrl());
             }
             map.put("attachmentMap", attachmentMap);
         }
