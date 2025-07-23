@@ -22,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -36,6 +37,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -71,6 +73,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
 
@@ -541,6 +544,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<String> skuIds = detailList.stream().map(PilotApplicationDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
 
+        //产品信息
+        List<ProductDetailEntity> productDetailList = productDetailService.listByIds(skuIds);
+
+        //通过Java8取一级供应商和二级供应商
+        List<String> supplierIds = detailList.stream()
+                .flatMap(detail -> Stream.of(detail.getMainSupplierId(), detail.getSecondSupplierId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class,supplierIds);
+
         for (PilotApplicationDetailDTO.ViewDTO detailEntity : detailList) {
             //目标成本
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailEntity.getSkuId())).findFirst();
@@ -551,6 +565,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
             //实际成本
             fillActualCost(detailEntity);
+
+            //一级供应商名称
+            String mainSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setMainSupplierName(mainSupplierName);
+            //二级供应商名称
+            String secondSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setSecondSupplierName(secondSupplierName);
+            //产品名称
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailEntity.setProductName(productName);
         }
         map.put("productDetailList", detailList);
         return map;
