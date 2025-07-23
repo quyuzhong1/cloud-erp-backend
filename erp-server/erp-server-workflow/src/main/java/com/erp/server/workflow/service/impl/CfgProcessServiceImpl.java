@@ -188,8 +188,12 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     continue;
                 }
                 //唯一值
-                String uniqueCode = CharSequenceUtil.format("{}-{}", CharSequenceUtil.isBlank(fieldMapDto.getSysParentId()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : fieldMapDto.getSysParentId(), fieldMapDto.getSysField());
-                fieldMapDto.setUniqueCode(uniqueCode);
+                if (CharSequenceUtil.isBlank(fieldMapDto.getSysParentId()) || CharSequenceUtil.equals(fieldMapDto.getSysField(),"default") || CharSequenceUtil.equals(fieldMapDto.getSysField(),"nullValue")) {
+                    fieldMapDto.setUniqueCode(fieldMapDto.getSysField());
+                } else {
+                    String uniqueCode = CharSequenceUtil.format("{}-{}",  fieldMapDto.getSysParentId(), fieldMapDto.getSysField());
+                    fieldMapDto.setUniqueCode(uniqueCode);
+                }
                 try {
                     // 转换为大写以匹配枚举名称的约定 (通常枚举常量是大写的)
                     fieldMapDto.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getThirdFieldType().toUpperCase()).getName());
