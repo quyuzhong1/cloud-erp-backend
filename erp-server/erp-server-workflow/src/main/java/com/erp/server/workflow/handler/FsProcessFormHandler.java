@@ -216,6 +216,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             case "date":
                 resultField.set("value", formatToRFC3339(finalValue));
                 break;
+            case "datetime":
+                resultField.set("value", formatToRFC3339(finalValue));
+                break;
 
             case "amount":
                 resultField.set("value", additionalValue);
