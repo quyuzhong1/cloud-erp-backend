@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -30,6 +31,7 @@ public interface FileService {
     String uploadFile(File file, String fileName);
 
     byte[] downloadFile(String fileId);
+    InputStream getInputStream(String fileId);
 
     ResponseEntity<byte[]> downloadByte(String fileId, String fileName, String contentType, boolean bPreview);
 }

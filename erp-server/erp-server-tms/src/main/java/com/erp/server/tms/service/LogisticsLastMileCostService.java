@@ -1,16 +1,20 @@
 package com.erp.server.tms.service;
 
+import cn.hutool.json.JSONObject;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description: 尾程费用 服务类
@@ -67,15 +71,9 @@ public interface LogisticsLastMileCostService {
      * @param response
      */
     Boolean downloadTemplate(HttpServletResponse response);
-    /**
-     * @description: 导入
-     * @author Will
-     * @date: 2024/5/9 18:32
-     * @param excelFile
-     * @param response
-     * @return Boolean
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer, String> headMap);
+
     /**
      * @param dto
      * @return Boolean
@@ -86,4 +84,8 @@ public interface LogisticsLastMileCostService {
     Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto);
 
     PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    void importLogisticsLastMileCost(BaseDTO.ImportDTO dto);
 }

@@ -6,10 +6,9 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL_COST;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_BILL_COST;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -21,8 +20,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.core.utils.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.tms.entity.*;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.tms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,7 +35,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -43,37 +45,20 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -86,10 +71,8 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
@@ -124,34 +107,13 @@ import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL_COST;
 
 /**
  * <p>
@@ -218,6 +180,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private InventorySkuCostDetailService inventorySkuCostDetailService;
     @Resource
     private LogisticsLargeService logisticsLargeService;
+    @Resource
+    private FileFeign fileFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -490,58 +454,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener();
-        try {
-            EasyExcel.read(excelFile.getInputStream(), LogisticsBillCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
-        } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
-        }
-        List<LogisticsBillCostExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        List<LogisticsBillCostExcelDTO > errorList = excelListenerUtil.getErrorList();
-
-        List<LogisticsBillCostExcelDTO> successList = excelListenerUtil.getSuccessList();
-        //处理验证成功数据
-        handleImportSuccessList(successList, errorList,DictCostAttributionEnum.SELF_DELIVER.getCode());
-
-        if (!errorList.isEmpty()) {
-        	errorList.forEach((excelDTO) -> {
-        		String payType = excelDTO.getPayType();
-        		if("pay".equals(payType)) {
-        			payType = "付款";
-        		}else if("refund".equals(payType)) {
-        			payType = "退款";
-        		}
-        		excelDTO.setPayType(payType);
-        	});
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/logisticsBillCostError.xlsx";
-            String name = "logisticsBillCostError";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
-    }
-
-
-
 
     @Override
     public Boolean exportExcel(LogisticsBillCostDTO.PagingParamDTO dto) {
@@ -2046,7 +1958,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				String key = reportDate + "_" + allocatedCurrency;
 				BigDecimal rate = rateMap.get(key);
 				if(rate == null) {
-					rate = dmpTaskFeign.getRate(reportDate + "-01", allocatedCurrency);
+                    LocalDate localDate = LocalDate.parse(reportDate + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+					rate = dmpTaskFeign.getRate(localDate.withDayOfMonth(localDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
 					if(ObjectUtil.isEmpty(rate)){
 			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
 			            throw new ServiceException("汇率为空，请维护汇率后再查询");
@@ -2127,5 +2040,40 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             tmsCostDetailService.deleteByMainIdList(ids);
             this.removeByIds(ids);
         });
+    }
+
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        downloadTaskFeign.saveImportTask("自发货列表导入", IMPORT_TMS_LOGISTICS_BILL_COST.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void importLogisticsBillCost(BaseDTO.ImportDTO dto) {
+        LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener(dto.getTaskId());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), LogisticsBillCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        //导出错误数据
+        List<LogisticsBillCostExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "自发货费用错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, LogisticsBillCostExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }
