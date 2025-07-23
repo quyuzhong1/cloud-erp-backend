@@ -197,8 +197,8 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     /**
      * 父平台产品ID（父ASIN）
      */
-    @TableField("platform_parent_sku_id")
-    private String platformParentSkuId;
+    @TableField("platform_parent_spu_no")
+    private String platformParentSpuNo;
 
 
 
