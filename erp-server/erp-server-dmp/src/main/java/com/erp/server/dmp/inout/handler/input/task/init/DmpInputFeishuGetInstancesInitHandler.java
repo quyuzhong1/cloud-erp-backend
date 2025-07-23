@@ -52,16 +52,10 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
         List<ParamData> paramDataList = new ArrayList<>();
         //获取第三方审批定义
         List<CfgThirdProcessEntity> cfgThirdProcessList = listCfgThirdProcess();
-        if (CollUtil.isEmpty(cfgThirdProcessList)) {
-            log.warn("无可用的第三方审批配置，handler: {}", this.getClass().getSimpleName());
-            return Collections.emptyList();
-        }
+
         //分页查询
         List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "feishu_instanceIds_data");
-        if (CollUtil.isEmpty(dmpInputMongoChildList)) {
-            log.warn("无可用的飞书审批实例id，handler: {}", this.getClass().getSimpleName());
-            return Collections.emptyList();
-        }
+
         //已启用的审批定义编码
         List<String> approvalCodeList = cfgThirdProcessList.stream().map(CfgThirdProcessEntity::getThirdProcessDefinitionCode).distinct().collect(Collectors.toList());
         //查询审批实例
@@ -78,16 +72,14 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
 
                 //第三方审核生成配置
                 CfgThirdProcessEntity cfgThirdProcessEntity = cfgThirdProcessList.stream().filter(obj -> CharSequenceUtil.equals(obj.getThirdProcessDefinitionCode(), approvalCode)).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(cfgThirdProcessEntity)) {
-                    log.warn("无可用的第三方审批配置，handler: {}", this.getClass().getSimpleName());
-                    continue;
-                }
-                //创建并更新只拉取审核完成的数据
-                ThirdProcessInstanceEntity thirdProcessInstanceEntity = instanceList.stream().filter(obj -> CharSequenceUtil.equals(obj.getInstanceCode(), instanceId)).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(thirdProcessInstanceEntity)
-                        && CharSequenceUtil.equals(FSApprovalStatusEnum.APPROVED.getCode(),thirdProcessInstanceEntity.getStatus())) {
-                    log.warn("审批实例已审核通过无需拉取，instanceId: {}", instanceId);
-                    continue;
+                if (ObjectUtil.isNotEmpty(cfgThirdProcessEntity)) {
+                    //创建并更新只拉取审核完成的数据
+                    ThirdProcessInstanceEntity thirdProcessInstanceEntity = instanceList.stream().filter(obj -> CharSequenceUtil.equals(obj.getInstanceCode(), instanceId)).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(thirdProcessInstanceEntity)
+                            && CharSequenceUtil.equals(FSApprovalStatusEnum.APPROVED.getCode(),thirdProcessInstanceEntity.getStatus())) {
+                        log.warn("审批实例已审核通过无需拉取，instanceId: {}", instanceId);
+                        continue;
+                    }
                 }
                 try {
                     GetInstanceResp instance = fsService.getInstance(instanceId);
