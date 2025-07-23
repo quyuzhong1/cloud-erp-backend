@@ -832,52 +832,88 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return baseMapper.batchGetTaxPrice(dto);
     }
 
+    /**
+     * 根据提供的搜索条件列表和是否捕获错误的标志，获取含税价格信息列表
+     * 此方法首先检查输入列表是否为空，然后获取对应的物料清单（BOM），并根据BOM信息计算每个商品的含税价格
+     * 如果商品在BOM映射中存在，则根据BOM详情计算含税价格；如果不存在，则直接获取含税价格
+     * 最后，将计算结果添加到结果列表中并返回
+     *
+     * @param list 搜索条件列表，包含需要查询的商品信息和购买数量等 @param catchError 是否捕获错误的标志，用于控制是否捕获并处理方法执行过程中可能发生的错误
+     * @return 返回一个含税价格详情列表，如果输入列表为空或没有找到对应的含税价格信息，则返回空列表
+     */
     @Override
-    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
-        if(CollectionUtils.isEmpty(list)){
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list, Boolean catchError) {
+        // 检查输入列表是否为空，如果为空则直接返回空列表
+        if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+
+        // 从搜索条件列表中提取唯一的商品ID列表，用于获取对应的物料清单（BOM）信息
+        List<String> skuIds = list.stream()
+                .map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 获取单个商品的物料清单（BOM）信息，如果获取失败或返回为空，则初始化为空Map
         Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuFeign.getSingleBomInfo(skuIds);
+        if (singleBomMap == null) {
+            singleBomMap = Collections.emptyMap();
+        }
+
+        // 初始化结果列表，用于存储计算后的含税价格详情
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = new ArrayList<>();
+
+        // 遍历搜索条件列表，为每个商品计算含税价格
         for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto : list) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = null;
-            if(Objects.nonNull(singleBomMap) && singleBomMap.containsKey(dto.getSkuId())) { //不校验
-                BigDecimal taxPrice = BigDecimal.ZERO;
+            // 初始化含税价格详情对象和含税价格累加器
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
+            BigDecimal taxPrice = BigDecimal.ZERO;
+
+            // 如果当前商品在BOM映射中存在，则根据BOM详情计算含税价格
+            if (singleBomMap.containsKey(dto.getSkuId())) {
                 List<BomDTO.BomSku> skuList = singleBomMap.get(dto.getSkuId());
+
                 for (BomDTO.BomSku childSku : skuList) {
+                    // 根据BOM中的子商品信息和购买数量，计算子商品的总购买数量
+                    long purchaseQty = (long) dto.getPurchaseQty() * childSku.getQty();
                     PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                     priceSearchDTO.setSkuId(childSku.getSkuId());
                     priceSearchDTO.setSkuNo(childSku.getSkuNo());
-                    priceSearchDTO.setPurchaseQty(dto.getPurchaseQty() * childSku.getQty());
-                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList = getTaxPrice(priceSearchDTO);
+                    priceSearchDTO.setPurchaseQty((int) purchaseQty);
+
+                    // 获取子商品的含税价格列表，并累加到总含税价格中
+                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = safeGetTaxPrice(priceSearchDTO, catchError);
+
                     if (CollUtil.isNotEmpty(taxPriceList)) {
                         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
                             if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
-                                if(Objects.isNull(purchaseTaxPriceViewDTO)){
-                                    purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
-                                    BeanMapper.copy(priceViewDTO,purchaseTaxPriceViewDTO);
-                                }
+                                BeanMapper.copy(priceViewDTO, purchaseTaxPriceViewDTO);
                                 BigDecimal multiply = priceViewDTO.getTaxPrice().multiply(new BigDecimal(childSku.getQty()));
                                 taxPrice = taxPrice.add(multiply);
+                                break;
                             }
                         }
                     }
                 }
-                if(Objects.nonNull(purchaseTaxPriceViewDTO)){
+
+                // 如果计算出的含税价格详情的最小购买数量不为空，则将商品信息和计算结果添加到结果列表中
+                if (purchaseTaxPriceViewDTO.getMinQty() != null) {
                     purchaseTaxPriceViewDTO.setSkuId(dto.getSkuId());
                     purchaseTaxPriceViewDTO.setSkuNo(dto.getSkuNo());
                     purchaseTaxPriceViewDTO.setPurchaseQty(dto.getPurchaseQty());
                     purchaseTaxPriceViewDTO.setTaxPrice(taxPrice);
                     resultList.add(purchaseTaxPriceViewDTO);
                 }
-            }else {
-                purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = getTaxPrice(dto);
+
+            } else {
+                // 如果当前商品在BOM映射中不存在，则直接获取商品的含税价格
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = safeGetTaxPrice(dto, catchError);
+
                 if (CollUtil.isNotEmpty(taxPriceList)) {
                     for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
                         if (dto.getPurchaseQty() >= priceViewDTO.getMinQty() && dto.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
-                            BeanMapper.copy(priceViewDTO,purchaseTaxPriceViewDTO);
+                            BeanMapper.copy(priceViewDTO, purchaseTaxPriceViewDTO);
                             purchaseTaxPriceViewDTO.setSkuId(dto.getSkuId());
                             purchaseTaxPriceViewDTO.setSkuNo(dto.getSkuNo());
                             purchaseTaxPriceViewDTO.setPurchaseQty(dto.getPurchaseQty());
@@ -888,8 +924,23 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 }
             }
         }
+        // 返回计算后的含税价格详情列表
         return resultList;
     }
+
+    private List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> safeGetTaxPrice(
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto, Boolean catchError) {
+        try {
+            return getTaxPrice(dto);
+        } catch (Exception e) {
+            if (Boolean.TRUE.equals(catchError)) {
+                log.error("获取含税价格失败：{}", e.getMessage(), e);
+            }
+            return Collections.emptyList();
+        }
+    }
+
+
 
 
     @Override

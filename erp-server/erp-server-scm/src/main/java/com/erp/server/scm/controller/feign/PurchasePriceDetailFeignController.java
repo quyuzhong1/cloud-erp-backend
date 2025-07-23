@@ -44,6 +44,6 @@ public class PurchasePriceDetailFeignController {
      */
     @PostMapping("/listTaxPrice")
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(@RequestBody @Validated List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list){
-        return purchasePriceDetailService.listTaxPrice(list);
+        return purchasePriceDetailService.listTaxPrice(list,Boolean.FALSE);
     }
 }
