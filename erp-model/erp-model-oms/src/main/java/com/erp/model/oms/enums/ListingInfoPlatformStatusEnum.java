@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum ListingInfoPlatformStatusEnum implements EnumMessage {
     ACTIVE("Active",	"在售"),
     INACTIVE("Inactive",	"停售"),
-    INCOMPLETE("Incomplete",	"未完成"),
-    UN_KNOW("unKnow",	"未知状态"),
+    INCOMPLETE("Incomplete",	"草稿"),
+    DELETE("Delete",	"删除"),
     ;
     /**
      * 类型

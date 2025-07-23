@@ -9,6 +9,7 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang.StringUtils;
@@ -135,7 +136,15 @@ public class MercadoLocalProductRocketMQTaskHandler extends DmpOutputRocketMQTas
 		//父平台产品ID（父ASIN）
 		product.setPlatformParentSkuId(dmpSkuInfoEntity.getPlatformParentSkuId());
 		//平台的Listing状态
-		product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
+		if (StringUtils.isNotBlank(dmpSkuInfoEntity.getStatus())) {
+			String status = dmpSkuInfoEntity.getStatus();
+			if ("1".equalsIgnoreCase(status)) {
+				status = ListingInfoPlatformStatusEnum.ACTIVE.getCode();
+			} else {
+				status = ListingInfoPlatformStatusEnum.INACTIVE.getCode();
+			}
+			product.setPlatformStatus(status);
+		}
         return product;
     }
     

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("listing_info")
 public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
 
@@ -156,7 +158,7 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     private String labelSourceType;
 
     /**
-     * 父平台产品ID（父ASIN）
+     * 父平台产品ID（父ASIN） ListingInfoPlatformStatusEnum
      */
     @TableField("platform_parent_sku_id")
     private String platformParentSkuId;
