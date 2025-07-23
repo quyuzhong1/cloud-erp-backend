@@ -3766,6 +3766,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIdList);
+        Map<String, String> map = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        //产品名称
+        for (SoB2cDetailEntity detailEntity :detailList) {
+            String productName = map.get(detailEntity.getSkuId());
+            detailEntity.setProductName(productName);
+        }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
@@ -3777,6 +3785,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(entity.getId());
         if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
             variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
+        }
+        //分类信息
+        List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
+            variablesMap.putAll(BeanUtil.beanToMap(soB2cRefCategoryList));
         }
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
