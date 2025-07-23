@@ -42,6 +42,8 @@ import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -178,6 +180,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      * @param headMap 表头
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,Map<Integer,String> headMap) {
 
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {
@@ -396,6 +399,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importLogisticsLastMileCost(BaseDTO.ImportDTO dto) {
         LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId());
         try {
@@ -421,6 +425,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         }
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setRemark("");
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }

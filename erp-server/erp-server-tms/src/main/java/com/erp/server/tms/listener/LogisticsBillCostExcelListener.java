@@ -85,6 +85,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
      * @param analysisContext
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
             logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
