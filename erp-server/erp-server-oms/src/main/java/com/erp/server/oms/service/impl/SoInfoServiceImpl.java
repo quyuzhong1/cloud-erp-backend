@@ -524,11 +524,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isNotEmpty(virtualWarehouseEntity)) {
             variablesMap.put("virtualWarehouseName", virtualWarehouseEntity.getName());
         }
-        //部门名称
+        //客户名称
         CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,entity.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
             variablesMap.put("customerName", customerInfoEntity.getName());
         }
+        //收款账号
+        BankAccountEntity accountEntity = bankAccountService.getById(entity.getReceiveAccount());
+        if (ObjectUtil.isNotEmpty(accountEntity)) {
+            variablesMap.put("receiveAccountName", accountEntity.getAccountName());
+        }
+        //结算币别
+        DictCurrencyEntity currencyEntity = FeignQuery.getById(DictCurrencyEntity.class, entity.getCurrency());
+        if (ObjectUtil.isNotEmpty(currencyEntity)) {
+            variablesMap.put("currencyName", currencyEntity.getName());
+        }
+        //收款条件
+        KingdeeReceiptConditionEntity receiptConditionList = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
+        if (ObjectUtil.isNotEmpty(receiptConditionList)) {
+            variablesMap.put("receiveConditionName", receiptConditionList.getName());
+        }
+
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
