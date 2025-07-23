@@ -690,7 +690,7 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformStatus;
         private String platformStatusName;
-        private String platformParenSkutId;
+        private String platformParentSpuNo;
 
     }
 
@@ -830,7 +830,7 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformStatus;
         private String platformStatusName;
-        private String platformParenSkutId;
+        private String platformParentSpuNo;
     }
 
 
@@ -968,7 +968,7 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformStatus;
         private String platformStatusName;
-        private String platformParenSkutId;
+        private String platformParentSpuNo;
     }
 
 
