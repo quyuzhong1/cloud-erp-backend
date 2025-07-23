@@ -205,7 +205,7 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                     if(CollectionUtils.isNotEmpty(relationships)){
                         List<String> parentAsins = relationships.get(0).getParentAsins();
                         if(CollectionUtils.isNotEmpty(parentAsins) && StringUtils.isNotBlank(parentAsins.get(0))){
-                            listingMongoDataItem.put("platformParentSkuId", parentAsins.get(0));
+                            listingMongoDataItem.put("platformParentSpuNo", parentAsins.get(0));
                         }
                     }
                 }

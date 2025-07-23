@@ -157,7 +157,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getId(), "新增操作");
 
                 //若父平台skuid 不为空则更新对应的父平台sku的标识为true
-                updatePlateformParentSku(entity.getPlatformParentSkuId());
+                updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
                 // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
@@ -189,8 +189,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     if (StringUtils.isNotBlank(entity.getThirdBarcode())) {
                         oldEntity.setThirdBarcode(entity.getThirdBarcode());
                     }
-                    if (StringUtils.isNotBlank(entity.getPlatformParentSkuId())) {
-                        oldEntity.setPlatformParentSkuId(entity.getPlatformParentSkuId());
+                    if (StringUtils.isNotBlank(entity.getPlatformParentSpuNo())) {
+                        oldEntity.setPlatformParentSpuNo(entity.getPlatformParentSpuNo());
                     }
                     if (StringUtils.isNotBlank(entity.getPlatformStatus())) {
                         oldEntity.setPlatformStatus(entity.getPlatformStatus());
@@ -204,32 +204,32 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
                     //若父平台skuid 不为空则更新对应的父平台sku的标识为true
-                    updatePlateformParentSku(entity.getPlatformParentSkuId());
+                    updatePlateformParentSku(entity.getPlatformParentSpuNo());
                 }
             }
         return ApiResult.success();
     }
 
     //若父平台skuid 不为空则更新对应的父平台sku的标识为true
-    private void updatePlateformParentSku(String platformParentSkuId) {
-        if(StringUtils.isNotBlank(platformParentSkuId)){
-            ListingInfoEntity platformParentSku = listingInfoService.lambdaQuery()
-                    .eq(ListingInfoEntity::getPlatformSkuId, platformParentSkuId)
+    private void updatePlateformParentSku(String platformParentSpuNo) {
+        if(StringUtils.isNotBlank(platformParentSpuNo)){
+            ListingInfoEntity parentListingInfoEntity = listingInfoService.lambdaQuery()
+                    .eq(ListingInfoEntity::getPlatformSpuNo, platformParentSpuNo)
                     .eq(ListingInfoEntity::getIsParent, Boolean.FALSE)
                     .last("limit 1")
                     .one();
-            if(Objects.nonNull(platformParentSku)){
+            if(Objects.nonNull(parentListingInfoEntity)){
                 listingInfoService.lambdaUpdate()
-                        .eq(ListingInfoEntity::getId, platformParentSku.getId())
+                        .eq(ListingInfoEntity::getId, parentListingInfoEntity.getId())
                         .set(ListingInfoEntity::getIsParent, Boolean.TRUE)
                         .update();
 
                 ListingInfoEntity newPlatformParentSku =new ListingInfoEntity();
-                BeanMapper.copy(platformParentSku, newPlatformParentSku);
+                BeanMapper.copy(parentListingInfoEntity, newPlatformParentSku);
                 newPlatformParentSku.setIsParent(Boolean.TRUE);
                 //记录更新日志
                 String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
-                operateLogService.addModuleOperateLogByObj(platformParentSku, newPlatformParentSku, ModuleTypeEnum.LISTING_INFO.getCode(), platformParentSku.getId(), msg);
+                operateLogService.addModuleOperateLogByObj(parentListingInfoEntity, newPlatformParentSku, ModuleTypeEnum.LISTING_INFO.getCode(), parentListingInfoEntity.getId(), msg);
             }
         }
     }

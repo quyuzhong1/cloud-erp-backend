@@ -24,7 +24,7 @@
         <result column="product_spec" property="productSpec" />
         <result column="product_packing" property="productPacking" />
         <result column="is_parent" property="isParent" />
-        <result column="platform_parent_sku_id" property="platformParentSkuId" />
+        <result column="platform_parent_spu_no" property="platformParentSpuNo" />
     </resultMap>
 
     <select id="listByType" resultType="com.erp.model.oms.dto.ListingInfoDTO$ListDTO">
