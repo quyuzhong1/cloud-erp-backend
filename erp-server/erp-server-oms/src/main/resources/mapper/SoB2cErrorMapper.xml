@@ -89,6 +89,7 @@
         WHERE sb2c.is_deleted = FALSE
         AND sb2c.sign_order_error != ''
         AND sb2c.invalid_status = FALSE
+        and sb2c.approve_status = 'approve'
         AND sb2c.pay_status IN ( 'paid' )
         AND EXISTS ( SELECT 1 FROM so_b2c_detail sbd WHERE sbd.is_deleted = FALSE AND sbd.main_id = sb2c.ID )
         AND sb2c.shop_id IN ( SELECT ID FROM shop_info WHERE is_deleted = FALSE )
