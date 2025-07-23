@@ -269,6 +269,14 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(exist = false)
     private BigDecimal baseTaxPrice;
 
+    /**
+     * 价税合计
+     */
+    @TableField(exist = false)
+    private BigDecimal originalTaxPrice;
+
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

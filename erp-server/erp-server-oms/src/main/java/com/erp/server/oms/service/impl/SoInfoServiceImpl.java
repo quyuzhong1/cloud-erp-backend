@@ -545,6 +545,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             detailEntity.setBasePrice(MathUtil.multiplyWithFour(detailEntity.getPrice(), detailEntity.getExchangeRate()));
             //含税单价-本位币
             detailEntity.setBaseTaxPrice(MathUtil.multiplyWithFour(detailEntity.getTaxPrice(), detailEntity.getExchangeRate()));
+            //价税合计
+            detailEntity.setOriginalTaxPrice(MathUtil.subtract(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(), detailEntity.getQty()),detailEntity.getDiscountAmount()));
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //折扣总额，因为和明细折扣额一样需要改名称处理
@@ -556,7 +558,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         //价税合计
-        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty()).subtract(obj.getDiscountAmount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
         //总销售额(折后)
         BigDecimal taxAmountTotal = detailList.stream().map(SoDetailEntity::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -377,7 +377,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             for (ApproveTaskDetailDTO.AddDTO addDTO : addDTOS) {
                 if (addDTO.getEntityCode()!=null){
                     Map<String, String> codeMap = (Map<String, String>) optionMap.get(addDTO.getEntityCode());
-                    addDTO.setSysFieldName(codeMap.get(addDTO.getSysField()));
+                    if (ObjectUtil.isNotEmpty(codeMap)) {
+                        addDTO.setSysFieldName(codeMap.get(addDTO.getSysField()));
+                    }
                     continue;
                 }
                 addDTO.setSysFieldName(optionMap.get(addDTO.getSysField()).toString());
