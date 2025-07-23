@@ -983,11 +983,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
             }
             //实际含税单价
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(item.getSkuId(), null);
-            if(Objects.isNull(priceViewDTO)){
-                item.setActualTaxCost("无价目表");
-            }else {
-                item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
+            try {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(item.getSkuId(), null);
+                if(Objects.isNull(priceViewDTO)){
+                    item.setActualTaxCost("无价目表");
+                }else {
+                    item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
+                }
+            }catch (Exception e) {
+                item.setTargetTaxCost("无价目表");
             }
             //采购申请量
             int applyQty = 0;
