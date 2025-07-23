@@ -206,8 +206,8 @@ public class PurchasePriceDetailController extends BaseController {
      * @author: jack
      */
     @PostMapping("/listTaxPrice")
-    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(@RequestBody @Validated List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list){
-        return purchasePriceDetailService.listTaxPrice(list,Boolean.TRUE);
+    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> listTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto){
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> list = purchasePriceDetailService.listTaxPrice(Arrays.asList(dto), Boolean.TRUE);
+        return success(list);
     }
-
 }
