@@ -130,5 +130,5 @@ public class PlatformProductDTO extends UniqueDto {
     /**
      * 父平台产品ID（父ASIN）
      */
-    private String platformParentSkuId;
+    private String platformParentSpuNo;
 }

@@ -134,7 +134,7 @@ public class MercadoLocalProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         product.setUniqueId(uniqueId);
 
 		//父平台产品ID（父ASIN）
-		product.setPlatformParentSkuId(dmpSkuInfoEntity.getPlatformParentSkuId());
+		product.setPlatformParentSpuNo(dmpSkuInfoEntity.getPlatformParentSpuNo());
 		//平台的Listing状态
 		if (StringUtils.isNotBlank(dmpSkuInfoEntity.getStatus())) {
 			String status = dmpSkuInfoEntity.getStatus();
