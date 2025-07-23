@@ -1,6 +1,7 @@
 package com.erp.server.tms.listener;
 
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -72,7 +73,14 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         excelDTO.setPayType(excelDTO.getPayTypeName().equals("付款") ? "pay" : "refund");
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
-            logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+            try {
+                List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
+                logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
             successList.clear();
             updateTask(count);
         }
@@ -88,7 +96,14 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
-            logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+            try {
+                List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
+                logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
         }
     }
 

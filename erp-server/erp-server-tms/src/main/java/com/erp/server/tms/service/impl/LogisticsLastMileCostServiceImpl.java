@@ -180,7 +180,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      * @param headMap 表头
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,Map<Integer,String> headMap) {
 
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {

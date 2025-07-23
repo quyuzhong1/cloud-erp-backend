@@ -33,7 +33,7 @@ public class ImportTmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }
@@ -46,7 +46,7 @@ public class ImportTmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }

@@ -60,6 +60,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     * @param analysisContext
     */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
         count += 1;
         List<String> errorMsgList = new ArrayList<>();
@@ -83,7 +84,16 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
 
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
-            logisticsLastMileCostService.handleImportSuccessList(successList, errorList, headList, headMap);
+            try {
+                List<JSONObject> errorList2 = new ArrayList<>();
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap);
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(jsonObject -> {
+                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                });
+                errorList.addAll(successList);
+            }
             successList.clear();
             updateTask(count);
         }
@@ -115,7 +125,16 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
-            logisticsLastMileCostService.handleImportSuccessList(successList, errorList, headList, headMap);
+            try {
+                List<JSONObject> errorList2 = new ArrayList<>();
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap);
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(jsonObject -> {
+                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
+                });
+                errorList.addAll(successList);
+            }
         }
     }
 
