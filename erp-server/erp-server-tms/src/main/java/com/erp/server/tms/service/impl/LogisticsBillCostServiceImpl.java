@@ -2049,6 +2049,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importLogisticsBillCost(BaseDTO.ImportDTO dto) {
         LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener(dto.getTaskId());
         try {
@@ -2071,6 +2072,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        importResultDTO.setRemark("");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());

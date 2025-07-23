@@ -11,6 +11,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
 import lombok.Getter;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,6 +112,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
      * @param analysisContext
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
             logisticsLastMileCostService.handleImportSuccessList(successList, errorList, headList, headMap);
