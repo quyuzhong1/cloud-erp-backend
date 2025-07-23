@@ -506,7 +506,31 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @return Map<String,Object>
      */
     private Map<String,Object> getVariablesMap(SoInfoEntity entity) {
+
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+
+        //部门名称
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Collections.singletonList(entity.getSalesDeptId()));
+        if (CollUtil.isNotEmpty(deptList)) {
+            variablesMap.put("salesDeptName", deptList.get(0).getName());
+        }
+        //仓库名称
+        WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class,entity.getWarehouseId());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            variablesMap.put("warehouseName", warehouseEntity.getName());
+        }
+        //虚拟仓库名称
+        VirtualWarehouseEntity virtualWarehouseEntity = FeignQuery.getById(VirtualWarehouseEntity.class,entity.getVirtualWarehouseId());
+        if (ObjectUtil.isNotEmpty(virtualWarehouseEntity)) {
+            variablesMap.put("virtualWarehouseName", virtualWarehouseEntity.getName());
+        }
+        //部门名称
+        CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,entity.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            variablesMap.put("customerName", customerInfoEntity.getName());
+        }
+
+
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);

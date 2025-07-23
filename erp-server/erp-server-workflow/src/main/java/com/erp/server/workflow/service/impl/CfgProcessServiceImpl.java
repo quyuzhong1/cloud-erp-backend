@@ -187,8 +187,12 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     continue;
                 }
                 //唯一值
-                String uniqueCode = CharSequenceUtil.format("{}-{}", CharSequenceUtil.isBlank(fieldMapDto.getSysParentId()) ? CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode() : fieldMapDto.getSysParentId(), fieldMapDto.getSysField());
-                fieldMapDto.setUniqueCode(uniqueCode);
+                if (CharSequenceUtil.isBlank(fieldMapDto.getSysParentId()) || CharSequenceUtil.equals(fieldMapDto.getSysField(),"default") || CharSequenceUtil.equals(fieldMapDto.getSysField(),"nullValue")) {
+                    fieldMapDto.setUniqueCode(fieldMapDto.getSysField());
+                } else {
+                    String uniqueCode = CharSequenceUtil.format("{}-{}",  fieldMapDto.getSysParentId(), fieldMapDto.getSysField());
+                    fieldMapDto.setUniqueCode(uniqueCode);
+                }
                 try {
                     // 转换为大写以匹配枚举名称的约定 (通常枚举常量是大写的)
                     fieldMapDto.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getThirdFieldType().toUpperCase()).getName());
@@ -318,9 +322,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
-        if (CollUtil.isEmpty(valueMapList)) {
-            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
-        }
+
         //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity processDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         if (ObjectUtil.isEmpty(processDefinition)) {
