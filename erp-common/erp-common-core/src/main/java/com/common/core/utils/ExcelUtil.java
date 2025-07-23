@@ -34,6 +34,8 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDate;
 import java.util.*;
 
 import static com.common.core.enums.ApiError.EXCEL_PARSING_FIELD_EXCEPTION;
@@ -389,18 +391,29 @@ public class ExcelUtil {
      */
     public static File exportFile(String fileName, String sheetName, List<?> dataResult, Class<?> clazz) {
         File tempDirectory = FileUtils.getTempDirectory();
-        File filePath = new File(tempDirectory,fileName);
+        File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
+        File outputFile = new File(tempDirectory,fileName);
         if (dataResult.size() > BATCH_COUNT){
-            List<? extends List<?>> partition = ListUtil.partition(dataResult, BATCH_COUNT);
-            for (int i = 0; i < partition.size(); i++) {
-                List<?> list = partition.get(i);
-                EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName + i).doWrite(list);
+            if(!filePath.exists()) {
+                EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(new ArrayList<>());
             }
+            List<? extends List<?>> partition = ListUtil.partition(dataResult, BATCH_COUNT);
+            // 初始化写入器（append模式）
+            ExcelWriter excelWriter = EasyExcel.write(outputFile, clazz)
+                    .withTemplate(filePath) // 复用原文件
+                    .inMemory(false) // 禁用内存缓存
+                    .build();
+            WriteSheet sheet = EasyExcel.writerSheet(sheetName).build();
+            for (List<?> batch : partition) {
+                excelWriter.write(batch, sheet); // 使用同一个sheet实例
+            }
+            // 必须关闭资源
+            excelWriter.finish();
         }else {
             //生成本地文件
-            EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
+            EasyExcel.write(outputFile.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
         }
-        return filePath;
+        return outputFile;
 
     }
 
@@ -713,16 +726,24 @@ public class ExcelUtil {
         }
 
         try {
+            File tempDirectory = FileUtils.getTempDirectory();
+            File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
             File tempFile = File.createTempFile(fileName, ".xlsx");
             if (list2.size() > BATCH_COUNT){
                 List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
-                for (int i = 0; i < partition.size(); i++) {
-                    EasyExcel.write(tempFile)
-                            .head(hs)
-                            .registerWriteHandler(getStyleStrategy())
-                            .sheet(fileName)
-                            .doWrite(partition.get(i));
+                // 初始化写入器（append模式）
+                ExcelWriter excelWriter = EasyExcel.write(tempFile)
+                        .withTemplate(filePath)
+                        .head(hs)
+                        .registerWriteHandler(getStyleStrategy())
+                        .inMemory(false)
+                        .build();
+                WriteSheet sheet = EasyExcel.writerSheet(fileName).build();// 单例化sheet
+                for (List<List<String>> batch : partition) {
+                    excelWriter.write(batch, sheet); // 真正增量写入
                 }
+                // 必须关闭资源
+                excelWriter.finish();
             }else {
                 EasyExcel.write(tempFile)
                         .head(hs)
