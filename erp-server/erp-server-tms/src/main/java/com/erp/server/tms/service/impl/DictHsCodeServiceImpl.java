@@ -118,11 +118,6 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             }
         }
 
-        if(StringUtil.isBlank(addOrUpdateDTO.getCountry())){
-            //默认中国
-            dictHsCodeEntity.setCountry("CN");
-        }
-
         log.info("编辑 开始修改出口申报要素单数据，id：【{}】", old.getId());
         boolean save = super.updateById(dictHsCodeEntity);
         if(!save) {
