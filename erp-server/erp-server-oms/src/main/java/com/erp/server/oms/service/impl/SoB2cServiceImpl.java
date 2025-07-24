@@ -1280,7 +1280,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
+        if(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+            approveDTO.setBusinessKey(SourceTypeEnum.TIK_TOK_FULLY.getCode());
+        }else {
+            approveDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
+        }
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         String userId = userInfo.getUid();

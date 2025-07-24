@@ -100,7 +100,8 @@
             COALESCE(EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),0) AS approveDuration,
             pm.create_time as createTime,
             pm.approve_status as approveStatus,
-            concat(wm.detail_url,pm.business_id) as detailUrl,
+            case when wm.sys_classify = 'oms' then replace(concat(wm.detail_url,pm.business_id), '?', concat('/',pm.business_id,'?')) else concat(wm.detail_url,pm.business_id)  end as detailUrl,
+--             replace(wm.detail_url, '?', concat('/',pm.business_id,'?')) as detailUrl,
             wmrs.cancel_process_url as cancelProcessUrl,
             wmrs.cancel_process_param as cancelProcessParam
         FROM process_management pm

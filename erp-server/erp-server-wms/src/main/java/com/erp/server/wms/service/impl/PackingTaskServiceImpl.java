@@ -854,6 +854,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setLength(null);
                 pagingViewDTO.setWidth(null);
                 pagingViewDTO.setHeight(null);
+                pagingViewDTO.setPackageWeight(null);
                 pagingViewDTO.setPackageWeightStr("");
                 pagingViewDTO.setWeightingStatusName("");
                 pagingViewDTO.setPackingUserName("");
