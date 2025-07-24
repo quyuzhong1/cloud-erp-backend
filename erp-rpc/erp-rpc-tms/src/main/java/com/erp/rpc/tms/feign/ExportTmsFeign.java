@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.*;

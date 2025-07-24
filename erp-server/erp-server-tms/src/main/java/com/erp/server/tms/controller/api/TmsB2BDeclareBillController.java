@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_BILL;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2B_DECLARE_DECLARE_BILL;
 
 /**
  * B2B报关单

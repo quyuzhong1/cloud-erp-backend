@@ -1,40 +1,50 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.dto.excel.ShippingTemplateCityExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
-import org.yaml.snakeyaml.events.Event;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
+    private static final int BATCH_COUNT = 1000;
 
+    private final String taskId;
+    @Getter
+    private Integer count = 0;
     /**
      * 错误信息
      */
+    @Getter
     private List<LogisticsBillCostExcelDTO> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
+    private final List<LogisticsBillCostExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
-    private List<LogisticsBillCostExcelDTO> successList = new ArrayList<>();
+    @Getter
+    private List<LogisticsBillCostExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    public LogisticsBillCostExcelListener() {
+    private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
+    public LogisticsBillCostExcelListener(String taskId) {
+        this.taskId = taskId;
     }
 
    /**
@@ -47,36 +57,33 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void invoke(LogisticsBillCostExcelDTO excelDTO, AnalysisContext analysisContext) {
+        count += 1;
         List<String> errorMsgList = new ArrayList<>();
-
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //添加数据用于判断是否为空
-        dataList.add(excelDTO);
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
-        excelDTO.setPayType(excelDTO.getPayType().equals("付款") ? "pay" : "refund");
+        excelDTO.setPayType(excelDTO.getPayTypeName().equals("付款") ? "pay" : "refund");
         successList.add(excelDTO);
-
-    }
-
-    public List<LogisticsBillCostExcelDTO> getErrorList(){
-        return errorList;
-    }
-
-    public List<LogisticsBillCostExcelDTO> getSuccessList(){
-        return successList;
-    }
-
-    public List<LogisticsBillCostExcelDTO> getExcelDateList(){
-        return dataList;
+        if (successList.size() >= BATCH_COUNT){
+            try {
+                List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
+            successList.clear();
+            updateTask(count);
+        }
     }
 
     /**
@@ -86,7 +93,25 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
      * @param analysisContext
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if (!successList.isEmpty()) {
+            try {
+                List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                errorList.addAll(errorList2);
+            }catch (Exception e){
+                successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                errorList.addAll(successList);
+            }
+        }
     }
+
+    private void updateTask(Integer count){
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(taskId);
+        importResultDTO.setCount(count);
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
 }

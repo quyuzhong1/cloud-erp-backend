@@ -64,7 +64,6 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
@@ -84,7 +83,6 @@ import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
@@ -105,7 +103,6 @@ import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
@@ -139,7 +136,6 @@ import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
 import com.erp.server.tms.service.TransferDeclareDetailService;
 import com.erp.server.tms.service.TransferDeclareGenerationSettingService;
-import com.erp.server.tms.service.TransferDeclareProductService;
 import com.erp.server.tms.service.TransferDeclareService;
 import com.erp.server.tms.service.TransferLogisticsAuthService;
 import com.erp.server.tms.service.TransferLogisticsChannelService;
@@ -155,23 +151,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jsoup.internal.StringUtil;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_DECLARE;
 
 /**
  * <p>
@@ -1298,7 +1280,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						String key = reportDate + "_" + allocatedCurrency;
 						BigDecimal rate = rateMap.get(key);
 						if(rate == null) {
-							rate = dmpTaskFeign.getRate(reportDate + "-01", allocatedCurrency);
+                            LocalDate localDate = LocalDate.parse(reportDate + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                            rate = dmpTaskFeign.getRate(localDate.withDayOfMonth(localDate.lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
 							if(ObjectUtil.isEmpty(rate)){
 					            log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
 					            throw new ServiceException("汇率为空，请维护汇率后再查询");
