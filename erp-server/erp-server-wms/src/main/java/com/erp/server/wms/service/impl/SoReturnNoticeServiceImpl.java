@@ -430,12 +430,19 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 throw new ServiceException("退货数量不能小于1");
             }
         }
-        //获取核算公司
+
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
+        //获取核算公司
+        if(Objects.nonNull(dto.getInventoryOrgId())){
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
+            if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
+                entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+        }
         //币种
         entity.setCurrency(dto.getCurrency());
         entity.setCurrencySymbol(dto.getCurrencySymbol());
