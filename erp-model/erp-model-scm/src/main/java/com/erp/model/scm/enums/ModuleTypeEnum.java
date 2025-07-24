@@ -151,6 +151,7 @@ public enum ModuleTypeEnum {
     CFG_SUPPLIER_SALES("130", "销量设置"),
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
+    TEMPLATE_MANAGEMENT("131", "模板管理"),
 
 
 
