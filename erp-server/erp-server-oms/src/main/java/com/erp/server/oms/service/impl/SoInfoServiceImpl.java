@@ -524,16 +524,45 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isNotEmpty(virtualWarehouseEntity)) {
             variablesMap.put("virtualWarehouseName", virtualWarehouseEntity.getName());
         }
-        //部门名称
+        //客户名称
         CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,entity.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
             variablesMap.put("customerName", customerInfoEntity.getName());
         }
-
+        //收款账号
+        BankAccountEntity accountEntity = bankAccountService.getById(entity.getReceiveAccount());
+        if (ObjectUtil.isNotEmpty(accountEntity)) {
+            variablesMap.put("receiveAccountName", accountEntity.getAccountName());
+        }
+        //结算币别
+        DictCurrencyEntity currencyEntity = FeignQuery.getById(DictCurrencyEntity.class, entity.getCurrency());
+        if (ObjectUtil.isNotEmpty(currencyEntity)) {
+            variablesMap.put("currencyName", currencyEntity.getName());
+        }
+        //收款条件
+        KingdeeReceiptConditionEntity receiptConditionList = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
+        if (ObjectUtil.isNotEmpty(receiptConditionList)) {
+            variablesMap.put("receiveConditionName", receiptConditionList.getName());
+        }
 
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        //产品名称
+        List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = CollUtil.isEmpty(productDetailList) ? new HashMap<>() : productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+        for (SoDetailEntity detailEntity : detailList) {
+            //产品名称
+            String productName = skuMap.get(detailEntity.getSkuId());
+            detailEntity.setProductName(productName);
+            //销售单价-本位币
+            detailEntity.setBasePrice(MathUtil.multiplyWithFour(detailEntity.getPrice(), detailEntity.getExchangeRate()));
+            //含税单价-本位币
+            detailEntity.setBaseTaxPrice(MathUtil.multiplyWithFour(detailEntity.getTaxPrice(), detailEntity.getExchangeRate()));
+            //价税合计
+            detailEntity.setOriginalTaxPrice(MathUtil.subtract(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(), detailEntity.getQty()),detailEntity.getDiscountAmount()));
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //折扣总额，因为和明细折扣额一样需要改名称处理
@@ -545,7 +574,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         //价税合计
-        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty()).subtract(obj.getDiscountAmount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
         //总销售额(折后)
         BigDecimal taxAmountTotal = detailList.stream().map(SoDetailEntity::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);

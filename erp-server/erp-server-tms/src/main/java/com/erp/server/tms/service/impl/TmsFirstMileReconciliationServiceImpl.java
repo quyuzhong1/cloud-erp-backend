@@ -575,7 +575,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
-        	String currentDate = data.getReconciliationMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        	String currentDate = data.getReconciliationMonth().withDayOfMonth(data.getReconciliationMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         	Map<String, BigDecimal> rateMap = new HashMap<>();
         	rateMap.put("CNY", BigDecimal.ONE);
             //审核状态名称

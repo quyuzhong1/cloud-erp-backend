@@ -41,7 +41,7 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
                 .set(CharSequenceUtil.isNotBlank(importResultDTO.getErrorUrl()), FileTask::getFileUrl, importResultDTO.getErrorUrl())
                 .set(Objects.nonNull(importResultDTO.getCount()), FileTask::getCount,importResultDTO.getCount())
                 .set(FileTask::getStatus, importResultDTO.getStatus())
-                .set(CharSequenceUtil.isNotBlank(importResultDTO.getRemark()), FileTask::getRemark, importResultDTO.getRemark())
+                .set(FileTask::getRemark, importResultDTO.getRemark())
                 .set(Objects.nonNull(importResultDTO.getStartTime()), FileTask::getStartTime, importResultDTO.getStartTime())
                 .set(Objects.nonNull(importResultDTO.getFinishTime()), FileTask::getFinishTime, importResultDTO.getFinishTime())
                 .eq(FileTask::getId, importResultDTO.getTaskId())

@@ -42,6 +42,8 @@ import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -49,13 +51,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LAST_MILE_COST;
@@ -178,6 +174,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      * @param headMap 表头
      */
     @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,Map<Integer,String> headMap) {
 
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {
@@ -396,6 +393,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importLogisticsLastMileCost(BaseDTO.ImportDTO dto) {
         LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId());
         try {
@@ -421,6 +419,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         }
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setRemark("");
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }

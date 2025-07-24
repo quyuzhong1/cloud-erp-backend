@@ -143,8 +143,17 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 // 1. 找到它对应的系统字段名
                 String sysParentField = parentFieldMap.get(fieldId);
                 // 2. 直接从 variablesMap 取原始 List
-                List<Map<String, Object>> rawDetail =
-                        (List<Map<String, Object>>) variablesMap.get(sysParentField);
+                List<Map<String, Object>> rawDetail = new ArrayList<>();
+                Object object = variablesMap.get(sysParentField);
+                if (object instanceof List) {
+                    rawDetail = (List<Map<String, Object>>) variablesMap.get(sysParentField);
+                } else if (object instanceof Map) {
+                    // 如果是 Map，可能是单条明细数据，转换为 List
+                    rawDetail.add((Map<String, Object>) object);
+                } else {
+                    // 如果不是 List 或 Map，抛出异常或处理错误
+                    throw new ServiceException("字段 {} 的值类型不正确，应为 List 或 Map", sysParentField);
+                }
 
                 // 3. 直接塞进去，不解析子字段
                 processDetailTable(formField, fieldMapByThirdId, tidToIdListMap, valueMapListMap, rawDetail);
@@ -214,6 +223,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 break;
 
             case "date":
+                resultField.set("value", formatToRFC3339(finalValue));
+                break;
+            case "datetime":
                 resultField.set("value", formatToRFC3339(finalValue));
                 break;
 
@@ -1116,7 +1128,18 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 CfgProcessFieldMapEntity parentFieldMap = parentFieldMaps.get(0);
                 String sysParentId = parentFieldMap.getSysParentId();
                 // 获取系统明细数据
-                List<Map<String, Object>> sysDetailList = (List<Map<String, Object>>) variablesMap.get(sysParentId);
+                // 2. 直接从 variablesMap 取原始 List
+                List<Map<String, Object>> sysDetailList = new ArrayList<>();
+                Object object = variablesMap.get(sysParentId);
+                if (object instanceof List) {
+                    sysDetailList = (List<Map<String, Object>>) variablesMap.get(sysParentId);
+                } else if (object instanceof Map) {
+                    // 如果是 Map，可能是单条明细数据，转换为 List
+                    sysDetailList.add((Map<String, Object>) object);
+                } else {
+                    // 如果不是 List 或 Map，抛出异常或处理错误
+                    throw new ServiceException("字段 {} 的值类型不正确，应为 List 或 Map", sysParentId);
+                }
 
                 // 处理每一行明细
                 for (int j = 0; j < detailValue.size(); j++) {

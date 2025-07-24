@@ -3762,6 +3762,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private Map<String,Object> getVariablesMap(SoB2cEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        //销售订单编号和物流信息编号都是code，需要区分
+        variablesMap.put("soCode", entity.getCode());
+        //店铺名称
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getId());
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            variablesMap.put("shopName", shopInfoEntity.getName());
+        }
+        //销售平台名称
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            String name = dictList.stream().filter(obj -> obj.getValue().equals(entity.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            variablesMap.put("dictPlatformName", name);
+        }
+
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
@@ -3778,18 +3792,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (ObjectUtil.isNotEmpty(soB2cLogisticsEntity)) {
-            variablesMap.putAll(BeanUtil.beanToMap(soB2cLogisticsEntity));
+            variablesMap.put("logisticsDTO",BeanUtil.beanToMap(soB2cLogisticsEntity));
         }
 
         //买家信息
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(entity.getId());
         if (ObjectUtil.isNotEmpty(soB2cReceiverEntity)) {
-            variablesMap.putAll(BeanUtil.beanToMap(soB2cReceiverEntity));
+            variablesMap.put("receiverDTO",BeanUtil.beanToMap(soB2cReceiverEntity));
         }
         //分类信息
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
-            variablesMap.putAll(BeanUtil.beanToMap(soB2cRefCategoryList));
+            variablesMap.put("soB2cRefCategoryDTO",BeanUtil.beanToMap(soB2cRefCategoryList));
         }
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);

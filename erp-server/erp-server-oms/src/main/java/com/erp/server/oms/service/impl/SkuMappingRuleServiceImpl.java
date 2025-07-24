@@ -446,7 +446,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     if (obj == null) {
                         continue;
                     }
-                    List<String> noMatch = JSONObject.parseObject(obj.toString(), new TypeReference<List<String>>() {}.getType());
+                    List<String> noMatch = (List<String>) obj;
                     if (CollectionUtils.isEmpty(noMatch)) {
                         continue;
                     }
@@ -465,7 +465,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     if (matched) {
                         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
                         listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                        listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                        listingInfoEntity.setMatchResult(ListingMatchResultEnum.NOT.getCode());
                         listingInfoEntity.setRemark("");
                         updateListingList.add(listingInfoEntity);
                     }
