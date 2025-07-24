@@ -88,6 +88,7 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
 					JSONObject parseObject = JSON.parseObject(jsonString);
 					result.add(parseObject);
                 } catch (Exception e) {
+                    log.error("调用飞书失败,e= {}",e.getMessage());
                     throw new ServiceException("调用飞书失败");
                 }
             }

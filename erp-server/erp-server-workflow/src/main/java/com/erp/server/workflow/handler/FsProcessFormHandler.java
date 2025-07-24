@@ -151,8 +151,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     // 如果是 Map，可能是单条明细数据，转换为 List
                     rawDetail.add((Map<String, Object>) object);
                 } else {
-                    // 如果不是 List 或 Map，抛出异常或处理错误
-                    throw new ServiceException("字段 {} 的值类型不正确，应为 List 或 Map", sysParentField);
+                    log.warn("数据无需处理，sysParentField = {},object = {}", sysParentField,object);
+                   continue;
                 }
 
                 // 3. 直接塞进去，不解析子字段
@@ -1138,7 +1138,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     sysDetailList.add((Map<String, Object>) object);
                 } else {
                     // 如果不是 List 或 Map，抛出异常或处理错误
-                    throw new ServiceException("字段 {} 的值类型不正确，应为 List 或 Map", sysParentId);
+                    log.warn("数据无需处理，sysParentId = {},object = {}", sysParentId,object);
+                    continue;
                 }
 
                 // 处理每一行明细
