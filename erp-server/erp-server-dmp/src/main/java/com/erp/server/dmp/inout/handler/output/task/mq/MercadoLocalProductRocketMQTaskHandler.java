@@ -73,6 +73,9 @@ public class MercadoLocalProductRocketMQTaskHandler extends DmpOutputRocketMQTas
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			if(CollUtil.isEmpty(dmpSkuInfoEntityList)) {
+				continue;
+			}
 			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
 				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {

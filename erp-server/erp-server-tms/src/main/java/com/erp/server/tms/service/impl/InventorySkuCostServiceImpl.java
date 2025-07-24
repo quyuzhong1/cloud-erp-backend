@@ -614,7 +614,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             inventorySkuCostEntity.setExchangeRate(BigDecimal.ONE);
         }else {
             //获取dmp汇率
-            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String currentDate = inventorySkuCostEntity.getAllocatedMonth().withDayOfMonth(inventorySkuCostEntity.getAllocatedMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, inventorySkuCostEntity.getCurrency());
             if (Objects.nonNull(rate)){
                 inventorySkuCostEntity.setExchangeRate(rate);

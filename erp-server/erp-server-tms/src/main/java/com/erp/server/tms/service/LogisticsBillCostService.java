@@ -1,9 +1,6 @@
 package com.erp.server.tms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -98,15 +95,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
-    /**
-     * @description: 导入
-     * @author Will
-     * @date: 2023/11/13 15:37
-     * @param excelFile
-     * @param response
-     * @return Boolean
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
      * @param dto
      * @return Boolean
@@ -235,4 +223,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * 删除没有物流单的物流费用
      */
     void deleteLogisticsBillCostNoBill();
+
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    void importLogisticsBillCost(BaseDTO.ImportDTO dto);
 }

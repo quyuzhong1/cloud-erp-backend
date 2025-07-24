@@ -193,6 +193,33 @@
         AND lca.is_deleted=false
         ORDER BY la.create_time DESC
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsAddressDTO$ListDTO">
+        select id,name,address_id
+        from
+        (
+            select
+            la.id,
+            la.name,
+            la.address_id
+            from logistics_address la
+            where
+            la.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and la.name ilike concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+            <if test="params.type != null and params.type != ''">
+                and la.type=#{params.type}
+            </if>
+            order by
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when la.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when la.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when la.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , la.name,
+            </if>
+            la.update_time desc
+        ) wls
+    </select>
 
 
 </mapper>
