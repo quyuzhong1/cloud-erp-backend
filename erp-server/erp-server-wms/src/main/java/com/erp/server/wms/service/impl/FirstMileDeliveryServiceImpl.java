@@ -2583,6 +2583,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setLength(null);
                 pagingViewDTO.setWidth(null);
                 pagingViewDTO.setHeight(null);
+                pagingViewDTO.setPackageWeight(null);
                 pagingViewDTO.setPackageWeightStr("");
                 pagingViewDTO.setWeightingStatusName("");
                 pagingViewDTO.setPackingUserName("");
