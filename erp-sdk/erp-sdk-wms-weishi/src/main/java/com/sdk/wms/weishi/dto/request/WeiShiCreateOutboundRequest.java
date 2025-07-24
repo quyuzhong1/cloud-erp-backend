@@ -37,7 +37,7 @@ public class WeiShiCreateOutboundRequest {
     @JsonProperty("remark")
     private String remark;
     @JsonProperty("labelFile")
-    private Object labelFile;
+    private String labelFile;
     @JsonProperty("useSpecifiedMaterial")
     private String useSpecifiedMaterial;
     @JsonProperty("materialCode")
