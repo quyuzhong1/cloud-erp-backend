@@ -3741,7 +3741,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //销售订单编号和物流信息编号都是code，需要区分
         variablesMap.put("soCode", entity.getCode());
         //店铺名称
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getId());
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
             variablesMap.put("shopName", shopInfoEntity.getName());
         }
@@ -3751,6 +3751,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String name = dictList.stream().filter(obj -> obj.getValue().equals(entity.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             variablesMap.put("dictPlatformName", name);
         }
+        //单据子类型
+        variablesMap.put("transactionSubTypeName", OrderSubTypeEnum.getName(entity.getTransactionSubType()));
+        //单据状态名称
+        variablesMap.put("billStatusName", SoB2cBillStatusEnum.getName(entity.getBillStatus()));
+        //单据审核状态
+        variablesMap.put("approveStatusName", entity.getApproveStatus().getName());
 
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -3779,7 +3785,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //分类信息
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
-            variablesMap.put("soB2cRefCategoryDTO",BeanUtil.beanToMap(soB2cRefCategoryList));
+            variablesMap.put("soB2cRefCategoryDTO",BeanUtil.copyToList(soB2cRefCategoryList,Map.class));
         }
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
