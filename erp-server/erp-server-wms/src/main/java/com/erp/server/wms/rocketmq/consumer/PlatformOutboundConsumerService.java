@@ -209,21 +209,23 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             asyncService.asyncCancelThirdWarehouseOrder(mainEntity);
         }
         if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
-            OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
-            operateLogDTO.setOperation("三方仓出库单废弃");
-            operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
-            operateLogDTO.setBusinessId(mainEntity.getId());
-            //订单如果为拦截中，直接更新订单状态为
-            mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
-            mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            mainEntity.setIsIntercept(false);
-            mainEntity.setRemark("三方仓出库单废弃");
-            soB2cFeign.updateStatus(mainEntity);
-            operateLogDTO.setContent("三方仓出库单废弃");
-            soB2cFeign.addModuleOperateLog(operateLogDTO);
-            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
-                thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+            if(mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())){
+                OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+                operateLogDTO.setOperation("三方仓出库单废弃");
+                operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+                operateLogDTO.setBusinessId(mainEntity.getId());
+                //订单如果为拦截中，直接更新订单状态为
+                mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+                mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+                mainEntity.setIsIntercept(false);
+                mainEntity.setRemark("三方仓出库单废弃,拦截成功");
+                soB2cFeign.updateStatus(mainEntity);
+                operateLogDTO.setContent("三方仓出库单废弃");
+                soB2cFeign.addModuleOperateLog(operateLogDTO);
+                if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                    thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                    thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                }
             }
         }
         return ApiResult.success();
