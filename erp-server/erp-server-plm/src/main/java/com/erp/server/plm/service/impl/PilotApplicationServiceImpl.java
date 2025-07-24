@@ -570,7 +570,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             String mainSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
             detailEntity.setMainSupplierName(mainSupplierName);
             //二级供应商名称
-            String secondSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            String secondSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSecondSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
             detailEntity.setSecondSupplierName(secondSupplierName);
             //产品名称
             String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
