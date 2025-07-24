@@ -631,6 +631,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             if (null == dto.getReceiver()){
                 return false;
             }
+            //已发货 或者 已取消
+            if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getBillStatus()) || (Objects.nonNull(dto.getIsCancel()) && dto.getIsCancel())){
+                return false;
+            }
             return StringUtils.isNotBlank(dto.getReceiver().getFullAddress()) && dto.getReceiver().getFullAddress().contains("***");
         }
         return false;
