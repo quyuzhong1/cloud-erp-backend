@@ -335,7 +335,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 					if (StringUtils.isNotBlank(platformDetailId) && DmpBasicSystemCodeEnum.AMAZON.getCode().equalsIgnoreCase(platformType)) {
 						String signTime = cfgMaps.get("amzPlatformSignTimeInfo").get(platformDetailId);
 						if (StringUtils.isNotBlank(signTime)) {
-							shudiyunB2cOrderDTO.setPlatform_signing_time(signTime);
+							shudiyunB2cOrderDTO.setEstimate_investment_time(signTime);
 						}
 					}
 				}
