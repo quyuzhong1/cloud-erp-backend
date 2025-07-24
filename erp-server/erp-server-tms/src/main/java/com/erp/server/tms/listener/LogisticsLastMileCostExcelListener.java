@@ -25,29 +25,32 @@ import java.util.stream.Collectors;
  */
 public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Map<Integer,String>> {
     private static final int BATCH_COUNT = 1000;
-    private String taskId;
+    private final String taskId;
     @Getter
     private Integer count = 0;
     /**
      * 错误信息
      */
+    @Getter
     private List<JSONObject> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<JSONObject> dataList = new ArrayList<>();
+    private final List<JSONObject> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
+    @Getter
     private List<JSONObject> successList = new ArrayList<>();
 
     private Map<Integer,String> headMap;
 
+    @Getter
     private List<String> headList;
 
-    private LogisticsLastMileCostService logisticsLastMileCostService = SpringUtil.getBean(LogisticsLastMileCostService.class);
-    private DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+    private final LogisticsLastMileCostService logisticsLastMileCostService = SpringUtil.getBean(LogisticsLastMileCostService.class);
+    private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
     public LogisticsLastMileCostExcelListener(String taskId) {
         this.taskId = taskId;
     }
@@ -63,7 +66,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     @Transactional(rollbackFor = Exception.class)
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
         count += 1;
-        List<String> errorMsgList = new ArrayList<>();
+//        List<String> errorMsgList = new ArrayList<>();
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());
@@ -75,12 +78,12 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
-            excelDTO.set("错误信息",errorMsg);
-            errorList.add(excelDTO);
-            return;
-        }
+//        if (errorMsgList.size() > 0) {
+//            String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
+//            excelDTO.set("错误信息",errorMsg);
+//            errorList.add(excelDTO);
+//            return;
+//        }
 
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
@@ -99,20 +102,8 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         }
     }
 
-    public List<JSONObject> getErrorList(){
-        return errorList;
-    }
-
-    public List<JSONObject> getSuccessList(){
-        return successList;
-    }
-
     public List<JSONObject> getExcelDateList(){
         return dataList;
-    }
-
-    public Map<Integer,String> getHeadMap(){
-        return headMap;
     }
 
     /**
@@ -140,22 +131,18 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        List<String> headList = map.values().stream().map(String::toString).collect(Collectors.toList());
         headList.add("错误信息");
         map.put(map.size(),"错误信息");
         this.headMap = map;
         this.headList = headList;
     }
 
-    public List<String> getHeadList() {
-        return headList;
-    }
-
     private void updateTask(Integer count){
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
-        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
-        importResultDTO.setRemark("处理中");
+//        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+//        importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
     }

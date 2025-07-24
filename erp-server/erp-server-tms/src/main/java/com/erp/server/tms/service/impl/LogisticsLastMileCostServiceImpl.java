@@ -419,7 +419,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         }
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
-        importResultDTO.setRemark("");
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
     }
