@@ -21,7 +21,7 @@ import java.util.List;
 public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
     private static final int BATCH_COUNT = 1000;
 
-    private String taskId;
+    private final String taskId;
     @Getter
     private Integer count = 0;
     /**
@@ -75,7 +75,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -98,7 +98,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (!successList.isEmpty()) {
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -110,8 +110,6 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private void updateTask(Integer count){
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
-        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
-        importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
     }

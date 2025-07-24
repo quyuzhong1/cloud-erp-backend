@@ -2073,7 +2073,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importResultDTO.setRemark("");
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
