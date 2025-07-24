@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -70,12 +69,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     /**
      * 批量启用或者禁用店铺
      *
-     * @param shop       店铺信息
-     * @param disabled   禁用状态
-     * @param enableTime
+     * @param shop     店铺信息
+     * @param disabled 禁用状态
      * @return
      */
-    BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled, LocalDateTime enableTime);
+    BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled);
 
     /**
      * 获取详情
