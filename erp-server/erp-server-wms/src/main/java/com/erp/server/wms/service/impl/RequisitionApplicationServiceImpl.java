@@ -3372,10 +3372,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                             && v.getPlatformFnSku().equals(e.getFnSku()) && Objects.equals(v.getQty(), e.getDeclareQty()))
                     .findFirst().orElse(null);
             if (Objects.isNull(planDetailEntity)){
-                continue;
+                planDetailEntity = planDetailEntityList.stream().filter(v -> v.getPlatformSku().equals(e.getMsku())
+                                && v.getPlatformFnSku().equals(e.getFnSku()))
+                        .findFirst().orElse(null);
 //                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】,货件数量【"+e.getDeclareQty()+"】与发货计划数量不一致");
             }
-            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(f -> f.getSourceDetailId().equals(planDetailEntity.getId())).findFirst().orElseThrow(() -> new ServiceException("要货申请单【" + entity.getCode() + "】中不存在MSKU【" + e.getMsku() + "】,FNSKU【" + e.getFnSku() + "】的明细信息"));
+            if (Objects.isNull(planDetailEntity)){
+                continue;
+            }
+            WmsDeliveryPlanDetailEntity finalPlanDetailEntity = planDetailEntity;
+            RequisitionApplicationDetailEntity detailEntity = detailEntityList.stream().filter(f -> f.getSourceDetailId().equals(finalPlanDetailEntity.getId())).findFirst().orElseThrow(() -> new ServiceException("要货申请单【" + entity.getCode() + "】中不存在MSKU【" + e.getMsku() + "】,FNSKU【" + e.getFnSku() + "】的明细信息"));
 //            if (!Objects.equals(e.getDeclareQty(),detailEntity.getRequisitionQty())){
 //                throw new ServiceException("MSKU【"+e.getMsku()+"】,FNSKU【"+e.getFnSku()+"】货件数量【"+e.getDeclareQty()+"】与要货申请要货数量【"+detailEntity.getRequisitionQty()+"】不一致");
 //            }
