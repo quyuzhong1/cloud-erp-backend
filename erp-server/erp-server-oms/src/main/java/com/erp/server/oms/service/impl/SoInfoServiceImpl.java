@@ -545,6 +545,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isNotEmpty(receiptConditionList)) {
             variablesMap.put("receiveConditionName", receiptConditionList.getName());
         }
+        //单据子类型
+        variablesMap.put("transactionSubTypeName", OrderSubTypeEnum.getName(entity.getTransactionSubType()));
 
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
