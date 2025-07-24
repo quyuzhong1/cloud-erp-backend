@@ -8,8 +8,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -37,6 +40,7 @@ import java.util.List;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/warehouseLocation")
+@LogSystemModule("仓库仓位分区")
 public class WarehouseLocationController extends BaseController {
     @Resource
     private OperateLogService operateLogService;
@@ -999,6 +1003,7 @@ public class WarehouseLocationController extends BaseController {
      * 新增仓位
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位")
     public ApiResult<Void> add(@RequestBody @Validated WarehouseLocationDTO.AddDTO addDTO){
         warehouseLocationService.add(addDTO);
         return ApiResult.success();
@@ -1009,6 +1014,7 @@ public class WarehouseLocationController extends BaseController {
      * @return 失败描述列表
      */
     @PostMapping("/deleteBatch")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位")
     public ApiResult<List<String>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
         List<String> errorList = warehouseLocationService.deleteBatch(idsDto);
         return errorList.isEmpty() ? ApiResult.success() : new ApiResult(500, "部分数据删除失败", errorList);
@@ -1018,6 +1024,7 @@ public class WarehouseLocationController extends BaseController {
      * 导入仓位Excel
      */
     @PostMapping("/importExcel")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入仓位Excel")
     public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
         warehouseLocationService.importExcel(file, response);
         return ApiResult.success();
@@ -1027,6 +1034,7 @@ public class WarehouseLocationController extends BaseController {
      * 导出仓位Excel
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位Excel")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated WarehouseLocationDTO.exportParamDto dto){
         warehouseLocationService.exportExcel(dto);
         return success(true);
@@ -1045,6 +1053,7 @@ public class WarehouseLocationController extends BaseController {
      * 启用/禁用仓位
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={id},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.UpdateStatusDto dto){
         warehouseLocationService.updateDisabled(dto);
         return ApiResult.success();
@@ -1064,6 +1073,7 @@ public class WarehouseLocationController extends BaseController {
      * 编辑更新仓位
      */
     @PostMapping("/edit")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "编辑更新仓位")
     public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.UpdateDto dto){
         warehouseLocationService.update(dto);
         return ApiResult.success();

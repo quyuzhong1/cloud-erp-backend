@@ -129,6 +129,7 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             menuCode = "wms:soB2cDeliveryIntercept:logisticsIntercept",
             serviceClass = SoB2cDeliveryInterceptService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "物流拦截")
     public ApiResult<List<BatchResultDTO>> logisticsIntercept(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

@@ -3,8 +3,11 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.server.oms.service.CfgConditionService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/cfCondition")
+@LogSystemModule("规则下拉")
 public class CfgConditionController extends BaseController {
 
     @Resource
@@ -37,6 +41,7 @@ public class CfgConditionController extends BaseController {
      * @date: 2023-08-30
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "规则新增")
     public ApiResult<String> add(@RequestBody @Validated CfgConditionDTO.AddDTO dto) {
         return success(cfConditionService.add(dto));
     }
@@ -50,6 +55,7 @@ public class CfgConditionController extends BaseController {
      * @date: 2023-08-30
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "规则修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:cfCondition:update",

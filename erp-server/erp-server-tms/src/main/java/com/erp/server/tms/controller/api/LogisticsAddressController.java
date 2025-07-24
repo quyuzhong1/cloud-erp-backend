@@ -69,6 +69,7 @@ public class LogisticsAddressController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = "物流地址列表导出")
     public ApiResult<Object>exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto) {
         Boolean result = logisticsAddressService.exportExcel(dto);
         return result ? success() : failure();
@@ -135,6 +136,7 @@ public class LogisticsAddressController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "物流地址删除")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:logisticsAddress:delete",

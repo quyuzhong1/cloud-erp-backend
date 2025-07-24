@@ -6,8 +6,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.server.tms.query.FirstMileEstimatedQueryHandler;
@@ -28,6 +31,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/firstMileEstimatedBill")
+@LogSystemModule("头程暂估账单")
 public class FirstMileEstimatedBillController extends BaseController {
 
     @Resource
@@ -51,6 +55,7 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 修改状态
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={type}")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileEstimatedBillDTO.UpdateStatus dto){
         List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -77,6 +82,7 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 导入Excel
      */
     @PostMapping("/importExcel")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "头程暂估账单导入")
     public ApiResult<Object> importExcel(@RequestParam MultipartFile excelFile, HttpServletResponse response){
         firstMileEstimatedBillService.importExcel(excelFile, response);
         return success();
@@ -86,6 +92,7 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 导出Excel
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程暂估账单导出")
     @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
     public ApiResult<Object> exportExcel(@RequestBody FirstMileEstimatedBillDTO.ExportParam dto){
         firstMileEstimatedBillService.exportExcel(dto);

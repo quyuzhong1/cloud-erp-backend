@@ -817,6 +817,7 @@ public class ProjectTaskController extends BaseController {
      * @date 2022-11-29 14:42
      */
     @PostMapping(value = "/finishSku")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = " 配置表单-输出物-完成sku")
     public ApiResult<Object> finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
         projectTaskService.taskFinishSku(dto);
         return success();

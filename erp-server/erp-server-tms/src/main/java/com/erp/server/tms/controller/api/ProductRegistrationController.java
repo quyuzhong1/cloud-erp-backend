@@ -143,6 +143,7 @@ public class ProductRegistrationController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "备案列表导出")
     public ApiResult<Boolean> export(@RequestBody @Validated ProductRegistrationDTO.PagingParamDTO dto) {
         productRegistrationService.export(dto);
         return success(true);

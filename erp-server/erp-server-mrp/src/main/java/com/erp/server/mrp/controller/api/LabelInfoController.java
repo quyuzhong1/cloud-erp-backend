@@ -55,6 +55,7 @@ public class LabelInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改标签信息表")
     public ApiResult<String> update(@RequestBody @Validated List<LabelInfoDTO.UpdateDTO> list) {
         labelInfoService.update(list);
         return success();

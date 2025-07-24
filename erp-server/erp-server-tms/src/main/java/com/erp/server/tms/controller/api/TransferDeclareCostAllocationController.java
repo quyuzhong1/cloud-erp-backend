@@ -137,7 +137,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:ids={ids}")
     @PostMapping("/updateReportStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -182,7 +182,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:ids={ids}")
     @PostMapping("/reAllocation")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
@@ -227,7 +227,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:ids={ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",

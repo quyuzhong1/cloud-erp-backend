@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.server.wms.service.SoB2bProcessingService;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,7 @@ public class SoB2bProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "B2B虚拟仓列表信息导出")
     public ApiResult exportExcel(@RequestBody SoB2bProcessingDTO.PagingParamDTO dto) {
         Boolean flag = soB2bProcessingService.exportExcel(dto);
         return flag == true ? success() : failure();
@@ -73,6 +76,7 @@ public class SoB2bProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/deleteB2bProcessing")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除B2B跟踪数据")
     public ApiResult deleteB2bProcessing(@RequestBody SoB2bProcessingDTO.DeleteDTO dto) {
         Boolean flag = soB2bProcessingService.deleteB2bProcessing(dto);
         return flag == true ? success() : failure();

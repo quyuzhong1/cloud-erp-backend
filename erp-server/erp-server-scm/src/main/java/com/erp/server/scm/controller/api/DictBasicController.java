@@ -1,8 +1,11 @@
 package com.erp.server.scm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.server.scm.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +22,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/dict")
+@LogSystemModule("字典管理")
 public class DictBasicController extends BaseController {
 
 
@@ -33,6 +37,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量保存或者修改字典信息")
     public ApiResult<Object> saveOrUpdate(@RequestBody @Validated List<DictBasicDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();
