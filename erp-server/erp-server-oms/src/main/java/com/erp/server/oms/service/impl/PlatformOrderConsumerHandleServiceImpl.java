@@ -1,7 +1,5 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -119,6 +117,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
+        String oldBillStatus = dto.getBillStatus();
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -139,7 +138,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         Boolean retryFlag = false;
         // 跳过未作废的自发货无地址的订单
         // 待发货/已发货订单不生成异常
-        if ( notPlatformOrderNotExistAddress(dto)
+        if ( notPlatformOrderNotExistAddress(dto,oldBillStatus)
                 && null != dto.getInvalidStatus()
                 && !dto.getInvalidStatus()
                 && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
@@ -605,12 +604,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     /**
      * 自发货订单不存在地址
      */
-    private boolean notPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+    private boolean notPlatformOrderNotExistAddress(PlatformOrderDTO dto, String oldBillStatus) {
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.checkHasMfnOrderAndNoAddress(dto);
         }
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
-            return this.aliExpressNotPlatformOrderNotExistAddress(dto);
+            return this.aliExpressNotPlatformOrderNotExistAddress(dto,oldBillStatus);
         }
         if (PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.temuPlatformOrderNotExistAddress(dto);
@@ -621,7 +620,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     /**
      * 速卖通自发货订单未解密地址
      */
-    private boolean aliExpressNotPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+    private boolean aliExpressNotPlatformOrderNotExistAddress(PlatformOrderDTO dto, String oldBillStatus) {
         if (StrUtil.isNotBlank(dto.getLabelJson())) {
             SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
             Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
@@ -632,7 +631,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 return false;
             }
             //已发货 或者 已取消
-            if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getBillStatus()) || (Objects.nonNull(dto.getIsCancel()) && dto.getIsCancel())){
+            if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(oldBillStatus) || (Objects.nonNull(dto.getIsCancel()) && dto.getIsCancel())){
                 return false;
             }
             return StringUtils.isNotBlank(dto.getReceiver().getFullAddress()) && dto.getReceiver().getFullAddress().contains("***");
