@@ -253,6 +253,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
                 mainEntity.setIsIntercept(false);
                 mainEntity.setRemark("三方仓出库单废弃,拦截成功");
+                if(mainEntity.getIsCancel()){
+                    mainEntity.setInvalidStatus(Boolean.TRUE);
+                    mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
+                }
                 soB2cFeign.updateStatus(mainEntity);
                 operateLogDTO.setContent("三方仓出库单废弃");
                 soB2cFeign.addModuleOperateLog(operateLogDTO);
