@@ -1536,7 +1536,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            String currency = reconciliationDetailEntity.getOtherCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+                LocalDate reconciliationMonth = reconciliationDetailEntity.getReconciliationMonth().withDayOfMonth(reconciliationDetailEntity.getReconciliationMonth().lengthOfMonth());
+                exchangeRate = dmpTaskFeign.getRate(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))+ currency + "汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getOtherCost()) ? MathUtil.multiplyWithTwo(exchangeRate,reconciliationDetailEntity.getOtherCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
@@ -1593,7 +1602,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity lastDetail = lastDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(e.getFeeType())).findFirst().orElse(null);
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            String currency = reconciliationDetailEntity.getOtherTaxCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+                LocalDate reconciliationMonth = reconciliationDetailEntity.getReconciliationMonth().withDayOfMonth(reconciliationDetailEntity.getReconciliationMonth().lengthOfMonth());
+                exchangeRate = dmpTaskFeign.getRate(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))+ currency + "汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getOtherTaxCost()) ? MathUtil.multiplyWithTwo(exchangeRate,reconciliationDetailEntity.getOtherTaxCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
@@ -1650,7 +1668,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileSkuCostAllocationDetailEntity lastDetail = lastDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getFeeType())).findFirst().orElse(null);
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            String currency = reconciliationDetailEntity.getDeclareCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+                LocalDate reconciliationMonth = reconciliationDetailEntity.getReconciliationMonth().withDayOfMonth(reconciliationDetailEntity.getReconciliationMonth().lengthOfMonth());
+                exchangeRate = dmpTaskFeign.getRate(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))+ currency + "汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getDeclareCost()) ? MathUtil.multiplyWithTwo(exchangeRate, reconciliationDetailEntity.getDeclareCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
@@ -1712,7 +1739,16 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         BigDecimal amount = BigDecimal.ZERO;
         FirstMileSkuCostAllocationDetailEntity lastDetail = lastDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getFeeType())).findFirst().orElse(null);
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            String currency = reconciliationDetailEntity.getShippingCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+                LocalDate reconciliationMonth = reconciliationDetailEntity.getReconciliationMonth().withDayOfMonth(reconciliationDetailEntity.getReconciliationMonth().lengthOfMonth());
+                exchangeRate = dmpTaskFeign.getRate(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(reconciliationMonth.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))+ currency + "汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getShippingCost()) ? MathUtil.multiplyWithTwo(exchangeRate, reconciliationDetailEntity.getShippingCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
