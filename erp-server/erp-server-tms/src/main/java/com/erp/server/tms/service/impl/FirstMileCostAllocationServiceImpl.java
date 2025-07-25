@@ -1796,6 +1796,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         //添加分摊明细
         list.forEach(e -> {
+            e.setSupplierTypeName(SupplierTypeEnum.getName(e.getSupplierType()));
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
             e.setBillSourceTypeName(ReconciliationBillTypeEnum.getNameByCode(e.getBillSourceType()));
             e.setFeeTypeName(AllocationFeeTypeEnum.getName(e.getFeeType()));

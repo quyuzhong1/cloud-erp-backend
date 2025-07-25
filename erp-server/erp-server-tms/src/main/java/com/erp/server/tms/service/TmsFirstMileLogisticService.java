@@ -105,7 +105,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto);
     void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent);
 
-    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(List<String> ids);
+    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(TmsFirstMileLogisticDTO.WaitDTO dto);
 
     /**
      * 待对账物流单(分页)

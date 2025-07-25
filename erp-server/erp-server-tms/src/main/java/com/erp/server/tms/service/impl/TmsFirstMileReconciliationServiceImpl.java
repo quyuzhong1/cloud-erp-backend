@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -608,7 +609,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     data.setReconciliationCountName(data.getReconciliationCount() + "次对账");
                 }
             }
-
+            data.setSupplierTypeName(SupplierTypeEnum.getName(data.getSupplierType()));
             data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(data.getPayStatus()));
             
             BigDecimal actualShippingCost = BigDecimal.ZERO;
@@ -714,9 +715,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     @Override
-    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status) {
+    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status, @NotBlank String supplierType) {
         List<TmsFirstMileReconciliationEntity> list = lambdaQuery()
                 .eq(TmsFirstMileReconciliationEntity::getApproveStatus, status)
+                .eq(TmsFirstMileReconciliationEntity::getSupplierType, supplierType)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();

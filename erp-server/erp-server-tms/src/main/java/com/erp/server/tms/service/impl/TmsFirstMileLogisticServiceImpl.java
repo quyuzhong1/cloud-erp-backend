@@ -52,6 +52,7 @@ import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -64,6 +65,7 @@ import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.FmLogisticsConverter;
 import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
@@ -205,6 +207,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private TmsCostDetailService tmsCostDetailService;
     @Resource
     private PackingTaskFeign packingTaskFeign;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1278,27 +1282,55 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(List<String> ids) {
-        List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> list = tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+    public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(TmsFirstMileLogisticDTO.WaitDTO dto) {
+        List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> list = tmsFirstMileReconciliationService.listByApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus(),dto.getSupplierType());
         if (CollectionUtils.isEmpty(list)){
             return list;
         }
-        // 校验物理商是否一致
-        List<LogisticsBillEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(entityList)){
-            throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+        if (SupplierTypeEnum.LOGISTICS.getCode().equals(dto.getSupplierType())){
+            // 校验物理商是否一致
+            List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)){
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+            }
+            List<String> logisticsSupperIds = entityList.stream()
+                    .map(LogisticsBillEntity::getLogisticsSupplierId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (logisticsSupperIds.size() > 1){
+                return new ArrayList<>();
+            }
+            // 显示对应物流商对账单
+            return list.stream()
+                    .filter(e->logisticsSupperIds.contains(e.getLogisticsSupplierId()))
+                    .collect(Collectors.toList());
+        }else if (SupplierTypeEnum.CUSTOM.getCode().equals(dto.getSupplierType())){
+            if (CharSequenceUtil.isBlank(dto.getSupplierId())){
+                throw new ServiceException("供应商id不能为空");
+            }
+            // 显示对应物流商对账单
+            return list.stream()
+                    .filter(e->dto.getSupplierId().equals(e.getLogisticsSupplierId()))
+                    .collect(Collectors.toList());
+        }else {
+            //根据物流单-头程发货单
+            // 校验物理商是否一致
+            List<LogisticsBillEntity> entityList = this.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)){
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "头程物流单");
+            }
+            List<String> deliveryIds = entityList.stream().map(LogisticsBillEntity::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> deliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+            List<String> warehouseIds = deliveryEntityList.stream().map(FirstMileDeliveryEntity::getDestWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            //获取三方仓关联的服务商
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
+            List<String> overseasIds = viewDTOS.stream().map(OverseasProviderWarehouseDTO.ViewDTO::getMainId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+            // 显示对应物流商对账单
+            return list.stream()
+                    .filter(e->overseasIds.contains(e.getLogisticsSupplierId()))
+                    .collect(Collectors.toList());
         }
-        List<String> logisticsSupperIds = entityList.stream()
-                .map(LogisticsBillEntity::getLogisticsSupplierId)
-                .distinct()
-                .collect(Collectors.toList());
-        if (logisticsSupperIds.size() > 1){
-        	return new ArrayList<>();
-        }
-        // 显示对应物流商对账单
-        return list.stream()
-                .filter(e->logisticsSupperIds.contains(e.getLogisticsSupplierId()))
-                .collect(Collectors.toList());
+
 
     }
 
