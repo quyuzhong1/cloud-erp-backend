@@ -312,7 +312,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 	</delete>
 	
 	<select id="getDmpOutputNoRecordMoveToHistoryTable" resultType="java.lang.String">
-		select g.id from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
+		select g.id from dmp_output_task g where status = 'finish' and not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
 	</select>
 	
     <delete id="dmpOutputNoRecordMoveToHistoryTable">
