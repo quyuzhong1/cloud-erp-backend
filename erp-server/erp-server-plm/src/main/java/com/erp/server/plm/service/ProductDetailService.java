@@ -834,4 +834,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return SkuVO
      */
     List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
+    /**
+     * @deprecated 上传SKU图片（主页）
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    Boolean uploadProductImage(ProductDetailDTO.ProductImagesDTO dto);
 }

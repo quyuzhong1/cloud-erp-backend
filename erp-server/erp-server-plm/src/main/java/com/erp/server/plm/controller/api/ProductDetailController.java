@@ -1372,4 +1372,22 @@ public class ProductDetailController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * @deprecated 上传SKU图片（主页）
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping("/uploadProductImage")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:uploadProductImage",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )
+    public ApiResult uploadProductImage(@RequestBody @Validated ProductDetailDTO.ProductImagesDTO dto) {
+        Boolean flag = productDetailService.uploadProductImage(dto);
+        return flag == true ? this.success() : this.failure();
+    }
+
 }

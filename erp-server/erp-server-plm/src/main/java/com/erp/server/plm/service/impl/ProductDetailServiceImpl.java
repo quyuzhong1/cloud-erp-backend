@@ -7115,4 +7115,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadProductImage(ProductDetailDTO.ProductImagesDTO dto){
+        ProductDetailEntity productDetailEntity = productDetailService.getById(dto.getSkuId());
+        if (ObjectUtils.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Integer status = productDetailEntity.getStatus();
+        if(status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())){
+            throw new ServiceException(ApiError.ERROR_95290);
+        }
+        String imagesUrl = productDetailEntity.getImagesUrl();
+
+        boolean save = lambdaUpdate()
+                .eq(ProductDetailEntity::getId, dto.getSkuId())
+                .set(ProductDetailEntity::getImagesUrl, dto.getImagesUrl())
+                .update();
+
+        if(save){
+            sysLogService.addSysLogBySave("sku图片由["+imagesUrl+"]变更为["+dto.getImagesUrl()+"]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+        }
+        return save;
+    }
+
 }
