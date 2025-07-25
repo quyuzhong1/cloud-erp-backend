@@ -180,10 +180,7 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
      */
     private void removeBySupplierId(String supplierId) {
         log.info("开始删除供应商工厂地信息，供应商id：【{}】", supplierId);
-        boolean remove = lambdaUpdate().eq(SupplierPlantAddrEntity::getSupplierId,supplierId).remove();
-        if (!remove) {
-            throw new ServiceException("删除供应商工厂地信息失败");
-        }
+        lambdaUpdate().eq(SupplierPlantAddrEntity::getSupplierId,supplierId).remove();
     }
     /**
     * 新增修改处理数据

@@ -222,8 +222,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         //供应商id
         String supplierId = IdWorker.getIdStr();
-        SupplierEntity addEntity = new SupplierEntity();
-        BeanMapper.copy(dto, addEntity);
+        SupplierEntity addEntity = BeanUtil.toBean(dto, SupplierEntity.class);
 
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
@@ -415,8 +414,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
         //旧的
-        SupplierEntity old = new SupplierEntity();
-        BeanMapper.copy(supplier, old);
+        SupplierEntity old = BeanUtil.toBean(supplier, SupplierEntity.class);
         //供应商srm状态是否修改
         if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
             LoginUser user = UserContext.getDefaultLoginUser();
@@ -466,7 +464,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
-        BeanMapper.copy(dto, supplier);
+        BeanUtil.copyProperties(dto, supplier);
 
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
@@ -1086,7 +1084,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(Arrays.asList(supplierId));
         if (CollectionUtils.isNotEmpty(contactList)) {
             SupplierContactEntity contact = contactList.get(0);
-            BeanMapper.copy(contact, view);
+            view = BeanUtil.toBean(contact,SupplierDTO.ViewDTO.class);
             view.setContactId(contact.getId());
         }
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(Arrays.asList(entity.getPayCurrency()));
@@ -1134,8 +1132,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return;
         }
         //供应商添加信息
-        SupplierEntity supplier = new SupplierEntity();
-        BeanMapper.copy(addDTO, supplier);
+        SupplierEntity supplier = BeanUtil.toBean(addDTO,SupplierEntity.class);
         String supplierId = IdWorker.getIdStr();
         supplier.setId(supplierId);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
