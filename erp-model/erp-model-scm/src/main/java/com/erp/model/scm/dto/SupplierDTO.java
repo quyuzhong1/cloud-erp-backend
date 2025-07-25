@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -18,7 +19,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -498,6 +502,42 @@ public class SupplierDTO implements Serializable {
         @Size(max = 200, message = "付款公司名称最大200字符")
         private String paymentCompanyName;
 
+        /**
+         * 公司注册资金（万）
+         */
+        @NotNull(message = "注册资金不能为空")
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合,字典property类型
+         */
+        @NotEmpty(message = "供应商属性不能为空")
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        @NotEmpty(message = "体系认证不能为空")
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        @NotEmpty(message = "产品分类不能为空")
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合,get,plm/applicationCategory/list
+         */
+        @NotEmpty(message = "应用分类不能为空")
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 工厂所在地,get,plm/category/tree
+         */
+        @NotEmpty(message = "工厂所在地不能为空")
+        @Valid
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
     }
 
 
@@ -731,8 +771,58 @@ public class SupplierDTO implements Serializable {
          */
         private String createUserName;
 
+        /**
+         * 供货识别码
+         */
+        private String identificationCode;
 
+        /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
 
+        /**
+         * 供应商属性集合
+         */
+        private JSONArray propertyJson;
+        /**
+         * 供应商属性名称
+         */
+        private String propertyNames;
+
+        /**
+         * 体系认证集合
+         */
+        private JSONArray certificateJson;
+        /**
+         * 体系认证名称
+         */
+        private String certificateNames;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+        /**
+         * 产品分类名称
+         */
+        private String productCategoryNames;
+        /**
+         * 应用分类集合
+         */
+        private JSONArray applicationCategoryJson;
+        /**
+         * 应用分类名称
+         */
+        private String applicationCategoryNames;
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
+        /**
+         * 工厂所在地名称
+         */
+        private String plantAddrNames;
     }
 
 
@@ -813,6 +903,41 @@ public class SupplierDTO implements Serializable {
          * 公司地址
          */
         private String companyAddress;
+
+        /**
+         * 供货识别码
+         */
+        private String identificationCode;
+
+        /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合
+         */
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合
+         */
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
     }
 
     /**

@@ -237,6 +237,7 @@ public class LogisticsBillCostController extends BaseController {
      * @return
      */
     @PostMapping("/initExchangeRate")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化头程对账单汇率")
     public ApiResult initExchangeRate(){
         logisticsBillCostService.initExchangeRate();
         return success();
@@ -354,7 +355,7 @@ public class LogisticsBillCostController extends BaseController {
       * @param dto
       * @return ApiResult<List<BatchResultDTO>>
       */
-     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @LogAction(value = LogActionEnum.DELETE, desc = "删除:ids={ids}")
      @PostMapping("/delete")
      @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
      tableField = "create_user_id",

@@ -120,6 +120,7 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新状态")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
         List<FirstMileCostAllocationEntity> entityList = null;
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
@@ -151,6 +152,7 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
         List<FirstMileCostAllocationEntity> entityList = null;
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
@@ -180,6 +182,7 @@ public class FirstMileCostAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "费用分摊明细导出")
     public ApiResult<Boolean> exportExcel(@RequestBody @Valid FirstMileCostAllocationDTO.PagingParamDTO dto) {
         firstMileCostAllocationService.exportList(dto);
         return success(Boolean.TRUE);

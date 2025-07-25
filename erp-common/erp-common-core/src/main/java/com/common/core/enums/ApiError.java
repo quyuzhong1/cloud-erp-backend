@@ -132,6 +132,7 @@ public enum ApiError implements Serializable {
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
     ERROR_NOT_FOUND(1067,"{}未找到"),
+    ERROR_HAS_EXIST(1068,"{}已存在"),
 
 
 

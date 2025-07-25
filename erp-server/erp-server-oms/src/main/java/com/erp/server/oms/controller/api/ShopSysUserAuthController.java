@@ -2,8 +2,11 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/shopSysUserAuth")
+@LogSystemModule("店铺权限")
 public class ShopSysUserAuthController extends BaseController {
 
     @Resource
@@ -36,6 +40,7 @@ public class ShopSysUserAuthController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/batchAuth")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量授权")
     public ApiResult batchAuth(@RequestBody @Validated ShopSysUserAuthDTO.BatchAuthDTO dto) {
         shopSysUserAuthService.batchAuth(dto);
         return success();

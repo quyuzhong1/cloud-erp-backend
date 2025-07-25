@@ -897,6 +897,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:updateContractStampStatus",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "合同状态更新")
     public ApiResult<?> updateContractStampStatus(@RequestBody @Validated PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
         purchaseOrderService.updateContractStampStatus(dto);
         return success();

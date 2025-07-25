@@ -7,9 +7,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
@@ -34,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@LogSystemModule("系统管理通用")
+@LogSystemModule("地址管理-省份城市管理")
 @RequestMapping("/dict/city")
 public class DictCityController extends BaseController {
 
@@ -76,6 +78,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/provinceExport")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "省份导出")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
     public ApiResult<Boolean> provinceExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
          dictCityService.provinceExport(dto);
@@ -88,6 +91,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/addProvince")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加省")
     public ApiResult addProvince(@RequestBody @Validated DictCityDTO.AddProvinceDTO dto) {
         Boolean result = dictCityService.addProvince(dto);
         return result ? success() : failure();
@@ -110,6 +114,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/updateProvince")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改省")
     public ApiResult updateProvince(@RequestBody @Validated DictCityDTO.UpdateProvinceDTO dto) {
         Boolean result = dictCityService.updateProvince(dto);
         return result ? success() : failure();
@@ -134,6 +139,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/cityExport")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "城市导出")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
     public ApiResult<Boolean> cityExport(@RequestBody @Validated DictCityDTO.ProvincePagingParamDTO dto) {
         dictCityService.cityExport(dto);
@@ -145,6 +151,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/addCity")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加城市")
     public ApiResult addCity(@RequestBody @Validated DictCityDTO.AddCityDTO dto) {
         Boolean result = dictCityService.addCity(dto);
         return result ? success() : failure();
@@ -167,6 +174,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/updateCity")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改城市")
     public ApiResult updateCity(@RequestBody @Validated DictCityDTO.UpdateCityDTO dto) {
         Boolean result = dictCityService.updateCity(dto);
         return result ? success() : failure();
@@ -204,6 +212,7 @@ public class DictCityController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

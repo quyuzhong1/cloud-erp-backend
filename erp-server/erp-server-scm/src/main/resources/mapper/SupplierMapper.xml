@@ -22,7 +22,13 @@
         payment_condition as paymentCondition,
         purchase_user_id AS purchaseUserId,
         purchase_user_name AS purchaseUserName,
-        approve_time as approveTime
+        approve_time as approveTime,
+        identification_code as identificationCode,
+        registered_capital as registeredCapital,
+        property_json as propertyJson,
+        product_category_json as productCategoryJson,
+        application_category_json as applicationCategoryJson,
+        certificate_json as certificateJson
         FROM supplier
         WHERE
         ${params.sqlMap.default}
@@ -55,7 +61,13 @@
         payment_condition as paymentCondition,
         purchase_user_id AS purchaseUserId,
         purchase_user_name AS purchaseUserName,
-        approve_time as approveTime
+        approve_time as approveTime,
+        identification_code as identificationCode,
+        registered_capital as registeredCapital,
+        property_json as propertyJson,
+        product_category_json as productCategoryJson,
+        application_category_json as applicationCategoryJson,
+        certificate_json as certificateJson
         FROM supplier
         WHERE ${params.sqlMap.default} AND is_deleted=FALSE
         <!--权限-->

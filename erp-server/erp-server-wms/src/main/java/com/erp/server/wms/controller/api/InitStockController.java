@@ -309,7 +309,7 @@ public class InitStockController extends BaseController {
      * @param response
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导入初期库存")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入初期库存")
     @PostMapping("/importFile")
     public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response) {
         return success(initStockService.importFile(file, response));

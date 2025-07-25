@@ -13,6 +13,7 @@ import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/soB2c")
 @Validated
+@LogSystemModule("B2C销售订单")
 public class SoB2cController extends BaseController {
 
     @Resource
@@ -135,6 +137,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
         /**
          * 1,创建订单
@@ -240,6 +243,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateDeclare")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新报关")
     public ApiResult<List<BatchResultDTO>> batchUpdateDeclare(@RequestBody List<String> ids){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
@@ -271,6 +275,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         //检查是否备案并修改状态
@@ -289,6 +294,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/submit")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -338,6 +344,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -414,6 +421,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "B2C销售订单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -444,6 +452,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 15:32
      */
     @PostMapping("/unInvalid")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "B2C销售订单取消作废")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -502,6 +511,7 @@ public class SoB2cController extends BaseController {
      * @create 2024-01-09 11:47
      */
     @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "B2C销售订单撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -568,6 +578,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 15:37
      */
     @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改订单备注")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -597,6 +608,7 @@ public class SoB2cController extends BaseController {
      * @author Will
      * @date: 2023/8/18 15:46
      */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑分类")
     @PostMapping("/updateCategory")
     public ApiResult<List<BatchResultDTO>> updateCategory(@RequestBody @Validated SoB2cDTO.SoB2cAddCategoryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -681,6 +693,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/saveSoB2cDistribution")
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @LogAction(value = LogActionEnum.INSERT, desc = "订单配货保存（前端手动配货）")
     public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -833,6 +846,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:51
      */
     @PostMapping("/deliveryIntercept")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "发货拦截")
     public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -863,6 +877,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 16:53
      */
     @PostMapping("/cancelDeliveryIntercept")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消发货拦截")
     public ApiResult<List<BatchResultDTO>> cancelDeliveryIntercept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -930,6 +945,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 18:35
      */
     @PostMapping("/mergeSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "合并保存")
     public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         String soId = soB2cService.mergeSave(dto.getIds());
         soB2cService.checkProductRegistrationAndUpdate(soId,"");
@@ -975,6 +991,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:07
      */
     @PostMapping("/cancelMerge")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消合并")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -1018,6 +1035,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:20
      */
     @PostMapping("/splitSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拆分保存")
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated List<SoB2cDTO.SplitSaveDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
         List<String> allSoIdList = new ArrayList<>();
@@ -1065,6 +1083,7 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/21 9:24
      */
     @PostMapping("/cancelSplit")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消拆分")
     public ApiResult<List<BatchResultDTO>> cancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -1168,6 +1187,7 @@ public class SoB2cController extends BaseController {
      * 订单预报
      */
     @PostMapping("/orderForecast")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "订单预报")
     public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated SoB2cDTO.TransferDeclareDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.orderForecast(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -1177,6 +1197,7 @@ public class SoB2cController extends BaseController {
      * 取消订单预报
      */
     @PostMapping("/cancelOrderForecast")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消订单预报")
     public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds(), true);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -1364,6 +1385,7 @@ public class SoB2cController extends BaseController {
      * @date: 2024-06-17
      */
     @PostMapping("/addGift")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加赠品")
     public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated ValidList<SoB2cDTO.GiftDTO> dtoList) {
         Map<String, List<SoB2cDTO.GiftDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(SoB2cDTO.GiftDTO::getId));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.size());
@@ -1406,6 +1428,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/updateReceiverInfo")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改买家信息")
     public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated ValidList<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (SoB2cReceiverDTO.UpdateBaseDTO dto : dtoList) {

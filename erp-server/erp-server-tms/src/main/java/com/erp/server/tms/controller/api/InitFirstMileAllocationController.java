@@ -167,6 +167,7 @@ public class InitFirstMileAllocationController extends BaseController {
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -196,6 +197,7 @@ public class InitFirstMileAllocationController extends BaseController {
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.CANCEL, desc = "期初头程分摊记录撤销")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -225,6 +227,7 @@ public class InitFirstMileAllocationController extends BaseController {
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "期初头程分摊记录提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -258,6 +261,7 @@ public class InitFirstMileAllocationController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliation:updateAndSubmit",
             serviceClass = TmsFirstMileReconciliationService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
         initFirstMileAllocationService.updateAndSubmit(dto);
         return success();
@@ -272,6 +276,7 @@ public class InitFirstMileAllocationController extends BaseController {
             serviceClass = InitFirstMileAllocationService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.DELETE, desc = "期初头程分摊记录删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -313,6 +318,7 @@ public class InitFirstMileAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "期初头程分摊导出")
     public ApiResult<Object> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
         initFirstMileAllocationService.exportExcel(dto);
         return success(Boolean.TRUE);

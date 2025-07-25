@@ -47,6 +47,7 @@ public class PickingCartTypeController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/batchUpdate")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "拣货车类型编辑")
     public ApiResult batchUpdate(@RequestBody @Validated List<PickingCartTypeDTO.BatchUpdateDTO> list) {
         pickingCartTypeService.batchUpdate(list);
         return success();

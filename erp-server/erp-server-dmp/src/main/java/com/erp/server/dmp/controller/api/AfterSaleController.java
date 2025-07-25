@@ -53,7 +53,7 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "售后申请表新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "售后申请表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
         dto.setType("selfAdd");
         return success(afterSaleService.addAndSubmit(dto));
@@ -118,6 +118,7 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = afterSaleService.addAndSubmit(dto);
         return success(result);
@@ -136,6 +137,7 @@ public class AfterSaleController extends BaseController {
 //            menuCode = "dmp:afterSale:updateAndSubmit",
 //            serviceClass = AfterSaleService.class,
 //            keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "售后申请表修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AfterSaleDTO.UpdateDTO dto) {
         afterSaleService.updateAndSubmit(dto);
         return success();

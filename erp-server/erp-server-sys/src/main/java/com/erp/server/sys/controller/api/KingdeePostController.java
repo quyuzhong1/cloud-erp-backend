@@ -156,6 +156,7 @@ public class KingdeePostController extends BaseController {
      * @date: 2024-03-11
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "金蝶岗位修改")
     public ApiResult update(@RequestBody @Validated KingdeePostDTO.UpdateDTO dto) {
         Boolean result = kingdeePostService.update(dto);
         return result ? success() : failure();
@@ -168,6 +169,7 @@ public class KingdeePostController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "金蝶岗位删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
