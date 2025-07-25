@@ -347,12 +347,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public SupplierDTO.SupplierViewDTO view(String supplierId) {
-        SupplierDTO.SupplierViewDTO result = new SupplierDTO.SupplierViewDTO();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        BeanMapper.copy(supplier, result);
+        SupplierDTO.SupplierViewDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierViewDTO.class);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
         String paymentConditionName="";
