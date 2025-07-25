@@ -1,6 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.scm.mapper.SupplierMapper">
+    <!-- 根据实体对象生成resultType -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SupplierEntity">
+        <id column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="voucher_no" property="voucherNo" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="name" property="name" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="phase" property="phase" />
+        <result column="grade_id" property="gradeId" />
+        <result column="category_id" property="categoryId"/>
+        <result column="disabled" property="disabled"/>
+        <result column="srm_disabled" property="srmDisabled"/>
+        <result column="pay_method_id" property="payMethodId"/>
+        <result column="payment_condition" property="paymentCondition"/>
+        <result column="purchase_user_id" property="purchaseUserId"/>
+        <result column="purchase_user_name" property="purchaseUserName"/>
+        <result column="approve_time" property="approveTime"/>
+        <result column="identification_code" property="identificationCode"/>
+        <result column="registered_capital" property="registeredCapital"/>
+        <result column="property_json" property="propertyJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="product_category_json" property="productCategoryJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="application_category_json" property="applicationCategoryJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+        <result column="certificate_json" property="certificateJson" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler"/>
+    </resultMap>
+
 
 
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierDTO$PagingViewDTO">

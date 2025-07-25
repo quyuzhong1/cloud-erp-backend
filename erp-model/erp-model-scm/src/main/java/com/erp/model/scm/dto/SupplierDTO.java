@@ -111,6 +111,10 @@ public class SupplierDTO implements Serializable {
     @Valid
     public static class ImportAddDTO {
 
+        /**
+         * 供应商主键id
+         */
+        private String id;
 
         /**
          * 名称
@@ -190,6 +194,35 @@ public class SupplierDTO implements Serializable {
          */
         @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 公司注册资金（万）
+         */
+        private BigDecimal registeredCapital;
+
+        /**
+         * 供应商属性
+         */
+        private JSONArray property;
+        /**
+         * 供应商品类
+         */
+        private JSONArray productCategory;
+
+        /**
+         * 供应商应用分类
+         */
+        private JSONArray applicationCategory;
+
+        /**
+         * 体系认证
+         */
+        private JSONArray certificate;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
 
         /**
          * 供应商联系信息
@@ -367,6 +400,31 @@ public class SupplierDTO implements Serializable {
         private String paymentCompanyName;
 
         /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合,字典property类型
+         */
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合,get,plm/applicationCategory/list
+         */
+        private JSONArray applicationCategoryJson;
+
+        /**
          * 供应商联系信息
          */
         @Valid
@@ -383,6 +441,11 @@ public class SupplierDTO implements Serializable {
          */
         @Valid
         private List<SupplierCredentialDTO.UpdateDTO> credentialList;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.ViewDTO> plantAddrList;
 
     }
 
@@ -772,7 +835,7 @@ public class SupplierDTO implements Serializable {
         private String createUserName;
 
         /**
-         * 供货识别码
+         * 供应商代码
          */
         private String identificationCode;
 
@@ -815,10 +878,6 @@ public class SupplierDTO implements Serializable {
          * 应用分类名称
          */
         private String applicationCategoryNames;
-        /**
-         * 工厂所在地
-         */
-        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
         /**
          * 工厂所在地名称
          */

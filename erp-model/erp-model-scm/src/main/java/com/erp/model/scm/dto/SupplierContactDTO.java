@@ -84,6 +84,10 @@ public class SupplierContactDTO implements Serializable {
     @NoArgsConstructor
     public static class ImportAddDTO{
 
+        /**
+         * 主键id
+         */
+        private String id;
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String supplierName;

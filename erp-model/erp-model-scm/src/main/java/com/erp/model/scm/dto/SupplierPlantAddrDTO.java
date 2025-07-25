@@ -45,16 +45,29 @@ public class SupplierPlantAddrDTO implements Serializable {
         private String country;
 
         /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
         * 省份
         */
         private String region;
+
+        /**
+         * 省份名称
+         */
+        private String regionName;
 
         /**
         * 城市
         */
         private String city;
 
-
+        /**
+         * 城市名称
+         */
+        private String cityName;
     }
 
     /**
