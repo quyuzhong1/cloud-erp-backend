@@ -62,7 +62,7 @@
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
-        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and wm.is_deleted = false
         where ${params.sqlMap.default} and pd.is_deleted = false
         <if test="null != params and params.id != null and params.id != ''">
             and pd.id ilike concat('%',#{params.id}::text,'%')
@@ -87,7 +87,7 @@
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
-        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and wm.is_deleted = false
         LEFT JOIN dict_basic db on db.value = pd.review_setting and db.is_deleted = false  and db.type = 'reviewSetting'
         where ${params.sqlMap.default} and pd.is_deleted = false
         <if test="null != params and params.ids != null and params.ids.size() > 0">

@@ -67,7 +67,7 @@
         <foreach collection="mainIds" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
-
+        order by tid.id asc
     </select>
 
     <!-- 根据来源明细id查询 -->

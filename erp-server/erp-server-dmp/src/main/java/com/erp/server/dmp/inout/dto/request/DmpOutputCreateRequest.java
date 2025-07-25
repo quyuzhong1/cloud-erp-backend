@@ -23,4 +23,9 @@ public class DmpOutputCreateRequest extends DmpOutputRequest{
 	 * 是否校验黑名单
 	 */
 	private boolean isNotValidate = false;
+	
+	/**
+	 * 是否重推
+	 */
+	private boolean isRetryPush = false;
 }

@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.CurrencyEnum;
@@ -50,6 +51,8 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
      */
     @ExcelProperty(value = "*对账类型", index = 4)
     @FieldValid(fieldName = "对账类型",isNotBlank = true,fieldValues = "付款,退款")
+    private String  payTypeName;
+    @ExcelIgnore
     private String  payType;
 
     /**
@@ -70,7 +73,7 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
      * 币种
      */
     @ExcelProperty(value = "*实际币种", index = 7)
-    @FieldValid(fieldName = "实际币种",isNotBlank = true,enumClass = CurrencyEnum.class)
+    @FieldValid(fieldName = "实际币种",isNotBlank = true)
     private String  currency;
 
     /**
@@ -84,7 +87,7 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
      * 预估币种
      */
     @ExcelProperty(value = "预估币种", index = 9)
-    @FieldValid(fieldName = "预估币种",enumClass = CurrencyEnum.class)
+    @FieldValid(fieldName = "预估币种")
     private String  estimatedCurrency;
 
     /**

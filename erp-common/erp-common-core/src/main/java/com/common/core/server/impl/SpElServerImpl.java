@@ -129,27 +129,46 @@ public class SpElServerImpl implements SpElServer {
      * 匹配表达式结果
      *
      * @param conditionList
-     * @param obj
+     * @param stringObjectMap
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj, String key) {
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> stringObjectMap, String key) {
         if (StrUtil.isBlank(key)){
             key="detailList";
         }
-        //自动根据obj里面的对象
-        convertObjData(obj);
-        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, obj);
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, stringObjectMap);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
-        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get(key);
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) stringObjectMap.get(key);
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
             String originalField = item.getOriginalField();
             List<Object> valueList = CollUtil.isEmpty(mapList) ? null : getValueList(originalField, mapList);
             String addField = item.getNeedAddField();
-            obj.put(addField, valueList);
+            stringObjectMap.put(addField, valueList);
         }
-        return matchExpressionWithVariable(spElDTO, obj);
+        return matchExpressionWithVariable(spElDTO, stringObjectMap);
+    }
+
+
+    @Override
+    public Boolean matchExpressionDefaultByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj, String key) {
+        if (StrUtil.isBlank(key)){
+            key="detailList";
+        }
+        //自动根据obj里面的对象
+        Map<String, Object> stringObjectMap = convertObjData(obj);
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, stringObjectMap);
+        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) stringObjectMap.get(key);
+        for (SpElAddFieldDTO item : addFieldList) {
+            //原始字段
+            String originalField = item.getOriginalField();
+            List<Object> valueList = CollUtil.isEmpty(mapList) ? null : getValueList(originalField, mapList);
+            String addField = item.getNeedAddField();
+            stringObjectMap.put(addField, valueList);
+        }
+        return matchExpressionWithVariable(spElDTO, stringObjectMap);
     }
 
     /**
@@ -159,9 +178,9 @@ public class SpElServerImpl implements SpElServer {
      * @param objMap
      * @return void
      */
-    private void convertObjData(Map<String, Object> objMap) {
+    private  Map<String, Object> convertObjData(Map<String, Object> objMap) {
         if (ObjectUtil.isEmpty(objMap)) {
-            return;
+            return objMap;
         }
 
         // 存储最终提取的字段（单值或拼接值）
@@ -182,9 +201,8 @@ public class SpElServerImpl implements SpElServer {
                             .map(Object::toString)
                             .collect(Collectors.joining(",")));
         }
-
         // 将提取的字段合并回原始Map
-        objMap.putAll(resultFields);
+        return resultFields;
     }
 
     /**

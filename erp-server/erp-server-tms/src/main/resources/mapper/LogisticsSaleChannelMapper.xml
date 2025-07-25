@@ -66,4 +66,37 @@
         FROM  logistics_sale_channel WHERE logistics_platform=#{logisticsPlatform}
         and service_platform ILIKE concat('%',#{servicePlatform}::text,'%')
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.SaleChannelDTO">
+        select id,cnName,platformChannelId,code
+        from
+        (
+            SELECT
+            MAX(t.id) as id,
+            MAX(t.cn_name) as cnName,
+            MAX(t.platform_channel_id) as platformChannelId,
+            t.code
+            FROM
+            logistics_sale_channel t
+            WHERE
+            t.is_deleted = false
+            AND t.channel_status = 0
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and t.cn_name ilike concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+            <if test="params.platformType != null and params.platformType != ''">
+                AND t.logistics_platform = #{params.platformType}
+            </if>
+            <if test="params.servicePlatform != null and params.servicePlatform != ''">
+                AND t.service_platform ILIKE concat('%',#{params.servicePlatform}::text,'%')
+            </if>
+            group by t.code,t.cn_name
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                order by
+                case when t.cn_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when t.cn_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when t.cn_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , t.cn_name
+            </if>
+        ) wls
+    </select>
 </mapper>

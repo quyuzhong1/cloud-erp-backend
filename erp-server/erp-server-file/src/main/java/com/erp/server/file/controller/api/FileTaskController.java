@@ -38,7 +38,7 @@ public class FileTaskController extends BaseController {
      */
     @PostMapping
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody FileTaskDTO fileTaskDTO){
-        String id = fileTaskContext.add(fileTaskDTO);
+        String id = fileTaskContext.addExport(fileTaskDTO);
         return success(new BaseResultDTO.AddDTO(id, ""));
     }
 
@@ -61,6 +61,23 @@ public class FileTaskController extends BaseController {
             try {
                 fileTaskContext.delete(id);
                 resultDTOS.add(BatchResultDTO.success(id,null, "删除成功"));
+            }catch (Exception e){
+                resultDTOS.add(BatchResultDTO.fail(id , null, e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     *  取消下载任务
+     */
+    @PostMapping("/cancel")
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            try {
+                fileTaskContext.cancel(id);
+                resultDTOS.add(BatchResultDTO.success(id,null, "取消成功"));
             }catch (Exception e){
                 resultDTOS.add(BatchResultDTO.fail(id , null, e.getMessage()));
             }
