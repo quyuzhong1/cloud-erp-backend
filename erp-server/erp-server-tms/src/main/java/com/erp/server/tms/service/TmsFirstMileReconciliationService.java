@@ -163,7 +163,7 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status);
 
 
-    TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, LocalDate startDate, LocalDate endDate, String currency);
+    TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, String supplierType, LocalDate startDate, LocalDate endDate, String currency);
 
     String checkAndGetSupplier(String id);
 

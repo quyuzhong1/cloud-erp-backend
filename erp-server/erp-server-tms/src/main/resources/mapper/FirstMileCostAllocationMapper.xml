@@ -215,6 +215,12 @@
         <if test="reportPeriodId != null and reportPeriodId != ''">
             and a.report_period_id = #{reportPeriodId}
         </if>
+        <if test="supplierId != null and supplierId != ''">
+            and a.supplier_id = #{supplierId}
+        </if>
+        <if test="supplierType != null and supplierType != ''">
+            and a.supplier_type = #{supplierType}
+        </if>
         order by rpm.month
     </select>
     <select id="getRecordBySourceIdAndCode"

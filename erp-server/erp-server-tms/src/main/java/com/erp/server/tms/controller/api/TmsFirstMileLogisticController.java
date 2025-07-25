@@ -15,15 +15,22 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.SupplierTypeEnum;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
 import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -61,6 +68,12 @@ public class TmsFirstMileLogisticController extends BaseController {
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
     private LogisticsBillService logisticsBillService;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+    @Resource
+    private SupplierFeign supplierFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
     /**
      * 导入
      * @author lrp
@@ -277,12 +290,55 @@ public class TmsFirstMileLogisticController extends BaseController {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByIds(ids);
-        
-        Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
-        
-        for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
-        	ids = supplierIdMap.getValue().stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-        	// 当前添加的主账单记录
+        String reconciliationType = dto.getSupplierType();
+        if (SupplierTypeEnum.WAREHOUSE.getCode().equals(reconciliationType)){
+            List<String> deliveryIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> deliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+            List<String> warehouseIds = deliveryEntityList.stream().map(FirstMileDeliveryEntity::getDestWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            //获取三方仓关联的服务商
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
+            Map<String, List<OverseasProviderWarehouseDTO.ViewDTO>> mainIdMap = viewDTOS.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseDTO.ViewDTO::getMainId));
+            for(Map.Entry<String, List<OverseasProviderWarehouseDTO.ViewDTO>> provideList : mainIdMap.entrySet()) {
+                String supplierName = provideList.getValue().get(0).getProviderName();
+                String supplierId = provideList.getValue().get(0).getMainId();
+                List<String> warehouseIds2 = provideList.getValue().stream().map(OverseasProviderWarehouseDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
+                List<String> deliveryIds2 = deliveryEntityList.stream().filter(e -> warehouseIds2.contains(e.getDestWarehouseId())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
+                ids = logisticsBillEntityList.stream().filter(e -> deliveryIds2.contains(e.getOutstockId())).map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
+                // 当前添加的主账单记录
+                Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
+                for (String id : ids) {
+                    BatchResultDTO updateResult;
+                    LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(id, e.getId())).findFirst().orElse(null);
+                    if (Objects.isNull(entity)){
+                        updateResult = BatchResultDTO.fail(id, id, "物流单记录不存在");
+                        resultDTOS.add(updateResult);
+                        continue;
+                    }
+                    try {
+                        updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode(),dto.getSupplierType(),supplierId,supplierName);
+                    } catch (Exception e) {
+                        log.error("头程对账生成失败", e);
+                        if (ObjectUtil.isEmpty(entity)) {
+                            updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                            resultDTOS.add(updateResult);
+                            continue;
+                        }
+                        updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+                    }
+                    resultDTOS.add(updateResult);
+                }
+            }
+        }else if (SupplierTypeEnum.CUSTOM.getCode().equals(reconciliationType)){
+            String supplierId = dto.getLogisticsSupplierId();
+            if (CharSequenceUtil.isBlank(supplierId)){
+                return failure("自定义物流商不能为空");
+            }
+            SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
+            if (Objects.isNull(supplier)){
+                return failure("自定义物流商不存在");
+            }
+            String supplierName = supplier.getName();
+            // 当前添加的主账单记录
             Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
             for (String id : ids) {
                 BatchResultDTO updateResult;
@@ -293,7 +349,7 @@ public class TmsFirstMileLogisticController extends BaseController {
                     continue;
                 }
                 try {
-                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode());
+                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode(),dto.getSupplierType(),supplierId,supplierName);
                 } catch (Exception e) {
                     log.error("头程对账生成失败", e);
                     if (ObjectUtil.isEmpty(entity)) {
@@ -305,8 +361,39 @@ public class TmsFirstMileLogisticController extends BaseController {
                 }
                 resultDTOS.add(updateResult);
             }
+        }else {
+            Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
+            Set<String> supplierIds = supplierIdMaps.keySet();
+            List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+            Map<String, String> supplierNameMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getSupplierId, LogisticsSupplierEntity::getSupplierName));
+            for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
+                ids = supplierIdMap.getValue().stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+                // 当前添加的主账单记录
+                Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
+                for (String id : ids) {
+                    BatchResultDTO updateResult;
+                    LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(id, e.getId())).findFirst().orElse(null);
+                    if (Objects.isNull(entity)){
+                        updateResult = BatchResultDTO.fail(id, id, "物流单记录不存在");
+                        resultDTOS.add(updateResult);
+                        continue;
+                    }
+                    try {
+                        updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode(),dto.getSupplierType(), entity.getLogisticsSupplierId(), supplierNameMap.getOrDefault(entity.getLogisticsSupplierId(), ""));
+                    } catch (Exception e) {
+                        log.error("头程对账生成失败", e);
+                        if (ObjectUtil.isEmpty(entity)) {
+                            updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                            resultDTOS.add(updateResult);
+                            continue;
+                        }
+                        updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+                    }
+                    resultDTOS.add(updateResult);
+                }
+            }
         }
-        
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

@@ -16,6 +16,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -128,7 +129,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 生成物流单
      */
-    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap,String reconciliationType);
+    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap, String reconciliationType, @NotBlank String type, String supplierId, String supplierName);
 
     /**
      * 更新对账状态

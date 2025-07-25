@@ -1354,7 +1354,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap,String reconciliationType) {
+    public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap, String reconciliationType, String supplierType, String supplierId, String supplierName) {
         // 校验物理商是否一致
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(sourceDetailList)){
@@ -1384,7 +1384,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             throw new ServiceException("数据异常, 明细为空");
         }
         //头程对账单明细查询
-        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(id), DetailReconciliationTypeEnum.ACTUAL.getCode());
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(Collections.singletonList(id), DetailReconciliationTypeEnum.ACTUAL.getCode(), supplierType, null);
         // 是否当前新增账单
         boolean currenAddMainEntity = false;
         String mainKey = "";
@@ -1404,10 +1404,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             if (!reconciliationEntity.getCurrency().equalsIgnoreCase(curListDTO.getCurrency())){
                 throw new ServiceException("对账单币种与当前物流单币种不一致");
             }
+            if (!reconciliationEntity.getLogisticsSupplierId().equals(supplierId)){
+                throw new ServiceException("对账单物流商与当前物流单物流商不一致");
+            }
             reconciliationEntity.setUpdateTime(LocalDateTime.now());
         } else {
-            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = sourceDetailList.get(0);
-            String logisticsSupplierId =  listDTO.getLogisticsSupplierId();
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCZD);
             if (CollectionUtils.isEmpty(dateList)){
                 throw new ServiceException("周期日期不能为空");
@@ -1417,26 +1418,28 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             LocalDate startDate = dateList.get(0);
             LocalDate endDate = dateList.get(1);
-            mainKey = CharSequenceUtil.format("{}_{}_{}_{}", logisticsSupplierId, curListDTO.getCurrency(), startDate, endDate);
+            mainKey = CharSequenceUtil.format("{}_{}_{}_{}_{}", supplierId, supplierType, curListDTO.getCurrency(), startDate, endDate);
             //一个头程物流单可生成多次对账单-限制同一个单同一个月份仅可生成一次
             LocalDate dayOfMonth = endDate.withDayOfMonth(1);
-            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(e.getMainId()) && dayOfMonth.equals(e.getReconciliationMonth())).collect(Collectors.toList());
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(e.getMainId()) && dayOfMonth.equals(e.getReconciliationMonth()) && e.getLogisticsSupplierId().equals(supplierId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(detailEntityList1)){
                 List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), dayOfMonth);
+                throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), dayOfMonth, SupplierTypeEnum.getName(supplierType), supplierName);
             }
             // 之前已添加账单
             reconciliationEntity = currentMainEntityMap.get(mainKey);
             if (null == reconciliationEntity){
-                TmsFirstMileReconciliationEntity existEntity = tmsFirstMileReconciliationService.getByGenerate(logisticsSupplierId, startDate, endDate, curListDTO.getCurrency());
+                TmsFirstMileReconciliationEntity existEntity = tmsFirstMileReconciliationService.getByGenerate(supplierId, supplierType, startDate, endDate, curListDTO.getCurrency());
                 if (null != existEntity){
                     throw new ServiceException("当前周期和币种的对账单已存在");
                 }
-                reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, logisticsSupplierId, curListDTO.getCurrency());
+                reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, supplierId,supplierType, curListDTO.getCurrency());
                 // 当前新增
                 currenAddMainEntity = true;
             }
         }
+        reconciliationEntity.setLogisticsSupplierId(supplierId);
+        reconciliationEntity.setLogisticsSupplierName(supplierName);
         CurrencyDTO.ViewDTO currencyView = null;
         if (StringUtils.isNotBlank(reconciliationEntity.getCurrency())) {
             currencyView = tmsFirstMileReconciliationDetailService.getCurrencyView(reconciliationEntity.getCurrency());
@@ -1459,7 +1462,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             reconciliationEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             reconciliationEntity.setExchangeRate(BigDecimal.ONE);
         }else {
-            String currentDate = reconciliationEntity.getReconciliationMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String currentDate = reconciliationEntity.getReconciliationMonth().withDayOfMonth(reconciliationEntity.getReconciliationMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
             if (Objects.isNull(rate)){
                 throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);

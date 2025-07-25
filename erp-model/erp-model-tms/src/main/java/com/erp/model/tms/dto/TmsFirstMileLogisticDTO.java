@@ -299,10 +299,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
 
         /**
          * 对账单类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
-         * FirstReconciliationTypeEnum
+         * SupplierTypeEnum
          */
         @NotBlank(message = "对账类不能为空")
-        private String reconciliationType;
+        private String supplierType;
         /**
          * 物流商id
          *

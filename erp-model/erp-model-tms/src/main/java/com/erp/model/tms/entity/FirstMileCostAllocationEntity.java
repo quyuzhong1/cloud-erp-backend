@@ -89,6 +89,12 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     @TableField("supplier_name")
     private String supplierName;
     /**
+     * 供应商类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
+     * SupplierTypeEnum
+     */
+    @TableField("supplier_type")
+    private String supplierType;
+    /**
     * {业务单号}取值发货单关联的业务单号
         FBA：取值FBA货件单号
         第三方仓：海外仓入库单号

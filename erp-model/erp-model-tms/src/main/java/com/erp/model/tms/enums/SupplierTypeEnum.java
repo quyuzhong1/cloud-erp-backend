@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: 头程对账单类型 （logistics 物流对账单，warehouse 仓储对账单，custom 自定义物流商）
  * @date 2024/8/19 16:39
  */
-public enum FirstReconciliationTypeEnum implements EnumMessage {
+public enum SupplierTypeEnum implements EnumMessage {
 
     LOGISTICS("logistics","物流对账单"),
     WAREHOUSE("warehouse","仓储对账单"),
@@ -29,7 +29,7 @@ public enum FirstReconciliationTypeEnum implements EnumMessage {
      */
     private String name;
 
-    FirstReconciliationTypeEnum(String code, String name){
+    SupplierTypeEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -45,11 +45,11 @@ public enum FirstReconciliationTypeEnum implements EnumMessage {
     }
 
 
-    public static FirstReconciliationTypeEnum getEnumByCode(String code) {
+    public static SupplierTypeEnum getEnumByCode(String code) {
         if (StringUtils.isBlank(code)) {
             return null;
         }
-        for (FirstReconciliationTypeEnum typeEnums : FirstReconciliationTypeEnum.values()) {
+        for (SupplierTypeEnum typeEnums : SupplierTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums;
             }
@@ -61,7 +61,7 @@ public enum FirstReconciliationTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (FirstReconciliationTypeEnum typeEnums : FirstReconciliationTypeEnum.values()) {
+        for (SupplierTypeEnum typeEnums : SupplierTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

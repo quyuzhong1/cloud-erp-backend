@@ -171,7 +171,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
             tableAlias = "tfmrd"
     )
     public ApiResult<List<TmsFirstMileReconciliationDetailDTO.ListDTO>> addWaitList(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.AddWaitListDTO dto) {
-        return success(tmsFirstMileReconciliationDetailService.addWaitReconciliation(dto.getSourceIdList()));
+        return success(tmsFirstMileReconciliationDetailService.addWaitReconciliation(dto.getSourceIdList(),dto.getSupplierType(),dto.getLogisticsSupplierId()));
     }
 
     /**

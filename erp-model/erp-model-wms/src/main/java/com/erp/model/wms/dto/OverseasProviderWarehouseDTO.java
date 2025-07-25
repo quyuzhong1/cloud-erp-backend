@@ -104,6 +104,10 @@ public class OverseasProviderWarehouseDTO implements Serializable {
          * 海外仓服务商code
          */
         private String  providerCode;
+        /**
+         * 海外仓服务商名称
+         */
+        private String  providerName;
 
 
     }
