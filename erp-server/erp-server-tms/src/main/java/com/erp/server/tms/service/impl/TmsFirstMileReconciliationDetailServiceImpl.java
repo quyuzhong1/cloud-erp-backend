@@ -655,7 +655,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
             }
             // 根据预计DTO生成：预计, 实际, 差异
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> curAllTyoeList = generateAllTypeDTO(sourceListDTO, reconciliationCount,Boolean.FALSE);
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> curAllTyoeList = generateAllTypeDTO(sourceListDTO, reconciliationCount,Boolean.FALSE, supplierType);
             // 添加到结果
             resultList.addAll(curAllTyoeList);
         }
@@ -666,7 +666,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
      * 根据预计DTO生成：预计, 实际, 差异
      */
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO, int reconciliationCount, boolean keepActual, String supplierType) {
         // 实际
         TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO = new TmsFirstMileReconciliationDetailDTO.ListDTO();
         BeanUtils.copyProperties(sourceListDTO, actualListDTO);
@@ -692,7 +692,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         diffListDTO.setTypeName(DetailReconciliationTypeEnum.DIFF.getName());
 
         //首次对账正常取值预估和实际费用，N次对账则所有预计+实际费用取值为0
-        if (!Objects.equals(1, reconciliationCount)){
+        if (!Objects.equals(1, reconciliationCount) || !SupplierTypeEnum.LOGISTICS.getCode().equals(supplierType)){
             initSourceDataDTO(sourceListDTO);
             if (!keepActual){
                 initSourceDataDTO(actualListDTO);
@@ -2064,12 +2064,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             .map(e ->{
                                 //当前明细对账单次数
                                 int reconciliationCount = 1;
+                                String supplierType = SupplierTypeEnum.LOGISTICS.getCode();
                                 TmsFirstMileReconciliationDetailEntity maxDetailEntity = finalDetailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(e.getSourceId(),f.getSourceId()))
                                         .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
                                 if (Objects.nonNull(maxDetailEntity)){
                                     reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+                                    supplierType = maxDetailEntity.getSupplierType();
                                 }
-                                return  generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE);
+                                return  generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE, supplierType);
                             })
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
@@ -2522,7 +2524,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                                 if (Objects.nonNull(maxDetailEntity)){
                                     reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
                                 }
-                                return generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE);
+                                return generateAllTypeDTO(e, reconciliationCount, Boolean.TRUE, supplierType);
                             })
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
@@ -2743,7 +2745,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
                 }
                 // 生成实际和差异记录
-                List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = this.generateAllTypeDTO(listDTO,reconciliationCount, Boolean.FALSE);
+                List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = this.generateAllTypeDTO(listDTO,reconciliationCount, Boolean.FALSE, SupplierTypeEnum.LOGISTICS.getCode());
                 List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
                 allDetailDTOList.addAll(detailDTOList);
             }

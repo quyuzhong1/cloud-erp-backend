@@ -1345,7 +1345,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds) {
-        return this.baseMapper.waitReconciliationList(
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> listDTOS = this.baseMapper.waitReconciliationList(
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
                 "",
@@ -1354,6 +1354,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 null,
                 null);
+        //处理businessCode
+        List<String> deliveryCodes = listDTOS.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getRelationCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
+        listDTOS.forEach(e -> {
+            businessDTOList.forEach(b -> {
+                if (e.getRelationCode().equals(b.getCode())){
+                    e.setBusinessCode(b.getBusinessCode());
+                }
+            });
+        });
+        return listDTOS;
     }
 
     @Override
@@ -1441,7 +1452,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             reconciliationEntity.setUpdateTime(LocalDateTime.now());
         } else {
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCZD);
             if (CollectionUtils.isEmpty(dateList)){
                 throw new ServiceException("周期日期不能为空");
             }
@@ -1465,6 +1475,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 if (null != existEntity){
                     throw new ServiceException("当前周期和币种的对账单已存在");
                 }
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCZD);
                 reconciliationEntity = new TmsFirstMileReconciliationEntity(code,startDate, endDate, supplierId,supplierType, curListDTO.getCurrency());
                 // 当前新增
                 currenAddMainEntity = true;
@@ -1536,7 +1547,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         // 保存明细
         // 生成实际和差异记录
         curListDTO.setReconciliationId(reconciliationEntity.getId());
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO, reconciliationCount,Boolean.FALSE);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = tmsFirstMileReconciliationDetailService.generateAllTypeDTO(curListDTO, reconciliationCount,Boolean.FALSE,supplierType);
         TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
         updateDTO.setId(reconciliationEntity.getId());
 

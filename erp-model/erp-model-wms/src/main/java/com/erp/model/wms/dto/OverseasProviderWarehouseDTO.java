@@ -328,4 +328,14 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         private Integer shippedQty;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProviderDTO {
+        private String deliveryId;
+        private String refId;
+        private String providerId;
+        private String providerName;
+        private String authStatus;
+    }
 }

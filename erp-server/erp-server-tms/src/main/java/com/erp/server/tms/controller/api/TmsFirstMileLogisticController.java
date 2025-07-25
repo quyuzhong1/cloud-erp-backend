@@ -293,16 +293,20 @@ public class TmsFirstMileLogisticController extends BaseController {
         String reconciliationType = dto.getSupplierType();
         if (SupplierTypeEnum.WAREHOUSE.getCode().equals(reconciliationType)){
             List<String> deliveryIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<FirstMileDeliveryEntity> deliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
-            List<String> warehouseIds = deliveryEntityList.stream().map(FirstMileDeliveryEntity::getDestWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            //获取三方仓关联的服务商
-            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
-            Map<String, List<OverseasProviderWarehouseDTO.ViewDTO>> mainIdMap = viewDTOS.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseDTO.ViewDTO::getMainId));
-            for(Map.Entry<String, List<OverseasProviderWarehouseDTO.ViewDTO>> provideList : mainIdMap.entrySet()) {
+            //根据头程发货单获取三方仓关联的服务商
+            List<OverseasProviderWarehouseDTO.ProviderDTO> providerDTOList = wmsFirstMileDeliveryFeign.listOverseasProvider(deliveryIds);
+            //不存在授权的服务商信息
+            logisticsBillEntityList.forEach(e -> {
+                OverseasProviderWarehouseDTO.ProviderDTO providerDTO = providerDTOList.stream().filter(f -> f.getDeliveryId().equals(e.getOutstockId())).findFirst().orElse(null);
+                if (Objects.isNull(providerDTO)){
+                    resultDTOS.add(BatchResultDTO.fail(e.getId(), e.getOutstockCode(), "头程发货单未关联已授权的三方仓"));
+                }
+            });
+            Map<String, List<OverseasProviderWarehouseDTO.ProviderDTO>> mainIdMap = providerDTOList.stream().collect(Collectors.groupingBy(OverseasProviderWarehouseDTO.ProviderDTO::getProviderId));
+            for(Map.Entry<String, List<OverseasProviderWarehouseDTO.ProviderDTO>> provideList : mainIdMap.entrySet()) {
                 String supplierName = provideList.getValue().get(0).getProviderName();
-                String supplierId = provideList.getValue().get(0).getMainId();
-                List<String> warehouseIds2 = provideList.getValue().stream().map(OverseasProviderWarehouseDTO.ViewDTO::getWarehouseId).collect(Collectors.toList());
-                List<String> deliveryIds2 = deliveryEntityList.stream().filter(e -> warehouseIds2.contains(e.getDestWarehouseId())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
+                String supplierId = provideList.getValue().get(0).getProviderName();
+                List<String> deliveryIds2 = provideList.getValue().stream().map(OverseasProviderWarehouseDTO.ProviderDTO::getDeliveryId).collect(Collectors.toList());
                 ids = logisticsBillEntityList.stream().filter(e -> deliveryIds2.contains(e.getOutstockId())).map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
                 // 当前添加的主账单记录
                 Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();

@@ -128,12 +128,14 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     /**
      * 生成实际和差异记录
+     *
      * @param sourceListDTO
      * @param reconciliationCount
-     * @param keepActual 是否保留实际账单
+     * @param keepActual          是否保留实际账单
+     * @param supplierType
      * @return
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO, int reconciliationCount, boolean keepActual, String supplierType);
 
     Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList);
 
