@@ -31,12 +31,6 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
     private String supplierId;
 
     /**
-     * 操作类型
-     */
-    @TableField("operate_type")
-    private String operateType;
-
-    /**
      * 当前阶段
      */
     @TableField(value="current_phase")

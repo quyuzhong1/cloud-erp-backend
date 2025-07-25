@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -33,7 +32,6 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.mapper.SupplierPhaseMapper;
 import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.AttachmentService;
@@ -106,8 +104,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (!phase.equals(dto.getCurrentPhase())) {
             throw new ServiceException(ApiError.ERROR_98020);
         }
-        //检查阶段能否变更
-        checkPhase(phase, dto.getTargetPhase(), dto.getOperateType());
         BeanUtil.copyProperties(dto, entity, dto.getCurrentPhase(), dto.getTargetPhase());
         String id = IdWorker.getIdStr();
         entity.setId(id);
@@ -229,12 +225,8 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             throw new ServiceException(ApiError.ERROR_98021);
         }
 
-        //当前阶段
-        String currentPhase = dto.getCurrentPhase();
         //目标阶段
         String targetPhase = dto.getTargetPhase();
-        String type = dto.getOperateType();
-        checkPhase(currentPhase, targetPhase, type);
 
         phase.setTargetPhase(targetPhase);
         phase.setDescription(dto.getDescription());
@@ -370,8 +362,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         }
 
         for (SupplierPhaseDTO.PagingViewDTO item : list) {
-            String type = item.getOperateType();
-            item.setTypeName(type.equals(ScmConstant.DEGRADE) ? "降级" : "升级");
             //当前阶段
             String currentPhase = item.getCurrentPhase();
             String currentPhaseName = SupplierPhaseEnum.getPhaseName(currentPhase);
@@ -422,92 +412,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
 
     /**
-     * 获取阶段变更的时候 获取阶段列表
-     *
-     * @param dto
-     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
-     * @author yl
-     * @date 2023-03-31 14:26
-     */
-    @Override
-    public List<BaseDropDownDTO.CommonDTO> listByChange(SupplierPhaseDTO.ListDTO dto) {
-        //当前等级
-        String currentPhase = dto.getCurrentPhase();
-        //操作
-        String operateType = dto.getOperateType();
-        List<BaseDropDownDTO.CommonDTO> resultList = new ArrayList<>(4);
-        //潜在
-        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
-        //准入
-        String access = SupplierPhaseEnum.ACCESS.getPhase();
-        //合格
-        String conform = SupplierPhaseEnum.CONFORM.getPhase();
-        //淘汰
-        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
-        SupplierPhaseEnum[] phaseList = SupplierPhaseEnum.values();
-        List<SupplierPhaseEnum> list = Arrays.asList(phaseList);
-
-        //当 当前阶段为潜在
-        if (currentPhase.equals(potential)) {
-            //阶段降级
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                BaseDropDownDTO.CommonDTO common = new BaseDropDownDTO.CommonDTO();
-                common.setCode(eliminate);
-                common.setValue(SupplierPhaseEnum.getPhaseName(eliminate));
-                resultList.add(common);
-            } else {
-                //升级 【潜在】只能升级为【准入】【合格】
-                List<BaseDropDownDTO.CommonDTO> potentialList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(potentialList);
-            }
-        }
-
-        //当 当前阶段为准入
-        if (currentPhase.equals(access)) {
-            //阶段降级 【准入】只能降级【潜在】【淘汰】
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> Arrays.asList(eliminate, potential).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(accessList);
-            } else {
-                //升级 为合格
-                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> p.getPhase().equals(conform))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(accessList);
-
-            }
-        }
-
-        //当 当前阶段为 合格的时候
-        if (currentPhase.equals(conform)) {
-            //阶段降级 【合格】只能降级【准入】【潜在】
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> conformList = list.stream().filter(p -> Arrays.asList(access, potential).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(conformList);
-            }
-        }
-
-        //当 当前阶段为 淘汰的时候
-        if (currentPhase.equals(eliminate)) {
-            //阶段升级 【淘汰】升级只能选择【准入】【合格】
-            if (!operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> eliminateList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(eliminateList);
-            }
-        }
-        return resultList;
-    }
-
-
-    /**
      * 更改状态
      *
      * @param list
@@ -532,82 +436,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
                 .update();
     }
 
-
-    /**
-     * 检查阶段能否变更
-     *
-     * @param currentPhase 当前阶段
-     * @param targetPhase  目标阶段
-     * @return void
-     * @author yl
-     * @date 2023-03-23 14:04
-     */
-    private void checkPhase(String currentPhase, String targetPhase, String type) {
-        //潜在
-        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
-        //准入
-        String access = SupplierPhaseEnum.ACCESS.getPhase();
-        //合格
-        String conform = SupplierPhaseEnum.CONFORM.getPhase();
-        //淘汰
-        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
-
-        //当 当前阶段为潜在
-        if (currentPhase.equals(potential)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!targetPhase.equals(eliminate)) {
-                    throw new ServiceException(98018, "【潜在】只能降级为【淘汰】");
-                }
-            } else {
-                //升级
-                if (!Arrays.asList(access, conform).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【潜在】只能升级为【准入】【合格】");
-                }
-            }
-        }
-
-        //当 当前阶段为准入
-        if (currentPhase.equals(access)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!Arrays.asList(eliminate, potential).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【准入】只能降级【潜在】【淘汰】");
-                }
-            } else {
-                //升级 为合格
-                if (!targetPhase.equals(conform)) {
-                    throw new ServiceException(98018, "升级只能选择【合格】");
-                }
-            }
-        }
-
-        //当 当前阶段为 合格的时候
-        if (currentPhase.equals(conform)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!Arrays.asList(access, potential).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【合格】只能降级【准入】【潜在】");
-                }
-            } else {
-                throw new ServiceException(98018, "当前阶段不能升级");
-            }
-        }
-
-        //当 当前阶段为 淘汰的时候
-        if (currentPhase.equals(eliminate)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                throw new ServiceException(98018, "当前阶段不能降级");
-            } else {
-                //升级
-                if (!Arrays.asList(access, conform).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【淘汰】升级只能选择【准入】【合格】");
-                }
-            }
-        }
-
-    }
 
     @Override
     public List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto) {

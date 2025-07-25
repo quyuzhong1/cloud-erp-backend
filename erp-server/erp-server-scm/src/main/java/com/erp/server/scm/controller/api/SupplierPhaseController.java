@@ -13,9 +13,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
-import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
 import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.SupplierPhaseService;
 import org.apache.commons.lang3.StringUtils;
@@ -87,20 +84,6 @@ public class SupplierPhaseController extends BaseController {
     public ApiResult add(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         String id = supplierPhaseService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
-    }
-
-    /**
-     * 变更阶段的时候 获取对应的阶段列表
-     *
-     * @param
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BaseDropDownDTO.CommonDTO>>
-     * @author yl
-     * @date 2023-03-31 14:20
-     */
-    @PostMapping("/listByChange")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByChange(@RequestBody @Validated SupplierPhaseDTO.ListDTO dto) {
-        List<BaseDropDownDTO.CommonDTO> list = supplierPhaseService.listByChange(dto);
-        return success(list);
     }
 
     /**
