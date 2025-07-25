@@ -85,7 +85,7 @@ public class WeiShiInboundInitHandler extends DmpInputInitHandler {
 				}
 				weiShiInboundResp.getData().getList().forEach(v->{
 					v.getInboundBoxList().forEach(box -> {
-						box.setFinishPutawayTime(v.getFinishPutawayTime());
+						box.setFinishPutawayTime(v.getReceiptLastTime());
 					});
 				});
 				allResult.addAll(weiShiInboundResp.getData().getList());
