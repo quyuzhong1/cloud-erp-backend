@@ -1,40 +1,57 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.dto.CustomerB2CDTO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.mapper.SupplierPhaseMapper;
+import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.AttachmentService;
+import com.erp.server.scm.service.SupplierGradeService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +72,18 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     @Resource
     private AttachmentService attachmentService;
 
+    @Resource
+    private SupplierGradeService supplierGradeService;
+
+    @Resource
+    private SupplierPhaseQueryHandler supplierPhaseQueryHandler;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Resource
+    @Qualifier("tabExecutorPool")
+    private ExecutorService tabExecutorPool;
     /**
      * 添加供应商阶段
      *
@@ -318,18 +347,28 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-//        String searchType = params.getSearchType();
-//        List<String> statusList = new ArrayList<>();
-//        //待我审核
-//        if (searchType.equals(SearchType.WAIT_APPROVE)) {
-//            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-//        }
-//        IPage pageData = baseMapper.paging(query, params, statusList);
         IPage pageData = baseMapper.paging(query, params, null);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         for (SupplierPhaseDTO.PagingViewDTO item : list) {
             String type = item.getOperateType();
             item.setTypeName(type.equals(ScmConstant.DEGRADE) ? "降级" : "升级");
@@ -344,6 +383,22 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             item.setTargetPhaseName(targetPhaseName);
             String approveStatus = item.getApproveStatus();
             item.setApproveStatusName(ApproveStatusEnum.getName(approveStatus));
+
+            //当前等级
+            String currentGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getCurrentGradeId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCurrentGradeName(currentGradeName);
+            //目标等级
+            String targetGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getTargetGradeId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setTargetGradeName(targetGradeName);
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+
         }
         return new PagingVO(pageData);
     }
@@ -462,11 +517,19 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 17:50
      */
     private Boolean updateApproveStatus(List<SupplierPhaseEntity> list, String approveStatus) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(approveStatus));
-            return this.updateBatchById(list);
+        if (CollUtil.isEmpty(list)) {
+            return Boolean.FALSE;
         }
-        return false;
+        List<String> ids = list.stream().map(SupplierPhaseEntity::getId).distinct().collect(Collectors.toList());
+        //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        return this.lambdaUpdate().in(SupplierPhaseEntity::getId, ids)
+                .set(SupplierPhaseEntity::getApproveUserId, userInfo.getUid())
+                .set(SupplierPhaseEntity::getApproveUserName, userInfo.getUserName())
+                .set(SupplierPhaseEntity::getApproveStatus, approveStatus)
+                .set(SupplierPhaseEntity::getApproveTime, LocalDateTime.now())
+                .update();
     }
 
 
@@ -548,23 +611,43 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
     @Override
     public List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto) {
-        List<SupplierPhaseDTO.TabFlagDTO> resultList = new ArrayList<>(2);
-        List<SupplierPhaseDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
-        int allCount = approveCountList.stream().mapToInt(SupplierPhaseDTO.ApproveCountDTO::getCount).sum();
-        SupplierPhaseDTO.TabFlagDTO all = new SupplierPhaseDTO.TabFlagDTO();
-        all.setCount(allCount);
-        all.setTabFlag("all");
-        all.setTabFlagName("全部");
-        resultList.add(all);
-        //待审核
-        SupplierPhaseDTO.TabFlagDTO waitApprove = new SupplierPhaseDTO.TabFlagDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setTabFlag(ApproveStatusEnum.APPROVE_ING.getStatus());
-        waitApprove.setTabFlagName("待审核");
-        resultList.add(waitApprove);
-        return resultList;
+        SupplierPhaseTabFlagEnum[] values = SupplierPhaseTabFlagEnum.values();
+        List<Future<SupplierPhaseDTO.TabFlagDTO>> futureList = new ArrayList<>();
+        List<SupplierPhaseDTO.TabFlagDTO> list = new ArrayList<>();
+        for (SupplierPhaseTabFlagEnum item : values) {
+            Future<SupplierPhaseDTO.TabFlagDTO> submit =  tabExecutorPool.submit(() -> {
+                SupplierPhaseDTO.PagingParamDTO searchParamDTO = new SupplierPhaseDTO.PagingParamDTO();
+                searchParamDTO.setPermissionSql(dto.getPermissionSql());
+                SupplierPhaseDTO.TabFlagDTO resultDTO = new SupplierPhaseDTO.TabFlagDTO();
+                String tabSql = supplierPhaseQueryHandler.getTabSql(item.getCode());
+                HashMap<String, String> map = new HashMap<>();
+                map.put("default", tabSql);
+                searchParamDTO.setSqlMap(map);
+                Integer count = this.baseMapper.tabList(searchParamDTO);
+                resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+                resultDTO.setTabFlag(item.getCode());
+                resultDTO.setTabFlagName(item.getName());
+                return resultDTO;
+            });
+            futureList.add(submit);
+        }
+        for(Future<SupplierPhaseDTO.TabFlagDTO> f : futureList) {
+            try {
+                list.add(f.get());
+            } catch (InterruptedException e) {
+                // 恢复线程的中断状态，确保中断标志不会被忽略
+                Thread.currentThread().interrupt();
+                log.error("线程被中断", e);
+                throw new ServiceException("线程被中断", e);
+            } catch (ExecutionException e) {
+                log.error("线程任务执行异常", e);
+                throw new ServiceException("线程任务执行异常", e.getCause());
+            } catch (ThreadDeath td) {
+                log.error("捕获到 ThreadDeath，线程终止", td);
+                throw td; // 重新抛出以允许线程正常终止
+            }
+        }
+        return list;
     }
 
 }

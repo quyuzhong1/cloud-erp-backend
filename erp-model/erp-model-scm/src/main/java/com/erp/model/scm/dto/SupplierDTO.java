@@ -584,7 +584,7 @@ public class SupplierDTO implements Serializable {
         private JSONArray certificateJson;
 
         /**
-         * 产品分类集合
+         * 产品分类集合,get,plm/category/tree
          */
         @NotEmpty(message = "产品分类不能为空")
         private JSONArray productCategoryJson;
@@ -596,7 +596,7 @@ public class SupplierDTO implements Serializable {
         private JSONArray applicationCategoryJson;
 
         /**
-         * 工厂所在地,get,plm/category/tree
+         * 工厂所在地,get,sys/dict/city/countryTreeList
          */
         @NotEmpty(message = "工厂所在地不能为空")
         @Valid

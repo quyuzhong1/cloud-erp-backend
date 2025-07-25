@@ -10,6 +10,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -18,6 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,6 +61,7 @@ import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -368,7 +371,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
-        handleContact(contactList);
+        handleContact(supplierId,contactList);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息
@@ -1826,16 +1829,78 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param contactList
      * @return void
      */
-    private void handleContact (List<SupplierContactDTO.UpdateDTO> contactList) {
+    private void handleContact (String supplierId,List<SupplierContactDTO.UpdateDTO> contactList) {
         if (CollUtil.isEmpty(contactList)) {
             return;
         }
+        //查询是否存在电话查看权限
+        Boolean existAuth = isExistAuth(Collections.singletonList(supplierId), "supplier:telNumber:view", "purchase_user_id");
         for (SupplierContactDTO.UpdateDTO updateDTO : contactList) {
             //隐藏电话
-            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber())) {
+            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber()) && !existAuth) {
                 updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
             }
         }
+    }
+    /**
+     * 查看是否存在权限
+     * @author will
+     * @date 2025/7/25 12:21
+     * @param billIdList
+     * @param menuCode
+     * @param menuTableField
+     * @return Boolean
+     */
+    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
+        //判断是否有权限回填产品信息
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(menuCode);
+            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(menuCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (ObjectUtils.isEmpty(userRequestPermissions)) {
+            return Boolean.FALSE;
+        }
+        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+        List<String> users = new ArrayList<>();
+        List<?> objects = this.listByIds(billIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+
+            if (CharSequenceUtil.isBlank(menuTableField)) {
+                return Boolean.FALSE;
+            }
+            String[] tableFields = menuTableField.split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
+        }
+        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return Boolean.TRUE;
+        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount == 0) {
+                return Boolean.FALSE;
+            }
+        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(userInfo.getUid())) {
+                return Boolean.FALSE;
+            }
+        }
+        return Boolean.TRUE;
     }
 
     /**

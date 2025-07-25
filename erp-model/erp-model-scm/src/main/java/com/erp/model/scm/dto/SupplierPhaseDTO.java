@@ -63,6 +63,18 @@ public class SupplierPhaseDTO implements Serializable {
 
 
         /**
+         * 当前等级
+         */
+        private String currentGradeId;
+
+        /**
+         * 目标等级
+         */
+        private String targetGradeId;
+
+
+
+        /**
          * 附件地址
          */
         private List<String> attachmentUrlList;
@@ -187,6 +199,25 @@ public class SupplierPhaseDTO implements Serializable {
         private String description;
 
         /**
+         * 当前等级
+         */
+        private String currentGradeId;
+        /**
+         * 当前等级名称
+         */
+        private String currentGradeName;
+
+        /**
+         * 目标等级
+         */
+        private String targetGradeId;
+
+        /**
+         * 目标等级名称
+         */
+        private String targetGradeName;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
@@ -203,9 +234,13 @@ public class SupplierPhaseDTO implements Serializable {
         private String createUserName;
 
         /**
-         * 审核人
+         * 审核完成人
          */
-        private String approvedBy;
+        private String approveUserName;
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 创建时间
