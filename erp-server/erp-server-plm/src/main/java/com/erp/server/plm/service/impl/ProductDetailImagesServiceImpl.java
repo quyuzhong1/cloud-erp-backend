@@ -84,7 +84,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         }
         Integer status = productDetailEntity.getStatus();
         if (status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
-            throw new ServiceException(ApiError.ERROR_95290);
+            throw new ServiceException(ApiError.ERROR_95291);
         }
         String imagesUrl = productDetailEntity.getImagesUrl();
 
