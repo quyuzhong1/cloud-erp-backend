@@ -1,0 +1,218 @@
+package com.erp.server.plm.service.impl;
+
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.*;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.server.plm.mapper.ProductDetailMapper;
+import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import java.io.*;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_SKU_IMAGES;
+
+/**
+ * @Description: 产品明细信息 图片处理类
+ * @Author: jack
+ * @Date: 2025-07-25
+ **/
+@Slf4j
+@Service
+public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMapper, ProductDetailEntity> implements ProductDetailImagesService {
+
+
+    @Resource
+    private SysLogService sysLogService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private ImageProcessService imageProcessService;
+
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
+
+    @Resource
+    @Qualifier("zipImageExecutorPool")
+    private ExecutorService zipImageExecutorPool;
+
+    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
+
+    /**
+     * 更新产品主图
+     * @author jack
+     * @date 2025-07-26
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadProductImage(ProductDetailDTO.ProductImagesDTO dto) {
+        ProductDetailEntity productDetailEntity = getById(dto.getSkuId());
+        if (ObjectUtils.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Integer status = productDetailEntity.getStatus();
+        if (status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
+            throw new ServiceException(ApiError.ERROR_95290);
+        }
+        String imagesUrl = productDetailEntity.getImagesUrl();
+
+        boolean save = lambdaUpdate()
+                .eq(ProductDetailEntity::getId, dto.getSkuId())
+                .set(ProductDetailEntity::getImagesUrl, dto.getImagesUrl())
+                .update();
+
+        if (save) {
+            sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + dto.getImagesUrl() + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+        }
+        return save;
+    }
+
+    /**
+     * 异步导入SKU图片（主页）
+     * @author jack
+     * @date 2025-07-25
+     */
+    @Override
+    public Boolean importZip(BaseDTO.ImportDTO dto) {
+        downloadTaskFeign.saveImportTask("SKU图片导入", IMPORT_PLM_SKU_IMAGES.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+
+    /**
+     * @author jack
+     * @date 2025-07-26
+     *
+     * 导入商品详情图片（通过解析压缩包实现）
+     * 该方法接收一个包含压缩包文件URL的导入DTO对象，解析压缩包中的图片文件，
+     * 根据文件名提取SKU编号，并将图片与对应的商品详情进行关联处理。
+     * 同时会排除状态为“待审核”的商品详情数据。
+     * 最终更新任务执行结果到下载任务服务中。
+     * @param dto 包含文件URL和任务ID的导入参数对象，不能为空
+     */
+    @Override
+    public void importProductDetailImages(BaseDTO.ImportDTO dto) {
+        List<MultipartFile> multipartFiles = null;
+        try {
+            // 解析压缩包获取图片文件列表
+            multipartFiles = imageProcessService.processZip(dto.getFileUrl());
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage());
+        }
+
+        ZipTaskResultDTO result = new ZipTaskResultDTO();
+        if (CollectionUtil.isNotEmpty(multipartFiles)) {
+            // 根据文件名获取SKU集合(去除后缀，去除下划线)
+            List<String> skuNoList = multipartFiles.stream()
+                    .map(MultipartFile::getOriginalFilename)
+                    .map(name -> {
+                        return getFileNameNotExt(name);
+                    })
+                    .filter(name -> !name.contains("_"))
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 排除待审核的SKU，只处理非“待审核”状态的商品详情
+            List<ProductDetailEntity> productDetailList = lambdaQuery()
+                    .in(ProductDetailEntity::getSkuNo, skuNoList)
+                    .ne(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+                    .list();
+
+            if (CollectionUtil.isNotEmpty(productDetailList)) {
+                // 构建SKU到商品详情实体的映射，用于快速查找
+                Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
+                List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+                // 获取压缩图片大小的配置
+                Long size = getImgUploadSize();
+
+                // 遍历所有图片文件并异步处理
+                for (MultipartFile file : multipartFiles) {
+                    // 每次循束，总处理数加一
+                    result.incrementTotal();
+
+                    String originalFilename = file.getOriginalFilename();
+                    String fileName = getFileNameNotExt(originalFilename);
+                    String skuNo = fileName.contains("_") ? fileName.substring(0, fileName.indexOf("_")) : fileName;
+                    if (!productDetailMap.containsKey(skuNo)) {
+                        // 如果SKU不存在于产品明细中，跳过处理
+                        result.incrementFailed(fileName);
+                        continue;
+                    }
+
+                    ProductDetailEntity productDetailEntity = productDetailMap.get(skuNo);
+
+                    // 异步处理单张图片
+                    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                        imageProcessService.processImage(file, fileName, productDetailEntity, size, result);
+                    }, zipImageExecutorPool);
+                    futures.add(future);
+                }
+                // 等待所有异步任务完成
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
+        }
+
+        // 构造任务处理结果并更新任务状态
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(result.getTotal());
+        importResultDTO.setRemark("处理完成，失败" + result.getFailed() + "条");
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+
+    private String getFileNameNotExt(String filename) {
+        int dotIndex = filename.lastIndexOf(".");
+        return dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+    }
+
+    /**
+     * 查询配置
+     */
+    private Long getImgUploadSize() {
+        Long size = 0L;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, SettingEnum.IMG_UPLOAD_SIZE_KEY.getKey())
+                .eq(CfgSettingEntity::getType, SettingEnum.IMG_UPLOAD_SIZE_KEY.getType())
+                .list();
+        if (CollectionUtil.isNotEmpty(list) && ObjectUtil.isNotNull(list.get(0).getValue())) {
+            size = Long.valueOf(list.get(0).getValue());
+        }
+        return size;
+    }
+}

@@ -3,10 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.ExcelImportFsDTO;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
@@ -834,10 +831,4 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return SkuVO
      */
     List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
-    /**
-     * @deprecated 上传SKU图片（主页）
-     * @Author jack
-     * @Date 2025-07-25
-     **/
-    Boolean uploadProductImage(ProductDetailDTO.ProductImagesDTO dto);
 }

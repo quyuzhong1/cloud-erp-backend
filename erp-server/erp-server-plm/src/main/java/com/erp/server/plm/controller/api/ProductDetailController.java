@@ -102,6 +102,8 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductCustomsService productCustomsService;
+    @Resource
+    private ProductDetailImagesService productDetailImagesService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -1374,7 +1376,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * @deprecated 上传SKU图片（主页）
+     *  上传SKU图片（主页）
      * @Author jack
      * @Date 2025-07-25
      **/
@@ -1382,12 +1384,29 @@ public class ProductDetailController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:detail:uploadProductImage",
-            serviceClass = ProductDetailService.class,
+            serviceClass = ProductDetailImagesService.class,
             keyIdName = "id"
     )
     public ApiResult uploadProductImage(@RequestBody @Validated ProductDetailDTO.ProductImagesDTO dto) {
-        Boolean flag = productDetailService.uploadProductImage(dto);
+        Boolean flag = productDetailImagesService.uploadProductImage(dto);
         return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     *  上传zip包 图片
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping(value = "/importZip")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:uploadProductImage",
+            serviceClass = ProductDetailImagesService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<Object> importZip(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = productDetailImagesService.importZip(dto);
+        return flag == true ? success() : failure();
     }
 
 }
