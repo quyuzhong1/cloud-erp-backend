@@ -55,14 +55,15 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Resource
-    private CommonService commonService;
 
     @Resource
     private ImageProcessService imageProcessService;
 
     @Resource
     private PlmAttachmentService plmAttachmentService;
+
+    @Resource
+    private FileFeign fileFeign;
 
     @Resource
     @Qualifier("zipImageExecutorPool")
@@ -95,6 +96,13 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
 
         if (save) {
             sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + dto.getImagesUrl() + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+
+            plmAttachmentService.lambdaUpdate().eq(PlmAttachmentEntity::getAttachUrl, imagesUrl)
+                    .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
+                    .set(PlmAttachmentEntity::getIsDeleted,true)
+                    .update();
+
+            fileFeign.deleteFile(imagesUrl);
         }
         return save;
     }
