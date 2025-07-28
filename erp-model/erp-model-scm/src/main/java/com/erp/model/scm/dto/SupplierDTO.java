@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -647,6 +648,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 选中导出字段
          */
+        @Valid
         private List<ExportField> fieldList;
     }
 
@@ -660,11 +662,13 @@ public class SupplierDTO implements Serializable {
         /**
          * 字段
          */
+        @NotBlank(message = "导出字段编码不能为空")
         private String field;
 
         /**
          * 字段名称
          */
+        @NotBlank(message = "导出字段名称不能为空")
         private String fieldName;
     }
 
@@ -908,6 +912,104 @@ public class SupplierDTO implements Serializable {
 
 
     /**
+     * 供应商分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingExportDTO  extends  PagingViewDTO{
+
+        /**
+         * 联系人-人员
+         */
+        private String person;
+        /**
+         * 联系人-职务
+         */
+        private String position;
+        /**
+         * 联系人-电话
+         */
+        private String telNumber;
+        /**
+         * 联系人-邮箱
+         */
+        private String email;
+        /**
+         * 联系人-默认联系人
+         */
+        private Boolean contactIsDefault;
+        /**
+         * 联系人-默认联系人，是/否
+         */
+        private String contactIsDefaultName;
+        /**
+         * 联系人-启用状态
+         */
+        private Boolean contactDisabled;
+        /**
+         * 联系人-启用状态，是/否
+         */
+        private String contactDisabledName;
+        /**
+         * 联系人-备注
+         */
+        private String contactRemark;
+        /**
+         * 账户-账户名称
+         */
+        private String payee;
+        /**
+         * 账户-收款银行
+         */
+        private String bankName;
+        /**
+         * 账户-银行账号
+         */
+        private String bankAccount;
+        /**
+         * 账户-开户支行
+         */
+        private String bankSubbranch;
+        /**
+         * 账户-支付方式
+         */
+        private String payMethodId;
+        /**
+         * 账户-是否默认
+         */
+        private Boolean accountDefault;
+        /**
+         * 账户-是否默认,是/否
+         */
+        private String accountDefaultName;
+        /**
+         * 账户-备注
+         */
+        private String accountRemark;
+        /**
+         * 资质 -主键id
+         */
+        private String credentialId;
+        /**
+         * 资质-名称
+         */
+        private String credentialName;
+        /**
+         * 资质-有效期
+         */
+        private LocalDate effectiveDate;
+        /**
+         * 资质-失效期
+         */
+        private LocalDate expireDate;
+        /**
+         * 资质-备注
+         */
+        private String credentialRemark;
+    }
+
+
+        /**
      * 导出供应商
      */
     @Data
