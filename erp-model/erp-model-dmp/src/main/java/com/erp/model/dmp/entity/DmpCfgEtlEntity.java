@@ -31,6 +31,11 @@ public class DmpCfgEtlEntity extends BaseEntity<DmpCfgEtlEntity> {
     @TableField("disabled")
     private Boolean disabled;
     /**
+     * 应用分类，填std,dwd,ads等
+     */
+     @TableField("app_category")
+     private String appCategory;
+    /**
     * 应用id
     */
     @TableField("app_id")
