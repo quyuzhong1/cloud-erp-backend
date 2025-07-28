@@ -205,7 +205,7 @@ public class WeiShiServiceTest {
         System.out.println(JSONUtil.toJsonStr(tokenRespWeiShiBaseResp));
         authMap.put("accessToken", tokenRespWeiShiBaseResp.getData().getAccessToken());
         WeiShiCancelOutboundRequest weiShiCreateOutboundRequest = new WeiShiCancelOutboundRequest();
-        weiShiCreateOutboundRequest.setOrderNo("SU0151982327016");
+        weiShiCreateOutboundRequest.setOrderNo("SU0152092446175");
         weiShiCreateOutboundRequest.setReason("测试");
         WeiShiBaseResp<String>  resp = weiShiService.cancelOutbound(weiShiCreateOutboundRequest,authMap);
         System.out.println(JSONUtil.toJsonStr(resp));

@@ -218,7 +218,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
-        return success();
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
