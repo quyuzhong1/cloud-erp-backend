@@ -342,7 +342,7 @@ public class ShopDTO implements Serializable {
          /**
          * 启用时间
          */
-         @NotNull(message = "启用时间不能为空")
+//         @NotNull(message = "启用时间不能为空")
          private LocalDateTime enableTime;
          /**
          * 店铺退货仓库： 同店铺平台仓库获取方式
@@ -731,7 +731,7 @@ public class ShopDTO implements Serializable {
          /**
          * 启用时间
          */
-         @NotNull(message = "启用时间不能为空")
+//         @NotNull(message = "启用时间不能为空")
          private LocalDateTime enableTime;
          /**
          * 店铺退货仓库：同店铺平台仓库获取方式
