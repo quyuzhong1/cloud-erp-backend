@@ -433,12 +433,18 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 供应商导入
+     *
+     * @author will
+     * @date 2025/7/22 20:09
+     * @param excelFile
+     * @param type allUpdate,partUpdate
+     * @param response
+     * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierService.importFile(excelFile, response);
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "type") String type, HttpServletResponse response) {
+        Boolean result = supplierService.importFile(excelFile,type, response);
         return result == true ? success() : failure();
     }
 

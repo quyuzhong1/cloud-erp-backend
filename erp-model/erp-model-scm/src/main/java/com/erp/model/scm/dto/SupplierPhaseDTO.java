@@ -3,7 +3,6 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,12 +36,6 @@ public class SupplierPhaseDTO implements Serializable {
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
 
-        /**
-         * 操作类型
-         */
-        @NotBlank(message = "操作类型不能为空")
-        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
-        private String operateType;
 
         /**
          * 当前阶段
@@ -63,6 +56,18 @@ public class SupplierPhaseDTO implements Serializable {
 
 
         /**
+         * 当前等级
+         */
+        private String currentGradeId;
+
+        /**
+         * 目标等级
+         */
+        private String targetGradeId;
+
+
+
+        /**
          * 附件地址
          */
         private List<String> attachmentUrlList;
@@ -79,13 +84,6 @@ public class SupplierPhaseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
-        /**
-         * 操作类型
-         */
-        @NotBlank(message = "操作类型不能为空")
-        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
-        private String operateType;
 
         /**
          * 当前阶段
@@ -151,16 +149,6 @@ public class SupplierPhaseDTO implements Serializable {
         private String categoryName;
 
         /**
-         * 操作类型
-         */
-        private String operateType;
-
-        /**
-         * 操作类型
-         */
-        private String typeName;
-
-        /**
          * 当前阶段
          */
         private String currentPhase;
@@ -187,6 +175,25 @@ public class SupplierPhaseDTO implements Serializable {
         private String description;
 
         /**
+         * 当前等级
+         */
+        private String currentGradeId;
+        /**
+         * 当前等级名称
+         */
+        private String currentGradeName;
+
+        /**
+         * 目标等级
+         */
+        private String targetGradeId;
+
+        /**
+         * 目标等级名称
+         */
+        private String targetGradeName;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
@@ -203,9 +210,13 @@ public class SupplierPhaseDTO implements Serializable {
         private String createUserName;
 
         /**
-         * 审核人
+         * 审核完成人
          */
-        private String approvedBy;
+        private String approveUserName;
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 创建时间
@@ -243,11 +254,6 @@ public class SupplierPhaseDTO implements Serializable {
          */
         private List<String> categoryIdList;
 
-
-//        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
-        private String operateType;
-
-
         /**
          * 状态
          */
@@ -257,7 +263,28 @@ public class SupplierPhaseDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 选中导出字段
+         */
+        private List<SupplierPhaseDTO.ExportField> fieldList;
+    }
 
+    /**
+     * 导出字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Data

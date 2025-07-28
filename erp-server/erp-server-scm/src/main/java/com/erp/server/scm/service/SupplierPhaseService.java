@@ -1,14 +1,16 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
+import com.erp.model.scm.dto.excel.SupplierPhaseExportExcelDTO;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -116,18 +118,33 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      */
     Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto);
 
-    
-    /**
-     * 获取阶段变更的时候 获取阶段列表
-     * @author yl
-     * @date 2023-03-31 14:26
-     * @param dto
-     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
-     */
-    List<BaseDropDownDTO.CommonDTO> listByChange(SupplierPhaseDTO.ListDTO dto);
 
     /**
      * tab List
      */
     List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto);
+    /**
+     * 导出供应商阶段
+     * @author will
+     * @date 2025/7/28 10:31
+     * @param dto
+     * @return void
+     */
+    void export(SupplierPhaseDTO.@Valid PagingParamDTO dto);
+    /**
+     * 全量字段导出
+     * @author will
+     * @date 2025/7/28 11:16
+     * @param dto
+     * @return PagingVO<SupplierPhaseExportExcelDTO>
+     */
+    PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+    /**
+     * 按字段导出
+     * @author will
+     * @date 2025/7/28 11:16
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
 }

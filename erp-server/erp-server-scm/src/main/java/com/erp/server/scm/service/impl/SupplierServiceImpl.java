@@ -7,7 +7,10 @@ import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -15,7 +18,9 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,13 +28,15 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.entity.ApplicationCategoryEntity;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
@@ -40,6 +47,8 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierTabEnum;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
@@ -53,6 +62,7 @@ import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -80,15 +90,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER;
 
 /**
@@ -174,6 +188,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Resource
     private SupplierService self;
+
+    @Resource
+    private SupplierPlantAddrService supplierPlantAddrService;
+
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+
     /**
      * 保存供应商信息
      *
@@ -204,8 +225,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         //供应商id
         String supplierId = IdWorker.getIdStr();
-        SupplierEntity addEntity = new SupplierEntity();
-        BeanMapper.copy(dto, addEntity);
+        SupplierEntity addEntity = BeanUtil.toBean(dto, SupplierEntity.class);
 
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
@@ -256,22 +276,24 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         Boolean result = this.save(addEntity);
         //保存成功
-        if (result) {
-            //供应商账号信息
-            List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
-            supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
-            //供应商联系人信息
-            supplierContactService.saveBatchContact(supplierId, contactList);
-
-            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
-            supplierCredentialService.saveBatchCredential(credentialList);
-            //添加日志
-            String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
-            return addEntity;
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1019);
         }
+        //供应商账号信息
+        List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
+        supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
+        //供应商联系人信息
+        supplierContactService.saveBatchContact(supplierId, contactList);
 
-        return null;
+        credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
+        supplierCredentialService.saveBatchCredential(credentialList);
+        //添加供应商工厂地
+        supplierPlantAddrService.saveOrUpdateBatchPlantAddr(dto.getPlantAddrList(), supplierId);
+        //添加日志
+        String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
+        return addEntity;
+
     }
 
     /**
@@ -330,12 +352,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public SupplierDTO.SupplierViewDTO view(String supplierId) {
-        SupplierDTO.SupplierViewDTO result = new SupplierDTO.SupplierViewDTO();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        BeanMapper.copy(supplier, result);
+        SupplierDTO.SupplierViewDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierViewDTO.class);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
         String paymentConditionName="";
@@ -352,7 +373,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
-        handleContact(contactList);
+        handleContact(supplierId,contactList);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息
@@ -361,6 +382,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据供应商id 获取资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = supplierCredentialService.getBySupplierId(supplierId);
         result.setCredentialList(credentialList);
+        //工厂地
+        List<SupplierPlantAddrEntity> plantAddrList = supplierPlantAddrService.listBySupplierId(supplierId);
+        List<SupplierPlantAddrDTO.ViewDTO> plantAddrViewList = BeanUtil.copyToList(plantAddrList, SupplierPlantAddrDTO.ViewDTO.class);
+        result.setPlantAddrList(plantAddrViewList);
         return result;
     }
 
@@ -392,8 +417,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
         //旧的
-        SupplierEntity old = new SupplierEntity();
-        BeanMapper.copy(supplier, old);
+        SupplierEntity old = BeanUtil.toBean(supplier, SupplierEntity.class);
         //供应商srm状态是否修改
         if (Objects.nonNull(dto.getSrmDisabled()) && !supplier.getSrmDisabled().equals(dto.getSrmDisabled())){
             LoginUser user = UserContext.getDefaultLoginUser();
@@ -443,7 +467,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
-        BeanMapper.copy(dto, supplier);
+        BeanUtil.copyProperties(dto, supplier);
 
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
@@ -475,24 +499,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         Boolean result = this.updateById(supplier);
         //修改成功
-        if (result) {
-            /**
-             * 添加修改日志
-             */
-            moduleOperateLogService.addModuleOperateLogByObj(old, supplier, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
-
-            //联系人的
-            supplierContactService.updateSupplierContact(contactList, supplierId);
-            //账户信息
-            List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
-            supplierAccountService.updateAccount(bankAccountList, supplierId);
-            //资质的
-            credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
-            supplierCredentialService.updateCredential(credentialList, supplierId);
-            return supplierId;
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1002);
         }
+        /**
+         * 添加修改日志
+         */
+        moduleOperateLogService.addModuleOperateLogByObj(old, supplier, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
 
-        return "";
+        //联系人的
+        supplierContactService.updateSupplierContact(contactList, supplierId);
+        //账户信息
+        List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
+        supplierAccountService.updateAccount(bankAccountList, supplierId);
+        //资质的
+        credentialList.stream().forEach(e-> e.setSupplierId(supplierId));
+        supplierCredentialService.updateCredential(credentialList, supplierId);
+        //工厂地
+        supplierPlantAddrService.saveOrUpdateBatchPlantAddr(dto.getPlantAddrList(), supplierId);
+        return supplierId;
     }
 
 
@@ -532,6 +557,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
 
+        //供应商工厂地
+        List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -569,6 +596,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //付款条件
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPaymentConditionName(paymentConditionName);
+            //供应商工厂地
+            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
+            item.setPlantAddrNames(plantAddrsNames);
+            //供应商属性名称
+            String propertyNames = item.getPropertyJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setPropertyNames(propertyNames);
+            //体系认证名称
+            String certificateJson = item.getCertificateJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setCertificateNames(certificateJson);
+            //体系认证名称
+            String productCategoryNames = item.getProductCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setProductCategoryNames(productCategoryNames);
+            //应用分类名称
+            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setApplicationCategoryNames(applicationCategoryNames);
 
             ApproveStatusEnum statusEnum = item.getApproveStatus();
             item.setApproveStatusName(statusEnum.getName());
@@ -979,7 +1021,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public void exportSupplier(SupplierDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            //正常导出
+            downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
+        } else {
+            //按字段导出
+            downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_DYNAMIC_SUPPLIER.getCode(), dto);
+        }
     }
 
     /**
@@ -992,35 +1040,38 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-30 9:44
      */
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        List<String> keyList = new ArrayList<>(3);
-        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
-        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
-        //获取供应商等级
-        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
-        //根据 key list 获取到对应数据
-        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
-        //用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<SupplierEntity> supplierList = this.list();
-        //币种信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(new ArrayList<>());
-        List<BaseIdDTO> bankList = sysUserFeign.getBankList(new ArrayList<>());
-        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList, supplierList, userList, currencyList, bankList);
+    public Boolean importFile(MultipartFile excelFile,String type, HttpServletResponse response) {
+        SupplierExcelListener excelListenerUtil = new SupplierExcelListener(type);
         try {
-            EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("供应商导入错误！", e);
-            return Boolean.FALSE;
+            EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();
+        //验证导入数据是否为空
+        List<SupplierImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<SupplierImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<SupplierImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportSupplierFile(successList, errorList,type);
+
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
         if (errorList.size() > 0) {
             String fileName = "供应商导入错误信息";
             ExcelUtil.export(fileName, "supplierError", errorList, SupplierImportExcelDTO.class, response);
             return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 
@@ -1042,7 +1093,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(Arrays.asList(supplierId));
         if (CollectionUtils.isNotEmpty(contactList)) {
             SupplierContactEntity contact = contactList.get(0);
-            BeanMapper.copy(contact, view);
+            view = BeanUtil.toBean(contact,SupplierDTO.ViewDTO.class);
             view.setContactId(contact.getId());
         }
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(Arrays.asList(entity.getPayCurrency()));
@@ -1078,60 +1129,41 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     /**
      * 批量保存 导入的供应商
      *
-     * @param addList
+     * @param addDTO
      * @return void
      * @author yl
      * @date 2023-03-30 20:01
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList) {
-        if (CollectionUtils.isNotEmpty(addList)) {
-            int initSize = addList.size();
-            //供应商添加信息
-            List<SupplierEntity> addSupplierList = new ArrayList<>(initSize);
-            //供应商联系信息
-            List<SupplierContactEntity> addContactList = new ArrayList<>(initSize);
-            //账户信息
-            List<SupplierAccountEntity> addAccountList = new ArrayList<>(initSize);
-            //资质信息
-            List<SupplierCredentialEntity> addCredentialList = new ArrayList<>(initSize);
-            for (SupplierDTO.ImportAddDTO item : addList) {
-                SupplierEntity supplier = new SupplierEntity();
-                BeanMapper.copy(item, supplier);
-                String supplierId = IdWorker.getIdStr();
-                supplier.setId(supplierId);
-//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
-                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
-                supplier.setCode(code);
-                supplier.setSrmDisabled(true);
-                addSupplierList.add(supplier);
-                //账户
-                List<SupplierAccountDTO.ImportAddDTO> accountList = item.getBankAccountList();
-                addAccountList.addAll(supplierAccountService.transform(supplierId, accountList));
-                //联系人信息
-                List<SupplierContactDTO.ImportAddDTO> contactList = item.getContactList();
-                addContactList.addAll(supplierContactService.transform(supplierId, contactList));
-                //资质信息
-                List<SupplierCredentialDTO.ImportAddDTO> credentialList = item.getCredentialList();
-                addCredentialList.addAll(supplierCredentialService.transform(supplierId, credentialList));
-            }
-
-            this.saveBatch(addSupplierList);
-            supplierAccountService.saveBatch(addAccountList);
-            supplierContactService.saveBatch(addContactList);
-            supplierCredentialService.saveBatch(addCredentialList);
-
-            List<Pair<String, String>> pairList = addSupplierList.stream().
-                    map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());
-            String content = "导入一个供应商信息[%s]";
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "新增操作");
-
+    public void batchImportSupplier(SupplierDTO.ImportAddDTO addDTO,String type) {
+        if (ObjectUtil.isEmpty(addDTO)) {
+            return;
         }
+        //供应商添加信息
+        SupplierEntity supplier = BeanUtil.toBean(addDTO,SupplierEntity.class);
+        String supplierId = IdWorker.getIdStr();
+        supplier.setId(supplierId);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
+        supplier.setCode(code);
+        supplier.setSrmDisabled(true);
+        //账户
+        List<SupplierAccountEntity> addAccountList = supplierAccountService.transform(supplierId, addDTO.getBankAccountList());
+        //联系人信息
+        List<SupplierContactEntity> addContactList = supplierContactService.transform(supplierId, addDTO.getContactList());
+        //资质信息
+        List<SupplierCredentialEntity> addCredentialList = supplierCredentialService.transform(supplierId, addDTO.getCredentialList());
 
+        supplierPlantAddrService.importUpdate(supplierId, addDTO.getPlantAddrList(),type);
 
+        super.saveOrUpdate(supplier);
+        supplierAccountService.saveOrUpdateBatch(addAccountList);
+        supplierContactService.saveBatch(addContactList);
+        supplierCredentialService.saveBatch(addCredentialList);
+
+        String content = "导入一个供应商信息[%s]";
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "新增操作");
     }
-
 
     /**
      * 查询是否 有供应商占用 要删除的id 如果有就不能删除
@@ -1160,25 +1192,38 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public void updatePhase(List<SupplierPhaseEntity> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> supplierIds = list.stream().map(SupplierPhaseEntity::getSupplierId).distinct().collect(Collectors.toList());
-            List<SupplierEntity> supplierList = this.listByIds(supplierIds);
-            List<SupplierEntity> updateList = new ArrayList<>(list.size());
-            for (SupplierPhaseEntity item : list) {
-                String supplierId = item.getSupplierId();
-                SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
-                if (supplier != null) {
-                    String targetPhase = item.getTargetPhase();
-                    SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
-                    if (target != null) {
-                        supplier.setPhase(target);
-                        updateList.add(supplier);
-                    }
-                }
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> supplierIds = list.stream().map(SupplierPhaseEntity::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = this.listByIds(supplierIds);
+        List<SupplierEntity> updateList = new ArrayList<>(list.size());
+        List<String> phaseIdList = list.stream().map(SupplierPhaseEntity::getTargetGradeId).distinct().collect(Collectors.toList());
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.listByIds(phaseIdList);
+        Map<String, String> gradeMap = CollUtil.isEmpty(supplierGradeList) ? new HashMap<>() : supplierGradeList.stream().collect(Collectors.toMap(SupplierGradeEntity::getId, SupplierGradeEntity::getName));
+
+        for (SupplierPhaseEntity item : list) {
+            String supplierId = item.getSupplierId();
+            SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(supplier)) {
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
             }
-            if (CollectionUtils.isNotEmpty(updateList)) {
-                this.updateBatchById(updateList);
+            if (CharSequenceUtil.equals(item.getTargetGradeId(),supplier.getGradeId()) &&
+                    CharSequenceUtil.equals(item.getTargetPhase(),supplier.getPhase().getPhase())) {
+                //如果阶段和等级没有变更 则不需要更新
+                continue;
             }
+            supplier.setGradeId(item.getTargetGradeId());
+            supplier.setGradeName(gradeMap.get(supplier.getGradeId()));
+            String targetPhase = item.getTargetPhase();
+            SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
+            if (target != null) {
+                supplier.setPhase(target);
+                updateList.add(supplier);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
         }
     }
 
@@ -1397,6 +1442,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //获取到采购订单数据
         List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
 
+        //供应商工厂地
+        List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
+
         //获取供应商配置
         List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
         Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
@@ -1454,6 +1502,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String paymentCondition = item.getPaymentCondition();
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             exportExcel.setPaymentConditionName(paymentConditionName);
+
+            //供应商工厂地
+            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
+            item.setPlantAddrNames(plantAddrsNames);
+            //供应商属性名称
+            String propertyNames = item.getPropertyJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setPropertyNames(propertyNames);
+            //体系认证名称
+            String certificateJson = item.getCertificateJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setCertificateNames(certificateJson);
+            //体系认证名称
+            String productCategoryNames = item.getProductCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setProductCategoryNames(productCategoryNames);
+            //应用分类名称
+            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            item.setApplicationCategoryNames(applicationCategoryNames);
+
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
             SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
@@ -1529,6 +1594,28 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierEntity.setApproveTime(updateApproveStatusDTO.getThirdApproveTime());
         }
          approveEnd(supplierEntity,ApproveTypeEnum.PASS.getStatus(),"");
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierExportExcelDTO> excelList = this.exportSupplier(dto);
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+
+        List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        List<String> fieldCodeList = fieldList.stream().map(SupplierDTO.ExportField::getField).distinct().collect(Collectors.toList());
+        LinkedHashMap<String, String> fieldMap = (LinkedHashMap<String, String>) fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        dynamicExcelDTO.setHeaders(fieldMap);
+
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        List<SupplierExportExcelDTO> list = excelList.getList();
+        for (SupplierExportExcelDTO exportExcelDTO : list) {
+            LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+            LinkedHashMap<String, Object> exportMap = excelMap.entrySet().stream().filter(obj -> fieldCodeList.contains(obj.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue, LinkedHashMap::new));
+            data.add(exportMap);
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("供应商数据");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
     }
 
     /**
@@ -1783,15 +1870,636 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param contactList
      * @return void
      */
-    private void handleContact (List<SupplierContactDTO.UpdateDTO> contactList) {
+    private void handleContact (String supplierId,List<SupplierContactDTO.UpdateDTO> contactList) {
         if (CollUtil.isEmpty(contactList)) {
             return;
         }
+        //查询是否存在电话查看权限
+        Boolean existAuth = isExistAuth(Collections.singletonList(supplierId), "supplier:telNumber:view", "purchase_user_id");
         for (SupplierContactDTO.UpdateDTO updateDTO : contactList) {
             //隐藏电话
-            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber())) {
+            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber()) && !existAuth) {
                 updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
             }
         }
     }
+    /**
+     * 查看是否存在权限
+     * @author will
+     * @date 2025/7/25 12:21
+     * @param billIdList
+     * @param menuCode
+     * @param menuTableField
+     * @return Boolean
+     */
+    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
+        //判断是否有权限回填产品信息
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(menuCode);
+            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(menuCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (ObjectUtils.isEmpty(userRequestPermissions)) {
+            return Boolean.FALSE;
+        }
+        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+        List<String> users = new ArrayList<>();
+        List<?> objects = this.listByIds(billIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+
+            if (CharSequenceUtil.isBlank(menuTableField)) {
+                return Boolean.FALSE;
+            }
+            String[] tableFields = menuTableField.split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
+        }
+        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return Boolean.TRUE;
+        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount == 0) {
+                return Boolean.FALSE;
+            }
+        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(userInfo.getUid())) {
+                return Boolean.FALSE;
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 处理导入数据
+     * @author will
+     * @date 2025/7/24 16:47
+     * @param successList
+     * @param errorList
+     * @param type
+     * @return void
+     */
+    private void handleImportSupplierFile(List<SupplierImportExcelDTO> successList,List<SupplierImportExcelDTO> errorList,String type) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        List<String> keyList = new ArrayList<>(3);
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        keyList.add(DictBasicEnum.PROPERTY.getType());
+        keyList.add(DictBasicEnum.CERTIFICATE.getType());
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        //用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //供应商信息
+        List<String> supplierNameList = successList.stream().map(SupplierImportExcelDTO::getName).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = this.listBySupplierByNames(supplierNameList);
+        Map<String, SupplierEntity> supplierMap = CollUtil.isEmpty(supplierList) ? new HashMap<>() : supplierList.stream().collect(Collectors.toMap(SupplierEntity::getName, Function.identity(), (k1, k2) -> k1));
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(new ArrayList<>());
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(new ArrayList<>());
+
+        //产品分类
+        List<BasicCategoryEntity> dictProductCategoryList = FeignQuery.create(BasicCategoryEntity.class).list();
+        //应用分类
+        List<ApplicationCategoryEntity> dictApplicationCategoryList = FeignQuery.create(ApplicationCategoryEntity.class).list();
+
+        //国家
+        List<DictCountryEntity> countylist = FeignQuery.create(DictCountryEntity.class).list();
+
+        //省市
+        List<DictCityEntity> cityList = FeignQuery.create(DictCityEntity.class).list();
+
+        //联系人
+        List<SupplierContactEntity> contactList = supplierContactService.list();
+        //账户信息
+        List<SupplierAccountEntity> accountList = supplierAccountService.list();
+        //资质信息
+        List<SupplierCredentialEntity> credentialList = supplierCredentialService.list();
+
+        for (SupplierImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            SupplierDTO.ImportAddDTO addDTO = new SupplierDTO.ImportAddDTO();
+            addDTO.setName(excelDTO.getName());
+            SupplierEntity supplierEntity = supplierMap.get(excelDTO.getName());
+            //部分更新
+            boolean isUpdatePart = ImportCommonTypeEnum.UPDATE_PART.getCode().equals(type);
+            if (ObjectUtil.isEmpty(supplierEntity) && isUpdatePart) {
+                errorMsgList.add("供应商不存在,不支持部分更新");
+            }
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                if (isUpdatePart) {
+                    addDTO =  BeanUtil.toBean(supplierEntity, SupplierDTO.ImportAddDTO.class);
+                } else {
+                    addDTO.setId(supplierEntity.getId());
+                }
+            }
+            //供应商组表赋值
+            chekImportSupplier(dictProductCategoryList,dictApplicationCategoryList,supplierGradeList,userList,currencyList,dictBasicList,addDTO,excelDTO,errorMsgList,isUpdatePart);
+
+            //供应商工厂表赋值
+            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, addDTO, excelDTO, errorMsgList, isUpdatePart);
+
+            //联系人信息赋值
+            SupplierContactDTO.ImportAddDTO contactAddDTO = checkImportContact(contactList,excelDTO, addDTO, errorMsgList, isUpdatePart);
+
+            //账户信息
+            SupplierAccountDTO.ImportAddDTO accountAddDTO = checkImportAccount(dictBasicList,bankList,accountList,excelDTO, addDTO, errorMsgList, isUpdatePart);
+
+            //账户信息
+            SupplierCredentialDTO.ImportAddDTO credentialAddDTO = checkImportCredential(credentialList,excelDTO, addDTO, errorMsgList, isUpdatePart);
+
+            //存在错误数据则直接返回
+            if (errorMsgList.size() > 0) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                return;
+            }
+            addDTO.setPlantAddrList(plantAddrList);
+            addDTO.setContactList(Collections.singletonList(contactAddDTO));
+            addDTO.setBankAccountList(Collections.singletonList(accountAddDTO));
+            addDTO.setCredentialList(Collections.singletonList(credentialAddDTO));
+            self.batchImportSupplier(addDTO,type);
+        }
+    }
+
+    /**
+     * 导入工厂信息
+     * @author will
+     * @date 2025/7/24 19:04
+     * @param countylist
+     * @param cityList
+     * @param addDTO
+     * @param excelDTO
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return List<AddDTO>
+     */
+    private List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO,List<String> errorMsgList,boolean isUpdatePart) {
+        List<SupplierPlantAddrDTO.AddDTO> plantAddrList = addDTO.getPlantAddrList();
+        //工厂地址
+        if (CharSequenceUtil.isBlank(excelDTO.getPlantAddr())) {
+            List<String> addrList = Arrays.stream(excelDTO.getPlantAddr().split(",")).collect(Collectors.toList());
+            for (String addr : addrList) {
+                SupplierPlantAddrDTO.AddDTO addrDTO = new SupplierPlantAddrDTO.AddDTO();
+                //查询是否是国家
+                DictCountryEntity dictCountryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getNameCn(), addr.trim())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictCountryEntity)) {
+                    long count = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCountryCode(), dictCountryEntity.getId())).count();
+                    if (count > MathUtil.ZERO) {
+                        errorMsgList.add(CharSequenceUtil.format("国家【{}】下存在省份或城市，请先选择省份或城市", dictCountryEntity.getNameCn()));
+                        continue;
+                    }
+                    //如果国家下没有省份或城市，则直接添加国家
+                    addrDTO.setCountry(addr);
+                    continue;
+                }
+                //省份或城市
+                DictCityEntity dictCityEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), addr.trim())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(dictCityEntity)) {
+                    errorMsgList.add("工厂地址【" + addr + "】不存在，请先在系统中添加");
+                }
+                if (DictCityTypeEnum.PROVINCE.getCode().equals(dictCityEntity.getType())) {
+                    DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(countryEntity)) {
+                        errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
+                        continue;
+                    }
+                    addrDTO.setCountry(countryEntity.getId());
+                    addrDTO.setRegion(dictCityEntity.getCode());
+                } else if (DictCityTypeEnum.CITY.getCode().equals(dictCityEntity.getType())) {
+                    //国家
+                    DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(countryEntity)) {
+                        errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
+                        continue;
+                    }
+                    //省份
+                    DictCityEntity provinceEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getParentId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(provinceEntity)) {
+                        errorMsgList.add("工厂地址【" + addr + "】对应的省份不存在，请先在系统中添加");
+                        continue;
+                    }
+                    addrDTO.setCountry(countryEntity.getId());
+                    addrDTO.setRegion(provinceEntity.getCode());
+                    addrDTO.setCity(dictCityEntity.getCode());
+                } else {
+                    errorMsgList.add("工厂地址【" + addr + "】不支持直接添加街道，请先填写对应的城市");
+                }
+                plantAddrList.add(addrDTO);
+            }
+            return plantAddrList;
+        } else if (!isUpdatePart) {
+            errorMsgList.add("工厂地址不能为空");
+        }
+        return plantAddrList;
+    }
+    /**
+     * 资质信息处理
+     * @author will
+     * @date 2025/7/24 16:26
+     * @param credentialList
+     * @param excelDTO
+     * @param addDTO
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return ImportAddDTO
+     */
+    private SupplierCredentialDTO.ImportAddDTO checkImportCredential (List<SupplierCredentialEntity> credentialList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
+            ,List<String> errorMsgList,boolean isUpdatePart) {
+        //资质信息
+        SupplierCredentialDTO.ImportAddDTO credential = new SupplierCredentialDTO.ImportAddDTO();
+        //资质信息名称为空则无需处理
+        if (CharSequenceUtil.isBlank(excelDTO.getCredentialName())) {
+            return credential;
+        }
+        SupplierCredentialEntity supplierCredentialEntity = credentialList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getName(), excelDTO.getCredentialName())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(supplierCredentialEntity)) {
+            if (isUpdatePart) {
+                credential =  BeanUtil.toBean(supplierCredentialEntity, SupplierCredentialDTO.ImportAddDTO.class);
+            } else {
+                credential.setId(supplierCredentialEntity.getId());
+            }
+        } else if (isUpdatePart) {
+            errorMsgList.add("资质不存在,不支持部分更新");
+            return credential;
+        }
+        credential.setName(excelDTO.getCredentialName());
+        //资质备注
+        if (CharSequenceUtil.isNotBlank(excelDTO.getCredentialRemark())) {
+            credential.setRemark(excelDTO.getCredentialRemark());
+        } else if(!isUpdatePart) {
+            credential.setRemark("");
+        }
+        //有效日期
+        if (CharSequenceUtil.isNotBlank(excelDTO.getEffectiveDate())) {
+            credential.setEffectiveDate(LocalDate.parse(excelDTO.getEffectiveDate(), dateTimeFormatter));
+        }
+        //失效日期
+        if (CharSequenceUtil.isNotBlank(excelDTO.getExpireDate())) {
+            credential.setEffectiveDate(LocalDate.parse(excelDTO.getExpireDate(), dateTimeFormatter));
+        }
+        if (credential.getEffectiveDate() != null && credential.getExpireDate() != null) {
+            if (credential.getEffectiveDate().compareTo(credential.getExpireDate()) > 0) {
+                errorMsgList.add("资质有效起不能大于资质有效止");
+            }
+        }
+        credential.setSupplierName(addDTO.getName());
+        return credential;
+    }
+
+    /**
+     * 账户信息处理
+     * @author will
+     * @date 2025/7/24 16:26
+     * @param dictBasicList
+     * @param bankList
+     * @param accountList
+     * @param excelDTO
+     * @param addDTO
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return ImportAddDTO
+     */
+    private  SupplierAccountDTO.ImportAddDTO checkImportAccount(List<DictBasicEntity> dictBasicList,List<BaseIdDTO> bankList,List<SupplierAccountEntity> accountList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
+            ,List<String> errorMsgList,boolean isUpdatePart) {
+        //账户信息
+        SupplierAccountDTO.ImportAddDTO bankAccount = new SupplierAccountDTO.ImportAddDTO();
+        //账户信息名称为空则无需处理
+        if (CharSequenceUtil.isBlank(excelDTO.getPayee())) {
+            log.warn("账户名称为空,无需处理");
+            return bankAccount;
+        }
+        SupplierAccountEntity supplierAccountEntity = accountList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getPayee(), excelDTO.getPayee())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(supplierAccountEntity)) {
+            if (isUpdatePart) {
+                bankAccount =  BeanUtil.toBean(supplierAccountEntity, SupplierAccountDTO.ImportAddDTO.class);
+            } else {
+                bankAccount.setId(supplierAccountEntity.getId());
+            }
+        } else if (isUpdatePart) {
+            errorMsgList.add("银行不存在,不支持部分更新");
+            return bankAccount;
+        }
+
+        //全量更新时需要校验必填，账户名称、开户行、银行账号
+        if (!isUpdatePart) {
+            if (CharSequenceUtil.isBlank(excelDTO.getPayee())) {
+                errorMsgList.add("账户名称不能为空");
+            }
+            if (CharSequenceUtil.isBlank(excelDTO.getBankSubbranch())) {
+                errorMsgList.add("开户支行不能为空");
+            }
+            if (CharSequenceUtil.isBlank(excelDTO.getBankAccount())) {
+                errorMsgList.add("银行账号不能为空");
+            }
+        }
+        //银行账号
+        if (CharSequenceUtil.isNotBlank(excelDTO.getBankAccount())) {
+            bankAccount.setBankAccount(excelDTO.getBankAccount());
+        }
+        //账户名称
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPayee())) {
+            bankAccount.setPayee(excelDTO.getPayee());
+        }
+        //开户支行
+        if (CharSequenceUtil.isNotBlank(excelDTO.getBankSubbranch())) {
+            bankAccount.setBankSubbranch(excelDTO.getBankSubbranch());
+        } else if (!isUpdatePart) {
+            bankAccount.setBankSubbranch("");
+        }
+        //备注
+        if (CharSequenceUtil.isNotBlank(excelDTO.getAccountRemark())) {
+            bankAccount.setRemark(excelDTO.getAccountRemark());
+        } else if (!isUpdatePart) {
+            bankAccount.setRemark("");
+        }
+        //银行账号
+        if (StringUtils.isNotBlank(excelDTO.getBankName())) {
+            String bankId = bankList.stream().filter(b -> b.getName().equals(excelDTO.getBankName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(bankId)) {
+                errorMsgList.add("银行不存在");
+            }
+            bankAccount.setBankId(bankId);
+        } else if (!isUpdatePart) {
+            bankAccount.setBankId("");
+        }
+
+        //银行支付方式
+        String bankPayMethodName = excelDTO.getBankPayMethodName();
+        if (StringUtils.isNotBlank(bankPayMethodName)) {
+            String bankPayMethodId = dictBasicList.stream().filter(d -> d.getName().equals(bankPayMethodName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(bankPayMethodId)) {
+                errorMsgList.add("支付方式不存在");
+            }
+            bankAccount.setPayMethodId(bankPayMethodId);
+        } else if (!isUpdatePart) {
+            bankAccount.setPayMethodId("");
+        }
+        bankAccount.setSupplierName(addDTO.getName());
+
+        return bankAccount;
+    }
+
+    /**
+     * 联系人信息处理
+     * @author will
+     * @date 2025/7/24 16:27
+     * @param contactList
+     * @param excelDTO
+     * @param addDTO
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return ImportAddDTO
+     */
+    private  SupplierContactDTO.ImportAddDTO checkImportContact(List<SupplierContactEntity> contactList,SupplierImportExcelDTO excelDTO,SupplierDTO.ImportAddDTO addDTO
+            ,List<String> errorMsgList,boolean isUpdatePart) {
+        //联系人信息
+        SupplierContactDTO.ImportAddDTO contact = new SupplierContactDTO.ImportAddDTO();
+        //联系人信息名称为空则无需处理
+        if (CharSequenceUtil.isBlank(excelDTO.getPerson())) {
+            log.warn("联系人信息名称为空,无需处理");
+            return contact;
+        }
+        SupplierContactEntity supplierContactEntity = contactList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getPerson(), excelDTO.getPerson())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(supplierContactEntity)) {
+            if (isUpdatePart) {
+                contact =  BeanUtil.toBean(supplierContactEntity, SupplierContactDTO.ImportAddDTO.class);
+            } else {
+                contact.setId(supplierContactEntity.getId());
+            }
+        } else if (isUpdatePart) {
+            errorMsgList.add("联系人信息不存在,不支持部分更新");
+            return contact;
+        }
+        contact.setPerson(excelDTO.getPerson());
+        //全量更新时需要校验必填，联系人和电话
+        if (!isUpdatePart) {
+            if (CharSequenceUtil.isBlank(excelDTO.getPerson())) {
+                errorMsgList.add("联系人不能为空");
+            }
+            if (CharSequenceUtil.isBlank(excelDTO.getTelNumber())) {
+                errorMsgList.add("联系电话不能为空");
+            }
+        }
+        //职务
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPosition())) {
+            contact.setPosition(excelDTO.getPosition());
+        }else if (!isUpdatePart) {
+            contact.setPosition("");
+        }
+        //邮箱
+        if (CharSequenceUtil.isNotBlank(excelDTO.getEmail())) {
+            contact.setEmail(excelDTO.getEmail());
+        }else if (!isUpdatePart) {
+            contact.setEmail("");
+        }
+        //备注
+        if (CharSequenceUtil.isNotBlank(excelDTO.getContactRemark())) {
+            contact.setRemark(excelDTO.getContactRemark());
+        } else if (!isUpdatePart) {
+            contact.setRemark("");
+        }
+        //是否启用
+        if (StringUtils.isNotBlank(excelDTO.getContactEnabled())) {
+            contact.setDisabled(!excelDTO.getContactEnabled().equals("启用"));
+        }  else if (!isUpdatePart) {
+            contact.setDisabled(Boolean.FALSE);
+        }
+        //电话
+        if (CharSequenceUtil.isNotBlank(excelDTO.getTelNumber())) {
+            contact.setRemark(excelDTO.getTelNumber());
+        } else if (!isUpdatePart) {
+            contact.setTelNumber("");
+        }
+
+        if (CharSequenceUtil.isNotBlank(excelDTO.getIsDefault())) {
+            boolean isDefaultResult = excelDTO.getIsDefault().equals("是");
+            contact.setIsDefault(isDefaultResult);
+        } else if (!isUpdatePart) {
+            contact.setIsDefault(Boolean.FALSE);
+        }
+        contact.setSupplierName(addDTO.getName());
+        return contact;
+    }
+
+    /**
+     * 处理供应商主表数据
+     * @author will
+     * @date 2025/7/24 16:39
+     * @param supplierGradeList
+     * @param userList
+     * @param currencyList
+     * @param dictBasicList
+     * @param addDTO
+     * @param excelDTO
+     * @param errorMsgList
+     * @param isUpdatePart
+     * @return void
+     */
+    private void chekImportSupplier (List<BasicCategoryEntity> dictProductCategoryList,List<ApplicationCategoryEntity> dictApplicationCategoryList,List<SupplierGradeEntity> supplierGradeList,List<FindUserDTO> userList,List<CurrencyDTO.ViewDTO> currencyList
+            ,List<DictBasicEntity> dictBasicList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO
+            ,List<String> errorMsgList,boolean isUpdatePart) {
+        //等级名称
+        if (CharSequenceUtil.isNotBlank(excelDTO.getGradeName())) {
+            String gradeId = supplierGradeList.stream().filter(g -> g.getName().equals(excelDTO.getGradeName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(gradeId)) {
+                errorMsgList.add("供应商等级不存在");
+            }
+            addDTO.setGradeId(gradeId);
+            addDTO.setGradeName(excelDTO.getGradeName());
+        } else if (!isUpdatePart) {
+            addDTO.setGradeId("");
+            addDTO.setGradeName("");
+
+        }
+        //采购员
+        if (StringUtils.isNotBlank(excelDTO.getPurchaseUserName())) {
+            String purchaseUserId = userList.stream().filter(u -> u.getUserName().equals(excelDTO.getPurchaseUserName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+            if (StringUtils.isBlank(purchaseUserId)) {
+                errorMsgList.add("采购员不存在");
+            }
+            addDTO.setPurchaseUserId(purchaseUserId);
+            addDTO.setPurchaseUserName(excelDTO.getPurchaseUserName());
+        } else if (!isUpdatePart) {
+            addDTO.setPurchaseUserId("");
+            addDTO.setPurchaseUserName("");
+
+        }
+        //公司地址
+        if (CharSequenceUtil.isNotBlank(excelDTO.getCompanyAddress())) {
+            addDTO.setCompanyAddress(excelDTO.getCompanyAddress());
+        }else if (!isUpdatePart) {
+            addDTO.setCompanyAddress("");
+        }
+        //公司网址
+        if (CharSequenceUtil.isNotBlank(excelDTO.getCompanyWebsite())) {
+            addDTO.setCompanyWebsite(excelDTO.getCompanyWebsite());
+        } else if (!isUpdatePart) {
+            addDTO.setCompanyWebsite("");
+        }
+        if (StringUtils.isNotBlank(excelDTO.getEnabled())) {
+            addDTO.setDisabled(!excelDTO.getEnabled().equals("启用"));
+        } else if (!isUpdatePart) {
+            addDTO.setDisabled(Boolean.TRUE);
+        }
+        //付款方式
+        if (StringUtils.isNotBlank(excelDTO.getPayMethodName())) {
+            String payMethodId = dictBasicList.stream().filter(d -> d.getName().equals(excelDTO.getPayMethodName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(payMethodId)) {
+                errorMsgList.add("结算方式不存在");
+            }
+            addDTO.setPayMethodId(payMethodId);
+        } else if (!isUpdatePart) {
+            addDTO.setPayMethodId("");
+        }
+        //结算币种
+        if (StringUtils.isNotBlank(excelDTO.getPayCurrency())) {
+            CurrencyDTO.ViewDTO currency = currencyList.stream().filter(c -> c.getName().equals(excelDTO.getPayCurrency())).findFirst().orElse(null);
+            if (Objects.isNull(currency)) {
+                errorMsgList.add("结算币种不存在");
+            } else {
+                addDTO.setPayCurrency(currency.getId());
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setPayCurrency("");
+        }
+        //分类名
+        if (StringUtils.isNotBlank(excelDTO.getCategoryName())) {
+            String categoryId = dictBasicList.stream().filter(d -> d.getName().equals(excelDTO.getCategoryName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(categoryId)) {
+                errorMsgList.add("供应商分类不存在");
+            }
+            addDTO.setCategoryId(categoryId);
+            addDTO.setCategoryName(excelDTO.getCategoryName());
+        } else if (!isUpdatePart) {
+            addDTO.setCategoryId("");
+            addDTO.setCategoryName("");
+        }
+        //公司注册资金
+        if (StringUtils.isNotBlank(excelDTO.getRegisteredCapital())) {
+            try {
+                addDTO.setRegisteredCapital(new BigDecimal(excelDTO.getRegisteredCapital()));
+            } catch (Exception e) {
+                errorMsgList.add("公司注册资金格式错误");
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setRegisteredCapital(BigDecimal.ZERO);
+        }
+        //供应商属性
+        if (StringUtils.isNotBlank(excelDTO.getPropertyStr())) {
+            List<String> propertyStrList = Arrays.stream(excelDTO.getPropertyStr().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> propertyList = dictBasicList.stream().filter(d -> propertyStrList.contains(d.getName())).map(DictBasicEntity::getValue).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(propertyList)) {
+                addDTO.setProperty(new JSONArray(propertyList));
+            } else {
+                errorMsgList.add("供应商属性不存在");
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setProperty(new JSONArray());
+        }
+        //供应商产品分类
+        if (StringUtils.isNotBlank(excelDTO.getProductCategoryStr())) {
+            List<String> productCategoryStrList = Arrays.stream(excelDTO.getProductCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName())).map(BasicCategoryEntity::getCode).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(productCategoryList)) {
+                addDTO.setProductCategory(new JSONArray(productCategoryList));
+            } else {
+                errorMsgList.add("产品分类不存在");
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setProductCategory(new JSONArray());
+        }
+
+        //供应商应用分类
+        if (StringUtils.isNotBlank(excelDTO.getApplicationCategoryStr())) {
+            List<String> applicationCategoryStrList = Arrays.stream(excelDTO.getApplicationCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> applicationCategoryList = dictApplicationCategoryList.stream().filter(d -> applicationCategoryStrList.contains(d.getName())).map(ApplicationCategoryEntity::getCode).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(applicationCategoryList)) {
+                addDTO.setApplicationCategory(new JSONArray(applicationCategoryList));
+            } else {
+                errorMsgList.add("应用分类不存在");
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setApplicationCategory(new JSONArray());
+        }
+
+        //体系认证
+        if (StringUtils.isNotBlank(excelDTO.getCertificateStr())) {
+            List<String> certificateStrList = Arrays.stream(excelDTO.getCertificateStr().split(",")).map(String::trim).collect(Collectors.toList());
+            List<String> certificateList = dictBasicList.stream().filter(d -> certificateStrList.contains(d.getName())).map(DictBasicEntity::getValue).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(certificateList)) {
+                addDTO.setCertificate(new JSONArray(certificateList));
+            } else {
+                errorMsgList.add("体系认证不存在");
+            }
+        } else if (!isUpdatePart) {
+            addDTO.setCertificate(new JSONArray());
+        }
+    }
+
 }

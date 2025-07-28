@@ -97,7 +97,7 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/handleBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量处理")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量处理")
     public ApiResult<List<BatchResultDTO>> handleBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> verifyResultList = replenishService.verifyReplenishQty(dtoList);
         boolean verifyAllMatch = verifyResultList.stream().allMatch(BatchResultDTO::getSuccess);
@@ -161,7 +161,7 @@ public class WarehouseLocationReplenishController extends BaseController {
 
 
     @PostMapping("/finishBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量状态变更finish")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量状态变更finish")
     public ApiResult<List<BatchResultDTO>> finishBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (WarehouseLocationReplenishDTO.HandleDTO handleDTO : dtoList) {

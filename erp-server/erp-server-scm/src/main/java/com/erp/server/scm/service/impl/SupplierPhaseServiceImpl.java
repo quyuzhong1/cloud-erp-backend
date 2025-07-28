@@ -1,41 +1,62 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.SearchType;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.dto.CustomerB2CDTO;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
+import com.erp.model.scm.dto.excel.SupplierPhaseExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.server.scm.constant.ScmConstant;
+import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.SupplierPhaseMapper;
+import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.AttachmentService;
+import com.erp.server.scm.service.SupplierGradeService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_PHASE;
 
 /**
  * <p>
@@ -54,6 +75,22 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private SupplierGradeService supplierGradeService;
+
+    @Resource
+    private SupplierPhaseQueryHandler supplierPhaseQueryHandler;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Resource
+    @Qualifier("tabExecutorPool")
+    private ExecutorService tabExecutorPool;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加供应商阶段
@@ -77,8 +114,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (!phase.equals(dto.getCurrentPhase())) {
             throw new ServiceException(ApiError.ERROR_98020);
         }
-        //检查阶段能否变更
-        checkPhase(phase, dto.getTargetPhase(), dto.getOperateType());
         BeanUtil.copyProperties(dto, entity, dto.getCurrentPhase(), dto.getTargetPhase());
         String id = IdWorker.getIdStr();
         entity.setId(id);
@@ -200,15 +235,12 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             throw new ServiceException(ApiError.ERROR_98021);
         }
 
-        //当前阶段
-        String currentPhase = dto.getCurrentPhase();
         //目标阶段
         String targetPhase = dto.getTargetPhase();
-        String type = dto.getOperateType();
-        checkPhase(currentPhase, targetPhase, type);
 
         phase.setTargetPhase(targetPhase);
         phase.setDescription(dto.getDescription());
+        phase.setTargetGradeId(dto.getTargetGradeId());
         Boolean result = this.updateById(phase);
         if (result) {
             Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
@@ -318,21 +350,29 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-//        String searchType = params.getSearchType();
-//        List<String> statusList = new ArrayList<>();
-//        //待我审核
-//        if (searchType.equals(SearchType.WAIT_APPROVE)) {
-//            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-//        }
-//        IPage pageData = baseMapper.paging(query, params, statusList);
         IPage pageData = baseMapper.paging(query, params, null);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+
         for (SupplierPhaseDTO.PagingViewDTO item : list) {
-            String type = item.getOperateType();
-            item.setTypeName(type.equals(ScmConstant.DEGRADE) ? "降级" : "升级");
             //当前阶段
             String currentPhase = item.getCurrentPhase();
             String currentPhaseName = SupplierPhaseEnum.getPhaseName(currentPhase);
@@ -344,6 +384,22 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             item.setTargetPhaseName(targetPhaseName);
             String approveStatus = item.getApproveStatus();
             item.setApproveStatusName(ApproveStatusEnum.getName(approveStatus));
+
+            //当前等级
+            String currentGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getCurrentGradeId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCurrentGradeName(currentGradeName);
+            //目标等级
+            String targetGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getTargetGradeId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setTargetGradeName(targetGradeName);
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+
         }
         return new PagingVO(pageData);
     }
@@ -367,92 +423,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
 
     /**
-     * 获取阶段变更的时候 获取阶段列表
-     *
-     * @param dto
-     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
-     * @author yl
-     * @date 2023-03-31 14:26
-     */
-    @Override
-    public List<BaseDropDownDTO.CommonDTO> listByChange(SupplierPhaseDTO.ListDTO dto) {
-        //当前等级
-        String currentPhase = dto.getCurrentPhase();
-        //操作
-        String operateType = dto.getOperateType();
-        List<BaseDropDownDTO.CommonDTO> resultList = new ArrayList<>(4);
-        //潜在
-        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
-        //准入
-        String access = SupplierPhaseEnum.ACCESS.getPhase();
-        //合格
-        String conform = SupplierPhaseEnum.CONFORM.getPhase();
-        //淘汰
-        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
-        SupplierPhaseEnum[] phaseList = SupplierPhaseEnum.values();
-        List<SupplierPhaseEnum> list = Arrays.asList(phaseList);
-
-        //当 当前阶段为潜在
-        if (currentPhase.equals(potential)) {
-            //阶段降级
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                BaseDropDownDTO.CommonDTO common = new BaseDropDownDTO.CommonDTO();
-                common.setCode(eliminate);
-                common.setValue(SupplierPhaseEnum.getPhaseName(eliminate));
-                resultList.add(common);
-            } else {
-                //升级 【潜在】只能升级为【准入】【合格】
-                List<BaseDropDownDTO.CommonDTO> potentialList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(potentialList);
-            }
-        }
-
-        //当 当前阶段为准入
-        if (currentPhase.equals(access)) {
-            //阶段降级 【准入】只能降级【潜在】【淘汰】
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> Arrays.asList(eliminate, potential).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(accessList);
-            } else {
-                //升级 为合格
-                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> p.getPhase().equals(conform))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(accessList);
-
-            }
-        }
-
-        //当 当前阶段为 合格的时候
-        if (currentPhase.equals(conform)) {
-            //阶段降级 【合格】只能降级【准入】【潜在】
-            if (operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> conformList = list.stream().filter(p -> Arrays.asList(access, potential).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(conformList);
-            }
-        }
-
-        //当 当前阶段为 淘汰的时候
-        if (currentPhase.equals(eliminate)) {
-            //阶段升级 【淘汰】升级只能选择【准入】【合格】
-            if (!operateType.equals(ScmConstant.DEGRADE)) {
-                List<BaseDropDownDTO.CommonDTO> eliminateList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
-                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
-                        .collect(Collectors.toList());
-                resultList.addAll(eliminateList);
-            }
-        }
-        return resultList;
-    }
-
-
-    /**
      * 更改状态
      *
      * @param list
@@ -462,109 +432,103 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 17:50
      */
     private Boolean updateApproveStatus(List<SupplierPhaseEntity> list, String approveStatus) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(approveStatus));
-            return this.updateBatchById(list);
+        if (CollUtil.isEmpty(list)) {
+            return Boolean.FALSE;
         }
-        return false;
+        List<String> ids = list.stream().map(SupplierPhaseEntity::getId).distinct().collect(Collectors.toList());
+        //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        return this.lambdaUpdate().in(SupplierPhaseEntity::getId, ids)
+                .set(SupplierPhaseEntity::getApproveUserId, userInfo.getUid())
+                .set(SupplierPhaseEntity::getApproveUserName, userInfo.getUserName())
+                .set(SupplierPhaseEntity::getApproveStatus, approveStatus)
+                .set(SupplierPhaseEntity::getApproveTime, LocalDateTime.now())
+                .update();
     }
 
-
-    /**
-     * 检查阶段能否变更
-     *
-     * @param currentPhase 当前阶段
-     * @param targetPhase  目标阶段
-     * @return void
-     * @author yl
-     * @date 2023-03-23 14:04
-     */
-    private void checkPhase(String currentPhase, String targetPhase, String type) {
-        //潜在
-        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
-        //准入
-        String access = SupplierPhaseEnum.ACCESS.getPhase();
-        //合格
-        String conform = SupplierPhaseEnum.CONFORM.getPhase();
-        //淘汰
-        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
-
-        //当 当前阶段为潜在
-        if (currentPhase.equals(potential)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!targetPhase.equals(eliminate)) {
-                    throw new ServiceException(98018, "【潜在】只能降级为【淘汰】");
-                }
-            } else {
-                //升级
-                if (!Arrays.asList(access, conform).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【潜在】只能升级为【准入】【合格】");
-                }
-            }
-        }
-
-        //当 当前阶段为准入
-        if (currentPhase.equals(access)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!Arrays.asList(eliminate, potential).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【准入】只能降级【潜在】【淘汰】");
-                }
-            } else {
-                //升级 为合格
-                if (!targetPhase.equals(conform)) {
-                    throw new ServiceException(98018, "升级只能选择【合格】");
-                }
-            }
-        }
-
-        //当 当前阶段为 合格的时候
-        if (currentPhase.equals(conform)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                if (!Arrays.asList(access, potential).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【合格】只能降级【准入】【潜在】");
-                }
-            } else {
-                throw new ServiceException(98018, "当前阶段不能升级");
-            }
-        }
-
-        //当 当前阶段为 淘汰的时候
-        if (currentPhase.equals(eliminate)) {
-            //阶段降级
-            if (type.equals(ScmConstant.DEGRADE)) {
-                throw new ServiceException(98018, "当前阶段不能降级");
-            } else {
-                //升级
-                if (!Arrays.asList(access, conform).contains(targetPhase)) {
-                    throw new ServiceException(98018, "【淘汰】升级只能选择【准入】【合格】");
-                }
-            }
-        }
-
-    }
 
     @Override
     public List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto) {
-        List<SupplierPhaseDTO.TabFlagDTO> resultList = new ArrayList<>(2);
-        List<SupplierPhaseDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
-        int allCount = approveCountList.stream().mapToInt(SupplierPhaseDTO.ApproveCountDTO::getCount).sum();
-        SupplierPhaseDTO.TabFlagDTO all = new SupplierPhaseDTO.TabFlagDTO();
-        all.setCount(allCount);
-        all.setTabFlag("all");
-        all.setTabFlagName("全部");
-        resultList.add(all);
-        //待审核
-        SupplierPhaseDTO.TabFlagDTO waitApprove = new SupplierPhaseDTO.TabFlagDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setTabFlag(ApproveStatusEnum.APPROVE_ING.getStatus());
-        waitApprove.setTabFlagName("待审核");
-        resultList.add(waitApprove);
-        return resultList;
+        SupplierPhaseTabFlagEnum[] values = SupplierPhaseTabFlagEnum.values();
+        List<Future<SupplierPhaseDTO.TabFlagDTO>> futureList = new ArrayList<>();
+        List<SupplierPhaseDTO.TabFlagDTO> list = new ArrayList<>();
+        for (SupplierPhaseTabFlagEnum item : values) {
+            Future<SupplierPhaseDTO.TabFlagDTO> submit =  tabExecutorPool.submit(() -> {
+                SupplierPhaseDTO.PagingParamDTO searchParamDTO = new SupplierPhaseDTO.PagingParamDTO();
+                searchParamDTO.setPermissionSql(dto.getPermissionSql());
+                SupplierPhaseDTO.TabFlagDTO resultDTO = new SupplierPhaseDTO.TabFlagDTO();
+                String tabSql = supplierPhaseQueryHandler.getTabSql(item.getCode());
+                HashMap<String, String> map = new HashMap<>();
+                map.put("default", tabSql);
+                searchParamDTO.setSqlMap(map);
+                Integer count = this.baseMapper.tabList(searchParamDTO);
+                resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+                resultDTO.setTabFlag(item.getCode());
+                resultDTO.setTabFlagName(item.getName());
+                return resultDTO;
+            });
+            futureList.add(submit);
+        }
+        for(Future<SupplierPhaseDTO.TabFlagDTO> f : futureList) {
+            try {
+                list.add(f.get());
+            } catch (InterruptedException e) {
+                // 恢复线程的中断状态，确保中断标志不会被忽略
+                Thread.currentThread().interrupt();
+                log.error("线程被中断", e);
+                throw new ServiceException("线程被中断", e);
+            } catch (ExecutionException e) {
+                log.error("线程任务执行异常", e);
+                throw new ServiceException("线程任务执行异常", e.getCause());
+            } catch (ThreadDeath td) {
+                log.error("捕获到 ThreadDeath，线程终止", td);
+                throw td; // 重新抛出以允许线程正常终止
+            }
+        }
+        return list;
     }
 
+    @Override
+    public void export(SupplierPhaseDTO.PagingParamDTO dto) {
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            //正常导出
+            downloadTaskFeign.saveDownloadTask("供应商阶段数据", EXPORT_SCM_SUPPLIER_PHASE.getCode(), dto);
+        } else {
+            //按字段导出
+            downloadTaskFeign.saveDownloadTask("供应商阶段数据", EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE.getCode(), dto);
+        }
+    }
+
+    @Override
+    public PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierPhaseDTO.PagingViewDTO> paging = this.paging(dto);
+        if (CollUtil.isEmpty(paging.getList())) {
+            return new PagingVO<>();
+        }
+        List<SupplierPhaseExportExcelDTO> supplierPhaseExportExcelList = BeanUtil.copyToList(paging.getList(), SupplierPhaseExportExcelDTO.class);
+        return new PagingVO<>(supplierPhaseExportExcelList, paging.getTotalCount(), paging.getPageSize(), paging.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierPhaseExportExcelDTO> excelList = this.exportSupplierPhase(dto);
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+
+        List<SupplierPhaseDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        List<String> fieldCodeList = fieldList.stream().map(SupplierPhaseDTO.ExportField::getField).distinct().collect(Collectors.toList());
+        LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(SupplierPhaseDTO.ExportField::getField, SupplierPhaseDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        dynamicExcelDTO.setHeaders(fieldMap);
+
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        List<SupplierPhaseExportExcelDTO> list = excelList.getList();
+        for (SupplierPhaseExportExcelDTO exportExcelDTO : list) {
+            LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+            LinkedHashMap<String, Object> exportMap = excelMap.entrySet().stream().filter(obj -> fieldCodeList.contains(obj.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue, LinkedHashMap::new));
+            data.add(exportMap);
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("供应商阶段数据");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
+    }
 }

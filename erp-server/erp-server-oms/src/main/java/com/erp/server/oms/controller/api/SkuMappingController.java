@@ -164,7 +164,7 @@ public class SkuMappingController extends BaseController {
      * 批量更新客户SKU标签
      */
     @PostMapping("/batchUpdateCustomerLabel")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新客户SKU标签")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量更新客户SKU标签")
     public ApiResult<List<BatchResultDTO>> batchUpdateCustomerLabel(@RequestBody @Validated ValidList<SkuMappingDTO.CustomerLabelDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (SkuMappingDTO.CustomerLabelDTO dto : dtoList){

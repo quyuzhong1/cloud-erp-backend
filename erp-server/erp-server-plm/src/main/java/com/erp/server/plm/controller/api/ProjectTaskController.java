@@ -224,7 +224,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新前置任务列表:id={id}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新前置任务列表:id={id}")
     @PostMapping("/update/pre/task")
     public ApiResult<Object> setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
         Boolean flag = preTaskService.updatePreTask(dto);

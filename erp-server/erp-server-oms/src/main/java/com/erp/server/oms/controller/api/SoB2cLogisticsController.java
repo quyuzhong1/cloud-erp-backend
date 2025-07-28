@@ -67,7 +67,7 @@ public class SoB2cLogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/transferOrderSave")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "转单保存")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "转单保存")
     public ApiResult<List<BatchResultDTO>> transferOrderSave(@RequestBody @Validated ValidList<SoB2cLogisticsDTO.transferOrderDTO> dtos) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtos.size());
         List<String> soIds = dtos.stream().map(SoB2cLogisticsDTO.transferOrderDTO::getId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
