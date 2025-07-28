@@ -81,6 +81,7 @@
         where
             ${params.sqlMap.default}
           and  dhc.is_deleted = FALSE
+          and dhc.country = 'CN'
         <if test="params.ids != null and params.ids.size > 0">
             and dhc.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
