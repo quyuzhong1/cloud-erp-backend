@@ -94,7 +94,7 @@ public class TemplateManagementController extends BaseController {
     /**
      * 列表查询
      * @author jack
-     * @date: 2025-05-13
+     * @date: 2025-07-28
      * @param dto
      * @return ApiResult<PagingVO<TemplateManagementDTO.ListDTO>>
      */
@@ -112,7 +112,7 @@ public class TemplateManagementController extends BaseController {
     /**
      * 详情
      * @author jack
-     * @date:  2025-05-14
+     * @date: 2025-07-28
      * @param id
      * @return ApiResult<AfterSaleDTO.ViewDTO>>
      */
@@ -131,7 +131,7 @@ public class TemplateManagementController extends BaseController {
     /**
      * 删除
      * @author jack
-     * @date:  2025-05-13
+     * @date: 2025-07-28
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
@@ -169,7 +169,7 @@ public class TemplateManagementController extends BaseController {
     /**
      * 启用/停用
      * @author jack
-     * @date:  2025-05-13
+     * @date: 2025-07-28
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
@@ -208,7 +208,7 @@ public class TemplateManagementController extends BaseController {
     /**
      * 设置默认
      * @author jack
-     * @date:  2025-05-13
+     * @date: 2025-07-28
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
@@ -242,4 +242,19 @@ public class TemplateManagementController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 列表查询
+     * @author jack
+     * @date: 2025-07-28
+     * @param dto
+     * @return ApiResult<PagingVO<TemplateManagementDTO.ListDTO>>
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<TemplateManagementDTO.PageSelectDTO>> pagingSelect(@RequestBody TemplateManagementDTO.SelectDTO dto) {
+        return success(templateManagementService.pagingSelect(dto));
+    }
+
+
+
 }

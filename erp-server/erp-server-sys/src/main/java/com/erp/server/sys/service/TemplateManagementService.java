@@ -47,4 +47,6 @@ public interface TemplateManagementService extends SuperService<TemplateManageme
     BatchResultDTO setDisabled(String id, Boolean disabledStatus);
 
     BatchResultDTO setDefault(String id);
+
+    PagingVO<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO dto);
 }

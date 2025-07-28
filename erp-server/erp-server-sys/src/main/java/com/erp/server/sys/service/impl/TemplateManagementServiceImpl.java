@@ -174,6 +174,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public BatchResultDTO delete(String id) {
         TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+
+        //判断合同管理是否有引用
+
         // 删除主单数据
         super.removeById(id);
         // 删除日志数据
@@ -216,5 +219,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新默认状态由{}为{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", isDefault ? "默认" : "不默认", newValue ?  "默认" : "不默认" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public PagingVO<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO dto) {
+        return null;
     }
 }

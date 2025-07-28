@@ -370,4 +370,26 @@ public class TemplateManagementDTO implements Serializable {
     }
 
 
+    /**
+     * 远程搜索
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO  {
+
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PageSelectDTO {
+
+    }
+
+
 }
