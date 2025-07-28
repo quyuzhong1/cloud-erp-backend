@@ -627,6 +627,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setDictCountryCode(dto.getDictCountryCode());
         shopInfo.setBusinessModel(dto.getBusinessModel());
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
+        shopInfo.setInitPullTime(dto.getInitPullTime());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -923,15 +924,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     /**
      * 启用或者禁用店铺
      *
-     * @param shop       店铺信息
-     * @param disabled   禁用状态
-     * @param enableTime
+     * @param shop     店铺信息
+     * @param disabled 禁用状态
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled, LocalDateTime enableTime) {
+    public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled) {
         if (Objects.nonNull(shop)) {
             //数据库的禁用状态
             Boolean dbDisabled = shop.getDisabled();
@@ -948,7 +948,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             	customerInfoService.lambdaUpdate()
 	            	.eq(CustomerInfoEntity::getId, customerId)
 	            	.set(CustomerInfoEntity::getDisabled, disabled)
-	            	.set(CustomerInfoEntity::getEnableTime, enableTime)
+	            	.set(CustomerInfoEntity::getEnableTime, shop.getEnableTime())
 	            	.set(CustomerInfoEntity::getDownTime, shop.getDownTime())
 	            	.update();
             }
