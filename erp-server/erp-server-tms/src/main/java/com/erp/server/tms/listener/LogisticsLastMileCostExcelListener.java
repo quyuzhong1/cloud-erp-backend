@@ -141,8 +141,8 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     private void updateTask(Integer count){
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(taskId);
-//        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
-//        importResultDTO.setRemark("处理中");
+        importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+        importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
     }

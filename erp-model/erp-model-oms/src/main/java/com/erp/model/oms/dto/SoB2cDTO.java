@@ -2675,6 +2675,10 @@ public class SoB2cDTO implements Serializable {
          * 是否冻结
          */
         private Boolean isFrozen;
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
 
         /**
          * 审核状态

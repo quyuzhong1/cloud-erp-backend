@@ -6,6 +6,9 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -36,6 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/soB2cLogistics")
+@LogSystemModule("B2C销售订单物流信息")
 public class SoB2cLogisticsController extends BaseController {
 
     @Resource
@@ -63,6 +67,7 @@ public class SoB2cLogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/transferOrderSave")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "转单保存")
     public ApiResult<List<BatchResultDTO>> transferOrderSave(@RequestBody @Validated ValidList<SoB2cLogisticsDTO.transferOrderDTO> dtos) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtos.size());
         List<String> soIds = dtos.stream().map(SoB2cLogisticsDTO.transferOrderDTO::getId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());

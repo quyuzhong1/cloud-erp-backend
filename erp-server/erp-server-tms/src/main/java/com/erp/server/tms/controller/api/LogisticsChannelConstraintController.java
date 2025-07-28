@@ -75,6 +75,7 @@ public class LogisticsChannelConstraintController extends BaseController {
      * @return
      */
     @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "国家设置导入")
     public ApiResult<Object>importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsChannelConstraintService.importExcel(excelFile, response);
         return result ? success() : failure();

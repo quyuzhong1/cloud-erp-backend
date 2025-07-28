@@ -7,8 +7,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.server.wms.query.WarehouseLocationReplenishQueryHandler;
@@ -27,6 +30,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/warehouseLocationReplenish")
+@LogSystemModule("仓位补货")
 public class WarehouseLocationReplenishController extends BaseController {
 
     @Resource
@@ -79,6 +83,7 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货清单")
     public ApiResult<?> exportExcel(@RequestBody WarehouseLocationReplenishDTO.ExportParamDTO dto){
         Boolean flag = replenishService.exportExcel(dto);
         return flag ? success() : failure();
@@ -92,6 +97,7 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/handleBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量处理")
     public ApiResult<List<BatchResultDTO>> handleBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> verifyResultList = replenishService.verifyReplenishQty(dtoList);
         boolean verifyAllMatch = verifyResultList.stream().allMatch(BatchResultDTO::getSuccess);
@@ -114,6 +120,7 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增补货单")
     public ApiResult<BatchResultDTO> add(@RequestBody WarehouseLocationReplenishDTO.AddDTO addDTO){
         BatchResultDTO resultDTO = replenishService.add(addDTO);
         return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
@@ -154,6 +161,7 @@ public class WarehouseLocationReplenishController extends BaseController {
 
 
     @PostMapping("/finishBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量状态变更finish")
     public ApiResult<List<BatchResultDTO>> finishBatch(@RequestBody List<WarehouseLocationReplenishDTO.HandleDTO> dtoList){
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (WarehouseLocationReplenishDTO.HandleDTO handleDTO : dtoList) {

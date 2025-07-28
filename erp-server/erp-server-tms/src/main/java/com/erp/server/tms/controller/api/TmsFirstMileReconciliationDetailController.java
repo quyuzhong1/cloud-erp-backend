@@ -66,7 +66,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * {@code @date:} 2024-03-25
      */
     @PostMapping("/updateStatus")
-    @LogAction(value = LogActionEnum.INSERT, desc = "更新对账状态")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新对账状态")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated TmsFirstMileReconciliationDetailDTO.UpdateStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (String id : dto.getIds()) {
@@ -131,6 +131,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      */
 //    @LogAction(value = LogActionEnum.IMPORT, desc = "导入对账单明细")
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "头程对账单导入")
     public ApiResult<TmsFirstMileReconciliationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
         TmsFirstMileReconciliationDetailDTO.ImportDTO importDTO = tmsFirstMileReconciliationDetailService.importFile(excelImportDTO, response);
         return success(importDTO);

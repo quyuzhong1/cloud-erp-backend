@@ -72,6 +72,7 @@ public class BiTargetStaffSettingController extends BaseController {
      * @return
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出人员目标数据")
     public Boolean export(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto, HttpServletResponse response) {
         dto.setPageSize(1000);
         dto.setCurrPage(1);

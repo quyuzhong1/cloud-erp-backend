@@ -246,6 +246,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
      * 更新备注
      */
     @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新备注 id={id}, remark={remark}")
     public ApiResult<Boolean> updateRemark(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO){
         return success(virtualWarehouseAllocationDetailService.updateRemark(updateRemarkDTO));
     }

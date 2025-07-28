@@ -101,6 +101,7 @@ public class LogisticsChannelController extends BaseController {
             menuCode = "tms:logisticsChannel:update",
             serviceClass = LogisticsChannelService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "物流渠道修改")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsChannelDTO.UpdateDTO dto) {
         logisticsChannelService.update(dto);
         return success();

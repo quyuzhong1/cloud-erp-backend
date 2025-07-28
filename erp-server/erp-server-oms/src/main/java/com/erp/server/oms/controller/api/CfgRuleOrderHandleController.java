@@ -96,6 +96,7 @@ public class CfgRuleOrderHandleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = " 更新状态 id={id},状态值={state}(true=禁用,false=启用)")
     public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = cfgRuleOrderHandleService.updateStatus(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();

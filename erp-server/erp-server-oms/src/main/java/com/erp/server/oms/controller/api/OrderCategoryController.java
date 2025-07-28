@@ -4,8 +4,11 @@ package com.erp.server.oms.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
 import com.erp.model.oms.entity.OrderCategoryEntity;
@@ -30,6 +33,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/orderCategory")
 @Slf4j
+@LogSystemModule("订单规则-订单分类表")
 public class OrderCategoryController extends BaseController {
 
     @Resource
@@ -70,6 +74,7 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存订单分类")
     public ApiResult<Object> add(@RequestBody @Validated OrderCategoryDTO.AddDTO dto) {
         Boolean result = orderCategoryService.add(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -82,6 +87,7 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改订单分类")
     public ApiResult<Object> update(@RequestBody @Validated OrderCategoryDTO.UpdateDTO dto) {
         Boolean result = orderCategoryService.updateCategory(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -107,6 +113,7 @@ public class OrderCategoryController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用或者禁用店铺 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();

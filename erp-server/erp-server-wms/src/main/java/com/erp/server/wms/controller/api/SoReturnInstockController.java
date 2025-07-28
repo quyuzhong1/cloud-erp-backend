@@ -68,7 +68,7 @@ public class SoReturnInstockController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
@@ -88,7 +88,7 @@ public class SoReturnInstockController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
@@ -122,7 +122,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售退货入库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:update",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -141,7 +141,7 @@ public class SoReturnInstockController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:view",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -160,7 +160,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售退货入库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:submit",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -179,7 +179,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售退货入库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:add",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -198,7 +198,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交销售退货入库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:update",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
@@ -217,7 +217,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售退货入库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:approve",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -250,7 +250,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售退货入库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:disApprove",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -283,7 +283,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售退货入库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:cancelProcess",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -302,7 +302,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废销售退货入库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:invalid",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -321,7 +321,7 @@ public class SoReturnInstockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货入库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:delete",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
@@ -380,7 +380,7 @@ public class SoReturnInstockController extends BaseController {
      * @return ApiResult<List<viewGenerateMachineInfoDTO>>
      */
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:viewGenerateMachineInfo",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")

@@ -3149,6 +3149,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setApproveStatus(ApproveStatusEnum.REJECT);
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             soB2cEntity.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
+            if(soB2cEntity.getIsCancel()){
+                soB2cEntity.setInvalidStatus(Boolean.TRUE);
+                soB2cEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
+            }
             this.updateById(soB2cEntity);
             String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截成功,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
@@ -7354,6 +7358,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus())) {
             msgSb.append(CharSequenceUtil.format(" 单据状态为{}，", EnumMessage.getNameByCode(SoB2cBillStatusEnum.class, interceptUpdateOrderDTO.getBillStatus())));
         }
+        if (Objects.nonNull(interceptUpdateOrderDTO.getInvalidStatus())) {
+            msgSb.append(CharSequenceUtil.format(" 作废状态为{}，", interceptUpdateOrderDTO.getInvalidStatus() ? "已作废" : "未作废"));
+        }
         //msgSb去掉最后一个字符
         msgSb.deleteCharAt(msgSb.length() - 1);
         List<Pair<String, String>> pairList = new ArrayList<>();
@@ -7369,6 +7376,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getBillStatus()), SoB2cEntity::getBillStatus, interceptUpdateOrderDTO.getBillStatus())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getAbnormalType()), SoB2cEntity::getAbnormalType, interceptUpdateOrderDTO.getAbnormalType())
                 .set(StringUtils.isNotBlank(interceptUpdateOrderDTO.getRemark()), SoB2cEntity::getRemark, interceptUpdateOrderDTO.getRemark())
+                .set(Objects.nonNull(interceptUpdateOrderDTO.getInvalidStatus()), SoB2cEntity::getInvalidStatus, interceptUpdateOrderDTO.getInvalidStatus())
+                .set(Objects.nonNull(interceptUpdateOrderDTO.getInvalidStatus()) && interceptUpdateOrderDTO.getInvalidStatus(), SoB2cEntity::getInvalidRemark, "平台订单取消,拦截成功自动作废")
                 .in(SoB2cEntity::getId, interceptUpdateOrderDTO.getIds())
                 .update();
     }

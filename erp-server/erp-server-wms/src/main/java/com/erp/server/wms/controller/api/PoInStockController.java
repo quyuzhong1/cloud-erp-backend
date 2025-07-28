@@ -64,7 +64,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -83,7 +83,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -103,7 +103,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -123,7 +123,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增采购入库单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
@@ -142,7 +142,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购入库单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
@@ -161,7 +161,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购入库单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
@@ -180,7 +180,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购入库单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
@@ -199,7 +199,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购入库单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:submit",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -232,7 +232,7 @@ public class PoInStockController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:view",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
@@ -252,7 +252,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除采购入库单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:delete",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -285,7 +285,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废采购入库单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:invalid",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -318,7 +318,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购入库单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:approve",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -351,7 +351,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核采购入库单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:disApprove",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -388,7 +388,7 @@ public class PoInStockController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购入库单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:cancelProcess",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
@@ -433,7 +433,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
+            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
             menuCode = "wms:poInStock:viewGeneratePurchaseReturnOrder",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")

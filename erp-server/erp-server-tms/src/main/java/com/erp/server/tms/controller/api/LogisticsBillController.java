@@ -118,6 +118,7 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "自发货物流单列表导出")
     public ApiResult<Object>exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
         Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
@@ -160,6 +161,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={trackStatus}")
     public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Valid LogisticsBillDTO.BatchUpdateStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String trackStatus = dto.getTrackStatus();
@@ -189,6 +191,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @PostMapping("/initLogisticsBillBusinessCode")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化头程发货单业务单号")
     public ApiResult<Object>initLogisticsBillBusinessCode(){
         logisticsBillService.initLogisticsBillBusinessCode();
         return success();
@@ -199,6 +202,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/deleteLogisticsBillNoOutstock")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除没有销售出库单/发货单的物流单")
     public ApiResult<Object> deleteLogisticsBillNoOutstock(@RequestParam(value = "orderType") String orderType){
         logisticsBillService.deleteLogisticsBillNoOutstock(orderType);
         return success();
@@ -208,6 +212,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/addNoLogisticsBillDetailByBill")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加物流单明细并补充物流费用")
     public ApiResult<Object> addNoLogisticsBillDetailByBill(){
         logisticsBillService.addNoLogisticsBillDetailByBill();
         return success();

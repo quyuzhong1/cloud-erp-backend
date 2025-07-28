@@ -6,8 +6,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseLocationSafetyInventoryDTO;
 import com.erp.server.wms.query.WarehouseLocationSafetyInventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
@@ -26,6 +29,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/warehouseLocationSafetyInventory")
+@LogSystemModule("仓位安全库存")
 public class WarehouseLocationSafetyInventoryController extends BaseController {
 
     @Resource
@@ -57,6 +61,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/updateBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新")
     public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDTO.UpdateParamDTO> list){
         List<BaseResultDTO.UpdateDTO> resultList = new ArrayList<>(list.size());
         for (WarehouseLocationSafetyInventoryDTO.UpdateParamDTO dto : list) {
@@ -76,6 +81,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/importExcel")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     public ApiResult importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
         boolean flag = safetyInventoryService.importExcel(file, response);
         return flag ? success() : failure();
@@ -89,6 +95,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位安全库存")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
     public ApiResult exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto){
         boolean flag = safetyInventoryService.exportExcel(dto);

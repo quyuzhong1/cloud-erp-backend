@@ -115,6 +115,7 @@ public class LogisticsSupplierController extends BaseController {
         menuCode = "tms:logisticsSupplier:update",
         serviceClass = LogisticsSupplierService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改物流商单数据")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsSupplierDTO.UpdateDTO dto) {
         logisticsSupplierService.update(dto);
         return success();

@@ -124,15 +124,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     PagingVO<LogisticsBillDTO.PagingVO> paging(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
 
     /**
-     * 导出
-     *@parms
-     *@return
-     *@author yl
-     *@date 2023-11-16
-     */
-    Boolean exportExcel(LogisticsBillDTO.PagingParamDTO dto);
-
-    /**
      * 生成物流单
      *@parms dto
      *@return
@@ -140,6 +131,15 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      *@date 2023-11-23
      */
     LogisticsBillDTO.GenerateBillResultDTO generateBill(LogisticsBillDTO.GenerateBillDTO dto);
+
+    /**
+     * 导出
+     *@parms
+     *@return
+     *@author yl
+     *@date 2023-11-16
+     */
+    Boolean exportExcel(LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 根据销售出单ids获取物流单

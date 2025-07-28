@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.server.wms.service.SoB2cProcessingService;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +63,7 @@ public class SoB2cProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "B2C虚拟仓列表信息导出")
     public ApiResult exportExcel(@RequestBody SoB2cProcessingDTO.PagingParamDTO dto) {
         Boolean flag = soB2cProcessingService.exportExcel(dto);
         return flag == true ? success() : failure();

@@ -47,7 +47,7 @@ public class TransferOutController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
@@ -64,7 +64,7 @@ public class TransferOutController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
@@ -83,7 +83,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交分布式调出单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:submit",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -101,7 +101,7 @@ public class TransferOutController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:view",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
@@ -117,7 +117,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改分布式调出单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:update",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
@@ -134,7 +134,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交分布式调出单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transferOut:update",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
@@ -153,7 +153,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核分布式调出单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:approve",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -184,7 +184,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核分布式调出单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:disApprove",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -217,7 +217,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调出单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:delete",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -234,7 +234,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废分布式调出单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:invalid",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -251,7 +251,7 @@ public class TransferOutController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销分布式调出单")
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:cancel",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
@@ -278,7 +278,7 @@ public class TransferOutController extends BaseController {
      */
     @PostMapping(value = "/viewGenerateTransferIn")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:viewGenerateTransferIn",
             tableAlias = "tfo"
     )

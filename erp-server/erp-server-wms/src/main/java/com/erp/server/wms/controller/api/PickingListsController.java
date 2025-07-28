@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/picking-lists")
+@LogSystemModule("拣货单")
 public class PickingListsController extends BaseController {
 
     @Resource
@@ -65,6 +67,7 @@ public class PickingListsController extends BaseController {
      * @param dto 编辑参数
      **/
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "拣货车类型修改")
     public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
         pickingListsService.update(dto);
         return success();
