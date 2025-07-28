@@ -31,8 +31,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class CfgTemplateVariablesServiceImpl extends SuperServiceImpl<CfgTemplateVariablesMapper, CfgTemplateVariablesEntity> implements CfgTemplateVariablesService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @Override
     public List<CfgTemplateVariablesDTO.VariableGroupDTO> listByTemplateType(CfgTemplateVariablesDTO.TemplateParamDTO dto) {

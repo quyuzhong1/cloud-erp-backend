@@ -71,7 +71,7 @@ public class TemplateManagementController extends BaseController {
         menuCode = "sys:templateManagement:update",
         serviceClass = TemplateManagementService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TemplateManagementDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TemplateManagementDTO.UpdateDTO dto) {
         templateManagementService.update(dto);
         return success();
     }
@@ -188,7 +188,7 @@ public class TemplateManagementController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = templateManagementService.setStatus(id,dto.getDisabledStatus());
+                result = templateManagementService.setDisabled(id,dto.getDisabledStatus());
             }catch (Exception e){
                 log.error("模板更新失败",e);
                 TemplateManagementEntity entity = idEntityMap.get(id);
@@ -242,5 +242,4 @@ public class TemplateManagementController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
 }

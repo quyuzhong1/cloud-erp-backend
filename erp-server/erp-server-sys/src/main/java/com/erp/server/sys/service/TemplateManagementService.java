@@ -5,7 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.TemplateManagementDTO;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -45,7 +44,7 @@ public interface TemplateManagementService extends SuperService<TemplateManageme
 
     BatchResultDTO delete(String id);
 
-    BatchResultDTO setStatus(String id, Boolean enableStatus);
+    BatchResultDTO setDisabled(String id, Boolean disabledStatus);
 
     BatchResultDTO setDefault(String id);
 }

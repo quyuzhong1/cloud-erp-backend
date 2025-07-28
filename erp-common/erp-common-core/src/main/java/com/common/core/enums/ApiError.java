@@ -188,10 +188,9 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
     MOBILE_IS_EXIST(9054,"手机号已注册"),
-
-
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_9057(9057, "【{}】模板类型已存在默认合同"),
 
 
     /**
