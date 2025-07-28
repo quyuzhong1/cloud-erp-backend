@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -20,11 +21,13 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     * @date: 2024-10-17
     * @return
     */
-    String add(ThirdWarehouseDeliveryEntity entity);
+    ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity);
 
     ThirdWarehouseDeliveryEntity getByCodeAndSoId(String outCode,String soId);
 
     ThirdWarehouseDeliveryEntity getLatestBySoId(String soId);
 
     ThirdWarehouseDeliveryEntity getLatestByCode(String code);
+
+    void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 }

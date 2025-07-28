@@ -6,8 +6,10 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -15,18 +17,21 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
@@ -77,6 +82,18 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private CfgSettingService cfgSettingService;
+
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -415,6 +432,46 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         //如果支付状态是待付款，并且支付方式不支持继续发货，则抛出异常
         if ((ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) && !isFlag) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
+        //判断是三方仓还是自发货生成不同的发货单
+        //检测是否是API 对接的仓库
+        List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+        Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
+        if(isThirdWarehouse){
+            ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+            addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
+            addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
+            addThirdWarehouseDeliveryEntity.setCode(code);
+            addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
+            addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
+            addThirdWarehouseDeliveryEntity.setThirdWarehousePlatform(overseasWarehouseList.get(0).getProviderCode());
+            addThirdWarehouseDeliveryEntity.setShippingMethod(dto.getLogisticsChannelCode());
+            List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+            for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
+                ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+                thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+                thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
+                thirdWarehouseDeliveryDetailEntity.setWarehouseId(dto.getWarehouseId());
+                thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+                thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(overseasWarehouseList.get(0).getPlatformWarehouseCode());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+                thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+            }
+            addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.add(addThirdWarehouseDeliveryEntity);
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0));
+            thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+        }else{
+
         }
     }
 }
