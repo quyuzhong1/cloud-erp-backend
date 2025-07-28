@@ -71,7 +71,7 @@ public class ProcessManagementController extends BaseController {
         return success(result);
     }
 
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启动流程:业务类型={businessKey},业务表id={businessId}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量启动流程:业务类型={businessKey},业务表id={businessId}")
     @PostMapping("/batchStart")
     public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
         List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);

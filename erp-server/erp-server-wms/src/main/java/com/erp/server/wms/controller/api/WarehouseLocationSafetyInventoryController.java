@@ -61,7 +61,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/updateBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量更新 id={id} 安全库存={safetyQty},补货上限={maxQty}")
     public ApiResult<List<BaseResultDTO.UpdateDTO>> updateBatch(@RequestBody List<WarehouseLocationSafetyInventoryDTO.UpdateParamDTO> list){
         List<BaseResultDTO.UpdateDTO> resultList = new ArrayList<>(list.size());
         for (WarehouseLocationSafetyInventoryDTO.UpdateParamDTO dto : list) {

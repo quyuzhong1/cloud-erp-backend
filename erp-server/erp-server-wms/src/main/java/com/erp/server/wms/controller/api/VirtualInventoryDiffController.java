@@ -121,7 +121,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateVirtualInventory")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "一键调整保存")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "一键调整保存")
     public ApiResult updateVirtualInventory(@RequestBody @Validated List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
         virtualInventoryDiffService.updateVirtualInventory(list);
         return success();
