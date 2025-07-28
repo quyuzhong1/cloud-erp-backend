@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
@@ -101,6 +102,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER;
 
 /**
@@ -1018,7 +1020,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public void exportSupplier(SupplierDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            //正常导出
+            downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_SUPPLIER.getCode(), dto);
+        } else {
+            //按字段导出
+            downloadTaskFeign.saveDownloadTask("供应商数据", EXPORT_SCM_DYNAMIC_SUPPLIER.getCode(), dto);
+        }
     }
 
     /**
@@ -1195,6 +1203,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
                     if (target != null) {
                         supplier.setPhase(target);
+                        supplier.setGradeId(item.getTargetGradeId());
                         updateList.add(supplier);
                     }
                 }
@@ -1572,6 +1581,28 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierEntity.setApproveTime(updateApproveStatusDTO.getThirdApproveTime());
         }
          approveEnd(supplierEntity,ApproveTypeEnum.PASS.getStatus(),"");
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierExportExcelDTO> excelList = this.exportSupplier(dto);
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+
+        List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        List<String> fieldCodeList = fieldList.stream().map(SupplierDTO.ExportField::getField).distinct().collect(Collectors.toList());
+        LinkedHashMap<String, String> fieldMap = (LinkedHashMap<String, String>) fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName));
+        dynamicExcelDTO.setHeaders(fieldMap);
+
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        List<SupplierExportExcelDTO> list = excelList.getList();
+        for (SupplierExportExcelDTO exportExcelDTO : list) {
+            LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+            LinkedHashMap<String, Object> exportMap = excelMap.entrySet().stream().filter(obj -> fieldCodeList.contains(obj.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue, LinkedHashMap::new));
+            data.add(exportMap);
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("供应商数据");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
     }
 
     /**

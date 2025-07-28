@@ -230,6 +230,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
         phase.setTargetPhase(targetPhase);
         phase.setDescription(dto.getDescription());
+        phase.setTargetGradeId(dto.getTargetGradeId());
         Boolean result = this.updateById(phase);
         if (result) {
             Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -343,4 +344,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     SupplierEntity add(SupplierDTO.InsertDTO addDTO);
 
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+    /**
+     * 动态导出供应商
+     * @author will
+     * @date 2025/7/28 09:26
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 }

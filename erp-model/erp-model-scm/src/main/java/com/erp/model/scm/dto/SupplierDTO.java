@@ -643,8 +643,30 @@ public class SupplierDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 选中导出字段
+         */
+        private List<ExportField> fieldList;
     }
 
+    /**
+     * 导出字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
+    }
 
     /**
      * 供应商分页信息

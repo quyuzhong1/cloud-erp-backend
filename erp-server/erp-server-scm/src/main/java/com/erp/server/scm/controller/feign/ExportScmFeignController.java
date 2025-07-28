@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -200,5 +201,14 @@ public class ExportScmFeignController {
         return contractInfoService.paging(dto);
     }
 
-
+    @PostMapping("/exportDynamicSupplier")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:paging",
+            tableAlias = "supplier"
+    )
+    @WebAdvanceQuery(handler = SupplierQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplier(@RequestBody PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        return supplierService.exportDynamicSupplier(dto);
+    }
 }

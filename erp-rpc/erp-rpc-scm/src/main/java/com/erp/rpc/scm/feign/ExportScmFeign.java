@@ -1,6 +1,7 @@
 package com.erp.rpc.scm.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.vo.BomExportExcelVO;
@@ -50,4 +51,9 @@ public interface ExportScmFeign {
     PagingVO<SupplierRefWarehouseDTO.ListDTO> exportSupplierRefWarehouse(PagingDTO<SupplierRefWarehouseDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportContractInfo")
     PagingVO<ContractInfoDTO.ListDTO> exportContractInfo(@RequestBody PagingDTO<ContractInfoDTO.PagingParamDTO> dto);
+    /**
+     * 动态导出供应商
+     */
+    @PostMapping("/feign/export/exportDynamicSupplier")
+    PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 }
