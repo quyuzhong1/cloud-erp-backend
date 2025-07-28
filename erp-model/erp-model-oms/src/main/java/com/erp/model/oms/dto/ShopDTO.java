@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -135,6 +134,10 @@ public class ShopDTO implements Serializable {
          * 授权时间
          */
         private LocalDateTime authTime;
+        /**
+         * 店铺下载时间
+         */
+        private LocalDateTime initPullTime;
 
         /**
          * 创建人
@@ -289,6 +292,12 @@ public class ShopDTO implements Serializable {
          */
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
+
+        /**
+         * 数据下载时间
+         */
+        @NotNull(message = "数据下载时间不能为空")
+        private LocalDateTime initPullTime;
 
         /**
          * ioss税号
@@ -479,6 +488,10 @@ public class ShopDTO implements Serializable {
          * 授权时间
          */
         private LocalDateTime authStatusTime;
+        /**
+         * 数据下载时间
+         */
+        private LocalDateTime initPullTime;
 
         /**
          * 创建人
@@ -661,7 +674,11 @@ public class ShopDTO implements Serializable {
          */
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
-
+        /**
+         * 数据下载时间
+         */
+        @NotNull(message = "数据下载时间不能为空")
+        private LocalDateTime initPullTime;
         /**
          * ioss税号
          */
