@@ -53,7 +53,8 @@ public class ExportScmFeignController {
     private SupplierRefWarehouseService supplierRefWarehouseService;
     @Resource
     private ContractInfoService contractInfoService;
-
+    @Resource
+    private SupplierPhaseService supplierPhaseService;
 
     @PostMapping("/purchaseApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -201,6 +202,13 @@ public class ExportScmFeignController {
         return contractInfoService.paging(dto);
     }
 
+    /**
+     * 导出动态供应商
+     * @author will
+     * @date 2025/7/28 11:34
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
     @PostMapping("/exportDynamicSupplier")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
@@ -210,5 +218,41 @@ public class ExportScmFeignController {
     @WebAdvanceQuery(handler = SupplierQueryHandler.class)
     public PagingVO<DynamicExcelDTO> exportDynamicSupplier(@RequestBody PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         return supplierService.exportDynamicSupplier(dto);
+    }
+
+    /**
+     * 导出供应商阶段
+     * @author will
+     * @date 2025/7/28 11:10
+     * @param dto
+     * @return PagingVO<SupplierPhaseExportExcelDTO>
+     */
+    @PostMapping("/exportSupplierPhase")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(@RequestBody PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        return supplierPhaseService.exportSupplierPhase(dto);
+    }
+
+    /**
+     * 动态导出供应商阶段
+     * @author will
+     * @date 2025/7/28 11:10
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    @PostMapping("/exportDynamicSupplierPhase")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(@RequestBody PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        return supplierPhaseService.exportDynamicSupplierPhase(dto);
     }
 }

@@ -263,7 +263,28 @@ public class SupplierPhaseDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 选中导出字段
+         */
+        private List<SupplierPhaseDTO.ExportField> fieldList;
+    }
 
+    /**
+     * 导出字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Data

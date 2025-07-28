@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -25,12 +26,14 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
+import com.erp.model.scm.dto.excel.SupplierPhaseExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.SupplierPhaseMapper;
 import com.erp.server.scm.query.SupplierPhaseQueryHandler;
@@ -51,6 +54,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_PHASE;
 
 /**
  * <p>
@@ -82,6 +88,10 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     @Resource
     @Qualifier("tabExecutorPool")
     private ExecutorService tabExecutorPool;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
     /**
      * 添加供应商阶段
      *
@@ -479,4 +489,46 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         return list;
     }
 
+    @Override
+    public void export(SupplierPhaseDTO.PagingParamDTO dto) {
+        if (CollUtil.isEmpty(dto.getFieldList())) {
+            //正常导出
+            downloadTaskFeign.saveDownloadTask("供应商阶段数据", EXPORT_SCM_SUPPLIER_PHASE.getCode(), dto);
+        } else {
+            //按字段导出
+            downloadTaskFeign.saveDownloadTask("供应商阶段数据", EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE.getCode(), dto);
+        }
+    }
+
+    @Override
+    public PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierPhaseDTO.PagingViewDTO> paging = this.paging(dto);
+        if (CollUtil.isEmpty(paging.getList())) {
+            return new PagingVO<>();
+        }
+        List<SupplierPhaseExportExcelDTO> supplierPhaseExportExcelList = BeanUtil.copyToList(paging.getList(), SupplierPhaseExportExcelDTO.class);
+        return new PagingVO<>(supplierPhaseExportExcelList, paging.getTotalCount(), paging.getPageSize(), paging.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierPhaseExportExcelDTO> excelList = this.exportSupplierPhase(dto);
+        DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
+
+        List<SupplierPhaseDTO.ExportField> fieldList = dto.getParams().getFieldList();
+        List<String> fieldCodeList = fieldList.stream().map(SupplierPhaseDTO.ExportField::getField).distinct().collect(Collectors.toList());
+        LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(SupplierPhaseDTO.ExportField::getField, SupplierPhaseDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        dynamicExcelDTO.setHeaders(fieldMap);
+
+        List<LinkedHashMap<String, Object>> data = new ArrayList<>();
+        List<SupplierPhaseExportExcelDTO> list = excelList.getList();
+        for (SupplierPhaseExportExcelDTO exportExcelDTO : list) {
+            LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
+            LinkedHashMap<String, Object> exportMap = excelMap.entrySet().stream().filter(obj -> fieldCodeList.contains(obj.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue, LinkedHashMap::new));
+            data.add(exportMap);
+        }
+        dynamicExcelDTO.setData(data);
+        dynamicExcelDTO.setSheetName("供应商阶段数据");
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
+    }
 }

@@ -192,6 +192,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierPlantAddrService supplierPlantAddrService;
 
+
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     /**
@@ -1191,26 +1192,38 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public void updatePhase(List<SupplierPhaseEntity> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> supplierIds = list.stream().map(SupplierPhaseEntity::getSupplierId).distinct().collect(Collectors.toList());
-            List<SupplierEntity> supplierList = this.listByIds(supplierIds);
-            List<SupplierEntity> updateList = new ArrayList<>(list.size());
-            for (SupplierPhaseEntity item : list) {
-                String supplierId = item.getSupplierId();
-                SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
-                if (supplier != null) {
-                    String targetPhase = item.getTargetPhase();
-                    SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
-                    if (target != null) {
-                        supplier.setPhase(target);
-                        supplier.setGradeId(item.getTargetGradeId());
-                        updateList.add(supplier);
-                    }
-                }
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> supplierIds = list.stream().map(SupplierPhaseEntity::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = this.listByIds(supplierIds);
+        List<SupplierEntity> updateList = new ArrayList<>(list.size());
+        List<String> phaseIdList = list.stream().map(SupplierPhaseEntity::getTargetGradeId).distinct().collect(Collectors.toList());
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.listByIds(phaseIdList);
+        Map<String, String> gradeMap = CollUtil.isEmpty(supplierGradeList) ? new HashMap<>() : supplierGradeList.stream().collect(Collectors.toMap(SupplierGradeEntity::getId, SupplierGradeEntity::getName));
+
+        for (SupplierPhaseEntity item : list) {
+            String supplierId = item.getSupplierId();
+            SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(supplier)) {
+                throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
             }
-            if (CollectionUtils.isNotEmpty(updateList)) {
-                this.updateBatchById(updateList);
+            if (CharSequenceUtil.equals(item.getTargetGradeId(),supplier.getGradeId()) &&
+                    CharSequenceUtil.equals(item.getTargetPhase(),supplier.getPhase().getPhase())) {
+                //如果阶段和等级没有变更 则不需要更新
+                continue;
             }
+            supplier.setGradeId(item.getTargetGradeId());
+            supplier.setGradeName(gradeMap.get(supplier.getGradeId()));
+            String targetPhase = item.getTargetPhase();
+            SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
+            if (target != null) {
+                supplier.setPhase(target);
+                updateList.add(supplier);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
         }
     }
 
@@ -1590,7 +1603,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
         List<String> fieldCodeList = fieldList.stream().map(SupplierDTO.ExportField::getField).distinct().collect(Collectors.toList());
-        LinkedHashMap<String, String> fieldMap = (LinkedHashMap<String, String>) fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName));
+        LinkedHashMap<String, String> fieldMap = (LinkedHashMap<String, String>) fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         dynamicExcelDTO.setHeaders(fieldMap);
 
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();

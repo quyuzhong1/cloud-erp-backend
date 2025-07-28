@@ -223,4 +223,23 @@ public class SupplierPhaseController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 导出供应商阶段审核
+     * @author will
+     * @date 2025/7/28 10:30
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出供应商阶段审核")
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
+    public ApiResult export(@RequestBody @Valid SupplierPhaseDTO.PagingParamDTO dto) {
+        supplierPhaseService.export(dto);
+        return success();
+    }
 }

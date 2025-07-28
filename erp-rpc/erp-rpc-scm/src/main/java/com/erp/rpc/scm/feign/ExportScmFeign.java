@@ -56,4 +56,15 @@ public interface ExportScmFeign {
      */
     @PostMapping("/feign/export/exportDynamicSupplier")
     PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+    /**
+     * 全量导出供应商阶段审核
+     */
+    @PostMapping("/feign/export/exportSupplierPhase")
+    PagingVO<SupplierPhaseExportExcelDTO> exportSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+
+    /**
+     * 动态导出供应商阶段审核
+     */
+    @PostMapping("/feign/export/exportDynamicSupplierPhase")
+    PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
 }
