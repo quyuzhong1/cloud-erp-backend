@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-07-24
+ * @since 2025-07-28
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -24,6 +24,21 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("cfg_template_variables")
 public class CfgTemplateVariablesEntity extends BaseEntity<CfgTemplateVariablesEntity> {
 
+    /**
+    * 父id ， 0 表示根节点
+    */
+    @TableField("parent_id")
+    private String parentId;
+    /**
+    * 是否表格扩展
+    */
+    @TableField("table_extensions")
+    private Boolean tableExtensions;
+    /**
+    * 是否默认展开
+    */
+    @TableField("default_expand")
+    private Boolean defaultExpand;
     /**
     * 模板类型
     */
@@ -34,7 +49,6 @@ public class CfgTemplateVariablesEntity extends BaseEntity<CfgTemplateVariablesE
     */
     @TableField("type")
     private String type;
-
     /**
     * 数据库表名
     */
@@ -71,6 +85,12 @@ public class CfgTemplateVariablesEntity extends BaseEntity<CfgTemplateVariablesE
     @TableField("index")
     private Integer index;
 
+
+    public static final String PARENT_ID = "parent_id";
+
+    public static final String TABLE_EXTENSIONS = "table_extensions";
+
+    public static final String DEFAULT_EXPAND = "default_expand";
 
     public static final String TEMPLATE_TYPE = "template_type";
 

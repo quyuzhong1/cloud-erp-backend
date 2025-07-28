@@ -12,6 +12,9 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
+       <result column="parent_id" property="parentId" />
+       <result column="table_extensions" property="tableExtensions" />
+       <result column="default_expand" property="defaultExpand" />
        <result column="template_type" property="templateType" />
        <result column="type" property="type" />
        <result column="table_name" property="tableName" />
@@ -25,16 +28,27 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        template_type, type, table_name, name, field, field_type, default_value, disabled, index
+        ctv.id as id,
+ctv.create_user_id as createUserId,
+ctv.create_user_name as createUserName,
+ctv.create_time as createTime,
+ctv.update_user_id as updateUserId,
+ctv.update_user_name as updateUserName,
+ctv.update_time as updateTime,
+ctv.version as version,
+ctv.is_deleted as isDeleted,
+ctv.parent_id as parentId,
+ctv.table_extensions as tableExtensions,
+ctv.default_expand as defaultExpand,
+ctv.template_type as templateType,
+ctv.type as type,
+ctv.table_name as tableName,
+ctv.name as name,
+ctv.field as field,
+ctv.field_type as fieldType,
+ctv.default_value as defaultValue,
+ctv.disabled as disabled,
+ctv.index as index
     </sql>
 
 

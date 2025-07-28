@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author jack
- * @since 2025-07-24
+ * @since 2025-07-28
  */
 @Mapper
 public interface CfgTemplateVariablesMapper extends BaseMapper<CfgTemplateVariablesEntity> {

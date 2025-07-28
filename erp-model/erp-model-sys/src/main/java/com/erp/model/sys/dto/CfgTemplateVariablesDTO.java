@@ -185,37 +185,6 @@ public class CfgTemplateVariablesDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class VariableGroupDTO {
-
-        /**
-         * 模板类型
-         */
-        private String templateType;
-
-        /**
-         * 分类
-         */
-        private String type;
-
-        /**
-         * 分类名称
-         */
-        private String typeName;
-        /**
-         * 字段集合
-         */
-        private List<VariableDTO> variables;
-
-
-    }
-
-
-    /**
-     * 模板字段
-     */
-    @Data
-    @NoArgsConstructor
-    public static class VariableDTO {
-
         /**
          * 主键id
          */
@@ -235,6 +204,44 @@ public class CfgTemplateVariablesDTO implements Serializable {
          * 分类名称
          */
         private String typeName;
+        /**
+         * 是否表格扩展
+         */
+        private Boolean tableExtensions;
+        /**
+         * 是否默认展开
+         */
+        private Boolean defaultExpand;
+        /**
+         * 字段集合
+         */
+        private List<VariableDTO> variables;
+
+        /**
+         * 序号
+         */
+        private Integer index;
+    }
+
+
+    /**
+     * 模板字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VariableDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+
+        /**
+         * 父id
+         */
+        private String  parentId;
+
 
         /**
          * 字段名称
@@ -274,6 +281,7 @@ public class CfgTemplateVariablesDTO implements Serializable {
         /**
          * 模板类型
          */
+        @NotBlank(message = "模板类型不能为空")
         private String templateType;
 
         /**
