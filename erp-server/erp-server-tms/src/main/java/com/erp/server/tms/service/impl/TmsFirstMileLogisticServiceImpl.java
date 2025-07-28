@@ -1353,7 +1353,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 null,
                 null,
-                null);
+                null, null);
         //处理businessCode
         List<String> deliveryCodes = listDTOS.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getRelationCode).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
@@ -1368,16 +1368,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndSupplierIds(List<String> transportNoList, List<String> logisticsSupplierIdList) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndReconciliationIds(List<String> transportNoList, List<String> reconciliationIds) {
         return this.baseMapper.waitReconciliationList(
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
                 "",
                 null,
                 transportNoList,
-                logisticsSupplierIdList,
                 null,
-                null);
+                null,
+                null,
+                reconciliationIds);
     }
 
     @Override
@@ -1996,9 +1997,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 null,
                 startDate,
-                endDate
-
-        );
+                endDate,
+                null);
     }
 
     @Override

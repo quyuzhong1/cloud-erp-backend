@@ -1515,9 +1515,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<String> transportNoList = successList.stream().map(FirstMileReconciliationStandardExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
 
         // 查询原物流单信息
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTransportNoListAndSupplierIds(
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTransportNoListAndReconciliationIds(
                 transportNoList,
-                Collections.singletonList(mainEntity.getLogisticsSupplierId()));
+                Collections.singletonList(mainEntity.getId()));
         sourceLogisticList = sourceLogisticList.stream().filter(e -> Objects.equals(mainEntity.getId(), e.getReconciliationId())).collect(Collectors.toList());
         // 补充来源信息
         this.fillWaitReconciliationData(sourceLogisticList);
@@ -2409,9 +2409,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             transportNoIndex = Integer.parseInt(finalI);
         }
         // 查询原物流单信息
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTransportNoListAndSupplierIds(
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceLogisticList = tmsFirstMileLogisticService.listByTransportNoListAndReconciliationIds(
                 transportNoList,
-                Collections.singletonList(mainEntity.getLogisticsSupplierId()));
+                Collections.singletonList(mainEntity.getId()));
 
         // 补充来源信息
         this.fillWaitReconciliationList(sourceLogisticList,mainEntity.getId());

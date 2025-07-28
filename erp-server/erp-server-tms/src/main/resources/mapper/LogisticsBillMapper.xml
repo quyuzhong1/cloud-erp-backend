@@ -593,6 +593,12 @@
                     #{logisticsSupplierId}
                 </foreach>
             </if>
+            <if test="reconciliationIds != null and reconciliationIds.size() > 0 ">
+                and lbc.reconciliation_id in
+                <foreach collection="reconciliationIds" item="reconciliationId" open="(" separator="," close=")">
+                    #{reconciliationId}
+                </foreach>
+            </if>
         </where>
     </select>
 

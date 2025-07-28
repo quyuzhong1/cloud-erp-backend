@@ -369,7 +369,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
             Set<String> supplierIds = supplierIdMaps.keySet();
             List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
-            Map<String, String> supplierNameMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getSupplierId, LogisticsSupplierEntity::getSupplierName));
+            Map<String, String> supplierNameMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
             for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
                 ids = supplierIdMap.getValue().stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
                 // 当前添加的主账单记录

@@ -121,7 +121,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 根据物流跟踪单分组查询物流单信息
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndReconciliationIds(List<String> trackNoList, List<String> reconciliationIds);
 
     List<Map<String,Object>> getTrackStatusList();
 
