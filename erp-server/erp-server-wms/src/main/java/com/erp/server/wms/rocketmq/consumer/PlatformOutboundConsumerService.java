@@ -129,6 +129,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         // 查询已有订单
         SoB2cEntity mainEntity;
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
+        if(OmsPlatformEnum.WEI_SHI.getCode().equals(dto.getPlatform()) && referenceNo.contains("_")){
+            //截取_前面的字符串
+            referenceNo = referenceNo.split("_")[0];
+        }
         if(referenceNo.contains(BusinessNoConstant.WFHD)){
             //查询三方仓发货单
             thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
