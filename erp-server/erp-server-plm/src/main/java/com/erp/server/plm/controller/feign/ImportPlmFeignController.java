@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.ProductDetailImagesService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -25,7 +26,7 @@ public class ImportPlmFeignController {
     private ProductDetailImagesService productDetailImagesService;
 
     @PostMapping("/productDetailImages")
-    public void productDetailImages(@RequestBody BaseDTO.ImportDTO dto) {
+    public void productDetailImages(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
         try {
             productDetailImagesService.importProductDetailImages(dto);
         }catch (Exception e) {

@@ -18,7 +18,7 @@ public interface ProductDetailImagesService extends IService<ProductDetailEntity
      * @author jack
      * @Date 2025-07-25
      */
-    Boolean importZip(BaseDTO.ImportDTO dto);
+    Boolean importZip(ProductDetailDTO.ProductImagesZipDTO dto);
 
-    void importProductDetailImages(BaseDTO.ImportDTO dto);
+    void importProductDetailImages(ProductDetailDTO.ProductImagesZipDTO dto);
 }

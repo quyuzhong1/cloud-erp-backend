@@ -20,7 +20,7 @@ public interface ImageProcessService {
      * @param size                压缩尺寸
      * @param result              任务结果DTO
      */
-    void processImage(MultipartFile file, String fileName, ProductDetailEntity productDetailEntity, Long size, ZipTaskResultDTO result);
+    void processImage(MultipartFile file, String fileName, ProductDetailEntity productDetailEntity, Long size, ZipTaskResultDTO result,String importType);
 
     List<MultipartFile> processZip(String zipUrl) throws IOException;
 }

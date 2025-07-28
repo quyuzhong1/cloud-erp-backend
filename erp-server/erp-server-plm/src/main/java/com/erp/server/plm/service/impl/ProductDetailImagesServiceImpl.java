@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -20,6 +22,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
@@ -87,22 +90,34 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         if (status.equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_95291);
         }
+
+        List<String> imagesUrls = dto.getImagesUrls();
+        imagesUrls = imagesUrls.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollUtil.isEmpty(imagesUrls)){
+            throw new ServiceException("图片地址不能为空");
+        }
+
         String imagesUrl = productDetailEntity.getImagesUrl();
 
+        String imagesUrlStr = String.join(",", imagesUrls);
         boolean save = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, dto.getSkuId())
-                .set(ProductDetailEntity::getImagesUrl, dto.getImagesUrl())
+                .set(ProductDetailEntity::getImagesUrl, String.join(",", imagesUrlStr))
                 .update();
 
         if (save) {
-            sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + dto.getImagesUrl() + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+            sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
 
-            plmAttachmentService.lambdaUpdate().eq(PlmAttachmentEntity::getAttachUrl, imagesUrl)
-                    .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
-                    .set(PlmAttachmentEntity::getIsDeleted,true)
-                    .update();
+            if(StringUtils.isNotBlank(imagesUrl)){
+                List<String> list = Arrays.asList(imagesUrl.split(","));
+                plmAttachmentService.lambdaUpdate()
+                        .in(PlmAttachmentEntity::getAttachUrl, list)
+                        .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
+                        .set(PlmAttachmentEntity::getIsDeleted,true)
+                        .update();
 
-            fileFeign.deleteFile(imagesUrl);
+                fileFeign.deleteBatchFile(list);
+            }
         }
         return save;
     }
@@ -113,7 +128,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
      * @date 2025-07-25
      */
     @Override
-    public Boolean importZip(BaseDTO.ImportDTO dto) {
+    public Boolean importZip(ProductDetailDTO.ProductImagesZipDTO dto) {
         downloadTaskFeign.saveImportTask("SKU图片导入", IMPORT_PLM_SKU_IMAGES.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -131,7 +146,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
      * @param dto 包含文件URL和任务ID的导入参数对象，不能为空
      */
     @Override
-    public void importProductDetailImages(BaseDTO.ImportDTO dto) {
+    public void importProductDetailImages(ProductDetailDTO.ProductImagesZipDTO dto) {
         List<MultipartFile> multipartFiles = null;
         try {
             // 解析压缩包获取图片文件列表
@@ -176,7 +191,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     String skuNo = fileName.contains("_") ? fileName.substring(0, fileName.indexOf("_")) : fileName;
                     if (!productDetailMap.containsKey(skuNo)) {
                         // 如果SKU不存在于产品明细中，跳过处理
-                        result.incrementFailed(fileName);
+                        result.incrementFailed();
                         continue;
                     }
 
@@ -184,12 +199,38 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
 
                     // 异步处理单张图片
                     CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                        imageProcessService.processImage(file, fileName, productDetailEntity, size, result);
+                        imageProcessService.processImage(file, fileName, productDetailEntity, size, result,dto.getImportType());
                     }, zipImageExecutorPool);
                     futures.add(future);
                 }
                 // 等待所有异步任务完成
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
+
+            Map<String, List<String>> successFiles = result.getSuccessFiles();
+            //判空
+            if (MapUtil.isNotEmpty(successFiles)) {
+                // 构建SKU到商品详情实体的映射，用于快速查找
+                Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
+
+                for (Map.Entry<String, List<String>> entry : successFiles.entrySet()) {
+                    String skuId = entry.getKey();
+                    List<String> value = entry.getValue();
+                    if(ProductDetailImprotTypeEnum.ADD.getCode().equals(dto.getImportType())){
+                        ProductDetailEntity productDetailEntity = productDetailMap.get(skuId);
+                        if (productDetailEntity != null) {
+                            String imagesUrl = productDetailEntity.getImagesUrl();
+                            if (StringUtils.isNotBlank(imagesUrl)) {
+                                value.addAll(Arrays.asList(imagesUrl.split(",")));
+                            }
+                        }
+                    }
+                    String iamgesUrl = String.join(",", value);
+
+                    lambdaUpdate().set(ProductDetailEntity::getImagesUrl, iamgesUrl)
+                            .eq(ProductDetailEntity::getId, skuId)
+                            .update();
+                }
             }
         }
 

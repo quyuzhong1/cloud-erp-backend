@@ -6,11 +6,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ZipTaskResultDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailImprotTypeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ImageProcessService;
 import com.erp.server.plm.service.PlmAttachmentService;
 import com.erp.server.plm.service.ProductDetailService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -57,7 +60,7 @@ public class ImageProcessServiceImpl implements ImageProcessService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void processImage(MultipartFile file, String fileName, ProductDetailEntity productDetailEntity, Long size, ZipTaskResultDTO result) {
+    public void processImage(MultipartFile file, String fileName, ProductDetailEntity productDetailEntity, Long size, ZipTaskResultDTO result,String importType) {
         boolean success = false;
         int retry = 0;
 
@@ -70,22 +73,23 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 // 上传压缩后的文件，并获取访问URL
                 String url = fileFeign.uploadFile(file);
 
-                // 如果文件名中不包含下划线，则更新产品明细中的图片URL字段
-                if (!fileName.contains("_")) {
-                    productDetailService.lambdaUpdate()
-                            .eq(ProductDetailEntity::getId, productDetailEntity.getId())
-                            .set(ProductDetailEntity::getImagesUrl, url)
-                            .update();
-                }
+                //替换更新
+                if(ProductDetailImprotTypeEnum.REPLACE.getCode().equals(importType)){
+                    // 查询并删除原有同名附件（按类型和名称前缀匹配）
+                    List<PlmAttachmentEntity> oldPlmAttachmentList = plmAttachmentService.lambdaQuery()
+                            .eq(PlmAttachmentEntity::getType, SKUTABLE)
+                            .likeRight(PlmAttachmentEntity::getAttachName, fileName + ".").list();
+                    if(CollUtil.isNotEmpty(oldPlmAttachmentList)){
+                        List<String> list = oldPlmAttachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                        if(CollUtil.isNotEmpty(list)){
+                            plmAttachmentService.lambdaUpdate()
+                                    .in(PlmAttachmentEntity::getAttachUrl, list)
+                                    .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
+                                    .set(PlmAttachmentEntity::getIsDeleted,true)
+                                    .update();
 
-                // 查询并删除原有同名附件（按类型和名称前缀匹配）
-                List<PlmAttachmentEntity> oldPlmAttachmentList = plmAttachmentService.lambdaQuery()
-                        .eq(PlmAttachmentEntity::getType, SKUTABLE)
-                        .likeRight(PlmAttachmentEntity::getAttachName, fileName + ".").list();
-                if(CollUtil.isNotEmpty(oldPlmAttachmentList)){
-                    for (PlmAttachmentEntity old : oldPlmAttachmentList) {
-                        plmAttachmentService.removeById(old.getId());
-                        fileFeign.deleteFile(old.getAttachUrl());
+                            fileFeign.deleteBatchFile(list);
+                        }
                     }
                 }
 
@@ -102,16 +106,18 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 plmAttachmentService.save(attachment);
 
                 // 更新任务结果：成功数加一
-                result.incrementSuccess();
-                success = true;
+                // 如果文件名中不包含下划线，则更新产品明细中的图片URL字段
+                if (!fileName.contains("_")) {
+                    result.incrementSuccess(productDetailEntity.getId(),url);
+                }else {
+                    result.incrementSuccess("","");
+                }
             } catch (Exception e) {
                 retry++;
                 // 达到最大重试次数时，标记该文件处理失败
                 if (retry >= 3) {
-                    result.incrementFailed(fileName);
+                    result.incrementFailed();
                 }
-            } finally {
-                result.incrementSuccess();
             }
         }
     }

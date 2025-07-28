@@ -1404,7 +1404,7 @@ public class ProductDetailController extends BaseController {
             serviceClass = ProductDetailImagesService.class,
             keyIdName = "id"
     )
-    public ApiResult<Object> importZip(@RequestBody BaseDTO.ImportDTO dto) {
+    public ApiResult<Object> importZip(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
         Boolean flag = productDetailImagesService.importZip(dto);
         return flag == true ? success() : failure();
     }

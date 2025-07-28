@@ -1,30 +1,32 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.entity.PlmAttachmentEntity;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ZipTaskResultDTO {
     private final AtomicInteger total = new AtomicInteger();
     private final AtomicInteger success = new AtomicInteger();
     private final AtomicInteger failed = new AtomicInteger();
-    private final List<String> failedFiles = Collections.synchronizedList(new ArrayList<>());
+
+    private final Map<String, List<String>> successUrls = new ConcurrentHashMap<>();
 
     public void incrementTotal() {
         total.incrementAndGet();
     }
 
-    public void incrementSuccess() {
+    public void incrementSuccess(String skuId, String fileUrl) {
         success.incrementAndGet();
+        if (StringUtils.isNotBlank(skuId) && StringUtils.isNotBlank(fileUrl)) {
+            successUrls.computeIfAbsent(skuId, k -> Collections.synchronizedList(new ArrayList<>()))
+                    .add(fileUrl); // synchronizedList 本身保证了线程安全
+        }
     }
 
-    public void incrementFailed(String fileName) {
+    public void incrementFailed() {
         failed.incrementAndGet();
-        failedFiles.add(fileName);
     }
 
     public int getTotal() {
@@ -39,8 +41,8 @@ public class ZipTaskResultDTO {
         return failed.get();
     }
 
-    public List<String> getFailedFiles() {
-        return failedFiles;
+    public Map<String, List<String>> getSuccessFiles() {
+        return successUrls;
     }
 
     @Override
