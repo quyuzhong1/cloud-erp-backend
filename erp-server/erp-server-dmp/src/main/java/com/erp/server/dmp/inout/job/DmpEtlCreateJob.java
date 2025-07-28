@@ -37,12 +37,12 @@ public class DmpEtlCreateJob {
 	 * 创建Etl任务
 	 * @return
 	 */
-	@XxlJob("createEtlTaskByAppId")
+	@XxlJob("createEtlTaskByAppCategory")
 	public ReturnT createEtlTaskByAppId(){
-		String appId = XxlJobHelper.getJobParam();
+		String appCategory = XxlJobHelper.getJobParam();
 		List<DmpCfgEtlEntity> list = dmpCfgEtlService.lambdaQuery()
 				.eq(DmpCfgEtlEntity::getDisabled, false)
-				.eq(DmpCfgEtlEntity::getAppId, appId)
+				.eq(DmpCfgEtlEntity::getAppCategory, appCategory)
 				.list();
 		if(CollUtil.isNotEmpty(list)) {
 			for(DmpCfgEtlEntity l : list) {
