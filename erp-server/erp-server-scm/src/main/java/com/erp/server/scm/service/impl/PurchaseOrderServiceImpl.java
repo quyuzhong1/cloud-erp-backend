@@ -3073,8 +3073,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //采购退货
             if (CollectionUtils.isNotEmpty(purchaseReturnOrderList) && SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())) {
-                String subCode = purchaseReturnOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
-                obj.setSourceCode(subCode);
+                PoReturnEntity poReturnEntity = purchaseReturnOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().orElse(new PoReturnEntity());
+                obj.setSourceCode(poReturnEntity.getCode());
+                obj.setReturnMode(poReturnEntity.getReturnMode());
             }
 
             //最新审核人

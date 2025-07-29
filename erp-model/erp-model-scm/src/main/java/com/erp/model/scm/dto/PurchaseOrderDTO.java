@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -337,6 +336,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源类型【可排序】
          */
         private String sourceType;
+
+        /**
+         * 退货方式 退货扣款 退货补货
+         */
+        private String returnMode;
 
         /**
          * 交货周期

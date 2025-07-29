@@ -267,4 +267,27 @@
 
 
     </select>
+
+    <!-- 查询符合调整信息的采购订单 -->
+    <select id="listAdjustPurchaseOrder"
+            resultType="com.erp.model.scm.dto.PurchasePriceChangeDTO$PurchaseOrderAdjustResultDTO">
+        select
+            po.id as purchaseOrderId,
+            pos.supplier_id as supplierId,
+            pod.id as purchaseOrderDetailId,
+            pod.sku_id as skuId,
+            pod.purchase_qty as purchaseQty,
+            pod.tax_price as taxPrice
+        from purchase_order_detail pod
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        <where>
+            pod.is_deleted = false and
+            (
+            <foreach collection="params" item="item" separator="or" open="(" close=")">
+                pos.supplier_id = #{item.supplierId} and pod.sku_id = #{item.skuId} and  #{item.maxQty} > pod.purchase_qty and pod.purchase_qty >= #{item.minQty}
+            </foreach>
+            )
+        </where>
+    </select>
 </mapper>

@@ -380,6 +380,15 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String detailRemark;
 
+        /**
+         *未完单据-已调整
+         */
+        private String adjustedCount;
+
+        /**
+         *未完单据-全部统计
+         */
+        private String totalCount;
     }
 
     /**
@@ -526,4 +535,68 @@ public class PurchasePriceChangeDTO implements Serializable {
          private PurchasePriceChangeEntity purchasePricechangeEntity;
          private ApproveStatusEnum approveStatus;
      }
+
+
+    /**
+     * 采购订单调整
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseOrderAdjustParamDTO {
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+    }
+
+
+    /**
+     * 采购订单调整
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseOrderAdjustResultDTO {
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+    }
 }

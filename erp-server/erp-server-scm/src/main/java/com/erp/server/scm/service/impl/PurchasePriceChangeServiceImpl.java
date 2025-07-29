@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -155,6 +154,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * 添加采购价目变更
@@ -765,6 +767,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
             List<String> supplierIdList = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
             List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIdList);
+
+            //根据供应商、sku、数量区间查询
+            List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList = list.stream().map(obj -> new PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO(obj.getSupplierId(), obj.getSkuId(), obj.getMinQty(), obj.getMaxQty())).collect(Collectors.toList());
+            //List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> purchaseOrderAdjustList = purchaseOrderDetailService.listAdjustPurchaseOrder(adjustParamList);
 
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
