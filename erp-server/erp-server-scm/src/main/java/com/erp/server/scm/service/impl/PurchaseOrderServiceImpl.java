@@ -3430,4 +3430,37 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         return baseMapper.listSkuBySupplierIds(supplierIds);
     }
+
+    @Override
+    public PagingVO<PurchaseOrderDTO.AdjustListDTO> adjustPaging(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SearchAdjustParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.AdjustListDTO> pageData = this.baseMapper.adjustPaging(query, params);
+        handleAdjustPaging(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 处理分页查询数据
+     * @author will
+     * @date 2025/7/29 15:36
+     * @param records
+     * @return void
+     */
+    private void handleAdjustPaging(List<PurchaseOrderDTO.AdjustListDTO> records) {
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        for (PurchaseOrderDTO.AdjustListDTO adjustListDTO : records) {
+            //审核状态名称
+            adjustListDTO.setApproveStatusName(ApproveStatusEnum.getName(adjustListDTO.getApproveStatus()));
+            //执行状态名称
+            adjustListDTO.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(adjustListDTO.getCode()));
+            //税率
+            adjustListDTO.setTaxRateStr(MathUtil.multiplyWithTwo(adjustListDTO.getTaxRate(), MathUtil.BigDecimal_100).toString().concat("%"));
+            //单价是否一致
+            adjustListDTO.setIsSameName(adjustListDTO.getIsSame() ? "一致" : "不一致");
+        }
+    }
 }

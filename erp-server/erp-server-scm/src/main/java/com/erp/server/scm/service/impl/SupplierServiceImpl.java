@@ -256,7 +256,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
         addEntity.setCode(code);
         //生成供应商代码
-        getByIdentificationCode(getIdentificationCode());
+        addEntity.setIdentificationCode(getIdentificationCode());
 
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
@@ -272,6 +272,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             addEntity.setSrmOperateUserId(userInfo.getUid());
             addEntity.setSrmOperateUserName(userInfo.getUserName());
         }
+        //不包含其他则清空数据
+        if (ObjectUtil.isNotEmpty(addEntity.getCertificateJson()) && !addEntity.getCertificateJson().contains("other")) {
+            addEntity.setCertificateOtherValue("");
+        }
+
         //如果付款公司是空，那就是自己公司付款
         if (CharSequenceUtil.isBlank(addEntity.getPaymentCompanyName())) {
             addEntity.setPaymentCompanyName(addEntity.getName());
@@ -353,7 +358,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 10:00
      */
     @Override
-    public SupplierDTO.SupplierViewDTO view(String supplierId) {
+    public SupplierDTO.SupplierViewDTO view(String supplierId,Boolean isViewTel) {
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
@@ -375,7 +380,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
-        handleContact(contactList);
+        handleContactTel(contactList,isViewTel);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息
@@ -1886,8 +1891,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param contactList
      * @return void
      */
-    private void handleContact (List<SupplierContactDTO.UpdateDTO> contactList) {
-        if (CollUtil.isEmpty(contactList)) {
+    private void handleContactTel (List<SupplierContactDTO.UpdateDTO> contactList,Boolean isViewTel) {
+        if (CollUtil.isEmpty(contactList) || isViewTel) {
             return;
         }
         for (SupplierContactDTO.UpdateDTO updateDTO : contactList) {

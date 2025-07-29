@@ -383,12 +383,12 @@ public class PurchasePriceChangeDTO implements Serializable {
         /**
          *未完单据-已调整
          */
-        private String adjustedCount;
+        private Integer adjustedCount;
 
         /**
          *未完单据-全部统计
          */
-        private String totalCount;
+        private Integer totalAdjustedCount;
     }
 
     /**
