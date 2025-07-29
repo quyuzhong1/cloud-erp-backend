@@ -101,6 +101,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
