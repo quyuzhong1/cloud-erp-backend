@@ -73,26 +73,6 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 // 上传压缩后的文件，并获取访问URL
                 String url = fileFeign.uploadFile(file);
 
-                //替换更新
-                if(ProductDetailImprotTypeEnum.REPLACE.getCode().equals(importType)){
-                    // 查询并删除原有同名附件（按类型和名称前缀匹配）
-                    List<PlmAttachmentEntity> oldPlmAttachmentList = plmAttachmentService.lambdaQuery()
-                            .eq(PlmAttachmentEntity::getType, SKUTABLE)
-                            .likeRight(PlmAttachmentEntity::getAttachName, fileName + ".").list();
-                    if(CollUtil.isNotEmpty(oldPlmAttachmentList)){
-                        List<String> list = oldPlmAttachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-                        if(CollUtil.isNotEmpty(list)){
-                            plmAttachmentService.lambdaUpdate()
-                                    .in(PlmAttachmentEntity::getAttachUrl, list)
-                                    .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
-                                    .set(PlmAttachmentEntity::getIsDeleted,true)
-                                    .update();
-
-                            fileFeign.deleteBatchFile(list);
-                        }
-                    }
-                }
-
                 // 计算原始文件大小（单位MB，保留四位小数）
                 double fileSize = (double) Math.round((file.getSize() / (1024.0 * 1024.0)) * 10000) / 10000;
 
