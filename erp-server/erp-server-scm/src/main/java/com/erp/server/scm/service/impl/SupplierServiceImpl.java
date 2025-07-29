@@ -2072,7 +2072,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO,List<String> errorMsgList,boolean isUpdatePart) {
         List<SupplierPlantAddrDTO.AddDTO> plantAddrList = addDTO.getPlantAddrList();
         //工厂地址
-        if (CharSequenceUtil.isBlank(excelDTO.getPlantAddr())) {
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPlantAddr())) {
             List<String> addrList = Arrays.stream(excelDTO.getPlantAddr().split(",")).collect(Collectors.toList());
             for (String addr : addrList) {
                 SupplierPlantAddrDTO.AddDTO addrDTO = new SupplierPlantAddrDTO.AddDTO();
@@ -2086,39 +2086,43 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     }
                     //如果国家下没有省份或城市，则直接添加国家
                     addrDTO.setCountry(addr);
+                    plantAddrList.add(addrDTO);
                     continue;
                 }
                 //省份或城市
                 DictCityEntity dictCityEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), addr.trim())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(dictCityEntity)) {
-                    errorMsgList.add("工厂地址【" + addr + "】不存在，请先在系统中添加");
-                }
-                if (DictCityTypeEnum.PROVINCE.getCode().equals(dictCityEntity.getType())) {
-                    DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(countryEntity)) {
-                        errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
-                        continue;
-                    }
-                    addrDTO.setCountry(countryEntity.getId());
-                    addrDTO.setRegion(dictCityEntity.getCode());
-                } else if (DictCityTypeEnum.CITY.getCode().equals(dictCityEntity.getType())) {
-                    //国家
-                    DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(countryEntity)) {
-                        errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
-                        continue;
-                    }
-                    //省份
-                    DictCityEntity provinceEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getParentId())).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(provinceEntity)) {
-                        errorMsgList.add("工厂地址【" + addr + "】对应的省份不存在，请先在系统中添加");
-                        continue;
-                    }
-                    addrDTO.setCountry(countryEntity.getId());
-                    addrDTO.setRegion(provinceEntity.getCode());
-                    addrDTO.setCity(dictCityEntity.getCode());
+                    errorMsgList.add("工厂地址【" + addr + "】不存在对应省份或城市，请先在系统中添加");
+                    continue;
                 } else {
-                    errorMsgList.add("工厂地址【" + addr + "】不支持直接添加街道，请先填写对应的城市");
+                    if (DictCityTypeEnum.PROVINCE.getCode().equals(dictCityEntity.getType())) {
+                        DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
+                        if (ObjectUtil.isEmpty(countryEntity)) {
+                            errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
+                            continue;
+                        }
+                        addrDTO.setCountry(countryEntity.getId());
+                        addrDTO.setRegion(dictCityEntity.getCode());
+                    } else if (DictCityTypeEnum.CITY.getCode().equals(dictCityEntity.getType())) {
+                        //国家
+                        DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
+                        if (ObjectUtil.isEmpty(countryEntity)) {
+                            errorMsgList.add("工厂地址【" + addr + "】对应的国家不存在，请先在系统中添加");
+                            continue;
+                        }
+                        //省份
+                        DictCityEntity provinceEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getParentId())).findFirst().orElse(null);
+                        if (ObjectUtil.isEmpty(provinceEntity)) {
+                            errorMsgList.add("工厂地址【" + addr + "】对应的省份不存在，请先在系统中添加");
+                            continue;
+                        }
+                        addrDTO.setCountry(countryEntity.getId());
+                        addrDTO.setRegion(provinceEntity.getCode());
+                        addrDTO.setCity(dictCityEntity.getCode());
+                    } else {
+                        errorMsgList.add("工厂地址【" + addr + "】不支持直接添加街道，请先填写对应的城市");
+                        continue;
+                    }
                 }
                 plantAddrList.add(addrDTO);
             }
