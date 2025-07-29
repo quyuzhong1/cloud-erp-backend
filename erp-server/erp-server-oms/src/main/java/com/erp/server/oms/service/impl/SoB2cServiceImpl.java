@@ -3170,6 +3170,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String msg = CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                operateLogService.addModuleOperateLog("状态变更为拦截中", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus());
                 thirdWarehouseDeliveryFeign.update(thirdWarehouseDeliveryEntity);
             }
