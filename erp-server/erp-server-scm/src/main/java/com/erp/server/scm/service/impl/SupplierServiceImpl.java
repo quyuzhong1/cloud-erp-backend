@@ -375,7 +375,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
-        handleContact(supplierId,contactList);
+        handleContact(contactList);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息
@@ -1534,6 +1534,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //联系人信息
             exportExcel.setContactIsDefaultName(Boolean.TRUE.equals(item.getContactIsDefault()) ? "是" : "否");
             exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "禁用" : "启用");
+
+            //查询是否存在电话查看权限
+            Boolean existAuth = isExistAuth(Collections.singletonList(item.getId()), "supplier:telNumber:view", "purchase_user_id");
+            if (!existAuth) {
+                exportExcel.setTelNumber(DesensitizedUtil.mobilePhone(exportExcel.getTelNumber()));
+            }
             //付款账户信息
             exportExcel.setAccountDefaultName(Boolean.TRUE.equals(item.getAccountDefault()) ? "是" : "否");
             String bankPayMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
@@ -1880,17 +1886,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param contactList
      * @return void
      */
-    private void handleContact (String supplierId,List<SupplierContactDTO.UpdateDTO> contactList) {
+    private void handleContact (List<SupplierContactDTO.UpdateDTO> contactList) {
         if (CollUtil.isEmpty(contactList)) {
             return;
         }
-        //查询是否存在电话查看权限
-        Boolean existAuth = isExistAuth(Collections.singletonList(supplierId), "supplier:telNumber:view", "purchase_user_id");
         for (SupplierContactDTO.UpdateDTO updateDTO : contactList) {
-            //隐藏电话
-            if (CharSequenceUtil.isNotBlank(updateDTO.getTelNumber()) && !existAuth) {
-                updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
-            }
+             updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
         }
     }
     /**

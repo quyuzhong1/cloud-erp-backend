@@ -26,7 +26,7 @@ public enum QueryConditionEnum implements EnumMessage {
     STARTS_WITH("startsWith", "starts_with", "开头以..."),
     ENDS_WITH("endsWith", "ends_with", "结尾以..."),
     CONTAINS("contains","ilike", "包含"),
-    NOT_CONTAINS("notContains","not like", "不包含"),
+    NOT_CONTAINS("notContains","not ilike", "不包含"),
     IS_NULL("isNull","is null", "为空"),
     NOT_NULL("notNull","is not null", "不为空"),
     BETWEEN("between","between", "介于"),
