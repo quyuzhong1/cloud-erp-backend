@@ -226,6 +226,9 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                         }
                     }
 
+                    // 先按是否有下划线排序，再按字典序排序
+                    value.sort(Comparator.comparing((String s) -> s.contains("_"))
+                            .thenComparing(String::compareTo));
                     String iamgesUrl = String.join(",", value);
 
                     lambdaUpdate().set(ProductDetailEntity::getImagesUrl, iamgesUrl)
