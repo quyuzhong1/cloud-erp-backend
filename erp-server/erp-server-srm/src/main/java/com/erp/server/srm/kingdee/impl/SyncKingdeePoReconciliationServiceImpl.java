@@ -184,7 +184,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         List<String> returnIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode())).map(PoReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<String> returnDetailIdList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode())).map(PoReconciliationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(returnIdList)) {
-            List<PoReturnEntity> returnList = FeignQuery.getByIds(PoReturnEntity.class, returnDetailIdList);
+            List<PoReturnEntity> returnList = FeignQuery.getByIds(PoReturnEntity.class, returnIdList);
             returnMap = returnList.stream().collect(Collectors.toMap(PoReturnEntity::getId, PoReturnEntity::getSyncKingdeeId));
 
             List<PoReturnDetailEntity> returnDetailList = FeignQuery.getByIds(PoReturnDetailEntity.class, returnDetailIdList);
