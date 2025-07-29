@@ -1534,6 +1534,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //联系人信息
             exportExcel.setContactIsDefaultName(Boolean.TRUE.equals(item.getContactIsDefault()) ? "是" : "否");
             exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "禁用" : "启用");
+
+            //查询是否存在电话查看权限
+            Boolean existAuth = isExistAuth(Collections.singletonList(item.getId()), "supplier:telNumber:view", "purchase_user_id");
+            if (!existAuth) {
+                exportExcel.setTelNumber(DesensitizedUtil.mobilePhone(exportExcel.getTelNumber()));
+            }
             //付款账户信息
             exportExcel.setAccountDefaultName(Boolean.TRUE.equals(item.getAccountDefault()) ? "是" : "否");
             String bankPayMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
