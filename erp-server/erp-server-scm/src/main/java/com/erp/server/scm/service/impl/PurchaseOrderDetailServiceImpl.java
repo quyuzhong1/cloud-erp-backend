@@ -27,6 +27,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
@@ -774,6 +775,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("SKU【%s】结束交货，结束原因：".concat(StrUtils.null2EmptyWithTrim(remark)), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "结束交货操作");
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList) {
+        if (CollUtil.isEmpty(adjustParamList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listAdjustPurchaseOrder(adjustParamList);
     }
 
     /**

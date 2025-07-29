@@ -50,7 +50,21 @@ public class SupplierDTO implements Serializable {
 
     }
 
-    /**
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ViewParamDTO {
+
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 是否需要查看电话
+         */
+        private Boolean isViewTel = Boolean.FALSE;
+    }
+
+        /**
      * 批量修改供应商分类
      */
     @Data
@@ -426,6 +440,11 @@ public class SupplierDTO implements Serializable {
         private JSONArray applicationCategoryJson;
 
         /**
+         * 体系认证其他选项值
+         */
+        private String certificateOtherValue;
+
+        /**
          * 供应商联系信息
          */
         @Valid
@@ -583,6 +602,11 @@ public class SupplierDTO implements Serializable {
          */
         @NotEmpty(message = "体系认证不能为空")
         private JSONArray certificateJson;
+
+        /**
+         * 体系认证其他选项的值
+         */
+        private String certificateOtherValue;
 
         /**
          * 产品分类集合,get,plm/category/tree

@@ -230,6 +230,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private SupplierAccountService supplierAccountService;
     @Resource
     private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
+    @Autowired
+    private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -3073,8 +3075,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //采购退货
             if (CollectionUtils.isNotEmpty(purchaseReturnOrderList) && SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())) {
-                String subCode = purchaseReturnOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
-                obj.setSourceCode(subCode);
+                PoReturnEntity poReturnEntity = purchaseReturnOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().orElse(new PoReturnEntity());
+                obj.setSourceCode(poReturnEntity.getCode());
+                obj.setReturnMode(poReturnEntity.getReturnMode());
             }
 
             //最新审核人
@@ -3428,5 +3431,44 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return Collections.emptyList();
         }
         return baseMapper.listSkuBySupplierIds(supplierIds);
+    }
+
+    @Override
+    public PagingVO<PurchaseOrderDTO.AdjustListDTO> adjustPaging(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SearchAdjustParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.AdjustListDTO> pageData = this.baseMapper.adjustPaging(query, params);
+        handleAdjustPaging(pageData.getRecords(),pagingDTO.getParams().getPurchasePriceChangeDetailId());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 处理分页查询数据
+     * @author will
+     * @date 2025/7/29 15:36
+     * @param records
+     * @return void
+     */
+    private void handleAdjustPaging(List<PurchaseOrderDTO.AdjustListDTO> records,String purchasePriceChangeDetailId) {
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        PurchasePriceChangeDetailEntity entity = purchasePriceChangeDetailService.getById(purchasePriceChangeDetailId);
+        if (ObjectUtil.isNotEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98028);
+        }
+        for (PurchaseOrderDTO.AdjustListDTO adjustListDTO : records) {
+            //待调整单价
+            adjustListDTO.setAdjustTaxPrice(entity.getTaxPrice());
+            //审核状态名称
+            adjustListDTO.setApproveStatusName(ApproveStatusEnum.getName(adjustListDTO.getApproveStatus()));
+            //执行状态名称
+            adjustListDTO.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(adjustListDTO.getCode()));
+            //税率
+            adjustListDTO.setTaxRateStr(MathUtil.multiplyWithTwo(adjustListDTO.getTaxRate(), MathUtil.BigDecimal_100).toString().concat("%"));
+            //单价是否一致
+            adjustListDTO.setIsSameName(adjustListDTO.getIsSame() ? "一致" : "不一致");
+        }
     }
 }

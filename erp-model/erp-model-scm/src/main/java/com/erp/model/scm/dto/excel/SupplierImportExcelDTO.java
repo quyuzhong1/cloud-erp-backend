@@ -80,6 +80,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "结算方式", index = 6)
+    @FieldValid(fieldName = "结算方式",isNotBlank = true )
     private String payMethodName;
 
 
@@ -88,6 +89,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "结算币种", index = 7)
+    @FieldValid(fieldName = "结算币种",isNotBlank = true )
     private String payCurrency;
 
 
@@ -96,13 +98,14 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "供应商分类", index = 8)
+    @FieldValid(fieldName = "供应商分类",isNotBlank = true )
     private String categoryName;
 
     /**
      * 工厂所在地
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "工厂所在地", index = 9)
+    @ExcelProperty(value = "*工厂所在地", index = 9)
     @FieldValid(fieldName = "工厂所在地",isNotBlank = true )
     private String plantAddr;
 
@@ -110,7 +113,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 公司注册资金（万）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "公司注册资金（万）", index = 10)
+    @ExcelProperty(value = "*公司注册资金（万）", index = 10)
     @FieldValid(fieldName = "公司注册资金（万）",isNotBlank = true )
     private String registeredCapital;
 
@@ -118,30 +121,30 @@ public class SupplierImportExcelDTO implements Serializable {
      * 供应商属性
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "供应商属性", index = 11)
+    @ExcelProperty(value = "*供应商属性", index = 11)
     @FieldValid(fieldName = "供应商属性",isNotBlank = true )
     private String propertyStr;
     /**
      * 供应商品类
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "供应商品类", index = 12)
-    @FieldValid(fieldName = "供应商品类",isNotBlank = true )
+    @ExcelProperty(value = "*产品分类-二级分类", index = 12)
+    @FieldValid(fieldName = "产品分类-二级分类",isNotBlank = true )
     private String productCategoryStr;
 
     /**
-     * 供应商应用分类
+     * 应用分类
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "供应商应用分类", index = 13)
-    @FieldValid(fieldName = "供应商应用分类",isNotBlank = true )
+    @ExcelProperty(value = "*应用分类", index = 13)
+    @FieldValid(fieldName = "应用分类",isNotBlank = true )
     private String applicationCategoryStr;
 
     /**
      * 体系认证
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "体系认证", index = 14)
+    @ExcelProperty(value = "*体系认证", index = 14)
     @FieldValid(fieldName = "体系认证",isNotBlank = true )
     private String certificateStr;
 

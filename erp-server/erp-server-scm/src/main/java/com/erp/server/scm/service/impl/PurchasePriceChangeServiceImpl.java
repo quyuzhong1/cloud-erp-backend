@@ -157,6 +157,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
     /**
      * 添加采购价目变更
      *
@@ -766,6 +769,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             List<String> supplierIdList = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
             List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIdList);
 
+            //根据供应商、sku、数量区间查询
+            List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList = list.stream().map(obj -> new PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO(obj.getSupplierId(), obj.getSkuId(), obj.getMinQty(), obj.getMaxQty())).collect(Collectors.toList());
+            List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> purchaseOrderAdjustList = purchaseOrderDetailService.listAdjustPurchaseOrder(adjustParamList);
+
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
@@ -802,6 +809,24 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), viewDTO.getTaxPrice()), viewDTO.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
                     item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
                 }
+
+                //查询全部调整数量
+                long totalAdjustedCount = purchaseOrderAdjustList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSupplierId(), item.getSupplierId())
+                                && CharSequenceUtil.equals(obj.getSkuId(), item.getSkuId())
+                                && MathUtil.compareTo(obj.getPurchaseQty(), item.getMinQty()) >= 0
+                                && MathUtil.compareTo(item.getMaxQty(), obj.getPurchaseQty()) > 0
+                ).map(PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO::getPurchaseOrderId).distinct().count();
+                item.setTotalAdjustedCount(Integer.valueOf(String.valueOf(totalAdjustedCount)));
+                //查询已调整数量
+                long adjustedCount = purchaseOrderAdjustList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSupplierId(), item.getSupplierId())
+                                && CharSequenceUtil.equals(obj.getSkuId(), item.getSkuId())
+                                && MathUtil.compareTo(obj.getPurchaseQty(), item.getMinQty()) >= MathUtil.ZERO
+                                && MathUtil.compareTo(item.getMaxQty(), obj.getPurchaseQty()) > MathUtil.ZERO
+                                && MathUtil.compareTo(item.getTaxPrice(), obj.getTaxPrice()) == MathUtil.ZERO
+                ).map(PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO::getPurchaseOrderId).distinct().count();
+                item.setAdjustedCount(Integer.valueOf(String.valueOf(adjustedCount)));
             }
         }
 

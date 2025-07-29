@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
@@ -210,4 +211,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return Boolean
      */
     Boolean finishDelivery(List<String> ids, String remark,Boolean isValid);
+    /**
+     * 查询调整数据
+     * @author will
+     * @date 2025/7/29 14:09
+     * @param adjustParamList
+     * @return List<PurchaseOrderAdjustResultDTO>
+     */
+    List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> adjustParamList);
 }
