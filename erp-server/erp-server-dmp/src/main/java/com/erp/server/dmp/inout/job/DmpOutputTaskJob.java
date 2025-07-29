@@ -113,6 +113,21 @@ public class DmpOutputTaskJob {
 			.update();
 		return ReturnT.SUCCESS;
 	}
+	
+	/**
+	 * 重推error状态数据通过创建时间
+	 * @return
+	 */
+	@XxlJob("retryOutputErrorTaskByCreateTime")
+	public ReturnT retryOutputErrorTaskByCreateTime(){
+		LocalDateTime createTime = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
+		dmpOutputTaskRecordService.lambdaUpdate()
+			.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+			.lt(DmpOutputTaskRecordEntity::getCreateTime, createTime)
+			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+			.update();
+		return ReturnT.SUCCESS;
+	}
 
 	/**
 	 * 输出任务执行
