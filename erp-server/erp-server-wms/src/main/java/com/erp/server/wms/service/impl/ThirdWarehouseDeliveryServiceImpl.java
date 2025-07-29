@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,6 +13,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
@@ -96,6 +98,10 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             v.setMainId(entity.getId());
         });
         detailService.saveBatch(entity.getDetailEntityList());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方仓发货单" , entity.getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),entity.getId(), "新增操作");
+
         return entity.getId();
     }
 

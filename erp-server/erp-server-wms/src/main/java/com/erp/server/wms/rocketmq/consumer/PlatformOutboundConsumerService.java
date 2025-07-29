@@ -32,10 +32,7 @@ import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.AsyncService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
-import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -56,6 +53,9 @@ import java.util.*;
 //        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_outbound_consumer",
 //        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -232,6 +232,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 soB2cFeign.addModuleOperateLog(operateLogDTO);
                 if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                     thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                    operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
+
                     thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
                 }
             }
@@ -278,6 +280,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
+            operateLogService.addModuleOperateLog("状态变更已发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
+
             thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
         }
     }
