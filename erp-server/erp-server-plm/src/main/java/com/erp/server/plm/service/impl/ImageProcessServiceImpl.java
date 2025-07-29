@@ -92,6 +92,7 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 }else {
                     result.incrementSuccess("","");
                 }
+                success = true;
             } catch (Exception e) {
                 retry++;
                 // 达到最大重试次数时，标记该文件处理失败
