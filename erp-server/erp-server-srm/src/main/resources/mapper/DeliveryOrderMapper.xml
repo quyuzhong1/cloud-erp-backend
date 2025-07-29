@@ -153,6 +153,8 @@
             doe.receipt_status as detailReceiptStatus,
             do2.code,
             do2.supplier_id,
+            do2.to_warehouse_id as warehouseId,
+            do2.to_warehouse_name as warehouseName,
             doe.sku_id,
             doe.sku_no,
             doe.product_name,
