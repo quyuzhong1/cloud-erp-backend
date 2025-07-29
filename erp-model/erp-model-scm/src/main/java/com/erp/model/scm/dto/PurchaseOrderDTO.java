@@ -1958,6 +1958,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 最大数量
          */
         private Integer maxQty;
+
+        /**
+         * 调价
+         */
+        private String purchasePriceChangeDetailId;
     }
 
 
@@ -1977,6 +1982,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 明细id
          */
         private String detailId;
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
         /**
          * 审核状态
          */

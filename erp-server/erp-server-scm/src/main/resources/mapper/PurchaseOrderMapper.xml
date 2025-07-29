@@ -887,8 +887,10 @@
             po.code,
             po.purchase_date as purchaseDate,
             po.approve_status as approveStatus,
+            po.supplier_id as supplierId,
             pod.id as purchaseDetailId,
             pod.execution_status as executionStatus,
+            po.purchase_org_id as purchaseOrgId,
             pod.sku_id as skuId,
             pod.sku_no as skuNo,
             pd.name as productName,
@@ -903,7 +905,7 @@
         left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and po.is_deleted = false and po.invalid_status = false and pod.execution_status not in ('finish','closed')
+            and po.is_deleted = false and po.invalid_status = false and pod.execution_status not in ('finish','closed')  and pod.is_gift = false
             <if test="params.supplierId != null and params.supplierId != ''">
                 po.supplier_id = ${params.supplierId}
             </if>
