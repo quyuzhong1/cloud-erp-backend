@@ -14,6 +14,16 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.camunda.feel</groupId>
+            <artifactId>feel-engine</artifactId>
+            <version>1.13.3</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     <modelVersion>4.0.0</modelVersion>
 
