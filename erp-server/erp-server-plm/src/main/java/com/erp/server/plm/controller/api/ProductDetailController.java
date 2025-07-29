@@ -1400,7 +1400,7 @@ public class ProductDetailController extends BaseController {
     @PostMapping(value = "/importZip")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:product:detail:uploadProductImage",
+            menuCode = "plm:product:detail:importZip",
             serviceClass = ProductDetailImagesService.class,
             keyIdName = "id"
     )
