@@ -4361,7 +4361,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name
-        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode()) || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
+        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())
+                || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())
+                || ProductBatchFieldEnum.MATERIALS.getCode().equals(dto.getUpdateFiledCode())) {
             if (ObjectUtils.isEmpty(dto.getValues())) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
@@ -4408,6 +4410,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         .in(ProductInfoEntity::getId, productIds)
                         .update();
             }
+            if (ProductBatchFieldEnum.MATERIALS.getCode().equals(dto.getUpdateFiledCode())) {
+                productInfoService.lambdaUpdate()
+                        .set(ProductInfoEntity::getMaterials, dto.getValues())
+                        .in(ProductInfoEntity::getId, productIds)
+                        .update();
+            }
 
         } else {
             if (ProductBatchFieldEnum.DECLARE_PRICE.getCode().equals(dto.getUpdateFiledCode())) {
@@ -4425,11 +4433,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ProductBatchFieldEnum.GROSS_WEIGHT.getCode().equals(dto.getUpdateFiledCode())) {
                 dto.setValues(MathUtil.valueOf(dto.getValues()));
             }
+            if (ProductBatchFieldEnum.INSURANCE_PROPERTY.getCode().equals(dto.getUpdateFiledCode())) {
+                List<String> values = (List<String>) dto.getValues();
+                dto.setValues(String.join(",",values));
+            }
             ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.ERROR_9046, dto.getUpdateFiledCode());
             }
-            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
+            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), "insurance_property", dto.getValues(), enumByCode.getKeyName());
         }
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
