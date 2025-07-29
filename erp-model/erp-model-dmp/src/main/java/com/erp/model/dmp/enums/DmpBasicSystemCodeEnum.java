@@ -32,6 +32,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     LING_XING("lingxing", "领星"),
     JIFENG("jifeng", "极风"),
     CAINIAO("cainiao", "菜鸟仓"),
+    WEI_SHI("weishi", "纬狮"),
     ;
     /**
      * 类型

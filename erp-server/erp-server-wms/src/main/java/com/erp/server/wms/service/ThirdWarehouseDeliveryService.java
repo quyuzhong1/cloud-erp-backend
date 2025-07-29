@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -30,4 +33,12 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     ThirdWarehouseDeliveryEntity getLatestByCode(String code);
 
     void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
+    PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
+
+    ThirdWarehouseDeliveryDTO.ViewDTO view(String id);
+
+    void export(ThirdWarehouseDeliveryDTO.PagingParamDTO dto);
+
+    List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList();
 }

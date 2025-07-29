@@ -174,7 +174,11 @@ public class WarehouseDTO implements Serializable {
          * 启用日期
          */
         private LocalDateTime openTime;
-        
+
+        /**
+         * 国家
+         */
+        private String country;
     }
 
 
@@ -436,6 +440,15 @@ public class WarehouseDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 国家
+         */
+        private String country;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
         /**
          * 金蝶仓库编号
          */

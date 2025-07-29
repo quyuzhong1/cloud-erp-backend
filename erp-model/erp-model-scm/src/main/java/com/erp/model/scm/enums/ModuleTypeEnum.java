@@ -152,6 +152,7 @@ public enum ModuleTypeEnum {
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
 
+    THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
 
 
     ;
