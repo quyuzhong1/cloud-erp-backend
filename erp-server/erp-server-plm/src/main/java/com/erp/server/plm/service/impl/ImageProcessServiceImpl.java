@@ -92,7 +92,7 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 retry++;
                 // 达到最大重试次数时，标记该文件处理失败
                 if (retry >= 3) {
-                    result.incrementFailed();
+                    result.incrementFailed(productDetailEntity.getSkuNo(),file.getOriginalFilename());
                 }
             }
         }
