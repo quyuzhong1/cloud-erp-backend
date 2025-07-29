@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformOutboundDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -298,6 +299,24 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             result.add(tabListDTO);
         }
         return result;
+    }
+
+    @Override
+    public BatchResultDTO retryOutstock(String id) {
+        ThirdWarehouseDeliveryEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            return BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+        }
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            return BatchResultDTO.fail(id, entity.getCode(), "销售订单不存在, 重新出库失败");
+        }
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
+        PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
+        platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
+        platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
+        platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO);
+        return BatchResultDTO.success();
     }
 
 }

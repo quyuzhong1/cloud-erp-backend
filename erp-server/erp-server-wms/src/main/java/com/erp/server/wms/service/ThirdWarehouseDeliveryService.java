@@ -41,4 +41,6 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     void export(ThirdWarehouseDeliveryDTO.PagingParamDTO dto);
 
     List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList();
+
+    BatchResultDTO retryOutstock(String id);
 }
