@@ -440,6 +440,11 @@ public class SupplierDTO implements Serializable {
         private JSONArray applicationCategoryJson;
 
         /**
+         * 体系认证其他选项值
+         */
+        private String certificateOtherValue;
+
+        /**
          * 供应商联系信息
          */
         @Valid
