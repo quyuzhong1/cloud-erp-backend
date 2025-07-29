@@ -2,6 +2,8 @@ package com.erp.model.plm.dto;
 
 import lombok.*;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -467,5 +469,49 @@ public class ProductDetailDTO implements Serializable {
         private List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField;
     }
 
+    /**
+     * @Description sku图片信息请求参数
+     * @Author jack
+     * @Date 2025-07-25
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductImagesDTO {
+        /**
+         * 产品sku明细表id
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 图片地址
+         */
+        @NotEmpty(message = "图片地址不能为空")
+        private List<String> imagesUrls;
+    }
+
+    /**
+     * @Description sku图片信息请求参数
+     * @Author jack
+     * @Date 2025-07-25
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductImagesZipDTO {
+        /**
+         * 文件URL
+         */
+        @NotBlank(message = "zip压缩文件不能为空")
+        private String fileUrl;
+
+        /**
+         * 导入类型
+         */
+        @NotBlank(message = "导入类型不能为空")
+        private String importType;
+
+        //ProductDetailImprotTypeEnum
+        private String taskId;
+    }
 
 }

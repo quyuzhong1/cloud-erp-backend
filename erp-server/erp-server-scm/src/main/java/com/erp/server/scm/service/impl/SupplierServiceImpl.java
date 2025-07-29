@@ -192,7 +192,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierPlantAddrService supplierPlantAddrService;
 
-
+    @Resource
+    private AttachmentService attachmentService;
+    
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     /**
@@ -1420,7 +1422,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
-        Page<SupplierDTO.PagingViewDTO> page = baseMapper.getExportSupplier(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<SupplierDTO.PagingExportDTO> page = baseMapper.getExportSupplier(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         List<SupplierExportExcelDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>();
@@ -1434,13 +1436,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         //供应商id 集合
-        List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        //获取供应商默认联系人信息
-        List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+        List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
-        //获取到采购订单数据
-        List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
 
         //供应商工厂地
         List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
@@ -1461,10 +1459,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(ApiError.ERROR_500);
             }
         }
+        List<String> credentialIdList = page.getRecords().stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(credentialIdList);
 
-        for (SupplierDTO.PagingViewDTO item : page.getRecords()) {
+        for (SupplierDTO.PagingExportDTO item : page.getRecords()) {
             String id = item.getId();
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
+            BeanUtil.copyProperties(item,exportExcel);
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
             exportExcel.setVoucherNo(item.getVoucherNo());
@@ -1521,14 +1522,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
-            SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
-            if (contact != null) {
-                exportExcel.setContactPerson(contact.getPerson());
-                exportExcel.setContactTelNumber(contact.getTelNumber());
-            }
-            //采购次数
-            long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
-            exportExcel.setPurchasesCount((int) purchasesCount);
             exportExcel.setCreateTime(item.getCreateTime());
             exportExcel.setCreateUserName(item.getCreateUserName());
             //最新审核人
@@ -1537,6 +1530,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 exportExcel.setApproveUserName(curApprove);
             }
             exportExcel.setApproveTime(item.getApproveTime());
+
+            //联系人信息
+            exportExcel.setContactIsDefaultName(Boolean.TRUE.equals(item.getContactIsDefault()) ? "是" : "否");
+            exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "禁用" : "启用");
+            //付款账户信息
+            exportExcel.setAccountDefaultName(Boolean.TRUE.equals(item.getAccountDefault()) ? "是" : "否");
+            String bankPayMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            exportExcel.setBankPayMethodName(bankPayMethodName);
+            //资质信息
+            String attachmentName = attachmentList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessId(), item.getCredentialId())).map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(","));
+            exportExcel.setAttachmentName(attachmentName);
             resultList.add(exportExcel);
 
         }
@@ -1603,14 +1608,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
         List<String> fieldCodeList = fieldList.stream().map(SupplierDTO.ExportField::getField).distinct().collect(Collectors.toList());
-        LinkedHashMap<String, String> fieldMap = (LinkedHashMap<String, String>) fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+        LinkedHashMap<String, String> fieldMap =  fieldList.stream().collect(Collectors.toMap(SupplierDTO.ExportField::getField, SupplierDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         dynamicExcelDTO.setHeaders(fieldMap);
 
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();
         List<SupplierExportExcelDTO> list = excelList.getList();
         for (SupplierExportExcelDTO exportExcelDTO : list) {
             LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
-            LinkedHashMap<String, Object> exportMap = excelMap.entrySet().stream().filter(obj -> fieldCodeList.contains(obj.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue, LinkedHashMap::new));
+            //添加值
+            LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
+            for (String fieldCode : fieldCodeList) {
+                Object value = excelMap.get(fieldCode);
+                exportMap.put(fieldCode,value);
+            }
             data.add(exportMap);
         }
         dynamicExcelDTO.setData(data);

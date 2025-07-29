@@ -11,6 +11,8 @@
         sp.supplier_id AS supplierId,
         sp.current_phase AS currentPhase,
         sp.target_phase AS targetPhase,
+        sp.current_grade_id AS currentGradeId,
+        sp.target_grade_id AS targetGradeId,
         sp.approve_status AS approveStatus,
         sp.description ,
         su.name AS supplierName,

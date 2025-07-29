@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -266,6 +267,7 @@ public class SupplierPhaseDTO implements Serializable {
         /**
          * 选中导出字段
          */
+        @Valid
         private List<SupplierPhaseDTO.ExportField> fieldList;
     }
 
@@ -279,11 +281,13 @@ public class SupplierPhaseDTO implements Serializable {
         /**
          * 字段
          */
+        @NotBlank(message = "导出字段编码不能为空")
         private String field;
 
         /**
          * 字段名称
          */
+        @NotBlank(message = "导出字段名称不能为空")
         private String fieldName;
     }
 
