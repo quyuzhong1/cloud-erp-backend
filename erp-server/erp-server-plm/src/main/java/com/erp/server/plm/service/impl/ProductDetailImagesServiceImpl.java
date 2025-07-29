@@ -96,9 +96,6 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         if(CollUtil.isEmpty(imagesUrls)){
             throw new ServiceException("图片地址不能为空");
         }
-
-        String imagesUrl = productDetailEntity.getImagesUrl();
-
         String imagesUrlStr = String.join(",", imagesUrls);
         boolean save = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, dto.getSkuId())
@@ -106,18 +103,8 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                 .update();
 
         if (save) {
+            String imagesUrl = productDetailEntity.getImagesUrl();
             sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
-
-            if(StringUtils.isNotBlank(imagesUrl)){
-                List<String> list = Arrays.asList(imagesUrl.split(","));
-                plmAttachmentService.lambdaUpdate()
-                        .in(PlmAttachmentEntity::getAttachUrl, list)
-                        .eq(PlmAttachmentEntity::getBusinessId, dto.getSkuId())
-                        .set(PlmAttachmentEntity::getIsDeleted,true)
-                        .update();
-
-                fileFeign.deleteBatchFile(list);
-            }
         }
         return save;
     }
@@ -216,15 +203,29 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                 for (Map.Entry<String, List<String>> entry : successFiles.entrySet()) {
                     String skuId = entry.getKey();
                     List<String> value = entry.getValue();
-                    if(ProductDetailImprotTypeEnum.ADD.getCode().equals(dto.getImportType())){
-                        ProductDetailEntity productDetailEntity = productDetailMap.get(skuId);
-                        if (productDetailEntity != null) {
-                            String imagesUrl = productDetailEntity.getImagesUrl();
-                            if (StringUtils.isNotBlank(imagesUrl)) {
-                                value.addAll(Arrays.asList(imagesUrl.split(",")));
-                            }
+
+                    ProductDetailEntity productDetailEntity = productDetailMap.getOrDefault(skuId,null);
+                    if (Objects.isNull(productDetailEntity)) {
+                        continue;
+                    }
+                    String imagesUrl = productDetailEntity.getImagesUrl();
+                    if (StringUtils.isNotBlank(imagesUrl)) {
+                        List<String> list = Arrays.asList(imagesUrl.split(","));
+                        if(ProductDetailImprotTypeEnum.ADD.getCode().equals(dto.getImportType())){
+                            //保留产品原有图片，并在新增新上传的图片
+                            value.addAll(list);
+                        }else {
+                            //新上传的图片替换原有图片
+                            //则需要删除
+                            plmAttachmentService.lambdaUpdate()
+                                    .in(PlmAttachmentEntity::getAttachUrl, list)
+                                    .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
+                                    .set(PlmAttachmentEntity::getIsDeleted,true)
+                                    .update();
+                            fileFeign.deleteBatchFile(list);
                         }
                     }
+
                     String iamgesUrl = String.join(",", value);
 
                     lambdaUpdate().set(ProductDetailEntity::getImagesUrl, iamgesUrl)
