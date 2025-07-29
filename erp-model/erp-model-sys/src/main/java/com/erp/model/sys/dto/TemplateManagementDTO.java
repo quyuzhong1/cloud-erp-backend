@@ -270,6 +270,10 @@ public class TemplateManagementDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BaseDTO {
+        /**
+         * id
+         */
+        private String id;
 
         /**
          * 创建人id
