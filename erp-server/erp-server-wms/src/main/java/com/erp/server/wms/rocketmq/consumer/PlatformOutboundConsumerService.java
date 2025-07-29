@@ -232,7 +232,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     addDTO.setSkuId(thirdWarehouseDeliveryDetailEntity.getSkuId());
                     addDTO.setSkuNo(thirdWarehouseDeliveryDetailEntity.getSkuNo());
                     SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getSkuId().equals(thirdWarehouseDeliveryDetailEntity.getSourceSkuId())).findFirst().orElse(new SoB2cDetailEntity());
-                    addDTO.setSourceDetailId(soB2cDetailEntity.getSourceDetailId());
+                    addDTO.setSourceDetailId(thirdWarehouseDeliveryDetailEntity.getId());
                     addDTO.setSoDetailId(soB2cDetailEntity.getId());
                     addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
                     addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());

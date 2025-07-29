@@ -9440,6 +9440,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(v -> v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
             soB2cLogisticsEntity.setCode(dto.getTrackNo());
             soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+            soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
             soB2cLogisticsEntity.setDeliveryTime(dto.getDeliveryTime());
             if (dto.getPlatformShipFlag()) {
                 if (!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE) || !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())) {
@@ -9488,9 +9489,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getMainId(), soB2cEntity.getId())).collect(Collectors.toList());
 
+            //将仓库会写到订单的明细发货仓库
+            if (CollectionUtils.isNotEmpty(detailEntityList)) {
+                detailEntityList.forEach(e -> {
+                    e.setWarehouseId(dto.getWarehouseId());
+                    e.setWarehouseName(updateDTOS.get(0).getName());
+                });
+            }
             //生成发货单和出库单
             try {
-                soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity,detailEntityList,dto);
+                soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity,detailEntityList,dto,soB2cLogisticsEntity);
             } catch (Exception e) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage())));
                 continue;
@@ -9499,14 +9507,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateList.add(soB2cEntity);
             updateLogisticList.add(soB2cLogisticsEntity);
             deleteErrorIds.add(soB2cEntity.getId());
-            //将仓库会写到订单的明细发货仓库
-            if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                detailEntityList.forEach(e -> {
-                    e.setWarehouseId(dto.getWarehouseId());
-                    e.setWarehouseName(updateDTOS.get(0).getName());
-                });
-                updateDetailList.addAll(detailEntityList);
-            }
+            updateDetailList.addAll(detailEntityList);
             // 不出库发货虚拟商品同步数帝云
             List<SoB2cDetailEntity> noInventorySkuDetailList = detailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {

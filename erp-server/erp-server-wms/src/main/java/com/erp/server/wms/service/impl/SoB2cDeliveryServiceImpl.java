@@ -43,6 +43,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
@@ -217,7 +218,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(SoB2cDeliveryDTO.AddDTO addDTO) {
+    public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
         if(ObjectUtil.isNotEmpty(existEntity)){
             throw new ServiceException(CharSequenceUtil.format("已生成发货单，发货单号：{}", existEntity.getCode()));
@@ -249,7 +250,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //冻结虚拟库存
         freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
 
-        return save;
+        return soB2cDeliveryEntity;
     }
 
     private void matchTransferRule(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
@@ -1560,8 +1561,74 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
+        SoB2cEntity soB2cEntity = generateDeliveryAndOutStockDTO.getEntity();
+        SoB2cDTO.DeliveryWithNotOutboundDTO dto = generateDeliveryAndOutStockDTO.getDto();
+        SoB2cLogisticsEntity soB2cLogisticsEntity = generateDeliveryAndOutStockDTO.getSoB2cLogisticsEntity();
+        List<SoB2cDetailEntity> detailList = generateDeliveryAndOutStockDTO.getDetailEntityList();
+        SoB2cDeliveryDTO.AddDTO soB2cDelivery = new SoB2cDeliveryDTO.AddDTO();
+        soB2cDelivery.setSoCode(soB2cEntity.getCode());
+        soB2cDelivery.setShopId(soB2cEntity.getShopId());
+        soB2cDelivery.setSourceId(soB2cEntity.getId());
+        soB2cDelivery.setSourceCode(soB2cEntity.getCode());
+        soB2cDelivery.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        soB2cDelivery.setDeliveryTime(dto.getDeliveryTime());
+        soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
+        soB2cDelivery.setTransportNo(soB2cLogisticsEntity.getCode());
+        soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+        if (OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equals(soB2cLogisticsEntity.getLogisticType())) {
+            soB2cDelivery.setLogisticType(B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode());
+        }
+        List<SoB2cDeliveryDetailDTO.AddDTO> deliveryDetailList = new ArrayList<>(detailList.size());
+        for (SoB2cDetailEntity detailItem : detailList) {
+            SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
+            addDTO.setSkuId(detailItem.getSkuId());
+            addDTO.setSkuNo(detailItem.getSkuNo());
+            addDTO.setWarehouseId(detailItem.getWarehouseId());
+            addDTO.setWarehouseName(detailItem.getWarehouseName());
+            addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+            addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
+            addDTO.setSourceDetailId(detailItem.getId());
+            addDTO.setDeliveryQty(detailItem.getQty());
+            deliveryDetailList.add(addDTO);
+        }
+        soB2cDelivery.setDetailList(deliveryDetailList);
+        SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
 
+        // 校验是否已生成销售出库单
+        boolean exist = soOutstockService.checkExist(soB2cEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
+        if (exist) {
+            return;
+        }
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cEntity.getCode());
+        //查询三方仓发货明细，重新赋值明细数据
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(soB2cDeliveryEntity.getId()));
+        if (CollectionUtils.isNotEmpty(soB2cDeliveryDetailEntities)) {
+            LinkedList<SoOutstockDetailDTO.AddDTO> wantDetailList = new LinkedList<>();
+            for (SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity : soB2cDeliveryDetailEntities) {
+                //表示有啊
+                SoOutstockDetailDTO.AddDTO addDTO = new SoOutstockDetailDTO.AddDTO();
+                // 明细记录平台单号
+                addDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+                addDTO.setSkuId(soB2cDeliveryDetailEntity.getSkuId());
+                addDTO.setSkuNo(soB2cDeliveryDetailEntity.getSkuNo());
+                SoB2cDetailEntity soB2cDetailEntity = detailList.stream().filter(v -> v.getId().equals(soB2cDeliveryDetailEntity.getSourceDetailId())).findFirst().orElse(new SoB2cDetailEntity());
+                addDTO.setSourceDetailId(soB2cDeliveryDetailEntity.getId());
+                addDTO.setSoDetailId(soB2cDetailEntity.getId());
+                addDTO.setPlanQty(soB2cDetailEntity.getQty());
+                addDTO.setActualQty(soB2cDetailEntity.getQty());
+                addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                addDTO.setRemark("不出库发货");
+                wantDetailList.add(addDTO);
+            }
+            generateB2cDTO.setDetailList(wantDetailList);
+        }
+        generateB2cDTO.setSourceCode(soB2cDeliveryEntity.getCode());
+        generateB2cDTO.setBillDate(dto.getDeliveryTime().toLocalDate());
+        generateB2cDTO.setTrackNo(soB2cLogisticsEntity.getCode());
+        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 
     @Override

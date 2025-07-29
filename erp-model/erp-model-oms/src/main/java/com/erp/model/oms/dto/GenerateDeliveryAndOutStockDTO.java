@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,5 +25,7 @@ public class GenerateDeliveryAndOutStockDTO implements Serializable {
     private SoB2cDTO.DeliveryWithNotOutboundDTO dto;
 
     private OverseasProviderWarehouseDTO.ViewDTO overseasWarehouseDto;
+
+    private SoB2cLogisticsEntity soB2cLogisticsEntity;
 
 }

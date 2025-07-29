@@ -437,16 +437,16 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
+    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity) {
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
         List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
         Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
         if(isThirdWarehouse){
-            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0));
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
             thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }else{
-            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0));
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
             soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }
     }

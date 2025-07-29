@@ -66,8 +66,8 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/add")
     @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
     public Boolean add(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult = soB2cDeliveryService.add(dto);
-        return addResult;
+        soB2cDeliveryService.add(dto);
+        return true;
     }
 
     /**
@@ -199,6 +199,10 @@ public class SoB2cDeliveryFeignController extends BaseController {
         return soB2cDeliveryService.afreshOutFreezeVirtualInventory(soId);
     }
 
+    /**
+     * 生成发货单和出库单
+     * @param generateDeliveryAndOutStockDTO
+     */
     @PostMapping("/generateDeliveryAndOutStock")
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);

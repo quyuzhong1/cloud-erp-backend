@@ -40,7 +40,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author Luo_WG
      * @date: 2023-12-13
      */
-    Boolean add(SoB2cDeliveryDTO.AddDTO dto);
+    SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO dto);
 
     /**
      * 获取状态统计
