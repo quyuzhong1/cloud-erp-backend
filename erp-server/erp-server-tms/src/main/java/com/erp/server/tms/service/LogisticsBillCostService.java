@@ -235,4 +235,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * 删除没有物流单的物流费用
      */
     void deleteLogisticsBillCostNoBill();
+
+    List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type);
 }

@@ -19,10 +19,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
@@ -86,7 +88,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -508,6 +511,32 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         }
         List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(ids, status);
         fillData(list);
+        return list;
+    }
+
+    @Override
+    public List<FirstMileEstimatedBillDTO.View> listEstimatedDetail(List<String> billIds, String status) {
+        if(billIds.isEmpty() && CharSequenceUtil.isBlank(status)){
+            return Collections.emptyList();
+        }
+        List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(billIds, status);
+        //物流单
+        List<LogisticsBillCostDTO.CostDetailDTO> costDetailDTOS = logisticsBillCostService.listCostDetailByBillAndReconciliationIds(billIds,null,LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+        if (org.springframework.util.CollectionUtils.isEmpty(costDetailDTOS)) {
+            return Collections.emptyList();
+        }
+        //对账单明细中的费用项进行重置
+        list.forEach(e -> {
+            List<LogisticsBillCostDTO.CostDetailDTO> collect = costDetailDTOS.stream().filter(f -> e.getLogisticsBillId().equals(f.getLogisticsBillId())).collect(Collectors.toList());
+            e.setLogisticsCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setLogisticsCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setCustomsClearanceCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setCustomsClearanceCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherTaxCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+        });
         return list;
     }
 }

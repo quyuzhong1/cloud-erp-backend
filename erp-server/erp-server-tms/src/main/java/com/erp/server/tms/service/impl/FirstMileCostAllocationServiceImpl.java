@@ -46,10 +46,9 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.OverseasProviderFeign;
+
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
@@ -67,7 +66,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -159,7 +157,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     @Resource
     private SupplierFeign supplierFeign;
     @Resource
-    private OverseasProviderFeign overseasProviderFeign;
+    private LogisticsBillCostService logisticsBillCostService;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -339,10 +337,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CharSequenceUtil.isNotBlank(entity.getReconciliationId())){
             reconciliationDetailEntityList = reconciliationDetailEntityList.stream().filter(e -> e.getMainId().equals(entity.getReconciliationId())).collect(Collectors.toList());
         }
+        //重置对账单明细中的费用项
+        resetReconciliationDetail(reconciliationDetailEntityList);
         //暂估账单 [已确认]
         List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = null;
         try {
-            estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(logisticsBillIds, ConfirmStatusEnum.CONFIRM.getCode());
+            estimatedBillEntityList = firstMileEstimatedBillService.listEstimatedDetail(logisticsBillIds, ConfirmStatusEnum.CONFIRM.getCode());
         } catch (Exception e) {
             log.error("processAllocationData: 暂估账单获取异常:{}", e.getMessage());
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "暂估账单获取异常" + e.getMessage());
@@ -384,6 +384,36 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         entity.setReportPeriodId(reportPeriodId);
         //构建sku分摊记录
         return service.buildSkuAllocation(firstMileDeliveryDetailEntityList, entity, skuCostAllocationEntityList, initFirstMileAllocationDetailEntityList, weightAllocationEntityList, reconciliationDetailEntityList, estimatedBillEntityList);
+    }
+
+    /**
+     * 重新计算费用分摊中的费用项
+     * @param reconciliationDetailEntityList
+     */
+    private void resetReconciliationDetail(List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList) {
+        if (CollectionUtils.isEmpty(reconciliationDetailEntityList)) {
+            return;
+        }
+        //物流单
+        List<String> billIds = reconciliationDetailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<String> mainIds = reconciliationDetailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostDTO.CostDetailDTO> costDetailDTOS = logisticsBillCostService.listCostDetailByBillAndReconciliationIds(billIds,mainIds, LogisticsBillCostTypeEnum.ACTUAL.getCode());
+        if (CollectionUtils.isEmpty(costDetailDTOS)) {
+            return;
+        }
+        //对账单明细中的费用项进行重置
+        reconciliationDetailEntityList.forEach(e -> {
+            List<LogisticsBillCostDTO.CostDetailDTO> collect = costDetailDTOS.stream().filter(f -> e.getSourceId().equals(f.getLogisticsBillId()) && e.getMainId().equals(f.getReconciliationId())).collect(Collectors.toList());
+            e.setShippingCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setShippingCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setDeclareCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setDeclareCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.DECLARE_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherCostCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setOtherCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_COST.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+            e.setOtherTaxCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            e.setOtherTaxCost(collect.stream().filter(f -> f.getDictCostCategory().equals(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode()) && f.getIsAllocate()).map(f -> MathUtil.multiplyWithFour(f.getCostValue(),f.getExchangeRate())).reduce(BigDecimal.ZERO,BigDecimal::add));
+        });
+
     }
 
     /**
@@ -1807,6 +1837,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
                     throw new ServiceException(reportPeriodMonthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM"))+ currency + "汇率为空，请维护汇率后再提交");
                 }
+
             }
             amount = Objects.nonNull(firstMileEstimatedBillEntity.getLogisticsCost()) ? MathUtil.multiplyWithTwo(exchangeRate,firstMileEstimatedBillEntity.getLogisticsCost()) : BigDecimal.ZERO;
         }

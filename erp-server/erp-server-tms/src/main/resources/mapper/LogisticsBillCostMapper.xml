@@ -246,6 +246,44 @@
         where lbc.is_deleted = false and lb.id is null
         ORDER BY lbc.create_time desc
     </select>
+    <select id="listCostDetailByBillAndReconciliationIds"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$CostDetailDTO">
+        SELECT
+            lbc.id as costId,
+            lbc.logistics_bill_id,
+            lbc.reconciliation_id,
+            lbc.reconciliation_status,
+            tcc.id as cfgId,
+            tcc.is_allocate,
+            tcc.is_default,
+            tcc.dict_cost_attribution,
+            tcc.dict_cost_category,
+            tcd.id as detailId,
+            tcd.currency,
+            tcd.exchange_rate,
+            tcd."type",
+            tcd.source_type,
+            tcd.cost_value
+        FROM logistics_bill_cost lbc
+                 LEFT JOIN tms_cost_detail tcd on lbc.id = tcd.main_id
+                 LEFT JOIN tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id
+        where lbc.is_deleted =false and tcd.is_deleted = false and tcc.is_deleted = false
+        <if test="billIds != null and billIds.size > 0">
+            lbc.logistics_bill_id in
+            <foreach collection="billIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="reconciliationIds != null and reconciliationIds.size > 0">
+            lbc.reconciliation_id in
+            <foreach collection="reconciliationIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="type != null and type != ''">
+            and tcd.type = #{type}
+        </if>
+    </select>
 
 
 </mapper>

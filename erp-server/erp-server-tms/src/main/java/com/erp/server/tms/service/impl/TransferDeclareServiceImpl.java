@@ -1125,7 +1125,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 				tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList()));
 		Map<String, List<CostViewDTO>> mainCategoryMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(costList)) {
-			mainCategoryMaps = costList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getMainId));
+			mainCategoryMaps = costList.stream().filter(CostViewDTO::getIsAllocate).collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getMainId));
 		}
 		
 		Map<String, String> wareIdOrgIdMaps = new HashMap<>();
