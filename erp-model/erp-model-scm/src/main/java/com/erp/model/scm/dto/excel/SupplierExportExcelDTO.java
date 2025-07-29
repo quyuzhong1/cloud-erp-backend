@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -123,54 +123,9 @@ public class SupplierExportExcelDTO implements Serializable {
 
 
     /**
-     * 联系人名
-     */
-    @ExcelProperty(value = "联系人", index = 13)
-    @ColumnWidth(10)
-    private String contactPerson="";
-
-
-    /**
-     * 联系人电话
-     */
-    @ExcelProperty(value = "联系人电话", index = 14)
-    @ColumnWidth(20)
-    private String contactTelNumber="";
-
-
-    /**
-     * 采购次数
-     */
-    @ExcelProperty(value = "采购次数", index = 15)
-    @ColumnWidth(10)
-    private Integer purchasesCount=0;
-
-    /**
-     * 退货率
-     */
-    @ExcelProperty(value = "退货率", index = 16)
-    @ColumnWidth(10)
-    private BigDecimal rejectRate;
-
-    /**
-     * 延期率
-     */
-    @ExcelProperty(value = "延期率", index = 17)
-    @ColumnWidth(10)
-    private BigDecimal delayRate;
-
-    /**
-     * 次品率
-     */
-    @ExcelProperty(value = "次品率", index = 18)
-    @ColumnWidth(10)
-    private BigDecimal defectiveRate;
-
-
-    /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 19)
+    @ExcelProperty(value = "审核人（最新）", index = 13)
     @ColumnWidth(20)
     private String approveUserName;
 
@@ -178,14 +133,14 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 20)
+    @ExcelProperty(value = "审核完成时间", index = 14)
     @ColumnWidth(10)
     private LocalDateTime approveTime;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 21)
+    @ExcelProperty(value = "创建时间", index = 15)
     @ColumnWidth(20)
     private LocalDateTime createTime;
 
@@ -193,10 +148,104 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 22)
+    @ExcelProperty(value = "创建人", index = 16)
     @ColumnWidth(10)
     private String createUserName;
 
-
+    /**
+     * 联系人-人员
+     */
+    @ExcelProperty(value = "联系人-联系人", index = 17)
+    private String person;
+    /**
+     * 联系人-职务
+     */
+    @ExcelProperty(value = "联系人-职务", index = 18)
+    private String position;
+    /**
+     * 联系人-电话
+     */
+    @ExcelProperty(value = "联系人-电话", index = 19)
+    private String telNumber;
+    /**
+     * 联系人-邮箱
+     */
+    @ExcelProperty(value = "联系人-邮箱", index = 20)
+    private String email;
+    /**
+     * 联系人-默认联系人，是/否
+     */
+    @ExcelProperty(value = "联系人-默认联系人", index = 21)
+    private String contactIsDefaultName;
+    /**
+     * 联系人-启用状态，是/否
+     */
+    @ExcelProperty(value = "联系人-启用状态", index = 22)
+    private String contactDisabledName;
+    /**
+     * 联系人-备注
+     */
+    @ExcelProperty(value = "联系人-备注", index = 23)
+    private String contactRemark;
+    /**
+     * 账户-账户名称
+     */
+    @ExcelProperty(value = "账户-账户名称", index = 24)
+    private String payee;
+    /**
+     * 账户-收款银行
+     */
+    @ExcelProperty(value = "账户-收款银行", index = 25)
+    private String bankName;
+    /**
+     * 账户-开户支行
+     */
+    @ExcelProperty(value = "开户支行", index = 26)
+    private String bankSubbranch;
+    /**
+     * 账户-银行账号
+     */
+    @ExcelProperty(value = "账户-银行账号", index = 27)
+    private String bankAccount;
+    /**
+     * 账户-支付方式
+     */
+    @ExcelProperty(value = "账户-支付方式", index = 28)
+    private String bankPayMethodName;
+    /**
+     * 账户-是否默认,是/否
+     */
+    @ExcelProperty(value = "账户-是否默认", index = 29)
+    private String accountDefaultName;
+    /**
+     * 账户-备注
+     */
+    @ExcelProperty(value = "账户-备注", index = 30)
+    private String accountRemark;
+    /**
+     * 资质-名称
+     */
+    @ExcelProperty(value = "资质-名称", index = 31)
+    private String credentialName;
+    /**
+     * 资质-有效期
+     */
+    @ExcelProperty(value = "资质-有效期", index = 32)
+    private LocalDate effectiveDate;
+    /**
+     * 资质-失效期
+     */
+    @ExcelProperty(value = "资质-失效期", index = 33)
+    private LocalDate expireDate;
+    /**
+     * 资质-证件名称
+     */
+    @ExcelProperty(value = "资质-证件名称", index = 34)
+    private String attachmentName;
+    /**
+     * 资质-备注
+     */
+    @ExcelProperty(value = "资质-备注", index = 35)
+    private String credentialRemark;
 
 }
