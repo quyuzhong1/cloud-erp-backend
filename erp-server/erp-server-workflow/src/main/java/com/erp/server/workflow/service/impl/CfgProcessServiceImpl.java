@@ -382,7 +382,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     }
                     continue;
                 }
-                addDTO.setSysFieldName(optionMap.get(addDTO.getSysField()).toString());
+                Object object = optionMap.get(addDTO.getSysField());
+                addDTO.setSysFieldName(ObjectUtil.isEmpty(object) ? "" : object.toString());
             }
             //验证addDTOS
             log.info("三方查询生成明细：", JSONUtil.toJsonStr(addDTOS));
