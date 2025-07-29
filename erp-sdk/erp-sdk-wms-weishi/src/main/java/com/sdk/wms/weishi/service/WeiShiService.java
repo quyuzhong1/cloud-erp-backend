@@ -329,6 +329,7 @@ public class WeiShiService {
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
         log.warn("纬狮取消出库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
         String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        log.warn("纬狮取消出库单响应参数: {}", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
