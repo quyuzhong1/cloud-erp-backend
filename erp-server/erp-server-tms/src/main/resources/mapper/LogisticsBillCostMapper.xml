@@ -269,13 +269,13 @@
                  LEFT JOIN tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id
         where lbc.is_deleted =false and tcd.is_deleted = false and tcc.is_deleted = false
         <if test="billIds != null and billIds.size > 0">
-            lbc.logistics_bill_id in
+            and lbc.logistics_bill_id in
             <foreach collection="billIds" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="reconciliationIds != null and reconciliationIds.size > 0">
-            lbc.reconciliation_id in
+            and lbc.reconciliation_id in
             <foreach collection="reconciliationIds" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
