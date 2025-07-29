@@ -86,12 +86,7 @@ public class ImageProcessServiceImpl implements ImageProcessService {
                 plmAttachmentService.save(attachment);
 
                 // 更新任务结果：成功数加一
-                // 如果文件名中不包含下划线，则更新产品明细中的图片URL字段
-                if (!fileName.contains("_")) {
-                    result.incrementSuccess(productDetailEntity.getId(),url);
-                }else {
-                    result.incrementSuccess("","");
-                }
+                result.incrementSuccess(productDetailEntity.getId(),url);
                 success = true;
             } catch (Exception e) {
                 retry++;
