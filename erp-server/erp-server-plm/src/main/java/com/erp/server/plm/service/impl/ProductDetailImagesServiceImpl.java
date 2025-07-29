@@ -12,16 +12,21 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.ProductDetailImageExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mock.web.MockMultipartFile;
@@ -143,6 +148,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         }
 
         ZipTaskResultDTO result = new ZipTaskResultDTO();
+        List<ProductDetailImageExcelDTO> errorList = new ArrayList<>();
         if (CollectionUtil.isNotEmpty(multipartFiles)) {
             // 根据文件名获取SKU集合(去除后缀，去除下划线)
             List<String> skuNoList = multipartFiles.stream()
@@ -176,9 +182,10 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     String originalFilename = file.getOriginalFilename();
                     String fileName = getFileNameNotExt(originalFilename);
                     String skuNo = fileName.contains("_") ? fileName.substring(0, fileName.indexOf("_")) : fileName;
+
                     if (!productDetailMap.containsKey(skuNo)) {
                         // 如果SKU不存在于产品明细中，跳过处理
-                        result.incrementFailed();
+                        result.incrementFailed(skuNo,originalFilename);
                         continue;
                     }
 
@@ -236,6 +243,29 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                             .update();
                 }
             }
+
+            Map<String, List<String>> failFiles = result.getFailFiles();
+            if (MapUtil.isNotEmpty(failFiles)){
+                for (Map.Entry<String, List<String>> entry : failFiles.entrySet()) {
+                    String skuNo = entry.getKey();
+                    List<String> value = entry.getValue();
+                    String errorMsg = String.join(",", value);
+                    ProductDetailImageExcelDTO excelDTO = new ProductDetailImageExcelDTO();
+                    excelDTO.setSkuNo(skuNo);
+                    excelDTO.setErrorMsg("以下图片导入失败："+errorMsg);
+                    errorList.add(excelDTO);
+                }
+            }
+        }
+
+        //导出错误数据
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "图片批量导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ProductDetailImageExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
         }
 
         // 构造任务处理结果并更新任务状态
@@ -245,6 +275,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         importResultDTO.setRemark("处理完成，失败" + result.getFailed() + "条");
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        importResultDTO.setErrorUrl(url);
         downloadTaskFeign.updateTask(importResultDTO);
     }
 

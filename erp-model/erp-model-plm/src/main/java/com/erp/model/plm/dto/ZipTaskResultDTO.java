@@ -12,6 +12,7 @@ public class ZipTaskResultDTO {
     private final AtomicInteger failed = new AtomicInteger();
 
     private final Map<String, List<String>> successUrls = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> failedNames = new ConcurrentHashMap<>();
 
     public void incrementTotal() {
         total.incrementAndGet();
@@ -25,8 +26,12 @@ public class ZipTaskResultDTO {
         }
     }
 
-    public void incrementFailed() {
+    public void incrementFailed(String skuNo, String fileName) {
         failed.incrementAndGet();
+        if (StringUtils.isNotBlank(skuNo) && StringUtils.isNotBlank(fileName)) {
+            failedNames.computeIfAbsent(skuNo, k -> Collections.synchronizedList(new ArrayList<>()))
+                    .add(fileName); // synchronizedList 本身保证了线程安全
+        }
     }
 
     public int getTotal() {
@@ -43,6 +48,9 @@ public class ZipTaskResultDTO {
 
     public Map<String, List<String>> getSuccessFiles() {
         return successUrls;
+    }
+    public Map<String, List<String>> getFailFiles() {
+        return failedNames;
     }
 
     @Override
