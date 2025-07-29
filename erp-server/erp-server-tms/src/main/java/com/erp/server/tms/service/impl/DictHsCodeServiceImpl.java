@@ -197,10 +197,10 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 List<String> errorMsgList = new ArrayList<>();
                 DictHsCodeEntity oldEntity = oldMap.getOrDefault(dto.getHsCode(), null);
                 if(Objects.isNull(oldEntity)){
-                    errorMsgList.add(StrUtil.format(ApiError.ERROR_96008.msg, oldEntity.getHsCode()));
+                    errorMsgList.add(StrUtil.format(ApiError.ERROR_96008.msg, dto.getHsCode()));
                 }
                 //存在错误数据则直接返回
-                if (errorMsgList.size() > 0) {
+                if (!errorMsgList.isEmpty()) {
                     dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(dto);
                     continue;
