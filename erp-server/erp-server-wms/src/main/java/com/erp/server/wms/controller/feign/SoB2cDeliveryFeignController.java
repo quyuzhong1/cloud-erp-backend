@@ -11,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -196,5 +197,10 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/afreshOutFreezeVirtualInventory")
     public Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId) {
         return soB2cDeliveryService.afreshOutFreezeVirtualInventory(soId);
+    }
+
+    @PostMapping("/generateDeliveryAndOutStock")
+    public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
+        soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
     }
 }

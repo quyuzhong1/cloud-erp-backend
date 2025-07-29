@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -469,4 +470,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
+
+    void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 }

@@ -29,10 +29,7 @@ import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +85,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -443,35 +443,11 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
         Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
         if(isThirdWarehouse){
-            ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
-            addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
-            addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
-            // 生成单号
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
-            addThirdWarehouseDeliveryEntity.setCode(code);
-            addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
-            addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
-            addThirdWarehouseDeliveryEntity.setThirdWarehousePlatform(overseasWarehouseList.get(0).getProviderCode());
-            addThirdWarehouseDeliveryEntity.setShippingMethod(dto.getLogisticsChannelCode());
-            List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-            for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
-                ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-                thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-                thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
-                thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
-                thirdWarehouseDeliveryDetailEntity.setWarehouseId(dto.getWarehouseId());
-                thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-                thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(overseasWarehouseList.get(0).getPlatformWarehouseCode());
-                thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
-                thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
-                thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
-            }
-            addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.add(addThirdWarehouseDeliveryEntity);
             GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0));
             thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }else{
-
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0));
+            soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }
     }
 }
