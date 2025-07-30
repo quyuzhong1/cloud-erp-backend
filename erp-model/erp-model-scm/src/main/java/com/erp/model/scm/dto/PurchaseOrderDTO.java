@@ -1962,6 +1962,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 调价
          */
+        @NotBlank(message = "采购调价表id不能为空")
         private String purchasePriceChangeDetailId;
     }
 
@@ -2071,5 +2072,15 @@ public class PurchaseOrderDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AdjustPriceDTO {
+        /**
+         * 主键明细id
+         */
+        @NotEmpty(message = "主键明细id不能为空")
+        private List<String> detailIdList;
     }
 }

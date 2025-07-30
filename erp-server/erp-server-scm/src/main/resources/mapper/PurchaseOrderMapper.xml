@@ -887,8 +887,8 @@
             po.code,
             po.purchase_date as purchaseDate,
             po.approve_status as approveStatus,
-            po.supplier_id as supplierId,
-            pod.id as purchaseDetailId,
+            ps.supplier_id as supplierId,
+            pod.id as detailId,
             pod.execution_status as executionStatus,
             po.purchase_org_id as purchaseOrgId,
             pod.sku_id as skuId,
@@ -901,6 +901,7 @@
             pod.currency_symbol as currencySymbol,
             pod.create_time as createTime
         from purchase_order po
+        inner join purchase_order_supplier ps on po.id = ps.purchase_order_id and ps.is_deleted = false
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
         <where>

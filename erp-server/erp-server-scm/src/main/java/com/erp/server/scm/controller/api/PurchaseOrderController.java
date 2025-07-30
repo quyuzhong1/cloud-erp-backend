@@ -927,9 +927,43 @@ public class PurchaseOrderController extends BaseController {
             warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
-    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
+    @WebAdvanceQuery
     public ApiResult<PagingVO<PurchaseOrderDTO.AdjustListDTO>> adjustPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.AdjustListDTO> pagingVO = purchaseOrderService.adjustPaging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 导出历史未完结订单
+     * @author will
+     * @date 2025/7/29 19:09
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史未完结订单")
+    @PostMapping(value = "/exportAdjustExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery
+    public ApiResult<?> exportAdjustExcel(@RequestBody PurchaseOrderDTO.SearchAdjustParamDTO dto) {
+        Boolean flag = purchaseOrderService.exportAdjustExcel(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 批量调价
+     * @author will
+     * @date 2025/7/30 09:22
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量调价")
+    @PostMapping(value = "/batchAdjustPrice")
+    public ApiResult<?> batchAdjustPrice(@RequestBody PurchaseOrderDTO.AdjustPriceDTO dto) {
+        Boolean flag = purchaseOrderService.batchAdjustPrice(dto);
+        return flag ? success() : failure();
     }
 }

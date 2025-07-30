@@ -57,6 +57,7 @@ import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -232,6 +233,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
     @Autowired
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
+
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -3438,9 +3440,92 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderDTO.SearchAdjustParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        PurchasePriceChangeDetailEntity entity = purchasePriceChangeDetailService.getById(pagingDTO.getParams().getPurchasePriceChangeDetailId());
+        if (ObjectUtil.isNotEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98028);
+        }
+        params.setSkuId(entity.getSkuId());
+        params.setMinQty(entity.getMinQty());
+        params.setMaxQty(entity.getMaxQty());
+        params.setSupplierId(entity.getSupplierId());
         IPage<PurchaseOrderDTO.AdjustListDTO> pageData = this.baseMapper.adjustPaging(query, params);
-        handleAdjustPaging(pageData.getRecords(),pagingDTO.getParams().getPurchasePriceChangeDetailId());
+        handleAdjustPaging(pageData.getRecords(),entity);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean exportAdjustExcel(PurchaseOrderDTO.SearchAdjustParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("历史未完结订单", EXPORT_SCM_PURCHASE_ORDER.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdjustPrice(PurchaseOrderDTO.AdjustPriceDTO dto) {
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(dto.getDetailIdList());
+        if (CollUtil.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        Map<String, List<PurchaseOrderDetailEntity>> podMap = purchaseOrderDetailList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getPurchaseOrderId));
+
+        List<String> poIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(poIdList);
+        if (CollUtil.isNotEmpty(purchaseOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //供应商信息
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = purchaseOrderSupplierService.listByPurchaseOrderIds(poIdList);
+        if (CollUtil.isEmpty(purchaseOrderSupplierList)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        Map<String, String> poSupplierMap = purchaseOrderSupplierList.stream().collect(Collectors.toMap(PurchaseOrderSupplierEntity::getPurchaseOrderId, PurchaseOrderSupplierEntity::getSupplierId));
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        SysDepartmentUserNumberDTO departmentUserNumberDTO = sysUserFeign.getDeptByUserId(userInfo.getUid());
+        if (ObjectUtil.isEmpty(departmentUserNumberDTO)) {
+            throw new ServiceException(ApiError.ERROR_9029);
+        }
+        for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
+            PurchaseChangeDTO.AddDTO addDTO = new PurchaseChangeDTO.AddDTO();
+            addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
+            addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            addDTO.setType(purchaseOrderEntity.getType());
+            addDTO.setChangeDate(LocalDate.now());
+            addDTO.setChangeUserId(userInfo.getUid());
+            addDTO.setChangeDeptId(departmentUserNumberDTO.getDepartmentId());
+
+            String supplierId = poSupplierMap.get(purchaseOrderEntity.getId());
+            if (CharSequenceUtil.isBlank(supplierId)) {
+                log.error("采购订单{}未找到供应商信息", purchaseOrderEntity.getCode());
+                throw new ServiceException(ApiError.ERROR_98036);
+            }
+            addDTO.setSupplierId(supplierId);
+            List<PurchaseOrderDetailEntity> detailList = podMap.get(purchaseOrderEntity.getId());
+            if (CollUtil.isEmpty(detailList)) {
+                log.error("采购订单{}未找到采购订单明细信息", purchaseOrderEntity.getCode());
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            List<PurchaseChangeDetailDTO.AddDTO> details = new ArrayList<>();
+            for (PurchaseOrderDetailEntity detailEntity : detailList) {
+                PurchaseChangeDetailDTO.AddDTO detailAddDTO = new PurchaseChangeDetailDTO.AddDTO();
+                detailAddDTO.setPurchaseOrderDetailId(detailEntity.getId());
+                detailAddDTO.setSkuId(detailEntity.getSkuId());
+                detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+                detailAddDTO.setOldQty(detailEntity.getPurchaseQty());
+                detailAddDTO.setOldPrice(detailEntity.getTaxPrice());
+                detailAddDTO.setOldAmount(MathUtil.multiplyWithTwo(detailAddDTO.getOldPrice(),detailAddDTO.getOldQty()));
+                detailAddDTO.setQty(detailEntity.getPurchaseQty());
+                detailAddDTO.setPrice(detailEntity.getTaxPrice());
+                detailAddDTO.setAmount(MathUtil.multiplyWithTwo(detailAddDTO.getPrice(),detailAddDTO.getQty()));
+                detailAddDTO.setCurrency(detailEntity.getCurrency());
+                detailAddDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
+                detailAddDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                details.add(detailAddDTO);
+            }
+            addDTO.setDetails(details);
+            purchaseChangeService.add(addDTO);
+        }
+        return Boolean.TRUE;
     }
 
     /**
@@ -3450,13 +3535,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @param records
      * @return void
      */
-    private void handleAdjustPaging(List<PurchaseOrderDTO.AdjustListDTO> records,String purchasePriceChangeDetailId) {
+    private void handleAdjustPaging(List<PurchaseOrderDTO.AdjustListDTO> records,PurchasePriceChangeDetailEntity entity) {
         if (CollUtil.isEmpty(records)) {
             return;
-        }
-        PurchasePriceChangeDetailEntity entity = purchasePriceChangeDetailService.getById(purchasePriceChangeDetailId);
-        if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98028);
         }
         for (PurchaseOrderDTO.AdjustListDTO adjustListDTO : records) {
             //待调整单价

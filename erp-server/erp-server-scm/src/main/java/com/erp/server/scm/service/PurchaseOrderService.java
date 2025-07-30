@@ -515,4 +515,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return PagingVO<AdjustListDTO>
      */
     PagingVO<PurchaseOrderDTO.AdjustListDTO> adjustPaging(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto);
+    /**
+     * 导出历史未完结订单
+     * @author will
+     * @date 2025/7/29 19:09
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportAdjustExcel(PurchaseOrderDTO.SearchAdjustParamDTO dto);
+    /**
+     * 批量调价
+     * @author will
+     * @date 2025/7/30 09:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean batchAdjustPrice(PurchaseOrderDTO.AdjustPriceDTO dto);
 }

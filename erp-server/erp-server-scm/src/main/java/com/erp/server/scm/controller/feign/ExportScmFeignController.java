@@ -255,4 +255,22 @@ public class ExportScmFeignController {
     public PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(@RequestBody PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
         return supplierPhaseService.exportDynamicSupplierPhase(dto);
     }
+
+    /**
+     * 导出采购订单调整（历史未完结订单）
+     * @author will 
+     * @date 2025/7/29 19:18
+     * @param dto 
+     * @return PagingVO<AdjustListDTO>
+     */
+    @PostMapping("/exportPurchaseOrderAdjust")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseOrderDTO.AdjustListDTO> exportPurchaseOrderAdjust(@RequestBody PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
+        return purchaseOrderService.adjustPaging(dto);
+    }
 }
