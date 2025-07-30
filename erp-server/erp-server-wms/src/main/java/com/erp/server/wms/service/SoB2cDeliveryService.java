@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -39,7 +40,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @author Luo_WG
      * @date: 2023-12-13
      */
-    Boolean add(SoB2cDeliveryDTO.AddDTO dto);
+    SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO dto);
 
     /**
      * 获取状态统计
@@ -469,4 +470,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
+
+    void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 }

@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -15,10 +16,13 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.SoB2cCoreDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.wms.query.ThirdWarehouseDeliveryQueryHandler;
@@ -97,5 +101,30 @@ public class ThirdWarehouseDeliveryController extends BaseController {
     @PostMapping("/view")
     public ApiResult<ThirdWarehouseDeliveryDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         return success(thirdWarehouseDeliveryService.view(dto.getId()));
+    }
+
+    /**
+     * 重新出库
+     */
+    @PostMapping("/retryOutstock")
+    public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto)  {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = thirdWarehouseDeliveryService.retryOutstock(id);
+            }catch (Exception e){
+                log.error("重新出库失败",e);
+                ThirdWarehouseDeliveryEntity entity = thirdWarehouseDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 重新出库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

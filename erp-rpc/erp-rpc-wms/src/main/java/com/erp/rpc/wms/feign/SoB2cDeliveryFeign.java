@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -143,4 +144,7 @@ public interface SoB2cDeliveryFeign {
      **/
     @PostMapping("feign/soB2cDelivery/falseDeliveryBySoId")
     BatchResultDTO falseDeliveryBySoId(@RequestBody String id);
+
+    @PostMapping("feign/soB2cDelivery/generateDeliveryAndOutStock")
+    void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 }

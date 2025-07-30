@@ -11,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -65,8 +66,8 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/add")
     @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
     public Boolean add(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult = soB2cDeliveryService.add(dto);
-        return addResult;
+        soB2cDeliveryService.add(dto);
+        return true;
     }
 
     /**
@@ -196,5 +197,14 @@ public class SoB2cDeliveryFeignController extends BaseController {
     @PostMapping("/afreshOutFreezeVirtualInventory")
     public Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId) {
         return soB2cDeliveryService.afreshOutFreezeVirtualInventory(soId);
+    }
+
+    /**
+     * 生成发货单和出库单
+     * @param generateDeliveryAndOutStockDTO
+     */
+    @PostMapping("/generateDeliveryAndOutStock")
+    public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
+        soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
     }
 }

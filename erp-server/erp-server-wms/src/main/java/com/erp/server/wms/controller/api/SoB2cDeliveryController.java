@@ -59,8 +59,8 @@ public class SoB2cDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
     @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult = soB2cDeliveryService.add(dto);
-        return addResult ? success() : failure();
+        soB2cDeliveryService.add(dto);
+        return success();
     }
 
     /**

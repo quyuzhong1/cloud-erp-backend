@@ -953,7 +953,7 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/deliveryWithNotOutbound")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "不出库发货")
-    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated List<SoB2cDTO.DeliveryWithNotOutboundDTO> dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

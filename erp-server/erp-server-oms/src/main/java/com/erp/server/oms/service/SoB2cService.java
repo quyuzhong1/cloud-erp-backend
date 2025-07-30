@@ -851,7 +851,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
-    List<BatchResultDTO> deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO ids);
+    List<BatchResultDTO> deliveryWithNotOutbound(List<SoB2cDTO.DeliveryWithNotOutboundDTO> ids);
 
     /**
      * 申报信息规则信息整理
