@@ -3,10 +3,15 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -161,6 +166,14 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     @Override
     public LogisticsSaleChannelEntity getByPlatform(String platform, String code) {
         return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).eq(LogisticsSaleChannelEntity::getLogisticsPlatform,platform).last(SqlConstants.LIMIT_1).one();
+    }
+
+    @Override
+    public PagingVO<SaleChannelDTO> pagingSelect(PagingDTO<LogisticsSaleChannelDTO.QueryDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsSaleChannelDTO.QueryDTO params = dto.getParams();
+        IPage<SaleChannelDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
     }
 
 

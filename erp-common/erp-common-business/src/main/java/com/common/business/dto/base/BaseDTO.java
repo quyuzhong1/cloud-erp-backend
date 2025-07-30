@@ -2,9 +2,11 @@ package com.common.business.dto.base;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -29,5 +31,50 @@ public class BaseDTO implements Serializable {
          */
         private Integer qty;
 
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportDTO implements Serializable {
+        /**
+         * 文件URL
+         */
+        private String fileUrl;
+        /**
+         * 任务id[后端使用]
+         */
+        private String taskId;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportResultDTO extends ImportDTO {
+        /**
+         * 失败文件URL
+         */
+        private String errorUrl;
+        /**
+         * 数据总条数
+         */
+        private Integer count;
+        /**
+         * 任务状态
+         * FileTaskStatusEnum
+         */
+        private String status;
+        /**
+         * 异常描述
+         */
+        private String remark;
+        /**
+         * 开始时间
+         */
+        private LocalDateTime startTime;
+        /**
+         * 结束时间
+         */
+        private LocalDateTime finishTime;
     }
 }

@@ -531,20 +531,20 @@ public class DmpInoutController extends BaseController {
     	Map<String, Map<String, String>> bizTypeSourceSystemMaps = new HashMap<>();
 
     	Map<String, String> sourceSystemMaps = new HashMap<>();
-    	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
-    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
+//    	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+//    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
     	sourceSystemMaps.put("1859425168586201876", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
-    	sourceSystemMaps.put("1859425336446442262", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+//    	sourceSystemMaps.put("1859425336446442262", DmpBasicSystemCodeEnum.TIKTOK.getCode());
     	sourceSystemMaps.put("1861317267527064372", DmpBasicSystemCodeEnum.WDT.getCode());
     	sourceSystemMaps.put("1859426447974751005", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1859425468411829017", DmpBasicSystemCodeEnum.AMAZON.getCode());
     	bizTypeSourceSystemMaps.put("soInfo", sourceSystemMaps);
 
     	sourceSystemMaps = new HashMap<>();
-    	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+//    	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
 //    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
     	sourceSystemMaps.put("1858832584453151459", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
-    	sourceSystemMaps.put("1858832825793403621", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+//    	sourceSystemMaps.put("1858832825793403621", DmpBasicSystemCodeEnum.TIKTOK.getCode());
     	sourceSystemMaps.put("1858830998851050201", "WDT");
     	sourceSystemMaps.put("1858832384133192417", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1858832015038634719", DmpBasicSystemCodeEnum.AMAZON.getCode());
@@ -611,6 +611,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -648,6 +649,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -676,6 +678,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -695,6 +698,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp配货单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -708,6 +712,7 @@ public class DmpInoutController extends BaseController {
     		}
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -725,6 +730,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp出库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -741,6 +747,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp物流单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -757,6 +764,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp退货入库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));

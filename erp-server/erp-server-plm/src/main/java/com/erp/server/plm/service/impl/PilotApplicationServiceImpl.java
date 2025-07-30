@@ -27,15 +27,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -44,13 +37,13 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
@@ -82,6 +75,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
 
@@ -520,7 +514,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> variablesMapByBusinessKey = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
-        
+
         // 从 map 中获取 productDetailList 并提取 skuId
         List<String> skuIdList = new ArrayList<>();
         try {
@@ -548,7 +542,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         } catch (Exception e) {
             log.error("提取 skuId 时发生异常", e);
         }
-        
+
         // 如果 skuIdList 不为空，可以进一步处理
         if (CollUtil.isNotEmpty(skuIdList)) {
             log.debug("提取到 {} 个 skuId: {}", skuIdList.size(), skuIdList);
@@ -563,7 +557,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .map(ProductDetailEntity::getChargeId)
                     .distinct() // 去重
                     .collect(Collectors.toList());
-            
+
             if (CollUtil.isNotEmpty(chargeIdList)) {
                 // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
                 String chargeIdString = String.join(",", chargeIdList);
@@ -577,6 +571,79 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return variablesMapByBusinessKey;
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        //附件
+        List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(entity.getId()));
+        if (ObjectUtil.isNotEmpty(attachmentList)) {
+            HashMap<String,Object> attachmentMap = new HashMap<>();
+            for (PlmAttachmentEntity obj : attachmentList) {
+                attachmentMap.put(obj.getAttachName(),  obj.getAttachUrl());
+            }
+            map.put("attachmentMap", attachmentMap);
+        }
+
+        List<PilotApplicationDetailDTO.ViewDTO> detailList = new ArrayList<>();
+        Object rawList = map.get("productDetailList");
+
+        if (rawList instanceof List) {
+            for (Object item : (List<?>) rawList) {
+                if (item instanceof PilotApplicationDetailDTO.ViewDTO) {
+                    detailList.add((PilotApplicationDetailDTO.ViewDTO) item);
+                } else if (item instanceof Map) {
+                    // Map转Bean
+                    PilotApplicationDetailDTO.ViewDTO viewDTO = BeanUtil.toBean(
+                            (Map<?, ?>) item,
+                            PilotApplicationDetailDTO.ViewDTO.class
+                    );
+                    detailList.add(viewDTO);
+                } else {
+                    log.warn("无法转换的类型: {} 值: {}",
+                            item.getClass().getName(), item);
+                }
+            }
+        }
+        if (ObjectUtil.isEmpty(detailList)) {
+            return map;
+        }
+        //产品费用
+        List<String> skuIds = detailList.stream().map(PilotApplicationDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductCostEntity> productCostEntityList = productCostService.lambdaQuery().in(ProductCostEntity::getSkuId, skuIds).list();
+
+        //产品信息
+        List<ProductDetailEntity> productDetailList = productDetailService.listByIds(skuIds);
+
+        //通过Java8取一级供应商和二级供应商
+        List<String> supplierIds = detailList.stream()
+                .flatMap(detail -> Stream.of(detail.getMainSupplierId(), detail.getSecondSupplierId()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class,supplierIds);
+
+        for (PilotApplicationDetailDTO.ViewDTO detailEntity : detailList) {
+            //目标成本
+            Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(item -> item.getSkuId().equals(detailEntity.getSkuId())).findFirst();
+            if (productCostEntityOptional.isPresent()) {
+                ProductCostEntity productCostEntity = productCostEntityOptional.get();
+                detailEntity.setTargetTaxCost(productCostEntity.getTargetTaxCost());
+                detailEntity.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
+            }
+            //实际成本
+            fillActualCost(detailEntity);
+
+            //一级供应商名称
+            String mainSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setMainSupplierName(mainSupplierName);
+            //二级供应商名称
+            String secondSupplierName = supplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSecondSupplierId())).map(SupplierEntity::getName).findFirst().orElse("");
+            detailEntity.setSecondSupplierName(secondSupplierName);
+            //产品名称
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailEntity.setProductName(productName);
+        }
+        map.put("productDetailList", detailList);
+        return map;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)

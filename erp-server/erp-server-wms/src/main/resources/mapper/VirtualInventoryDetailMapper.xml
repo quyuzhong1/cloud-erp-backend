@@ -51,8 +51,8 @@
                 sum(vidh.wait_qty * vidh.inventory_age_days) as backInventoryAgeQty,
                 sum(vidh.qty * vidh.inventory_age_days) as inventoryAgeQty
             from virtual_inventory_detail_his vidh
-            left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-            where vidh.is_deleted = false and vidh.date = #{params.date}
+            left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false and vidh.date = #{params.date}
+            where vidh.is_deleted = false
             group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
         ),VirtualInventoryHis AS (
         SELECT
@@ -65,9 +65,9 @@
                 SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
             FROM
             virtual_inventory_his vih
-            left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
+            left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false and vih.date = #{params.date}
             WHERE
-            vih.is_deleted = false and vih.date = #{params.date}
+            vih.is_deleted = false
             GROUP BY
             vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
         ),CombinedProcessing AS (

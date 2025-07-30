@@ -90,6 +90,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	
 	protected boolean isNotValidate = false;
 	
+	protected boolean isRetryPush = false;
+	
 	@Override
 	public void doDmpHandler(DmpOutputRequest dmpRequest, DmpOutputResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpOutputTaskRequest)) {
@@ -103,6 +105,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	
 	protected void doDmpHandler(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, DmpHandlerChain chain) {
 		isNotValidate = dmpRequest.isNotValidate();
+		isRetryPush = dmpRequest.isRetryPush();
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getInputConvertId()));
 		if(CollUtil.isNotEmpty(dmpCfgInputConvertEntityList)) {
@@ -173,13 +176,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		if(CollUtil.isEmpty(outputData)) {
 			return;
 		}
-		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
+		String cfgOutputId = dmpCfgOutputEntity.getId();
+		String systemId = dmpCfgOutputEntity.getSystemId();
 		Iterator<DmpOutputTaskRecordEntity> iterator = outputData.iterator();
 		while(iterator.hasNext()) {
 			DmpOutputTaskRecordEntity next = iterator.next();
 			String requestData = next.getRequestData();
 			if(StringUtils.isNotBlank(requestData)) {
 				JSONObject parseObject = JSON.parseObject(requestData);
+				if("1801574477567165866".equals(systemId)) {
+					String status = parseObject.getString("status");
+					if(isRetryPush && "已删除".equals(status)) {
+						iterator.remove();
+						log.warn("重推数帝云模式，已删除单据无需推送：类型{}，单据编号：{}" , cfgOutputId , next.getSourceCode());
+						continue;
+					}
+				}
 				if(this.validateDataBlack(parseObject, cfgOutputId, Boolean.TRUE)) {
 					log.warn("如下单据匹配到黑名单：类型{}，单据编号：{}" , cfgOutputId , next.getSourceCode());
 					iterator.remove();

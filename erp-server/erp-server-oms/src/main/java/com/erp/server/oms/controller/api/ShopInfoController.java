@@ -594,10 +594,10 @@ public class ShopInfoController extends BaseController {
      * @author zdy
      */
     @PostMapping("/pagingSelect")
-    public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+    public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
         if (Objects.isNull(dto.getParams().getShowByAuth())){
             dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
         }
-        return shopInfoService.pagingSelect(dto);
+        return success(shopInfoService.pagingSelect(dto));
     }
 }
