@@ -353,8 +353,11 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
                     productCustomsEntity.setId(oldEntity.getId());
                     productCustomsEntity.setVersion(oldEntity.getVersion());
+                    self.updateById(productCustomsEntity);
+                    // 操作日志
+                    String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "",format);
                 }
-                self.updateBatchById(updateList);
             }
 
             //根据skuId 和 country字段唯一来找出successList 中不存在于oldList的数据
@@ -363,6 +366,12 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
                     collect(Collectors.toList());
             if(CollUtil.isNotEmpty(addList)){
                 self.saveBatch(addList);
+
+                for (ProductCustomsEntity productCustomsEntity : addList) {
+                    // 操作日志
+                    String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
+                    sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "");
+                }
             }
             //新增sku国家默认的记录，如果有则不新增
             self.addDefaultCustoms(skuIds);
