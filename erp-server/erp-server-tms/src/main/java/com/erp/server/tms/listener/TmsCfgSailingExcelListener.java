@@ -10,6 +10,7 @@ import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
+import com.erp.model.tms.enums.DictBasicEnum;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -106,7 +108,7 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         }
         //截单日
         String endDateName = excelDTO.getEndDateName();
-        String endDate = dictList.stream().filter(obj ->  CharSequenceUtil.equals(obj.getName(), endDateName))
+        String endDate = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),dateType) && CharSequenceUtil.equals(obj.getName(), endDateName))
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
         if (StringUtils.isNotBlank(endDate)) {
             entity.setEndDate(Integer.parseInt(endDate));
@@ -129,7 +131,7 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         }
         //开船日
         String satartDateName = excelDTO.getStartDateName();
-        String satartDate = dictList.stream().filter(obj ->  CharSequenceUtil.equals(obj.getName(), satartDateName))
+        String satartDate = dictList.stream().filter(obj ->CharSequenceUtil.equals(obj.getType(),dateType) &&  CharSequenceUtil.equals(obj.getName(), satartDateName))
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
         if (StringUtils.isNotBlank(satartDate)) {
             entity.setStartDate(Integer.parseInt(satartDate));
@@ -158,7 +160,6 @@ public class TmsCfgSailingExcelListener extends AnalysisEventListener<TmsCfgSail
         }catch (Exception e){
             errorMsgList.add("起始日格式错误");
         }
-
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

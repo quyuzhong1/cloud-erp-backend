@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -35,14 +34,12 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.excel.UpdateDeclarePriceExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.DictHsCodeEntity;
@@ -307,13 +304,26 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         BeanMapper.copy(declareInfo, productLogistics);
         handleProductLogistics(productLogistics);
+
+        //海关编码
+        String customsCode = productLogistics.getCustomsCode();
+        if(StringUtils.isNotBlank(customsCode)){
+            //查询中国海关编码
+            List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class)
+                    .eq(DictHsCodeEntity::getCountry,"CN")
+                    .eq(DictHsCodeEntity::getHsCode, customsCode).list();
+            if(CollUtil.isEmpty(hsCodeList)){
+                throw new ServiceException(ApiError.ERROR_95292);
+            }
+        }
+
         boolean save = productLogisticsService.saveOrUpdate(productLogistics);
         if (!save) {
             throw new ServiceException("物流产品信息保存失败");
         }
 
         if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
-            String msg = String.format("编辑【%s】物流产品信息", oldEntity.getSkuNo());
+            String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", oldEntity.getSkuNo());
             sysLogService.addSysLogByUpdate(oldEntity,productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "",msg);
         }else{
             // 记录操作日志
@@ -352,7 +362,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //处理验证成功数据
         handleImportSuccessList(successList, errorList);
 
-        if (errorList.size() > 0) {
+        if (!errorList.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             String excelPath = "excel/logisticsProductError.xlsx";
             String name = "productLogistics";
@@ -436,18 +446,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             productLogisticsService.update(queryWrapper);
         }
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/declarePriceTemplate.xlsx";
-            String name = "declarePrice";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            }
+        if (!errorList.isEmpty()) {
+            String fileName = "更新出口申报价错误信息";
+//            ExcelUtil.export(fileName, "declarePrice", errorList, LogisticsProductErrorExcelDTO.class, response);
+            ExcelUtil.export(fileName, "declarePrice", errorList, UpdateDeclarePriceExcelDTO.class, response);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
@@ -889,7 +891,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String customsCode = item.getCustomsCode();
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
-                    errorMsgList.add("中国海关编码不存在于出口申报要素");
+                    errorMsgList.add(ApiError.ERROR_95292.msg);
                 }else {
                     //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
                     logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : logistics.getDeclareChineseName());
@@ -933,7 +935,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 errorList.addAll(value);
                 continue;
             }
-           productLogisticsService.saveOrUpdate(logistics);
+            productLogisticsService.saveOrUpdate(logistics);
+
+            ProductLogisticsEntity oldLogistics = productLogisticsList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            //日志
+            String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", logistics.getSkuNo());
+            sysLogService.addSysLogByUpdate(oldLogistics,logistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), logistics.getId(), "",msg);
         }
     }
 

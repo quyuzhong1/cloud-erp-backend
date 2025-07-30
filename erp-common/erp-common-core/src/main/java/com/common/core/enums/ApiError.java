@@ -610,6 +610,10 @@ public enum ApiError implements Serializable {
     ERROR_95290(95290,"【{}】已存在【{}】国家"),
 
     ERROR_95291(95291,"审核中不支持上传"),
+
+    ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
+
+
     /**
      * TMS 错误
      * 从96000 开始

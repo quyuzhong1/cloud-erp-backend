@@ -343,7 +343,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         if(CollUtil.isNotEmpty(successList)){
             List<String> skuIds = successList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
             List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
-            if(CollUtil.isEmpty(oldList)){
+            if(CollUtil.isNotEmpty(oldList)){
                 //根据skuId 和 country字段唯一来找出successList 中存在于oldList的数据
                 List<ProductCustomsEntity> updateList = successList.stream()
                         .filter(success -> oldList.stream().allMatch(old -> success.getSkuId().equals(old.getSkuId()) && success.getCountry().equals(old.getCountry()))).
@@ -367,8 +367,6 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             //新增sku国家默认的记录，如果有则不新增
             self.addDefaultCustoms(skuIds);
         }
-
-
         return Boolean.TRUE;
     }
 
