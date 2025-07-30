@@ -914,4 +914,22 @@ public class PurchaseOrderController extends BaseController {
         return success();
     }
 
+    /**
+     * 历史未完结订单分页查询（待调整列表）
+     * @author will
+     * @date 2025/7/29 15:15
+     * @param dto
+     * @return ApiResult<PagingVO<AdjustListDTO>>
+     */
+    @PostMapping("/adjustPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
+    public ApiResult<PagingVO<PurchaseOrderDTO.AdjustListDTO>> adjustPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.AdjustListDTO> pagingVO = purchaseOrderService.adjustPaging(dto);
+        return success(pagingVO);
+    }
 }

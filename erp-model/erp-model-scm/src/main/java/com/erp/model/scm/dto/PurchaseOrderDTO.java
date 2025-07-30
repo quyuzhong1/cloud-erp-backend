@@ -1925,4 +1925,151 @@ public class PurchaseOrderDTO implements Serializable {
         private String skuNo;
     }
 
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchAdjustParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         * tabFlag,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+        /**
+         * 调价
+         */
+        private String purchasePriceChangeDetailId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class AdjustListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 采购单号
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 执行状态，ExecutionStatusEnum枚举
+         */
+        private String executionStatus;
+
+        /**
+         * 执行状态，ExecutionStatusEnum枚举
+         */
+        private String executionStatusName;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 税率，带百分比
+         */
+        private String taxRateStr;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 待调整单价
+         */
+        private BigDecimal adjustTaxPrice;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
+         * 单价是否一致，一致/不一致
+         */
+        private Boolean isSame;
+
+        /**
+         * 单价是否一致，一致/不一致
+         */
+        private String isSameName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+    }
 }

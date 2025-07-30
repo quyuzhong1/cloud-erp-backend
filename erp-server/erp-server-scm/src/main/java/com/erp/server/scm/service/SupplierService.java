@@ -56,7 +56,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 10:00
      */
-    SupplierDTO.SupplierViewDTO view(String supplierId);
+    SupplierDTO.SupplierViewDTO view(String supplierId,Boolean isViewTel);
 
 
     /**

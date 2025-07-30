@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -508,4 +507,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     void calSupplierPurchaseQty();
 
     List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(List<String> supplierIds);
+    /**
+     * 历史未完结订单分页查询
+     * @author will
+     * @date 2025/7/29 15:15
+     * @param dto
+     * @return PagingVO<AdjustListDTO>
+     */
+    PagingVO<PurchaseOrderDTO.AdjustListDTO> adjustPaging(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto);
 }

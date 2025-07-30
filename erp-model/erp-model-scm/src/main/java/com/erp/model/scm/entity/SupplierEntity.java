@@ -235,7 +235,11 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField(value = "certificate_json", jdbcType = JdbcType.OTHER)
     private JSONArray certificateJson;
 
-
+    /**
+     * 体系认证其他选项的值
+     */
+    @TableField("certificate_other_value")
+    private String certificateOtherValue;
 
     @Override
     public Serializable pkVal() {
