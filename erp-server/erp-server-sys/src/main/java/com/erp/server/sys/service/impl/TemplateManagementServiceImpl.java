@@ -222,7 +222,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     }
 
     @Override
-    public PagingVO<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO dto) {
-        return null;
+    public List<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO searchParam) {
+        return baseMapper.pagingSelect(searchParam);
     }
 }

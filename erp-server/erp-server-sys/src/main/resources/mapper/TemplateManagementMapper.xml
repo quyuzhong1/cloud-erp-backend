@@ -68,6 +68,39 @@ tm.index as index
     </select>
 
 
+    <select id="pagingSelect" resultType="com.erp.model.sys.dto.TemplateManagementDTO$PageSelectDTO">
+        SELECT
+            tm.ID,
+            tm.code,
+            tm.NAME,
+            tm.is_default AS isDefault
+        FROM
+            template_management AS tm
+        WHERE
+            tm.is_deleted = FALSE
+          AND tm.disabled = FALSE
+          and tm.status = 'finished'
+          <if test="params.type!=null and params.type!=''">
+              and tm.type = #{params.type}
+          </if>
+          <if test="params.bizType!=null and params.bizType!=''">
+              and tm.biz_type = #{params.bizType}
+          </if>
+          <if test="params.searchKeyword!=null and params.searchKeyword!=''">
+            and ( tm.name LIKE concat('%',#{searchKeyword},'%') or  tm.code LIKE concat('%',#{searchKeyword},'%') )
+          </if>
+        ORDER BY
+        <if test="params.searchKeyword!=null and params.searchKeyword!=''">
+            CASE
+            WHEN tm.name = #{params.searchKeyword} THEN 1
+            WHEN tm.name LIKE concat(#{params.searchKeyword}, '%') THEN 2
+            WHEN tm.name LIKE concat('%', #{params.searchKeyword}) THEN 3
+            ELSE 4
+            END,
+        </if>
+        tm.update_time DESC
+    </select>
+
     <sql id="paging_sql">
         SELECT
         tm.ID AS ID,

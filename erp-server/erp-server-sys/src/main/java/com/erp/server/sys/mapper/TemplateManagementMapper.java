@@ -28,4 +28,6 @@ public interface TemplateManagementMapper extends BaseMapper<TemplateManagementE
     List<TemplateManagementDTO.TabListDTO> tabList(@Param("params") TemplateManagementDTO.PagingParamDTO searchParam);
 
     IPage<TemplateManagementDTO.ListDTO> paging(Page query,@Param("params") TemplateManagementDTO. PagingParamDTO params);
+
+    List<TemplateManagementDTO.PageSelectDTO> pagingSelect(@Param("params") TemplateManagementDTO.SelectDTO params);
 }

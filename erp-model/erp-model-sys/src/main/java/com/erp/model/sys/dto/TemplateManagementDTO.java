@@ -383,6 +383,18 @@ public class TemplateManagementDTO implements Serializable {
 
 
         /**
+         * 业务类型：purchaseContract=采购框架合同,soContract=销售订单合同  枚举：TemplateManagementBizTypeEnum
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String bizType;
+
+        /**
+         * 模板类型： contract=合同模板, shippingLabel=面单模板  枚举：TemplateManagementTypeEnum
+         */
+        @NotBlank(message = "模板类型不能为空")
+        private String type;
+
+        /**
          * 关键词
          */
         private String searchKeyword;
@@ -392,7 +404,10 @@ public class TemplateManagementDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PageSelectDTO {
-
+        private String id;
+        private String code;
+        private String name;
+        private String isDefault;
     }
 
 

@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-07-24 09:36:52
  */
 public enum TemplateManagementBizTypeEnum implements EnumMessage {
-	PURCHASECONTRACT("purchaseContract", "采购框架合同"),
+    PURCHASEFRAMEWORK("purchaseFramework", "采购框架合同"),
 	SOCONTRACT("soContract", "销售订单合同"),
     ;
     /**

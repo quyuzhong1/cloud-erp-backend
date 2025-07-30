@@ -244,17 +244,15 @@ public class TemplateManagementController extends BaseController {
     }
 
     /**
-     * 列表查询
+     * 模糊搜索 （启用 未删除，已发布）
      * @author jack
      * @date: 2025-07-28
      * @param dto
-     * @return ApiResult<PagingVO<TemplateManagementDTO.ListDTO>>
+     * @return ApiResult<PagingVO<TemplateManagementDTO.PageSelectDTO>>
      */
     @PostMapping("/pagingSelect")
-    public ApiResult<PagingVO<TemplateManagementDTO.PageSelectDTO>> pagingSelect(@RequestBody TemplateManagementDTO.SelectDTO dto) {
+    public ApiResult<List<TemplateManagementDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated TemplateManagementDTO.SelectDTO dto) {
         return success(templateManagementService.pagingSelect(dto));
     }
-
-
 
 }
