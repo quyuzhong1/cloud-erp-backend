@@ -1,15 +1,13 @@
 package com.erp.rpc.file.feign;
 
-import com.common.business.config.ExportFeignConfig;
 import com.common.business.config.FeignErrorDecoder;
+import feign.Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 @FeignClient(name = "erp-file", contextId = "file",configuration = {FeignErrorDecoder.class})
@@ -52,4 +50,11 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/downloadFile")
     byte[] downloadFile(@RequestParam("fileId") String fileId);
+    /**
+     * 下载文件
+     * @param fileId
+     * @return
+     */
+    @GetMapping("/feign/file/getInputStream/{fileId}")
+    Response getInputStream(@PathVariable("fileId") String fileId);
 }

@@ -90,8 +90,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -2575,6 +2573,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setLength(null);
                 pagingViewDTO.setWidth(null);
                 pagingViewDTO.setHeight(null);
+                pagingViewDTO.setPackageWeight(null);
                 pagingViewDTO.setPackageWeightStr("");
                 pagingViewDTO.setWeightingStatusName("");
                 pagingViewDTO.setPackingUserName("");

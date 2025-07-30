@@ -210,7 +210,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     @Override
     public List<ProductRegistrationEntity> listBySkuNoListAndPlatform(List<String> skuNoList,String declareSupplierId) {
         if (CollectionUtils.isEmpty(skuNoList)) {
-            return Collections.emptyList();
+            return this.lambdaQuery().eq(ProductRegistrationEntity::getDeclareSupplierId,declareSupplierId).list();
         }
         return this.lambdaQuery().in(ProductRegistrationEntity::getSkuNo, skuNoList).eq(ProductRegistrationEntity::getDeclareSupplierId,declareSupplierId).list();
     }
@@ -437,7 +437,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
         }
         List<String> skuNoList = pullDataList.stream().map(ProductRegistrationEntity::getSkuNo).collect(Collectors.toList());
         //查询现在已存在的
-        List<ProductRegistrationEntity> existEntityList = this.listBySkuNoListAndPlatform(skuNoList,declareSupplierId);
+        List<ProductRegistrationEntity> existEntityList = this.listBySkuNoListAndPlatform(null,declareSupplierId);
         //产品信息
         List<LogisticsProductDTO.ProductDTO> productDTOList = logisticsProductFeign.listBySkuNoList(skuNoList);
         List<ProductRegistrationEntity> addList = new ArrayList<>();
@@ -497,6 +497,13 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 updateList.add(existEntity);
             }
         }
+        //将ERP存在，第三方不存在的SKU备案状态改为取消
+        List<ProductRegistrationEntity> needCancelList = existEntityList.stream().filter(v -> !skuNoList.contains(v.getSkuNo()) && v.getStatus().equals(ProductRegistrationEnum.StatusEnum.REGISTERED.getCode())).collect(Collectors.toList());
+        needCancelList.forEach(v->{
+            v.setStatus(ProductRegistrationEnum.StatusEnum.CANCEL.getCode());
+            v.setFailureReason("第三方平台不存在该SKU，请核实修改");
+            updateList.add(v);
+        });
         this.batchAddOrUpdate(addList,updateList);
         service.sendMsgWhenNotRegistration(null);
         return ApiResult.success();

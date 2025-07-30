@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -43,13 +42,9 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         //获取第三方审批定义
-        List<CfgThirdProcessEntity> cfgThirdProcessList = listCfgThirdProcess();
-        if (CollUtil.isEmpty(cfgThirdProcessList)) {
-            log.warn("无可用的第三方审批配置，handler: {}", this.getClass().getSimpleName());
-            return Collections.emptyList();
-        }
+        List<ThirdProcessDefinitionEntity> cfgThirdProcessList = listCfgThirdProcess();
 
-        List<String> approvalCodeList = cfgThirdProcessList.stream().map(CfgThirdProcessEntity::getThirdProcessDefinitionCode).distinct().collect(Collectors.toList());
+        List<String> approvalCodeList = cfgThirdProcessList.stream().map(ThirdProcessDefinitionEntity::getApprovalCode).distinct().collect(Collectors.toList());
         JSONArray result = new JSONArray();
         for (String approvalCode : approvalCodeList) {
             try {
@@ -61,6 +56,7 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
                     result.add(object);
                 }
             } catch (Exception e) {
+                log.error("调用飞书失败,e= {}",e.getMessage());
                 throw new ServiceException("调用飞书失败");
             }
         }
@@ -69,12 +65,12 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
     }
 
     /**
-     * 获取第三方审批配置
+     * 获取飞书审批定义
      * @author will
      * @date 2025/7/14 16:30
      * @return List<ThirdProcessDefinitionEntity>
      */
-    private List<CfgThirdProcessEntity> listCfgThirdProcess () {
+    private List<ThirdProcessDefinitionEntity> listCfgThirdProcess () {
 
         List<ThirdProcessDefinitionEntity> thirdProcessDefinitionList = FeignQuery.create(ThirdProcessDefinitionEntity.class)
                 .eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
@@ -84,10 +80,6 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
             log.warn("无可用的飞书审批定义，handler: {}", this.getClass().getSimpleName());
             return Collections.emptyList();
         }
-
-        //查询第三方审批
-        return FeignQuery.create(CfgThirdProcessEntity.class)
-                .eq(CfgThirdProcessEntity::getEnableStatus , Boolean.TRUE)
-                .list();
+        return thirdProcessDefinitionList;
     }
 }

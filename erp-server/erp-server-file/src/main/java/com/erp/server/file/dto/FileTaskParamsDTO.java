@@ -24,4 +24,11 @@ public class FileTaskParamsDTO extends SortDTO {
      * sqlMap 默认key default
      */
     private Map<String, String> sqlMap;
+
+    /**
+     * 下载任务类型
+     * FileTaskTypeEnum
+     * asyncImport 异步导入  asyncExport 异步导出
+     */
+    private String type;
 }

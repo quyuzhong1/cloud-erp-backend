@@ -156,6 +156,8 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
      */
     @TableField("org_name")
     private String orgName;
+    @TableField(exist = false)
+    private LocalDate deliveryDate;
 
 
     public static final String FIELD_REMARK = "remark";
