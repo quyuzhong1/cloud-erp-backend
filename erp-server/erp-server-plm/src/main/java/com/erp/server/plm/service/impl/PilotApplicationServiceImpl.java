@@ -27,7 +27,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -46,7 +49,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
@@ -584,7 +586,28 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailEntity.setProductName(productName);
         }
-        map.put("productDetailList", detailList);
+                map.put("productDetailList", detailList);
+
+        // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailList)) {
+            List<String> chargeIdList = productDetailList.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                map.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailList 为空");
+        }
+
         return map;
     }
 
