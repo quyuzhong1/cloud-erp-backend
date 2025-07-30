@@ -94,6 +94,11 @@ public enum DictBasicEnum {
     REJECTED("REJECTED", "taskStatus", "reject", "审核不通过"),//公用
     TRANCFERRED("TRANCFERRED", "taskStatus", "approve", "已转交"),
     DONE("DONE", "taskStatus", "approve", "完成"),
+
+    DESIGNATED_ROLE("designated_role", "assigneeOption", "指定角色", "审批人选项"),
+    DQE_OWNER("dqe_owner", "assigneeOption", "DQE负责人", "审批人选项"),
+    PRODUCT_MANAGER("product_manager", "designatedRole", "产品经理", "指定角色选项"),
+
     ;
 
     @EnumValue

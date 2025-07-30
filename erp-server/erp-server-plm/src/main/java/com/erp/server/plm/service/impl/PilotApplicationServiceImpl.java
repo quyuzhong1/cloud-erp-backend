@@ -54,6 +54,7 @@ import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -247,6 +248,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerId())){
+            pilotApplicationEntity.setDqeOwnerId(updateDTO.getDqeOwnerId());
+        }
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerName())){
+            pilotApplicationEntity.setDqeOwnerName(updateDTO.getDqeOwnerName());
+        }
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -512,7 +519,64 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        Map<String, Object> variablesMapByBusinessKey = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        
+        // 从 map 中获取 productDetailList 并提取 skuId
+        List<String> skuIdList = new ArrayList<>();
+        try {
+            Object productDetailListObj = variablesMapByBusinessKey.get("productDetailList");
+            if (productDetailListObj != null) {
+                if (productDetailListObj instanceof List) {
+                    List<?> productDetailList = (List<?>) productDetailListObj;
+                    if (CollUtil.isNotEmpty(productDetailList)) {
+                        for (Object productDetail : productDetailList) {
+                            if (productDetail instanceof Map) {
+                                Map<?, ?> productDetailMap = (Map<?, ?>) productDetail;
+                                Object skuIdObj = productDetailMap.get("skuId");
+                                if (skuIdObj != null && StringUtils.isNotBlank(skuIdObj.toString())) {
+                                    skuIdList.add(skuIdObj.toString());
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    log.warn("productDetailList 不是 List 类型，实际类型: {}", productDetailListObj.getClass().getSimpleName());
+                }
+            } else {
+                log.debug("productDetailList 为空");
+            }
+        } catch (Exception e) {
+            log.error("提取 skuId 时发生异常", e);
+        }
+        
+        // 如果 skuIdList 不为空，可以进一步处理
+        if (CollUtil.isNotEmpty(skuIdList)) {
+            log.debug("提取到 {} 个 skuId: {}", skuIdList.size(), skuIdList);
+            // 这里可以调用 productDetailService.getByIdList() 等方法
+            // productDetailService.getByIdList(skuIdList);
+        }
+        List<ProductDetailEntity> productDetailEntities = productDetailService.getByIdList(skuIdList);
+        // 从 productDetailEntities 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailEntities)) {
+            List<String> chargeIdList = productDetailEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+            
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                variablesMapByBusinessKey.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailEntities 为空");
+        }
+
+        return variablesMapByBusinessKey;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -734,6 +798,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         view.setAttachmentList(attachmentList);
+        view.setDqeOwnerId(pilotApplicationEntity.getDqeOwnerId());
+        view.setDqeOwnerName(pilotApplicationEntity.getDqeOwnerName());
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -1109,6 +1175,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setDqeOwnerId(addDTO.getDqeOwnerId());
+        entity.setDqeOwnerName(addDTO.getDqeOwnerName());
     }
 
     @Override

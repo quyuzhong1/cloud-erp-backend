@@ -45,6 +45,11 @@ public class AssigneeStrategyService {
         assigneeStrategyMap.put("somebody", value -> assigneeStrategyTypeService.somebodyAssignee(value));
         //指定人-表达式
         assigneeStrategyMap.put("somebody_exp", value -> assigneeStrategyTypeService.somebodyExpAssignee(value));
+        //指定角色
+        assigneeStrategyMap.put("designated_role", value -> assigneeStrategyTypeService.designatedRoleAssignee(value));
+        //DQE负责人
+        assigneeStrategyMap.put("dqe_owner", value -> assigneeStrategyTypeService.dqeOwnerAssignee(value));
+
     }
     public List<String> getResult(CamundaDTO.PropertiesDTO propertiesDTO, String startUserId, String candidateUsers, Map<String, Object> variables) {
         //Controller根据 类型resourceType、编码resourceId 去查询 发放方式grantType
