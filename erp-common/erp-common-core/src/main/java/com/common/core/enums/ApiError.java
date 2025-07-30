@@ -605,7 +605,7 @@ public enum ApiError implements Serializable {
 
     ERROR_95290(95290,"【{}】已存在【{}】国家"),
 
-    ERROR_95291(95291,"中国海关编码不存在于出口申报要素"),
+    ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
 
 
     /**

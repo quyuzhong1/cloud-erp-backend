@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -35,16 +34,12 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.dto.ProductCustomsDTO;
-import com.erp.model.plm.dto.excel.LogisticsProductErrorExcelDTO;
 import com.erp.model.plm.dto.excel.UpdateDeclarePriceExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.entity.DictHsCodeEntity;
@@ -318,7 +313,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     .eq(DictHsCodeEntity::getCountry,"CN")
                     .eq(DictHsCodeEntity::getHsCode, customsCode).list();
             if(CollUtil.isEmpty(hsCodeList)){
-                throw new ServiceException(ApiError.ERROR_95291);
+                throw new ServiceException(ApiError.ERROR_95292);
             }
         }
 
@@ -896,7 +891,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 String customsCode = item.getCustomsCode();
                 DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
                 if(Objects.isNull(dictHsCodeEntity)){
-                    errorMsgList.add(ApiError.ERROR_95291.msg);
+                    errorMsgList.add(ApiError.ERROR_95292.msg);
                 }else {
                     //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
                     logistics.setDeclareChineseName(isBlank(logistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : logistics.getDeclareChineseName());
