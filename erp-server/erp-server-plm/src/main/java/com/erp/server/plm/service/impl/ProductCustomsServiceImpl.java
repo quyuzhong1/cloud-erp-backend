@@ -328,13 +328,13 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductCustomsExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
-            log.error("导入拜访错误！", e);
+            log.error("导入目的国清关错误！", e);
             return Boolean.FALSE;
         }
 
         List<ProductCustomsExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
-            String fileName = "拜访错误信息";
+            String fileName = "目的国清关错误信息";
             ExcelUtil.export(fileName, "error", errorList, ProductCustomsExcelDTO.class, response);
             return Boolean.FALSE;
         }
@@ -343,32 +343,18 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
         if(CollUtil.isNotEmpty(successList)){
             List<String> skuIds = successList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
             List<ProductCustomsEntity> oldList = lambdaQuery().in(ProductCustomsEntity::getSkuId, skuIds).list();
-            if(CollUtil.isNotEmpty(oldList)){
-                //根据skuId 和 country字段唯一来找出successList 中存在于oldList的数据
-                List<ProductCustomsEntity> updateList = successList.stream()
-                        .filter(success -> oldList.stream().allMatch(old -> success.getSkuId().equals(old.getSkuId()) && success.getCountry().equals(old.getCountry()))).
-                        collect(Collectors.toList());
-
-                for (ProductCustomsEntity productCustomsEntity : updateList) {
-                    ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
+            for (ProductCustomsEntity productCustomsEntity : successList) {
+                ProductCustomsEntity oldEntity = oldList.stream().filter(e -> e.getSkuId().equals(productCustomsEntity.getSkuId()) && e.getCountry().equals(productCustomsEntity.getCountry())).findFirst().orElse(null);
+                if(Objects.nonNull(oldEntity)){
                     productCustomsEntity.setId(oldEntity.getId());
                     productCustomsEntity.setVersion(oldEntity.getVersion());
                     self.updateById(productCustomsEntity);
                     // 操作日志
                     String format = String.format("编辑【%s】清关信息", StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     sysLogService.addSysLogByUpdate(oldEntity,productCustomsEntity, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "",format);
-                }
-            }
-
-            //根据skuId 和 country字段唯一来找出successList 中不存在于oldList的数据
-            List<ProductCustomsEntity> addList = successList.stream()
-                    .filter(success -> oldList.stream().noneMatch(old -> success.getSkuId().equals(old.getSkuId()) && success.getCountry().equals(old.getCountry()))).
-                    collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(addList)){
-                self.saveBatch(addList);
-
-                for (ProductCustomsEntity productCustomsEntity : addList) {
+                }else {
                     // 操作日志
+                    self.save(productCustomsEntity);
                     String format = String.format("新增【%s】清关信息",  StringUtils.isBlank(productCustomsEntity.getCountryName()) ? "默认" : productCustomsEntity.getCountryName());
                     sysLogService.addSysLogBySave(format, SysLogClassPathEnum.PRODUCTCUSTOMSENTITY.getDesc(), productCustomsEntity.getSkuId(), "");
                 }
