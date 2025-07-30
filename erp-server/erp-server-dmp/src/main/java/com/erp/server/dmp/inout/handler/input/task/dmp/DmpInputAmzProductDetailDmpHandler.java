@@ -82,7 +82,8 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
 
         // 按listing报告内容
         List<ParamData> chlidParamDataList = new ArrayList<>();
-        chlidParamDataList.add(new ParamData(REPORT_ID, REPORT_ID, PannoEnum.EQ, reportId));
+//        chlidParamDataList.add(new ParamData(REPORT_ID, REPORT_ID, PannoEnum.EQ, reportId));
+        chlidParamDataList.add(new ParamData(NEXT_LEVEL_ID, NEXT_LEVEL_ID, PannoEnum.EQ, shopId));
         List<Map<String, Object>> listingMongoData = mongoService.findMongoData(chlidParamDataList, AMAZON_LISTING_DATA);
         if (CollectionUtils.isEmpty(listingMongoData)) {
             return Collections.emptyList();
