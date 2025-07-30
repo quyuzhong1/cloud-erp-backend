@@ -4355,7 +4355,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.ERROR_9046, dto.getUpdateFiledCode());
             }
-            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
+            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), "insurance_property", dto.getValues(), enumByCode.getKeyName());
         }
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);

@@ -1091,5 +1091,13 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @NotEmpty( message = "来源ID数组不能为空")
         private List<@NotBlank(message = "来源ID不能为空") String> sourceIdList;
+
+        /**
+         * 对账单类型
+         */
+        @NotBlank(message = "对账单类型不能为空")
+        private String supplierType;
+        @NotBlank(message = "物流供应商ID不能为空")
+        private String logisticsSupplierId;
     }
 }

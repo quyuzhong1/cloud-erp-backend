@@ -166,7 +166,6 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     .ne(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                     .list();
 
-            if (CollectionUtil.isNotEmpty(productDetailList)) {
                 // 构建SKU到商品详情实体的映射，用于快速查找
                 Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
                 List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -199,13 +198,12 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                 }
                 // 等待所有异步任务完成
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            }
 
             Map<String, List<String>> successFiles = result.getSuccessFiles();
             //判空
             if (MapUtil.isNotEmpty(successFiles)) {
                 // 构建SKU到商品详情实体的映射，用于快速查找
-                Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
+                productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
 
                 for (Map.Entry<String, List<String>> entry : successFiles.entrySet()) {
                     String skuId = entry.getKey();

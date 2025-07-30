@@ -92,5 +92,5 @@ public interface LogisticsBaseService {
     /**
      * TikTok全托管同步物流地址
      */
-    void syncTikTokLogisticsAddress(String shopId);
+    void syncTikTokLogisticsAddress(String shopId, String shopName);
 }
