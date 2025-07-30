@@ -3441,7 +3441,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         PurchasePriceChangeDetailEntity entity = purchasePriceChangeDetailService.getById(pagingDTO.getParams().getPurchasePriceChangeDetailId());
-        if (ObjectUtil.isNotEmpty(entity)) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98028);
         }
         params.setSkuId(entity.getSkuId());
