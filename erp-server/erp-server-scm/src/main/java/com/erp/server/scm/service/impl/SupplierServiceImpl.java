@@ -315,7 +315,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getIdentificationCode () {
-        String identificationCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYSDM);
+        String identificationCode = docNoGenHelper.generateSeqCode(BusinessNoTypeEnum.CODE_GYSDM);
         SupplierEntity entity = getByIdentificationCode(identificationCode);
         if (ObjectUtil.isNotEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_HAS_EXIST, CharSequenceUtil.format("供应商代码{}",identificationCode));
@@ -1532,20 +1532,31 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             exportExcel.setPaymentConditionName(paymentConditionName);
 
             //供应商工厂地
-            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
-            exportExcel.setPlantAddrNames(plantAddrsNames);
+            if(CollUtil.isNotEmpty(supplierPlantAddrList)) {
+                String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
+                exportExcel.setPlantAddrNames(plantAddrsNames);
+            }
             //供应商属性名称
-            String propertyNames = item.getPropertyJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
-            exportExcel.setPropertyNames(propertyNames);
+            if (ObjectUtil.isNotEmpty(item.getPropertyJson())) {
+                String propertyNames = item.getPropertyJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setPropertyNames(propertyNames);
+            }
             //体系认证名称
-            String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
-            exportExcel.setCertificateNames(certificateJson);
+            if (ObjectUtil.isNotEmpty(item.getCertificateJson())) {
+                String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setCertificateNames(certificateJson);
+            }
             //产品分类名称名称
-            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
-            exportExcel.setProductCategoryNames(productCategoryNames);
+            if (ObjectUtil.isNotEmpty(item.getProductCategoryJson())) {
+                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setProductCategoryNames(productCategoryNames);
+            }
             //应用分类名称
-            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
-            exportExcel.setApplicationCategoryNames(applicationCategoryNames);
+            if(ObjectUtil.isNotEmpty(item.getApplicationCategoryJson())) {
+                String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setApplicationCategoryNames(applicationCategoryNames);
+            }
+
 
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());

@@ -204,7 +204,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 联系人-人员
      */
-    @ExcelProperty(value = "联系人-联系人", index = 24)
+    @ExcelProperty(value = "联系人-名称", index = 24)
     private String person;
     /**
      * 联系人-职务
@@ -249,7 +249,7 @@ public class SupplierExportExcelDTO implements Serializable {
     /**
      * 账户-开户支行
      */
-    @ExcelProperty(value = "开户支行", index = 33)
+    @ExcelProperty(value = "账户-开户支行", index = 33)
     private String bankSubbranch;
     /**
      * 账户-银行账号
