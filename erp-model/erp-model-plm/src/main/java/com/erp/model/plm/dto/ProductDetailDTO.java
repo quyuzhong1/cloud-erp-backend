@@ -486,7 +486,6 @@ public class ProductDetailDTO implements Serializable {
         /**
          * 图片地址
          */
-        @NotEmpty(message = "图片地址不能为空")
         private List<String> imagesUrls;
     }
 

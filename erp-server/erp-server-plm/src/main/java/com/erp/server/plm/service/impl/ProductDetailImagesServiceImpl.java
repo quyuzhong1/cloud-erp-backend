@@ -96,20 +96,31 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
             throw new ServiceException(ApiError.ERROR_95291);
         }
 
+        String oldImagesUrl = productDetailEntity.getImagesUrl();
+
         List<String> imagesUrls = dto.getImagesUrls();
-        imagesUrls = imagesUrls.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if(CollUtil.isEmpty(imagesUrls)){
-            throw new ServiceException("图片地址不能为空");
+        String imagesUrlStr = "";
+        if(CollUtil.isNotEmpty(imagesUrls)){//删除图片
+            imagesUrlStr = String.join(",", imagesUrls);
         }
-        String imagesUrlStr = String.join(",", imagesUrls);
         boolean save = lambdaUpdate()
                 .eq(ProductDetailEntity::getId, dto.getSkuId())
-                .set(ProductDetailEntity::getImagesUrl, String.join(",", imagesUrlStr))
+                .set(ProductDetailEntity::getImagesUrl, imagesUrlStr)
                 .update();
 
         if (save) {
-            String imagesUrl = productDetailEntity.getImagesUrl();
-            sysLogService.addSysLogBySave("sku图片由[" + imagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+            sysLogService.addSysLogBySave("sku图片由[" + oldImagesUrl + "]变更为[" + imagesUrlStr + "]", SKUCLASSPATH, productDetailEntity.getId(), productDetailEntity.getProductId());
+
+            if(StringUtils.isNotBlank(oldImagesUrl)){
+                List<String> list = Arrays.asList(oldImagesUrl.split(","));
+                //则需要删除
+                plmAttachmentService.lambdaUpdate()
+                        .in(PlmAttachmentEntity::getAttachUrl, list)
+                        .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
+                        .set(PlmAttachmentEntity::getIsDeleted,true)
+                        .update();
+                fileFeign.deleteBatchFile(list);
+            }
         }
         return save;
     }
@@ -239,9 +250,45 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     }
 
                     // 先按是否有下划线排序，再按字典序排序
-                    value.sort(Comparator.comparing((String s) -> s.contains("_"))
-                            .thenComparing(String::compareTo));
-                    String iamgesUrl = String.join(",", value);
+                    List<PlmAttachmentEntity> newPlmAttachmentList = plmAttachmentService.lambdaQuery()
+                            .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
+                            .eq(PlmAttachmentEntity::getType, "product_detail")
+                            .in(PlmAttachmentEntity::getAttachUrl, value)
+                            .list();
+
+                    // 添加自定义排序逻辑
+                    newPlmAttachmentList.sort((a, b) -> {
+                        String nameA = a.getAttachName();
+                        String nameB = b.getAttachName();
+
+                        boolean hasUnderscoreA = nameA.contains("_");
+                        boolean hasUnderscoreB = nameB.contains("_");
+
+                        // 如果一个有下划线，一个没有下划线
+                        if (hasUnderscoreA != hasUnderscoreB) {
+                            return hasUnderscoreA ? 1 : -1; // 无下划线的排在前面
+                        }
+
+                        // 如果都没有下划线，按字典序排序
+                        if (!hasUnderscoreA && !hasUnderscoreB) {
+                            return nameA.compareTo(nameB);
+                        }
+
+                        // 如果都有下划线，按 下划线后的数字 排序
+                        try {
+                            String numStrA = nameA.substring(nameA.indexOf("_") + 1);
+                            String numStrB = nameB.substring(nameB.indexOf("_") + 1);
+                            Integer numA = Integer.valueOf(numStrA);
+                            Integer numB = Integer.valueOf(numStrB);
+                            return numA.compareTo(numB);
+                        } catch (NumberFormatException e) {
+                            // 如果解析数字失败，按字典序排序
+                            return nameA.compareTo(nameB);
+                        }
+                    });
+
+                    List<String> iamgesUrls = newPlmAttachmentList.stream().map(PlmAttachmentEntity::getAttachUrl).collect(Collectors.toList());
+                    String iamgesUrl = String.join(",", iamgesUrls);
 
                     lambdaUpdate().set(ProductDetailEntity::getImagesUrl, iamgesUrl)
                             .eq(ProductDetailEntity::getId, skuId)
