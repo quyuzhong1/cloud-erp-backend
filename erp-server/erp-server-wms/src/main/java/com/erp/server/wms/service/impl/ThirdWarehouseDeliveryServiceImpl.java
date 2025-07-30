@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.common.business.dto.base.PagingDTO;
@@ -311,12 +312,57 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             return BatchResultDTO.fail(id, entity.getCode(), "销售订单不存在, 重新出库失败");
         }
+        if (soB2cEntity.hasPlatformWarehouseOrder()) {
+            return BatchResultDTO.fail(id, entity.getCode(), "平台仓订单无法 重新出库");
+        }
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
         platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
         platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO);
         return BatchResultDTO.success();
+    }
+
+    @Override
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(String soId) {
+        SoB2cEntity entity = soB2cFeign.getById(soId);
+        //已发货
+        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        String billStatus = entity.getBillStatus();
+
+        //已存在也不生成
+        ThirdWarehouseDeliveryEntity exist = this.getLatestBySoId(entity.getId());
+        if (ObjectUtil.isNotEmpty(exist)) {
+            log.warn("销售订单{}已存在三方仓发货单,不再重复生成", entity.getCode());
+            return exist;
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
+            throw new ServiceException("销售订单明细不存在");
+        }
+        ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+        addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
+        addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
+        addThirdWarehouseDeliveryEntity.setCode(code);
+        addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
+        addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
+        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+        return service.add(addThirdWarehouseDeliveryEntity);
+
     }
 
 }

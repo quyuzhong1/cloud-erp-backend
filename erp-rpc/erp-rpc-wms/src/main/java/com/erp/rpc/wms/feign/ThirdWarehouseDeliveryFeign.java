@@ -34,4 +34,5 @@ public interface ThirdWarehouseDeliveryFeign {
 
     @PostMapping("feign/thirdWarehouseDelivery/generateDeliveryAndOutStock")
     void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
+
 }

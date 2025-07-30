@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,4 +46,5 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         thirdWarehouseDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
     }
+
 }

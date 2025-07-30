@@ -2945,6 +2945,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
             soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
         }
+        //如果是平台仓发货，处理发货单生成情况
+        if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(dto.getSoId());
+            if(Objects.isNull(thirdWarehouseDeliveryEntity)){
+                thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.generatePlatformDelivery(dto.getSoId());
+            }
+            dto.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            dto.setSourceId(thirdWarehouseDeliveryEntity.getId());
+        }
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);

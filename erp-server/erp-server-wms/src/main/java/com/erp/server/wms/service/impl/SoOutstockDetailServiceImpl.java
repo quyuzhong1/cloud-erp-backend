@@ -18,6 +18,8 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -44,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -164,7 +167,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             handleDetailData(addList);
         } else {
             //处理明细数据
-            handleB2cDetailData(addList);
+            handleB2cDetailData(addList,entity);
         }
         //赋值仓库名称
         if(Objects.nonNull(entity)){
@@ -886,19 +889,68 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param detailList
      */
-    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList) {
+    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByIds(soDetailIdList);
         List<String> currencyIdList = soDetailList.stream().map(SoB2cDetailEntity::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = CollectionUtils.isNotEmpty(currencyIdList) ? sysUserFeign.listByCurrency(currencyIdList) : Collections.emptyList();
+        List<String> skuIds = soDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        //子sku列表
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
+        List<String> childSkuList = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
+        //子件含税成本Map ,key : 父sku val: 含税总成本
+        Map<String,BigDecimal> costMap = new HashMap<>();
+        for (SoOutstockDetailEntity detailEntity : detailList) {
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                continue;
+            }
+            SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(skuVO) || Objects.isNull(skuVO.getActualTaxCost()) || skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+            if(costMap.containsKey(bomChildrenSkuDTO.getParentSkuId())){
+                costMap.put(bomChildrenSkuDTO.getParentSkuId(),
+                        costMap.get(bomChildrenSkuDTO.getParentSkuId()).add(skuVO.getActualTaxCost()));
+            }else{
+                costMap.put(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost());
+            }
+        }
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                continue;
+                //平台仓订单没有明细通过sku关联
+                soDetailEntity = soDetailList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(soDetailEntity)){
+                    //还关联不到看明细是否有组合品，有的话通过子件关联
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                    if(ObjectUtils.isEmpty(bomChildrenSkuDTO)){
+                        continue;
+                    }
+                    soDetailEntity = soDetailList.stream()
+                            .filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getParentSkuId()))
+                            .findFirst().orElse(new SoB2cDetailEntity());
+                    //查询出库单明细是否有其他子件
+                    List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = bomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(bomChildrenSkuDTO.getParentSkuId()) && outSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
+                    if (sameBomChildrenSkuDTOList.size() > 1) {
+                        //有其他子件 将单价分摊
+                        SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                        if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
+                            soDetailEntity.setPrice(BigDecimal.ZERO);
+                        }else{
+                            BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
+                            BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(detailEntity.getActualQty()));
+                            soDetailEntity.setPrice(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP));
+                        }
+                    }
+                }
             }
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){

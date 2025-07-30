@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -43,4 +44,6 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList();
 
     BatchResultDTO retryOutstock(String id);
+
+    ThirdWarehouseDeliveryEntity generatePlatformDelivery(String soId);
 }

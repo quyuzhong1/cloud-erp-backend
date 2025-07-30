@@ -6964,6 +6964,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setWarehouseId(detailItem.getWarehouseId());
                 addDTO.setWarehouseLocation(warehouseLocation);
                 addDTO.setRemark("B2C订单平台自动生成");
+                addDTO.setPrice(detailItem.getPrice());
+                addDTO.setAmount(detailItem.getAmount());
+                addDTO.setTaxRate(detailItem.getTaxRate());
+                addDTO.setExchangeRate(detailItem.getExchangeRate());
+                addDTO.setCurrency(detailItem.getCurrency());
                 // 平台订单记录历史映射
                 if (entity.hasPlatformWarehouseOrder()) {
                     List<ListingInfoWithSkuMappingDTO> list;
