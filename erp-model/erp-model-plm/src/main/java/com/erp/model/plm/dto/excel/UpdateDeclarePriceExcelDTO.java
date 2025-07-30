@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateDeclarePriceExcelDTO {
     @ColumnWidth(20)
-    @ExcelProperty(value = "*sku", index = 0)
-    @FieldValid(fieldName = "*sku", isNotBlank = true )
+    @ExcelProperty(value = "*SKU", index = 0)
+    @FieldValid(fieldName = "*SKU", isNotBlank = true )
     private String skuNo;
 
     @ColumnWidth(30)
