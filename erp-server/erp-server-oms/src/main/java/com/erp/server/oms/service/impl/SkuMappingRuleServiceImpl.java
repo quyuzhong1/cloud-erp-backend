@@ -438,9 +438,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     }
                 }if (SkuMappingRuleEnum.NO_MATCH.equals(skuMappingRuleEnum)) {
                     // 无需匹配类型针对的是 listingInfo 中的 platformStatus 和 isParent 字段
-                    if (!skuVOMap.containsKey(handlePlatformSkuNo)) {
-                        continue;
-                    }
+//                    if (!skuVOMap.containsKey(handlePlatformSkuNo)) {
+//                        continue;
+//                    }
                     Map<String, Object> ruleContent = skuMappingRuleEntity.getRuleContent();
                     Object obj = ruleContent.get("noMatchList");
                     if (obj == null) {
