@@ -2674,5 +2674,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         autoGenerateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
+
+    @Override
+    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds) {
+        if (CollUtil.isEmpty(deliveryIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listOverseasProvider(deliveryIds);
+    }
 }
 

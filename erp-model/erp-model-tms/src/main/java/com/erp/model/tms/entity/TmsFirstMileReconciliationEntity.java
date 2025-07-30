@@ -119,6 +119,12 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
      */
     @TableField("pay_time")
     private LocalDateTime payTime;
+    /**
+     * 供应商类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
+     * SupplierTypeEnum
+     */
+    @TableField("supplier_type")
+    private String supplierType;
 
 
     public static final String FIELD_CODE = "code";
@@ -151,13 +157,14 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
 
     public static final String FIELD_REASON = "reason";
 
-    public TmsFirstMileReconciliationEntity(String code, LocalDate startDate, LocalDate endDate, String logisticsSupplierId, String currency) {
+    public TmsFirstMileReconciliationEntity(String code, LocalDate startDate, LocalDate endDate, String logisticsSupplierId, String supplierType, String currency) {
         this.code = code;
         this.approveStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         this.reconciliationDate = LocalDate.now();
         this.startDate = startDate;
         this.endDate = endDate;
         this.logisticsSupplierId = logisticsSupplierId;
+        this.supplierType = supplierType;
         this.logisticsSupplierName = "";
         this.currency = currency;
     }

@@ -59,7 +59,7 @@
         ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
         a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
         to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
-        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,a.supplier_type,
         a.source_id,a.source_code,a.org_id as orgId,a.org_name as orgName,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
         ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
         cast(ca.product_cost AS VARCHAR) as productCost,
@@ -214,6 +214,12 @@
         </if>
         <if test="reportPeriodId != null and reportPeriodId != ''">
             and a.report_period_id = #{reportPeriodId}
+        </if>
+        <if test="supplierId != null and supplierId != ''">
+            and a.supplier_id = #{supplierId}
+        </if>
+        <if test="supplierType != null and supplierType != ''">
+            and a.supplier_type = #{supplierType}
         </if>
         order by rpm.month
     </select>

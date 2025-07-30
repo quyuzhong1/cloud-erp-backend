@@ -62,6 +62,7 @@
         lb.delivery_time AS deliveryTime,
         lb.transport_no AS transportNo,
         lb.to_country AS toCountry,
+        lb.logistics_supplier_id AS logisticsSupplierId,
         lbd.track_status AS trackStatus ,
         lbd.track_no AS trackNo,
         lbd.sign_time AS signTime,
@@ -124,6 +125,8 @@
             lb.outstock_id,
             lb.outstock_code,
             lb.transport_no,
+            lb.channel_id,
+            lb.order_time,
             lbd.id as detailId,
             lbd.track_status,
             lbd.track_no
@@ -591,6 +594,12 @@
                 and lb.logistics_supplier_id in
                 <foreach collection="logisticsSupplierIdList" item="logisticsSupplierId" open="(" separator="," close=")">
                     #{logisticsSupplierId}
+                </foreach>
+            </if>
+            <if test="reconciliationIds != null and reconciliationIds.size() > 0 ">
+                and lbc.reconciliation_id in
+                <foreach collection="reconciliationIds" item="reconciliationId" open="(" separator="," close=")">
+                    #{reconciliationId}
                 </foreach>
             </if>
         </where>

@@ -1769,7 +1769,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
 		Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(costList)) {
-			costList = costList.stream().filter(c -> costType.getCode().equals(c.getType())).collect(Collectors.toList());
+			costList = costList.stream().filter(c -> costType.getCode().equals(c.getType()) && c.getIsAllocate()).collect(Collectors.toList());
 			costCategoryMaps = costList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getDictCostCategory));
 		}
 
@@ -2079,5 +2079,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type) {
+        if (CollUtil.isEmpty(billIds) || CollUtil.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listCostDetailByBillAndReconciliationIds(billIds, mainIds,type);
     }
 }

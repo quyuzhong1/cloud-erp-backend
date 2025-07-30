@@ -928,4 +928,26 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillId;
         private String logisticsBillDetailId;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostDetailDTO {
+        private String costId;
+        private String logisticsBillId;
+        private String reconciliationId;
+        private String reconciliationStatus;
+        private String cfgId;
+        private Boolean isAllocate;
+        private Boolean isDefault;
+        private String dictCostAttribution;
+        private String dictCostCategory;
+        private String detailId;
+        private String currency;
+        private BigDecimal exchangeRate;
+        //账单类型 实际账单 actual 暂估账单
+        private String type;
+        private String sourceType;
+        private BigDecimal costValue;
+    }
 }

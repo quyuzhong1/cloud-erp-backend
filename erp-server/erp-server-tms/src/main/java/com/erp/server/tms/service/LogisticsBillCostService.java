@@ -227,4 +227,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     Boolean importExcel(BaseDTO.ImportDTO dto);
 
     void importLogisticsBillCost(BaseDTO.ImportDTO dto);
+
+    List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type);
 }

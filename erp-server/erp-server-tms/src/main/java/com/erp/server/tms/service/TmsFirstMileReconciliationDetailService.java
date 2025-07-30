@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -123,16 +124,18 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds, String supplierType, @NotBlank String logisticsSupplierId);
 
     /**
      * 生成实际和差异记录
+     *
      * @param sourceListDTO
      * @param reconciliationCount
-     * @param keepActual 是否保留实际账单
+     * @param keepActual          是否保留实际账单
+     * @param supplierType
      * @return
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO, int reconciliationCount, boolean keepActual, String supplierType);
 
     Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList);
 
@@ -146,7 +149,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     CurrencyDTO.ViewDTO getCurrencyView(String currency);
 
-    void checkRemoveByMainId(String id);
+    void checkRemoveByMainId(TmsFirstMileReconciliationEntity entity);
 
     void changeLogisticsBillCost(List<String> sourceIds, String reconciliationStatus);
 
@@ -173,11 +176,14 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     /**
      * 根据明细id进行查询对账单明细
+     *
      * @param sourceIds
      * @param type
+     * @param supplierType
+     * @param logisticsSupplierId
      * @return
      */
-    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds, String type);
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds, String type, String supplierType, String logisticsSupplierId);
 
     /**
      * 根据业务单号获取对账明细

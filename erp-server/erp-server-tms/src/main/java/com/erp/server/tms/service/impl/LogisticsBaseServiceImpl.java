@@ -626,6 +626,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     public void syncLogisticsAddress(Map<String, String> authMap) {
         IopResponse sellerInfo = null;
         String shopId = authMap.get("shopId");
+        String shopName = authMap.get("shopName");
         try {
             sellerInfo = aliExpressShipperService.getLogisticsAddress(authMap);
         } catch (ApiException e) {
@@ -643,6 +644,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.DELIVER);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -652,6 +654,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.COLLECT);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -661,6 +664,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.REFUND);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -670,7 +674,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public void syncTikTokLogisticsAddress(String shopId) {
+    public void syncTikTokLogisticsAddress(String shopId, String shopName) {
         List<LogisticsAddressEntity> dbList = logisticsAddressService.listByTypeAndShopId(LogisticsAddressTypeEnum.COLLECT, shopId);
         List<TikTokFullyAddressResp.DataDTO.AddressesDTO> tiktokFullyAddressList = tikTokFullService.listAddress(shopId);
         List<LogisticsAddressEntity> saveOrUpdateList = new ArrayList<>();
@@ -685,7 +689,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     .findFirst()
                     .orElse(new LogisticsAddressEntity());
             logisticsAddressEntity.setShopId(shopId);
-            logisticsAddressEntity.setName(addressesDTO.getContactName());
+            logisticsAddressEntity.setName(addressesDTO.getContactName() + "-" + shopName);
             logisticsAddressEntity.setType(LogisticsAddressTypeEnum.COLLECT);
             logisticsAddressEntity.setContact(addressesDTO.getContactName());
             logisticsAddressEntity.setAddressFirst(addressesDTO.getFullAddress());

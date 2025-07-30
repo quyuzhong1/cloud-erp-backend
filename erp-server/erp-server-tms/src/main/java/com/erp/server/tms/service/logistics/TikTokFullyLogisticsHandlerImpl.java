@@ -186,6 +186,7 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (ShopAuthEntity shopAuth : authShops.getData()) {
             Map<String, String> map = new HashMap<>();
             map.put("shopId", shopAuth.getShopId());
+            map.put("shopName", shopAuth.getShopName());
             mapList.add(map);
         }
         return mapList;
