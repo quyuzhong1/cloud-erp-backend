@@ -155,10 +155,17 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     .map(MultipartFile::getOriginalFilename)
                     .map(name -> {
                         return getFileNameNotExt(name);
+                    }).map(name -> {
+                        if (name.contains("_")) {
+                            return name.substring(0, name.indexOf("_"));  // 提取下划线前的部分作为SKU编号
+                        }
+                        return name;  // 不含下划线则直接使用文件名作为SKU编号
                     })
-                    .filter(name -> !name.contains("_"))
                     .distinct()
                     .collect(Collectors.toList());
+            if(CollUtil.isEmpty(skuNoList)){
+                throw new ServiceException("SKU图片格式有异常,主图SKU，非主图使用SKU_1");
+            }
 
             // 排除待审核的SKU，只处理非“待审核”状态的商品详情
             List<ProductDetailEntity> productDetailList = lambdaQuery()
