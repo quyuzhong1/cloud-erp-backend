@@ -181,40 +181,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             log.error("导入出口申请要素错误！", e);
             return Boolean.FALSE;
         }
-
         List<DictHsCodeExcelDTO> errorList = excelListenerUtil.getErrorList();
-
-        List<DictHsCodeExcelDTO> successList = excelListenerUtil.getSuccessList();
-
-        List<DictHsCodeEntity> addList =  new ArrayList<>();
-
-        if(CollUtil.isNotEmpty(successList)){
-            List<String> hsCodes = successList.stream().map(DictHsCodeExcelDTO::getHsCode).collect(Collectors.toList());
-            List<DictHsCodeEntity> oldList = lambdaQuery().in(DictHsCodeEntity::getHsCode, hsCodes).list();
-            Map<String, DictHsCodeEntity> oldMap = oldList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, w -> w));
-
-            for (DictHsCodeExcelDTO dto : successList) {
-                List<String> errorMsgList = new ArrayList<>();
-                DictHsCodeEntity oldEntity = oldMap.getOrDefault(dto.getHsCode(), null);
-                if(Objects.isNull(oldEntity)){
-                    errorMsgList.add(StrUtil.format(ApiError.ERROR_96008.msg, dto.getHsCode()));
-                }
-                //存在错误数据则直接返回
-                if (!errorMsgList.isEmpty()) {
-                    dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                    errorList.add(dto);
-                    continue;
-                }
-                DictHsCodeEntity entity = new DictHsCodeEntity();
-                BeanMapper.copy(dto, entity);
-
-                if(StringUtil.isBlank(entity.getCountry())){
-                    //默认中国
-                    entity.setCountry("CN");
-                }
-                addList.add(entity);
-            }
-        }
 
         if (errorList.size() > 0) {
             String fileName = "出口申报要素错误信息";
@@ -222,8 +189,38 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             return Boolean.FALSE;
         }
 
+        List<DictHsCodeExcelDTO> successList = excelListenerUtil.getSuccessList();
+
+        List<DictHsCodeEntity> addList =  new ArrayList<>();
+        List<DictHsCodeEntity> updateList =  new ArrayList<>();
+
+        if(CollUtil.isNotEmpty(successList)){
+            List<String> hsCodes = successList.stream().map(DictHsCodeExcelDTO::getHsCode).collect(Collectors.toList());
+            List<DictHsCodeEntity> oldList = lambdaQuery().in(DictHsCodeEntity::getHsCode, hsCodes).list();
+            Map<String, DictHsCodeEntity> oldMap = oldList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, w -> w , (o1,o2)->o1));
+
+            for (DictHsCodeExcelDTO dto : successList) {
+                DictHsCodeEntity oldEntity = oldMap.getOrDefault(dto.getHsCode(), null);
+                if(Objects.nonNull(oldEntity)){
+                    BeanMapper.copy(dto, oldEntity);
+                    updateList.add(oldEntity);
+                }else {
+                    DictHsCodeEntity entity = new DictHsCodeEntity();
+                    BeanMapper.copy(dto, entity);
+
+                    if(StringUtil.isBlank(entity.getCountry())){
+                        //默认中国
+                        entity.setCountry("CN");
+                    }
+                    addList.add(entity);
+                }
+            }
+        }
         if(addList.size() > 0){
             saveBatch(addList);
+        }
+        if(updateList.size() > 0){
+            updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
