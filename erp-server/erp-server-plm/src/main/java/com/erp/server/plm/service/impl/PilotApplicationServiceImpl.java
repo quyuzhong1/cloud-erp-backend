@@ -513,64 +513,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        Map<String, Object> variablesMapByBusinessKey = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
-
-        // 从 map 中获取 productDetailList 并提取 skuId
-        List<String> skuIdList = new ArrayList<>();
-        try {
-            Object productDetailListObj = variablesMapByBusinessKey.get("productDetailList");
-            if (productDetailListObj != null) {
-                if (productDetailListObj instanceof List) {
-                    List<?> productDetailList = (List<?>) productDetailListObj;
-                    if (CollUtil.isNotEmpty(productDetailList)) {
-                        for (Object productDetail : productDetailList) {
-                            if (productDetail instanceof Map) {
-                                Map<?, ?> productDetailMap = (Map<?, ?>) productDetail;
-                                Object skuIdObj = productDetailMap.get("skuId");
-                                if (skuIdObj != null && StringUtils.isNotBlank(skuIdObj.toString())) {
-                                    skuIdList.add(skuIdObj.toString());
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    log.warn("productDetailList 不是 List 类型，实际类型: {}", productDetailListObj.getClass().getSimpleName());
-                }
-            } else {
-                log.debug("productDetailList 为空");
-            }
-        } catch (Exception e) {
-            log.error("提取 skuId 时发生异常", e);
-        }
-
-        // 如果 skuIdList 不为空，可以进一步处理
-        if (CollUtil.isNotEmpty(skuIdList)) {
-            log.debug("提取到 {} 个 skuId: {}", skuIdList.size(), skuIdList);
-            // 这里可以调用 productDetailService.getByIdList() 等方法
-            // productDetailService.getByIdList(skuIdList);
-        }
-        List<ProductDetailEntity> productDetailEntities = productDetailService.getByIdList(skuIdList);
-        // 从 productDetailEntities 中提取 chargeId 并生成逗号分隔的字符串
-        if (CollUtil.isNotEmpty(productDetailEntities)) {
-            List<String> chargeIdList = productDetailEntities.stream()
-                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
-                    .map(ProductDetailEntity::getChargeId)
-                    .distinct() // 去重
-                    .collect(Collectors.toList());
-
-            if (CollUtil.isNotEmpty(chargeIdList)) {
-                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
-                String chargeIdString = String.join(",", chargeIdList);
-                variablesMapByBusinessKey.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
-                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
-            } else {
-                log.debug("未找到有效的 chargeId");
-            }
-        } else {
-            log.debug("productDetailEntities 为空");
-        }
-
-        return variablesMapByBusinessKey;
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
 
         //附件
@@ -643,6 +585,26 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             detailEntity.setProductName(productName);
         }
         map.put("productDetailList", detailList);
+
+        // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailList)) {
+            List<String> chargeIdList = productDetailList.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                map.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailList 为空");
+        }
         return map;
     }
 
