@@ -46,6 +46,8 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -240,6 +242,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerId())){
+            pilotApplicationEntity.setDqeOwnerId(updateDTO.getDqeOwnerId());
+        }
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerName())){
+            pilotApplicationEntity.setDqeOwnerName(updateDTO.getDqeOwnerName());
+        }
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -821,6 +829,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         view.setAttachmentList(attachmentList);
+        view.setDqeOwnerId(pilotApplicationEntity.getDqeOwnerId());
+        view.setDqeOwnerName(pilotApplicationEntity.getDqeOwnerName());
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -1201,6 +1211,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setDqeOwnerId(addDTO.getDqeOwnerId());
+        entity.setDqeOwnerName(addDTO.getDqeOwnerName());
     }
 
     @Override

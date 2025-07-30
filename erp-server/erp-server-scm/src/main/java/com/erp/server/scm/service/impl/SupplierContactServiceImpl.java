@@ -215,7 +215,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
 
     @Override
     public String getTelNumber(String contactId) {
-        SupplierContactEntity entity = lambdaQuery().select(SupplierContactEntity::getTelNumber).last("limit 1").one();
+        SupplierContactEntity entity = lambdaQuery().eq(SupplierContactEntity::getId,contactId).select(SupplierContactEntity::getTelNumber).last("limit 1").one();
         if (ObjectUtil.isEmpty(entity)) {
             return "";
         }

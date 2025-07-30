@@ -218,21 +218,21 @@ public class SupplierDTO implements Serializable {
         /**
          * 供应商属性
          */
-        private JSONArray property;
+        private JSONArray propertyJson;
         /**
          * 供应商品类
          */
-        private JSONArray productCategory;
+        private JSONArray productCategoryJson;
 
         /**
          * 供应商应用分类
          */
-        private JSONArray applicationCategory;
+        private JSONArray applicationCategoryJson;
 
         /**
          * 体系认证
          */
-        private JSONArray certificate;
+        private JSONArray certificateJson;
 
         /**
          * 工厂所在地

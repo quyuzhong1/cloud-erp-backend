@@ -58,6 +58,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -194,6 +195,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
@@ -310,7 +315,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getIdentificationCode () {
-        String identificationCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
+        String identificationCode = docNoGenHelper.generateSeqCode(BusinessNoTypeEnum.CODE_GYSDM);
         SupplierEntity entity = getByIdentificationCode(identificationCode);
         if (ObjectUtil.isNotEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_HAS_EXIST, CharSequenceUtil.format("供应商代码{}",identificationCode));
@@ -550,6 +555,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        keyList.add(DictBasicEnum.PROPERTY.getType());
+        keyList.add(DictBasicEnum.CERTIFICATE.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
@@ -566,6 +573,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //供应商工厂地
         List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
+
+        //产品分类
+        List<BasicCategoryEntity> productCategoryList = FeignQuery.list(BasicCategoryEntity.class);
+        //应用分类
+        List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -604,19 +616,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPaymentConditionName(paymentConditionName);
             //供应商工厂地
-            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
+            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
             item.setPlantAddrNames(plantAddrsNames);
             //供应商属性名称
-            String propertyNames = item.getPropertyJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            String propertyNames = item.getPropertyJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setPropertyNames(propertyNames);
             //体系认证名称
-            String certificateJson = item.getCertificateJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setCertificateNames(certificateJson);
-            //体系认证名称
-            String productCategoryNames = item.getProductCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            //产品分类名称名称
+            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setProductCategoryNames(productCategoryNames);
             //应用分类名称
-            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
+            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setApplicationCategoryNames(applicationCategoryNames);
 
             ApproveStatusEnum statusEnum = item.getApproveStatus();
@@ -1147,26 +1159,29 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (ObjectUtil.isEmpty(addDTO)) {
             return;
         }
+        //校验名称重复
+        checkName(addDTO.getId(), addDTO.getName());
         //供应商添加信息
         SupplierEntity supplier = BeanUtil.toBean(addDTO,SupplierEntity.class);
-        String supplierId = IdWorker.getIdStr();
-        supplier.setId(supplierId);
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
-        supplier.setCode(code);
-        supplier.setSrmDisabled(true);
-        //账户
-        List<SupplierAccountEntity> addAccountList = supplierAccountService.transform(supplierId, addDTO.getBankAccountList());
-        //联系人信息
-        List<SupplierContactEntity> addContactList = supplierContactService.transform(supplierId, addDTO.getContactList());
-        //资质信息
-        List<SupplierCredentialEntity> addCredentialList = supplierCredentialService.transform(supplierId, addDTO.getCredentialList());
-
-        supplierPlantAddrService.importUpdate(supplierId, addDTO.getPlantAddrList(),type);
-
+        if (CharSequenceUtil.isBlank(addDTO.getId())) {
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYS);
+            supplier.setCode(code);
+            supplier.setSrmDisabled(true);
+            //生成供应商代码
+            supplier.setIdentificationCode(getIdentificationCode());
+        }
         super.saveOrUpdate(supplier);
+        //账户
+        List<SupplierAccountEntity> addAccountList = supplierAccountService.transform(supplier.getId(), addDTO.getBankAccountList());
+        //联系人信息
+        List<SupplierContactEntity> addContactList = supplierContactService.transform(supplier.getId(), addDTO.getContactList());
+        //资质信息
+        List<SupplierCredentialEntity> addCredentialList = supplierCredentialService.transform(supplier.getId(), addDTO.getCredentialList());
+
+        supplierPlantAddrService.importUpdate(supplier.getId(), addDTO.getPlantAddrList(),type);
         supplierAccountService.saveOrUpdateBatch(addAccountList);
-        supplierContactService.saveBatch(addContactList);
-        supplierCredentialService.saveBatch(addCredentialList);
+        supplierContactService.saveOrUpdateBatch(addContactList);
+        supplierCredentialService.saveOrUpdateBatch(addCredentialList);
 
         String content = "导入一个供应商信息[%s]";
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "新增操作");
@@ -1436,6 +1451,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
+        keyList.add(DictBasicEnum.PROPERTY.getType());
+        keyList.add(DictBasicEnum.CERTIFICATE.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
@@ -1447,6 +1464,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //供应商工厂地
         List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
+
+        //产品分类
+        List<BasicCategoryEntity> productCategoryList = FeignQuery.list(BasicCategoryEntity.class);
+        //应用分类
+        List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
 
         //获取供应商配置
         List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
@@ -1510,20 +1532,31 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             exportExcel.setPaymentConditionName(paymentConditionName);
 
             //供应商工厂地
-            String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
-            item.setPlantAddrNames(plantAddrsNames);
+            if(CollUtil.isNotEmpty(supplierPlantAddrList)) {
+                String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
+                exportExcel.setPlantAddrNames(plantAddrsNames);
+            }
             //供应商属性名称
-            String propertyNames = item.getPropertyJson().stream().map(Object::toString).collect(Collectors.joining(","));
-            item.setPropertyNames(propertyNames);
+            if (ObjectUtil.isNotEmpty(item.getPropertyJson())) {
+                String propertyNames = item.getPropertyJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setPropertyNames(propertyNames);
+            }
             //体系认证名称
-            String certificateJson = item.getCertificateJson().stream().map(Object::toString).collect(Collectors.joining(","));
-            item.setCertificateNames(certificateJson);
-            //体系认证名称
-            String productCategoryNames = item.getProductCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
-            item.setProductCategoryNames(productCategoryNames);
+            if (ObjectUtil.isNotEmpty(item.getCertificateJson())) {
+                String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setCertificateNames(certificateJson);
+            }
+            //产品分类名称名称
+            if (ObjectUtil.isNotEmpty(item.getProductCategoryJson())) {
+                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setProductCategoryNames(productCategoryNames);
+            }
             //应用分类名称
-            String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(Object::toString).collect(Collectors.joining(","));
-            item.setApplicationCategoryNames(applicationCategoryNames);
+            if(ObjectUtil.isNotEmpty(item.getApplicationCategoryJson())) {
+                String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                exportExcel.setApplicationCategoryNames(applicationCategoryNames);
+            }
+
 
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
@@ -2070,7 +2103,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return List<AddDTO>
      */
     private List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO,List<String> errorMsgList,boolean isUpdatePart) {
-        List<SupplierPlantAddrDTO.AddDTO> plantAddrList = addDTO.getPlantAddrList();
+        List<SupplierPlantAddrDTO.AddDTO> plantAddrList = new ArrayList<>();
         //工厂地址
         if (CharSequenceUtil.isNotBlank(excelDTO.getPlantAddr())) {
             List<String> addrList = Arrays.stream(excelDTO.getPlantAddr().split(",")).collect(Collectors.toList());
@@ -2085,7 +2118,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                         continue;
                     }
                     //如果国家下没有省份或城市，则直接添加国家
-                    addrDTO.setCountry(addr);
+                    addrDTO.setCountry(dictCountryEntity.getId());
                     plantAddrList.add(addrDTO);
                     continue;
                 }
@@ -2113,12 +2146,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                         //省份
                         DictCityEntity provinceEntity = cityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getParentId())).findFirst().orElse(null);
                         if (ObjectUtil.isEmpty(provinceEntity)) {
-                            errorMsgList.add("工厂地址【" + addr + "】对应的省份不存在，请先在系统中添加");
-                            continue;
+                           //无省份城市
+                            addrDTO.setCountry(countryEntity.getId());
+                            addrDTO.setRegion("");
+                            addrDTO.setCity(dictCityEntity.getCode());
+                        } else {
+                            addrDTO.setCountry(countryEntity.getId());
+                            addrDTO.setRegion(provinceEntity.getCode());
+                            addrDTO.setCity(dictCityEntity.getCode());
                         }
-                        addrDTO.setCountry(countryEntity.getId());
-                        addrDTO.setRegion(provinceEntity.getCode());
-                        addrDTO.setCity(dictCityEntity.getCode());
                     } else {
                         errorMsgList.add("工厂地址【" + addr + "】不支持直接添加街道，请先填写对应的城市");
                         continue;
@@ -2475,24 +2511,24 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<String> propertyStrList = Arrays.stream(excelDTO.getPropertyStr().split(",")).map(String::trim).collect(Collectors.toList());
             List<String> propertyList = dictBasicList.stream().filter(d -> propertyStrList.contains(d.getName())).map(DictBasicEntity::getValue).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(propertyList)) {
-                addDTO.setProperty(new JSONArray(propertyList));
+                addDTO.setPropertyJson(new JSONArray(propertyList));
             } else {
                 errorMsgList.add("供应商属性不存在");
             }
         } else if (!isUpdatePart) {
-            addDTO.setProperty(new JSONArray());
+            addDTO.setPropertyJson(new JSONArray());
         }
         //供应商产品分类
         if (StringUtils.isNotBlank(excelDTO.getProductCategoryStr())) {
             List<String> productCategoryStrList = Arrays.stream(excelDTO.getProductCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
-            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName())).map(BasicCategoryEntity::getCode).collect(Collectors.toList());
+            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName()) && !CharSequenceUtil.equals(d.getPid(),"0")).map(BasicCategoryEntity::getCode).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(productCategoryList)) {
-                addDTO.setProductCategory(new JSONArray(productCategoryList));
+                addDTO.setProductCategoryJson(new JSONArray(productCategoryList));
             } else {
                 errorMsgList.add("产品分类不存在");
             }
         } else if (!isUpdatePart) {
-            addDTO.setProductCategory(new JSONArray());
+            addDTO.setProductCategoryJson(new JSONArray());
         }
 
         //供应商应用分类
@@ -2500,12 +2536,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<String> applicationCategoryStrList = Arrays.stream(excelDTO.getApplicationCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
             List<String> applicationCategoryList = dictApplicationCategoryList.stream().filter(d -> applicationCategoryStrList.contains(d.getName())).map(ApplicationCategoryEntity::getCode).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(applicationCategoryList)) {
-                addDTO.setApplicationCategory(new JSONArray(applicationCategoryList));
+                addDTO.setApplicationCategoryJson(new JSONArray(applicationCategoryList));
             } else {
                 errorMsgList.add("应用分类不存在");
             }
         } else if (!isUpdatePart) {
-            addDTO.setApplicationCategory(new JSONArray());
+            addDTO.setApplicationCategoryJson(new JSONArray());
         }
 
         //体系认证
@@ -2513,12 +2549,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<String> certificateStrList = Arrays.stream(excelDTO.getCertificateStr().split(",")).map(String::trim).collect(Collectors.toList());
             List<String> certificateList = dictBasicList.stream().filter(d -> certificateStrList.contains(d.getName())).map(DictBasicEntity::getValue).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(certificateList)) {
-                addDTO.setCertificate(new JSONArray(certificateList));
+                addDTO.setCertificateJson(new JSONArray(certificateList));
             } else {
                 errorMsgList.add("体系认证不存在");
             }
         } else if (!isUpdatePart) {
-            addDTO.setCertificate(new JSONArray());
+            addDTO.setCertificateJson(new JSONArray());
         }
     }
 

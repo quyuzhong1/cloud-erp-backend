@@ -144,13 +144,15 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
         List<String> countryIdList = list.stream().map(SupplierPlantAddrEntity::getCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> dictCountryList = FeignQuery.getByIds(DictCountryEntity.class, countryIdList);
         Map<String, String> countryMap = CollUtil.isEmpty(dictCountryList) ? new HashMap<>() : dictCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
-        //省份
-        List<String> regionIdList = list.stream().flatMap(obj -> Stream.of(obj.getRegion(), obj.getCity())).distinct().collect(Collectors.toList());
-        List<DictCityEntity> dictCityList = FeignQuery.getByIds(DictCityEntity.class, regionIdList);
+        //省份或城市
+        List<String> codeList = list.stream().flatMap(obj -> Stream.of(obj.getRegion(), obj.getCity())).distinct().collect(Collectors.toList());
+        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class).in(DictCityEntity::getCode,codeList).list();
 
         List<SupplierPlantAddrDTO.ViewDTO> resultList = new ArrayList<>();
         for (SupplierPlantAddrEntity plantAddrEntity : list) {
             SupplierPlantAddrDTO.ViewDTO viewDTO = new SupplierPlantAddrDTO.ViewDTO();
+            viewDTO.setId(plantAddrEntity.getId());
+            viewDTO.setSupplierId(plantAddrEntity.getSupplierId());
             //国家
             String countryName = countryMap.get(plantAddrEntity.getCountry());
             viewDTO.setCountryName(countryName);

@@ -67,4 +67,10 @@ public interface ExportScmFeign {
      */
     @PostMapping("/feign/export/exportDynamicSupplierPhase")
     PagingVO<DynamicExcelDTO> exportDynamicSupplierPhase(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出采购订单调整（历史未完结订单）
+     */
+    @PostMapping("/feign/export/exportPurchaseOrderAdjust")
+    PagingVO<PurchaseOrderDTO.AdjustListDTO> exportPurchaseOrderAdjust(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto);
 }

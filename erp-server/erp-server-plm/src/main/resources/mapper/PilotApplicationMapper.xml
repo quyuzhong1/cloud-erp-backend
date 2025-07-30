@@ -127,7 +127,9 @@
                 pad.purchase_apply_qty purchaseApplyQty,
                 pad.business_type businessType,
                 pad.order_status orderStatus,
-                pa.approve_time as approveTime
+                pa.approve_time as approveTime,
+                pa.dqe_owner_id as dqeOwnerId,
+                pa.dqe_owner_name as dqeOwnerName
         from pilot_application_detail pad
         left join pilot_application pa on pa.id = pad.main_id and pa.is_deleted = false
         <where>
