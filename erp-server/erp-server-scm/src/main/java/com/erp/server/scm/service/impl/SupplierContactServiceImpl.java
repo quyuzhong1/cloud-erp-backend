@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -220,6 +221,14 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
             return "";
         }
         return entity.getTelNumber();
+    }
+
+    @Override
+    public List<SupplierContactEntity> listByNameList(List<String> contactNames) {
+        if (CollUtil.isEmpty(contactNames)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SupplierContactEntity::getPerson,contactNames).eq(SupplierContactEntity::getDisabled,Boolean.FALSE).list();
     }
 
 

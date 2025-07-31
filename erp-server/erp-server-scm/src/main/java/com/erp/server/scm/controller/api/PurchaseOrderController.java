@@ -966,4 +966,51 @@ public class PurchaseOrderController extends BaseController {
         Boolean flag = purchaseOrderService.batchAdjustPrice(dto);
         return flag ? success() : failure();
     }
+
+
+    /**
+     * 导入采购订单主表
+     * @author will
+     * @date 2025/7/30 17:50
+     * @param excelFile
+     * @param response
+     * @return ApiResult<ImportDTO>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购订单主表")
+    @PostMapping("/importMainFile")
+    public ApiResult importMainFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.importMainFile(excelFile, response);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 下载采购订单主表模板
+     * @author Will
+     * @date 2025/7/30 17:50
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载采购订单主表模板")
+    @GetMapping("/exportMainTemplate")
+    public ApiResult<Object> exportMainTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/purchaseOrderMainTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
 }

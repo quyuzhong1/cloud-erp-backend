@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -15,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -66,5 +68,13 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
             return null;
         }
         return this.lambdaQuery().eq(KingdeePaymentConditionEntity::getCode, code).last("LIMIT 1").one();
+    }
+
+    @Override
+    public List<KingdeePaymentConditionEntity> listByNameList(List<String> paymentConditionNames) {
+        if (CollUtil.isEmpty(paymentConditionNames)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(KingdeePaymentConditionEntity::getName,paymentConditionNames).eq(KingdeePaymentConditionEntity::getDisabled,Boolean.FALSE).list();
     }
 }

@@ -531,4 +531,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean batchAdjustPrice(PurchaseOrderDTO.AdjustPriceDTO dto);
+    /**
+     * 导入采购订单主表信息
+     * @author will
+     * @date 2025/7/30 18:27
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
 }

@@ -1,16 +1,19 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.server.scm.mapper.DictBasicMapper;
 import com.erp.server.scm.service.DictBasicService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -75,6 +78,14 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(DictBasicEntity::getType, keyList);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<DictBasicEntity> listByNameList(List<String> nameList, DictBasicEnum dictBasicEnum) {
+        if (CollUtil.isEmpty(nameList) || dictBasicEnum == null) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(DictBasicEntity::getName,nameList).eq(DictBasicEntity::getType,dictBasicEnum.getType()).list();
     }
 
 
