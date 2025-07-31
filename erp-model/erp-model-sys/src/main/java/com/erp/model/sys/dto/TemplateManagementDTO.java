@@ -211,6 +211,7 @@ public class TemplateManagementDTO implements Serializable {
          * 禁用状态(false:启用,true:禁用)
          */
         private Boolean disabled;
+        private String disabledName;
 
         /**
          * 模板编号
@@ -249,6 +250,10 @@ public class TemplateManagementDTO implements Serializable {
          * 模板宽度(mm)
          */
         private BigDecimal width;
+        /**
+         * 模板大小
+         */
+        private String size;
 
         /**
          * 模板版本号

@@ -1,8 +1,10 @@
 package com.erp.server.sys.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
+import com.erp.server.sys.query.TemplateManagementQueryHandler;
 import com.erp.server.sys.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +26,8 @@ public class ExportSysFeignController {
     private CfgThirdNoticeService cfgThirdNoticeService;
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
+    @Resource
+    private TemplateManagementService templateManagementService;
 
     @PostMapping("/city")
     public PagingVO<DictCityDTO.PagingViewDTO> exportCity(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
@@ -52,5 +56,11 @@ public class ExportSysFeignController {
     @PostMapping("/exportCfgThirdNoticePushRecord")
     public PagingVO<ThirdNoticePushRecordDTO.ListDTO> exportCfgThirdNoticePushRecord(@RequestBody PagingDTO<ThirdNoticePushRecordDTO.PagingParamDTO> dto){
         return thirdNoticePushRecordService.paging(dto);
+    }
+
+    @PostMapping("/exportTemplateManagement")
+    @WebAdvanceQuery(handler = TemplateManagementQueryHandler.class)
+    public PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(PagingDTO<TemplateManagementDTO.PagingParamDTO> dto){
+        return templateManagementService.paging(dto);
     }
 }

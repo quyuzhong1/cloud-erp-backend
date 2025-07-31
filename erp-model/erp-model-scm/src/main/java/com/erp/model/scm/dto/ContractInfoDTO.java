@@ -1,11 +1,11 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -308,12 +308,18 @@ public class ContractInfoDTO implements Serializable {
         /**
          * 文件不能为空
          */
-        @NotEmpty(message = "附件不能为空")
+//        @NotEmpty(message = "附件不能为空")
         @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentUrlList;
-        @NotEmpty(message = "附件不能为空")
+//        @NotEmpty(message = "附件不能为空")
         @Size(max = 1, message = "支持1个附件上传")
         private List<String> attachmentNameList;
+
+        /**
+         * 模板管理id
+         */
+        @TableField("template_id")
+        private String templateId;
     }
 
 
@@ -353,5 +359,46 @@ public class ContractInfoDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProviderParamsDTO {
+
+        @NotBlank(message = "服务商不能为空")
+        private String serviceProviderId;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProviderResultDTO {
+        /**
+         * 合同id
+         */
+        private String id;
+
+        /**
+         * 合同编码
+         */
+        private String code;
+        /**
+         * 模板id
+         */
+        private String templateId;
+        /**
+         * 模板名称
+         */
+        private String templateName;
+
+        /**
+         * 前端渲染配置JSON
+         */
+        private String content;
+    }
 
 }

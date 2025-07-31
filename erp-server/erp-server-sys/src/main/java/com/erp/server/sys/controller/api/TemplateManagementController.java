@@ -8,6 +8,7 @@ import com.erp.model.sys.entity.TemplateManagementEntity;
 import com.erp.server.sys.query.TemplateManagementQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -16,14 +17,12 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.sys.service.TemplateManagementService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.TemplateManagementDTO;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -253,6 +252,28 @@ public class TemplateManagementController extends BaseController {
     @PostMapping("/pagingSelect")
     public ApiResult<List<TemplateManagementDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated TemplateManagementDTO.SelectDTO dto) {
         return success(templateManagementService.pagingSelect(dto));
+    }
+
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-07-31
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "sys:templateManagement:export",
+            tableAlias = "tm"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
+    @WebAdvanceQuery(handler = TemplateManagementQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated TemplateManagementDTO.PagingParamDTO dto, HttpServletResponse response) {
+        templateManagementService.exportList(dto, response);
+        return success();
     }
 
 }

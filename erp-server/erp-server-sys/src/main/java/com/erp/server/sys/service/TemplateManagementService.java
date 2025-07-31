@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.TemplateManagementDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -49,4 +50,6 @@ public interface TemplateManagementService extends SuperService<TemplateManageme
     BatchResultDTO setDefault(String id);
 
     List<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO dto);
+
+    void exportList(TemplateManagementDTO.PagingParamDTO dto, HttpServletResponse response);
 }

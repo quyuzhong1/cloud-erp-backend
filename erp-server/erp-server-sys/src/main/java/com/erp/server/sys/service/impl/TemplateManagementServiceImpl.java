@@ -18,6 +18,7 @@ import com.erp.model.sys.entity.TemplateManagementEntity;
 import com.erp.model.sys.enums.TemplateManagementBizTypeEnum;
 import com.erp.model.sys.enums.TemplateManagementStatusEnum;
 import com.erp.model.sys.enums.TemplateManagementTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.sys.mapper.TemplateManagementMapper;
 import com.erp.server.sys.service.TemplateManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -30,9 +31,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_TEMPLATE;
 
 /**
  * <p>
@@ -45,10 +53,13 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateManagementMapper, TemplateManagementEntity> implements TemplateManagementService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -65,6 +76,8 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
                 throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
             }
         }
+        //默认已发布
+        templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
 
         log.info("开始新增模板管理");
         // 生成单号
@@ -99,6 +112,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
                 throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
             }
         }
+
+        //默认已发布
+        templateManagementEntity.setStatus(TemplateManagementStatusEnum.FINISHED.getCode());
 
         log.info("编辑 开始修改模板管理数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(templateManagementEntity);
@@ -147,6 +163,12 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
             record.setTypeName(TemplateManagementTypeEnum.getName(record.getType()));
             //状态
             record.setStatusName(TemplateManagementStatusEnum.getName(record.getStatus()));
+            //启用状态
+            record.setDisabledName(record.getDisabled() ? "停用" : "启用");
+            //模板大小
+            BigDecimal length = record.getLength();
+            BigDecimal width = record.getWidth();
+            record.setSize(String.format("%.2f", length)  + "*" + String.format("%.2f", width) +" 毫米");
         }
     }
 
@@ -224,5 +246,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public List<TemplateManagementDTO.PageSelectDTO> pagingSelect(TemplateManagementDTO.SelectDTO searchParam) {
         return baseMapper.pagingSelect(searchParam);
+    }
+
+    @Override
+    public void exportList(TemplateManagementDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("模板管理导出", EXPORT_SYS_TEMPLATE.getCode(), param);
     }
 }
