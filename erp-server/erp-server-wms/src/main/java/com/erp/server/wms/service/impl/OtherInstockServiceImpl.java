@@ -1339,7 +1339,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
         //查询其他入库单是否已存在
         OtherInstockEntity dbEntity = this.getOne(Wrappers.<OtherInstockEntity>lambdaQuery()
-                .eq(OtherInstockEntity::getThirdCode, dto.getThirdCode()),false);
+                        .eq(OtherInstockEntity::getThirdCode, dto.getThirdCode())
+                        .eq(OtherInstockEntity::getThirdPlatform,PlatformDictEnum.WDT.getCode())
+                ,false);
         if(Objects.nonNull(dbEntity)){
 //            if(Objects.nonNull(dbEntity.getApproveTime()) && dto.getCheckTime().isAfter(dbEntity.getApproveTime())){
 //                
