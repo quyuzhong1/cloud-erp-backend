@@ -1,13 +1,13 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -30,17 +30,17 @@ public class SupplierPlantAddrEntity extends BaseEntity<SupplierPlantAddrEntity>
     @TableField("supplier_id")
     private String supplierId;
     /**
-    * 国家
+    * 国家id
     */
     @TableField("country")
     private String country;
     /**
-    * 省份
+    * 省份id
     */
     @TableField("region")
     private String region;
     /**
-    * 城市
+    * 城市id
     */
     @TableField("city")
     private String city;
