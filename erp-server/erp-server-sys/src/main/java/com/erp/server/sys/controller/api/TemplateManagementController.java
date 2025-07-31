@@ -142,26 +142,7 @@ public class TemplateManagementController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "模板删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<TemplateManagementEntity> list = templateManagementService.lambdaQuery().in(TemplateManagementEntity::getId, ids).list();
-        Map<String, TemplateManagementEntity> idEntityMap = list.stream().collect(Collectors.toMap(TemplateManagementEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = templateManagementService.delete(id);
-            }catch (Exception e){
-                log.error("模板删除失败",e);
-                TemplateManagementEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "模板不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
+        List<BatchResultDTO> resultDTOS = templateManagementService.delete(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

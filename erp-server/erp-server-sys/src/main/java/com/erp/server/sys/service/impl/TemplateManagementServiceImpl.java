@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,6 +13,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.scm.entity.ContractInfoEntity;
+import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.TemplateManagementDTO;
 import com.erp.model.sys.entity.TemplateManagementEntity;
@@ -34,6 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -156,9 +164,13 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     }
 
     private void fillList(List<TemplateManagementDTO.ListDTO> records) {
+
+        List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicEnum.CONTRACT_TYPE.getType()).list();
+        Map<String, String> dictMap = dictList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2)-> o1));
+
         for (TemplateManagementDTO.ListDTO record : records) {
             //业务类型
-            record.setBizTypeName(TemplateManagementBizTypeEnum.getName(record.getBizTypeName()));
+            record.setBizTypeName(dictMap.get(record.getBizType()));
             //模板类型
             record.setTypeName(TemplateManagementTypeEnum.getName(record.getType()));
             //状态
@@ -186,7 +198,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
 
     private void fillOne(TemplateManagementDTO.ViewDTO view) {
         //业务类型
-        view.setBizTypeName(TemplateManagementBizTypeEnum.getName(view.getBizTypeName()));
+        List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicEnum.CONTRACT_TYPE.getType()).list();
+        Map<String, String> dictMap = dictList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2)-> o1));
+            //业务类型
+        view.setBizTypeName(dictMap.get(view.getBizType()));
         //模板类型
         view.setTypeName(TemplateManagementTypeEnum.getName(view.getType()));
         //状态
@@ -194,17 +209,35 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     }
 
     @Override
-    public BatchResultDTO delete(String id) {
-        TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> delete(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<TemplateManagementEntity> list = listByIds(ids);
+        Map<String, TemplateManagementEntity> idEntityMap = list.stream().collect(Collectors.toMap(TemplateManagementEntity::getId, w -> w));
 
-        //判断合同管理是否有引用
+        List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, ids).list();
+        Map<String, ContractInfoEntity> contractInfoMap = contractInfoList.stream().collect(Collectors.toMap(ContractInfoEntity::getTemplateId, Function.identity(),(o1,o2)->o1));
 
-        // 删除主单数据
-        super.removeById(id);
-        // 删除日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), id, "删除模板管理");
-        return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
+        for (String id : ids) {
+            TemplateManagementEntity entity = idEntityMap.getOrDefault(id, null);
+            if(Objects.isNull(entity)){
+                resultDTOList.add(BatchResultDTO.fail(id, id, CharSequenceUtil.format(ApiError.NOT_EXIST_BILL.msg, "模板管理")));
+                continue;
+            }
+
+            //判断合同管理是否有引用
+            if(contractInfoMap.containsKey(entity.getId())){
+                resultDTOList.add(BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可删除"));
+                continue;
+            }
+            // 删除主单数据
+            super.removeById(id);
+            // 删除日志数据
+            String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), id, "删除模板管理");
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE));
+        }
+        return resultDTOList;
     }
 
     @Override

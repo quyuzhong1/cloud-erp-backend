@@ -43,7 +43,7 @@ public interface TemplateManagementService extends SuperService<TemplateManageme
 
     TemplateManagementDTO.ViewDTO view(String id);
 
-    BatchResultDTO delete(String id);
+    List<BatchResultDTO> delete(List<String> ids);
 
     BatchResultDTO setDisabled(String id, Boolean disabledStatus);
 

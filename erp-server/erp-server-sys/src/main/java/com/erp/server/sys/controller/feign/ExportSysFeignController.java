@@ -1,7 +1,9 @@
 package com.erp.server.sys.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.server.sys.query.TemplateManagementQueryHandler;
@@ -59,6 +61,11 @@ public class ExportSysFeignController {
     }
 
     @PostMapping("/exportTemplateManagement")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "sys:templateManagement:export",
+            tableAlias = "tm"
+    )
     @WebAdvanceQuery(handler = TemplateManagementQueryHandler.class)
     public PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(PagingDTO<TemplateManagementDTO.PagingParamDTO> dto){
         return templateManagementService.paging(dto);
