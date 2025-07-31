@@ -125,7 +125,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
         }
         // 记录主单操作日志
         log.info("编辑 开始记录出口申报要素单日志数据，id：【{}】", dictHsCodeEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictHsCodeEntity.getId(), "出口申报要素单");
+        String msg = StrUtil.format("用户【{}】编辑海关编码为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictHsCodeEntity.getHsCode(), "出口申报要素单");
         operateLogService.addModuleOperateLogByObj(old, dictHsCodeEntity, ModuleTypeEnum.DICT_HS_CODE.getCode(), dictHsCodeEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -154,7 +154,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
         // 删除主单数据
         super.removeById(id);
         // 删除日志数据
-        String msg = StrUtil.format("用户【{}】删除【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "出口申报要素单" , entity.getId());
+        String msg = StrUtil.format("用户【{}】删除【{}】单据海关编码为【{}】", UserContext.getDefaultLoginUser().getUserName(), "出口申报要素单" , entity.getHsCode());
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getHsCode(),OperationTypeEnum.DELETE);
     }
@@ -173,6 +173,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         DictHsCodeExcelListener excelListenerUtil = new DictHsCodeExcelListener();
         try {
@@ -190,10 +191,6 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
         }
 
         List<DictHsCodeExcelDTO> successList = excelListenerUtil.getSuccessList();
-
-        List<DictHsCodeEntity> addList =  new ArrayList<>();
-        List<DictHsCodeEntity> updateList =  new ArrayList<>();
-
         if(CollUtil.isNotEmpty(successList)){
             List<String> hsCodes = successList.stream().map(DictHsCodeExcelDTO::getHsCode).collect(Collectors.toList());
             List<DictHsCodeEntity> oldList = lambdaQuery().in(DictHsCodeEntity::getHsCode, hsCodes).list();
@@ -202,25 +199,26 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             for (DictHsCodeExcelDTO dto : successList) {
                 DictHsCodeEntity oldEntity = oldMap.getOrDefault(dto.getHsCode(), null);
                 if(Objects.nonNull(oldEntity)){
-                    BeanMapper.copy(dto, oldEntity);
-                    updateList.add(oldEntity);
+                    DictHsCodeEntity dictHsCodeEntity =  BeanMapperUtils.map(DictHsCodeEntity.class, dto);
+                    dictHsCodeEntity.setId(oldEntity.getId());
+                    dictHsCodeEntity.setVersion(oldEntity.getVersion());
+                    dictHsCodeEntity.setCountry(oldEntity.getCountry());
+                    updateById(dictHsCodeEntity);
+                    // 记录主单操作日志
+                    String msg = StrUtil.format("用户【{}】编辑海关编码为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictHsCodeEntity.getHsCode(), "出口申报要素单");
+                    operateLogService.addModuleOperateLogByObj(oldEntity, dictHsCodeEntity, ModuleTypeEnum.DICT_HS_CODE.getCode(), dictHsCodeEntity.getId(), msg);
                 }else {
                     DictHsCodeEntity entity = new DictHsCodeEntity();
                     BeanMapper.copy(dto, entity);
-
                     if(StringUtil.isBlank(entity.getCountry())){
                         //默认中国
                         entity.setCountry("CN");
                     }
-                    addList.add(entity);
+                    save(entity);
+                    // 操作日志
+                    operateLogService.addModuleOperateLog("新增出口申报要素信息", ModuleTypeEnum.DICT_HS_CODE.getCode(), entity.getId(), "新增操作");
                 }
             }
-        }
-        if(addList.size() > 0){
-            saveBatch(addList);
-        }
-        if(updateList.size() > 0){
-            updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }

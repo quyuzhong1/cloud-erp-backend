@@ -667,7 +667,7 @@ public class FirstMileDeliveryController extends BaseController {
 
 
     /**
-     * 下推头程报关单
+     * 下推头程报关单 (不校验系统配置)
      * @author jack
      * @date: 2025-07-18
      * @param dto
