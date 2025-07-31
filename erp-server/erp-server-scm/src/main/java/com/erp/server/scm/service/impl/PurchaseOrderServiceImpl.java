@@ -3626,7 +3626,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //结算方式
         List<String> payMethodNames = successList.stream().map(PurchaseOrderMainExcelDTO::getPayMethodName).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictBasicList = dictBasicService.listByNameList(payMethodNames,DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT);
+        List<DictBasicEntity> dictBasicList = dictBasicService.listByNameList(payMethodNames,DictBasicEnum.SUPPLIER_PAY_MODE);
         Map<String, DictBasicEntity> payMethodMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
 
         //付款条件
@@ -3656,30 +3656,31 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (ObjectUtil.isEmpty(company)) {
                 mainErrorMsgList.add(CharSequenceUtil.format("未找到采购组织"));
             }
-            //账户名称验证
-            String supplierAccountId = "";
-            if (CharSequenceUtil.isNotBlank(mainExcelDTO.getSupplierAccountName())) {
-                SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPayee(), mainExcelDTO.getSupplierAccountName()) && CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getPurchaseOrderSupplierDTO().getSupplierId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(supplierAccountEntity)) {
-                    mainErrorMsgList.add(CharSequenceUtil.format("未找到账户名称"));
-                } else {
-                    supplierAccountId = supplierAccountEntity.getId();
-                }
-            }
-            //联系人名称验证
-            String supplierContactId = "";
-            if (CharSequenceUtil.isNotBlank(mainExcelDTO.getContactName())) {
-                SupplierContactEntity supplierContactEntity = supplierContactList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPerson(), mainExcelDTO.getContactName()) && CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getPurchaseOrderSupplierDTO().getSupplierId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(supplierContactEntity)) {
-                    mainErrorMsgList.add(CharSequenceUtil.format("未找到联系人名称"));
-                } else {
-                    supplierContactId = supplierContactEntity.getId();
-                }
-            }
-            //供应商验证
+            //供应商信息验证
             SupplierEntity supplierEntity = supplierMap.get(mainExcelDTO.getSupplierName());
+            String supplierAccountId = "";
+            String supplierContactId = "";
             if (ObjectUtil.isEmpty(supplierEntity)) {
                 mainErrorMsgList.add(CharSequenceUtil.format("未找到审核通过并启用的供应商"));
+            } else {
+                //账户名称验证
+                if (CharSequenceUtil.isNotBlank(mainExcelDTO.getSupplierAccountName())) {
+                    SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPayee(), mainExcelDTO.getSupplierAccountName()) && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(supplierAccountEntity)) {
+                        mainErrorMsgList.add(CharSequenceUtil.format("未找到账户名称"));
+                    } else {
+                        supplierAccountId = supplierAccountEntity.getId();
+                    }
+                }
+                //联系人名称验证
+                if (CharSequenceUtil.isNotBlank(mainExcelDTO.getContactName())) {
+                    SupplierContactEntity supplierContactEntity = supplierContactList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPerson(), mainExcelDTO.getContactName()) && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(supplierContactEntity)) {
+                        mainErrorMsgList.add(CharSequenceUtil.format("未找到联系人名称"));
+                    } else {
+                        supplierContactId = supplierContactEntity.getId();
+                    }
+                }
             }
 
             //结算方式验证

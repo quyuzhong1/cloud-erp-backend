@@ -1752,7 +1752,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         for ( Map.Entry<String, List<PurchaseApplicationMainExcelDTO>> entry : excelMap.entrySet()) {
             List<PurchaseApplicationMainExcelDTO> value = entry.getValue();
             PurchaseApplicationDTO.AddDTO addDTO = new PurchaseApplicationDTO.AddDTO();
-            addDTO.setApplyDate(LocalDateUtil.parseStrToLocalDate(value.get(0).getPlanDeliveryDateStr()));
+            addDTO.setApplyDate(LocalDateUtil.parseStrToLocalDate(value.get(0).getApplyDateStr()));
             addDTO.setApplyUserId(userInfo.getUid());
             addDTO.setApplyDeptId(ObjectUtil.isEmpty(departmentUserNumberDTO) ? "" : departmentUserNumberDTO.getDepartmentId());
             List<PurchaseApplicationDetailDTO.AddDTO> details = new ArrayList<>();
@@ -1791,6 +1791,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setFirstMassProduct(FirstMassProductTypeEnum.getCode(excelDTO.getFirstMassProductName()));
                 addDetailDTO.setFirstMassProductName(excelDTO.getFirstMassProductName());
                 addDetailDTO.setIsUrgent(BooleanEnum.getByName(excelDTO.getIsUrgentStr()));
+                addDetailDTO.setPlanDeliveryDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getPlanDeliveryDateStr()));
                 addDetailDTO.setRemark(excelDTO.getRemark());
                 details.add(addDetailDTO);
             }
