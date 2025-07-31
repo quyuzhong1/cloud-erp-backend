@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -12,6 +13,7 @@ import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
@@ -73,6 +75,14 @@ public class AliExpressLogisticsHandlerImplTest {
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
         authMap.put("url","https://api-sg.aliexpress.com");
+    }
+
+    @Test
+    public void getService() {
+        ApiResult<List<LogisticsServiceResponseVO>> listApiResult = aliExpressLogisticsHandler.listLogisticsService(authMap);
+        System.out.println("==============================================");
+        System.out.println(JSONUtil.toJsonStr(listApiResult));
+        System.out.println("==============================================");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){

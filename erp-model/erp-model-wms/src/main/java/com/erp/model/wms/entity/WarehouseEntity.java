@@ -181,6 +181,12 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("close_time")
     private LocalDateTime closeTime;
 
+    /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
     @Override
     public Serializable pkVal() {
         return null;
