@@ -87,15 +87,16 @@ tm.index as index
               and tm.biz_type = #{params.bizType}
           </if>
           <if test="params.searchKeyword!=null and params.searchKeyword!=''">
-            and ( tm.name LIKE concat('%',#{searchKeyword},'%') or  tm.code LIKE concat('%',#{searchKeyword},'%') )
+            and  tm.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
           </if>
         ORDER BY
         <if test="params.searchKeyword!=null and params.searchKeyword!=''">
             CASE
-            WHEN tm.name = #{params.searchKeyword} THEN 1
-            WHEN tm.name LIKE concat(#{params.searchKeyword}, '%') THEN 2
-            WHEN tm.name LIKE concat('%', #{params.searchKeyword}) THEN 3
-            ELSE 4
+            WHEN tm.name = #{params.searchKeyword}::text THEN 1
+            WHEN tm.name ILIKE concat(#{params.searchKeyword}::text, '%') THEN 2
+            WHEN tm.name ILIKE concat('%', #{params.searchKeyword}::text) THEN 3
+            WHEN tm.name ILIKE concat('%', #{params.searchKeyword}::text, '%') THEN 4
+            ELSE 5
             END,
         </if>
         tm.update_time DESC
