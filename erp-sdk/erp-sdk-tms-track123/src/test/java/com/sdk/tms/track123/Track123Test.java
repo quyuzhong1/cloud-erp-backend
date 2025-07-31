@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= TrackShipperService.class)
-class Track123Test {
+public class Track123Test {
 
 	@Resource
 	private TrackShipperService trackShipperService;
@@ -31,12 +31,11 @@ class Track123Test {
 	public void getTrack() {
 		String token = authMap.get("clientSecret");
 		TrackRequest trackRequest = TrackRequest.builder()
-				.trackNos(Collections.singletonList("LS961438364NL"))
+				.trackNos(Collections.singletonList("JDVC28603701823"))
 				.cursor("")
 				.queryPageSize(100)
 				.build();
 		TrackResponse track = trackShipperService.getTrack(token, trackRequest);
 		System.out.println(track);
 	}
-
 }
