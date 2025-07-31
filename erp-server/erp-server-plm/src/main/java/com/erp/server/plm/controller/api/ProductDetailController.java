@@ -1384,8 +1384,8 @@ public class ProductDetailController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:detail:uploadProductImage",
-            serviceClass = ProductDetailImagesService.class,
-            keyIdName = "id"
+            serviceClass = ProductDetailService.class,
+            keyIdName = "skuId"
     )
     public ApiResult uploadProductImage(@RequestBody @Validated ProductDetailDTO.ProductImagesDTO dto) {
         Boolean flag = productDetailImagesService.uploadProductImage(dto);
@@ -1401,7 +1401,7 @@ public class ProductDetailController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:detail:importZip",
-            serviceClass = ProductDetailImagesService.class,
+            serviceClass = ProductDetailService.class,
             keyIdName = "id"
     )
     public ApiResult<Object> importZip(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
