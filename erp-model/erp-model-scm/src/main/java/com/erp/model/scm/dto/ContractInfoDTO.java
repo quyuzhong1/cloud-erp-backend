@@ -241,6 +241,8 @@ public class ContractInfoDTO implements Serializable {
 
         private List<String> attachmentUrlList;
         private List<String> attachmentNameList;
+
+        private String templateId;
     }
 
     /**
