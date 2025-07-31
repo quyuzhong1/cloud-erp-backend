@@ -5,7 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -28,33 +30,38 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.PilotApplicationDetailEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
+import com.erp.model.scm.dto.excel.PurchaseApplicationMainExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -64,6 +71,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
+import com.erp.server.scm.listener.PurchaseApplicationMainExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
@@ -1663,6 +1671,146 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             entity.setApproveTime(updateApproveStatusDTO.getThirdApproveTime());
         }
         return approveEnd(new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),""), entity);
+    }
+
+    @Override
+    public Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response) {
+        PurchaseApplicationMainExcelListener excelListenerUtil = new PurchaseApplicationMainExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchaseApplicationMainExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<PurchaseApplicationMainExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<PurchaseApplicationMainExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<PurchaseApplicationMainExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理数据
+        handleMainFile(successList,errorList);
+
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/purchaseApplicationMainError.xlsx";
+        String name = "purchaseApplicationMainError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+    }
+    /**
+     * 处理数据
+     * @author will
+     * @date 2025/7/31 09:06
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+    private void handleMainFile (List<PurchaseApplicationMainExcelDTO> successList,List<PurchaseApplicationMainExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        //产品信息
+        List<String> skuNos = successList.stream().map(PurchaseApplicationMainExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNos)
+                .eq(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+                .list();
+        //仓库信息
+        List<String> warehouseNames = successList.stream().map(PurchaseApplicationMainExcelDTO::getDestWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
+                .in(WarehouseEntity::getName, warehouseNames)
+                .eq(WarehouseEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                .eq(WarehouseEntity::getDisabled,Boolean.FALSE)
+                .list();
+        Map<String, WarehouseEntity> warehosueMap = CollUtil.isEmpty(warehouseList) ? new HashMap<>() : warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+
+        //采购组织
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        Map<String, BaseIdDTO> orgMap = companyList.stream().collect(Collectors.toMap(BaseIdDTO::getName, Function.identity()));
+
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        //部门
+        SysDepartmentUserNumberDTO departmentUserNumberDTO = sysUserFeign.getDeptByUserId(userInfo.getUid());
+
+        Map<String, List<PurchaseApplicationMainExcelDTO>> excelMap = successList.stream().collect(Collectors.groupingBy(PurchaseApplicationMainExcelDTO::getIndex));
+        for ( Map.Entry<String, List<PurchaseApplicationMainExcelDTO>> entry : excelMap.entrySet()) {
+            List<PurchaseApplicationMainExcelDTO> value = entry.getValue();
+            PurchaseApplicationDTO.AddDTO addDTO = new PurchaseApplicationDTO.AddDTO();
+            addDTO.setApplyDate(LocalDateUtil.parseStrToLocalDate(value.get(0).getPlanDeliveryDateStr()));
+            addDTO.setApplyUserId(userInfo.getUid());
+            addDTO.setApplyDeptId(ObjectUtil.isEmpty(departmentUserNumberDTO) ? "" : departmentUserNumberDTO.getDepartmentId());
+            List<PurchaseApplicationDetailDTO.AddDTO> details = new ArrayList<>();
+
+            for (PurchaseApplicationMainExcelDTO excelDTO : value) {
+                //注解验证信息
+                List<String> errorMsgList = new ArrayList<>();
+                //SKU验证
+                ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(productDetailEntity)) {
+                    errorMsgList.add(CharSequenceUtil.format("未找到审核通过的SKU"));
+                }
+                //仓库验证
+                WarehouseEntity warehouseEntity = warehosueMap.get(excelDTO.getDestWarehouseName());
+                if (ObjectUtil.isEmpty(warehouseEntity)) {
+                    errorMsgList.add(CharSequenceUtil.format("未找到审核通过并启用的仓库名称"));
+                }
+                //采购组织验证
+                BaseIdDTO company = orgMap.get(excelDTO.getPurchaseOrgName());
+                if (ObjectUtil.isEmpty(company)) {
+                    errorMsgList.add(CharSequenceUtil.format("未找到采购组织"));
+                }
+                if (CollUtil.isNotEmpty(errorList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                PurchaseApplicationDetailDTO.AddDTO addDetailDTO = new PurchaseApplicationDetailDTO.AddDTO();
+                addDetailDTO.setSkuId(productDetailEntity.getId());
+                addDetailDTO.setSkuNo(productDetailEntity.getSkuNo());
+                addDetailDTO.setDestWarehouseId(warehouseEntity.getId());
+                addDetailDTO.setDestWarehouseName(warehouseEntity.getName());
+                addDetailDTO.setPurchaseOrgId(company.getId());
+                addDetailDTO.setPurchaseOrgName(company.getName());
+                addDetailDTO.setApplyQty(Integer.valueOf(excelDTO.getApplyQtyStr()));
+                addDetailDTO.setFirstMassProduct(FirstMassProductTypeEnum.getCode(excelDTO.getFirstMassProductName()));
+                addDetailDTO.setFirstMassProductName(excelDTO.getFirstMassProductName());
+                addDetailDTO.setIsUrgent(BooleanEnum.getByName(excelDTO.getIsUrgentStr()));
+                addDetailDTO.setRemark(excelDTO.getRemark());
+                details.add(addDetailDTO);
+            }
+            if (CollUtil.isEmpty(details)) {
+                continue;
+            }
+            addDTO.setDetails(details);
+            //新增错误信息
+            List<String> addErrorMsgList = new ArrayList<>();
+            try {
+                //新增采购申请单
+                purchaseApplicationService.add(addDTO);
+            } catch (Exception e) {
+                addErrorMsgList.add(e.getMessage());
+            }
+            if (CollUtil.isNotEmpty(errorList)) {
+                value.forEach(obj -> obj.setErrorMsg(FieldValidUtil.getMsgSort(addErrorMsgList)));
+                errorList.addAll(value);
+            }
+        }
     }
 
     /**

@@ -415,6 +415,11 @@ public class SupplierDTO implements Serializable {
         private String paymentCompanyName;
 
         /**
+         * 供货识别码
+         */
+        private String identificationCode;
+
+        /**
          * 公司注册资金（万）
          */
         private Integer registeredCapital;

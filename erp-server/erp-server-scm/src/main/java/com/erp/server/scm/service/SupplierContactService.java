@@ -92,4 +92,12 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @return String
      */
     String getTelNumber(String contactId);
+    /**
+     * 根据名称查询
+     * @author will
+     * @date 2025/7/31 10:22
+     * @param contactNames
+     * @return List<SupplierContactEntity>
+     */
+    List<SupplierContactEntity> listByNameList(List<String> contactNames);
 }
