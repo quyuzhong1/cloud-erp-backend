@@ -88,7 +88,7 @@ public class PlmJob {
         List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
         if (isNotEmpty(details)){
             XxlJobHelper.log("重算目的国申报价sku数量：{}", details.size());
-            productDetailService.resetDestDeclarePrice(details, Boolean.FALSE);
+            productDetailService.(details, Boolean.FALSE);
         }
         XxlJobHelper.log("recalDestDeclarePrice end : {}", LocalDateTime.now());
     }

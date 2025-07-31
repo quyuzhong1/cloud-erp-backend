@@ -2707,7 +2707,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                     log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                     if (Objects.isNull(skuCostDTO)) {
-                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(), format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
+                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(), format("SKU【{}】实际含税成本不存在",productDetailEntity.getSkuNo())));
                         continue;
                     }
                     if (Objects.nonNull(skuCostDTO.getCostPrice())) {
