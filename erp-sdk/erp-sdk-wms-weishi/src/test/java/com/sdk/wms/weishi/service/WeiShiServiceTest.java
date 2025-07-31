@@ -21,7 +21,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={WeiShiService.class, BusinessCommonConstants.class})
+@SpringBootTest(classes={BusinessCommonConstants.class,WeiShiService.class})
 public class WeiShiServiceTest {
 
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
