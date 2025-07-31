@@ -432,7 +432,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/otherOutStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
