@@ -88,4 +88,12 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @return
      */
     List<SupplierAccountEntity> getDefaultBySupplierIdList(List<String> supplierIds);
+    /**
+     * 根据名称集合查询
+     * @author will
+     * @date 2025/7/31 10:26
+     * @param supplierAccountNames
+     * @return List<SupplierAccountEntity>
+     */
+    List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames);
 }

@@ -301,6 +301,10 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<ProductLogisticsEntity> productLogisticsList = this.listBySkuIdList(parentSkuIds);
         List<String> childrenSkuIds = bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductLogisticsEntity> allChildProductLogisticsEntityList = this.listBySkuIdList(childrenSkuIds);
+
+        //物流属性
+        List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+
         List<ProductLogisticsEntity> updateList = new ArrayList<>();
         for (BomInfoEntity bomInfoEntity : bomInfoEntityList) {
             if(!BomTypeEnum.COMBINATION.getType().equals(bomInfoEntity.getType())){
@@ -324,6 +328,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                     .distinct()
                     .collect(Collectors.joining(","));
             if(StringUtils.isNotBlank(propertyIds)){
+                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                productLogisticsEntity.setProductProperty(productProperty);
+                //物流属性名称
                 productLogisticsEntity.setProductPropertyId(propertyIds);
                 updateList.add(productLogisticsEntity);
             }

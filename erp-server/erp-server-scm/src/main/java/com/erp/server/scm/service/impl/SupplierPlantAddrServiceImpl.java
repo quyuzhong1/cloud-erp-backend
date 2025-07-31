@@ -145,8 +145,8 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
         List<DictCountryEntity> dictCountryList = FeignQuery.getByIds(DictCountryEntity.class, countryIdList);
         Map<String, String> countryMap = CollUtil.isEmpty(dictCountryList) ? new HashMap<>() : dictCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
         //省份或城市
-        List<String> codeList = list.stream().flatMap(obj -> Stream.of(obj.getRegion(), obj.getCity())).distinct().collect(Collectors.toList());
-        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class).in(DictCityEntity::getCode,codeList).list();
+        List<String> idList = list.stream().flatMap(obj -> Stream.of(obj.getRegion(), obj.getCity())).distinct().collect(Collectors.toList());
+        List<DictCityEntity> dictCityList = FeignQuery.getByIds(DictCityEntity.class,idList);
 
         List<SupplierPlantAddrDTO.ViewDTO> resultList = new ArrayList<>();
         for (SupplierPlantAddrEntity plantAddrEntity : list) {
@@ -158,13 +158,13 @@ public class SupplierPlantAddrServiceImpl extends SuperServiceImpl<SupplierPlant
             viewDTO.setCountryName(countryName);
             //省份
             if (CharSequenceUtil.isNotBlank(plantAddrEntity.getRegion())) {
-                String regionName = dictCityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCountryCode(), plantAddrEntity.getCountry()) && CharSequenceUtil.equals(obj.getCode(), plantAddrEntity.getRegion()))
+                String regionName = dictCityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCountryCode(), plantAddrEntity.getCountry()) && CharSequenceUtil.equals(obj.getId(), plantAddrEntity.getRegion()))
                         .map(DictCityEntity::getName).findFirst().orElse("");
                 viewDTO.setRegionName(regionName);
             }
            //城市
             if (CharSequenceUtil.isNotBlank(plantAddrEntity.getCity())) {
-                String cityName = dictCityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCountryCode(), plantAddrEntity.getCountry()) && CharSequenceUtil.equals(obj.getCode(), plantAddrEntity.getCity()))
+                String cityName = dictCityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCountryCode(), plantAddrEntity.getCountry()) && CharSequenceUtil.equals(obj.getId(), plantAddrEntity.getCity()))
                         .map(DictCityEntity::getName).findFirst().orElse("");
                 viewDTO.setCityName(cityName);
             }

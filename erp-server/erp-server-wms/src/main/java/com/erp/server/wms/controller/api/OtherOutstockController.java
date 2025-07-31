@@ -356,11 +356,6 @@ public class OtherOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出其他出库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id,create_user_id",
-            menuCode = "wms:otherOutstock:paging",
-            tableAlias = "oo"
-    )
     public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto) {
         Boolean flag = otherOutstockService.exportExcel(dto);
         return flag == true ? success() : failure();

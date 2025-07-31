@@ -16,7 +16,6 @@
         sp.approve_status AS approveStatus,
         sp.description ,
         su.name AS supplierName,
-        su.id AS supplierId,
         su.code AS supplierCode,
         su.category_id AS categoryId,
         su.category_name AS categoryName,
@@ -24,8 +23,7 @@
         sp.approve_user_name as approveUserName,
         sp.approve_time as approveTime
         FROM supplier_phase sp
-        INNER JOIN supplier su
-        ON su.id=sp.supplier_id
+        INNER JOIN supplier su ON su.id=sp.supplier_id and su.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and sp.is_deleted=false

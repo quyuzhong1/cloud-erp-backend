@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
  * @date 2025/7/22 20:17
  */
 public enum ImportCommonTypeEnum implements EnumMessage  {
-    UPDATE_ALL("updateAll", "更新全部"),
-    UPDATE_PART("updatePart", "更新部分");
+    UPDATE_ALL("updateAll", "全部更新"),
+    UPDATE_PART("updatePart", "有值更新");
 
     @EnumValue
     @JsonValue

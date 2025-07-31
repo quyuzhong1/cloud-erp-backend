@@ -35,17 +35,20 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseEndReceiveImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
+import com.erp.model.scm.dto.excel.PurchaseOrderMainExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
@@ -88,6 +91,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.listener.PurchaseEndReceiveExcelListener;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
+import com.erp.server.scm.listener.PurchaseOrderMainExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.service.*;
@@ -99,6 +103,7 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -233,6 +238,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
     @Autowired
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
+
+    @Resource
+    @Lazy
+    private PurchaseOrderService selfService;
 
 
     @Override
@@ -3526,6 +3535,246 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             purchaseChangeService.add(addDTO);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response) {
+        PurchaseOrderMainExcelListener excelListenerUtil = new PurchaseOrderMainExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchaseOrderMainExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<PurchaseOrderMainExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<PurchaseOrderMainExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<PurchaseOrderMainExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理数据
+        handleMainFile(successList,errorList);
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/purchaseOrderMainError.xlsx";
+        String name = "purchaseOrderMainError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 处理数据
+     * @author will
+     * @date 2025/7/31 09:06
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+    private void handleMainFile (List<PurchaseOrderMainExcelDTO> successList, List<PurchaseOrderMainExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        //产品信息
+        List<String> skuNos = successList.stream().map(PurchaseOrderMainExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuNos)
+                .eq(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+                .list();
+        //仓库信息
+        List<String> warehouseNames = successList.stream().map(PurchaseOrderMainExcelDTO::getDeliveryWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
+                .in(WarehouseEntity::getName, warehouseNames)
+                .eq(WarehouseEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                .eq(WarehouseEntity::getDisabled,Boolean.FALSE)
+                .list();
+        Map<String, WarehouseEntity> warehosueMap = CollUtil.isEmpty(warehouseList) ? new HashMap<>() : warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+
+        //供应商信息
+        List<String> supplierNames = successList.stream().map(PurchaseOrderMainExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = supplierService.lambdaQuery()
+                .in(SupplierEntity::getName,supplierNames)
+                .eq(SupplierEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                .eq(SupplierEntity::getDisabled,Boolean.FALSE)
+                .list();
+        Map<String, SupplierEntity> supplierMap = CollUtil.isEmpty(supplierList) ? new HashMap<>() : supplierList.stream().collect(Collectors.toMap(SupplierEntity::getName, Function.identity()));
+
+        //供应商联系人信息
+        List<String> contactNames = successList.stream().map(PurchaseOrderMainExcelDTO::getContactName).distinct().collect(Collectors.toList());
+        List<SupplierContactEntity> supplierContactList = supplierContactService.listByNameList(contactNames);
+
+        //供应商账户信息
+        List<String> supplierAccountNames = successList.stream().map(PurchaseOrderMainExcelDTO::getSupplierAccountName).distinct().collect(Collectors.toList());
+        List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listByNameList(supplierAccountNames);
+
+        //采购组织
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        Map<String, BaseIdDTO> orgMap = companyList.stream().collect(Collectors.toMap(BaseIdDTO::getName, Function.identity()));
+
+        //结算方式
+        List<String> payMethodNames = successList.stream().map(PurchaseOrderMainExcelDTO::getPayMethodName).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = dictBasicService.listByNameList(payMethodNames,DictBasicEnum.SUPPLIER_PAY_MODE);
+        Map<String, DictBasicEntity> payMethodMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
+
+        //付款条件
+        List<String> paymentConditionNames = successList.stream().map(PurchaseOrderMainExcelDTO::getPaymentConditionName).distinct().collect(Collectors.toList());
+        List<KingdeePaymentConditionEntity> kingdeePaymentConditionList = kingdeePaymentConditionService.listByNameList(paymentConditionNames);
+        Map<String, KingdeePaymentConditionEntity> paymentConditionMap = CollUtil.isEmpty(kingdeePaymentConditionList) ? new HashMap<>() : kingdeePaymentConditionList.stream().collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, Function.identity()));
+
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        //部门
+        SysDepartmentUserNumberDTO departmentUserNumberDTO = sysUserFeign.getDeptByUserId(userInfo.getUid());
+
+        Map<String, List<PurchaseOrderMainExcelDTO>> excelMap = successList.stream().collect(Collectors.groupingBy(PurchaseOrderMainExcelDTO::getIndex));
+        for ( Map.Entry<String, List<PurchaseOrderMainExcelDTO>> entry : excelMap.entrySet()) {
+            List<PurchaseOrderMainExcelDTO> value = entry.getValue();
+            PurchaseOrderMainExcelDTO mainExcelDTO = value.get(0);
+            PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
+            //注解验证信息
+            List<String> mainErrorMsgList = new ArrayList<>();
+            //仓库验证
+            WarehouseEntity warehouseEntity = warehosueMap.get(mainExcelDTO.getDeliveryWarehouseName());
+            if (ObjectUtil.isEmpty(warehouseEntity)) {
+                mainErrorMsgList.add(CharSequenceUtil.format("未找到审核通过并启用的仓库名称"));
+            }
+            //采购组织验证
+            BaseIdDTO company = orgMap.get(mainExcelDTO.getPurchaseOrgName());
+            if (ObjectUtil.isEmpty(company)) {
+                mainErrorMsgList.add(CharSequenceUtil.format("未找到采购组织"));
+            }
+            //供应商信息验证
+            SupplierEntity supplierEntity = supplierMap.get(mainExcelDTO.getSupplierName());
+            String supplierAccountId = "";
+            String supplierContactId = "";
+            if (ObjectUtil.isEmpty(supplierEntity)) {
+                mainErrorMsgList.add(CharSequenceUtil.format("未找到审核通过并启用的供应商"));
+            } else {
+                //账户名称验证
+                if (CharSequenceUtil.isNotBlank(mainExcelDTO.getSupplierAccountName())) {
+                    SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPayee(), mainExcelDTO.getSupplierAccountName()) && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(supplierAccountEntity)) {
+                        mainErrorMsgList.add(CharSequenceUtil.format("未找到账户名称"));
+                    } else {
+                        supplierAccountId = supplierAccountEntity.getId();
+                    }
+                }
+                //联系人名称验证
+                if (CharSequenceUtil.isNotBlank(mainExcelDTO.getContactName())) {
+                    SupplierContactEntity supplierContactEntity = supplierContactList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPerson(), mainExcelDTO.getContactName()) && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(supplierContactEntity)) {
+                        mainErrorMsgList.add(CharSequenceUtil.format("未找到联系人名称"));
+                    } else {
+                        supplierContactId = supplierContactEntity.getId();
+                    }
+                }
+            }
+
+            //结算方式验证
+            String payMethodId = "";
+            if (CharSequenceUtil.isNotBlank(mainExcelDTO.getPayMethodName())) {
+                DictBasicEntity dictBasicEntity = payMethodMap.get(mainExcelDTO.getPayMethodName());
+                if (ObjectUtil.isEmpty(dictBasicEntity)) {
+                    mainErrorMsgList.add(CharSequenceUtil.format("未找到结算方式"));
+                } else {
+                    payMethodId = dictBasicEntity.getId();
+                }
+            }
+
+            //付款条件验证
+            String paymentCondition = "";
+            if (CharSequenceUtil.isNotBlank(mainExcelDTO.getPaymentConditionName())) {
+                KingdeePaymentConditionEntity kingdeePaymentConditionEntity = paymentConditionMap.get(mainExcelDTO.getPaymentConditionName());
+                if (ObjectUtil.isEmpty(kingdeePaymentConditionEntity)) {
+                    mainErrorMsgList.add(CharSequenceUtil.format("未找到付款条件"));
+                } else {
+                    paymentCondition = kingdeePaymentConditionEntity.getCode();
+                }
+            }
+
+            //存在错误直接返回
+            if (CollUtil.isNotEmpty(mainErrorMsgList)) {
+                value.forEach(obj -> obj.setErrorMsg(FieldValidUtil.getMsgSort(mainErrorMsgList)));
+                errorList.addAll(value);
+                continue;
+            }
+            addDTO.setDeliveryWarehouseId(warehouseEntity.getId());
+            addDTO.setDeliveryWarehouseName(warehouseEntity.getName());
+            addDTO.setPurchaseOrgId(company.getId());
+            addDTO.setPurchaseOrgName(company.getName());
+            addDTO.setPurchaseDate(LocalDateUtil.parseStrToLocalDate(mainExcelDTO.getPurchaseDateStr()));
+            addDTO.setPurchaseUserId(userInfo.getUid());
+            addDTO.setPurchaseDeptId(ObjectUtil.isEmpty(departmentUserNumberDTO) ? "" : departmentUserNumberDTO.getDepartmentId());
+            addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
+            addDTO.setSupplierAccountId(supplierAccountId);
+            //供应商信息
+            PurchaseOrderSupplierDTO.AddDTO supplierAddDTO = new PurchaseOrderSupplierDTO.AddDTO();
+            supplierAddDTO.setSupplierId(supplierEntity.getId());
+            supplierAddDTO.setPayMethodId(payMethodId);
+            supplierAddDTO.setPayMethodName(mainExcelDTO.getPayMethodName());
+            supplierAddDTO.setPaymentCondition(paymentCondition);
+            supplierAddDTO.setPaymentConditionName(mainExcelDTO.getPaymentConditionName());
+            supplierAddDTO.setContactTelNumber(mainExcelDTO.getContactTelNumber());
+            supplierAddDTO.setSupplierContactId(supplierContactId);
+            addDTO.setPurchaseOrderSupplierDTO(supplierAddDTO);
+
+            List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
+
+            for (PurchaseOrderMainExcelDTO excelDTO : value) {
+                //注解验证信息
+                List<String> errorMsgList = new ArrayList<>();
+                //SKU验证
+                ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(productDetailEntity)) {
+                    errorMsgList.add(CharSequenceUtil.format("未找到审核通过的SKU"));
+                }
+                if (CollUtil.isNotEmpty(errorList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
+                addDetailDTO.setSkuId(productDetailEntity.getId());
+                addDetailDTO.setSkuNo(productDetailEntity.getSkuNo());
+                addDetailDTO.setPurchaseQty(Integer.valueOf(excelDTO.getPurchaseQtyStr()));
+                addDetailDTO.setPlanDeliveryDate(LocalDateUtil.parseStrToLocalDate(mainExcelDTO.getPlanDeliveryDateStr()));
+                addDetailDTO.setFirstMassProduct(FirstMassProductTypeEnum.getCode(excelDTO.getFirstMassProductName()));
+                addDetailDTO.setFirstMassProductName(excelDTO.getFirstMassProductName());
+                addDetailDTO.setIsUrgent(BooleanEnum.getByName(excelDTO.getIsUrgentStr()));
+                addDetailDTO.setIsGift(BooleanEnum.getByName(excelDTO.getIsGiftStr()));
+                addDetailDTO.setRemark(excelDTO.getRemark());
+                details.add(addDetailDTO);
+            }
+            if (CollUtil.isEmpty(details)) {
+                continue;
+            }
+            addDTO.setDetails(details);
+            //新增错误信息
+            List<String> addErrorMsgList = new ArrayList<>();
+            try {
+                //新增采购申请单
+                selfService.add(addDTO);
+            } catch (Exception e) {
+                addErrorMsgList.add(e.getMessage());
+            }
+            if (CollUtil.isNotEmpty(errorList)) {
+                value.forEach(obj -> obj.setErrorMsg(FieldValidUtil.getMsgSort(addErrorMsgList)));
+                errorList.addAll(value);
+            }
+        }
     }
 
     /**

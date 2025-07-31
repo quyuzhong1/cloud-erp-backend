@@ -27,10 +27,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -586,7 +583,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailEntity.setProductName(productName);
         }
-                map.put("productDetailList", detailList);
+        map.put("productDetailList", detailList);
 
         // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
         if (CollUtil.isNotEmpty(productDetailList)) {
@@ -607,7 +604,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         } else {
             log.debug("productDetailList 为空");
         }
-
         return map;
     }
 

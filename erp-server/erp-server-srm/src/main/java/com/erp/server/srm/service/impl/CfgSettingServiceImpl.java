@@ -256,7 +256,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private String getConfigOrderDesc(CfgSettingEntity orderCfgSettingEntity) {
         StringBuilder sb = new StringBuilder();
         if (Objects.isNull(orderCfgSettingEntity)) {
-            sb.append("自动确认");
+            sb.append("手动确认");
         } else {
             OrderAcceptDTO orderAcceptDTO = JSONUtil.toBean(orderCfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
             Boolean enable = orderAcceptDTO.getEnable();
@@ -264,10 +264,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             String unit = orderAcceptDTO.getUnit();
             if (Objects.nonNull(enable) && Boolean.TRUE.equals(enable)) {
                 //启用
-                sb.append("[").append(duration).append(unit).append("]手动确认");
+                sb.append("[").append(duration).append(unit).append("]自动确认");
                 return sb.toString();
             } else {
-                sb.append("自动确认");
+                sb.append("手动确认");
             }
         }
         return sb.toString();

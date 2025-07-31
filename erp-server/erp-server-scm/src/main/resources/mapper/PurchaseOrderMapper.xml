@@ -908,7 +908,7 @@
             ${params.sqlMap.default}
             and po.is_deleted = false and po.invalid_status = false and pod.execution_status not in ('finish','closed')  and pod.is_gift = false
             <if test="params.supplierId != null and params.supplierId != ''">
-                ps.supplier_id = ${params.supplierId}
+                ps.id = ${params.supplierId}
             </if>
             <if test="params.skuId != null and params.skuId != ''">
                 pod.sku_id = ${params.skuId}
