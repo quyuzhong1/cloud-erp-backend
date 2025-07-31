@@ -505,7 +505,7 @@ public class SoOutstockController extends BaseController {
     }
 
     /**
-     * 下推B2B报关单
+     * 下推B2B报关单(不校验系统配置)
      * @author jack
      * @date: 2025-07-18
      * @param dto

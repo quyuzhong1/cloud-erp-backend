@@ -21,6 +21,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -84,6 +85,8 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -190,7 +193,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO addDTO) {
@@ -206,6 +208,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHD);
         firstMileDeliveryEntity.setCode(code);
+        firstMileDeliveryEntity.setDeclareStatus(WmsDeclareStatusEnum.WAIT);
         boolean save = super.save(firstMileDeliveryEntity);
         if(!save) {
             throw new ServiceException("发货单保存失败");
@@ -225,23 +228,37 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         //新增装箱任务
 //        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
+
         //根据装箱状态自动生成报关单
-        autoGenerateByPacked(firstMileDeliveryEntity,BillGenerateTimingEnum.AFTER_PACKING);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    log.error("自动生成报关单睡眠异常: {}", e.getMessage());
+                }
+                FirstMileDeliveryServiceImpl bean = ApplicationContextUtils.getBean(FirstMileDeliveryServiceImpl.class);
+                bean.autoGenerateByPacked(firstMileDeliveryEntity,BillGenerateTimingEnum.AFTER_PACKING);
+            }
+        });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
     }
 
-    private void autoGenerateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
+    @Override
+    public void autoGenerateByPacked( FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-        //已装箱才能自动生成物流单逻辑
+        //已装箱才能生成报关单逻辑
         if (CollectionUtils.isNotEmpty(taskEntityList)) {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if(packed){
-                //走TMS自动生成物流单逻辑
+                //走TMS生成报关单单逻辑
                 AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
                         .id(entity.getId())
                         .billGenerateTimingEnum(billGenerateTimingEnum)
                         .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                         .firstMileDeliveryEntity(entity)
+                        .checkCfg(Boolean.TRUE) // 检查配置
                         .build();
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
@@ -994,6 +1011,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_APPROVE)
                             .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                             .firstMileDeliveryEntity(entity)
+                            .checkCfg(Boolean.TRUE) // 检查配置
                             .build();
                     try {
                         if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
@@ -2554,7 +2572,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92284.msg );
         }
-        //根据装箱状态自动生成报关单
+        //根据装箱状态生成报关单
         generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
@@ -2585,6 +2603,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .billGenerateTimingEnum(billGenerateTiming)
                             .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                             .firstMileDeliveryEntity(entity)
+                            .checkCfg(Boolean.FALSE) // 不检查配置
                             .build();
                     try {
                         Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
