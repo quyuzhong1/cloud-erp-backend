@@ -4,16 +4,22 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.*;
@@ -23,6 +29,8 @@ import com.erp.model.plm.enums.*;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -69,9 +77,13 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
 
     @Resource
     private PlmAttachmentService plmAttachmentService;
+    @Resource
+    private ProductDetailService productDetailService;
 
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Resource
     @Qualifier("zipImageExecutorPool")
@@ -136,6 +148,92 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         return Boolean.TRUE;
     }
 
+    /**
+     * @description: 判断产品明细列表中是否存在当前用户有权限访问的数据，并返回有权限的产品ID列表。
+     *               权限判断基于用户的角色和数据范围（全部、部门、个人）进行过滤。
+     * @author jack
+     * @date: 2025-07-31
+     * @param productDetailList 产品明细实体列表
+     * @param menuCode 菜单编码，用于匹配用户的权限配置
+     * @param menuTableField 数据表字段名（下划线格式），用于获取产品实体中的权限控制字段
+     * @return List<String> 有权限访问的skuNo列表
+     */
+    private List<String>  isExistAuth(List<ProductDetailEntity> productDetailList , String menuCode,String menuTableField) {
+        // 参数校验：若产品列表为空或菜单编码、字段名为空，则直接返回空列表
+        if (CollectionUtils.isEmpty(productDetailList) || CharSequenceUtil.isBlank(menuCode) || CharSequenceUtil.isBlank(menuTableField)) {
+            return Collections.emptyList();
+        }
+
+        // 获取当前登录用户信息
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        if (userInfo == null || userInfo.getUid() == null) {
+            return Collections.emptyList();
+        }
+
+        // 获取用户请求权限列表
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+
+        // 获取用户角色ID列表，若包含超级管理员角色（ID为"1"）则赋予全部数据权限
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(menuCode);
+            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            // 否则从权限列表中查找匹配的菜单权限
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(menuCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        // 若未找到对应权限配置，返回空列表
+        if (ObjectUtils.isEmpty(userRequestPermissions)) {
+            return Collections.emptyList();
+        }
+
+        // 获取用户所在部门的用户列表，用于部门级别权限判断
+        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+
+        Integer dataScope = userRequestPermissions.getDataScope();
+
+        List<String> result = new ArrayList<>();
+        // 遍历产品明细列表，根据权限范围筛选有权限的产品ID
+        for (ProductDetailEntity productDetailEntity : productDetailList) {
+            if (productDetailEntity == null) {
+                continue;
+            }
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(productDetailEntity));
+            // 将字段名由下划线转为驼峰命名
+            String field = StrUtils.underlineToCamel(menuTableField, true);
+            Object obj = jsonObject.get(field);
+            if (obj == null) {
+                continue;
+            }
+
+            // 全部数据权限：直接添加产品ID
+            if (DataPermissionAspect.DATA_SCOPE_ALL.equals(dataScope)) {
+                result.add(productDetailEntity.getSkuNo());
+            } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(dataScope)) {
+                // 部门数据权限：判断字段中是否包含当前用户所在部门的用户
+                List<String> users = Arrays.asList(obj.toString().split(","));
+                long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+                if (containsUserCount > 0) {
+                    result.add(productDetailEntity.getSkuNo());
+                }
+            } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(dataScope)) {
+                // 个人数据权限：判断字段中是否包含当前用户ID
+                List<String> users = Arrays.asList(obj.toString().split(","));
+                if (users.contains(userInfo.getUid())) {
+                    result.add(productDetailEntity.getSkuNo());
+                }
+            }
+        }
+        return result;
+    }
+
 
     /**
      * @author jack
@@ -174,7 +272,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     })
                     .distinct()
                     .collect(Collectors.toList());
-            if(CollUtil.isEmpty(skuNoList)){
+            if (CollUtil.isEmpty(skuNoList)) {
                 throw new ServiceException("SKU图片格式有异常,主图SKU，非主图使用SKU_1");
             }
 
@@ -184,38 +282,48 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     .ne(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                     .list();
 
-                // 构建SKU到商品详情实体的映射，用于快速查找
-                Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
-                List<CompletableFuture<Void>> futures = new ArrayList<>();
+            // 构建SKU到商品详情实体的映射，用于快速查找
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, productDetailEntity -> productDetailEntity, (existing, replacement) -> existing));
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-                // 获取压缩图片大小的配置
-                Long size = getImgUploadSize();
+            // 获取压缩图片大小的配置
+//                Long size = getImgUploadSize();
+            Long size = 0l;
 
-                // 遍历所有图片文件并异步处理
-                for (MultipartFile file : multipartFiles) {
-                    // 每次循束，总处理数加一
-                    result.incrementTotal();
+            //是否存在权限
+            List<String> skuNoListHaveAuth = isExistAuth(productDetailList, "plm:product:detail:importZip", "charge_id");
 
-                    String originalFilename = file.getOriginalFilename();
-                    String fileName = getFileNameNotExt(originalFilename);
-                    String skuNo = fileName.contains("_") ? fileName.substring(0, fileName.indexOf("_")) : fileName;
+            // 遍历所有图片文件并异步处理
+            for (MultipartFile file : multipartFiles) {
+                // 每次循束，总处理数加一
+                result.incrementTotal();
 
-                    if (!productDetailMap.containsKey(skuNo)) {
-                        // 如果SKU不存在于产品明细中，跳过处理
-                        result.incrementFailed(skuNo,originalFilename);
-                        continue;
-                    }
+                String originalFilename = file.getOriginalFilename();
+                String fileName = getFileNameNotExt(originalFilename);
+                String skuNo = fileName.contains("_") ? fileName.substring(0, fileName.indexOf("_")) : fileName;
 
-                    ProductDetailEntity productDetailEntity = productDetailMap.get(skuNo);
-
-                    // 异步处理单张图片
-                    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                        imageProcessService.processImage(file, fileName, productDetailEntity, size, result,dto.getImportType());
-                    }, zipImageExecutorPool);
-                    futures.add(future);
+                if (!productDetailMap.containsKey(skuNo)) {
+                    //未审核通过或者不存在则跳过处理
+                    result.incrementFailed(skuNo, "SKU不存在或未审核通过");
+                    continue;
                 }
-                // 等待所有异步任务完成
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                if(!skuNoListHaveAuth.contains(skuNo)){
+                    //没有权限访问的SKU，跳过处理
+                    result.incrementFailed(skuNo, "该SKU无操作权限");
+                    continue;
+                }
+
+                ProductDetailEntity productDetailEntity = productDetailMap.get(skuNo);
+
+                // 异步处理单张图片
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                    imageProcessService.processImage(file, fileName, productDetailEntity, size, result, dto.getImportType());
+                }, zipImageExecutorPool);
+                futures.add(future);
+            }
+            // 等待所有异步任务完成
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             Map<String, List<String>> successFiles = result.getSuccessFiles();
             //判空
@@ -227,23 +335,23 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
                     String skuId = entry.getKey();
                     List<String> value = entry.getValue();
 
-                    ProductDetailEntity productDetailEntity = productDetailMap.getOrDefault(skuId,null);
+                    ProductDetailEntity productDetailEntity = productDetailMap.getOrDefault(skuId, null);
                     if (Objects.isNull(productDetailEntity)) {
                         continue;
                     }
                     String imagesUrl = productDetailEntity.getImagesUrl();
                     if (StringUtils.isNotBlank(imagesUrl)) {
                         List<String> list = Arrays.asList(imagesUrl.split(","));
-                        if(ProductDetailImprotTypeEnum.ADD.getCode().equals(dto.getImportType())){
+                        if (ProductDetailImprotTypeEnum.ADD.getCode().equals(dto.getImportType())) {
                             //保留产品原有图片，并在新增新上传的图片
                             value.addAll(list);
-                        }else {
+                        } else {
                             //新上传的图片替换原有图片
                             //则需要删除
                             plmAttachmentService.lambdaUpdate()
                                     .in(PlmAttachmentEntity::getAttachUrl, list)
                                     .eq(PlmAttachmentEntity::getBusinessId, productDetailEntity.getId())
-                                    .set(PlmAttachmentEntity::getIsDeleted,true)
+                                    .set(PlmAttachmentEntity::getIsDeleted, true)
                                     .update();
                             fileFeign.deleteBatchFile(list);
                         }
@@ -297,14 +405,15 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
             }
 
             Map<String, List<String>> failFiles = result.getFailFiles();
-            if (MapUtil.isNotEmpty(failFiles)){
+            if (MapUtil.isNotEmpty(failFiles)) {
                 for (Map.Entry<String, List<String>> entry : failFiles.entrySet()) {
                     String skuNo = entry.getKey();
-                    List<String> value = entry.getValue();
+                    //去重
+                    List<String> value = entry.getValue().stream().distinct().collect(Collectors.toList());
                     String errorMsg = String.join(",", value);
                     ProductDetailImageExcelDTO excelDTO = new ProductDetailImageExcelDTO();
                     excelDTO.setSkuNo(skuNo);
-                    excelDTO.setErrorMsg("以下图片导入失败："+errorMsg);
+                    excelDTO.setErrorMsg("导入失败：" + errorMsg);
                     errorList.add(excelDTO);
                 }
             }
