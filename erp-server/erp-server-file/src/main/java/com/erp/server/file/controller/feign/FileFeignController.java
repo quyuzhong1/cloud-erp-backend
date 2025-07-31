@@ -1,6 +1,7 @@
 package com.erp.server.file.controller.feign;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.server.file.handler.FileRegistry;
 import com.erp.server.file.service.FileService;
@@ -41,8 +42,10 @@ public class FileFeignController {
     }
     @PostMapping("/deleteBatchFile")
     public void deleteBatchFile(@RequestParam("urlList") List<String> urlList){
-        FileService fileService = fileRegistry.getHandler();
-        fileService.deleteBatchFile(urlList);
+        if(CollUtil.isNotEmpty(urlList)){
+            FileService fileService = fileRegistry.getHandler();
+            fileService.deleteBatchFile(urlList);
+        }
     }
     @PostMapping(value = "/uploadFileAndName", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String uploadFileAndName(@RequestPart("file") MultipartFile file, @RequestParam("fileName") String fileName){
