@@ -9,6 +9,7 @@
          create_user_name AS createUserName,
          create_time AS createTime,
          name,
+        country,
          type_id AS typeId ,
          charge_id AS chargeId,
          contacts,
@@ -51,6 +52,7 @@
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
         SELECT
         id,
+        country,
         create_user_name AS createUserName,
         create_time AS createTime,
         name,

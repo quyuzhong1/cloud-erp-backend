@@ -16,12 +16,14 @@ import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
@@ -30,10 +32,7 @@ import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.service.AsyncService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
-import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -54,6 +53,9 @@ import java.util.*;
 //        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_outbound_consumer",
 //        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -127,6 +129,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         // 查询已有订单
         SoB2cEntity mainEntity;
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
+        if(OmsPlatformEnum.WEI_SHI.getCode().equals(dto.getPlatform()) && referenceNo.contains("_")){
+            //截取_前面的字符串
+            referenceNo = referenceNo.split("_")[0];
+        }
         if(referenceNo.contains(BusinessNoConstant.WFHD)){
             //查询三方仓发货单
             thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(referenceNo);
@@ -152,6 +158,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
         }
 
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus())){
+            return ApiResult.success();
+        }
         // 当前单据状态
         String curBillStatus = mainEntity.getBillStatus();
 
@@ -206,6 +215,32 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             //异步取消海外仓订单
             asyncService.asyncCancelThirdWarehouseOrder(mainEntity);
         }
+        if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
+            if(mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())){
+                OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+                operateLogDTO.setOperation("三方仓出库单废弃");
+                operateLogDTO.setModuleType(ModuleTypeEnum.SO_B2C.getCode());
+                operateLogDTO.setBusinessId(mainEntity.getId());
+                //订单如果为拦截中，直接更新订单状态为
+                mainEntity.setApproveStatus(ApproveStatusEnum.REJECT);
+                mainEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+                mainEntity.setIsIntercept(false);
+                mainEntity.setRemark("三方仓出库单废弃,拦截成功");
+                if(mainEntity.getIsCancel()){
+                    mainEntity.setInvalidStatus(Boolean.TRUE);
+                    mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
+                }
+                soB2cFeign.updateStatus(mainEntity);
+                operateLogDTO.setContent("三方仓出库单废弃");
+                soB2cFeign.addModuleOperateLog(operateLogDTO);
+                if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                    thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                    operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
+
+                    thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                }
+            }
+        }
         return ApiResult.success();
     }
 
@@ -248,6 +283,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
+            operateLogService.addModuleOperateLog("状态变更已发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
+
             thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
         }
     }
