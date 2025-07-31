@@ -3896,7 +3896,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92283.msg );
         }
         //自动生成B2B报关单
-        autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_PACKING);
+//        autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_PACKING);
+        if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
+            //走TMS自动生成逻辑
+            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                    .id(entity.getId())
+                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                    .soOutstockEntity(entity)
+                    .build();
+            try {
+                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                if(autoGenerateResult){
+                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
+                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                    this.updateStatus(updateStatusDTO);
+                }else {
+                    throw new ServiceException("下推生成报关单失败");
+                }
+            }catch (Exception e){
+                log.error("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
+        }else {
+            throw new ServiceException("仅限B2B类型的销售出库单，且报关状态为待报关的出库单可生成报关单");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -3909,7 +3934,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param entity 销售出库单实体对象，包含出库单详细信息
      * @throws ServiceException 当自动生成报关单失败时抛出异常
      */
-    private void autoGenerateB2bDeclare(SoOutstockEntity entity,BillGenerateTimingEnum billGenerateTiming) {
+    private void autoGenerateB2bDeclare(SoOutstockEntity entity, BillGenerateTimingEnum billGenerateTiming) {
         if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
             //走TMS自动生成逻辑
             AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
