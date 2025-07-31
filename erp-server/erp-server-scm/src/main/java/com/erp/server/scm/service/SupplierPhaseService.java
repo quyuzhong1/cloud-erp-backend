@@ -1,9 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.DynamicExcelDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
@@ -47,10 +45,10 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * 供应商提交审核
      * @author yl
      * @date 2023-03-23 16:50
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id);
 
     
     /**
@@ -79,7 +77,7 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(SupplierPhaseEntity entity,ApproveOneDTO dto);
 
     
     /**
@@ -99,6 +97,16 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @return java.lang.Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 审核完成
+     * @author will
+     * @date 2025/7/31 18:06
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, SupplierPhaseEntity entity);
 
     /**
      * 分页查询

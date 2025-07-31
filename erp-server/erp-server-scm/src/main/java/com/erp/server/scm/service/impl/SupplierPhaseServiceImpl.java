@@ -2,17 +2,21 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DynamicExcelDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -41,6 +45,7 @@ import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierGradeService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -66,6 +71,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_PH
  * @author admin
  * @since 2023-03-15
  */
+@Slf4j
 @Service
 public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapper, SupplierPhaseEntity> implements SupplierPhaseService {
 
@@ -140,47 +146,66 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 16:34
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SupplierPhaseDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        BatchResultDTO submit = this.submit(id);
+        return submit.getSuccess();
     }
 
 
     /**
      * 供应商阶段 提交审核
      *
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-23 16:50
      */
     @Override
-    public Boolean submit(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<SupplierPhaseEntity> list = this.listByIds(ids);
-        //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        //审核不通过
-        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+    public BatchResultDTO submit(String id) {
+        SupplierPhaseEntity entity = this.getById(id);
+        log.info("提交 开始启动试产申请流程，id=：【{}】", entity.getId());
 
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(rejectStatus);
-        statusList.add(waitSubmitStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99061);
         }
-        //启动流程 todo
-        Boolean result = updateApproveStatus(list, ApproveStatusEnum.APPROVE_ING.getStatus());
-        return result;
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getCode().equals(entity.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("提交 开始修改供应商阶段单状态数据，id：【{}】", id);
+        //更新审核状态
+        updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.APPROVE_ING.getStatus());
+
+        log.info("提交 开始启动供应商阶段单流程，id=：【{}】", entity.getId());
+        startProcess(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getTargetPhase(), OperationTypeEnum.SUBMIT);
     }
 
+    /**
+     * 流程启动
+     * @author will
+     * @date 2025/7/31 16:57
+     * @param entity
+     * @return void
+     */
+    public void startProcess(SupplierPhaseEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getTargetPhase());
+        startDTO.setBusinessKey(SourceTypeEnum.SUPPLIER_PHASE.getCode());
+        startDTO.setBusinessName(entity.getTargetPhase());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
 
     /**
      * 供应商详情阶段
@@ -262,32 +287,55 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 17:43
      */
     @Override
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-        List<SupplierPhaseEntity> list = this.listByIds(ids);
-        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
-        if (count > 0) {
+    public BatchResultDTO approve(SupplierPhaseEntity entity,ApproveOneDTO dto) {
+        //审核中允许审核
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        /**
-         *
-         * 还需要检查是否是自己能否审核
-         */
-        //审核通过
-        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            Boolean result = this.updateApproveStatus(list, approveStatus);
-            //通过后更改供应商的阶段
-            supplierService.updatePhase(list);
+        approveProcess(entity, dto);
+        log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(dto.getType()), JSONUtil.toJsonStr(dto.getId()));
+        return BatchResultDTO.success(entity.getId(),entity.getTargetPhase(),"操作成功");
+    }
 
-            return result;
-        } else {
-            //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            Boolean result = this.updateApproveStatus(list, rejectStatus);
-            return result;
+    /**
+     * 审核流程处理
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(SupplierPhaseEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SUPPLIER_PHASE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
         }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, SupplierPhaseEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        //更新单据状态
+        updateApproveStatus(Collections.singletonList(entity), approveStatus.getCode());
+
+        //通过后更改供应商的阶段
+        supplierService.updatePhase(Collections.singletonList(entity));
+        return Boolean.TRUE;
     }
 
 
@@ -410,12 +458,14 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-29 16:20
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto) {
         String id = this.updateSupplierPhase(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        BatchResultDTO submit = this.submit(id);
+        return submit.getSuccess();
     }
 
 
