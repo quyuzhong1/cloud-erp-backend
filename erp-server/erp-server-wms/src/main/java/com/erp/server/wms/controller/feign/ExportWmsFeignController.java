@@ -431,7 +431,7 @@ public class ExportWmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
             warehouseTableField = "oo.warehouse_id",
-            menuCode = "wms:pdaOtherOutstock:paging",
+            menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
     @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
