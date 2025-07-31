@@ -357,6 +357,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         }
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        Map<String, String> gradeMap = CollUtil.isEmpty(supplierGradeList) ? new HashMap<>() : supplierGradeList.stream().collect(Collectors.toMap(SupplierGradeEntity::getId, SupplierGradeEntity::getName));
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -386,13 +387,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             item.setApproveStatusName(ApproveStatusEnum.getName(approveStatus));
 
             //当前等级
-            String currentGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getCurrentGradeId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCurrentGradeName(currentGradeName);
+            item.setCurrentGradeName(gradeMap.get(item.getCurrentGradeId()));
             //目标等级
-            String targetGradeName = supplierGradeList.stream().filter(d -> d.getId().equals(item.getTargetGradeId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setTargetGradeName(targetGradeName);
+            item.setTargetGradeName(gradeMap.get(item.getTargetGradeId()));
 
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {

@@ -625,7 +625,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setCertificateNames(certificateJson);
             //产品分类名称名称
-            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getCategoryName(productCategoryList,obj)).collect(Collectors.joining(","));
             item.setProductCategoryNames(productCategoryNames);
             //应用分类名称
             String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
@@ -660,6 +660,29 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return new PagingVO(pageData);
     }
 
+    /**
+     * 大类显示，一级品类->二级品类
+     * @author will
+     * @date 2025/7/31 15:34
+     * @param productCategoryList
+     * @param value
+     * @return String
+     */
+    private String getCategoryName(List<BasicCategoryEntity> productCategoryList,Object value) {
+        StringBuffer str = new StringBuffer();
+        //子级品类
+        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getCode(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+        if (ObjUtil.isEmpty(childCategory)) {
+            return str.toString();
+        }
+        BasicCategoryEntity parentCategoryEntity = productCategoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), childCategory.getPid())).findFirst().orElse(new BasicCategoryEntity());
+        if (ObjectUtil.isEmpty(parentCategoryEntity)) {
+            str.append(childCategory.getName());
+        } else {
+            str.append(parentCategoryEntity.getName()).append("->").append(childCategory.getName());
+        }
+        return str.toString();
+    }
 
     /**
      * 根据表id集合删除 数据
@@ -1548,7 +1571,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
             //产品分类名称名称
             if (ObjectUtil.isNotEmpty(item.getProductCategoryJson())) {
-                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> productCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString()) && !CharSequenceUtil.equals(e.getPid(),"0") ).map(BasicCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getCategoryName(productCategoryList,obj)).collect(Collectors.joining(","));
                 exportExcel.setProductCategoryNames(productCategoryNames);
             }
             //应用分类名称
@@ -2135,7 +2158,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                             continue;
                         }
                         addrDTO.setCountry(countryEntity.getId());
-                        addrDTO.setRegion(dictCityEntity.getCode());
+                        addrDTO.setRegion(dictCityEntity.getId());
                     } else if (DictCityTypeEnum.CITY.getCode().equals(dictCityEntity.getType())) {
                         //国家
                         DictCountryEntity countryEntity = countylist.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dictCityEntity.getCountryCode())).findFirst().orElse(null);
@@ -2149,10 +2172,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                            //无省份城市
                             addrDTO.setCountry(countryEntity.getId());
                             addrDTO.setRegion("");
-                            addrDTO.setCity(dictCityEntity.getCode());
+                            addrDTO.setCity(dictCityEntity.getId());
                         } else {
                             addrDTO.setCountry(countryEntity.getId());
-                            addrDTO.setRegion(provinceEntity.getCode());
+                            addrDTO.setRegion(provinceEntity.getId());
                             addrDTO.setCity(dictCityEntity.getCode());
                         }
                     } else {

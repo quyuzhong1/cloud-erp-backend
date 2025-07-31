@@ -56,7 +56,7 @@ public class SupplierPhaseExportExcelDTO implements Serializable {
      * 目标等级名称
      */
     @ExcelProperty(value = "目标等级")
-    private String targetGradeId;
+    private String targetGradeName;
 
     /**
      * 审核结果
