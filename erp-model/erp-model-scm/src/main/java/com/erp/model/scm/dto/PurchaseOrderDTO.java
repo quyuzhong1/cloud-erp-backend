@@ -741,6 +741,32 @@ public class PurchaseOrderDTO implements Serializable {
         private String codeStr;
 
         /**
+         * 单据类型
+         */
+        private String type;
+        private String typeName;
+
+        /**
+         * 采购日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
          * 结算方式名称
          */
         private String payMethodName;
@@ -847,6 +873,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 付款方式名称
          */
         private String logoUrl;
+
+        /**
+         * 打印时间
+         */
+        private LocalDate printTime;
+
+        /**
+         * 打印人
+         */
+        private String printName;
 
         /**
          * 明细信息

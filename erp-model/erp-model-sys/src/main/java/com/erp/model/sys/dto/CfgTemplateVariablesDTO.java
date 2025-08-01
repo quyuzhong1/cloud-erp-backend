@@ -205,6 +205,10 @@ public class CfgTemplateVariablesDTO implements Serializable {
          */
         private String typeName;
         /**
+         * 分组名称
+         */
+        private String name;
+        /**
          * 是否表格扩展
          */
         private Boolean tableExtensions;
