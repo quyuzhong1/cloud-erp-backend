@@ -39,6 +39,7 @@ public class DeliveryNoticeChangeApproveHandler extends AbstractApproveHandler {
         SoDeliveryNoticeChangeEntity entity = soDeliveryNoticeChangeService.getById(dto.getBusinessId());
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setComment(dto.getComment());
         return soDeliveryNoticeChangeService.approveEnd(approveOneDTO,entity);
     }
 }

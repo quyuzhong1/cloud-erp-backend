@@ -39,6 +39,7 @@ public class StocktakingTaskApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setComment(dto.getComment());
         return stocktakingTaskService.approveEnd(approveOne,entity);
     }
 }

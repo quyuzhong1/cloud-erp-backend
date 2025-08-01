@@ -38,6 +38,7 @@ public class RequisitionApplicationChangeApproveHandler extends AbstractApproveH
         RequisitionApplicationChangeEntity entity = requisitionApplicationChangeService.getById(dto.getBusinessId());
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setComment(dto.getComment());
         return requisitionApplicationChangeService.approveEnd(approveOneDTO,entity);
     }
 }

@@ -36,7 +36,7 @@ public class PurchasePriceChangeApproveHandler extends AbstractApproveHandler {
     public Boolean approveEnd(ApproveDTO.EndProcessDTO dto) {
         //采购调价
         PurchasePriceChangeEntity entity = purchasePriceChangeService.getById(dto.getBusinessId());
-        BatchResultDTO resultDTO = purchasePriceChangeService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", null);
+        BatchResultDTO resultDTO = purchasePriceChangeService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment(), null);
         return resultDTO.getSuccess();
     }
 }

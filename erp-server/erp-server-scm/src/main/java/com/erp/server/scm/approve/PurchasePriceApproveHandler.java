@@ -64,6 +64,6 @@ public class PurchasePriceApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        return purchasePriceService.approveEnd(entity,dto.getApproveStatus().getStatus(),"");
+        return purchasePriceService.approveEnd(entity,dto.getApproveStatus().getStatus(),dto.getComment());
     }
 }

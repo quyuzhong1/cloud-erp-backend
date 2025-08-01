@@ -40,6 +40,7 @@ public class ProductChangeApproveHandler extends AbstractApproveHandler {
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         approveOne.setVariablesMap(dto.getVariablesMap());
+        approveOne.setComment(dto.getComment());
         return productChangeService.approveEnd(approveOne,entity);
     }
 }

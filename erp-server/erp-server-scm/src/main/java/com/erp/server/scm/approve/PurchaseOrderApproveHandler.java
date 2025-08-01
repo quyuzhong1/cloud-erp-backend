@@ -48,6 +48,7 @@ public class PurchaseOrderApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setId(dto.getBusinessId());
+        baseApproveParamDTO.setComment(dto.getComment());
         return purchaseOrderService.approveEnd(baseApproveParamDTO, entity);
     }
 }
