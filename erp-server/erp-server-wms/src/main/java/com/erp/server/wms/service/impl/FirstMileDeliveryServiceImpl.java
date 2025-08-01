@@ -2738,5 +2738,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
         }
     }
+
+    @Override
+    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds) {
+        if (CollUtil.isEmpty(deliveryIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listOverseasProvider(deliveryIds);
+    }
 }
 
