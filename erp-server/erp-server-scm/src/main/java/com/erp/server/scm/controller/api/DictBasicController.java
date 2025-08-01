@@ -60,4 +60,16 @@ public class DictBasicController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 根据类型查询级联
+     * @author will
+     * @date 2025/8/1 10:33
+     * @param key
+     * @return ApiResult<List<DictBasicDTO>>
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<DictBasicDTO>> tree(@RequestParam("key") String key) {
+        List<DictBasicDTO> list = dictBasicService.tree(key);
+        return success(list);
+    }
 }
