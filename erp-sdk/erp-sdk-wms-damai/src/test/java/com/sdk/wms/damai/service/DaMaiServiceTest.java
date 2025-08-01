@@ -2,8 +2,8 @@ package com.sdk.wms.damai.service;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessCommonConstants;
-import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
-import com.sdk.wms.damai.dto.response.DaMaiWarehouseResp;
+import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
+import com.sdk.wms.damai.dto.response.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,4 +36,34 @@ public class DaMaiServiceTest {
         DaMaiBaseResp<List<DaMaiWarehouseResp>> resp = daMaiService.getWarehouseList(authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
+
+    @Test
+    public void getSkuList() {
+        DaMaiPageBaseResp<List<DaMaiSkuResp>> resp = daMaiService.getSkuList(authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void createInbound() {
+        DaMaiCreateInboundRequest request = DaMaiCreateInboundRequest.builder()
+                .whCode("CATOR4")
+                .custReferenceNo("WJTEST0801")
+                .arrivalTime("2025-08-02 00:00:00")
+                .logisticsTrackingNo("123456")
+                .asnAnSkuList(Arrays.asList(
+                        DaMaiCreateInboundRequest.AsnAnSkuListDTO.builder()
+                                .custSkuCode("P8D-TEST0051")
+                                .custLotNo("20250801")
+                                .custPackageNo("ZXGG001")
+                                .totalSkuQty(1)
+                                .packQty(1)
+                                .build()
+                ))
+                .build();
+
+
+        DaMaiBaseResp<DaMaiCreateInboundResp> resp = daMaiService.createInbound(authMap,request);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
 }

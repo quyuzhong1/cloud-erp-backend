@@ -8,6 +8,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -56,7 +57,10 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.JIFENG.getCode()));
+		List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
+				.eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+				.eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
+				.list();
 		if(CollUtil.isEmpty(overseasProviderEntityList)) {
 			throw new ServiceException("极风授权信息不存在");
 		}
