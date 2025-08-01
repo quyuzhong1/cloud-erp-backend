@@ -42,6 +42,45 @@ public class BankDTO  implements Serializable {
          */
         private String headquarterAddress;
 
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 银行编号
+         */
+        private String bankNo;
+
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 是否禁用
+         */
+        private String name;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 银行编号
+         */
+        private String bankNo;
+
     }
 
 

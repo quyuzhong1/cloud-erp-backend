@@ -53,11 +53,11 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
      * @date 2023-03-21 16:33
      */
     @Override
-    public List<BaseIdDTO> getList() {
+    public List<BankDTO.ViewDTO> getList() {
         LambdaQueryWrapper<DictBankEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(DictBankEntity::getId, DictBankEntity::getName);
+        queryWrapper.select(DictBankEntity::getId, DictBankEntity::getName,DictBankEntity::getDisabled,DictBankEntity::getBankNo);
         List<DictBankEntity> list = this.list(queryWrapper);
-        return BeanMapper.copyList(list, BaseIdDTO.class);
+        return BeanMapper.copyList(list, BankDTO.ViewDTO.class);
     }
 
     @Override
