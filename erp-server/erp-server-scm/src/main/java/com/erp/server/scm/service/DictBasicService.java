@@ -55,4 +55,12 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return List<DictBasicEntity>
      */
     List<DictBasicEntity> listByNameList(List<String> nameList, DictBasicEnum dictBasicEnum);
+    /**
+     * 级联
+     * @author will
+     * @date 2025/8/1 10:27
+     * @param key
+     * @return List<DictBasicDTO>
+     */
+    List<DictBasicDTO> tree(String key);
 }
