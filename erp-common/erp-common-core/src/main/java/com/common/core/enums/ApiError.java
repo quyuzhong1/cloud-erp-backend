@@ -1320,6 +1320,9 @@ public enum ApiError implements Serializable {
     ERROR_92284(92284, "仅限未作废未审核通过的发货单"),
     ERROR_92285(92285, "装箱未完成，不能下推报关单"),
 
+    TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
+    TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号

@@ -911,6 +911,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollUtil.isNotEmpty(inboundEntityList)){
             throw new ServiceException("存在下游海外入库单【{}】，禁止删除", inboundEntityList.stream().map(OverseasWarehouseInboundEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(",")));
         }
+
+        //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
+        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
+            throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL, tmsFirstMileLogisticEntities.get(0).getTransportNo());
+        }
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
+            throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS_NOT_DEL, tmsDeclareBillEntities.get(0).getCode());
+        }
         //删除装箱信息
         if(Objects.nonNull(packingTask)){
             packingTaskService.delete(packingTask);
