@@ -317,6 +317,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
         }
 
+        //若海关编码，报关中文名，申报要素，出口申报价，报关单位都不为空则设置为已维护
+        if(StringUtils.isNotBlank(customsCode)
+                && StringUtils.isNotBlank(declareInfo.getDeclareChineseName())
+                && StringUtils.isNotBlank(declareInfo.getDeclareElement())
+                && declareInfo.getDeclarePrice() != null
+                && declareInfo.getDeclareUnit() != null){
+            productLogistics.setCustomsStatus(LogisticsProductCustomsStatusEnum.COMPLETED.getCode());
+        }
+
         boolean save = productLogisticsService.saveOrUpdate(productLogistics);
         if (!save) {
             throw new ServiceException("物流产品信息保存失败");
@@ -946,6 +955,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     errorMsgList.add("组合品申报不存在");
                 }
 
+                //若海关编码，报关中文名，申报要素，出口申报价，报关单位都不为空则设置为已维护
+                if(StringUtils.isNotBlank(customsCode)
+                        && StringUtils.isNotBlank(logistics.getDeclareChineseName())
+                        && StringUtils.isNotBlank(logistics.getDeclareElement())
+                        && logistics.getDeclarePrice() != null
+                        && logistics.getDeclareUnit() != null){
+                    logistics.setCustomsStatus(LogisticsProductCustomsStatusEnum.COMPLETED.getCode());
+                }
+
                 //存在错误信息则
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isError = Boolean.TRUE;
@@ -953,8 +971,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     break;
                 }
             }
-
-
             //更新错误数据
             if (isError) {
                 errorList.addAll(value);
