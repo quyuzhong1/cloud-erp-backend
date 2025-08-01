@@ -561,6 +561,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+
         //供应商id 集合
         List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
         //获取供应商默认联系人信息
@@ -603,10 +605,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setGradeName(gradeName);
             //分类id
-            String categoryId = item.getCategoryId();
-            String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCategoryName(categoryName);
+            item.setCategoryName(getCategoryName(dictMap,item.getCategoryId()));
             //结算方式
             String payMethodId = item.getPayMethodId();
             String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
@@ -658,6 +657,27 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 获取供应商分类名称
+     * @author will
+     * @date 2025/8/1 10:53
+     * @param dictMap
+     * @param categoryId
+     * @return String
+     */
+    private String getCategoryName (Map<String, DictBasicEntity> dictMap,String categoryId) {
+        StringBuffer str = new StringBuffer();
+        DictBasicEntity childEntity = dictMap.get(categoryId);
+        if (ObjectUtil.isEmpty(childEntity)) {
+            return str.toString();
+        }
+        DictBasicEntity parentEntity = dictMap.get(childEntity.getRemark());
+        if (ObjectUtil.isEmpty(parentEntity)) {
+            return str.append(childEntity.getName()).toString();
+        }
+        return str.append(parentEntity.getName()).append("->").append(childEntity.getName()).toString();
     }
 
     /**
@@ -1480,6 +1500,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+
         //供应商id 集合
         List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //付款条件
@@ -1540,10 +1562,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             exportExcel.setGradeName(gradeName);
             //分类
-            String categoryId = item.getCategoryId();
-            String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            exportExcel.setCategoryName(categoryName);
+            exportExcel.setCategoryName(getCategoryName(dictMap,item.getCategoryId()));
             //结算方式
             String payMethodId = item.getPayMethodId();
             String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
