@@ -129,11 +129,30 @@ public class SpElServerImpl implements SpElServer {
      * 匹配表达式结果
      *
      * @param conditionList
-     * @param obj
+     * @param stringObjectMap
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj, String key) {
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> stringObjectMap, String key) {
+        if (StrUtil.isBlank(key)){
+            key="detailList";
+        }
+        SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, stringObjectMap);
+        List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) stringObjectMap.get(key);
+        for (SpElAddFieldDTO item : addFieldList) {
+            //原始字段
+            String originalField = item.getOriginalField();
+            List<Object> valueList = CollUtil.isEmpty(mapList) ? null : getValueList(originalField, mapList);
+            String addField = item.getNeedAddField();
+            stringObjectMap.put(addField, valueList);
+        }
+        return matchExpressionWithVariable(spElDTO, stringObjectMap);
+    }
+
+
+    @Override
+    public Boolean matchExpressionDefaultByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj, String key) {
         if (StrUtil.isBlank(key)){
             key="detailList";
         }

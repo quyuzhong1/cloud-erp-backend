@@ -83,6 +83,9 @@
         <where>
             ${params.sqlMap.default}
             and pr.is_deleted = false
+            <if test="params.id!=null and params.id!=''">
+                and pr.id = #{params.id}
+            </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

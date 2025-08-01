@@ -213,6 +213,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
      @TableField("down_time")
      private LocalDateTime downTime;
+    /**
+     * 数据下载时间
+     */
+    @TableField("init_pull_time")
+    private LocalDateTime initPullTime;
      /**
      * 店铺退货仓库
      */
