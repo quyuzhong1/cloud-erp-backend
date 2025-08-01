@@ -42,6 +42,11 @@ public class BankDTO  implements Serializable {
          */
         private String headquarterAddress;
 
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
     }
 
 
