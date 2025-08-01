@@ -56,6 +56,7 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
     public List<BankDTO.ViewDTO> getList() {
         LambdaQueryWrapper<DictBankEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DictBankEntity::getId, DictBankEntity::getName,DictBankEntity::getDisabled,DictBankEntity::getBankNo);
+        queryWrapper.eq(DictBankEntity::getDisabled,false);
         List<DictBankEntity> list = this.list(queryWrapper);
         return BeanMapper.copyList(list, BankDTO.ViewDTO.class);
     }
