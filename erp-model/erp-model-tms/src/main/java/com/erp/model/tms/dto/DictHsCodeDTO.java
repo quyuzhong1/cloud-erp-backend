@@ -400,4 +400,29 @@ public class DictHsCodeDTO implements Serializable {
     }
 
 
+    /**
+     * 分页列表 （巴西）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListBRDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 海关编码
+         */
+        private String hsCode;
+        /**
+         * 描述
+         */
+        private String description;
+        /**
+         * 国家
+         */
+        private String country;
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.DictInvoiceHsDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.tms.dto.DictHsCodeDTO;
 import com.erp.model.tms.entity.DictHsCodeEntity;
@@ -28,4 +29,6 @@ public interface DictHsCodeMapper extends BaseMapper<DictHsCodeEntity> {
     IPage<DictHsCodeDTO.ListDTO> paging(Page query, @Param("params")  DictHsCodeDTO. PagingParamDTO params);
 
     List<DictHsCodeDTO.SearchDTO> searchByKey(@Param("params")  DictHsCodeDTO.SearchParamDTO params);
+
+    IPage<DictHsCodeDTO.ListBRDTO> pagingByBR(Page query,@Param("params") DictHsCodeDTO.PagingParamDTO params);
 }
