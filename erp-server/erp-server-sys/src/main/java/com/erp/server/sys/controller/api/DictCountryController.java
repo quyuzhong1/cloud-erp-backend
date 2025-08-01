@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.CommonConstants;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -132,6 +133,27 @@ public class DictCountryController extends BaseController {
                 .collect(Collectors.toList());
         return success(resultList);
     }
+
+    /**
+     * 获取国家列表(带默认)
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/listWithDefault")
+    public ApiResult<List<DictCountryDTO.ListDTO>> listWithDefault() {
+        List<DictCountryDTO.ListDTO> list = dictCountryService.listCountry().stream()
+                .filter(e -> !e.getDisabled())
+                .collect(Collectors.toList());
+        List<DictCountryDTO.ListDTO> resultList = new ArrayList<>();
+        DictCountryDTO.ListDTO listDTO = new DictCountryDTO.ListDTO();
+        listDTO.setNameCn("默认");
+        listDTO.setId(CommonConstants.DEFAULT);
+        resultList.add(listDTO);
+        resultList.addAll(list);
+        return success(resultList);
+    }
+
     /**
      * 获取国家列表
      *
