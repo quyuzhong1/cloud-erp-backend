@@ -12,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.dto.DictInvoiceHsDTO;
 import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -249,5 +250,13 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
     @Override
     public List<DictHsCodeDTO.SearchDTO> searchByKey(DictHsCodeDTO.SearchParamDTO dto) {
         return baseMapper.searchByKey(dto);
+    }
+
+    @Override
+    public PagingVO<DictHsCodeDTO.ListBRDTO> pagingByBR(PagingDTO<DictHsCodeDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DictHsCodeDTO.ListBRDTO> pageData = this.baseMapper.pagingByBR(query, pagingParamDTO.getParams());
+        return new PagingVO(pageData);
     }
 }

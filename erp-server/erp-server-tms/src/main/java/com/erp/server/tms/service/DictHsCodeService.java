@@ -1,5 +1,6 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.DictInvoiceHsDTO;
 import com.erp.model.tms.entity.DictHsCodeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -83,4 +84,14 @@ public interface DictHsCodeService extends SuperService<DictHsCodeEntity> {
      * @return
      */
     List<DictHsCodeDTO.SearchDTO> searchByKey(DictHsCodeDTO.SearchParamDTO dto);
+
+
+    /**
+     * 分页查询（巴西）
+     * @author jack
+     * @date 2025-07-31
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<DictHsCodeDTO.ListBRDTO> pagingByBR(PagingDTO<DictHsCodeDTO.PagingParamDTO> dto);
 }
