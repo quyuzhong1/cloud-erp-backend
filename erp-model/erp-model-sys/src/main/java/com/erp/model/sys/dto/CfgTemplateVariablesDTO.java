@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -178,7 +179,6 @@ public class CfgTemplateVariablesDTO implements Serializable {
 
     }
 
-
     /**
      * 模板字段
      */
@@ -199,56 +199,8 @@ public class CfgTemplateVariablesDTO implements Serializable {
          * 分类
          */
         private String type;
-
         /**
-         * 分类名称
-         */
-        private String typeName;
-        /**
-         * 分组名称
-         */
-        private String name;
-        /**
-         * 是否表格扩展
-         */
-        private Boolean tableExtensions;
-        /**
-         * 是否默认展开
-         */
-        private Boolean defaultExpand;
-        /**
-         * 字段集合
-         */
-        private List<VariableDTO> variables;
-
-        /**
-         * 序号
-         */
-        private Integer index;
-    }
-
-
-    /**
-     * 模板字段
-     */
-    @Data
-    @NoArgsConstructor
-    public static class VariableDTO {
-
-        /**
-         * 主键id
-         */
-        private String  id;
-
-
-        /**
-         * 父id
-         */
-        private String  parentId;
-
-
-        /**
-         * 字段名称
+         * 分组名称/字段名称
          */
         private String name;
 
@@ -261,17 +213,27 @@ public class CfgTemplateVariablesDTO implements Serializable {
          * 字段类型
          */
         private String fieldType;
-
         /**
-         * 默认值
+         * 字段默认值
          */
         private String defaultValue;
+        /**
+         * 是否表格扩展
+         */
+        private Boolean tableExtensions;
+        /**
+         * 是否默认展开
+         */
+        private Boolean defaultExpand;
+        /**
+         * 字段集合
+         */
+        private List<VariableGroupDTO> variables;
 
         /**
          * 序号
          */
         private Integer index;
-
     }
 
 
