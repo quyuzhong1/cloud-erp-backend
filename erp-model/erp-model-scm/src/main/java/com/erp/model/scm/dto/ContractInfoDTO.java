@@ -210,8 +210,8 @@ public class ContractInfoDTO implements Serializable {
         /**
         * 服务商id
         */
-        private String serviceProviderId;
-        private String serviceProviderName;
+        private List<String> serviceProviderIdList;
+        private List<String> serviceProviderNameList;
 
         /**
         * 合同类型,contractType字典
@@ -267,7 +267,6 @@ public class ContractInfoDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
 
     @Data
@@ -277,9 +276,7 @@ public class ContractInfoDTO implements Serializable {
         /**
         * 服务商id
         */
-        @NotBlank(message = "服务商不能为空")
-        @Size(max = 19,message = "服务商最大长度不能超过19位")
-        private String serviceProviderId;
+        private List<String> serviceProviderIdList;
 
         /**
         * 合同类型,contractType字典

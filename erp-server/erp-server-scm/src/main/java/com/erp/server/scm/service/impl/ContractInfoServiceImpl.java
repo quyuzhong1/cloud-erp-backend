@@ -63,6 +63,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_CONTRACT_INFO_REPORT;
+import static com.common.core.utils.BeanMapperUtils.map;
 
 /**
  * <p>
@@ -100,48 +101,61 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ContractInfoDTO.AddDTO addDTO) {
-        ContractInfoEntity contractInfoEntity = new ContractInfoEntity();
-        BeanMapperUtils.copy(addDTO, contractInfoEntity);
+        List<String> serviceProviderIdList = addDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isEmpty(serviceProviderIdList)){
+            throw new ServiceException("服务商不能为空");
+        }
 
-        //根据类型判断
-        if(addDTO.getType().equals("purchaseFramework")){
-            if(CollUtil.isNotEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isNotEmpty(addDTO.getAttachmentNameList())){
-                throw new ServiceException("采购框架合同类型附件不能为空");
+        //适用所有供应商
+        if(serviceProviderIdList.contains("all")){
+            serviceProviderIdList = serviceProviderIdList.stream().filter(s -> s.equals("all")).collect(Collectors.toList());
+        }
+
+        for (String serviceProviderId : serviceProviderIdList) {
+            ContractInfoEntity contractInfoEntity = new ContractInfoEntity();
+            BeanMapperUtils.copy(addDTO, contractInfoEntity);
+            contractInfoEntity.setServiceProviderId(serviceProviderId);
+
+            //根据类型判断
+            if(addDTO.getType().equals("purchaseFramework")){
+                if(CollUtil.isEmpty(addDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addDTO.getAttachmentNameList())){
+                    throw new ServiceException("采购框架合同类型附件不能为空");
+                }
+            }else {
+                if(StringUtils.isBlank(addDTO.getTemplateId())){
+                    throw new ServiceException("合同模板不能为空");
+                }
             }
-        }else {
-            if(StringUtils.isBlank(addDTO.getTemplateId())){
-                throw new ServiceException("合同模板不能为空");
+
+            // 数据处理
+            handleData(contractInfoEntity);
+
+            //默认未生效
+            contractInfoEntity.setStatus(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode());
+
+            log.info("开始新增合同管理单");
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYSHT);
+            contractInfoEntity.setCode(code);
+            boolean save = super.save(contractInfoEntity);
+            if(!save) {
+                throw new ServiceException("合同管理单保存失败");
+            }
+
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "合同管理单" , contractInfoEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CONTRACT_INFO.getCode(), contractInfoEntity.getId(), "新增操作");
+
+            //附件集合
+            List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
+            //附件名
+            List<String> attachmentNameList = addDTO.getAttachmentNameList();
+            if(CollUtil.isNotEmpty(attachmentUrlList) && CollUtil.isNotEmpty(attachmentNameList)){
+                //批量保存附件
+                batchSaveAttachment(attachmentUrlList, attachmentNameList, contractInfoEntity);
             }
         }
-
-        // 数据处理
-        handleData(contractInfoEntity);
-
-        //默认未生效
-        contractInfoEntity.setStatus(ContractInfoStatusEnum.NOT_EFFECTIVE.getCode());
-
-        log.info("开始新增合同管理单");
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_GYSHT);
-        contractInfoEntity.setCode(code);
-        boolean save = super.save(contractInfoEntity);
-        if(!save) {
-            throw new ServiceException("合同管理单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "合同管理单" , contractInfoEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CONTRACT_INFO.getCode(), contractInfoEntity.getId(), "新增操作");
-
-        //附件集合
-        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
-        //附件名
-        List<String> attachmentNameList = addDTO.getAttachmentNameList();
-        if(CollUtil.isNotEmpty(attachmentUrlList) && CollUtil.isNotEmpty(attachmentNameList)){
-            //批量保存附件
-            batchSaveAttachment(attachmentUrlList, attachmentNameList, contractInfoEntity);
-        }
-        return new BaseResultDTO.AddDTO(contractInfoEntity.getId(), code);
+        return new BaseResultDTO.AddDTO();
     }
 
     private void batchSaveAttachment(List<String> attachmentUrlList, List<String> attachmentNameList, ContractInfoEntity contractInfoEntity) {
@@ -171,9 +185,13 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     private void handleData(ContractInfoEntity contractInfoEntity) {
         //供应商
         if(StringUtils.isNotBlank(contractInfoEntity.getServiceProviderId())){
-            SupplierEntity supplierEntity = supplierService.getById(contractInfoEntity.getServiceProviderId());
-            if(Objects.nonNull(supplierEntity)){
-                contractInfoEntity.setServiceProviderName(supplierEntity.getName());
+            if(contractInfoEntity.getServiceProviderId().equals("all")){
+                contractInfoEntity.setServiceProviderName("所有供应商");
+            }else{
+                SupplierEntity supplierEntity = supplierService.getById(contractInfoEntity.getServiceProviderId());
+                if(Objects.nonNull(supplierEntity)){
+                    contractInfoEntity.setServiceProviderName(supplierEntity.getName());
+                }
             }
         }
 
@@ -191,17 +209,29 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(ContractInfoDTO.UpdateDTO addOrUpdateDTO) {
+        List<String> serviceProviderIdList = addOrUpdateDTO.getServiceProviderIdList().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isEmpty(serviceProviderIdList)){
+            throw new ServiceException("服务商不能为空");
+        }
+
+        String serviceProviderId = serviceProviderIdList.get(0);
+
         ContractInfoEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "合同管理单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        ContractInfoEntity contractInfoEntity =  BeanMapperUtils.map(ContractInfoEntity.class, addOrUpdateDTO);
+
+        if(!serviceProviderId.equals(old.getServiceProviderId())){
+            throw new ServiceException("服务商不允许修改");
+        }
+
+        ContractInfoEntity contractInfoEntity =  map(ContractInfoEntity.class, addOrUpdateDTO);
 
         //根据类型判断
         if(addOrUpdateDTO.getType().equals("purchaseFramework")){
-            if(CollUtil.isNotEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isNotEmpty(addOrUpdateDTO.getAttachmentNameList())){
+            if(CollUtil.isEmpty(addOrUpdateDTO.getAttachmentUrlList()) || CollUtil.isEmpty(addOrUpdateDTO.getAttachmentNameList())){
                 throw new ServiceException("采购框架合同类型附件不能为空");
             }
             contractInfoEntity.setTemplateId("");
@@ -351,15 +381,18 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             data.setTypeName(typeMap.get(data.getType()));
             data.setDisableName(Objects.equals(data.getDisable(),true) ? "停用" : "启用");
 
-            //附件地址
-            List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(data.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
-                    collect(Collectors.toList());
-
-            //附件地址
-            List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(data.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
-                    collect(Collectors.toList());
-            data.setAttachmentUrlList(attachmentUrlList);
-            data.setAttachmentNameList(attachmentNameList);
+            //获取合同对应的附件信息
+            List<AttachmentDTO.UpdateDTO> attachment = attachmentList.stream().filter(a -> a.getBusinessId().equals(data.getId())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(attachment)){
+                //附件地址
+                List<String> attachmentUrlList = attachment.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                        collect(Collectors.toList());
+                //附件地址
+                List<String> attachmentNameList = attachment.stream().map(AttachmentDTO.UpdateDTO::getAttachName).
+                        collect(Collectors.toList());
+                data.setAttachmentUrlList(attachmentUrlList);
+                data.setAttachmentNameList(attachmentNameList);
+            }
         }
     }
 
@@ -401,7 +434,9 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     @Override
     public ContractInfoDTO.ViewDTO view(String id) {
         ContractInfoEntity contractInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到合同管理单数据"));
-        ContractInfoDTO.ViewDTO data = BeanMapperUtils.map(ContractInfoDTO.ViewDTO.class, contractInfoEntity);
+        ContractInfoDTO.ViewDTO data = map(ContractInfoDTO.ViewDTO.class, contractInfoEntity);
+        data.setServiceProviderIdList(Arrays.asList(contractInfoEntity.getServiceProviderId()));
+        data.setServiceProviderNameList(Arrays.asList(contractInfoEntity.getServiceProviderName()));
         // 数据填充处理
         fillOne(data);
         return data;
@@ -830,12 +865,24 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
      */
     @Override
     public List<ContractInfoDTO.ProviderResultDTO> listContractByProvider(ContractInfoDTO.ProviderParamsDTO dto) {
-        // 查询指定服务商下所有已审核、已绑定模板的合同信息
+        // 查询适用于所有服务商的合同
         List<ContractInfoEntity> list = lambdaQuery()
+                .eq(ContractInfoEntity::getServiceProviderId, "all")
+                .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .ne(ContractInfoEntity::getTemplateId, "")
+                .orderByDesc(ContractInfoEntity::getUpdateTime)
+                .list();
+
+        // 查询指定服务商下所有已审核、已绑定模板的合同信息
+        List<ContractInfoEntity> listByServiceProviderId = lambdaQuery()
                 .eq(ContractInfoEntity::getServiceProviderId, dto.getServiceProviderId())
                 .eq(ContractInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
                 .ne(ContractInfoEntity::getTemplateId, "")
+                .orderByDesc(ContractInfoEntity::getUpdateTime)
                 .list();
+
+        //合并
+        list.addAll(listByServiceProviderId);
         if(CollUtil.isEmpty(list)){
             throw new ServiceException(ApiError.ERROR_CONTACT_NOT_BINDING);
         }

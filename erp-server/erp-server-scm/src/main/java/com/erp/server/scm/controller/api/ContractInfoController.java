@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -20,6 +21,7 @@ import com.erp.server.scm.query.ContractInfoQueryHandler;
 import com.erp.server.scm.service.CfgSupplierSalesService;
 import com.erp.server.scm.service.ContractInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
