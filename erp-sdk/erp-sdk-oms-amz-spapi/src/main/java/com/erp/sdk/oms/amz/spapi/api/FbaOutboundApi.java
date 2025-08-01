@@ -1646,9 +1646,9 @@ public class FbaOutboundApi {
         
 
         public FbaOutboundApi build() {
-            if (awsAuthenticationCredentials == null) {
-                throw new RuntimeException("AWSAuthenticationCredentials not set");
-            }
+//            if (awsAuthenticationCredentials == null) {
+//                throw new RuntimeException("AWSAuthenticationCredentials not set");
+//            }
 
             if (lwaAuthorizationCredentials == null) {
                 throw new RuntimeException("LWAAuthorizationCredentials not set");
@@ -1658,13 +1658,13 @@ public class FbaOutboundApi {
                 throw new RuntimeException("Endpoint not set");
             }
 
-            AWSSigV4Signer awsSigV4Signer;
-            if ( awsAuthenticationCredentialsProvider == null) {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
-            }
-            else {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials,awsAuthenticationCredentialsProvider);
-            }
+//            AWSSigV4Signer awsSigV4Signer;
+//            if ( awsAuthenticationCredentialsProvider == null) {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
+//            }
+//            else {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials,awsAuthenticationCredentialsProvider);
+//            }
             
             LWAAuthorizationSigner lwaAuthorizationSigner = null;            
             if (disableAccessTokenCache) {
@@ -1678,7 +1678,7 @@ public class FbaOutboundApi {
             }
 
             return new FbaOutboundApi(new ApiClient()
-                .setAWSSigV4Signer(awsSigV4Signer)
+                // .setAWSSigV4Signer(awsSigV4Signer)
                 .setLWAAuthorizationSigner(lwaAuthorizationSigner)
                 .setBasePath(endpoint));
         }
