@@ -45,6 +45,6 @@ public class TransferApplicationApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_99043);
         }
-        return transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", null);
+        return transferApplicationService.approveEnd(entity, dto.getApproveStatus().getStatus(), dto.getComment(), null);
     }
 }

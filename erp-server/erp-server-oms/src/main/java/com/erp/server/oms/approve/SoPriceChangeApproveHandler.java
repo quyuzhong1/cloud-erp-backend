@@ -38,6 +38,7 @@ public class SoPriceChangeApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
+        approveOneDTO.setComment(dto.getComment());
         return soPriceChangeService.approveEnd(approveOneDTO,entity);
     }
 }

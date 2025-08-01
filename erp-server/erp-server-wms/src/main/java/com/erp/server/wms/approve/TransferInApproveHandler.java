@@ -47,6 +47,7 @@ public class TransferInApproveHandler extends AbstractApproveHandler {
         }
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setComment(dto.getComment());
         return transferInService.approveEnd(approveOneDTO,entity);
     }
 }

@@ -45,6 +45,6 @@ public class SupplierApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        return supplierService.approveEnd(entity,dto.getApproveStatus().getStatus(),"");
+        return supplierService.approveEnd(entity,dto.getApproveStatus().getStatus(),dto.getComment());
     }
 }

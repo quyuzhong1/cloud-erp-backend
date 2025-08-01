@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -181,12 +182,18 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
         LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
 
+        //审批意见
+        JSONArray timeline = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TIMELINE.getCode());
+        String comment = timeline.stream().filter(item -> !Objects.equals(((JSONObject) item).getStr(FsRequestBodyAttributesEnum.COMMENT.getCode()), ""))
+                .map(item -> ((JSONObject) item).getStr(FsRequestBodyAttributesEnum.COMMENT.getCode()))
+                .collect(Collectors.joining("; "));
+
         switch (statusEnum) {
             case APPROVED:
-                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+                handleCallback(one, PASS.getStatus(), lastUserId, approveTime,comment);
                 break;
             case REJECTED:
-                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
+                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime,comment);
                 break;
             case CANCELED:
                 ApproveDTO.CancelProcessDTO cancelProcessDTO = new ApproveDTO.CancelProcessDTO();
@@ -208,7 +215,7 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
     /**
      * 原始的回调方法，保持不变。
      */
-    public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime) {
+    public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime,String comment) {
         EndProcessDTO processDTO = new EndProcessDTO();
         processDTO.setBusinessKey(entity.getBussinessKey());
         processDTO.setBusinessId(entity.getBussinessId());
@@ -217,6 +224,7 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
+        processDTO.setComment(comment);
         processManagementService.callFeign(entity.getBussinessKey(), processDTO);
     }
 }

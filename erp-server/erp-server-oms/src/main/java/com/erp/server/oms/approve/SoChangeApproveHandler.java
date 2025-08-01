@@ -41,6 +41,7 @@ public class SoChangeApproveHandler extends AbstractApproveHandler {
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        baseApproveParamDTO.setComment(dto.getComment());
         return soChangeService.approveEnd(baseApproveParamDTO,list);
     }
 }

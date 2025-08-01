@@ -37,6 +37,7 @@ public class PilotApplicationApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setComment(dto.getComment());
         PilotApplicationEntity entity = new PilotApplicationEntity();
         entity.setId(dto.getBusinessId());
         Boolean approveEnd = pilotApplicationService.approveEnd(approveOne, entity);

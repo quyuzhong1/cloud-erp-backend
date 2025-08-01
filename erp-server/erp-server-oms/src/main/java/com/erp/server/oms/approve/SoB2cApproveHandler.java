@@ -37,6 +37,7 @@ public class SoB2cApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
+        approveOneDTO.setComment(dto.getComment());
         return soB2cService.approveEnd(approveOneDTO,entity,null);
     }
 }

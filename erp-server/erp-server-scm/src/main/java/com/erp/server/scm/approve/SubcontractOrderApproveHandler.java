@@ -46,6 +46,7 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
+        approveOneDTO.setComment(dto.getComment());
         return subcontractOrderService.approveEnd(approveOneDTO,entity);
     }
 }
