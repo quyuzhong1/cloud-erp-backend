@@ -206,7 +206,7 @@ public class ProductCustomsDTO {
         /**
          * 产品图片
          */
-        private String imageUrl;
+        private String imagesUrl;
 
         /**
          * 报关中文名
