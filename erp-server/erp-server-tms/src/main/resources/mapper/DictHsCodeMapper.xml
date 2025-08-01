@@ -125,6 +125,47 @@
         when dhc.hs_code ILIKE concat('%',#{params.searchKey}::text,'%') THEN 3
         end , dhc.hs_code
     </select>
-
-
+    <select id="pagingByBR" resultType="com.erp.model.tms.dto.DictHsCodeDTO$ListBRDTO">
+        select
+        dih.id AS id,
+        dih.create_user_id AS createUserId,
+        dih.create_user_name AS createUserName,
+        dih.create_time AS createTime,
+        dih.update_user_id AS updateUserId,
+        dih.update_user_name AS updateUserName,
+        dih.update_time AS updateTime,
+        dih.version AS version,
+        dih.is_deleted AS isDeleted,
+        dih.hs_code AS hsCode,
+        dih.country AS country,
+        dih.description AS description,
+        dih.first_declare_unit AS firstDeclareUnit,
+        dih.second_declare_unit AS secondDeclareUnit,
+        dih.declare_element AS declareElement,
+        dih.supervision_conditions AS supervisionConditions,
+        dih.mfn_rate AS mfnRate,
+        dih.general_rate AS generalRate,
+        dih.vat_rate AS vatRate,
+        dih.consumption_tax_rate AS consumptionTaxRate,
+        dih.export_rebate_rate AS exportRebateRate,
+        dih.effective_date AS effectiveDate,
+        dih.expire_date AS expireDate,
+        dih.disabled AS disabled
+        from dict_hs_code dih
+        <where>
+            ${params.sqlMap.default}
+            and dih.is_deleted = false
+            and dih.country = 'BR'
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            dih.id desc
+        </where>
+    </select>
 </mapper>
