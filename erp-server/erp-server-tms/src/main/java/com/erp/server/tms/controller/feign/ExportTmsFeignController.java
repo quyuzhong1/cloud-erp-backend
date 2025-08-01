@@ -76,6 +76,8 @@ public class ExportTmsFeignController {
     private LogisticsLargeService logisticsLargeService;
     @Resource
     private FirstMileChangeRecordService firstMileChangeRecordService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -372,5 +374,20 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
     public PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto){
         return firstMileChangeRecordService.paging(dto);
+    }
+
+    /**
+     * 物流-第三方渠道关系表导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportLogisticsThirdChannelRef")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            menuCode = "tms:logisticsThirdChannelRef:paging",
+            tableAlias = "ltcr"
+    )
+    @WebAdvanceQuery(handler = LogisticsThirdChannelRefQueryHandler.class)
+    public PagingVO<LogisticsThirdChannelRefDTO.PagingVO> exportLogisticsThirdChannelRef(@RequestBody PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto){
+        return logisticsThirdChannelRefService.paging(dto);
     }
 }

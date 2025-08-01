@@ -158,6 +158,14 @@ public class LogisticsTrackDTO implements Serializable {
          */
         private String platformOrderNo;
         /**
+         * 销售平台
+         */
+        private String salesPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
          * 船司/航司
          */
         private String carrierId;
