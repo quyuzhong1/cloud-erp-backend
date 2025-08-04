@@ -49,8 +49,6 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.python.modules.cmath.e;
-
 /**
  * @author zdy
  * @ClassName LogisticsBaseServiceImpl
@@ -359,24 +357,38 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 record.setThirdSupplierCode("");
                 continue;
             }
-            Boolean isPushMobile = collect.get(0).getIsPushMobile();
+            LogisticsThirdChannelRefDTO.PagingVO pagingVO = collect.get(0);
+            Boolean isPushMobile = pagingVO.getIsPushMobile();
             if (!isPushMobile){
                 record.setTelNumber("");
-                record.setThirdSupplierCode(collect.get(0).getThirdSupplierCode());
+                record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
+                record.setThirdRefId(pagingVO.getId());
                 continue;
             }
-            String pushType = collect.get(0).getPushType();
-            record.setThirdSupplierCode(collect.get(0).getThirdSupplierCode());
+            String pushType = pagingVO.getPushType();
+            record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
             if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
-                record.setTelNumber(collect.get(0).getMobile());
+                record.setTelNumber(pagingVO.getMobile());
+                record.setThirdRefId(pagingVO.getId());
             }else if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(pushType)){
-                collect.stream().filter(e -> e.getShopId().equals(record.getShopId())).findFirst().ifPresent(e -> record.setTelNumber(e.getMobile()));
+                collect.stream().filter(e -> e.getShopId().equals(record.getShopId())).findFirst().ifPresent(e -> {
+                    record.setTelNumber(e.getMobile());
+                    record.setThirdRefId(pagingVO.getId());
+                });
             }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(pushType)){
-                collect.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().ifPresent(e -> record.setTelNumber(e.getMobile()));
+                collect.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().ifPresent(e -> {
+                    record.setTelNumber(e.getMobile());
+                    record.setThirdRefId(pagingVO.getId());
+                });
             }
         }
         if (CollUtil.isNotEmpty(detailIds)){
             logisticsBillDetailService.updateTrackEnableByIds(detailIds);
+        }
+        //更新注册手机号和关联关系
+        List<LogisticsTrackDTO.UpdateTrackDTO> refList = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getThirdRefId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(refList)){
+            logisticsBillDetailService.updateRegisterParams(refList);
         }
     }
 

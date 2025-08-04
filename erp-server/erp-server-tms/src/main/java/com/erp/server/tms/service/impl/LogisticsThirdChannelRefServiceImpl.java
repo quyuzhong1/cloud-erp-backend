@@ -79,6 +79,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     private LogisticsChannelService logisticsChannelService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -192,8 +194,11 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
-        //TODO 检查是否引用
-
+        //检查是否引用
+        Integer count = logisticsBillDetailService.countByThirdRefId(id);
+        if (count > 0){
+            return BatchResultDTO.fail(id, id,"该渠道配置已被使用，不能删除");
+        }
         //主表
         this.removeById(id);
         //明细
