@@ -88,6 +88,8 @@
         lb.tel_number as telNumber,
         lb.channel_id as channelId,
         lb.transport_no as transportNo,
+        lb.sales_platform as salesPlatform,
+        lb.shop_id as shopId,
         lc.track_query_type as trackQueryType
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false

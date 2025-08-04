@@ -20,6 +20,12 @@
        <result column="logistics_channel_code" property="logisticsChannelCode" />
        <result column="third_supplier_code" property="thirdSupplierCode" />
        <result column="third_supplier_name" property="thirdSupplierName" />
+       <result column="platform_type" property="platformType" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="third_channel_code" property="thirdChannelCode" />
+       <result column="third_channel_name" property="thirdChannelName" />
+       <result column="push_type" property="pushType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -33,8 +39,79 @@
         update_time,
         version,
         is_deleted,
-        remark, disabled, is_push_mobile, logistics_channel_id, logistics_channel_name, logistics_channel_code, third_supplier_code, third_supplier_name
+        remark, disabled, is_push_mobile, logistics_channel_id, logistics_channel_name, logistics_channel_code, third_supplier_code, third_supplier_name, platform_type, logistics_supplier_id, logistics_supplier_name, third_channel_code, third_channel_name, push_type
     </sql>
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$PagingVO">
+        select
+            ltcr.id,
+            ltcr.platform_type as platformType,
+            ltcr.logistics_supplier_id as logisticsSupplierId,
+            ltcr.logistics_supplier_name as logisticsSupplierName,
+            ltcr.logistics_channel_id as logisticsChannelId,
+            ltcr.logistics_channel_name as logisticsChannelName,
+            ltcr.logistics_channel_code as logisticsChannelCode,
+            ltcr.third_supplier_code as thirdSupplierCode,
+            ltcr.third_supplier_name as thirdSupplierName,
+            ltcr.third_channel_code as thirdChannelCode,
+            ltcr.third_channel_name as thirdChannelName,
+            ltcr.is_push_mobile as isPushMobile,
+            ltcr.push_type as pushType,
+            ltcr.create_user_name as createUserName,
+            ltcr.disabled as disabled,
+            ltcrd.id as detailId,
+            ltcrd.shop_id as shopId,
+            ltcrd.shop_name as shopName,
+            ltcrd.dict_platform as dictPlatform,
+            ltcrd.mobile as mobile
+        from
+        logistics_third_channel_ref ltcr
+        left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id
+        <where>
+            ${params.sqlMap.default}
+            and ltcr.is_deleted = false and ltcrd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            ltcr.create_time desc
+        </where>
+    </select>
+    <select id="listByPlatform" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$PagingVO">
+        select
+            ltcr.id,
+            ltcr.platform_type as platformType,
+            ltcr.logistics_supplier_id as logisticsSupplierId,
+            ltcr.logistics_supplier_name as logisticsSupplierName,
+            ltcr.logistics_channel_id as logisticsChannelId,
+            ltcr.logistics_channel_name as logisticsChannelName,
+            ltcr.logistics_channel_code as logisticsChannelCode,
+            ltcr.third_supplier_code as thirdSupplierCode,
+            ltcr.third_supplier_name as thirdSupplierName,
+            ltcr.third_channel_code as thirdChannelCode,
+            ltcr.third_channel_name as thirdChannelName,
+            ltcr.is_push_mobile as isPushMobile,
+            ltcr.push_type as pushType,
+            ltcr.create_user_name as createUserName,
+            ltcr.disabled as disabled,
+            ltcrd.id as detailId,
+            ltcrd.shop_id as shopId,
+            ltcrd.shop_name as shopName,
+            ltcrd.dict_platform as dictPlatform,
+            ltcrd.mobile as mobile
+        from
+            logistics_third_channel_ref ltcr
+                left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id
+        where
+            ltcr.is_deleted = false and ltcrd.is_deleted = false
+            and ltcr.platform_type = #{platformType}
+        order by ltcr.create_time desc
+    </select>
 
 
 </mapper>
