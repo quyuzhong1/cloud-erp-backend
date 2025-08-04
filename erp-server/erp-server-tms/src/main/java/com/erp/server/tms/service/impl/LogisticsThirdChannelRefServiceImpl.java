@@ -164,6 +164,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             e.setPushMobileName(e.getIsPushMobile() ? "是" : "否");
             e.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(e.getPushType()));
             e.setDisabledName(e.getDisabled() ? "是" : "否");
+            e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+            e.setPlatformShopName(e.getDictPlatformName() + e.getShopName());
         });
     }
 
