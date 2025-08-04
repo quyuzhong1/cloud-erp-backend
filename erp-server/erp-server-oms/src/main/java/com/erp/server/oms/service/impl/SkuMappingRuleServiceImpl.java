@@ -376,6 +376,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 匹配sku
         List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>();
         List<ListingInfoEntity> updateListingList = new ArrayList<>();
+        List<ListingInfoEntity> noMatchListingList = new ArrayList<>();
         for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
             String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
             ruleLoop : for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
@@ -469,7 +470,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                         listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
                         listingInfoEntity.setMatchResult(ListingMatchResultEnum.NOT.getCode());
                         listingInfoEntity.setRemark("");
-                        updateListingList.add(listingInfoEntity);
+                        noMatchListingList.add(listingInfoEntity);
                         break;
                     }
                 } else{
@@ -515,6 +516,14 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);
+        }
+        //更新为无需匹配
+        if(CollectionUtils.isNotEmpty(noMatchListingList)){
+            listingInfoService.updateBatchById(noMatchListingList,2000);
+            for (ListingInfoEntity listingInfoEntity : noMatchListingList) {
+                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，平台sku【{}】平台状态【未匹配】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(),listingInfoEntity.getPlatformSpuNo(),ListingMatchResultEnum.NOT.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "无需匹配");
+            }
         }
     }
 
