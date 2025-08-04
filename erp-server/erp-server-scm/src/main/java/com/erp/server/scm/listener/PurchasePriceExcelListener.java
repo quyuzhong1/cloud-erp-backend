@@ -290,6 +290,20 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             detailDTO.setEffectiveDate(LocalDate.now());
         }
 
+        // 失效时间
+        String expireDateStr = excelDTO.getExpireDate();
+        if(StrUtils.isNotEmpty(expireDateStr)) {
+            if(!isDate(expireDateStr)) {
+                errorMsgList.add("生效日期格式错误");
+            } else {
+                LocalDate expireDate = getDate(expireDateStr);
+                detailDTO.setExpireDate(expireDate);
+            }
+        } else {
+            // 默认设置为9999年12月31日
+            detailDTO.setExpireDate(LocalDate.of(9999, 12, 31));
+        }
+
         // 启用状态
         String disabledStr = excelDTO.getDisabled();
         detailDTO.setDisabled(Objects.equals(disabledStr, "停用"));
