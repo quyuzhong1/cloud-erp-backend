@@ -425,6 +425,14 @@ public class DeliveryOrderDTO implements Serializable {
          * 订单单号
          */
         private String sourceCode;
+        /**
+         * 订单类型
+         */
+        private String type;
+        /**
+         * 订单类型名称
+         */
+        private String typeName;
 
         /**
          * skuId
