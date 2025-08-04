@@ -521,7 +521,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(CollectionUtils.isNotEmpty(noMatchListingList)){
             listingInfoService.updateBatchById(noMatchListingList,2000);
             for (ListingInfoEntity listingInfoEntity : noMatchListingList) {
-                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，平台sku【{}】平台状态【未匹配】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(),listingInfoEntity.getPlatformSpuNo(),ListingMatchResultEnum.NOT.getName());
+                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，平台sku【{}】平台状态【未匹配】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(),listingInfoEntity.getPlatformSkuNo(),ListingMatchResultEnum.NOT.getName());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "无需匹配");
             }
         }
