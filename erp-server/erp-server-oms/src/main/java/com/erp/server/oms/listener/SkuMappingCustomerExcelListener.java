@@ -148,10 +148,6 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("通过导入修改客户sku，客户sku名称从【{}】修改为【{}】，产品sku从【{}】修改为【{}】", existEntity.getPlatformSkuName(), excelDTO.getPlatformSkuName(), skuMapping.getProductSkuNo(), excelDTO.getPlatformSkuNo()),ModuleTypeEnum.LISTING_INFO.getCode(), existEntity.getId(), "导入更新"));
                 existEntity.setPlatformSkuName(excelDTO.getPlatformSkuName());
                 existEntity.setProductSkuNo(excelDTO.getSkuNo());
-                if(StringUtils.isNotBlank(excelDTO.getPlatformStatusName())){
-                    String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(excelDTO.getPlatformStatusName());
-                    existEntity.setPlatformStatus(platformStatus);
-                }
                 updateListingList.add(existEntity);
 
                 LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime());
@@ -235,10 +231,6 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         listingInfoEntity.setAuthId(customerInfo.getId());
         listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         listingInfoEntity.setProductSkuNo(skuVO.getSkuNo());
-        if(StringUtils.isNotBlank(excelDTO.getPlatformStatusName())){
-            String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(excelDTO.getPlatformStatusName());
-            listingInfoEntity.setPlatformStatus(platformStatus);
-        }
         addListingList.add(listingInfoEntity);
         SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
         skuMappingEntity.setType(RuleTypeEnum.CUSTOMER);
