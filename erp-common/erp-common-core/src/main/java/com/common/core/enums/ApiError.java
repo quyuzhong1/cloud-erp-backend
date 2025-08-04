@@ -194,10 +194,9 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
     MOBILE_IS_EXIST(9054,"手机号已注册"),
-
-
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_9057(9057, "【{}】模板类型已存在默认合同"),
 
 
     /**
@@ -852,6 +851,7 @@ public enum ApiError implements Serializable {
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
+    ERROR_CONTACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     /**
      * WMS 错误

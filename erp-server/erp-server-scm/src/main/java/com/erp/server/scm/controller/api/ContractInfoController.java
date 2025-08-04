@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -14,15 +15,13 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
-import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
-import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.server.scm.query.ContractInfoQueryHandler;
 import com.erp.server.scm.service.CfgSupplierSalesService;
 import com.erp.server.scm.service.ContractInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -417,4 +415,17 @@ public class ContractInfoController extends BaseController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resultDTO.getResponseBody());
     }
+
+    /**
+     * 合同模板选择（已审核 已启用 且在生效和时效时间范围内的合同）
+     * @author jack
+     * @date:  2025-07-31
+     * @param dto
+     * @return List<ContractInfoDTO.ProviderResultDTO>
+     */
+    @PostMapping("/listContractByProvider")
+    public ApiResult<List<ContractInfoDTO.ProviderResultDTO>> listContractByProvider(@RequestBody @Validated ContractInfoDTO.ProviderParamsDTO dto){
+        return success(contractInfoService.listContractByProvider(dto));
+    }
+
 }
