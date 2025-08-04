@@ -3527,7 +3527,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         List<String> poIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
         List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(poIdList);
-        if (CollUtil.isNotEmpty(purchaseOrderList)) {
+        if (CollUtil.isEmpty(purchaseOrderList)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
         //供应商信息
@@ -3568,6 +3568,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailAddDTO.setPurchaseOrderDetailId(detailEntity.getId());
                 detailAddDTO.setSkuId(detailEntity.getSkuId());
                 detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+                detailAddDTO.setProductName(detailEntity.getProductName());
                 detailAddDTO.setOldQty(detailEntity.getPurchaseQty());
                 detailAddDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailAddDTO.setOldAmount(MathUtil.multiplyWithTwo(detailAddDTO.getOldPrice(),detailAddDTO.getOldQty()));
@@ -3842,9 +3843,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //审核状态名称
             adjustListDTO.setApproveStatusName(ApproveStatusEnum.getName(adjustListDTO.getApproveStatus()));
             //执行状态名称
-            adjustListDTO.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(adjustListDTO.getCode()));
+            adjustListDTO.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(adjustListDTO.getExecutionStatus()));
             //税率
             adjustListDTO.setTaxRateStr(MathUtil.multiplyWithTwo(adjustListDTO.getTaxRate(), MathUtil.BigDecimal_100).toString().concat("%"));
+
+            if (MathUtil.compareTo(entity.getTaxPrice(), adjustListDTO.getTaxPrice()) == 0) {
+                adjustListDTO.setIsSame(Boolean.TRUE);
+            } else {
+                adjustListDTO.setIsSame(Boolean.FALSE);
+            }
             //单价是否一致
             adjustListDTO.setIsSameName(adjustListDTO.getIsSame() ? "一致" : "不一致");
         }

@@ -638,6 +638,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             item.setPhaseCode(phaseEnum.getPhase());
             SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(id)).findFirst().orElse(null);
             if (contact != null) {
+                item.setContactId(contact.getId());
                 item.setContactPerson(contact.getPerson());
                 //隐藏电话中间数字*
                 item.setContactTelNumber(DesensitizedUtil.mobilePhone(contact.getTelNumber()));

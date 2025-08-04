@@ -837,6 +837,10 @@ public class SupplierDTO implements Serializable {
         private String purchaseUserName;
 
         /**
+         * 联系人id
+         */
+        private String contactId;
+        /**
          * 联系人名
          */
         private String contactPerson;
