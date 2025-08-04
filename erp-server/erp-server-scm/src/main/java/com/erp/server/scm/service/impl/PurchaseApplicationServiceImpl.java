@@ -1701,6 +1701,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (errorList.isEmpty()) {
             return Boolean.TRUE;
         }
+        //errorList根据index顺序排序
+        errorList.sort(Comparator.comparing(PurchaseApplicationMainExcelDTO::getIndex));
         String excelPath = "excel/purchaseApplicationMainError.xlsx";
         String name = "purchaseApplicationMainError";
         try {
