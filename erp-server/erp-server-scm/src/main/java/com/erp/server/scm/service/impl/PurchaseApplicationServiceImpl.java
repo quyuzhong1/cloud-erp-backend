@@ -1809,7 +1809,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             } catch (Exception e) {
                 addErrorMsgList.add(e.getMessage());
             }
-            if (CollUtil.isNotEmpty(errorList)) {
+            if (CollUtil.isNotEmpty(addErrorMsgList)) {
                 value.forEach(obj -> obj.setErrorMsg(FieldValidUtil.getMsgSort(addErrorMsgList)));
                 errorList.addAll(value);
             }

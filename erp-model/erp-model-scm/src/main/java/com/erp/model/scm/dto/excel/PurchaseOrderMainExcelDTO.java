@@ -28,7 +28,7 @@ public class PurchaseOrderMainExcelDTO implements Serializable {
      * 采购日期
      */
     @ExcelProperty(value = "*采购日期", index = 1)
-    @FieldValid(fieldName = "采购日期", formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "采购日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String purchaseDateStr;
 
     /**
@@ -97,7 +97,7 @@ public class PurchaseOrderMainExcelDTO implements Serializable {
      * 采购数量
      */
     @ExcelProperty(value = "*采购数量", index = 11)
-    @FieldValid(fieldName = "采购数量" ,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "采购数量" , isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String purchaseQtyStr;
 
 
@@ -105,7 +105,7 @@ public class PurchaseOrderMainExcelDTO implements Serializable {
      * 预计交货日期
      */
     @ExcelProperty(value = "*预计交货日期", index = 12)
-    @FieldValid(fieldName = "预计交货日期", formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "预计交货日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planDeliveryDateStr;
 
     /**
