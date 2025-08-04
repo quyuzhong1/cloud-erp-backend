@@ -348,7 +348,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "cfgApproveSync";
     }
     /**
      *
@@ -384,7 +384,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "cfgApproveSync";
     }
     /**
      *

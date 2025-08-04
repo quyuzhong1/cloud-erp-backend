@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum CfgQueryOptionUseTypeEnum implements EnumMessage {
 
+    CFG_APPROVE_SYNC("cfgApproveSync", "流程配置"),
     CFG_PROCESS("cfgProcess", "流程配置"),
     ALL_DATA("allData", "全量数据"),
     ;
