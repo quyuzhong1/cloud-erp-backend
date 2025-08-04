@@ -1,7 +1,9 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -97,8 +99,10 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDetail(LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity, List<LogisticsThirdChannelRefDetailEntity> detailList) {
+        List<String> detailIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         // 先删除旧明细
-        super.remove(new LambdaQueryWrapper<LogisticsThirdChannelRefDetailEntity>().eq(LogisticsThirdChannelRefDetailEntity::getMainId, logisticsThirdChannelRefEntity.getId()));
+        super.remove(new LambdaQueryWrapper<LogisticsThirdChannelRefDetailEntity>().eq(LogisticsThirdChannelRefDetailEntity::getMainId, logisticsThirdChannelRefEntity.getId())
+                .notIn(CollUtil.isNotEmpty(detailIds), LogisticsThirdChannelRefDetailEntity::getId, detailIds));
         // 再新增明细
         if(CollectionUtil.isNotEmpty(detailList)) {
             if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode())) {
@@ -122,7 +126,7 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
             } else {
                 detailList.forEach(detail -> detail.setMainId(logisticsThirdChannelRefEntity.getId()));
             }
-            super.saveBatch(detailList);
+            super.saveOrUpdateBatch(detailList);
         }
     }
 
