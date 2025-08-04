@@ -62,7 +62,7 @@
             ltcrd.shop_id as shopId,
             ltcrd.shop_name as shopName,
             ltcrd.dict_platform as dictPlatform,
-            case when ltcr.push_type = 'sender' or ltcr.push_type = 'receiver' or ltcr.push_type = 'orderReceiver' then "" else ltcrd.mobile end as mobile
+            case when ltcr.push_type = 'sender' or ltcr.push_type = 'receiver' or ltcr.push_type = 'orderReceiver' then '' else ltcrd.mobile end as mobile
         from
         logistics_third_channel_ref ltcr
         left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id and ltcrd.is_deleted = false
