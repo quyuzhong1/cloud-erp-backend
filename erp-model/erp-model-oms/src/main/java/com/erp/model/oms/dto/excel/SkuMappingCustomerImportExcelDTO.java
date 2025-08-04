@@ -40,16 +40,8 @@ public class SkuMappingCustomerImportExcelDTO {
     @FieldValid(fieldName = "启用时间")
     private String enabledTime;
 
-    /**
-     * 平台状态
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "平台状态", index = 5)
-    @FieldValid(fieldName = "平台状态")
-    private String platformStatusName;
-
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 6)
+    @ExcelProperty(value = "错误数据", index = 5)
     private String errorMsg;
 
     @Override
