@@ -355,10 +355,6 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private String mobile;
         /**
-         * 手机号码
-         */
-        private String detailMobile;
-        /**
          * 平台店铺名称
          */
         private String platformShopName;
