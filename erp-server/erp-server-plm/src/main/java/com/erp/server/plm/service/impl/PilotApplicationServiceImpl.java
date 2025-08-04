@@ -39,6 +39,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -147,6 +148,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
 
+        // 获取用户信息
+        fillUserInfo(addDTO);
+        
         // 数据处理
         handleData(addDTO, pilotApplicationEntity);
 
@@ -185,6 +189,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return new BaseResultDTO.AddDTO(pilotApplicationEntity.getId(), code);
+    }
+
+    /**
+     * 填充用户信息
+     * @param addDTO 试产申请DTO
+     */
+    private void fillUserInfo(PilotApplicationDTO.AddDTO addDTO) {
+        if (addDTO.getDqeOwnerId() == null) {
+            log.warn("DQE负责人ID为空，跳过用户信息填充");
+            return;
+        }
+        
+        try {
+            SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(addDTO.getDqeOwnerId());
+            if (sysUserDTO != null && StringUtils.isNotBlank(sysUserDTO.getUserName())) {
+                addDTO.setDqeOwnerName(sysUserDTO.getUserName());
+                log.debug("成功获取用户信息，用户ID: {}, 用户名: {}", addDTO.getDqeOwnerId(), sysUserDTO.getUserName());
+            } else {
+                log.warn("未找到用户信息，用户ID: {}", addDTO.getDqeOwnerId());
+                addDTO.setDqeOwnerName("未知用户");
+            }
+        } catch (Exception e) {
+            log.error("获取用户信息失败，用户ID: {}, 错误信息: {}", addDTO.getDqeOwnerId(), e.getMessage(), e);
+            addDTO.setDqeOwnerName("获取失败");
+        }
     }
 
     /**
