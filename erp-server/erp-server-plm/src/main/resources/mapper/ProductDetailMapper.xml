@@ -1649,38 +1649,37 @@
     </select>
 
     <select id="listLogisticsProduct" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ProductDTO">
-         SELECT
-             pl.sku_id,pl.product_property,pl.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
-             pl.declare_price,pl.customs_code,pl.declare_element,pl.english_material,pl.english_usage,
-             pl.create_time,pl.create_user_id,pl.update_time,pl.update_user_id,pl.create_user_name,pl.update_user_name,
-             pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pc.to_declare_price as destDeclarePrice,
-             pc.to_currency AS destCurrency,pc.to_currency_symbol as destCurrencySymbol,pl.source_cargo,pl.exemption,pl.source_country,
-             pl.combination_declare_type,pd.sku_no as skuNo,
-             pp.gross_weight as  grossWeight,
-            pp.box_length / 10 AS boxSizeLength,
-            pp.box_width / 10 AS boxSizeWide,
-            pp.box_height / 10 AS boxSizeHigh,
+        SELECT
+        pl.sku_id,pl.product_property,pl.product_property_id,pl.declare_chinese_name,pl.declare_english_name,
+        pl.declare_price,pl.customs_code,pl.declare_element,pl.english_material,pl.english_usage,
+        pl.create_time,pl.create_user_id,pl.update_time,pl.update_user_id,pl.create_user_name,pl.update_user_name,
+        pl.declare_model,pl.declare_unit,pl.declare_currency,pl.declare_currency_symbol,pl.dest_declare_price,
+        pl.dest_currency,pl.dest_currency_symbol,pl.source_cargo,pl.exemption,pl.source_country,
+        pl.combination_declare_type,pd.sku_no as skuNo,
+        pp.gross_weight as  grossWeight,
+        pp.box_length / 10 AS boxSizeLength,
+        pp.box_width / 10 AS boxSizeWide,
+        pp.box_height / 10 AS boxSizeHigh,
         pp.product_length as productLength,pp.product_width as productWidth,pp.product_height as productHeight,
-            (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
-            (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
-            pd.name as cnName,pd.name_en as enName,
-            pi.spu_no as spuNo,
-            pl.first_qty as firstQty,
-            pl.second_qty as secondQty,
-            pl.approve_status as approveStatus,
-            pd.images_url as imagesUrl
-         FROM product_detail pd
+        (select value from basic_dict  where is_deleted=false and id=pl.product_property_id LIMIT 1) AS productProperty,
+        (select name from basic_dict  where is_deleted=false and value=pl.declare_unit and type ='declareUnit' LIMIT 1) AS declareUnitName,
+        pd.name as cnName,pd.name_en as enName,
+        pi.spu_no as spuNo,
+        pl.first_qty as firstQty,
+        pl.second_qty as secondQty,
+        pl.approve_status as approveStatus,
+        pd.images_url as imagesUrl
+        FROM product_detail pd
         LEFT join product_logistics pl on pl.sku_id = pd.id and pl.is_deleted = false
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pp.sku_id = pl.sku_id and pp.is_deleted = false
-        left join product_customs pc on pc.sku_id = pl.sku_id and pc.is_deleted = false
         WHERE  pd.is_deleted=false
-         <if test="skuIdList !=null and skuIdList.size>0">
+        <if test="skuIdList !=null and skuIdList.size>0">
             AND pd.id IN
             <foreach collection="skuIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
-         </if>
+        </if>
         <if test="skuNoList !=null and skuNoList.size>0">
             AND pd.sku_no IN
             <foreach collection="skuNoList" item="item" open="(" separator="," close=")">
