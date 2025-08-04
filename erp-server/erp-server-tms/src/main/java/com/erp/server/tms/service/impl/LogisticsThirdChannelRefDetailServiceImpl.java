@@ -103,7 +103,7 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
         if(CollectionUtil.isNotEmpty(detailList)) {
             if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode())) {
                 //增加店铺是否重复校验
-                List<String> shopIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getShopId).collect(Collectors.toList());
+                List<String> shopIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getShopId).distinct().collect(Collectors.toList());
                 if(shopIds.size() != detailList.size()){
                     throw new ServiceException("明细中店铺不能重复配置");
                 }
@@ -115,7 +115,7 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
                 });
             }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode())) {
                 //增加平台是否重复校验
-                List<String> platformIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getDictPlatform).collect(Collectors.toList());
+                List<String> platformIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getDictPlatform).distinct().collect(Collectors.toList());
                 if(platformIds.size() != detailList.size()){
                     throw new ServiceException("明细中平台不能重复配置");
                 }
