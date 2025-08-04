@@ -271,6 +271,13 @@
     <!-- 查询符合调整信息的采购订单 -->
     <select id="listAdjustPurchaseOrder"
             resultType="com.erp.model.scm.dto.PurchasePriceChangeDTO$PurchaseOrderAdjustResultDTO">
+        WITH productDetailGroup AS (
+            SELECT
+                purchase_order_id,
+                sku_id,
+                SUM(purchase_qty) AS original_total
+            FROM purchase_order_detail where is_deleted = false and is_gift = false  group by purchase_order_id,sku_id
+        )
         select
             po.id as purchaseOrderId,
             pos.supplier_id as supplierId,
@@ -280,12 +287,13 @@
             pod.tax_price as taxPrice
         from purchase_order_detail pod
         inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        inner join productDetailGroup pdg on pod.purchase_order_id = pdg.purchase_order_id and pod.sku_id = pdg.sku_id
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         <where>
             pod.is_deleted = false and  po.invalid_status = false and pod.execution_status not in ('finish','closed') and pod.is_gift = false
             and (
             <foreach collection="params" item="item" separator="or" open="(" close=")">
-                pos.supplier_id = #{item.supplierId} and pod.sku_id = #{item.skuId} and  #{item.maxQty} > pod.purchase_qty and pod.purchase_qty >= #{item.minQty}
+                pos.supplier_id = #{item.supplierId} and pod.sku_id = #{item.skuId} and  #{item.maxQty} > pdg.original_total and pdg.original_total >= #{item.minQty}
             </foreach>
             )
         </where>

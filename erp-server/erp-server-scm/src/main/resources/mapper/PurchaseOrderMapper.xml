@@ -882,6 +882,13 @@
 
     <!-- 历史未完结订单分页查询 -->
     <select id="adjustPaging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$AdjustListDTO">
+        WITH productDetailGroup AS (
+            SELECT
+            purchase_order_id,
+            sku_id,
+            SUM(purchase_qty) AS original_total
+            FROM purchase_order_detail where is_deleted = false and is_gift = false  group by purchase_order_id,sku_id
+        )
         select
             po.id,
             po.code,
@@ -903,21 +910,22 @@
         from purchase_order po
         inner join purchase_order_supplier ps on po.id = ps.purchase_order_id and ps.is_deleted = false
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        inner join productDetailGroup pdg on pod.purchase_order_id = pdg.purchase_order_id and pod.sku_id = pdg.sku_id
         left join product_detail pd on pod.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and po.is_deleted = false and po.invalid_status = false and pod.execution_status not in ('finish','closed')  and pod.is_gift = false
             <if test="params.supplierId != null and params.supplierId != ''">
-                ps.id = ${params.supplierId}
+                and ps.id = #{params.supplierId}
             </if>
             <if test="params.skuId != null and params.skuId != ''">
-                pod.sku_id = ${params.skuId}
+                and pod.sku_id = #{params.skuId}
             </if>
             <if test="params.minQty != null and params.minQty != ''">
-                pod.purchase_qty &gt;= ${params.minQty}
+                and pdg.original_total &gt;= #{params.minQty}
             </if>
             <if test="params.maxQty != null and params.maxQty != ''">
-                pod.purchase_qty &lt; ${params.maxQty}
+                and pdg.original_total &lt; #{params.maxQty}
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
