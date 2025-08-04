@@ -680,6 +680,11 @@ public class LogisticsBillDTO implements Serializable {
         private String voecTaxNo;
 
         /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+
+        /**
          * 币别
          */
         private String currency;

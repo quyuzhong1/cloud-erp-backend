@@ -2045,6 +2045,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setShopName(entity.getShopName());
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
         result.setVoecTaxNo(shopInfoEntity.getVoecTaxNo());
+        result.setEoriTaxNo(shopInfoEntity.getEoriTaxNo());
         result.setSalesPlatform(entity.getDictPlatform());
         //包裹号 虾皮
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())) {
@@ -2827,6 +2828,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setSoCode(entity.getCode());
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         createOutboundReq.setShopName(shopInfoEntity.getName());
+        // 设置EORI税号
+        if (CharSequenceUtil.isNotBlank(shopInfoEntity.getEoriTaxNo())) {
+            createOutboundReq.setEoriTaxNo(shopInfoEntity.getEoriTaxNo());
+        }
         createOutboundReq.setOwnerCode(overseasProviderWarehouse.getOwnerCode());
         createOutboundReq.setPlatformCode(entity.getPlatformCode());
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());

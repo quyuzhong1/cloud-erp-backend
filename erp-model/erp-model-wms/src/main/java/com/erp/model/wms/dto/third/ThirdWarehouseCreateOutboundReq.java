@@ -95,6 +95,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     //收件人信息
     private ReceiverInfo receiverInfo;
 
+    /**
+     * EORI税号
+     */
+    private String eoriTaxNo;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
