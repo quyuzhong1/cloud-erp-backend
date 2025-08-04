@@ -35,6 +35,7 @@ public final class SoUtils {
         Map<String, String> headMap = new LinkedHashMap<>();
         headMap.put("id", "id");
         headMap.put("code", "单据编号");
+        headMap.put("trackNoStr", "运单号");
         headMap.put("orderTypeName", "单据类型");
         headMap.put("billDate", "单据日期");
         headMap.put("approveStatusName", "单据状态");
