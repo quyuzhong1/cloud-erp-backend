@@ -425,7 +425,6 @@ public class PilotApplicationDTO implements Serializable {
         /**
          * DQE负责人名称
          */
-        @NotBlank(message = "DQE负责人名称不能为空")
         private String dqeOwnerName;
 
     }
