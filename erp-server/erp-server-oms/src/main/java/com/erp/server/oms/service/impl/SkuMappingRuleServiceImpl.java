@@ -436,7 +436,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             }
                         }
                     }
-                }if (SkuMappingRuleEnum.NO_MATCH.equals(skuMappingRuleEnum)) {
+                }else if (SkuMappingRuleEnum.NO_MATCH.equals(skuMappingRuleEnum)) {
                     // 无需匹配类型针对的是 listingInfo 中的 platformStatus 和 isParent 字段
 //                    if (!skuVOMap.containsKey(handlePlatformSkuNo)) {
 //                        continue;
@@ -462,12 +462,15 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             }
                         }
                     }
-                    if (matched) {
+                    String matchResult = listingInfoWithSkuMappingDTO.getMatchResult();
+                    // 匹配结果无需匹配并且符合匹配规则，则需要更新 listingInfo 的 matchResult
+                    if (Boolean.TRUE.equals(matched) && ListingMatchResultEnum.FALSE.getCode().equals(matchResult)) {
                         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
                         listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
                         listingInfoEntity.setMatchResult(ListingMatchResultEnum.NOT.getCode());
                         listingInfoEntity.setRemark("");
                         updateListingList.add(listingInfoEntity);
+                        break;
                     }
                 } else{
                     String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();

@@ -253,10 +253,6 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addListingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
                 addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                 addListingInfoEntity.setAuthId(authId);
-                if(StringUtils.isNotBlank(dto.getPlatformStatusName())){
-                    String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(dto.getPlatformStatusName());
-                    addListingInfoEntity.setPlatformStatus(platformStatus);
-                }
                 addListingInfoEntityList.add(addListingInfoEntity);
                 //封装新增skuMapping
                 SkuMappingEntity addSkuMapping = new SkuMappingEntity();
@@ -318,10 +314,6 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                 listingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
                 listingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
-                if(StringUtils.isNotBlank(dto.getPlatformStatusName())){
-                    String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(dto.getPlatformStatusName());
-                    listingInfoEntity.setPlatformStatus(platformStatus);
-                }
                 updateListingInfoList.add(listingInfoEntity);
             }
         }
