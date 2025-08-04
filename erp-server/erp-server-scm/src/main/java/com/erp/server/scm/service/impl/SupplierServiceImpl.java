@@ -639,7 +639,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(id)).findFirst().orElse(null);
             if (contact != null) {
                 item.setContactPerson(contact.getPerson());
-                item.setContactTelNumber(contact.getTelNumber());
+                //隐藏电话中间数字*
+                item.setContactTelNumber(DesensitizedUtil.mobilePhone(contact.getTelNumber()));
             }
             //采购次数
             long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
