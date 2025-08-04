@@ -89,7 +89,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         BeanMapperUtils.copy(addDTO, logisticsThirdChannelRefEntity);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
         if (CollUtil.isNotEmpty(addDTO.getDetailList())){
-            BeanMapperUtils.copy(addDTO.getDetailList(), detailList);
+            detailList = BeanMapperUtils.copyList(LogisticsThirdChannelRefDetailEntity.class,addDTO.getDetailList());
         }
         // 数据处理
         handleData(logisticsThirdChannelRefEntity,detailList);
@@ -119,7 +119,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())){
-            BeanMapperUtils.copy(addOrUpdateDTO.getDetailList(), detailList);
+            detailList = BeanMapperUtils.copyList(LogisticsThirdChannelRefDetailEntity.class,addOrUpdateDTO.getDetailList());
         }
         // 数据处理
         handleData(logisticsThirdChannelRefEntity, detailList);
@@ -171,8 +171,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     public LogisticsThirdChannelRefDTO.ViewDTO view(String id) {
         LogisticsThirdChannelRefEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到渠道配置数据"));
         LogisticsThirdChannelRefDTO.ViewDTO data = BeanMapperUtils.map(LogisticsThirdChannelRefDTO.ViewDTO.class, entity);
-        data.setPlatformType(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
-        data.setPushType(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
+        data.setPlatformTypeName(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
+        data.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
         //查询实际明细
         List<LogisticsThirdChannelRefDetailEntity> detailEntityList = logisticsThirdChannelRefDetailService.listByMainIdList(Collections.singletonList(data.getId()));
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
