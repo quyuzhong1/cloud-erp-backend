@@ -1,4 +1,4 @@
-package com.erp.server.file.enums;
+package com.common.business.enums;
 
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
@@ -19,6 +19,10 @@ public enum FileTaskStatusEnum implements EnumMessage {
      * 已完成
      */
     FINISH("FINISH", "已完成"),
+    /**
+     * 已取消
+     */
+    CANCEL("CANCEL", "已取消"),
     /**
      * 处理失败
      */

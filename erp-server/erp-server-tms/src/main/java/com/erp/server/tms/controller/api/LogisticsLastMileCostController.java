@@ -7,6 +7,7 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.common.business.dto.base.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,11 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -219,18 +215,17 @@ public class LogisticsLastMileCostController extends BaseController {
     }
 
     /**
-     * 导入
-     * @author Will
-     * @date: 2023/11/13 15:14
-     * @param excelFile
-     * @param response
+     *  异步导入
+     * @author zdy
+     * @date: 2025/07/18 16:19
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾程费用模板")
-    @PostMapping("/import")
-    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
-        return result ? success() : failure();
+    @PostMapping(value = "/importExcel")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean flag = logisticsLastMileCostService.importExcel(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -302,7 +297,7 @@ public class LogisticsLastMileCostController extends BaseController {
       * 编辑付款/退款 保存
       * @author Will
       * @date:  2023-11-06
-      * @param dto
+      * @param dtoList
       * @return ApiResult
       */
      @PostMapping("/edit")

@@ -1459,10 +1459,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             reconciliationEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             reconciliationEntity.setExchangeRate(BigDecimal.ONE);
         }else {
-            String currentDate = reconciliationEntity.getReconciliationMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String currentDate = reconciliationEntity.getReconciliationMonth().withDayOfMonth(reconciliationEntity.getReconciliationMonth().lengthOfMonth()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
             if (Objects.isNull(rate)){
-                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, currentDate, currency);
             }
             reconciliationEntity.setExchangeRate(rate);
         }

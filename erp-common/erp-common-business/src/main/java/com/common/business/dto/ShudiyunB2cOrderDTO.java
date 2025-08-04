@@ -603,7 +603,7 @@ public class ShudiyunB2cOrderDTO {
     private String department_name;
 
     /**
-     * 发货类型
+     * 发货类型：按照0/1推送【(0:平台配送1:自发货)】
      */
     private String fulfillment_type;
 

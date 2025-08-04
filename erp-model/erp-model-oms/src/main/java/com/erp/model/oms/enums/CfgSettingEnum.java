@@ -15,6 +15,7 @@ public enum CfgSettingEnum implements EnumMessage {
 
     TIME_OUT_CONFIG("timeOutConfig",  "超时设置"),
     PAY_METHOD("payMethod",  "付款方式设置"),
+    AMZ_AUTH_PRE_STATE("amzAuthPreState",  "亚马逊授权state前缀"),
 
     ;
 

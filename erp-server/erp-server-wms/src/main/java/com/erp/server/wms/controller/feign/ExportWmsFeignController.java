@@ -178,6 +178,9 @@ public class ExportWmsFeignController {
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+    @Resource
     private SupplierInventoryService supplierInventoryService;
 
     @PostMapping("/b2cDelivery")
@@ -431,7 +434,7 @@ public class ExportWmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
             warehouseTableField = "oo.warehouse_id",
-            menuCode = "wms:pdaOtherOutstock:paging",
+            menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
     @WebAdvanceQuery(handler = OtherOutstockQueryHandler.class)
@@ -1046,4 +1049,11 @@ public class ExportWmsFeignController {
     public PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(@RequestBody PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto) {
         return supplierInventoryService.paging(dto);
     }
+
+    @PostMapping("/exportThirdWarehouseDelivery")
+    @WebAdvanceQuery
+    public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
+        return thirdWarehouseDeliveryService.paging(dto);
+    }
+
 }

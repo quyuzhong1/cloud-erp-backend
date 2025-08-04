@@ -19,6 +19,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
@@ -245,6 +246,14 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             fillData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<LogisticsAddressDTO.ListDTO> pagingSelect(PagingDTO<LogisticsAddressDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsAddressDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsAddressDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
     }
 
     private LogisticsAddressEntity getLogisticsServiceAddress(String addressId,String shopId){

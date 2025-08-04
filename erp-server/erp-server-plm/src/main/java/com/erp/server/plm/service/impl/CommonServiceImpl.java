@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.threadlocal.UserContext;
@@ -14,25 +15,37 @@ import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.dto.ZipTaskResultDTO;
+import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.PlmAttachmentService;
+import com.erp.server.plm.service.ProductDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author Administrator
@@ -41,6 +54,7 @@ import java.util.stream.Collectors;
  * @Date 2022-10-12 15:20
  * @Created by yl
  */
+@Slf4j
 @Service
 public class CommonServiceImpl implements CommonService {
 
@@ -51,7 +65,13 @@ public class CommonServiceImpl implements CommonService {
     @Autowired
     private WorkflowFeign workflowFeign;
     @Resource
-    private FileFeign filefeign;
+    private FileFeign fileFeign;
+
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
+
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 获取用户名
@@ -146,7 +166,7 @@ public class CommonServiceImpl implements CommonService {
             //图片压缩
             MultipartFile newMultipartFile = compressImage(multipartFile, size);
             //上传fastdfs
-            String filePath = filefeign.uploadFile(newMultipartFile);
+            String filePath = fileFeign.uploadFile(newMultipartFile);
             list.add(filePath);
         }
         return list;
@@ -160,7 +180,8 @@ public class CommonServiceImpl implements CommonService {
      * @param size
      * @return MultipartFile
      */
-    private MultipartFile compressImage (MultipartFile multipartFile,Long size) {
+    @Override
+    public MultipartFile compressImage(MultipartFile multipartFile, Long size) {
         //压缩大小=0，则不压缩
         if (MathUtil.compareTo(size,MathUtil.ZERO) == MathUtil.ZERO) {
             return multipartFile;
