@@ -1387,6 +1387,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //销售组织
         String salesOrgId = dto.getSalesOrgId();
+        if (StringUtils.isNotBlank(salesOrgId)) {
+            String oldSalesOrgId = soInfo.getSalesOrgId();
+            if(StringUtils.isNotBlank(oldSalesOrgId) && !salesOrgId.equals(oldSalesOrgId)) {
+                //判断是否已下推发货通知单，是则销售组织不允许修改
+                String soId = soInfo.getId();
+                Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
+                if (CollUtil.isNotEmpty(pushDownMap)
+                        && pushDownMap.containsKey(soId)
+                        && pushDownMap.get(soId) > 0) {
+                    throw new ServiceException("已下推发货通知单冻结库存，销售组织不允许修改，请删除发货通知单后修改");
+                }
+            }
+        }
         //销售员
         String sellerId = dto.getSellerId();
         //用户信息
