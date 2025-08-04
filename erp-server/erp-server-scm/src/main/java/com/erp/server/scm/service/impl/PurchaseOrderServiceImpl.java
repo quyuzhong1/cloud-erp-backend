@@ -3567,6 +3567,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (errorList.isEmpty()) {
             return Boolean.TRUE;
         }
+        //errorList根据index顺序排序
+        errorList.sort(Comparator.comparing(
+                dto -> {
+                    try {
+                        return dto.getIndex() != null ? Integer.parseInt(dto.getIndex()) : null;
+                    } catch (NumberFormatException e) {
+                        return null;  // 非数字视为null
+                    }
+                },
+                Comparator.nullsFirst(Comparator.naturalOrder())
+        ));
         String excelPath = "excel/purchaseOrderMainError.xlsx";
         String name = "purchaseOrderMainError";
         try {
@@ -3744,7 +3755,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
                     errorMsgList.add(CharSequenceUtil.format("未找到审核通过的SKU"));
                 }
-                if (CollUtil.isNotEmpty(errorList)) {
+                if (CollUtil.isNotEmpty(errorMsgList)) {
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(excelDTO);
                     continue;
