@@ -2306,7 +2306,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isApi) {
             try {
                 //下出库单命令
-                thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
+                soB2cService.thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
             } catch (Exception e) {
                 log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
                 SoB2cErrorEntity soB2cErrorEntity = soB2cErrorService.getByMainIdAndType(entity.getId(),SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
@@ -2709,6 +2709,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param overseasProviderWarehouse
      * @param newChannelId
      */
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_THIRD_DELIVERY_ORDER_KEY,keyName = "logisticsEntity.mainId",waiteTime = 60)
     public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, SoB2cLogisticsEntity logisticsEntity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
         //判断渠道是否是海外仓的渠道，否的话判断新的渠道是否是海外仓渠道，否则报错
         Boolean isCheckNewChannel = false;
@@ -2901,6 +2902,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public ApiResult<String> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        //如果已存在发货单，不处理
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())){
+            log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
+            return ApiResult.success(entity.getShippingOrderNo());
+        }
         String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
         createOutboundReq.setReferenceNo(code);
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
