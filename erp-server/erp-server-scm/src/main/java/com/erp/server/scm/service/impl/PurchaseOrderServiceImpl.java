@@ -239,6 +239,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private SupplierPurchaseQuantityService supplierPurchaseQuantityService;
     @Autowired
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
     @Lazy
@@ -3474,6 +3476,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdjustPrice(PurchaseOrderDTO.AdjustPriceDTO dto) {
+        PurchasePriceChangeDetailEntity priceChangeDetailEntity = purchasePriceChangeDetailService.getById(dto.getPurchasePriceChangeDetailId());
+        if (ObjectUtil.isEmpty(priceChangeDetailEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购调价明细");
+        }
+        PurchasePriceChangeEntity priceChangeEntity = purchasePriceChangeService.getById(priceChangeDetailEntity.getPurchasePriceChangeId());
+        if (ObjectUtil.isEmpty(priceChangeEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"采购调价");
+        }
+        if (!CharSequenceUtil.equals(priceChangeEntity.getApproveStatus().getStatus(),ApproveStatusEnum.APPROVE.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS);
+        }
+        //获取调价表对应价目明细的最新数据，存在则本条调价数据属于历史数据不支持批量调价，不存在则属于最新调价可以直接更新
+        PurchasePriceChangeDetailEntity latestPriceChangeDetail = purchasePriceChangeDetailService.getLatest(priceChangeDetailEntity.getPurchasePriceDetailId(),priceChangeDetailEntity.getId());
+        if (ObjectUtil.isNotEmpty(latestPriceChangeDetail)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_CHANGE_ADJUST);
+        }
+
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(dto.getDetailIdList());
         if (CollUtil.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
@@ -3498,47 +3517,99 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_9029);
         }
         for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
-            PurchaseChangeDTO.AddDTO addDTO = new PurchaseChangeDTO.AddDTO();
-            addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
-            addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
-            addDTO.setType(purchaseOrderEntity.getType());
-            addDTO.setChangeDate(LocalDate.now());
-            addDTO.setChangeUserId(userInfo.getUid());
-            addDTO.setChangeDeptId(departmentUserNumberDTO.getDepartmentId());
-
-            String supplierId = poSupplierMap.get(purchaseOrderEntity.getId());
-            if (CharSequenceUtil.isBlank(supplierId)) {
-                log.error("采购订单{}未找到供应商信息", purchaseOrderEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_98036);
+            //已审核走变更
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
+                batchAdjustAddChange(purchaseOrderEntity,userInfo,departmentUserNumberDTO,podMap,poSupplierMap,priceChangeDetailEntity);
+            } else if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(purchaseOrderEntity.getApproveStatus()) || ApproveStatusEnum.REJECT.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
+                batchAdjustUpdatePurchaseOrder(purchaseOrderEntity,podMap,priceChangeDetailEntity);
+            } else {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_ADJUST_PRICE);
             }
-            addDTO.setSupplierId(supplierId);
-            List<PurchaseOrderDetailEntity> detailList = podMap.get(purchaseOrderEntity.getId());
-            if (CollUtil.isEmpty(detailList)) {
-                log.error("采购订单{}未找到采购订单明细信息", purchaseOrderEntity.getCode());
-                throw new ServiceException(ApiError.ERROR_98026);
-            }
-            List<PurchaseChangeDetailDTO.AddDTO> details = new ArrayList<>();
-            for (PurchaseOrderDetailEntity detailEntity : detailList) {
-                PurchaseChangeDetailDTO.AddDTO detailAddDTO = new PurchaseChangeDetailDTO.AddDTO();
-                detailAddDTO.setPurchaseOrderDetailId(detailEntity.getId());
-                detailAddDTO.setSkuId(detailEntity.getSkuId());
-                detailAddDTO.setSkuNo(detailEntity.getSkuNo());
-                detailAddDTO.setProductName(detailEntity.getProductName());
-                detailAddDTO.setOldQty(detailEntity.getPurchaseQty());
-                detailAddDTO.setOldPrice(detailEntity.getTaxPrice());
-                detailAddDTO.setOldAmount(MathUtil.multiplyWithTwo(detailAddDTO.getOldPrice(),detailAddDTO.getOldQty()));
-                detailAddDTO.setQty(detailEntity.getPurchaseQty());
-                detailAddDTO.setPrice(detailEntity.getTaxPrice());
-                detailAddDTO.setAmount(MathUtil.multiplyWithTwo(detailAddDTO.getPrice(),detailAddDTO.getQty()));
-                detailAddDTO.setCurrency(detailEntity.getCurrency());
-                detailAddDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
-                detailAddDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
-                details.add(detailAddDTO);
-            }
-            addDTO.setDetails(details);
-            purchaseChangeService.add(addDTO);
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     *
+     * @author will
+     * @date 2025/8/5 18:09
+     * @param purchaseOrderEntity
+     * @param podMap
+     * @param priceChangeDetailEntity
+     * @return void
+     */
+    private void batchAdjustUpdatePurchaseOrder (PurchaseOrderEntity purchaseOrderEntity,Map<String, List<PurchaseOrderDetailEntity>> podMap,PurchasePriceChangeDetailEntity priceChangeDetailEntity) {
+        List<PurchaseOrderDetailEntity> detailList = podMap.get(purchaseOrderEntity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            log.error("采购订单{}未找到采购订单明细信息", purchaseOrderEntity.getCode());
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        for (PurchaseOrderDetailEntity detailEntity : detailList) {
+            detailEntity.setTaxPrice(priceChangeDetailEntity.getTaxPrice());
+            detailEntity.setTaxRate(priceChangeDetailEntity.getTaxRate());
+            detailEntity.setPurchaseAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getPurchaseQty()));
+            detailEntity.setUpdateTime(LocalDateTime.now());
+            detailEntity.setUpdateUserId(UserContext.getDefaultLoginUser().getUid());
+        }
+        purchaseOrderDetailService.updateBatchById(detailList);
+        //添加日志
+        moduleOperateLogService.addModuleOperateLog(CharSequenceUtil.format("采购订单明细含税单价调整为[{}],税率调整为[{}]", priceChangeDetailEntity.getTaxPrice().toString(),MathUtil.multiplyWithTwo(priceChangeDetailEntity.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"))
+                , ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), "采购订单明细调价");
+    }
+
+    /**
+     * 新增数据
+     * @author will
+     * @date 2025/8/5 17:01
+     * @param purchaseOrderEntity
+     * @param userInfo
+     * @param departmentUserNumberDTO
+     * @param podMap
+     * @param poSupplierMap
+     * @return void
+     */
+    private void batchAdjustAddChange (PurchaseOrderEntity purchaseOrderEntity,LoginUser userInfo,SysDepartmentUserNumberDTO departmentUserNumberDTO
+            ,Map<String, List<PurchaseOrderDetailEntity>> podMap,Map<String, String> poSupplierMap,PurchasePriceChangeDetailEntity priceChangeDetailEntity) {
+        PurchaseChangeDTO.AddDTO addDTO = new PurchaseChangeDTO.AddDTO();
+        addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
+        addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+        addDTO.setType(purchaseOrderEntity.getType());
+        addDTO.setChangeDate(LocalDate.now());
+        addDTO.setChangeUserId(userInfo.getUid());
+        addDTO.setChangeDeptId(departmentUserNumberDTO.getDepartmentId());
+
+        String supplierId = poSupplierMap.get(purchaseOrderEntity.getId());
+        if (CharSequenceUtil.isBlank(supplierId)) {
+            log.error("采购订单{}未找到供应商信息", purchaseOrderEntity.getCode());
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        addDTO.setSupplierId(supplierId);
+        List<PurchaseOrderDetailEntity> detailList = podMap.get(purchaseOrderEntity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            log.error("采购订单{}未找到采购订单明细信息", purchaseOrderEntity.getCode());
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        List<PurchaseChangeDetailDTO.AddDTO> details = new ArrayList<>();
+        for (PurchaseOrderDetailEntity detailEntity : detailList) {
+            PurchaseChangeDetailDTO.AddDTO detailAddDTO = new PurchaseChangeDetailDTO.AddDTO();
+            detailAddDTO.setPurchaseOrderDetailId(detailEntity.getId());
+            detailAddDTO.setSkuId(detailEntity.getSkuId());
+            detailAddDTO.setSkuNo(detailEntity.getSkuNo());
+            detailAddDTO.setProductName(detailEntity.getProductName());
+            detailAddDTO.setOldQty(detailEntity.getPurchaseQty());
+            detailAddDTO.setOldPrice(detailEntity.getTaxPrice());
+            detailAddDTO.setOldAmount(MathUtil.multiplyWithTwo(detailAddDTO.getOldPrice(),detailAddDTO.getOldQty()));
+            detailAddDTO.setQty(detailEntity.getPurchaseQty());
+            detailAddDTO.setPrice(priceChangeDetailEntity.getTaxPrice());
+            detailAddDTO.setAmount(MathUtil.multiplyWithTwo(detailAddDTO.getPrice(),detailAddDTO.getQty()));
+            detailAddDTO.setCurrency(detailEntity.getCurrency());
+            detailAddDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
+            detailAddDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+            details.add(detailAddDTO);
+        }
+        addDTO.setDetails(details);
+        purchaseChangeService.add(addDTO);
     }
 
     @Override

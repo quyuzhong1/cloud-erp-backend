@@ -367,6 +367,11 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 orderByDesc(PurchasePriceChangeDetailEntity::getUpdateTime).list();
     }
 
+    @Override
+    public PurchasePriceChangeDetailEntity getLatest(String purchasePriceDetailId, String id) {
+        return baseMapper.getLatest(purchasePriceDetailId,id);
+    }
+
     /**
      * @description: 审核通过验证
      * @author Will
