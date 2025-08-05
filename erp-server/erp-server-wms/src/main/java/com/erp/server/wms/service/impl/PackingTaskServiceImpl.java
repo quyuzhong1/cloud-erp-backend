@@ -2330,11 +2330,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 printDTO.setChargeId(requisitionApplication.getCreateUserId());
                 printDTO.setChargeName(requisitionApplication.getCreateUserName());
             }else if (Objects.nonNull(requisitionApplication)  && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
-
-                //箱唛国家字段按现有逻辑先取值三方仓管理的映射的三方仓所属国家，国家为空时取值仓库列表基础信息的国家
                 WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
-                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(requisitionApplication.getChannelId());
-
                 if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
                     DictCountryEntity country = sysUserFeign.getCountryById(warehouseEntity.getCountry());
                     printDTO.setCountryId(warehouseEntity.getCountry());
