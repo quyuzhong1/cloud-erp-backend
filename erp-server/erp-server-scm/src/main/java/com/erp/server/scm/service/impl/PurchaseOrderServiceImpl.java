@@ -128,6 +128,7 @@ import java.util.stream.Stream;
 
 import static com.common.business.constant.ThirdConstants.PURCHASE_ORDER_DETAIL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER_ADJUST;
 
 /**
  * <p>
@@ -3466,7 +3467,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean exportAdjustExcel(PurchaseOrderDTO.SearchAdjustParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("历史未完结订单", EXPORT_SCM_PURCHASE_ORDER.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("历史未完结订单", EXPORT_SCM_PURCHASE_ORDER_ADJUST.getCode(), dto);
         return Boolean.TRUE;
     }
 
