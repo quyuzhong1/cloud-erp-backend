@@ -138,7 +138,7 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             }
 
             String listingMongoDataReportId = listingMongoDataItem.getOrDefault(REPORT_ID, "").toString();
-            if(StringUtils.isNotBlank(listingMongoDataReportId) && StringUtils.isNotBlank(reportId) && !listingMongoDataReportId.equalsIgnoreCase(reportId)){
+            if(StringUtils.isNotBlank(reportId) && !listingMongoDataReportId.equalsIgnoreCase(reportId)){
                 //标记为删除状态
                 listingMongoDataItem.put("status", "Delete");
             }
