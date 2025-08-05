@@ -3676,11 +3676,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> supplierIdList = CollUtil.isEmpty(supplierList) ? Collections.emptyList() : supplierList.stream().map(SupplierEntity::getId).distinct().collect(Collectors.toList());
 
         //供应商联系人信息
-        List<String> contactNames = successList.stream().map(PurchaseOrderMainExcelDTO::getContactName).distinct().collect(Collectors.toList());
+        List<String> contactNames = successList.stream().map(PurchaseOrderMainExcelDTO::getContactName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SupplierContactEntity> supplierContactList = supplierContactService.listByNameList(contactNames,supplierIdList);
 
         //供应商账户信息
-        List<String> supplierAccountNames = successList.stream().map(PurchaseOrderMainExcelDTO::getSupplierAccountName).distinct().collect(Collectors.toList());
+        List<String> supplierAccountNames = successList.stream().map(PurchaseOrderMainExcelDTO::getSupplierAccountName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listByNameList(supplierAccountNames,supplierIdList);
 
         //采购组织

@@ -229,8 +229,8 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
             return Collections.emptyList();
         }
         return lambdaQuery()
-                .in(SupplierContactEntity::getPerson,contactNames)
-                .in(SupplierContactEntity::getSupplierId,supplierIdList)
+                .in(CollUtil.isNotEmpty(contactNames),SupplierContactEntity::getPerson,contactNames)
+                .in(CollUtil.isNotEmpty(supplierIdList),SupplierContactEntity::getSupplierId,supplierIdList)
                 .eq(SupplierContactEntity::getDisabled,Boolean.FALSE)
                 .list();
     }

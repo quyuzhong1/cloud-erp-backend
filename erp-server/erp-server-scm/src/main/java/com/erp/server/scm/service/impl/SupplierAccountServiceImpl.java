@@ -249,8 +249,8 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             return Collections.emptyList();
         }
         return lambdaQuery()
-                .in(SupplierAccountEntity::getPayee,supplierAccountNames)
-                .in(SupplierAccountEntity::getSupplierId,supplierIdList)
+                .in(CollUtil.isNotEmpty(supplierAccountNames),SupplierAccountEntity::getPayee,supplierAccountNames)
+                .in(CollUtil.isNotEmpty(supplierIdList),SupplierAccountEntity::getSupplierId,supplierIdList)
                 .list();
     }
 
