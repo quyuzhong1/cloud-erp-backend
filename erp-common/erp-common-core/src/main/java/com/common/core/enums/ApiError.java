@@ -852,6 +852,10 @@ public enum ApiError implements Serializable {
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
     ERROR_CONTACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
+    ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
+    ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
+    ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
+
 
     /**
      * WMS 错误

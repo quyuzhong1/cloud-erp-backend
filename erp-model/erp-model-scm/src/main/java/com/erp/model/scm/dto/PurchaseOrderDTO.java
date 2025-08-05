@@ -2113,6 +2113,13 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AdjustPriceDTO {
+
+        /**
+         * 采购调价表明细id
+         */
+        @NotBlank(message = "采购调价表明细id不能为空")
+        private String purchasePriceChangeDetailId;
+
         /**
          * 主键明细id
          */
