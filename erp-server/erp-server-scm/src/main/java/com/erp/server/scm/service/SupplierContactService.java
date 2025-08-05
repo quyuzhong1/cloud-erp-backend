@@ -99,5 +99,5 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @param contactNames
      * @return List<SupplierContactEntity>
      */
-    List<SupplierContactEntity> listByNameList(List<String> contactNames);
+    List<SupplierContactEntity> listByNameList(List<String> contactNames,List<String> supplierIdList);
 }

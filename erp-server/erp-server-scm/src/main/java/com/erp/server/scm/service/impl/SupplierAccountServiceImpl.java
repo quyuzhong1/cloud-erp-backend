@@ -244,11 +244,14 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
     }
 
     @Override
-    public List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames) {
-        if (CollUtil.isEmpty(supplierAccountNames)) {
+    public List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames,List<String> supplierIdList) {
+        if (CollUtil.isEmpty(supplierAccountNames) && CollUtil.isEmpty(supplierIdList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SupplierAccountEntity::getPayee,supplierAccountNames).list();
+        return lambdaQuery()
+                .in(CollUtil.isNotEmpty(supplierAccountNames),SupplierAccountEntity::getPayee,supplierAccountNames)
+                .in(CollUtil.isNotEmpty(supplierIdList),SupplierAccountEntity::getSupplierId,supplierIdList)
+                .list();
     }
 
 
