@@ -1672,7 +1672,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //国家名称
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             item.setCountryName(countryName);
-            String orderTypeName = OrderTypeEnum.getName(orderType);
+            String orderTypeName = BillTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus ? "已作废" : "未作废";

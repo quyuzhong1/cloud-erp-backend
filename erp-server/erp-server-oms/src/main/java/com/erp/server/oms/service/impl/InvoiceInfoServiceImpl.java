@@ -45,6 +45,7 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
+import com.google.common.collect.Lists;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -643,35 +644,40 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public void retryInvoice() {
         //查开票中的发票
-        List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).list();
-        if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
+        List<InvoiceInfoEntity> allInvoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).list();
+        if(CollectionUtils.isEmpty(allInvoiceInfoEntityList)){
+            log.warn("没有需要重试的开票中的发票");
             return;
         }
-        List<String> soIds = invoiceInfoEntityList.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<String> platformCodeList = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<CfgVatInvoiceEntity> cfgVatInvoiceEntities = cfgVatInvoiceService.listCfgByShopIds(shopIds);
-        List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
-        List<String> platformSkuNoList = allSoB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.PLATFORM.getCode(), soB2cEntityList.get(0).getDictPlatform(), platformSkuNoList);
+        List<List<InvoiceInfoEntity>> partitionedList = Lists.partition(allInvoiceInfoEntityList, 1000);
+        for (List<InvoiceInfoEntity> invoiceInfoEntityList : partitionedList) {
+            List<String> soIds = invoiceInfoEntityList.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<String> platformCodeList = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<CfgVatInvoiceEntity> cfgVatInvoiceEntities = cfgVatInvoiceService.listCfgByShopIds(shopIds);
+            List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
+            List<String> platformSkuNoList = allSoB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.PLATFORM.getCode(), soB2cEntityList.get(0).getDictPlatform(), platformSkuNoList);
 
-        //查询亚马逊财务配送报告
-        List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class).in(DmpSoBillDetailEntity::getPlatformCode,platformCodeList)
-                .in(DmpSoBillDetailEntity::getShopId,shopIds)
-                .eq(DmpSoBillDetailEntity::getSourcePlatform, PlatformDictEnum.AMAZON.getCode()).list();
-        List<InvoiceInfoEntity> updateList = new ArrayList<>();
-        for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
-            DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(invoiceInfoEntity.getShopId())&& e.getPlatformCode().equals(invoiceInfoEntity.getPlatformCode())).findFirst().orElse(null);
-            if(Objects.isNull(dmpSoBillDetailEntity)){
-                continue;
+            //查询亚马逊财务配送报告
+            List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class).in(DmpSoBillDetailEntity::getPlatformCode,platformCodeList)
+                    .in(DmpSoBillDetailEntity::getShopId,shopIds)
+                    .eq(DmpSoBillDetailEntity::getSourcePlatform, PlatformDictEnum.AMAZON.getCode()).list();
+            List<InvoiceInfoEntity> updateList = new ArrayList<>();
+            for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
+                DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(invoiceInfoEntity.getShopId())&& e.getPlatformCode().equals(invoiceInfoEntity.getPlatformCode())).findFirst().orElse(null);
+                if(Objects.isNull(dmpSoBillDetailEntity)){
+                    log.warn("{}亚马逊财务配送报告不存在",invoiceInfoEntity.getCode());
+                    continue;
+                }
+                generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList, allDmpSoBillDetailEntityList, listingInfoEntityList);
+                updateList.add(invoiceInfoEntity);
             }
-            generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList, allDmpSoBillDetailEntityList, listingInfoEntityList);
-            updateList.add(invoiceInfoEntity);
+            this.autoUploadInvoice(updateList, cfgVatInvoiceEntities, soB2cEntityList, new ArrayList<>());
+            service.updateBatchById(updateList);
+            soB2cService.updateBatchById(soB2cEntityList);
         }
-        this.autoUploadInvoice(updateList, cfgVatInvoiceEntities, soB2cEntityList, new ArrayList<>());
-        service.updateBatchById(updateList);
-        soB2cService.updateBatchById(soB2cEntityList);
     }
 
     /**
