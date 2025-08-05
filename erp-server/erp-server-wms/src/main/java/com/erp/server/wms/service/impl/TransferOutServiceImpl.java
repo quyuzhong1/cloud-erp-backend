@@ -494,8 +494,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
+    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(detailIdList);
         if(CollUtil.isEmpty(dataList)) {
             return null;
         }

@@ -282,8 +282,8 @@ public class TransferOutController extends BaseController {
             menuCode = "wms:transfer:out:viewGenerateTransferIn",
             tableAlias = "tfo"
     )
-    public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getIds());
+    public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getDetailIdList());
         return success(list);
     }
 
