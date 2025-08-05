@@ -41,14 +41,8 @@ import java.util.stream.Collectors;
 public class MqRecordConsumerService implements RocketMQListener<String> {
 
     @Resource
-    private CfgThirdNoticeService cfgThirdNoticeService;
-
-    @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
-    @Resource
-    @Qualifier("thirdNoticePushExecutor")
-    private Executor thirdNoticePushExecutor;
 
 
     public static final String TABLE_BUSINESS_KEY = "TABLE_BUSINESS_KEY";
