@@ -37,6 +37,8 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
 
     public static final String AMAZON_LISTING_DETAIL_DATA = "amazon_listingDetail_data";
 
+    public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
+
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<ParamData> paramDataList = new ArrayList<>();
@@ -44,9 +46,10 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         if (StringUtils.isBlank(childId)) {
             throw new ServiceException("未查询到DmpInputAmzProductDmpHandler子类id");
         }
-        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, childId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+
+        List<ParamData> detailParamDataList = new ArrayList<>();
+        detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DATA);
 
         // 按产品ID维度去重
         List<Map<String, Object>> dmpInputMongoLastList = new LinkedList<>();
@@ -63,8 +66,6 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         // 查询和替换ASIN
         // 查询明细
         // 当前sku子任务明细所有结果
-        List<ParamData> detailParamDataList = new ArrayList<>();
-        detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DETAIL_DATA);
 
         for (Map<String, Object> listingMongoDataItem : dmpInputMongoLastList) {
