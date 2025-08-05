@@ -1,5 +1,6 @@
 package com.erp.model.workflow.dto;
 
+import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import lombok.Data;
@@ -19,6 +20,11 @@ import java.util.Map;
 @NoArgsConstructor
 @Data
 public class EndProcessDTO {
+
+    /**
+     * 审核平台，默认erp
+     */
+    private ApprovePlatformEnum approvePlatformEnum = ApprovePlatformEnum.ERP;
 
     /**
      * 业务key
