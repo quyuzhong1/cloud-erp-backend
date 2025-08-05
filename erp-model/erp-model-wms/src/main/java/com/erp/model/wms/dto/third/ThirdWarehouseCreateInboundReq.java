@@ -267,6 +267,7 @@ public class ThirdWarehouseCreateInboundReq {
     @Builder
     public static class Item {
 
+        private String batchNo;
         /**
          * 海外仓产品SKU
          */
