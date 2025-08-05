@@ -9,11 +9,14 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
 import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
 import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
 import com.sdk.wms.damai.dto.response.DaMaiCreateInboundResp;
 import com.sdk.wms.damai.dto.response.DaMaiWarehouseResp;
 import com.sdk.wms.damai.service.DaMaiService;
+import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -143,12 +146,16 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
-        return null;
+        throw new ServiceException("该仓库入库单不允许修改，请取消入库单后重新创建");
     }
 
     @Override
     protected ApiResult<String> cancelInboundBill(ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        return null;
+        DaMaiBaseResp<String> resp = daMaiService.cancelInbound(ThirdWarehouseContext.getAuthMap(),new DaMaiCancelInboundRequest(cancelInboundReq.getReceivingCode()));
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success();
     }
 
     @Override

@@ -2,7 +2,10 @@ package com.sdk.wms.damai.service;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessCommonConstants;
+import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
 import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
+import com.sdk.wms.damai.dto.request.DaMaiInventoryAgeRequest;
+import com.sdk.wms.damai.dto.request.DaMaiInventoryTransRequest;
 import com.sdk.wms.damai.dto.response.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,4 +69,29 @@ public class DaMaiServiceTest {
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
+    @Test
+    public void cancelInbound() {
+
+        DaMaiBaseResp<String> resp = daMaiService.cancelInbound(authMap,new DaMaiCancelInboundRequest("ASNP8D20250801000001"));
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void getInventoryTrans() {
+        DaMaiInventoryTransRequest daMaiInventoryTransRequest = new DaMaiInventoryTransRequest();
+        daMaiInventoryTransRequest.setStartOperationTime("2025-07-01 00:00:00");
+        daMaiInventoryTransRequest.setEndOperationTime("2025-08-01 00:00:00");
+        DaMaiPageBaseResp<List<DaMaiInventoryTransResp>> resp = daMaiService.getInventoryTrans(authMap,daMaiInventoryTransRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void getInventoryAge() {
+        DaMaiInventoryAgeRequest daMaiInventoryAgeRequest = new DaMaiInventoryAgeRequest();
+        daMaiInventoryAgeRequest.setCustomerSkuCodeList(Arrays.asList("TEST-PHONE","TEST-001"));
+        daMaiInventoryAgeRequest.setPage(1);
+        daMaiInventoryAgeRequest.setLimit(200);
+        DaMaiBaseResp<String> resp = daMaiService.getInventoryAge(authMap,daMaiInventoryAgeRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
 }

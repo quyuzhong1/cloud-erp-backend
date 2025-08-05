@@ -5,7 +5,10 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
+import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
 import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
+import com.sdk.wms.damai.dto.request.DaMaiInventoryAgeRequest;
+import com.sdk.wms.damai.dto.request.DaMaiInventoryTransRequest;
 import com.sdk.wms.damai.dto.response.*;
 import com.sdk.wms.damai.utils.DaMaiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -114,6 +117,79 @@ public class DaMaiService {
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCreateInboundRequest), headerMap);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         DaMaiBaseResp<DaMaiCreateInboundResp> response = DaMaiUtils.parseToResp(bodyStr,DaMaiCreateInboundResp.class);
+        return response;
+    }
+
+    /**
+     * 取消入库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<String> cancelInbound(Map<String,Object> authMap, DaMaiCancelInboundRequest daMaiCancelInboundRequest){
+        String path = "/omsService/non/asnAnApi/cancelAsnAn";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiCancelInboundRequest));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCancelInboundRequest), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        DaMaiBaseResp<String> response = DaMaiUtils.parseToResp(bodyStr,String.class);
+        return response;
+    }
+    /**
+     * 库存流水
+     * @param authMap
+     * @return
+     */
+    public DaMaiPageBaseResp<List<DaMaiInventoryTransResp>> getInventoryTrans(Map<String,Object> authMap, DaMaiInventoryTransRequest daMaiInventoryTransRequest){
+        String url = "/omsService/non/skuInvApi/getSkuInvTrans";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        int page = 1;
+        int limit = 100;
+        boolean hasMore = true;
+        List<DaMaiInventoryTransResp> allData = new ArrayList<>();
+        while (hasMore) {
+            daMaiInventoryTransRequest.setLimit(limit);
+            daMaiInventoryTransRequest.setPage(page);
+            String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + url, JSONUtil.toJsonStr(daMaiInventoryTransRequest), headerMap);
+            DaMaiPageBaseResp<List<DaMaiInventoryTransResp>> response = DaMaiUtils.parsePageToResp(bodyStr, new TypeReference<DaMaiPageBaseResp<List<DaMaiInventoryTransResp>>>() {});
+            if (StringUtils.isBlank(response.getMsg())) {
+                List<DaMaiInventoryTransResp> respList = response.getData();
+                if (respList == null || respList.isEmpty()) {
+                    hasMore = false;
+                    continue;
+                }
+                if (response.getCount() != null ) {
+                    allData.addAll(respList);
+                    if (response.getCount() <= page * limit) {
+                        hasMore = false;
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            }else{
+                // 如果请求失败，直接返回错误信息
+                DaMaiPageBaseResp<List<DaMaiInventoryTransResp>> errorResp = new DaMaiPageBaseResp<>();
+                errorResp.setMsg(response.getMsg());
+                return errorResp;
+            }
+        }
+        DaMaiPageBaseResp<List<DaMaiInventoryTransResp>> errorResp = new DaMaiPageBaseResp<>();
+        errorResp.setMsg("");
+        errorResp.setData(allData);
+        return errorResp;
+    }
+
+    /**
+     * 批次库龄
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<String> getInventoryAge(Map<String,Object> authMap, DaMaiInventoryAgeRequest daMaiInventoryAgeRequest){
+        String path = "/omsService/non/skuInvApi/getSkuBatchInv";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiInventoryAgeRequest), headerMap);
+        DaMaiBaseResp<String> response = DaMaiUtils.parseToResp(bodyStr,String.class);
         return response;
     }
 
