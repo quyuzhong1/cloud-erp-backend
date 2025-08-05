@@ -72,6 +72,7 @@ public final class SoUtils {
         headMap.put("scarceQty", "缺货数量");
         headMap.put("virtualScarceQty", "虚拟仓缺货数量");
         headMap.put("effectiveNoticeQty", "发货通知数量");
+        headMap.put("remainingNoticeQty", "剩余发货通知数量");
         headMap.put("availableQty", "可出数量");
         headMap.put("deliveryQty", "已出库数量");
         headMap.put("waitQty", "剩余未出数量");

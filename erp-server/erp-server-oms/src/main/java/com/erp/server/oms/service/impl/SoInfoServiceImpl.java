@@ -1027,6 +1027,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
+                
+                //剩余发货通知数量 = 销售数量 - 发货通知数量
+                Integer remainingNoticeQty = qty - effectiveNoticeQty;
+                item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
 

@@ -67,6 +67,13 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             return getQueryAllSql();
         }
 
+        /**
+         * 剩余发货通知数量
+         */
+        if("remainingNoticeQty".equals(field)){
+            return "(sod.qty - COALESCE(sod.effective_notice_qty, 0)) " + compareCodeSplicingValueSql;
+        }
+
         if("tab".equals(field)){
             switch (value.toString()) {
                 case OmsConstant.WAIT_SUBMIT:

@@ -58,17 +58,19 @@
         sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        COALESCE(sdnd.deliveryQty, 0) as effectiveNoticeQty,
+        (sod.qty - COALESCE(sdnd.deliveryQty, 0)) as remainingNoticeQty
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         left join foreign_dict_partition fdp on fdp.id = si.partition_id and fdp.is_deleted = false
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') )">
-            left join (
+        left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
-            ) sdnd on sod.id = sdnd.source_detail_id
+        ) sdnd on sod.id = sdnd.source_detail_id
+        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') )">
             left join (
             select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
             ,vi.warehouse_id
