@@ -32,4 +32,13 @@ public abstract class AbstractApproveHandler {
      * @return void
      */
     public abstract Boolean approveEnd(ApproveDTO.EndProcessDTO dto);
+
+    /**
+     * 同步第三方评论（日志）
+     *
+     * @param dto
+     * @author will
+     * @date 2025/6/18 09:40
+     */
+    public abstract void addComment(ApproveDTO.AddCommentDTO dto);
 }

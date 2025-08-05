@@ -69,4 +69,12 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
      * @param businessIds
      */
     void removeByBusinessIds(List<String> businessIds);
+    /**
+     * 批量添加
+     * @author will
+     * @date 2025/8/5 14:57
+     * @param operateLogList
+     * @return void
+     */
+    void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList);
 }
