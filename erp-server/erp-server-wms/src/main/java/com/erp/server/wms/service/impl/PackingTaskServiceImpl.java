@@ -2312,10 +2312,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(firstMileDelivery.getShopId());
                     if (Objects.nonNull(shopInfo)){
                         printDTO.setShopName(shopInfo.getName());
-                        printDTO.setChargeId(shopInfo.getChargeId());
-                        printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
+                //取发货单创建人
+                printDTO.setChargeId(firstMileDelivery.getCreateUserId());
+                printDTO.setChargeName(firstMileDelivery.getCreateUserName());
             }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
@@ -2324,9 +2325,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     printDTO.setCountryId(shopInfo.getDictCountryCode());
                     printDTO.setCountryName(shopInfo.getCountryName());
                     printDTO.setShopName(shopInfo.getName());
-                    printDTO.setChargeId(shopInfo.getChargeId());
-                    printDTO.setChargeName(shopInfo.getChargeName());
                 }
+                //取要货申请创建人
+                printDTO.setChargeId(requisitionApplication.getCreateUserId());
+                printDTO.setChargeName(requisitionApplication.getCreateUserName());
             }else if (Objects.nonNull(requisitionApplication)  && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode())){
                 WarehouseEntity warehouseEntity = warehouseService.getById(requisitionApplication.getChannelId());
                 if(StringUtils.isNotBlank(warehouseEntity.getCountry())){
@@ -2335,7 +2337,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     if (Objects.nonNull(country)){
                         printDTO.setCountryName(country.getNameCn());
                     }
+                }else {
+
                 }
+                //取要货申请创建人
+                printDTO.setChargeId(requisitionApplication.getCreateUserId());
+                printDTO.setChargeName(requisitionApplication.getCreateUserName());
             }
         }
         return printDTO;
