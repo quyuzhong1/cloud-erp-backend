@@ -13,6 +13,8 @@ import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
@@ -58,6 +60,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
         operateLogService.addModuleOperateLog(StrUtil.format("状态变更为{}", SoB2cWarehouseDeliveryStatusEnum.getName(entity.getStatus())), ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),entity.getId(), "状态变更");
        return thirdWarehouseDeliveryService.updateById(entity);
     }
+
     @PostMapping("/generateDeliveryAndOutStock")
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         thirdWarehouseDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);

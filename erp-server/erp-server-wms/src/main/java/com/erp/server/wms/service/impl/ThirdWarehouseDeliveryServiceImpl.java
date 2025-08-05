@@ -153,41 +153,62 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         SoB2cEntity entity = generateDeliveryAndOutStockDTO.getEntity();
         List<SoB2cDetailEntity> soB2cDetailEntityList = generateDeliveryAndOutStockDTO.getDetailEntityList();
         SoB2cDTO.DeliveryWithNotOutboundDTO deliveryWithNotOutboundDTO = generateDeliveryAndOutStockDTO.getDto();
         OverseasProviderWarehouseDTO.ViewDTO viewDTO = generateDeliveryAndOutStockDTO.getOverseasWarehouseDto();
-        ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
-        addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
-        addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
-        addThirdWarehouseDeliveryEntity.setCode(code);
-        addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
-        addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
-        addThirdWarehouseDeliveryEntity.setThirdWarehousePlatform(viewDTO.getProviderCode());
-        addThirdWarehouseDeliveryEntity.setShippingMethod(deliveryWithNotOutboundDTO.getLogisticsChannelCode());
-        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
-            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-            thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-            thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
-            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
-            thirdWarehouseDeliveryDetailEntity.setWarehouseId(deliveryWithNotOutboundDTO.getWarehouseId());
-            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-            thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(viewDTO.getPlatformWarehouseCode());
-            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
-            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
-            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+        ThirdWarehouseDeliveryEntity exist = this.getLatestBySoId(entity.getId());
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
+        if(Objects.nonNull(exist) && (exist.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())
+                || exist.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus()))) {
+            thirdWarehouseDeliveryEntity = exist;
+        }else{
+            ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+            addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
+            addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
+            addThirdWarehouseDeliveryEntity.setCode(code);
+            addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
+            addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
+            addThirdWarehouseDeliveryEntity.setThirdWarehousePlatform(viewDTO.getProviderCode());
+            addThirdWarehouseDeliveryEntity.setShippingMethod(deliveryWithNotOutboundDTO.getLogisticsChannelCode());
+            addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus());
+            List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+            for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+                ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+                thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+                thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
+                thirdWarehouseDeliveryDetailEntity.setWarehouseId(deliveryWithNotOutboundDTO.getWarehouseId());
+                thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+                thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(viewDTO.getPlatformWarehouseCode());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+                thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+            }
+            addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+            thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity);
         }
-        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity);
+
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
         platformOutboundDTO.setTrackNo(deliveryWithNotOutboundDTO.getTrackNo());
         platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO);
+        entity = soB2cFeign.getById(entity.getId());
+        if(entity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
+            if(!thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus())){
+                thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus());
+                this.updateById(thirdWarehouseDeliveryEntity);
+            }
+            throw new ServiceException("生成销售出库单失败,请查看订单异常");
+        }else{
+            if(!thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())){
+                thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
+                this.updateById(thirdWarehouseDeliveryEntity);
+            }
+        }
     }
 
     @Override
