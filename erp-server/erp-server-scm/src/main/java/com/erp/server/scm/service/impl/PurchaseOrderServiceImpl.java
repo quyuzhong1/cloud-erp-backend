@@ -3627,13 +3627,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 .list();
         Map<String, SupplierEntity> supplierMap = CollUtil.isEmpty(supplierList) ? new HashMap<>() : supplierList.stream().collect(Collectors.toMap(SupplierEntity::getName, Function.identity()));
 
+        List<String> supplierIdList = CollUtil.isEmpty(supplierList) ? Collections.emptyList() : supplierList.stream().map(SupplierEntity::getId).distinct().collect(Collectors.toList());
+
         //供应商联系人信息
         List<String> contactNames = successList.stream().map(PurchaseOrderMainExcelDTO::getContactName).distinct().collect(Collectors.toList());
-        List<SupplierContactEntity> supplierContactList = supplierContactService.listByNameList(contactNames);
+        List<SupplierContactEntity> supplierContactList = supplierContactService.listByNameList(contactNames,supplierIdList);
 
         //供应商账户信息
         List<String> supplierAccountNames = successList.stream().map(PurchaseOrderMainExcelDTO::getSupplierAccountName).distinct().collect(Collectors.toList());
-        List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listByNameList(supplierAccountNames);
+        List<SupplierAccountEntity> supplierAccountList = supplierAccountService.listByNameList(supplierAccountNames,supplierIdList);
 
         //采购组织
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
@@ -3686,6 +3688,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     } else {
                         supplierAccountId = supplierAccountEntity.getId();
                     }
+                } else {
+                    //取默认账户,无默认则无需取值
+                    SupplierAccountEntity supplierAccountEntity = supplierAccountList.stream().filter(obj -> obj.getIsDefault() && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(supplierAccountEntity)) {
+                        supplierAccountId = supplierAccountEntity.getId();
+                    }
                 }
                 //联系人名称验证
                 if (CharSequenceUtil.isNotBlank(mainExcelDTO.getContactName())) {
@@ -3693,6 +3701,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     if (ObjectUtil.isEmpty(supplierContactEntity)) {
                         mainErrorMsgList.add(CharSequenceUtil.format("未找到联系人名称"));
                     } else {
+                        supplierContactId = supplierContactEntity.getId();
+                    }
+                } else {
+                    //取默认联系人,无默认则无需取值
+                    SupplierContactEntity supplierContactEntity = supplierContactList.stream().filter(obj -> obj.getIsDefault() && CharSequenceUtil.equals(obj.getSupplierId(), supplierEntity.getId())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(supplierContactEntity)) {
                         supplierContactId = supplierContactEntity.getId();
                     }
                 }
@@ -3707,6 +3721,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 } else {
                     payMethodId = dictBasicEntity.getId();
                 }
+            } else {
+                payMethodId = ObjectUtil.isNotEmpty(supplierEntity) ? supplierEntity.getPayMethodId() : "";
             }
 
             //付款条件验证
@@ -3718,6 +3734,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 } else {
                     paymentCondition = kingdeePaymentConditionEntity.getCode();
                 }
+            } else {
+                paymentCondition = ObjectUtil.isNotEmpty(supplierEntity) ? supplierEntity.getPaymentCondition() : "";
             }
 
             //存在错误直接返回

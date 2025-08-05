@@ -224,11 +224,15 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     }
 
     @Override
-    public List<SupplierContactEntity> listByNameList(List<String> contactNames) {
-        if (CollUtil.isEmpty(contactNames)) {
+    public List<SupplierContactEntity> listByNameList(List<String> contactNames,List<String> supplierIdList) {
+        if (CollUtil.isEmpty(contactNames) && CollUtil.isEmpty(supplierIdList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SupplierContactEntity::getPerson,contactNames).eq(SupplierContactEntity::getDisabled,Boolean.FALSE).list();
+        return lambdaQuery()
+                .in(SupplierContactEntity::getPerson,contactNames)
+                .in(SupplierContactEntity::getSupplierId,supplierIdList)
+                .eq(SupplierContactEntity::getDisabled,Boolean.FALSE)
+                .list();
     }
 
 
