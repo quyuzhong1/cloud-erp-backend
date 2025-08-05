@@ -123,10 +123,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 分步式调出单下推分布式调入单
-     * @param ids
+     * @param detailIdList
      * @return
      */
-    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids);
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList);
 
     /**
      * 下推分布式调入单保存
