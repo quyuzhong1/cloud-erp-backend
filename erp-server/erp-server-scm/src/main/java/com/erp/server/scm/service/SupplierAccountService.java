@@ -95,5 +95,5 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @param supplierAccountNames
      * @return List<SupplierAccountEntity>
      */
-    List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames);
+    List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames,List<String> supplierIdList);
 }
