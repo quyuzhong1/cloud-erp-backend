@@ -201,20 +201,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.add(waitApprove);
 
 
-        List<SoDetailDTO.TypeCountDTO> deliveryCountList = baseMapper.listDeliveryCount(dto.getPermissionSql());
+        // 使用新的XML查询方法进行待发货和已发货统计
+        Integer waitDeliveryCount = baseMapper.listWaitDeliveryCount(dto.getPermissionSql());
+        Integer deliveredCount = baseMapper.listDeliveredCount(dto.getPermissionSql());
+
         //待发货
         SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
         waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);
-
-        //已发货
-        String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
-
-        //已审核+未发货+部分发货的
-        int waitDeliveryCount = deliveryCountList.stream().filter(s -> !completeShipment.equals(s.getType())).
-                mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
-        waitDelivery.setCount(waitDeliveryCount);
-
-
+        waitDelivery.setCount(waitDeliveryCount != null ? waitDeliveryCount : 0);
         result.add(waitDelivery);
 
         //不通过
@@ -229,9 +223,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        int deliveryCount = (int) deliveryCountList.stream().filter(s -> completeShipment.equals(s.getType())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        delivery.setCount(deliveryCount);
+        delivery.setCount(deliveredCount != null ? deliveredCount : 0);
         result.add(delivery);
         return result;
     }
