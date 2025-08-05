@@ -446,7 +446,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
             thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }else{
-            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
+            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
             soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
         }
     }
