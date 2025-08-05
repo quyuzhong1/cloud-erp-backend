@@ -158,6 +158,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getByCodeAndSoId(mainEntity.getShippingOrderNo(),mainEntity.getId());
         }
 
+        if(Objects.nonNull(thirdWarehouseDeliveryEntity) && thirdWarehouseDeliveryEntity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus())){
+            return ApiResult.success();
+        }
         // 当前单据状态
         String curBillStatus = mainEntity.getBillStatus();
 

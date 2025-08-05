@@ -317,23 +317,36 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityList)) {
 				JSONObject parseObject = JSON.parseObject(JSON.toJSONString(object));
 				for(DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity : dmpCfgOutputBlackEntityList) {
-					String fieldName = dmpCfgOutputBlackEntity.getFieldName();
-					if(StringUtils.isBlank(fieldName)) {
-						return false;
-					}
-					String[] fieldNameArr = fieldName.split("\\.");
-					if(fieldNameArr.length > 1) {
-						String className = fieldNameArr[0];
-						if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
-							return false;
+					String[] dataTypeList = dmpCfgOutputBlackEntity.getDataType().split("&&");
+					String[] compareSignList = dmpCfgOutputBlackEntity.getCompareSign().split("&&");
+					String[] fieldNameList = dmpCfgOutputBlackEntity.getFieldName().split("&&");
+					String[] fieldValueList = dmpCfgOutputBlackEntity.getFieldValue().split("&&");
+					boolean outputBlack = false;
+					for (int i = 0; i < dataTypeList.length; i++) {
+						String fieldName = fieldNameList[i];
+						if(StringUtils.isBlank(fieldName)) {
+							continue;
+						}
+						String[] fieldNameArr = fieldName.split("\\.");
+						if(fieldNameArr.length > 1) {
+							String className = fieldNameArr[0];
+							if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
+								continue;
+							}
+						}
+						String key = fieldNameArr[fieldNameArr.length - 1];
+						if(StringUtils.isBlank(key)) {
+							continue;
+						}
+						Object value = parseObject.get(key);
+						if(this.validate(value, dataTypeList[i] , compareSignList[i] , fieldValueList[i])) {
+							outputBlack = true;
+						}else {
+							outputBlack = false;
+							break;
 						}
 					}
-					String key = fieldNameArr[fieldNameArr.length - 1];
-					if(StringUtils.isBlank(key)) {
-						return false;
-					}
-					Object value = parseObject.get(key);
-					if(this.validate(value, dmpCfgOutputBlackEntity)) {
+					if(outputBlack) {
 						return true;
 					}
 				}
@@ -342,12 +355,10 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		return false;
 	}
 	
-	private boolean validate(Object value , DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity) {
+	private boolean validate(Object value , String dataType , String compareSign ,  String fieldValue) {
 		if(isNotValidate) {
 			return false;
 		}
-		String compareSign = dmpCfgOutputBlackEntity.getCompareSign();
-		String dataType = dmpCfgOutputBlackEntity.getDataType();
 		if(StringUtils.isBlank(compareSign) || StringUtils.isBlank(dataType)) {
 			return true;
 		}
@@ -364,7 +375,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				|| DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)){
 			if(value != null) {
 				String valueString = value.toString();
-				String fieldValue = dmpCfgOutputBlackEntity.getFieldValue();
 				if(DmpCfgOutputBlackDataTypeEnum.STRING.getCode().equals(dataType)) {
 					if(DmpCfgOutputBlackCompareSignEnum.EQ.getCode().equals(compareSign)) {
 						return StringUtils.equals(valueString, fieldValue);

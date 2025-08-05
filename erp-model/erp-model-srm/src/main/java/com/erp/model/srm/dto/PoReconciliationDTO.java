@@ -45,7 +45,10 @@ public class PoReconciliationDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
-
+        /**
+         * 主键id
+         */
+        private String id;
     }
 
 

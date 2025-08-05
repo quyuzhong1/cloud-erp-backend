@@ -408,7 +408,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	 */
 	private Map<String, String> queryAndConvertArrivalDate(List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity) {
 		List<String> amzPlatformDetailIdList = changeDmpSoOutstockDetailEntity.stream()
-				.filter(e -> e.getPlatformType().equalsIgnoreCase(DmpBasicSystemCodeEnum.AMAZON.getCode()) && StringUtils.isNotBlank(e.getPlatformDetailId()))
+				.filter(e -> DmpBasicSystemCodeEnum.AMAZON.getCode().equalsIgnoreCase(e.getPlatformType()) && StringUtils.isNotBlank(e.getPlatformDetailId()))
 				.map(DmpSoOutstockDetailEntity::getPlatformDetailId)
 				.collect(Collectors.toList());
 		if (CollUtil.isEmpty(amzPlatformDetailIdList)) {

@@ -3,6 +3,7 @@ package com.sdk.wms.weishi.service;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.*;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,27 +23,37 @@ import java.util.Map;
 @Component
 public class WeiShiService {
 
-    private final String preUrl = "https://test8.toms.360lion.com:2444";
+    private static final String api = "/prod-api/omsapi/api";
 
-    private final String api = "/prod-api/omsapi/api";
-
-    private final String apiUrl = preUrl + api;
+    private String getPreUrl(){
+        if (BusinessCommonConstants.hasProfile("prod")) {
+            return "https://tms.360lion.com";
+        } else {
+            return "https://test8.toms.360lion.com:2444";
+        }
+    }
 
     public static void main(String[] args) {
-        WeiShiService weiShiService = new WeiShiService();
-        Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
-        authMap.put("accessToken","769cf24c-3463-4374-b52d-b276b3051188");
-
-        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
-//        WeiShiBaseResp<WeiShiTokenResp> weiShiBaseResp = weiShiService.accessToken(authMap);
-        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
-
+//        WeiShiService weiShiService = new WeiShiService();
+//        Map<String,Object> authMap = new HashMap<>();
+//        authMap.put("appKey","613cefbb29a34ab5af3f26c3a04ff6a7");
+//        authMap.put("accessToken","769cf24c-3463-4374-b52d-b276b3051188");
+//
+//        WeiShiBaseResp<List<WeiShiWarehouseResp>> weiShiBaseResp = weiShiService.getWarehouseList(authMap);
+////        WeiShiBaseResp<WeiShiTokenResp> weiShiBaseResp = weiShiService.accessToken(authMap);
+//        System.out.println(JSONUtil.toJsonStr(weiShiBaseResp));
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("action", "1232");
+        bodyMap.put("version", "2.0");
+        WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = new WeiShiCreateOutboundRequest();
+        weiShiCreateOutboundRequest.setLabelFile("1231");
+        bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateOutboundRequest));
+        System.out.println(JSONUtil.toJsonStr(bodyMap));
     }
 
     public WeiShiBaseResp<WeiShiTokenResp> accessToken(Map<String,Object> authMap){
         String path = "/prod-api/omsapi/auth/omsLoginBySecretKey/" + authMap.get("appKey").toString();
-        String bodyStr = OkHttpUtils.doGet(preUrl +path, new HashMap<>(), new HashMap<>());
+        String bodyStr = OkHttpUtils.doGet(getPreUrl() +path, new HashMap<>(), new HashMap<>());
         return WeiShiUtils.parseToJiFengResp(bodyStr, WeiShiTokenResp.class);
     }
 
@@ -57,7 +69,7 @@ public class WeiShiService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("action", action);
         bodyMap.put("data", "{}");
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiWarehouseResp>>>() {});
     }
 
@@ -79,7 +91,7 @@ public class WeiShiService {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("action", action);
             bodyMap.put("data", JSONUtil.toJsonStr(weiShiProductRequest));
-            String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+            String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
             WeiShiBaseResp<List<WeiShiProductResp>> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiProductResp>>>() {});
             if (response.getCode() == 200) {
                 List<WeiShiProductResp> respList = response.getData();
@@ -135,7 +147,7 @@ public class WeiShiService {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("action", action);
             bodyMap.put("data", JSONUtil.toJsonStr(weiShiStockRequest));
-            String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+            String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
             WeiShiBaseResp<WeiShiStockResp> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiStockResp>>() {});
             if (response.getCode() == 200) {
                 List<WeiShiStockResp.DataDTO.ListDTO> respList = response.getData().getData().getList();
@@ -190,7 +202,7 @@ public class WeiShiService {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("action", action);
             bodyMap.put("data", JSONUtil.toJsonStr(weiShiStockAgeRequest));
-            String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+            String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
             WeiShiBaseResp<WeiShiStockAgeResp> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiStockAgeResp>>() {});
             if (response.getCode() == 200) {
                 List<WeiShiStockAgeResp.ListDTO> respList = response.getData().getList();
@@ -237,7 +249,9 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
         log.warn("纬狮创建入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
@@ -252,7 +266,9 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
         log.warn("纬狮更新入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateInboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
@@ -267,7 +283,9 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
         log.warn("纬狮取消入库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
@@ -282,7 +300,7 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
         log.warn("纬狮查询入库单请求参数: {}", JSONUtil.toJsonStr(bodyMap));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiInboundResp>>() {});
     }
 
@@ -296,7 +314,7 @@ public class WeiShiService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelInboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiChannelResp>>>() {});
     }
 
@@ -313,7 +331,9 @@ public class WeiShiService {
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCreateOutboundRequest));
         bodyMap.put("version", "2.0");
         log.warn("纬狮创建出库单请求参数: {}", JSONUtil.toJsonStr(weiShiCreateOutboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiCreateOutboundResp>>() {});
     }
 
@@ -328,8 +348,10 @@ public class WeiShiService {
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
         log.warn("纬狮取消出库单请求参数: {}", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
         log.warn("纬狮取消出库单响应参数: {}", JSONUtil.toJsonStr(weiShiCancelOutboundRequest));
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(bodyMap));
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<String>>() {});
     }
 
@@ -343,7 +365,7 @@ public class WeiShiService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("action", action);
         bodyMap.put("data", JSONUtil.toJsonStr(weiShiGetOutboundRequest));
-        String bodyStr = OkHttpUtils.doPostJson(apiUrl, bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
         return WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiOutboundResp>>() {});
     }
 
