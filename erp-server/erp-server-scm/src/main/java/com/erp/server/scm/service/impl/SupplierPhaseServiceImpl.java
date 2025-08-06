@@ -194,11 +194,17 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @return void
      */
     public void startProcess(SupplierPhaseEntity entity) {
+
+        //查询供应商信息
+        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
+        if (ObjectUtil.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
-        startDTO.setBusinessCode(entity.getTargetPhase());
+        startDTO.setBusinessCode(supplierEntity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.SUPPLIER_PHASE.getCode());
-        startDTO.setBusinessName(entity.getTargetPhase());
+        startDTO.setBusinessName(supplierEntity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);

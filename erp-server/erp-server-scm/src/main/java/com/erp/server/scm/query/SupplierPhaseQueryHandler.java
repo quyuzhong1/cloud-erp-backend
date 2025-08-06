@@ -41,7 +41,7 @@ public class SupplierPhaseQueryHandler extends AbstractQueryHandler {
         if (SupplierPhaseTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
             super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUPPLIER_PHASE.getCode());
             if (CollectionUtils.isNotEmpty(businessIds)) {
                 super.buildDefaultDTO("sp.id", businessIds);
             }else{
