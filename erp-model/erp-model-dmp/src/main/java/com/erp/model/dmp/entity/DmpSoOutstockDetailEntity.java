@@ -1,6 +1,8 @@
 package com.erp.model.dmp.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -251,6 +253,12 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
      */
     @TableField("suite_qty")
     private Integer suiteQty;
+    
+    /**
+     * 预估签收时间
+     */
+    @TableField("estimate_investment_time")
+    private LocalDateTime estimateInvestmentTime;
 
 
     public static final String MAIN_ID = "main_id";
