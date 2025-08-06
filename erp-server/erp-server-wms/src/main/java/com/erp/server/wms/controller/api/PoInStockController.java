@@ -24,8 +24,6 @@ import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.PoReturnService;
 import com.erp.server.wms.service.SubcontractIssueService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,7 +62,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
+            tableField = "stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -83,7 +81,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
+            tableField = "stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
@@ -103,7 +101,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id,create_user_id",
+            tableField = "stock_in_user_id,create_user_id",
             warehouseTableField = "psi.delivery_warehouse_id",
             menuCode = "wms:poInStock:paging",
             tableAlias = "psi"
