@@ -115,8 +115,12 @@
                            ON su.uid = krp.erp_user_id
                  LEFT JOIN sys_department sd ON sd.id = kd.erp_dept_id
         WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null
-          AND ko.type_code = #{params.type}
-          AND ko.use_org_id = #{params.orgId}
+          <if test="params.orgId != null and params.orgId != ''">
+              AND ko.use_org_id = #{params.orgId}
+          </if>
+          <if test="params.type != null and params.type != ''">
+              AND ko.type_code = #{params.type}
+          </if>
         and ko.disabled = false
     </select>
     <select id="listOperatorByUserIdList"
