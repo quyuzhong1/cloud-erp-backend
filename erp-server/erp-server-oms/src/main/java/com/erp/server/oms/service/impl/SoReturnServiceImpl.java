@@ -1059,6 +1059,32 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoReturnEntity entity) {
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        //删除详情表
+        soReturnDetailService.delete(ids);
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
+    public Map<String, SoReturnEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoReturnEntity::getId, Function.identity()));
+    }
+
+    @Override
     public Boolean exportExcel(SoReturnDTO.PagingParam dto) {
 
         downloadTaskFeign.saveDownloadTask("销售退货订单", EXPORT_OMS_SO_RETURN.getCode() ,dto);

@@ -272,16 +272,30 @@ public class TransferInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除直接调拨单 id为:{ids}")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:transferInfo:delete",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferInfoEntity> entityMap = transferInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "直接调拨单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("直接调拨单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

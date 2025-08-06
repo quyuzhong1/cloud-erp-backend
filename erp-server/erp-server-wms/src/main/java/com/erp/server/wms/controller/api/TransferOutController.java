@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -214,16 +215,30 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调出单 id为:{ids}")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:transfer:out:delete",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
-    public ApiResult<Void> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        transferOutService.delete(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferOutEntity> entityMap = transferOutService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferOutEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "分布式调出单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferOutService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("分布式调出单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

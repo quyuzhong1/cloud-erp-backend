@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -312,7 +313,7 @@ public class SoReturnController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除销售退货订单 id为:{ids}")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -320,9 +321,23 @@ public class SoReturnController extends BaseController {
             serviceClass = SoReturnService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
+        Map<String, SoReturnEntity> entityMap = soReturnService.mapByIds(idsDTO.getIds());
+        for (String id : idsDTO.getIds()) {
+            SoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "销售退货订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("销售退货订单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 直接调拨单主表
@@ -99,6 +100,25 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return Boolean
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 删除单个直接调拨单
+     * @author Will
+     * @date: 2023/5/15 11:25
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(TransferInfoEntity entity);
+
+    /**
+     * @description: 根据ID列表获取实体Map
+     * @author Will
+     * @date: 2023/5/15 11:25
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferInfoEntity>
+     */
+    Map<String, TransferInfoEntity> mapByIds(List<String> ids);
+
     /**
      * @description: 作废
      * @author Will

@@ -407,6 +407,46 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(TransferOutEntity entity) {
+        //只有待提交的数据允许删除
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || !Objects.equals(entity.getInvalidStatus(), Boolean.FALSE)) {
+            throw new ServiceException("只有待提交并且未作废数据支持删除");
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        // 删除日志数据
+        log.info("删除 开始删除分步式调出单日志数据，id：【{}】", entity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
+        // 删除明细数据
+        log.info("删除 开始删除分步式调出单明细数据，id：【{}】", entity.getId());
+        transferOutDetailService.removeByMainIds(ids);
+
+        // 删除主单数据
+        log.info("删除 开始删除分步式调出单主单数据，id：【{}】", entity.getId());
+        boolean result = super.removeByIds(ids);
+
+        //推送金蝶
+        syncApproveInfoToKingdee(entity, SyncOperateEnum.OPERATE_DELETE);
+
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
+    public Map<String, TransferOutEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<TransferOutEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void invalid(List<String> ids, String remark) {

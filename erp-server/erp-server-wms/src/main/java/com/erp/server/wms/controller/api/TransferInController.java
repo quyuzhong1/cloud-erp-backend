@@ -29,6 +29,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -271,7 +272,7 @@ public class TransferInController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调入单 id为:{ids}")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",
@@ -279,10 +280,23 @@ public class TransferInController extends BaseController {
             serviceClass = TransferInService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = transferInService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
-
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferInEntity> entityMap = transferInService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "分布式调入单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("分布式调入单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

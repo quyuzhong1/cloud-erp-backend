@@ -144,6 +144,24 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     Boolean delete(List<String> ids);
 
     /**
+     * 删除单个销售退货订单
+     * @Author Luo_WG
+     * @Date 2023/5/10 16:47
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoReturnEntity entity);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @Author Luo_WG
+     * @Date 2023/5/10 16:47
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.oms.entity.SoReturnEntity>
+     **/
+    Map<String, SoReturnEntity> mapByIds(List<String> ids);
+
+    /**
      * 导出
      * @Author Luo_WG
      * @Date 2023/5/10 16:47
