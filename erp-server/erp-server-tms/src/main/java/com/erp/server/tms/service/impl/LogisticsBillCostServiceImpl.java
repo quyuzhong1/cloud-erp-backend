@@ -1759,9 +1759,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
 			throw new ServiceException("只支持对账状态为暂估确认或账单确认下推分摊");
 		}
+        LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+                ? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
 		List<SmallBagCostAllocationMainEntity> smallBagCostAllocationMainEntityList = smallBagCostAllocationMainService.lambdaQuery()
 				.eq(SmallBagCostAllocationMainEntity::getCostId, id).list();
 		if(CollUtil.isNotEmpty(smallBagCostAllocationMainEntityList)) {
+            if(smallBagCostAllocationMainEntityList.stream().anyMatch(s -> SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(s.getFeeSource())) && costType.equals(LogisticsBillCostTypeEnum.ACTUAL)) {
+                throw new ServiceException("一个费用单只能下推一次费用分摊，不可重复下推分摊");
+            }
 			if(smallBagCostAllocationMainEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
 				throw new ServiceException(reportDate + "已存在下推分摊数据，不可下推分摊");
 			}
@@ -1800,9 +1805,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			String warehouseId = FeignQuery.getById(SoOutstockEntity.class, outstockId).getWarehouseId();
 			soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
 		}
-		
-		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
-				? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
+
 		List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
 		Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(costList)) {
