@@ -131,9 +131,13 @@ public class KingdeeOperatorRefPostController extends BaseController {
 
 
 
-    /**
-     * 业务员列表 用于B2B 销售订单下拉
-     */
+   /**
+    * 根据业务员类型和组织查询所有人员
+    * @author will
+    * @date 2025/8/6 09:52
+    * @param dto
+    * @return ApiResult<List<BusinessOperationUserDTO>>
+    */
     @PostMapping("/list")
     public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeOperatorRefPostService.listInfo(dto);
