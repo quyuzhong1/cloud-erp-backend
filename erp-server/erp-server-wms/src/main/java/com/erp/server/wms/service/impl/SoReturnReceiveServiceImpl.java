@@ -60,6 +60,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_RECEIVE;
@@ -691,6 +692,26 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoReturnReceiveEntity entity) {
+        //待提交支持删除
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        //删除详情表
+        soReturnReceiveDetailService.delete(ids);
+        //删除主表
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
     public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto) {
         downloadTaskFeign.saveDownloadTask("销售退货签收单", EXPORT_WMS_SO_RETURN_RECEIVE.getCode(), dto);
         return true;
@@ -1038,5 +1059,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         soReceiveList.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
         soReceiveList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return soReceiveList;
+    }
+
+    @Override
+    public Map<String, SoReturnReceiveEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnReceiveEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoReturnReceiveEntity::getId, Function.identity()));
     }
 }

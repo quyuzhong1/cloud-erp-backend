@@ -214,7 +214,7 @@ public class TransferOutController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调出单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调出单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",

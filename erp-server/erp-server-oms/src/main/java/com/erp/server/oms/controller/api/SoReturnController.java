@@ -312,7 +312,7 @@ public class SoReturnController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除销售退货订单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除销售退货订单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

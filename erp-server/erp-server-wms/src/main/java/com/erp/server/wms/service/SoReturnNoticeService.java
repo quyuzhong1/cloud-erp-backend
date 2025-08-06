@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 退货通知单
@@ -147,6 +148,15 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     Boolean delete(List<String> ids);
 
     /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoReturnNoticeEntity entity);
+
+    /**
      * 导出
      *
      * @param dto dto
@@ -191,4 +201,11 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
 
     BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoReturnNoticeEntity>
+     */
+    Map<String, SoReturnNoticeEntity> mapByIds(List<String> ids);
 }

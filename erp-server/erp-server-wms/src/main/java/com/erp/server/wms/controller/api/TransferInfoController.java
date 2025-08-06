@@ -272,7 +272,7 @@ public class TransferInfoController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除直接调拨单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除直接调拨单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id,create_user_id",

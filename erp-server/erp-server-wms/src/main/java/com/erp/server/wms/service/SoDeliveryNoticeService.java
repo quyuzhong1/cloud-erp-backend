@@ -151,6 +151,15 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     Boolean delete(List<String> ids);
 
     /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoDeliveryNoticeEntity entity);
+
+    /**
      * 导出
      *
      * @param dto dto
@@ -306,4 +315,11 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(List<String> ids);
 
     void printSkuLabelConfirm(SoDeliveryNoticeDTO.PrintSkuLabelConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoDeliveryNoticeEntity>
+     */
+    Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids);
 }

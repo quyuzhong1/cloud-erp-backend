@@ -223,7 +223,7 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除调拨申请单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除调拨申请单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",

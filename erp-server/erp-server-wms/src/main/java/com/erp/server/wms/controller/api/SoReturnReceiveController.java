@@ -26,10 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 销售退货签收单
@@ -309,16 +306,30 @@ public class SoReturnReceiveController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货签收单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货签收单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnReceive:delete",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnReceiveService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
+        Map<String, SoReturnReceiveEntity> entityMap = soReturnReceiveService.mapByIds(idsDTO.getIds());
+        for (String id : idsDTO.getIds()) {
+            SoReturnReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "销售退货签收单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnReceiveService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("销售退货签收单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -24,14 +24,13 @@ import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -322,11 +321,34 @@ public class SoDeliveryNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除发货通知单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soDeliveryNoticeService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<String> ids = idsDTO.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return success(Collections.emptyList());
+        }
+
+        Map<String, SoDeliveryNoticeEntity> entityMap = soDeliveryNoticeService.mapByIds(ids);
+        List<BatchResultDTO> results = new ArrayList<>();
+
+        for (String id : ids) {
+            SoDeliveryNoticeEntity entity = entityMap.get(id);
+            if (entity == null) {
+                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
+                continue;
+            }
+
+            try {
+                BatchResultDTO result = soDeliveryNoticeService.deleteEntity(entity);
+                results.add(result);
+            } catch (Exception e) {
+                log.error("删除发货通知单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
+                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+
+        return success(results);
     }
 
     /**

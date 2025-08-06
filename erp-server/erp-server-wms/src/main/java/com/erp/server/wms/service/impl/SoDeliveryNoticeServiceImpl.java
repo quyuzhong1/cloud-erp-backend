@@ -90,6 +90,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_DELIVERY_NOTICE;
@@ -790,6 +791,47 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         handleUnLockVirtualInventory(deliveryNoticeEntityList,soDeliveryNoticeDetailList);
         //删除主表
         return flag;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoDeliveryNoticeEntity entity) {
+        List<String> ids = Collections.singletonList(entity.getId());
+        
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+        if (CollectionUtils.isEmpty(soDeliveryNoticeDetailList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货通知单明细");
+        }
+        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
+        if(CollectionUtils.isNotEmpty(machineInfoEntityList)){
+            throw new ServiceException("存在关联的加工单{}，B2B发货通知单禁止删除",machineInfoEntityList.stream().map(MachineInfoEntity::getCode).collect(Collectors.toList()));
+        }
+        pickingListsService.exist(ids);
+        //待提交支持删除
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(entity.getCode()));
+        PackingTaskEntity taskEntity = taskEntityList.stream().filter(t->t.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+        if(Objects.nonNull(taskEntity) && !taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.UNPACKED.getCode())){
+            throw new ServiceException("装箱中&已装箱不允许删除");
+        }
+        //删除装箱任务
+        taskEntityList.forEach(v->packingTaskService.delete(v));
+        //删除详情表
+        soDeliveryNoticeDetailService.delete(ids);
+
+        boolean result = this.removeByIds(ids);
+
+        //释放冻结库存
+        handleUnLockVirtualInventory(Collections.singletonList(entity), soDeliveryNoticeDetailList);
+        
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
     }
 
     @Override
@@ -2211,5 +2253,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             e.setLabelUrl(Objects.nonNull(listingInfoEntity) ? listingInfoEntity.getLabelUrl() : "");
             e.setLabelSourceType(Objects.nonNull(listingInfoEntity)? listingInfoEntity.getLabelSourceType() : "");
         });
+    }
+
+    @Override
+    public Map<String, SoDeliveryNoticeEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoDeliveryNoticeEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity()));
     }
 }

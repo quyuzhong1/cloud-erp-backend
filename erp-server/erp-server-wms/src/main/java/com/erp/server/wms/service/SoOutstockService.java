@@ -144,6 +144,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     Boolean delete(List<String> ids);
 
+    /**
+     * 删除单个实体
+     * @author yl
+     * @date 2023-05-19 12:16
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(SoOutstockEntity entity);
+
 
     /**
      * 作废
@@ -559,4 +568,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     BatchResultDTO handleWdtData(String id);
 
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoOutstockEntity>
+     */
+    Map<String, SoOutstockEntity> mapByIds(List<String> ids);
 }

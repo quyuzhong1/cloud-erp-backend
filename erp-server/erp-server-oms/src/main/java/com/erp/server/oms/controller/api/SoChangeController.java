@@ -283,7 +283,7 @@ public class SoChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售变更单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售变更单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

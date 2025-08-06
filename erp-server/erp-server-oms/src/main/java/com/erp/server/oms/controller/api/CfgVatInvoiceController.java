@@ -155,6 +155,7 @@ public class CfgVatInvoiceController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "VAT发票设置删除 id为:{ids}")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(cfgVatInvoiceService.delete(idsDTO.getIds()));
     }
