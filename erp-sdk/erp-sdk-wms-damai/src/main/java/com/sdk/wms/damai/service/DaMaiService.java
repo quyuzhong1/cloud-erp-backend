@@ -193,6 +193,19 @@ public class DaMaiService {
         return response;
     }
 
+    /**
+     * 渠道查询
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<List<DaMaiChannelResp>> getChannel(Map<String,Object> authMap){
+        String path = "/omsService/non/baseApi/getCarriers";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, new HashMap<>(), headerMap);
+        DaMaiBaseResp<List<DaMaiChannelResp>> response = DaMaiUtils.parseToResp(bodyStr, new TypeReference<DaMaiBaseResp<List<DaMaiChannelResp>>>() {});
+        return response;
+    }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("appToken", authMap.get("appToken").toString());

@@ -42,6 +42,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     CAINIAO(OmsPlatformEnum.CAI_NIAO.getCode(), OmsPlatformEnum.CAI_NIAO.getName(), "菜鸟仓", "","",""),
 
     WEI_SHI_WAREHOUSE("weishi", "纬狮海外仓", "纬狮海外仓", "","Y","N"),
+    DA_MAI("damai", "大卖仓", "大卖仓", "","Y","N"),
     ;
 
 

@@ -94,4 +94,11 @@ public class DaMaiServiceTest {
         DaMaiBaseResp<String> resp = daMaiService.getInventoryAge(authMap,daMaiInventoryAgeRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
+
+
+    @Test
+    public void getChannel() {
+        DaMaiBaseResp<String> resp = daMaiService.getChannel(authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
 }
