@@ -2823,6 +2823,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
             outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
             outboundReqItem.setPlatformDetailId(deliverySkuDTO.getPlatformDetailId());
+            outboundReqItem.setDetailId(deliverySkuDTO.getDetailId());
             outboundReqItem.setProductSkuId(platformSkuId);
             SoB2cDeclareProductEntity soB2cDeclareProductEntity = soB2cDeclareProductEntityList.stream().filter(s -> s.getSkuId().equals(deliverySkuDTO.getSkuId())).findFirst().orElse(null);
             if(Objects.nonNull(soB2cDeclareProductEntity)){
@@ -2963,6 +2964,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(item.getDetailId());
             detailEntityList.add(thirdWarehouseDeliveryDetailEntity);
         }
         thirdWarehouseDeliveryEntity.setDetailEntityList(detailEntityList);
@@ -9558,6 +9560,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if (CollectionUtils.isNotEmpty(deleteErrorIds)) {
             soB2cErrorService.deleteByMainIds(deleteErrorIds);
+        }
+        if (CollectionUtils.isNotEmpty(updateLogisticList)) {
+            soB2cLogisticsService.updateBatchById(updateLogisticList);
         }
         return resultDTOList;
     }

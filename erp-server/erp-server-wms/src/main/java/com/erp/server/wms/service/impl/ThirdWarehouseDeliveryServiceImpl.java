@@ -186,6 +186,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(viewDTO.getPlatformWarehouseCode());
                 thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
                 thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+                thirdWarehouseDeliveryDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
                 thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
             }
             addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
@@ -336,6 +337,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (soB2cEntity.hasPlatformWarehouseOrder()) {
             return BatchResultDTO.fail(id, entity.getCode(), "平台仓订单无法 重新出库");
         }
+        if (!entity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())) {
+            return BatchResultDTO.fail(id, entity.getCode(), "只有已发货才能重新出库");
+        }
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
@@ -364,6 +368,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
         addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         addThirdWarehouseDeliveryEntity.setCode(code);
@@ -379,6 +384,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
