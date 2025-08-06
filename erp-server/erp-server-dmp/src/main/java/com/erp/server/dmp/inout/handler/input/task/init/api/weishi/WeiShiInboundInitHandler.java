@@ -77,6 +77,9 @@ public class WeiShiInboundInitHandler extends DmpInputInitHandler {
 				weiShiCancelInboundRequest.setPageSize(50);
 				weiShiCancelInboundRequest.setPageNum(1);
 				WeiShiBaseResp<WeiShiInboundResp> weiShiInboundResp = weiShiService.getInbound(weiShiCancelInboundRequest,overseasProviderEntity.getAuthJson());
+				if (null == weiShiInboundResp || weiShiInboundResp.getData() == null) {
+					throw new ServiceException("纬狮获取入库列表失败: 响应结果为空");
+				}
 				if(!weiShiInboundResp.getCode().equals(200)){
 					throw new ServiceException("纬狮获取入库单列表失败: " + weiShiInboundResp.getMsg());
 				}
