@@ -179,7 +179,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         }
         log.info("提交 开始修改供应商阶段单状态数据，id：【{}】", id);
         //更新审核状态
-        updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.APPROVE_ING.getStatus());
+        updateApproveStatusForDisApprove(Collections.singletonList(entity), ApproveStatusEnum.APPROVE_ING.getStatus());
 
         log.info("提交 开始启动供应商阶段单流程，id=：【{}】", entity.getId());
         startProcess(entity);
