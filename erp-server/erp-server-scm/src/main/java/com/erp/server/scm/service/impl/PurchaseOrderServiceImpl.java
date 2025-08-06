@@ -3827,6 +3827,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierAddDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierAddDTO.setSupplierId(supplierEntity.getId());
+            supplierAddDTO.setPayCurrency(supplierEntity.getPayCurrency());
             supplierAddDTO.setPayMethodId(payMethodId);
             supplierAddDTO.setPayMethodName(mainExcelDTO.getPayMethodName());
             supplierAddDTO.setPaymentCondition(paymentCondition);
