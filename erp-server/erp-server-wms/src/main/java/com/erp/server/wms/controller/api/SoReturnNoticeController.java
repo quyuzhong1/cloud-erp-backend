@@ -19,13 +19,12 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 销售退货通知单
@@ -299,16 +298,39 @@ public class SoReturnNoticeController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货通知单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnNotice:delete",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnNoticeService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<String> ids = idsDTO.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return success(Collections.emptyList());
+        }
+
+        Map<String, SoReturnNoticeEntity> entityMap = soReturnNoticeService.mapByIds(ids);
+        List<BatchResultDTO> results = new ArrayList<>();
+
+        for (String id : ids) {
+            SoReturnNoticeEntity entity = entityMap.get(id);
+            if (entity == null) {
+                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
+                continue;
+            }
+
+            try {
+                BatchResultDTO result = soReturnNoticeService.deleteEntity(entity);
+                results.add(result);
+            } catch (Exception e) {
+                log.error("删除销售退货通知单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
+                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+
+        return success(results);
     }
 
     /**

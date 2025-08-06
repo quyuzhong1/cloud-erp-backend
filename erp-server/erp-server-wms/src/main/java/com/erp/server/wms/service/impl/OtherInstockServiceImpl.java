@@ -462,6 +462,33 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(OtherInstockEntity entity) {
+        //待提交并且未作废允许删除
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        log.info("其他入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除明细数据
+        otherInstockDetailService.removeByMainIds(ids);
+        //删除操作日志
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "删除操作");
+        //发送金蝶
+        sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+        //删除主表数据
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -1535,5 +1562,14 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             }
         }
         return listApiResult;
+    }
+
+    @Override
+    public Map<String, OtherInstockEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<OtherInstockEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(OtherInstockEntity::getId, Function.identity()));
     }
 }

@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -94,6 +95,25 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return Boolean 
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 删除单个调拨申请单
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(TransferApplicationEntity entity);
+
+    /**
+     * @description: 根据ID列表获取实体Map
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferApplicationEntity>
+     */
+    Map<String, TransferApplicationEntity> mapByIds(List<String> ids);
+
     /**
      * @description: 作废
      * @author Will

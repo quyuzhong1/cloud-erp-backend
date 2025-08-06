@@ -21,14 +21,13 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 销售出库-销售出库单
@@ -341,20 +340,39 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售出库单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
             menuCode = "wms:so:outstock:delete",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        try {
-            Boolean result = soOutstockService.delete(dto.getIds());
-            return result ? success() : failure();
-        }catch (Exception e){
-            return failure(e.getMessage());
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return success(Collections.emptyList());
         }
+
+        Map<String, SoOutstockEntity> entityMap = soOutstockService.mapByIds(ids);
+        List<BatchResultDTO> results = new ArrayList<>();
+
+        for (String id : ids) {
+            SoOutstockEntity entity = entityMap.get(id);
+            if (entity == null) {
+                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
+                continue;
+            }
+
+            try {
+                BatchResultDTO result = soOutstockService.deleteEntity(entity);
+                results.add(result);
+            } catch (Exception e) {
+                log.error("删除销售出库单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
+                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+
+        return success(results);
     }
 
     /**

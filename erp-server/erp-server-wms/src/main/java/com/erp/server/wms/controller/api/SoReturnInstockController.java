@@ -30,6 +30,7 @@ import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.query.SoReturnInstockQueryHandler;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,9 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -318,16 +317,39 @@ public class SoReturnInstockController extends BaseController {
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售退货入库单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,warehouse_keeper_id",
             menuCode = "wms:soReturnInstock:delete",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnInstockService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<String> ids = idsDTO.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return success(Collections.emptyList());
+        }
+
+        Map<String, SoReturnInstockEntity> entityMap = soReturnInstockService.mapByIds(ids);
+        List<BatchResultDTO> results = new ArrayList<>();
+
+        for (String id : ids) {
+            SoReturnInstockEntity entity = entityMap.get(id);
+            if (entity == null) {
+                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
+                continue;
+            }
+
+            try {
+                BatchResultDTO result = soReturnInstockService.deleteEntity(entity);
+                results.add(result);
+            } catch (Exception e) {
+                log.error("删除销售退货入库单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
+                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+
+        return success(results);
     }
 
     /**

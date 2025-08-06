@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -223,16 +224,30 @@ public class OtherInstockController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除其他入库单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除其他入库单 id为:{ids}")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id,create_user_id",
             menuCode = "wms:otherInstock:delete",
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherInstockService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, OtherInstockEntity> entityMap = otherInstockService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            OtherInstockEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "其他入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(otherInstockService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("其他入库单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -63,6 +63,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_NOTICE;
@@ -712,6 +713,25 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoReturnNoticeEntity entity) {
+        //待提交支持删除
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        //删除详情表
+        soReturnNoticeDetailService.delete(ids);
+        //删除主表
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
+    }
+
+    @Override
     public Boolean exportExcel(SoReturnNoticeDTO.PagingParam dto) {
         downloadTaskFeign.saveDownloadTask("销售退货通知单", EXPORT_WMS_SO_RETURN_NOTICE.getCode(), dto);
         return Boolean.TRUE;
@@ -940,5 +960,14 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             dto.setDetailList(detailList);
             String noticeId = this.addB2c(dto);
         });
+    }
+
+    @Override
+    public Map<String, SoReturnNoticeEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnNoticeEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoReturnNoticeEntity::getId, Function.identity()));
     }
 }

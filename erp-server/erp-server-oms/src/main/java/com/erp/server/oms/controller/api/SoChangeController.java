@@ -27,6 +27,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -283,7 +284,7 @@ public class SoChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除销售变更单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -291,9 +292,23 @@ public class SoChangeController extends BaseController {
             serviceClass = SoChangeService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soChangeService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SoChangeEntity> entityMap = soChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "销售变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soChangeService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("销售变更单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

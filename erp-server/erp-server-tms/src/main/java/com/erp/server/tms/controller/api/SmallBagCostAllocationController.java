@@ -232,7 +232,7 @@ public class SmallBagCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:ids={ids}")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
