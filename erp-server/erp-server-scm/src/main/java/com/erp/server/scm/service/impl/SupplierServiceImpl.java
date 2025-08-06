@@ -693,7 +693,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private String getCategoryName(List<BasicCategoryEntity> productCategoryList,Object value) {
         StringBuffer str = new StringBuffer();
         //子级品类
-        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getCode(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
         if (ObjUtil.isEmpty(childCategory)) {
             return str.toString();
         }
@@ -2565,7 +2565,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //供应商产品分类
         if (StringUtils.isNotBlank(excelDTO.getProductCategoryStr())) {
             List<String> productCategoryStrList = Arrays.stream(excelDTO.getProductCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
-            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName()) && !CharSequenceUtil.equals(d.getPid(),"0")).map(BasicCategoryEntity::getCode).collect(Collectors.toList());
+            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName()) && !CharSequenceUtil.equals(d.getPid(),"0")).map(BasicCategoryEntity::getId).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(productCategoryList)) {
                 addDTO.setProductCategoryJson(new JSONArray(productCategoryList));
             } else {
