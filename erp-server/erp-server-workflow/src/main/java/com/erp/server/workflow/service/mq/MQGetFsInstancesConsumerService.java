@@ -1,12 +1,18 @@
 package com.erp.server.workflow.service.mq;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.ApproveDTO;
+import com.common.business.enums.ApprovePlatformEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.factory.ApproveEndHandlerFactory;
+import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -31,6 +37,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -78,6 +85,8 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
     @Resource
     SysUserFeign sysUserFeign;
 
+    @Resource
+    private ApproveEndHandlerFactory approveEndHandlerFactory;
 
     @Override
     public String getBizName() {
@@ -189,12 +198,20 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         Long endTime = lastTask.getLong(FsRequestBodyAttributesEnum.ENDTIME.getCode());
         LocalDateTime approveTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault());
 
+        //审批意见
+        JSONArray timeline = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.TIMELINE.getCode());
+        String comment = "";
+        if (timeline != null && !timeline.isEmpty()) {
+             comment = timeline.stream().filter(item -> !Objects.equals(((JSONObject) item).getStr(FsRequestBodyAttributesEnum.COMMENT.getCode()), ""))
+                    .map(item -> ((JSONObject) item).getStr(FsRequestBodyAttributesEnum.COMMENT.getCode()))
+                    .collect(Collectors.joining("; "));
+        }
         switch (statusEnum) {
             case APPROVED:
-                handleCallback(one, PASS.getStatus(), lastUserId, approveTime);
+                handleCallback(one, PASS.getStatus(), lastUserId, approveTime,comment);
                 break;
             case REJECTED:
-                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime);
+                handleCallback(one, REJECT.getStatus(), lastUserId, approveTime,comment);
                 break;
             case CANCELED:
                 ApproveDTO.CancelProcessDTO cancelProcessDTO = new ApproveDTO.CancelProcessDTO();
@@ -211,12 +228,47 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
             default:
                 break;
         }
+        //评论
+        JSONArray commentList = jsonObject.getJSONArray(FsRequestBodyAttributesEnum.COMMENTLIST.getCode());
+        List<String> comments = null;
+        if (commentList != null && !commentList.isEmpty()) {
+            comments = commentList.stream()
+                    .map(item -> ((JSONObject) item).getStr(FsRequestBodyAttributesEnum.COMMENT.getCode()))
+                    .collect(Collectors.toList());
+        }
+        handleAddComments(comments,one);
+    }
+
+    /**
+     * 添加评论日志
+     * @author will
+     * @date 2025/8/5 10:10
+     * @param comments
+     * @param entity
+     * @return void
+     */
+    public void handleAddComments( List<String> comments, ApproveTaskInfoEntity entity) {
+        if (CollUtil.isEmpty(comments)) {
+            return;
+        }
+        String businessKey = entity.getBussinessKey();
+        SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
+        if (null == sourceType) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_APPROVE_BUSINESSKEY,"添加评论",businessKey);
+        }
+        AbstractApproveHandler handler = approveEndHandlerFactory.getHandler(sourceType);
+        ApproveDTO.AddCommentDTO addCommentDTO = new ApproveDTO.AddCommentDTO();
+        addCommentDTO.setBusinessKey(businessKey);
+        addCommentDTO.setId(entity.getBussinessId());
+        addCommentDTO.setComments(comments);
+        addCommentDTO.setApprovePlatformEnum(ApprovePlatformEnum.FEI_SHU);
+        handler.addComment(addCommentDTO);
     }
 
     /**
      * 原始的回调方法，保持不变。
      */
-    public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime) {
+    public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime,String comment) {
         EndProcessDTO processDTO = new EndProcessDTO();
         processDTO.setBusinessKey(entity.getBussinessKey());
         processDTO.setBusinessId(entity.getBussinessId());
@@ -225,6 +277,8 @@ public class MQGetFsInstancesConsumerService  extends AbstractNewPlatformConsume
         SysUserThirdEntity user = sysUserFeign.getUserByThird(ProcessSourcePlatformEnum.FS.getCode().toUpperCase(), userId);
         processDTO.setApproveUserId(user.getUserId());
         processDTO.setApproveTime(approveTime);
+        processDTO.setComment(comment);
+        processDTO.setApprovePlatformEnum(ApprovePlatformEnum.FEI_SHU);
         processManagementService.callFeign(entity.getBussinessKey(), processDTO);
     }
 }
