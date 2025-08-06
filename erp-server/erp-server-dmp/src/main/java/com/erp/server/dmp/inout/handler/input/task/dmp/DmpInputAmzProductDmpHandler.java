@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp处理金蝶明细子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -109,11 +110,20 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
 
     @Override
     protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        if (CollectionUtils.isEmpty(dmpInputMongoChildEntityList)) {
+            return;
+        }
+        List<String> reportIds = dmpInputMongoChildEntityList.stream()
+                .map(e -> e.getOrDefault("reportId", "").toString())
+                .distinct()
+                .collect(Collectors.toList());
+
         DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
         String parentStorageName = mainConvertId.getStorageName();
         ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
         QueryWrapper<?> wrapper = new QueryWrapper<>();
-        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        wrapper.eq("next_level_id", nextLevelId);
+        wrapper.in("report_id", reportIds);
         List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {

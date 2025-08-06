@@ -137,12 +137,6 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                 }
             }
 
-            String listingMongoDataReportId = listingMongoDataItem.getOrDefault(REPORT_ID, "").toString();
-            if(StringUtils.isNotBlank(reportId) && !listingMongoDataReportId.equalsIgnoreCase(reportId)){
-                //标记为删除状态
-                listingMongoDataItem.put("status", "Delete");
-            }
-
             // 匹配明细
             Map<String, Object> detailMap = listingDetailMongoData
                     .stream()
@@ -237,9 +231,12 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
 
     @Override
     protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        if (CollectionUtils.isEmpty(dmpInputMongoChildEntityList)) {
+            return;
+        }
         ServiceImpl parentServiceImpl = this.getServiceImpl("dmp_product_info");
         QueryWrapper<?> wrapper = new QueryWrapper<>();
-        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        wrapper.eq("next_level_id", nextLevelId);
         List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {
