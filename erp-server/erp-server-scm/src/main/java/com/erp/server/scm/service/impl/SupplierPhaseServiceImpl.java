@@ -526,10 +526,8 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     @Override
     public List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto) {
         SupplierPhaseTabFlagEnum[] values = SupplierPhaseTabFlagEnum.values();
-        List<Future<SupplierPhaseDTO.TabFlagDTO>> futureList = new ArrayList<>();
         List<SupplierPhaseDTO.TabFlagDTO> list = new ArrayList<>();
         for (SupplierPhaseTabFlagEnum item : values) {
-            Future<SupplierPhaseDTO.TabFlagDTO> submit =  tabExecutorPool.submit(() -> {
                 SupplierPhaseDTO.PagingParamDTO searchParamDTO = new SupplierPhaseDTO.PagingParamDTO();
                 searchParamDTO.setPermissionSql(dto.getPermissionSql());
                 SupplierPhaseDTO.TabFlagDTO resultDTO = new SupplierPhaseDTO.TabFlagDTO();
@@ -541,25 +539,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
                 resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
                 resultDTO.setTabFlag(item.getCode());
                 resultDTO.setTabFlagName(item.getName());
-                return resultDTO;
-            });
-            futureList.add(submit);
-        }
-        for(Future<SupplierPhaseDTO.TabFlagDTO> f : futureList) {
-            try {
-                list.add(f.get());
-            } catch (InterruptedException e) {
-                // 恢复线程的中断状态，确保中断标志不会被忽略
-                Thread.currentThread().interrupt();
-                log.error("线程被中断", e);
-                throw new ServiceException("线程被中断", e);
-            } catch (ExecutionException e) {
-                log.error("线程任务执行异常", e);
-                throw new ServiceException("线程任务执行异常", e.getCause());
-            } catch (ThreadDeath td) {
-                log.error("捕获到 ThreadDeath，线程终止", td);
-                throw td; // 重新抛出以允许线程正常终止
-            }
+            list.add(resultDTO);
         }
         return list;
     }
