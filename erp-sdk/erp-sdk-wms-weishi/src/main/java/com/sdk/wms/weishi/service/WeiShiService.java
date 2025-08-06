@@ -13,10 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Slf4j
@@ -93,6 +90,14 @@ public class WeiShiService {
             bodyMap.put("data", JSONUtil.toJsonStr(weiShiProductRequest));
             String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
             WeiShiBaseResp<List<WeiShiProductResp>> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<List<WeiShiProductResp>>>() {});
+            if(Objects.isNull(response) || Objects.isNull(response.getData())){
+                // 如果响应数据为空，直接返回错误信息
+                WeiShiBaseResp<List<WeiShiProductResp.ListDTO>> errorResp = new WeiShiBaseResp<>();
+                errorResp.setCode(-1);
+                errorResp.setMsg("响应数据为空,"+bodyStr);
+                errorResp.setSuccess(false);
+                return errorResp;
+            }
             if (response.getCode() == 200) {
                 List<WeiShiProductResp> respList = response.getData();
                 if (respList == null || respList.isEmpty()) {
@@ -118,7 +123,7 @@ public class WeiShiService {
                 WeiShiBaseResp<List<WeiShiProductResp.ListDTO>> errorResp = new WeiShiBaseResp<>();
                 errorResp.setCode(response.getCode());
                 errorResp.setMsg(response.getMsg());
-                errorResp.setSuccess(true);
+                errorResp.setSuccess(false);
                 return errorResp;
             }
         }
@@ -150,6 +155,10 @@ public class WeiShiService {
             String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + api, bodyMap, headerMap);
             WeiShiBaseResp<WeiShiStockResp> response = WeiShiUtils.parseToJiFengResp(bodyStr, new TypeReference<WeiShiBaseResp<WeiShiStockResp>>() {});
             if (response.getCode() == 200) {
+                if(Objects.isNull(response.getData()) || Objects.isNull(response.getData().getData())){
+                    hasMore = false;
+                    continue;
+                }
                 List<WeiShiStockResp.DataDTO.ListDTO> respList = response.getData().getData().getList();
                 if (respList == null || respList.isEmpty()) {
                     hasMore = false;
@@ -174,7 +183,7 @@ public class WeiShiService {
                 WeiShiBaseResp<List<WeiShiStockResp.DataDTO.ListDTO>> errorResp = new WeiShiBaseResp<>();
                 errorResp.setCode(response.getCode());
                 errorResp.setMsg(response.getMsg());
-                errorResp.setSuccess(true);
+                errorResp.setSuccess(false);
                 return errorResp;
             }
         }
@@ -229,7 +238,7 @@ public class WeiShiService {
                 WeiShiBaseResp<List<WeiShiStockAgeResp.ListDTO>> errorResp = new WeiShiBaseResp<>();
                 errorResp.setCode(response.getCode());
                 errorResp.setMsg(response.getMsg());
-                errorResp.setSuccess(true);
+                errorResp.setSuccess(false);
                 return errorResp;
             }
         }
