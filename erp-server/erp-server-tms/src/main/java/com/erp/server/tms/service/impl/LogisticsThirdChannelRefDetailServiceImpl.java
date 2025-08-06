@@ -113,7 +113,6 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
                 }
                 List<ShopInfoEntity> shopInfoEntities = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
                 detailList.forEach(detail -> {
-                    detail.setMainId(logisticsThirdChannelRefEntity.getId());
                     ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(shop -> shop.getId().equals(detail.getShopId())).findFirst().orElseThrow(()->new ServiceException("店铺不存在"));
                     detail.setShopName(shopInfoEntity.getName());
                 });
@@ -123,9 +122,8 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
                 if(platformIds.size() != detailList.size()){
                     throw new ServiceException("明细中平台不能重复配置");
                 }
-            } else {
-                detailList.forEach(detail -> detail.setMainId(logisticsThirdChannelRefEntity.getId()));
             }
+            detailList.forEach(detail -> detail.setMainId(logisticsThirdChannelRefEntity.getId()));
             super.saveOrUpdateBatch(detailList);
         }
     }
