@@ -2083,7 +2083,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type) {
-        if (CollUtil.isEmpty(billIds) || CollUtil.isEmpty(mainIds)){
+        if (CollUtil.isEmpty(billIds) && CollUtil.isEmpty(mainIds)){
             return Collections.emptyList();
         }
         return baseMapper.listCostDetailByBillAndReconciliationIds(billIds, mainIds,type);

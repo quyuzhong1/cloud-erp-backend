@@ -1,7 +1,9 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -97,22 +99,32 @@ public class LogisticsThirdChannelRefDetailServiceImpl extends SuperServiceImpl<
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDetail(LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity, List<LogisticsThirdChannelRefDetailEntity> detailList) {
+        List<String> detailIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         // 先删除旧明细
-        super.remove(new LambdaQueryWrapper<LogisticsThirdChannelRefDetailEntity>().eq(LogisticsThirdChannelRefDetailEntity::getMainId, logisticsThirdChannelRefEntity.getId()));
+        super.remove(new LambdaQueryWrapper<LogisticsThirdChannelRefDetailEntity>().eq(LogisticsThirdChannelRefDetailEntity::getMainId, logisticsThirdChannelRefEntity.getId())
+                .notIn(CollUtil.isNotEmpty(detailIds), LogisticsThirdChannelRefDetailEntity::getId, detailIds));
         // 再新增明细
         if(CollectionUtil.isNotEmpty(detailList)) {
             if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode())) {
-                List<String> shopIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getShopId).collect(Collectors.toList());
+                //增加店铺是否重复校验
+                List<String> shopIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getShopId).distinct().collect(Collectors.toList());
+                if(shopIds.size() != detailList.size()){
+                    throw new ServiceException("明细中店铺不能重复配置");
+                }
                 List<ShopInfoEntity> shopInfoEntities = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
                 detailList.forEach(detail -> {
-                    detail.setMainId(logisticsThirdChannelRefEntity.getId());
                     ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(shop -> shop.getId().equals(detail.getShopId())).findFirst().orElseThrow(()->new ServiceException("店铺不存在"));
                     detail.setShopName(shopInfoEntity.getName());
                 });
-            }else {
-                detailList.forEach(detail -> detail.setMainId(logisticsThirdChannelRefEntity.getId()));
+            }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode())) {
+                //增加平台是否重复校验
+                List<String> platformIds = detailList.stream().map(LogisticsThirdChannelRefDetailEntity::getDictPlatform).distinct().collect(Collectors.toList());
+                if(platformIds.size() != detailList.size()){
+                    throw new ServiceException("明细中平台不能重复配置");
+                }
             }
-            super.saveBatch(detailList);
+            detailList.forEach(detail -> detail.setMainId(logisticsThirdChannelRefEntity.getId()));
+            super.saveOrUpdateBatch(detailList);
         }
     }
 

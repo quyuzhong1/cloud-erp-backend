@@ -83,6 +83,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          * TrackPlatformTypeEnum
         */
         private String platformType;
+        private String platformTypeName;
 
         /**
         * 物流商id
@@ -108,6 +109,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         * 推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人-店铺,platformSender=发件人-平台
         */
         private String pushType;
+        private String pushTypeName;
 
         /**
          * 明细
@@ -349,9 +351,13 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private String dictPlatformName;
         /**
-         * 手机号[可排序]
+         * 默认手机号
          */
         private String mobile;
+        /**
+         * 平台店铺名称
+         */
+        private String platformShopName;
     }
 
     @Data

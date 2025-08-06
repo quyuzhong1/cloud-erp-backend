@@ -65,10 +65,10 @@
             ltcrd.mobile as mobile
         from
         logistics_third_channel_ref ltcr
-        left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id
+        left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id and ltcrd.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and ltcr.is_deleted = false and ltcrd.is_deleted = false
+            and ltcr.is_deleted = false
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

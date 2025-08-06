@@ -89,7 +89,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         BeanMapperUtils.copy(addDTO, logisticsThirdChannelRefEntity);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
         if (CollUtil.isNotEmpty(addDTO.getDetailList())){
-            BeanMapperUtils.copy(addDTO.getDetailList(), detailList);
+            detailList = BeanMapperUtils.copyList(LogisticsThirdChannelRefDetailEntity.class,addDTO.getDetailList());
         }
         // 数据处理
         handleData(logisticsThirdChannelRefEntity,detailList);
@@ -119,7 +119,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity =  BeanMapperUtils.map(LogisticsThirdChannelRefEntity.class, addOrUpdateDTO);
         List<LogisticsThirdChannelRefDetailEntity> detailList = new ArrayList<>();
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())){
-            BeanMapperUtils.copy(addOrUpdateDTO.getDetailList(), detailList);
+            detailList = BeanMapperUtils.copyList(LogisticsThirdChannelRefDetailEntity.class,addOrUpdateDTO.getDetailList());
         }
         // 数据处理
         handleData(logisticsThirdChannelRefEntity, detailList);
@@ -164,6 +164,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             e.setPushMobileName(e.getIsPushMobile() ? "是" : "否");
             e.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(e.getPushType()));
             e.setDisabledName(e.getDisabled() ? "是" : "否");
+            e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+            e.setPlatformShopName(CharSequenceUtil.isNotBlank(e.getDictPlatformName()) ? e.getDictPlatformName() : "" + (CharSequenceUtil.isNotBlank(e.getShopName()) ? e.getShopName():""));
         });
     }
 
@@ -171,8 +173,8 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     public LogisticsThirdChannelRefDTO.ViewDTO view(String id) {
         LogisticsThirdChannelRefEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到渠道配置数据"));
         LogisticsThirdChannelRefDTO.ViewDTO data = BeanMapperUtils.map(LogisticsThirdChannelRefDTO.ViewDTO.class, entity);
-        data.setPlatformType(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
-        data.setPushType(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
+        data.setPlatformTypeName(TrackPlatformTypeEnum.getName(entity.getPlatformType()));
+        data.setPushTypeName(LogisticsThirdChannelRefPushTypeEnum.getName(entity.getPushType()));
         //查询实际明细
         List<LogisticsThirdChannelRefDetailEntity> detailEntityList = logisticsThirdChannelRefDetailService.listByMainIdList(Collections.singletonList(data.getId()));
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
@@ -306,20 +308,27 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     private void handleData(LogisticsThirdChannelRefEntity logisticsThirdChannelRefEntity, List<LogisticsThirdChannelRefDetailEntity> detailList) {
     // 验证数据 & 数据赋值
         if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode()) || logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode())){
-            //手机号必填
-            detailList.stream().filter(detail -> StrUtil.isBlank(detail.getMobile())).forEach(detail -> {
-                throw new ServiceException("手机号码不能为空");
-            });
+            if (logisticsThirdChannelRefEntity.getIsPushMobile()){
+                //手机号必填
+                detailList.stream().filter(detail -> StrUtil.isBlank(detail.getMobile())).forEach(detail -> {
+                    throw new ServiceException("手机号码不能为空");
+                });
+            }
         }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode())){
-            //店铺Id必填
-            detailList.stream().filter(detail -> StrUtil.isBlank(detail.getShopId())).forEach(detail -> {
-                throw new ServiceException("店铺Id不能为空");
-            });
+            if (logisticsThirdChannelRefEntity.getIsPushMobile()){
+                //店铺Id必填
+                detailList.stream().filter(detail -> StrUtil.isBlank(detail.getShopId())).forEach(detail -> {
+                    throw new ServiceException("店铺Id不能为空");
+                });
+            }
+
         }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode())){
-            //平台必填
-            detailList.stream().filter(detail -> StrUtil.isBlank(detail.getDictPlatform())).forEach(detail -> {
-                throw new ServiceException("平台不能为空");
-            });
+            if (logisticsThirdChannelRefEntity.getIsPushMobile()){
+                //平台必填
+                detailList.stream().filter(detail -> StrUtil.isBlank(detail.getDictPlatform())).forEach(detail -> {
+                    throw new ServiceException("平台不能为空");
+                });
+            }
         }else if (logisticsThirdChannelRefEntity.getPushType().equals(LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode())){
             if (CollUtil.isNotEmpty(detailList)){
                 throw new ServiceException("推送明细不需要配置");
