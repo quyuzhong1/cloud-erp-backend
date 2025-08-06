@@ -205,7 +205,52 @@ public class DaMaiService {
         DaMaiBaseResp<List<DaMaiChannelResp>> response = DaMaiUtils.parseToResp(bodyStr, new TypeReference<DaMaiBaseResp<List<DaMaiChannelResp>>>() {});
         return response;
     }
-
+    /**
+     * 库存查询
+     * @param authMap
+     * @return
+     */
+    public DaMaiPageBaseResp<List<DaMaiInventoryResp>> getInventory(Map<String,Object> authMap){
+        String url = "/omsService/non/skuInvApi/getSkuInv";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        int page = 1;
+        int limit = 100;
+        boolean hasMore = true;
+        List<DaMaiInventoryResp> allData = new ArrayList<>();
+        while (hasMore) {
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("limit",limit);
+            bodyMap.put("page",page);
+            String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + url, bodyMap, headerMap);
+            DaMaiPageBaseResp<List<DaMaiInventoryResp>> response = DaMaiUtils.parsePageToResp(bodyStr, new TypeReference<DaMaiPageBaseResp<List<DaMaiInventoryResp>>>() {});
+            if (StringUtils.isBlank(response.getMsg())) {
+                List<DaMaiInventoryResp> respList = response.getData();
+                if (respList == null || respList.isEmpty()) {
+                    hasMore = false;
+                    continue;
+                }
+                if (response.getCount() != null ) {
+                    allData.addAll(respList);
+                    if (response.getCount() <= page * limit) {
+                        hasMore = false;
+                    } else {
+                        page++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            }else{
+                // 如果请求失败，直接返回错误信息
+                DaMaiPageBaseResp<List<DaMaiInventoryResp>> errorResp = new DaMaiPageBaseResp<>();
+                errorResp.setMsg(response.getMsg());
+                return errorResp;
+            }
+        }
+        DaMaiPageBaseResp<List<DaMaiInventoryResp>> errorResp = new DaMaiPageBaseResp<>();
+        errorResp.setMsg("");
+        errorResp.setData(allData);
+        return errorResp;
+    }
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("appToken", authMap.get("appToken").toString());

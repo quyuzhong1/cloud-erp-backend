@@ -98,7 +98,13 @@ public class DaMaiServiceTest {
 
     @Test
     public void getChannel() {
-        DaMaiBaseResp<String> resp = daMaiService.getChannel(authMap);
+        DaMaiBaseResp<List<DaMaiChannelResp>> resp = daMaiService.getChannel(authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void getInventory() {
+        DaMaiPageBaseResp<List<DaMaiInventoryResp>> resp = daMaiService.getInventory(authMap);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }
