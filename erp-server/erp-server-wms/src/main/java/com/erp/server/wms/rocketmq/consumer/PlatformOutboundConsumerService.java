@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -272,7 +273,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
                     addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
                     addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
-                    addDTO.setRemark("三方仓出库自动生成");
+                    if(StringUtils.isNotBlank(thirdWarehouseDeliveryEntity.getActualDeliveryCode())){
+                        addDTO.setRemark(thirdWarehouseDeliveryEntity.getActualDeliveryCode());
+                    }else{
+                        addDTO.setRemark("三方仓出库自动生成");
+                    }
                     wantDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(wantDetailList);
