@@ -686,7 +686,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillDetailId;
 
         private String trackNo;
-        
+        /**
+         * 对账类型
+         */
+        private String payType;
+
         /**
     	 * 计费重[预估]
     	 */

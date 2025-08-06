@@ -1,7 +1,6 @@
 package com.erp.server.tms.listener;
 
 import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -22,6 +21,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private static final int BATCH_COUNT = 1000;
 
     private final String taskId;
+    private final String importType;
     @Getter
     private Integer count = 0;
     /**
@@ -43,8 +43,9 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
-    public LogisticsBillCostExcelListener(String taskId) {
+    public LogisticsBillCostExcelListener(String taskId, String importType) {
         this.taskId = taskId;
+        this.importType = importType;
     }
 
    /**
@@ -75,7 +76,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(),importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -98,7 +99,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (!successList.isEmpty()) {
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(), importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
