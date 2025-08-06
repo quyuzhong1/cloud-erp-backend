@@ -3,6 +3,9 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -178,52 +181,65 @@ public class DmpInoutController extends BaseController {
     }
 
     @PostMapping("getCache")
-    public ApiResult<?> getCache() {
+    public ApiResult<?> getCache(@RequestParam(required = false) String f) {
         Map<String, Object> typeCacheMap = new HashMap<>();
-        typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
+        if(StringUtils.isNotBlank(f)) {
+        	try {
+				Field field = dmpHandlerCache.getClass().getDeclaredField(f);
+				field.setAccessible(true);
+				Object object = field.get(dmpHandlerCache);
+				field.setAccessible(false);
+				typeCacheMap.put(f, object);
+			} catch (Exception e) {
+				log.error("获取中台缓存错误" , e);
+				return ApiResult.error("获取中台缓存错误：" + ExceptionUtil.stacktraceToString(e));
+			}
+        }else {
+        	typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
 
-        List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-                .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
+            List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+                    .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 
 
-        Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
-        for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
-            String id = dmpCfgInputConvertEntity.getId();
-            convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
+            Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
+            for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
+                String id = dmpCfgInputConvertEntity.getId();
+                convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
 
+            }
+
+            Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
+            List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
+            for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
+                String id = dmpCfgInputConvertMappingEntity.getId();
+                convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
+            }
+
+            typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
+            typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
+
+            typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutput", dmpHandlerCache.getDmpCfgOutputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
+
+            List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
+                    .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+                    .eq(DmpCfgMqEntity::getDisabled, false).list();
+            Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
+            Map<String, String> rocketMQTemplateMap = new HashMap<>();
+            for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
+                String mqId = dmpCfgMqEntity.getId();
+                rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
+                rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
+            }
+            typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
+            typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
+            typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
+            typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
+            typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
         }
-
-        Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
-        List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
-        for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
-            String id = dmpCfgInputConvertMappingEntity.getId();
-            convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
-        }
-
-        typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
-        typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
-
-        typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
-        typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
-
-        List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
-                .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
-                .eq(DmpCfgMqEntity::getDisabled, false).list();
-        Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
-        Map<String, String> rocketMQTemplateMap = new HashMap<>();
-        for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
-            String mqId = dmpCfgMqEntity.getId();
-            rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
-            rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
-        }
-        typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
-        typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
-        typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
-        typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-        typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
-
         return success(typeCacheMap);
     }
 
