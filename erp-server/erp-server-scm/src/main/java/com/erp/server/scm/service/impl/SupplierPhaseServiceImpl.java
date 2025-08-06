@@ -381,13 +381,19 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        //TODO 这里要调用工作流服务取消流程
-
+        //撤销现有流程
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER_PHASE.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, waitSubmitStatus);
 
-        return result;
+        return this.updateApproveStatusForDisApprove(list, waitSubmitStatus);
     }
 
 
@@ -416,7 +422,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), obj.getId()));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER_PHASE.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -497,6 +503,22 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
                 .set(SupplierPhaseEntity::getApproveUserName, userInfo.getUserName())
                 .set(SupplierPhaseEntity::getApproveStatus, approveStatus)
                 .set(SupplierPhaseEntity::getApproveTime, LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private Boolean updateApproveStatusForDisApprove(List<SupplierPhaseEntity> list, String approveStatus) {
+        if (CollUtil.isEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        List<String> ids = list.stream().map(SupplierPhaseEntity::getId).distinct().collect(Collectors.toList());
+        return this.lambdaUpdate().in(SupplierPhaseEntity::getId, ids)
+                .set(SupplierPhaseEntity::getApproveStatus, approveStatus)
+                .set(SupplierPhaseEntity::getApproveUserId, "")
+                .set(SupplierPhaseEntity::getApproveUserName, "")
+                .set(SupplierPhaseEntity::getApproveTime, null)
                 .update();
     }
 
