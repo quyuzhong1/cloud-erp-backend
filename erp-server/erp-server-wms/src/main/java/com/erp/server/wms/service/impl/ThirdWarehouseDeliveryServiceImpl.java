@@ -196,6 +196,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
         platformOutboundDTO.setTrackNo(deliveryWithNotOutboundDTO.getTrackNo());
+        thirdWarehouseDeliveryEntity.setActualDeliveryCode(deliveryWithNotOutboundDTO.getActualDeliveryCode());
         platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO);
         entity = soB2cFeign.getById(entity.getId());
         if(entity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){

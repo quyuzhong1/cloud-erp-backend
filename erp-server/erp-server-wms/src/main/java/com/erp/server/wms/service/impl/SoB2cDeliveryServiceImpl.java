@@ -1624,7 +1624,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 addDTO.setPlanQty(soB2cDetailEntity.getQty());
                 addDTO.setActualQty(soB2cDetailEntity.getQty());
                 addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
-                addDTO.setRemark("不出库发货");
+                addDTO.setRemark(dto.getActualDeliveryCode());
                 wantDetailList.add(addDTO);
             }
             generateB2cDTO.setDetailList(wantDetailList);
