@@ -895,11 +895,13 @@ public class SoB2cFeignController extends BaseController {
     public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         if (null == soB2cEntity){
-            ServiceException.runError("未找到B2C销售订单:{}", soId);
+//            ServiceException.runError("未找到B2C销售订单:{}", soId);
+        	return;
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)){
-            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+//            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+        	return;
         }
         syncSoB2cService.syncSdyOrderHandler(soB2cEntity, soB2cDetailEntityList, operateEnum, sourceType);
     }
