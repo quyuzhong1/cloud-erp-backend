@@ -108,6 +108,7 @@ public class KingdeeOperatorRefPostController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -141,9 +142,23 @@ public class KingdeeOperatorRefPostController extends BaseController {
     }
 
     /**
+     * 根据业务员类型和组织id集合查询用户信息
+     * @author will
+     * @date 2025/8/6 14:25
+     * @param dto
+     * @return ApiResult<List<BusinessOperationUserDTO>>
+     */
+    @PostMapping("/listUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeOperatorRefPostService.listUser(dto);
+        return success(list);
+    }
+
+    /**
      * 批量启用/停用
      */
     @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult updateState (@RequestBody @Validated KingdeeBusinessOperatorDTO.BatchUpdateDTO dto) {
         kingdeeOperatorRefPostService.updateState(dto);
         return success();

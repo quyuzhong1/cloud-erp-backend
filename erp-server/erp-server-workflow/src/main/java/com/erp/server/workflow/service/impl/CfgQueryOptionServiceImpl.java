@@ -11,6 +11,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
@@ -50,7 +51,13 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @Override
     public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType) {
-        return baseMapper.proDropDownByMain(bussinessKey,useType);
+        List<CfgQueryOptionEntity> list = lambdaQuery().eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).orderByDesc(CfgQueryOptionEntity::getId).list();
+        List<CfgQueryOptionDTO.ListDTO> result = BeanMapper.copyList(list, CfgQueryOptionDTO.ListDTO.class);
+        List<CfgQueryOptionDTO.ListDTO> listDTOS = baseMapper.proDropDownByMain(bussinessKey, useType);
+        if(CollUtil.isNotEmpty(listDTOS)){
+            result.addAll(listDTOS);
+        }
+        return result;
     }
 
     @Override
