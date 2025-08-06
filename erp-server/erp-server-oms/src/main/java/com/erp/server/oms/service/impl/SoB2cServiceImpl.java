@@ -4300,6 +4300,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         detailDTO.setIsCombination(Boolean.TRUE);
                     }
                 }
+                
+                //设置是否手工添加明细
+                Boolean isSelfAdd = Boolean.FALSE;
+                if (StringUtils.isNotBlank(detailDTO.getSourcePlatform()) && 
+                    SoB2cSourcePlatformEnum.ENUM_SELF_ADD.getCode().equals(detailDTO.getSourcePlatform())) {
+                    isSelfAdd = Boolean.TRUE;
+                }
+                detailDTO.setIsSelfAdd(isSelfAdd);
                 //库存SKU
                 SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuId(), detailDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId())).findFirst().orElse(null);
                 String variantProperty = detailDTO.getVariantProperty();
