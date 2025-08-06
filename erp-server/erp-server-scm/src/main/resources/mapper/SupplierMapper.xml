@@ -115,6 +115,7 @@
         sup.registered_capital as registeredCapital,
         sup.property_json as propertyJson,
         sup.product_category_json as productCategoryJson,
+        sup.certificate_json as certificateJson,
         sup.application_category_json as applicationCategoryJson
         FROM supplier sup
         <if test="params.fieldList != null and params.fieldList.size > 0">

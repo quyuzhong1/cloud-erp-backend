@@ -1517,6 +1517,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //应用分类
         List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
 
+        //获取供应商默认联系人信息
+        List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+
         //获取供应商配置
         List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
         Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
@@ -1600,7 +1603,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
                 exportExcel.setApplicationCategoryNames(applicationCategoryNames);
             }
-
+            //导出列表时联系人为空则取需要重新查联系人
+            if (CharSequenceUtil.isBlank(exportExcel.getPerson()) && CharSequenceUtil.isBlank(exportExcel.getTelNumber())){
+                SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
+                if (contact != null) {
+                    exportExcel.setPerson(contact.getPerson());
+                    exportExcel.setTelNumber(contact.getTelNumber());
+                }
+            }
 
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
