@@ -77,6 +77,7 @@
             lb.source_type as sourceType,
             lbc.reconciliation_status as reconciliationStatus,
             lc.name as channelName,
+            lc.main_id as logisticsSupplierId,
             lbc.transport_no as transportNo,
             lbc.track_no as trackNo,
             lbc.channel_id as channelId,
