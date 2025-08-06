@@ -2080,6 +2080,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(new ArrayList<>());
         List<BaseIdDTO> bankList = sysUserFeign.getBankList(new ArrayList<>());
 
+        //付款条件
+        List<String> paymentConditionNames = successList.stream().map(SupplierImportExcelDTO::getPaymentConditionStr).distinct().collect(Collectors.toList());
+        List<KingdeePaymentConditionEntity> kingdeePaymentConditionList = kingdeePaymentConditionService.listByNameList(paymentConditionNames);
+        Map<String, String> paymentConditionMap = CollUtil.isEmpty(kingdeePaymentConditionList) ? new HashMap<>() : kingdeePaymentConditionList.stream().collect(Collectors.toMap(KingdeePaymentConditionEntity::getName,KingdeePaymentConditionEntity::getCode));
+
+
         //产品分类
         List<BasicCategoryEntity> dictProductCategoryList = FeignQuery.create(BasicCategoryEntity.class).list();
         //应用分类
@@ -2116,7 +2122,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 }
             }
             //供应商组表赋值
-            chekImportSupplier(dictProductCategoryList,dictApplicationCategoryList,supplierGradeList,userList,currencyList,dictBasicList,addDTO,excelDTO,errorMsgList,isUpdatePart);
+            chekImportSupplier(paymentConditionMap,dictProductCategoryList,dictApplicationCategoryList,supplierGradeList,userList,currencyList,dictBasicList,addDTO,excelDTO,errorMsgList,isUpdatePart);
 
             //供应商工厂表赋值
             List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, addDTO, excelDTO, errorMsgList, isUpdatePart);
@@ -2467,7 +2473,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param isUpdatePart
      * @return void
      */
-    private void chekImportSupplier (List<BasicCategoryEntity> dictProductCategoryList,List<ApplicationCategoryEntity> dictApplicationCategoryList,List<SupplierGradeEntity> supplierGradeList,List<FindUserDTO> userList,List<CurrencyDTO.ViewDTO> currencyList
+    private void chekImportSupplier (Map<String, String> paymentConditionMap,List<BasicCategoryEntity> dictProductCategoryList,List<ApplicationCategoryEntity> dictApplicationCategoryList,List<SupplierGradeEntity> supplierGradeList,List<FindUserDTO> userList,List<CurrencyDTO.ViewDTO> currencyList
             ,List<DictBasicEntity> dictBasicList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO
             ,List<String> errorMsgList,boolean isUpdatePart) {
         //等级名称
@@ -2515,7 +2521,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         } else if (!isUpdatePart) {
             addDTO.setDisabled(Boolean.TRUE);
         }
-        //付款方式
+        //结算方式
         if (StringUtils.isNotBlank(excelDTO.getPayMethodName())) {
             String payMethodId = dictBasicList.stream().filter(d -> d.getName().equals(excelDTO.getPayMethodName())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
@@ -2526,6 +2532,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         } else if (!isUpdatePart) {
             addDTO.setPayMethodId("");
         }
+        //付款条件
+        if (StringUtils.isNotBlank(excelDTO.getPaymentConditionStr())) {
+            String paymentCondition = paymentConditionMap.get(excelDTO.getPaymentConditionStr());
+            if (CharSequenceUtil.isBlank(paymentCondition)) {
+                errorMsgList.add("付款条件不存在");
+            }
+            addDTO.setPaymentCondition(paymentCondition);
+        } else if (!isUpdatePart) {
+            addDTO.setPaymentCondition("");
+        }
+        //税率
+        if (StringUtils.isNotBlank(excelDTO.getTaxRateStr())) {
+            addDTO.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRateStr()).divide(MathUtil.BigDecimal_100));
+        } else if (!isUpdatePart) {
+            addDTO.setTaxRate(BigDecimal.ZERO);
+        }
+
         //结算币种
         if (StringUtils.isNotBlank(excelDTO.getPayCurrency())) {
             CurrencyDTO.ViewDTO currency = currencyList.stream().filter(c -> c.getName().equals(excelDTO.getPayCurrency())).findFirst().orElse(null);

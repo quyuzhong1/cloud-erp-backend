@@ -141,10 +141,26 @@ public class SupplierImportExcelDTO implements Serializable {
     private String applicationCategoryStr;
 
     /**
+     * 付款条件
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*付款条件", index = 14)
+    @FieldValid(fieldName = "付款条件",isNotBlank = true )
+    private String paymentConditionStr;
+
+    /**
+     * 税率
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "税率", index = 15)
+    @FieldValid(fieldName = "税率" , formatPattern = FieldFormatPatternTypeEnum.NUMBER)
+    private String taxRateStr;
+
+    /**
      * 体系认证
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*体系认证", index = 14)
+    @ExcelProperty(value = "*体系认证", index = 16)
     @FieldValid(fieldName = "体系认证",isNotBlank = true )
     private String certificateStr;
 
@@ -152,7 +168,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 联系人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "联系人", index = 15)
+    @ExcelProperty(value = "联系人", index = 17)
     @FieldValid(fieldName = "联系人",maxLength = 30)
     private String person;
 
@@ -161,7 +177,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 职务
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "职务", index = 16)
+    @ExcelProperty(value = "职务", index = 18)
     @FieldValid(fieldName = "职务",maxLength = 50)
     private String position;
 
@@ -170,7 +186,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 联系人电话
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "联系人电话", index = 17)
+    @ExcelProperty(value = "联系人电话", index = 19)
     @FieldValid(fieldName = "联系人电话",maxLength = 20)
     private String telNumber;
 
@@ -179,7 +195,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 联系人邮箱
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "联系人邮箱", index = 18)
+    @ExcelProperty(value = "联系人邮箱", index = 20)
     @FieldValid(fieldName = "联系人邮箱",maxLength = 50)
     private String email;
 
@@ -188,7 +204,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 是否默认联系人
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否默认联系人", index = 19)
+    @ExcelProperty(value = "是否默认联系人", index = 21)
     @FieldValid(fieldName = "是否默认联系人",fieldValues = "是,否")
     private String isDefault;
 
@@ -197,7 +213,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 联系人状态
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "联系人状态", index = 20)
+    @ExcelProperty(value = "联系人状态", index = 22)
     @FieldValid(fieldName = "联系人状态",fieldValues = "启用,停用")
     private String contactEnabled;
 
@@ -207,7 +223,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 联系备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "联系备注", index = 21)
+    @ExcelProperty(value = "联系备注", index = 23)
     @FieldValid(fieldName = "联系备注",maxLength = 255)
     private String contactRemark;
 
@@ -217,7 +233,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 账户名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "账户名称", index = 22)
+    @ExcelProperty(value = "账户名称", index = 24)
     @FieldValid(fieldName = "账户名称",maxLength = 100)
     private String payee;
 
@@ -226,14 +242,14 @@ public class SupplierImportExcelDTO implements Serializable {
      * 银行名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "银行名称", index = 23)
+    @ExcelProperty(value = "银行名称", index = 25)
     @FieldValid(fieldName = "银行名称",maxLength = 50)
     private String bankName;
 
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "开户行支行", index = 24)
+    @ExcelProperty(value = "开户行支行", index = 26)
     @FieldValid(fieldName = "开户行支行",maxLength = 255)
     private String bankSubbranch;
 
@@ -241,7 +257,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 银行账号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "银行账号", index = 25)
+    @ExcelProperty(value = "银行账号", index = 27)
     @FieldValid(fieldName = "银行账号",maxLength = 50)
     private String bankAccount;
 
@@ -249,38 +265,38 @@ public class SupplierImportExcelDTO implements Serializable {
      * 支付方式
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "支付方式", index = 26)
+    @ExcelProperty(value = "支付方式", index = 28)
     @FieldValid(fieldName = "支付方式",maxLength = 20)
     private String bankPayMethodName;
 
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "账户备注", index = 27)
+    @ExcelProperty(value = "账户备注", index = 29)
     @FieldValid(fieldName = "账户备注",maxLength = 255)
     private String accountRemark;
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质名称", index = 28)
+    @ExcelProperty(value = "资质名称", index = 30)
     @FieldValid(fieldName = "资质名称",maxLength = 50)
     private String credentialName;
 
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质有效期起", index = 29)
+    @ExcelProperty(value = "资质有效期起", index = 31)
     @FieldValid(fieldName = "资质有效期起",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String effectiveDate;
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质有效期止", index = 30)
+    @ExcelProperty(value = "资质有效期止", index = 32)
     @FieldValid(fieldName = "资质有效期止",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String expireDate;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "资质备注", index = 31)
+    @ExcelProperty(value = "资质备注", index = 33)
     @FieldValid(fieldName = "资质备注",maxLength = 255)
     private String credentialRemark;
 
@@ -289,7 +305,7 @@ public class SupplierImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =32)
+    @ExcelProperty(value = "错误数据", index =34)
     @ColumnWidth(50)
     private String  errorMsg;
 }

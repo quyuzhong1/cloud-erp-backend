@@ -197,6 +197,16 @@ public class SupplierDTO implements Serializable {
         private String payMethodId;
 
         /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
          * 结算付款币种
          */
         //@NotBlank(message = "结算币种不能为空")

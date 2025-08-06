@@ -948,7 +948,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery
-    public ApiResult<?> exportAdjustExcel(@RequestBody PurchaseOrderDTO.SearchAdjustParamDTO dto) {
+    public ApiResult<?> exportAdjustExcel(@RequestBody @Validated PurchaseOrderDTO.SearchAdjustParamDTO dto) {
         Boolean flag = purchaseOrderService.exportAdjustExcel(dto);
         return flag ? success() : failure();
     }
@@ -962,7 +962,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量调价")
     @PostMapping(value = "/batchAdjustPrice")
-    public ApiResult<?> batchAdjustPrice(@RequestBody PurchaseOrderDTO.AdjustPriceDTO dto) {
+    public ApiResult<?> batchAdjustPrice(@RequestBody @Validated PurchaseOrderDTO.AdjustPriceDTO dto) {
         Boolean flag = purchaseOrderService.batchAdjustPrice(dto);
         return flag ? success() : failure();
     }
