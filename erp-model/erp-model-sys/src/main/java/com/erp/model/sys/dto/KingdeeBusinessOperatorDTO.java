@@ -69,6 +69,33 @@ public class KingdeeBusinessOperatorDTO  {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListBusinessOperatorUserDTO{
+
+        /**
+         *  组织 id
+         */
+
+        private List<String> orgIdList;
+
+        /**
+         *  目前业务员类型
+         *  XSY 销售员
+         *  CGY 采购员
+         *  WHY 仓管员
+         *  JHY 计划员
+         *  CWRY 财务人员
+         *  ZJY 质检员
+         *  FWRY 服务人员
+         *  JSY 驾驶员
+         *  CXY 程序员
+         */
+
+        private String type;
+    }
+
+
 
     @Data
     @NoArgsConstructor
