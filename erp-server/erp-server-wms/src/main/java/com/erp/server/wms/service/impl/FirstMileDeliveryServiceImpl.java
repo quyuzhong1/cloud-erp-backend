@@ -1461,7 +1461,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             .set(FirstMileDeliveryEntity::getApproveUserName, userInfo.getUserName())
             .set(FirstMileDeliveryEntity::getApproveStatus, approveStatus)
             .set(FirstMileDeliveryEntity::getApproveTime, LocalDateTime.now())
-            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
+            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, deliveryDate)
             .set(FirstMileDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode())
             .update(new FirstMileDeliveryEntity());
      }
@@ -2616,6 +2616,32 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             resultList.addAll(generateLogisticDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public BatchResultDTO retryOutstock(String id) {
+        FirstMileDeliveryEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货单不存在");
+        }
+        if (validateExistsTransferInfo(entity.getId())) {
+            throw new ServiceException(ApiError.ERROR_92138, "发货单已调拨出库，不允许重新出库");
+        }
+        //查询发货详情
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细不存在");
+        }
+        //匹配到规则则进行中转调拨，否则直接生成调拨单
+        if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            List<String> split = CharSequenceUtil.split(entity.getTransferWarehouseIds(), ",");
+            //中转循环调拨
+            generateTransferByRule(split,entity, detailEntityList,batchNo);
+        }else {
+            generateTransferOut(entity, detailEntityList);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
     }
 }
 

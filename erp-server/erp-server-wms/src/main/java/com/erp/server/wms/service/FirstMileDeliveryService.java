@@ -374,4 +374,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth, String shipmentCode, String asin, String msku);
 
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(List<String> deliveryCodes);
+    /**
+     * 重新出库
+     * @author will
+     * @date 2025/8/6 17:01
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO retryOutstock(String id);
 }
