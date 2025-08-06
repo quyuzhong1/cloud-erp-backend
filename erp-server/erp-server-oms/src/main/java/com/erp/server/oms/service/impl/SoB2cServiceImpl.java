@@ -2478,6 +2478,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(soB2cDetailEntity)) {
                 throw new ServiceException("发货sku匹配不到明细");
             }
+            
+            // 获取仓库信息，检查是否允许负库存
+            List<WarehouseDTO.UpdateDTO> warehouseInfoList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(soB2cDetailEntity.getWarehouseId()));
+            WarehouseDTO.UpdateDTO warehouseInfo = CollectionUtils.isNotEmpty(warehouseInfoList) ? warehouseInfoList.get(0) : null;
+            if (Objects.isNull(warehouseInfo)) {
+                throw new ServiceException("仓库信息不存在，仓库ID：" + soB2cDetailEntity.getWarehouseId());
+            }
+            
+            // 如果仓库允许负库存，则跳过库存校验
+            if (Boolean.TRUE.equals(warehouseInfo.getAllowNegativeInventory())) {
+                log.info("仓库【{}】允许负库存，跳过SKU【{}】的库存校验", warehouseInfo.getName(), soB2cDetailEntity.getSkuNo());
+                continue;
+            }
+            
             //验证是否存在可用库存
             Integer usableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(deliverySkuDTO.getSkuId()) && obj.getWarehouseId().equals(soB2cDetailEntity.getWarehouseId()))
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
