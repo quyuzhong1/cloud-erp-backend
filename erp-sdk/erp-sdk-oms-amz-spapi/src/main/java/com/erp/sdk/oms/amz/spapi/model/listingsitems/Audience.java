@@ -20,75 +20,55 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+
 import java.io.IOException;
 /**
- * The image for the listings item.
+ * Buyer segment or program this offer is applicable to.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class Audience {
+  @SerializedName("value")
+  private String value = null;
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("displayName")
+  private String displayName = null;
 
-  @SerializedName("width")
-  private Integer width = null;
-
-  public ItemImage link(String link) {
-    this.link = link;
+  public Audience value(String value) {
+    this.value = value;
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * Name of the audience an offer is applicable to.   Common values:   * &#x27;ALL&#x27; - Standard offer audience for buyers on Amazon retail websites.   * &#x27;B2B&#x27; - Offer audience for Amazon Business website buyers.
+   * @return value
   **/
   
-  public String getLink() {
-    return link;
+  public String getValue() {
+    return value;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setValue(String value) {
+    this.value = value;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public Audience displayName(String displayName) {
+    this.displayName = displayName;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * Localized display name for the audience.
+   * @return displayName
   **/
   
-  public Integer getHeight() {
-    return height;
+  public String getDisplayName() {
+    return displayName;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
-  }
-
-  public ItemImage width(Integer width) {
-    this.width = width;
-    return this;
-  }
-
-   /**
-   * The width of the image in pixels.
-   * @return width
-  **/
-  
-  public Integer getWidth() {
-    return width;
-  }
-
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
   }
 
 
@@ -100,26 +80,24 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    Audience audience = (Audience) o;
+    return Objects.equals(this.value, audience.value) &&
+        Objects.equals(this.displayName, audience.displayName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(value, displayName);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class Audience {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    value: ").append(toIndentedString(value)).append("\n");
+    sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("}");
     return sb.toString();
   }

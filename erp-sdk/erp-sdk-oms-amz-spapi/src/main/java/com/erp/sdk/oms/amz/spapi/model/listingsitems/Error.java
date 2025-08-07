@@ -22,73 +22,73 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 /**
- * The image for the listings item.
+ * Error response returned when the request is unsuccessful.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class Error {
+  @SerializedName("code")
+  private String code = null;
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("message")
+  private String message = null;
 
-  @SerializedName("width")
-  private Integer width = null;
+  @SerializedName("details")
+  private String details = null;
 
-  public ItemImage link(String link) {
-    this.link = link;
+  public Error code(String code) {
+    this.code = code;
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * An error code that identifies the type of error that occurred.
+   * @return code
   **/
   
-  public String getLink() {
-    return link;
+  public String getCode() {
+    return code;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setCode(String code) {
+    this.code = code;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public Error message(String message) {
+    this.message = message;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * A message that describes the error condition.
+   * @return message
   **/
   
-  public Integer getHeight() {
-    return height;
+  public String getMessage() {
+    return message;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
+  public void setMessage(String message) {
+    this.message = message;
   }
 
-  public ItemImage width(Integer width) {
-    this.width = width;
+  public Error details(String details) {
+    this.details = details;
     return this;
   }
 
    /**
-   * The width of the image in pixels.
-   * @return width
+   * Additional details that can help the caller understand or fix the issue.
+   * @return details
   **/
   
-  public Integer getWidth() {
-    return width;
+  public String getDetails() {
+    return details;
   }
 
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setDetails(String details) {
+    this.details = details;
   }
 
 
@@ -100,26 +100,26 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    Error error = (Error) o;
+    return Objects.equals(this.code, error.code) &&
+        Objects.equals(this.message, error.message) &&
+        Objects.equals(this.details, error.details);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(code, message, details);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class Error {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    code: ").append(toIndentedString(code)).append("\n");
+    sb.append("    message: ").append(toIndentedString(message)).append("\n");
+    sb.append("    details: ").append(toIndentedString(details)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -22,73 +22,52 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 /**
- * The image for the listings item.
+ * When a request produces a response that exceeds the &#x60;pageSize&#x60;, pagination occurs. This means the response is divided into individual pages. To retrieve the next page or the previous page, you must pass the &#x60;nextToken&#x60; value or the &#x60;previousToken&#x60; value as the &#x60;pageToken&#x60; parameter in the next request. When you receive the last page, there is no &#x60;nextToken&#x60; key in the pagination object.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class Pagination {
+  @SerializedName("nextToken")
+  private String nextToken = null;
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("previousToken")
+  private String previousToken = null;
 
-  @SerializedName("width")
-  private Integer width = null;
-
-  public ItemImage link(String link) {
-    this.link = link;
+  public Pagination nextToken(String nextToken) {
+    this.nextToken = nextToken;
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * A token that can be used to fetch the next page.
+   * @return nextToken
   **/
   
-  public String getLink() {
-    return link;
+  public String getNextToken() {
+    return nextToken;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setNextToken(String nextToken) {
+    this.nextToken = nextToken;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public Pagination previousToken(String previousToken) {
+    this.previousToken = previousToken;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * A token that can be used to fetch the previous page.
+   * @return previousToken
   **/
   
-  public Integer getHeight() {
-    return height;
+  public String getPreviousToken() {
+    return previousToken;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
-  }
-
-  public ItemImage width(Integer width) {
-    this.width = width;
-    return this;
-  }
-
-   /**
-   * The width of the image in pixels.
-   * @return width
-  **/
-  
-  public Integer getWidth() {
-    return width;
-  }
-
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setPreviousToken(String previousToken) {
+    this.previousToken = previousToken;
   }
 
 
@@ -100,26 +79,24 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    Pagination pagination = (Pagination) o;
+    return Objects.equals(this.nextToken, pagination.nextToken) &&
+        Objects.equals(this.previousToken, pagination.previousToken);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(nextToken, previousToken);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class Pagination {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    nextToken: ").append(toIndentedString(nextToken)).append("\n");
+    sb.append("    previousToken: ").append(toIndentedString(previousToken)).append("\n");
     sb.append("}");
     return sb.toString();
   }

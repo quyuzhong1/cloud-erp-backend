@@ -22,73 +22,52 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 /**
- * The image for the listings item.
+ * Identity attributes associated with the item in the Amazon catalog for the indicated Amazon marketplace.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class ItemIdentifiersByMarketplace {
+  @SerializedName("marketplaceId")
+  private String marketplaceId = null;
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("asin")
+  private String asin = null;
 
-  @SerializedName("width")
-  private Integer width = null;
-
-  public ItemImage link(String link) {
-    this.link = link;
+  public ItemIdentifiersByMarketplace marketplaceId(String marketplaceId) {
+    this.marketplaceId = marketplaceId;
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * A marketplace identifier. Identifies the Amazon marketplace for the listings item.
+   * @return marketplaceId
   **/
   
-  public String getLink() {
-    return link;
+  public String getMarketplaceId() {
+    return marketplaceId;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setMarketplaceId(String marketplaceId) {
+    this.marketplaceId = marketplaceId;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public ItemIdentifiersByMarketplace asin(String asin) {
+    this.asin = asin;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * Amazon Standard Identification Number (ASIN) of the listings item.
+   * @return asin
   **/
   
-  public Integer getHeight() {
-    return height;
+  public String getAsin() {
+    return asin;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
-  }
-
-  public ItemImage width(Integer width) {
-    this.width = width;
-    return this;
-  }
-
-   /**
-   * The width of the image in pixels.
-   * @return width
-  **/
-  
-  public Integer getWidth() {
-    return width;
-  }
-
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setAsin(String asin) {
+    this.asin = asin;
   }
 
 
@@ -100,26 +79,24 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    ItemIdentifiersByMarketplace itemIdentifiersByMarketplace = (ItemIdentifiersByMarketplace) o;
+    return Objects.equals(this.marketplaceId, itemIdentifiersByMarketplace.marketplaceId) &&
+        Objects.equals(this.asin, itemIdentifiersByMarketplace.asin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(marketplaceId, asin);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class ItemIdentifiersByMarketplace {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    marketplaceId: ").append(toIndentedString(marketplaceId)).append("\n");
+    sb.append("    asin: ").append(toIndentedString(asin)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -1,6 +1,6 @@
 /*
  * Selling Partner API for Listings Items
- * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](doc:listings-items-api-v2021-08-01-use-case-guide).
+ * The Selling Partner API for Listings Items (Listings Items API) provides programmatic access to selling partner listings on Amazon. Use this API in collaboration with the Selling Partner API for Product Type Definitions, which you use to retrieve the information about Amazon product types needed to use the Listings Items API.  For more information, see the [Listings Items API Use Case Guide](https://developer-docs.amazon.com/sp-api/docs/listings-items-api-v2021-08-01-use-case-guide).
  *
  * OpenAPI spec version: 2021-08-01
  * 
@@ -10,26 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.IssueEnforcements;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
  * An issue with a listings item.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2022-07-24T13:44:38.380+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
+
 public class Issue {
   @SerializedName("code")
   private String code = null;
@@ -42,10 +42,11 @@ public class Issue {
    */
   @JsonAdapter(SeverityEnum.Adapter.class)
   public enum SeverityEnum {
+    @SerializedName("ERROR")
     ERROR("ERROR"),
-    
+    @SerializedName("WARNING")
     WARNING("WARNING"),
-    
+    @SerializedName("INFO")
     INFO("INFO");
 
     private String value;
@@ -53,7 +54,6 @@ public class Issue {
     SeverityEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -62,35 +62,37 @@ public class Issue {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static SeverityEnum fromValue(String text) {
+    public static SeverityEnum fromValue(String input) {
       for (SeverityEnum b : SeverityEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<SeverityEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final SeverityEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public SeverityEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return SeverityEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return SeverityEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("severity")
+  }  @SerializedName("severity")
   private SeverityEnum severity = null;
 
   @SerializedName("attributeNames")
   private List<String> attributeNames = null;
+
+  @SerializedName("categories")
+  private List<String> categories = new ArrayList<String>();
+
+  @SerializedName("enforcements")
+  private IssueEnforcements enforcements = null;
 
   public Issue code(String code) {
     this.code = code;
@@ -101,7 +103,7 @@ public class Issue {
    * An issue code that identifies the type of issue.
    * @return code
   **/
-
+  
   public String getCode() {
     return code;
   }
@@ -119,7 +121,7 @@ public class Issue {
    * A message that describes the issue.
    * @return message
   **/
-
+  
   public String getMessage() {
     return message;
   }
@@ -137,7 +139,7 @@ public class Issue {
    * The severity of the issue.
    * @return severity
   **/
-
+  
   public SeverityEnum getSeverity() {
     return severity;
   }
@@ -160,16 +162,57 @@ public class Issue {
   }
 
    /**
-   * Names of the attributes associated with the issue, if applicable.
+   * The names of the attributes associated with the issue, if applicable.
    * @return attributeNames
   **/
-
+  
   public List<String> getAttributeNames() {
     return attributeNames;
   }
 
   public void setAttributeNames(List<String> attributeNames) {
     this.attributeNames = attributeNames;
+  }
+
+  public Issue categories(List<String> categories) {
+    this.categories = categories;
+    return this;
+  }
+
+  public Issue addCategoriesItem(String categoriesItem) {
+    this.categories.add(categoriesItem);
+    return this;
+  }
+
+   /**
+   * List of issue categories.   Possible values:   * &#x27;INVALID_ATTRIBUTE&#x27; - Indicating an invalid attribute in the listing.   * &#x27;MISSING_ATTRIBUTE&#x27; - Highlighting a missing attribute in the listing.   * &#x27;INVALID_IMAGE&#x27; - Signifying an invalid image in the listing.   * &#x27;MISSING_IMAGE&#x27; - Noting the absence of an image in the listing.   * &#x27;INVALID_PRICE&#x27; - Pertaining to issues with the listing&#x27;s price-related attributes.   * &#x27;MISSING_PRICE&#x27; - Pointing out the absence of a price attribute in the listing.   * &#x27;DUPLICATE&#x27; - Identifying listings with potential duplicate problems, such as this ASIN potentially being a duplicate of another ASIN.   * &#x27;QUALIFICATION_REQUIRED&#x27; - Indicating that the listing requires qualification-related approval.
+   * @return categories
+  **/
+  
+  public List<String> getCategories() {
+    return categories;
+  }
+
+  public void setCategories(List<String> categories) {
+    this.categories = categories;
+  }
+
+  public Issue enforcements(IssueEnforcements enforcements) {
+    this.enforcements = enforcements;
+    return this;
+  }
+
+   /**
+   * Get enforcements
+   * @return enforcements
+  **/
+  
+  public IssueEnforcements getEnforcements() {
+    return enforcements;
+  }
+
+  public void setEnforcements(IssueEnforcements enforcements) {
+    this.enforcements = enforcements;
   }
 
 
@@ -185,12 +228,14 @@ public class Issue {
     return Objects.equals(this.code, issue.code) &&
         Objects.equals(this.message, issue.message) &&
         Objects.equals(this.severity, issue.severity) &&
-        Objects.equals(this.attributeNames, issue.attributeNames);
+        Objects.equals(this.attributeNames, issue.attributeNames) &&
+        Objects.equals(this.categories, issue.categories) &&
+        Objects.equals(this.enforcements, issue.enforcements);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, message, severity, attributeNames);
+    return Objects.hash(code, message, severity, attributeNames, categories, enforcements);
   }
 
 
@@ -203,6 +248,8 @@ public class Issue {
     sb.append("    message: ").append(toIndentedString(message)).append("\n");
     sb.append("    severity: ").append(toIndentedString(severity)).append("\n");
     sb.append("    attributeNames: ").append(toIndentedString(attributeNames)).append("\n");
+    sb.append("    categories: ").append(toIndentedString(categories)).append("\n");
+    sb.append("    enforcements: ").append(toIndentedString(enforcements)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -219,4 +266,3 @@ public class Issue {
   }
 
 }
-

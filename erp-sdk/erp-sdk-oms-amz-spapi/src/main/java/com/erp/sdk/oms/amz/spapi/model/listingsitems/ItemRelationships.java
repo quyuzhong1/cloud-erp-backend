@@ -14,16 +14,17 @@ package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
 import java.util.Objects;
 import java.util.Arrays;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemRelationshipsByMarketplace;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 /**
- * A JSON object containing structured listings item attribute data keyed by attribute name.
+ * Relationships for a listing item, by marketplace (for example, variations).
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemAttributes extends HashMap<String, Object> {
+public class ItemRelationships extends ArrayList<ItemRelationshipsByMarketplace> {
 
   @Override
   public boolean equals(Object o) {
@@ -45,7 +46,7 @@ public class ItemAttributes extends HashMap<String, Object> {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemAttributes {\n");
+    sb.append("class ItemRelationships {\n");
     sb.append("    ").append(toIndentedString(super.toString())).append("\n");
     sb.append("}");
     return sb.toString();

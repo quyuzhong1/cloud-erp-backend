@@ -19,76 +19,64 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.IssueEnforcementAction;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.IssueExemption;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 /**
- * The image for the listings item.
+ * This field provides information about the enforcement actions taken by Amazon that affect the publishing or status of a listing. It also includes details about any associated exemptions.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class IssueEnforcements {
+  @SerializedName("actions")
+  private List<IssueEnforcementAction> actions = new ArrayList<IssueEnforcementAction>();
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("exemption")
+  private IssueExemption exemption = null;
 
-  @SerializedName("width")
-  private Integer width = null;
+  public IssueEnforcements actions(List<IssueEnforcementAction> actions) {
+    this.actions = actions;
+    return this;
+  }
 
-  public ItemImage link(String link) {
-    this.link = link;
+  public IssueEnforcements addActionsItem(IssueEnforcementAction actionsItem) {
+    this.actions.add(actionsItem);
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * List of enforcement actions taken by Amazon that affect the publishing or status of a listing.
+   * @return actions
   **/
   
-  public String getLink() {
-    return link;
+  public List<IssueEnforcementAction> getActions() {
+    return actions;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setActions(List<IssueEnforcementAction> actions) {
+    this.actions = actions;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public IssueEnforcements exemption(IssueExemption exemption) {
+    this.exemption = exemption;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * Get exemption
+   * @return exemption
   **/
   
-  public Integer getHeight() {
-    return height;
+  public IssueExemption getExemption() {
+    return exemption;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
-  }
-
-  public ItemImage width(Integer width) {
-    this.width = width;
-    return this;
-  }
-
-   /**
-   * The width of the image in pixels.
-   * @return width
-  **/
-  
-  public Integer getWidth() {
-    return width;
-  }
-
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setExemption(IssueExemption exemption) {
+    this.exemption = exemption;
   }
 
 
@@ -100,26 +88,24 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    IssueEnforcements issueEnforcements = (IssueEnforcements) o;
+    return Objects.equals(this.actions, issueEnforcements.actions) &&
+        Objects.equals(this.exemption, issueEnforcements.exemption);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(actions, exemption);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class IssueEnforcements {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    actions: ").append(toIndentedString(actions)).append("\n");
+    sb.append("    exemption: ").append(toIndentedString(exemption)).append("\n");
     sb.append("}");
     return sb.toString();
   }

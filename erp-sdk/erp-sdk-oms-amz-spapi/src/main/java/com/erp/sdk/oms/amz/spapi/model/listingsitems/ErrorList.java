@@ -14,16 +14,49 @@ package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
 import java.util.Objects;
 import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.listingsitems.Error;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 /**
- * A JSON object containing structured listings item attribute data keyed by attribute name.
+ * A list of error responses returned when a request is unsuccessful.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemAttributes extends HashMap<String, Object> {
+public class ErrorList {
+  @SerializedName("errors")
+  private List<Error> errors = new ArrayList<Error>();
+
+  public ErrorList errors(List<Error> errors) {
+    this.errors = errors;
+    return this;
+  }
+
+  public ErrorList addErrorsItem(Error errorsItem) {
+    this.errors.add(errorsItem);
+    return this;
+  }
+
+   /**
+   * Get errors
+   * @return errors
+  **/
+  
+  public List<Error> getErrors() {
+    return errors;
+  }
+
+  public void setErrors(List<Error> errors) {
+    this.errors = errors;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -33,20 +66,22 @@ public class ItemAttributes extends HashMap<String, Object> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return super.equals(o);
+    ErrorList errorList = (ErrorList) o;
+    return Objects.equals(this.errors, errorList.errors);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode());
+    return Objects.hash(errors);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemAttributes {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
+    sb.append("class ErrorList {\n");
+    
+    sb.append("    errors: ").append(toIndentedString(errors)).append("\n");
     sb.append("}");
     return sb.toString();
   }

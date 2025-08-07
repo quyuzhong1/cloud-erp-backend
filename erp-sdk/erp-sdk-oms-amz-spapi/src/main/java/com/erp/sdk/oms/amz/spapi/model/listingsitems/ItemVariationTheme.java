@@ -21,74 +21,60 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 /**
- * The image for the listings item.
+ * A variation theme that indicates the combination of listing item attributes that define the variation family.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemImage {
-  @SerializedName("link")
-  private String link = null;
+public class ItemVariationTheme {
+  @SerializedName("attributes")
+  private List<String> attributes = new ArrayList<String>();
 
-  @SerializedName("height")
-  private Integer height = null;
+  @SerializedName("theme")
+  private String theme = null;
 
-  @SerializedName("width")
-  private Integer width = null;
+  public ItemVariationTheme attributes(List<String> attributes) {
+    this.attributes = attributes;
+    return this;
+  }
 
-  public ItemImage link(String link) {
-    this.link = link;
+  public ItemVariationTheme addAttributesItem(String attributesItem) {
+    this.attributes.add(attributesItem);
     return this;
   }
 
    /**
-   * The link, or URL, to the image.
-   * @return link
+   * The names of the listing item attributes that are associated with the variation theme.
+   * @return attributes
   **/
   
-  public String getLink() {
-    return link;
+  public List<String> getAttributes() {
+    return attributes;
   }
 
-  public void setLink(String link) {
-    this.link = link;
+  public void setAttributes(List<String> attributes) {
+    this.attributes = attributes;
   }
 
-  public ItemImage height(Integer height) {
-    this.height = height;
+  public ItemVariationTheme theme(String theme) {
+    this.theme = theme;
     return this;
   }
 
    /**
-   * The height of the image in pixels.
-   * @return height
+   * The variation theme that indicates the combination of listing item attributes that define the variation family.
+   * @return theme
   **/
   
-  public Integer getHeight() {
-    return height;
+  public String getTheme() {
+    return theme;
   }
 
-  public void setHeight(Integer height) {
-    this.height = height;
-  }
-
-  public ItemImage width(Integer width) {
-    this.width = width;
-    return this;
-  }
-
-   /**
-   * The width of the image in pixels.
-   * @return width
-  **/
-  
-  public Integer getWidth() {
-    return width;
-  }
-
-  public void setWidth(Integer width) {
-    this.width = width;
+  public void setTheme(String theme) {
+    this.theme = theme;
   }
 
 
@@ -100,26 +86,24 @@ public class ItemImage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ItemImage itemImage = (ItemImage) o;
-    return Objects.equals(this.link, itemImage.link) &&
-        Objects.equals(this.height, itemImage.height) &&
-        Objects.equals(this.width, itemImage.width);
+    ItemVariationTheme itemVariationTheme = (ItemVariationTheme) o;
+    return Objects.equals(this.attributes, itemVariationTheme.attributes) &&
+        Objects.equals(this.theme, itemVariationTheme.theme);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(link, height, width);
+    return Objects.hash(attributes, theme);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemImage {\n");
+    sb.append("class ItemVariationTheme {\n");
     
-    sb.append("    link: ").append(toIndentedString(link)).append("\n");
-    sb.append("    height: ").append(toIndentedString(height)).append("\n");
-    sb.append("    width: ").append(toIndentedString(width)).append("\n");
+    sb.append("    attributes: ").append(toIndentedString(attributes)).append("\n");
+    sb.append("    theme: ").append(toIndentedString(theme)).append("\n");
     sb.append("}");
     return sb.toString();
   }

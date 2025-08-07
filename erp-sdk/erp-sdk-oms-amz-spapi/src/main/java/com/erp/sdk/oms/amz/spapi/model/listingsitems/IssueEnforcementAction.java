@@ -14,16 +14,41 @@ package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
 import java.util.Objects;
 import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
 /**
- * A JSON object containing structured listings item attribute data keyed by attribute name.
+ * The enforcement action taken by Amazon that affect the publishing or status of a listing
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
 
-public class ItemAttributes extends HashMap<String, Object> {
+public class IssueEnforcementAction {
+  @SerializedName("action")
+  private String action = null;
+
+  public IssueEnforcementAction action(String action) {
+    this.action = action;
+    return this;
+  }
+
+   /**
+   * The enforcement action name.   Possible values:   * &#x60;LISTING_SUPPRESSED&#x60; - This enforcement takes down the current listing item&#x27;s buyability.   * &#x60;ATTRIBUTE_SUPPRESSED&#x60; - An attribute&#x27;s value on the listing item is invalid, which causes it to be rejected by Amazon.   * &#x60;CATALOG_ITEM_REMOVED&#x60; - This catalog item is inactive on Amazon, and all offers against it in the applicable marketplace are non-buyable.   * &#x60;SEARCH_SUPPRESSED&#x60; - This value indicates that the catalog item is hidden from search results.
+   * @return action
+  **/
+  
+  public String getAction() {
+    return action;
+  }
+
+  public void setAction(String action) {
+    this.action = action;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -33,20 +58,22 @@ public class ItemAttributes extends HashMap<String, Object> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return super.equals(o);
+    IssueEnforcementAction issueEnforcementAction = (IssueEnforcementAction) o;
+    return Objects.equals(this.action, issueEnforcementAction.action);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode());
+    return Objects.hash(action);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ItemAttributes {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
+    sb.append("class IssueEnforcementAction {\n");
+    
+    sb.append("    action: ").append(toIndentedString(action)).append("\n");
     sb.append("}");
     return sb.toString();
   }
