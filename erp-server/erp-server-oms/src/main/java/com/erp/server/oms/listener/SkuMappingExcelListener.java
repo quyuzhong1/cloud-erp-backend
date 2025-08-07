@@ -17,6 +17,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -25,6 +26,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -329,6 +331,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 }
                 if (Objects.nonNull(listingInfoEntity)){
                     listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                    if(StringUtils.isNotBlank(skuMappingImportExcelDTO.getPlatformStatusName())){
+                        String platformStatus = ListingInfoPlatformStatusEnum.getCodeByName(skuMappingImportExcelDTO.getPlatformStatusName());
+                        listingInfoEntity.setPlatformStatus(platformStatus);
+                    }
+
                     updateListingInfoList.add(listingInfoEntity);
                     //税务信息
                     InvoiceTaxDTO.UpdateDTO invoiceTaxUpdateDTO = BeanUtil.toBean(skuMappingImportExcelDTO, InvoiceTaxDTO.UpdateDTO.class);

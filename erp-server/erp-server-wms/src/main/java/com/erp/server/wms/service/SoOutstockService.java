@@ -559,4 +559,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     BatchResultDTO handleWdtData(String id);
 
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
+    /**
+     * 下推B2B报关单
+     * @author jack
+     * @date: 2025-07-18
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    BatchResultDTO generateB2bDeclar(String id);
 }

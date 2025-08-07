@@ -50,4 +50,6 @@ public interface ExportPlmFeign {
     PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProjectTask(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto);
     @PostMapping("/feign/export/exportProductDetail")
     PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto);
+    @PostMapping("/feign/export/exportProductCustoms")
+    PagingVO<ProductCustomsDTO.ListDTO> exportProductCustoms(@RequestBody @Validated PagingDTO<ProductCustomsDTO.PagingParamDTO> dto);
 }

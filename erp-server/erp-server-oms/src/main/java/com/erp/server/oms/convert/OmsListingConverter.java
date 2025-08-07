@@ -43,6 +43,7 @@ public interface OmsListingConverter {
             @Mapping(target = "matchResult", source = "matchResultStr",defaultValue = "false"),
             @Mapping(target = "platformStatus", source = "platformStatus",defaultValue = ""),
             @Mapping(target = "authId", source = "authId",defaultValue = ""),
+            @Mapping(target = "platformParentSpuNo", source = "platformParentSpuNo"),
     })
     ListingInfoEntity listingDtoToEntity(PlatformProductDTO platformProductDTO);
 

@@ -181,6 +181,10 @@ public class SoB2cReceiverDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
 
     }
@@ -260,5 +264,23 @@ public class SoB2cReceiverDTO implements Serializable {
          * 街道详细地址
          */
         private String fullAddress;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddressDTO {
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单id不能为空")
+        private String soId;
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+        /**
+         * 发票地址
+         */
+        private String invoiceAddress;
     }
 }

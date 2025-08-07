@@ -10,15 +10,19 @@ import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.ASINIdentifier;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.IdentifierType;
+import com.erp.server.dmp.service.DmpProductInfoService;
+import com.erp.server.dmp.service.DmpSkuInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -44,6 +48,13 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
     public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
 
     public static final String AMAZON_LISTING_PRICING_DATA = "amazon_listing_pricing_data";
+
+
+    @Resource
+    private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private DmpProductInfoService dmpProductInfoService;
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
@@ -71,7 +82,8 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
 
         // 按listing报告内容
         List<ParamData> chlidParamDataList = new ArrayList<>();
-        chlidParamDataList.add(new ParamData(REPORT_ID, REPORT_ID, PannoEnum.EQ, reportId));
+//        chlidParamDataList.add(new ParamData(REPORT_ID, REPORT_ID, PannoEnum.EQ, reportId));
+        chlidParamDataList.add(new ParamData(NEXT_LEVEL_ID, NEXT_LEVEL_ID, PannoEnum.EQ, shopId));
         List<Map<String, Object>> listingMongoData = mongoService.findMongoData(chlidParamDataList, AMAZON_LISTING_DATA);
         if (CollectionUtils.isEmpty(listingMongoData)) {
             return Collections.emptyList();
@@ -179,6 +191,20 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                     }
                 }
             }
+            //记录父平台产品id
+            Object relationshipsObj = detailMap.get("relationships");
+            if(null != relationshipsObj){
+                List<ItemRelationshipsByMarketplace> itemRelationshipsByMarketplace = JSONUtil.toList(JSONUtil.toJsonStr(relationshipsObj), ItemRelationshipsByMarketplace.class);
+                if(CollectionUtils.isNotEmpty(itemRelationshipsByMarketplace)){
+                    List<ItemRelationship> relationships = itemRelationshipsByMarketplace.get(0).getRelationships();
+                    if(CollectionUtils.isNotEmpty(relationships)){
+                        List<String> parentAsins = relationships.get(0).getParentAsins();
+                        if(CollectionUtils.isNotEmpty(parentAsins) && StringUtils.isNotBlank(parentAsins.get(0))){
+                            listingMongoDataItem.put("platformParentSpuNo", parentAsins.get(0));
+                        }
+                    }
+                }
+            }
 
             listingMongoDataItem.put("packageUnit", "cm");
             listingMongoDataItem.put("weightUnit", "kg");
@@ -205,9 +231,12 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
 
     @Override
     protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        if (CollectionUtils.isEmpty(dmpInputMongoChildEntityList)) {
+            return;
+        }
         ServiceImpl parentServiceImpl = this.getServiceImpl("dmp_product_info");
         QueryWrapper<?> wrapper = new QueryWrapper<>();
-        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        wrapper.eq("next_level_id", nextLevelId);
         List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {

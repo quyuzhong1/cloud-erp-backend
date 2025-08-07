@@ -1,6 +1,7 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Objects;
@@ -10,7 +11,7 @@ import java.util.Objects;
  * @author: hcg
  * @date: 2025/4/14 14:21
  */
-public enum InvoiceRuleEnum {
+public enum InvoiceRuleEnum implements EnumMessage {
     AMOUNT("Amount", "按产品全额开票"),
     CUSTOM("Custom", "按（产品全额×自定义百分比）后开票"),
     DEDUCT("Deduct", "按（产品全额-佣金）后开票"),
