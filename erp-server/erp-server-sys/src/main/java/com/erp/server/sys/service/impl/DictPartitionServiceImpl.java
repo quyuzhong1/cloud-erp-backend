@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -98,6 +99,10 @@ public class DictPartitionServiceImpl extends SuperServiceImpl<DictPartitionMapp
         return baseMapper.dropDown(dto);
     }
 
+    @Override
+    public List<DictPartitionEntity> listByAdvanceQuery(AdvanceQueryContainer advanceQueryContainer) {
+        return baseMapper.listByAdvanceQuery(advanceQueryContainer);
+    }
 
     /**
     * 新增修改处理数据
