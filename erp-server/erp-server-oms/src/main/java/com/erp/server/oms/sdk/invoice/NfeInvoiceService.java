@@ -818,7 +818,7 @@ public class NfeInvoiceService {
         return FileUtil.toMultipartFile(invoiceUrl,sourceFile.getName(),defaultSuffix);
     }
 
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public void createInvoiceProcess(SoB2cEntity soB2cEntity, InvoiceInfoEntity invoiceInfoEntity) {
          log.warn("记录异步开票日志开始：{}",invoiceInfoEntity.getCode());
         try {
