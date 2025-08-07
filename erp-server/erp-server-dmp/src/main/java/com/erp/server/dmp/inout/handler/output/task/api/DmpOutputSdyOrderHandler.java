@@ -107,7 +107,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
-
+        
+        boolean selfAdd = isSelfAdd();
 
         Map<String, Object> dmpDictBasticMap = queryAndCacheDmpDictBasicEntity(cacheMap);
 
@@ -682,6 +683,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
+            if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
+				if(selfAdd) {
+            		shudiyunB2cOrderDTO.setBiz_uni_key(shudiyunB2cOrderDTO.getBiz_uni_key() + "_1");
+            	}else {
+            		shudiyunB2cOrderDTO.setTransaction_type("配货单");
+            	}
+            }
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
@@ -961,4 +969,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         return dmpDictBasic;
     }
 
+    protected boolean isSelfAdd() {
+		return false;
+	}
 }

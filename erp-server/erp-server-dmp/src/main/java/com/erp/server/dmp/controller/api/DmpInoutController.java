@@ -557,6 +557,7 @@ public class DmpInoutController extends BaseController {
 
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1859427581292469023", DmpBasicSystemCodeEnum.WDT.getCode());
+    	sourceSystemMaps.put("1859427581292469024", DmpBasicSystemCodeEnum.WDT.getCode());
     	bizTypeSourceSystemMaps.put("soDeliver", sourceSystemMaps);
     	
     	sourceSystemMaps = new HashMap<>();
