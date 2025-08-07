@@ -2225,7 +2225,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                         } else {
                             addrDTO.setCountry(countryEntity.getId());
                             addrDTO.setRegion(provinceEntity.getId());
-                            addrDTO.setCity(dictCityEntity.getCode());
+                            addrDTO.setCity(dictCityEntity.getId());
                         }
                     } else {
                         errorMsgList.add("工厂地址【" + addr + "】不支持直接添加街道，请先填写对应的城市");
