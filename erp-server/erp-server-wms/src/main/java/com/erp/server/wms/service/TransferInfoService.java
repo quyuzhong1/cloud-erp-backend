@@ -102,22 +102,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
     Boolean delete(List<String> ids);
 
     /**
-     * @description: 删除单个直接调拨单
-     * @author Will
-     * @date: 2023/5/15 11:25
-     * @param entity
-     * @return com.common.business.dto.base.BatchResultDTO
-     */
-    BatchResultDTO deleteEntity(TransferInfoEntity entity);
-
-    /**
-     * @description: 根据ID列表获取实体Map
+     * @description: 删除直接调拨单（返回详细结果）
      * @author Will
      * @date: 2023/5/15 11:25
      * @param ids
-     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferInfoEntity>
+     * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
      */
-    Map<String, TransferInfoEntity> mapByIds(List<String> ids);
+    List<BatchResultDTO> delete(List<String> ids, boolean returnDetails);
 
     /**
      * @description: 作废

@@ -379,6 +379,43 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        ids.stream().forEach(id->{
+            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(transferOutEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+        });
+        // 删除日志数据
+        log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
+        // 删除明细数据
+        log.info("删除 开始删除分步式调出单明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        transferOutDetailService.removeByMainIds(ids);
+
+        // 删除主单数据
+        log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        //删除主表数据
+        boolean result =  super.removeByIds(ids);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
+        
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {

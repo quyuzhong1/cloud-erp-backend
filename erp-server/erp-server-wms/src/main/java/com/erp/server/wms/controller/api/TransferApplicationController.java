@@ -231,22 +231,13 @@ public class TransferApplicationController extends BaseController {
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        Map<String, TransferApplicationEntity> entityMap = transferApplicationService.mapByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            TransferApplicationEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "调拨申请单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(transferApplicationService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("调拨申请单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = transferApplicationService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除调拨申请单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

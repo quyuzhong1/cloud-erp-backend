@@ -104,6 +104,14 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
     void delete(List<String> ids);
 
     /**
+     * 原子批量删除分布式调出单
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * 删除单个分布式调出单
      * @param entity
      * @return com.common.business.dto.base.BatchResultDTO

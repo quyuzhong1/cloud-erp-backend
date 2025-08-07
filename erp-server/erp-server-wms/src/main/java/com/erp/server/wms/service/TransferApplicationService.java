@@ -97,6 +97,16 @@ public interface TransferApplicationService extends SuperService<TransferApplica
     Boolean delete(List<String> ids);
 
     /**
+     * @description: 原子批量删除调拨申请单
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * @description: 删除单个调拨申请单
      * @author Will
      * @date: 2023/5/10 18:56

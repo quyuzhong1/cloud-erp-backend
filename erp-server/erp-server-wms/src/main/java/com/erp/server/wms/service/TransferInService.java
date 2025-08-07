@@ -87,6 +87,16 @@ public interface TransferInService extends SuperService<TransferInEntity> {
     Boolean deleteByIds(List<String> ids);
 
     /**
+     * 原子批量删除分布式调入单
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * 删除单个分布式调入单
      * @author yl
      * @date 2023-05-26 19:05

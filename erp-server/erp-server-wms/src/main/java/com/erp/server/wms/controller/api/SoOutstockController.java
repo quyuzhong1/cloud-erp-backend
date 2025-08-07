@@ -347,31 +347,13 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        if (CollectionUtils.isEmpty(ids)) {
-            return success(Collections.emptyList());
+        try {
+            List<BatchResultDTO> resultDTOS = soOutstockService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售出库单失败", e);
+            return failure(e.getMessage());
         }
-
-        Map<String, SoOutstockEntity> entityMap = soOutstockService.mapByIds(ids);
-        List<BatchResultDTO> results = new ArrayList<>();
-
-        for (String id : ids) {
-            SoOutstockEntity entity = entityMap.get(id);
-            if (entity == null) {
-                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
-                continue;
-            }
-
-            try {
-                BatchResultDTO result = soOutstockService.deleteEntity(entity);
-                results.add(result);
-            } catch (Exception e) {
-                log.error("删除销售出库单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
-                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
-            }
-        }
-
-        return success(results);
     }
 
     /**

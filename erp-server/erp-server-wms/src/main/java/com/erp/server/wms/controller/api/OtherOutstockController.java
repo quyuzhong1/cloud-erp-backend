@@ -230,9 +230,14 @@ public class OtherOutstockController extends BaseController {
             menuCode = "wms:otherOutstock:delete",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherOutstockService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        try {
+            List<BatchResultDTO> resultDTOS = otherOutstockService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除其他出库单失败", e);
+            return failure(e.getMessage());
+        }
     }
 
     /**

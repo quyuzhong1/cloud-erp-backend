@@ -1533,4 +1533,49 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         return listApiResult;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        // 先验证所有ID是否存在
+        List<OtherOutstockEntity> list = getList(ids);
+        if (list.size() != ids.size()) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND, "部分其他出库单");
+        }
+        
+        // 验证所有实体的状态是否允许删除
+        for (OtherOutstockEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
+                throw new ServiceException(ApiError.ERROR_1043, "其他出库单[" + entity.getCode() + "]");
+            }
+        }
+        
+        // 删除其他出库客户
+        otherOutstockCustomerService.removeByMainIds(ids);
+        
+        // 删除明细数据
+        otherOutstockDetailService.removeByMainIds(ids);
+        
+        // 执行批量删除
+        Boolean result = this.removeByIds(ids);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        
+        // 发送金蝶
+        sendPushTask(list, SyncOperateEnum.OPERATE_DELETE.getCode());
+        
+        // 添加批量操作日志
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了其他出库单", UserContext.getDefaultLoginUser().getUserName());
+        List<Pair<String, String>> pairList = list.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "删除操作");
+        
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
 }

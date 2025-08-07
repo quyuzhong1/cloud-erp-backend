@@ -151,6 +151,16 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     Boolean delete(List<String> ids);
 
     /**
+     * @description: 原子批量删除发货通知单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * 删除单个实体
      * @Author Luo_WG
      * @Date 2023/4/6 19:29

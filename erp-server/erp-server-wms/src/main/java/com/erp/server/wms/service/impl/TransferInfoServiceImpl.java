@@ -504,43 +504,39 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO deleteEntity(TransferInfoEntity entity) {
+    public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
+        //根据ids查询
+        List<TransferInfoEntity> list = getList(ids);
         //待提交并且未作废允许删除
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        String codes = ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getCode()) ? entity.getCode() : "";
+        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
         //马帮直接调拨单不允许删除 TODO
         if (CharSequenceUtil.isNotBlank(codes)) {
-            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE, codes);
+            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
         }
 
-        log.info("直接调拨单删除，id=【{}】", entity.getId());
-        List<String> ids = Collections.singletonList(entity.getId());
+        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
-        List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //删除发送金蝶
-        sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
         boolean result = this.removeByIds(ids);
-        if (result) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
-        } else {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
-    }
 
-    @Override
-    public Map<String, TransferInfoEntity> mapByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
-        }
-        List<TransferInfoEntity> list = this.listByIds(ids);
-        return list.stream().collect(Collectors.toMap(TransferInfoEntity::getId, Function.identity()));
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
     }
 
     @Override
