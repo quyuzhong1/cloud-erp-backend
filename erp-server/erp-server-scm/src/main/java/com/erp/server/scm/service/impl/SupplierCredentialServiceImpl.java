@@ -324,6 +324,29 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId) {
+        // 根据 code 来校验是否有重复
+        Map<String, List<SupplierCredentialDTO.UpdateDTO>> collect = credentialList.stream()
+                .collect(Collectors.groupingBy(SupplierCredentialDTO.UpdateDTO::getCode));
+        // 判断是否有重复的 code
+        for (Map.Entry<String, List<SupplierCredentialDTO.UpdateDTO>> entry : collect.entrySet()) {
+            SupplierCredentialDTO.UpdateDTO updateDTO = entry.getValue().get(0);
+
+            if (entry.getValue().size() > 1) {
+                throw new ServiceException("存在重复的资质编码：" + updateDTO.getName());
+            }
+
+            if(StringUtils.isNotBlank(updateDTO.getId())){
+                Integer count = self.lambdaQuery()
+                        .eq(SupplierCredentialEntity::getSupplierId, supplierId)
+                        .eq(SupplierCredentialEntity::getCode, entry.getKey())
+                        .ne(SupplierCredentialEntity::getId,updateDTO.getId())
+                        .count();
+                if(count > 0){
+                    throw new ServiceException("【"+updateDTO.getName()+"】资质已存在");
+                }
+            }
+        }
+
         //这是要添加的
         List<SupplierCredentialDTO.UpdateDTO> addList = credentialList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -350,7 +373,13 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             self.checkDate(entity);
             //获取状态
             self.getCredentialStatuses(entity);
-            saveOrUpdateList.add(entity);
+            if(StringUtils.isNotBlank(item.getId())){//编辑
+                saveOrUpdateList.add(entity);
+            }else {//新增
+                entity.setId(IdWorker.getIdStr());
+                self.save(entity);
+            }
+
             //附件集合
             List<String> attachmentUrlList = item.getAttachmentUrlList();
             List<String> attachmentNameList = item.getAttachmentNameList();

@@ -4,7 +4,9 @@ package com.erp.server.tms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -15,7 +17,6 @@ import com.erp.model.tms.dto.SaleChannelDTO;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.TmsCarrierService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,7 +80,14 @@ public class LogisticsSaleChannelController extends BaseController {
     public ApiResult<List<SaleChannelDTO>> listByType(@RequestBody LogisticsSaleChannelDTO.QueryDTO dto) {
         return success(logisticsSaleChannelService.listByType(dto.getPlatformType(), dto.getServicePlatform()));
     }
-
+    /**
+     * 根根据平台类型获取承运商列表远程搜索
+     * @return
+     */
+    @PostMapping("/saleChannel/pagingSelect")
+    public ApiResult<PagingVO<SaleChannelDTO>> saleChannelPagingSelect(@RequestBody @Validated PagingDTO<LogisticsSaleChannelDTO.QueryDTO> dto){
+        return success(logisticsSaleChannelService.pagingSelect(dto));
+    }
 
     /**
      * 根据平台类型获取承运商列表
@@ -88,4 +96,14 @@ public class LogisticsSaleChannelController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> carrierList(@RequestParam(value = "salesPlatform", defaultValue = "AliExpress") String salesPlatform) {
         return success(tmsCarrierService.listBySalesPlatform(salesPlatform));
     }
+
+    /**
+     * 根根据平台类型获取承运商列表远程搜索
+     * @return
+     */
+    @PostMapping("/carrier/pagingSelect")
+    public ApiResult<PagingVO<BaseDropDownDTO.CommonDTO>> carrierPagingSelect(@RequestBody @Validated PagingDTO<LogisticsSaleChannelDTO.SelectDTO> dto){
+        return success(tmsCarrierService.pagingSelect(dto));
+    }
+
 }

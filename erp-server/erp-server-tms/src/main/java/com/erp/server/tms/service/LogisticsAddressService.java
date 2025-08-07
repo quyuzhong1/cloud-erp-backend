@@ -114,4 +114,5 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
 
     PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
 
+    PagingVO<LogisticsAddressDTO.ListDTO> pagingSelect(PagingDTO<LogisticsAddressDTO.SelectDTO> dto);
 }

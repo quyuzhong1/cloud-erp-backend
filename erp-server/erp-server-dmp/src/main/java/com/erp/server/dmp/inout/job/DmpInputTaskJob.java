@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.job;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -110,6 +111,7 @@ public class DmpInputTaskJob {
 				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+				.and(d -> d.isNull(DmpInputTaskEntity::getNextExecTime).or().le(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now()))
 				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
 				.orderByAsc(DmpInputTaskEntity::getUpdateTime)
 				.last(dmpInputTaskTaskTypeEnum != DmpInputTaskTaskTypeEnum.COMPENSATE , " limit " + size)

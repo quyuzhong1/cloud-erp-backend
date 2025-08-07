@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,12 +14,10 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
@@ -482,7 +479,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             if (StringUtils.isNotBlank(record.getRoleType())) {
 
                 List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.list();
-                Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getField, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
+                Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getId, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
                 List<String> roleTypes = Arrays.asList(record.getRoleType().split(","));
                 if (CollUtil.isNotEmpty(roleTypes)) {
                     record.setRoleTypeList(roleTypes);

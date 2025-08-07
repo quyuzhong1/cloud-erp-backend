@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -312,15 +311,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         TransferInfoEntity entity = this.getById(id);
-        if (ObjUtil.isEmpty(entity)) {
+        if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_99047);
         }
         //提交
         this.submit(entity, Boolean.FALSE);
+
         //审核
-        if (Objects.nonNull(entity)){
-            this.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+        TransferInfoEntity approveEntity = this.getById(entity.getId());
+        if (ObjectUtil.isEmpty(approveEntity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
         }
+        this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         return id;
     }
 
@@ -2144,21 +2146,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
 
-        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
+        Map<String, List<TransferInfoDetailDTO.ApproveDTO>> detailMap = transferInfoDetailService.listApproveByMainIds(Collections.singletonList(entity.getId()),Boolean.TRUE);
+
+        List<TransferInfoDetailDTO.ApproveDTO> detailList = detailMap.get(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
+        variablesMap.put("detailList", detailList);
         //调拨总数
-        Integer qtyTotal = detailList.stream().map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        Integer qtyTotal = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
         //调入仓库
-        String inWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getInWarehouseId).collect(Collectors.joining(","));
+        String inWarehouseId = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getInWarehouseId).collect(Collectors.joining(","));
         variablesMap.put("inWarehouseId", inWarehouseId);
         //调出仓库
-        String outWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getOutWarehouseId).collect(Collectors.joining(","));
+        String outWarehouseId = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getOutWarehouseId).collect(Collectors.joining(","));
         variablesMap.put("outWarehouseId", outWarehouseId);
         //SKU
-        String skuNo = detailList.stream().map(TransferInfoDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        String skuNo = detailList.stream().map(TransferInfoDetailDTO.ApproveDTO::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }

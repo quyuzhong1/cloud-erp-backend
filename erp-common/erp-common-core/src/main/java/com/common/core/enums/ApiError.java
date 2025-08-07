@@ -286,7 +286,7 @@ public enum ApiError implements Serializable {
     CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
     CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
     FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
-    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，请检查流程图是否配置正确"),
+    ERROR_TASK_COMPLETE_FAIL(94058,"审核失败，错误信息：{}"),
 
     PROCESS_APPROVE_TASK_INFO_ERROR(94058,"查询三方生成查询报错,{}"),
     PROCESS_QUERY_THIRD_SUER_MULTIPLE(94059,"查询第三方用户信息返回多条数据，请检查"),
@@ -600,6 +600,8 @@ public enum ApiError implements Serializable {
     ERROR_95282(95282,"获取供应商采购价目表失败: sku：{}，数量：{}"),
     ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
+
+    ERROR_95291(95291,"审核中不支持上传"),
     /**
      * TMS 错误
      * 从96000 开始

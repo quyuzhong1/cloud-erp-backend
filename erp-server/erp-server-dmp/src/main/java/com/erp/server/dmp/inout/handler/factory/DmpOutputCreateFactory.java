@@ -133,6 +133,7 @@ public class DmpOutputCreateFactory{
 		dmpOutputTaskRequest.setNotValidate(dmpRequest.isNotValidate());
 		dmpOutputTaskRequest.setOutputTaskId(dmpOutputTaskEntity.getId());
 		dmpOutputTaskRequest.setExecTimeout(dmpOutputTaskEntity.getExecTimeout());
+		dmpOutputTaskRequest.setRetryPush(dmpRequest.isRetryPush());
 		
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpOutputCreateResponse.getDmpCfgOutputEntity();
 		String inputConvertId = dmpCfgOutputEntity.getInputConvertId();

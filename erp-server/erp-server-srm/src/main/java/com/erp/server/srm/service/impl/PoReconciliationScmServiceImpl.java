@@ -447,7 +447,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             poReconciliationDetailScmService.fillList(detailDTOList);
 
             //出货小计
-            BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.DELIVERY_ORDER.getCode().equals(obj.getSourceType()))
+            BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_INSTOCK.getCode().equals(obj.getSourceType()))
                     .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
             exportDTO.setTotalDeliveryAmount(totalDeliveryAmount);
             //退料小计

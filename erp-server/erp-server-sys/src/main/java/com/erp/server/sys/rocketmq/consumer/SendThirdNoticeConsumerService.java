@@ -41,6 +41,7 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<SendThir
             Boolean sendResult = fsService.sendMessage(dto);
             //当发送成功后
             if (Boolean.TRUE.equals(sendResult)) {
+                log.info("sendMessage 当发送成功");
                 String messageId = dto.getMessageId();
                 thirdNoticePushRecordService.lambdaUpdate()
                         .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
@@ -48,6 +49,7 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<SendThir
                         .eq(ThirdNoticePushRecordEntity::getId, messageId)
                         .update();
             }else {
+                log.info("sendMessage 当发送失败");
                 String messageId = dto.getMessageId();
                 ThirdNoticePushRecordEntity record = thirdNoticePushRecordService.getById(messageId);
                 String errorReason = record.getErrorReason();
@@ -62,6 +64,7 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<SendThir
                         .update();
             }
         }catch(Exception e) {
+            log.error("sendMessage 发送异常 ",e);
             String messageId = dto.getMessageId();
             thirdNoticePushRecordService.lambdaUpdate()
                     .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())

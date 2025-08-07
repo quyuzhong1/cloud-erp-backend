@@ -284,7 +284,7 @@ public interface DmpTaskFeign {
      * @return Boolean
      */
     @GetMapping("feign/outputTaskRecord/getOutputTaskRecord")
-    DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
+    List<DmpOutputTaskRecordEntity> getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
 
     /**
      * 根据来源id,来源类型获取推送记录

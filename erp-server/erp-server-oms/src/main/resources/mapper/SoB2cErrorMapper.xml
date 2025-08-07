@@ -69,13 +69,14 @@
     </delete>
 
     <select id="getTypeCountDTO" resultType="com.erp.model.oms.dto.SoB2cErrorDTO$TypeCountDTO">
-        SELECT type,COUNT ( 0 ) AS typeCount
+        SELECT sbe.type,COUNT ( 1 ) AS typeCount
         FROM
-            so_b2c_error
+            so_b2c_error sbe
+            left join so_b2c sb2c on sbe.main_id = sb2c.id
         WHERE
-            main_id != ''
-	    AND type IN ( 'getLogisticsCode', 'submitDelivery', 'orderForecast', 'generateTransferInfo', 'virtualFreezeQty', 'generateOutstock', 'signDelivery' )
-        GROUP BY type
+            sbe.main_id != '' and sb2c.is_deleted = false and sb2c.approve_status = 'approve'
+	    AND sbe.type IN ( 'getLogisticsCode', 'submitDelivery', 'orderForecast', 'generateTransferInfo', 'virtualFreezeQty', 'generateOutstock', 'signDelivery' )
+        GROUP BY sbe.type
     </select>
     <select id="getB2CErrorReport" resultType="com.erp.model.oms.dto.SoB2cErrorDTO$TypeCountDTO">
         SELECT sb2c.sign_order_error as type, COUNT (1) AS typeCount
@@ -88,6 +89,7 @@
         WHERE sb2c.is_deleted = FALSE
         AND sb2c.sign_order_error != ''
         AND sb2c.invalid_status = FALSE
+        and sb2c.approve_status = 'approve'
         AND sb2c.pay_status IN ( 'paid' )
         AND EXISTS ( SELECT 1 FROM so_b2c_detail sbd WHERE sbd.is_deleted = FALSE AND sbd.main_id = sb2c.ID )
         AND sb2c.shop_id IN ( SELECT ID FROM shop_info WHERE is_deleted = FALSE )

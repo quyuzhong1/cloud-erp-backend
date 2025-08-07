@@ -28,7 +28,6 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -253,7 +252,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .in("parent_id", pickAreaIds)
                     .eq("is_deleted", false)
             );
-            List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).collect(Collectors.toList());
+            List<String> pickLocationCodeList = pickLocationList.stream().map(item -> item.getCode()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if(pickLocationCodeList.isEmpty()){
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
             }
@@ -305,6 +304,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     备注：仓位流水查询通过“出入库流水”查询
                 */
                 inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
+                if(Objects.isNull(inventoryEntity)){
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_WAREHOUSE_LOCATION);
+                }
                 String toWarehouseLocation = inventoryEntity.getWarehouseLocation();
                 replenishItem.setToWarehouseLocation(toWarehouseLocation);
                 //推荐补货库区

@@ -3,6 +3,9 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -160,52 +163,65 @@ public class DmpInoutController extends BaseController {
     }
 
     @PostMapping("getCache")
-    public ApiResult<?> getCache() {
+    public ApiResult<?> getCache(@RequestParam(required = false) String f) {
         Map<String, Object> typeCacheMap = new HashMap<>();
-        typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
+        if(StringUtils.isNotBlank(f)) {
+        	try {
+				Field field = dmpHandlerCache.getClass().getDeclaredField(f);
+				field.setAccessible(true);
+				Object object = field.get(dmpHandlerCache);
+				field.setAccessible(false);
+				typeCacheMap.put(f, object);
+			} catch (Exception e) {
+				log.error("获取中台缓存错误" , e);
+				return ApiResult.error("获取中台缓存错误：" + ExceptionUtil.stacktraceToString(e));
+			}
+        }else {
+        	typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
 
-        List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-                .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
+            List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+                    .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 
 
-        Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
-        for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
-            String id = dmpCfgInputConvertEntity.getId();
-            convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
+            Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
+            for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
+                String id = dmpCfgInputConvertEntity.getId();
+                convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
 
+            }
+
+            Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
+            List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
+            for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
+                String id = dmpCfgInputConvertMappingEntity.getId();
+                convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
+            }
+
+            typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
+            typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
+
+            typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutput", dmpHandlerCache.getDmpCfgOutputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
+
+            List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
+                    .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+                    .eq(DmpCfgMqEntity::getDisabled, false).list();
+            Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
+            Map<String, String> rocketMQTemplateMap = new HashMap<>();
+            for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
+                String mqId = dmpCfgMqEntity.getId();
+                rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
+                rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
+            }
+            typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
+            typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
+            typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
+            typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
+            typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
         }
-
-        Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
-        List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
-        for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
-            String id = dmpCfgInputConvertMappingEntity.getId();
-            convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
-        }
-
-        typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
-        typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
-
-        typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
-        typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
-
-        List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
-                .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
-                .eq(DmpCfgMqEntity::getDisabled, false).list();
-        Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
-        Map<String, String> rocketMQTemplateMap = new HashMap<>();
-        for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
-            String mqId = dmpCfgMqEntity.getId();
-            rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
-            rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
-        }
-        typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
-        typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
-        typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
-        typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-        typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
-
         return success(typeCacheMap);
     }
 
@@ -531,20 +547,20 @@ public class DmpInoutController extends BaseController {
     	Map<String, Map<String, String>> bizTypeSourceSystemMaps = new HashMap<>();
 
     	Map<String, String> sourceSystemMaps = new HashMap<>();
-    	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
-    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
+//    	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+//    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
     	sourceSystemMaps.put("1859425168586201876", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
-    	sourceSystemMaps.put("1859425336446442262", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+//    	sourceSystemMaps.put("1859425336446442262", DmpBasicSystemCodeEnum.TIKTOK.getCode());
     	sourceSystemMaps.put("1861317267527064372", DmpBasicSystemCodeEnum.WDT.getCode());
     	sourceSystemMaps.put("1859426447974751005", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1859425468411829017", DmpBasicSystemCodeEnum.AMAZON.getCode());
     	bizTypeSourceSystemMaps.put("soInfo", sourceSystemMaps);
 
     	sourceSystemMaps = new HashMap<>();
-    	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+//    	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
 //    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
     	sourceSystemMaps.put("1858832584453151459", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
-    	sourceSystemMaps.put("1858832825793403621", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+//    	sourceSystemMaps.put("1858832825793403621", DmpBasicSystemCodeEnum.TIKTOK.getCode());
     	sourceSystemMaps.put("1858830998851050201", "WDT");
     	sourceSystemMaps.put("1858832384133192417", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1858832015038634719", DmpBasicSystemCodeEnum.AMAZON.getCode());
@@ -611,6 +627,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -648,6 +665,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -676,6 +694,7 @@ public class DmpInoutController extends BaseController {
     	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
     	try {
 			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setRetryPush(true);
 			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 			List<QueryParam> queryParams = new ArrayList<>();
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -695,6 +714,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp配货单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -708,6 +728,7 @@ public class DmpInoutController extends BaseController {
     		}
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -725,6 +746,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp出库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -741,6 +763,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp物流单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
@@ -757,6 +780,7 @@ public class DmpInoutController extends BaseController {
     		log.warn("开始重推数帝云erp退货入库单，系统：" + sourceSystem);
         	try {
     			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setRetryPush(true);
     			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
     			List<QueryParam> queryParams = new ArrayList<>();
     			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));

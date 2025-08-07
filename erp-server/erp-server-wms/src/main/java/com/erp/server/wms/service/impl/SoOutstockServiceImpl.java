@@ -8,7 +8,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -46,6 +45,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -228,6 +228,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private CfgRuleOutService cfgRuleOutService;
 
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @Lazy
     @Resource
@@ -1655,7 +1657,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //国家名称
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             item.setCountryName(countryName);
-            String orderTypeName = OrderTypeEnum.getName(orderType);
+            String orderTypeName = BillTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus ? "已作废" : "未作废";
@@ -2653,9 +2655,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 generateB2cDTO.setDetailList(newDetailList);
             } else if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(generateB2cDTO.getSourceType())){
+                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(generateB2cDTO.getSoId());
+                List<String> sourceCodes = new ArrayList<>();
+                sourceCodes.add(generateB2cDTO.getSoCode());
+                if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                    sourceCodes.add(thirdWarehouseDeliveryEntity.getCode());
+                }
                 // 海外仓出库信息补充
                 List<DmpThirdOutboundEntity> list = FeignQuery.create(DmpThirdOutboundEntity.class)
-                        .eq(DmpThirdOutboundEntity::getReferenceNo, generateB2cDTO.getSoCode())
+                        .in(DmpThirdOutboundEntity::getReferenceNo, sourceCodes)
                         .list();
                 if (CollectionUtils.isEmpty(list)){
                     ServiceException.runError("未找到海外仓出库信息:ReferenceNo=" + generateB2cDTO.getSourceCode());
@@ -2705,6 +2713,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         LinkedList<SoOutstockDetailDTO.AddDTO> addDTOS = generateB2cDTO.getDetailList();
         List<String> detailIds = soB2cDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         addDTOS = (LinkedList<SoOutstockDetailDTO.AddDTO>) addDTOS.stream().filter(v->detailIds.contains(v.getSoDetailId())).collect(Collectors.toCollection(LinkedList::new));
+        for (SoOutstockDetailDTO.AddDTO addDTO : addDTOS) {
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v -> v.getId().equals(addDTO.getSoDetailId())).findFirst().orElse(null);
+            if (Objects.nonNull(soB2cDetailEntity)) {
+                addDTO.setActualQty(soB2cDetailEntity.getQty());
+            }
+        }
         generateB2cDTO.setDetailList(addDTOS);
         //重试时需要按照发货单发货时间扣减
         generateB2cDTO.setBillDate(outTime.toLocalDate());
@@ -2715,7 +2729,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
-            this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+            //temu通过明细清楚异常
+            if(generateB2cDTO.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+                deleteDTO.setMainId(generateB2cDTO.getSoId());
+                deleteDTO.setType(type);
+                List<String> soDetailIds = generateB2cDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(soDetailIds)){
+                    deleteDTO.setDetailIdList(soDetailIds);
+                    soB2cFeign.deleteDetailError(deleteDTO);
+                }else{
+                    this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+                }
+            }else{
+                this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
+            }
         }
         return result;
     }
@@ -2759,6 +2788,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setMainId(soB2cId);
             addError.setMessage(message);
             addError.setParamJson(paramJson);
+            //temu通过明细记录异常
+            if(dto.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode()) && CollectionUtils.isNotEmpty(dto.getDetailList())){
+                addError.setDetailId(dto.getDetailList().get(0).getSoDetailId());
+            }
             soB2cFeign.addSoB2cError(addError);
             return Boolean.FALSE;
         }

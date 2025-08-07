@@ -45,6 +45,10 @@ public class LogisticsMappingDTO implements Serializable {
          *  物流销售渠道id
          */
         private String platformLogisticsChannelId;
+        /**
+         * 物流销售渠道名称
+         */
+        private String platformLogisticsChannelName;
 
         /**
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）

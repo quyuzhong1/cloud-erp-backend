@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
+import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -32,4 +33,6 @@ public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
      * @return 最新任务信息
      */
     List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(@Param("systemCodeList") List<String> systemCodeList, @Param("billTypeList") List<String> billTypeList, @Param("nextLevelIdList") List<String> nextLevelIdList);
+
+    DmpInputTaskEntity getByInputIdAndExtendJson(@Param("inputId")String inputId,@Param("key") String key,@Param("value") String value);
 }

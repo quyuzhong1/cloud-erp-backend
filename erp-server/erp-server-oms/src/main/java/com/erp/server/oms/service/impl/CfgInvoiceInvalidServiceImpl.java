@@ -3,17 +3,14 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CfgInvoiceInvalidEntity;
-import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.mapper.CfgInvoiceInvalidMapper;
@@ -23,7 +20,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import org.springframework.context.annotation.Lazy;
@@ -35,12 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 import java.util.*;
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INVALID;
 
 /**

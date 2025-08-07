@@ -312,4 +312,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/supplierInventory")
     PagingVO<SupplierInventoryDTO.ListDTO> exportSupplierInventory(PagingDTO<SupplierInventoryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出三方仓发货单
+     */
+    @PostMapping("/feign/export/exportThirdWarehouseDelivery")
+    PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
 }

@@ -2,13 +2,11 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -38,12 +36,9 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
@@ -53,7 +48,6 @@ import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
 
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -67,15 +61,9 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_NEW_DMP_PUSH_TASK;
@@ -752,7 +740,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
-    public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
+    public List<DmpOutputTaskRecordEntity> getOutputTaskRecord(String sourceCode, String outputClass) {
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
 

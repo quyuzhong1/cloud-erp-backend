@@ -1747,97 +1747,92 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public void syncFsUser() {
-        //获取飞书平台
-        List<SysUserInfoEntity> list = lambdaQuery().eq(SysUserInfoEntity::getUserState, 1)
-                .list()
-                .stream().filter(e -> StringUtils.isNotBlank(e.getMobile()))
-                .collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(list)){
-            //第三方用户信息拓展表
-            List<String> ids = list.stream().map(SysUserInfoEntity::getUid).collect(Collectors.toList());
-            List<SysUserThirdEntity> sysUserThird = sysUserThirdService.lambdaQuery().in(SysUserThirdEntity::getUserId, ids)
-                    .eq(SysUserThirdEntity::getThirdPartyType, ThirdPlatformEnums.FS.code)
-                    .list();
-
+        List<SysUserThirdEntity> sysUserThird = sysUserThirdService.lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, ThirdPlatformEnums.FS.code).list();
+        if(CollUtil.isNotEmpty(sysUserThird)){
             Map<String, SysUserThirdEntity> sysUserThirdMap = sysUserThird.stream().collect(Collectors.toMap(SysUserThirdEntity::getUserId, e -> e));
 
-            // 分割为每 50 条数据一个子列表
-            List<List<SysUserInfoEntity>> partitions = splitList(list, 50);
-            List<SysUserThirdEntity> result = new ArrayList<>();
-            for (List<SysUserInfoEntity> partition : partitions) {
-                List<String> mobiles = partition.stream().map(SysUserInfoEntity::getMobile).distinct().collect(Collectors.toList());
-                String[] mobileArray = mobiles.toArray(new String[0]);
+            List<String> uids = sysUserThird.stream().map(SysUserThirdEntity::getUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            //获取飞书平台
+            List<SysUserInfoEntity> list = lambdaQuery()
+                    .in(SysUserInfoEntity::getUid, uids)
+                    .eq(SysUserInfoEntity::getUserState, 1)
+                    .list();
+            list = list.stream().filter(e -> StringUtils.isNotBlank(e.getMobile()))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(list)){
+                // 分割为每 50 条数据一个子列表
+                List<List<SysUserInfoEntity>> partitions = splitList(list, 50);
+                List<SysUserThirdEntity> result = new ArrayList<>();
+                for (List<SysUserInfoEntity> partition : partitions) {
+                    List<String> mobiles = partition.stream().map(SysUserInfoEntity::getMobile).distinct().collect(Collectors.toList());
+                    String[] mobileArray = mobiles.toArray(new String[0]);
 
-                FindThirdUserDTO.UserParamsDTO params = new FindThirdUserDTO.UserParamsDTO();
-                params.setMobiles(mobileArray);
-                params.setUserIdType(UserIdTypeEnum.OPEN_ID.getValue());
-                //根据手机号码查询openId
-                BatchGetIdUserResp batchGetOpenIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
-                UserContactInfo[] thirdOpenId = batchGetOpenIdResp.getData().getUserList();
-                Map<String, String> mobileToOpendIdMap = Arrays.stream(thirdOpenId)
-                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
-                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
-                        .collect(Collectors.toMap(
-                                UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId,  // Value: userId
-                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
-                        ));
+                    FindThirdUserDTO.UserParamsDTO params = new FindThirdUserDTO.UserParamsDTO();
+                    params.setMobiles(mobileArray);
+                    params.setUserIdType(UserIdTypeEnum.OPEN_ID.getValue());
+                    //根据手机号码查询openId
+                    BatchGetIdUserResp batchGetOpenIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                    UserContactInfo[] thirdOpenId = batchGetOpenIdResp.getData().getUserList();
+                    Map<String, String> mobileToOpendIdMap = Arrays.stream(thirdOpenId)
+                            .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                            .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
+                            .collect(Collectors.toMap(
+                                    UserContactInfo::getMobile, // Key: mobile
+                                    UserContactInfo::getUserId,  // Value: userId
+                                    (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
+                            ));
+                    //根据手机号码查询userId
+                    params.setUserIdType(UserIdTypeEnum.USER_ID.getValue());
+                    BatchGetIdUserResp batchGetUserIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                    UserContactInfo[] thirdUserIdList = batchGetUserIdResp.getData().getUserList();
+                    Map<String, String> mobileToUserIdMap = Arrays.stream(thirdUserIdList)
+                            .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                            .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
+                            .collect(Collectors.toMap(
+                                    UserContactInfo::getMobile, // Key: mobile
+                                    UserContactInfo::getUserId,  // Value: userId
+                                    (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
+                            ));
+                    //根据手机号码查询unionId
+                    params.setUserIdType(UserIdTypeEnum.UNION_ID.getValue());
+                    BatchGetIdUserResp batchGetUnionIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                    UserContactInfo[] thirdUnionIdList = batchGetUnionIdResp.getData().getUserList();
+                    Map<String, String> mobileToUnionIdMap = Arrays.stream(thirdUnionIdList)
+                            .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                            .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
+                            .collect(Collectors.toMap(
+                                    UserContactInfo::getMobile, // Key: mobile
+                                    UserContactInfo::getUserId,  // Value: userId
+                                    (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
+                            ));
+                    for (SysUserInfoEntity sysUserInfoEntity : partition) {
+                        SysUserThirdEntity sysUserThirdEntity = sysUserThirdMap.getOrDefault(sysUserInfoEntity.getUid(),null);
+                        if(Objects.isNull(sysUserThirdEntity)){
+                            continue;
+                        }
 
-                //根据手机号码查询userId
-                params.setUserIdType(UserIdTypeEnum.USER_ID.getValue());
-                BatchGetIdUserResp batchGetUserIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
-                UserContactInfo[] thirdUserIdList = batchGetUserIdResp.getData().getUserList();
-                Map<String, String> mobileToUserIdMap = Arrays.stream(thirdUserIdList)
-                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
-                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
-                        .collect(Collectors.toMap(
-                                UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId,  // Value: userId
-                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
-                        ));
+                        String unionId = mobileToUnionIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                        if(StringUtils.isNotBlank(unionId) && StringUtils.isBlank(sysUserThirdEntity.getThirdUnionId())){
+                            sysUserThirdEntity.setThirdUnionId(unionId);
+                        }
 
-                //根据手机号码查询unionId
-                params.setUserIdType(UserIdTypeEnum.UNION_ID.getValue());
-                BatchGetIdUserResp batchGetUnionIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
-                UserContactInfo[] thirdUnionIdList = batchGetUnionIdResp.getData().getUserList();
-                Map<String, String> mobileToUnionIdMap = Arrays.stream(thirdUnionIdList)
-                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
-                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
-                        .collect(Collectors.toMap(
-                                UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId,  // Value: userId
-                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
-                        ));
+                        String openId = mobileToOpendIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                        if(StringUtils.isNotBlank(openId)){
+                            sysUserThirdEntity.setThirdOpenId(openId);
 
-                for (SysUserInfoEntity sysUserInfoEntity : partition) {
-                    SysUserThirdEntity sysUserThirdEntity = sysUserThirdMap.getOrDefault(sysUserInfoEntity.getUid(),null);
-                    if(Objects.isNull(sysUserThirdEntity)){
-                        sysUserThirdEntity = new SysUserThirdEntity();
-                        sysUserThirdEntity.setUserId(sysUserInfoEntity.getUid());
-                        sysUserThirdEntity.setThirdPartyType(ThirdPlatformEnums.FS.code);
-                    }
-
-                    String unionId = mobileToUnionIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
-                    if(StringUtils.isNotBlank(unionId) && StringUtils.isBlank(sysUserThirdEntity.getThirdUnionId())){
-                        sysUserThirdEntity.setThirdUnionId(unionId);
-                    }
-
-                    String openId = mobileToOpendIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
-                    if(StringUtils.isNotBlank(openId)){
-                        sysUserThirdEntity.setThirdOpenId(openId);
-
-                    }
-                    String userId = mobileToUserIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
-                    if(StringUtils.isNotBlank(userId)){
-                        sysUserThirdEntity.setThirdUserId(userId);
-                    }
-                    if(StringUtils.isNotBlank(unionId) || StringUtils.isNotBlank(openId) || StringUtils.isNotBlank(userId)){
-                        result.add(sysUserThirdEntity);
+                        }
+                        String userId = mobileToUserIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                        if(StringUtils.isNotBlank(userId)){
+                            sysUserThirdEntity.setThirdUserId(userId);
+                        }
+                        if(StringUtils.isNotBlank(unionId) || StringUtils.isNotBlank(openId) || StringUtils.isNotBlank(userId)){
+                            result.add(sysUserThirdEntity);
+                        }
                     }
                 }
-            }
-            if(CollectionUtils.isNotEmpty(result)){
-                sysUserThirdService.saveOrUpdateBatch(result);
+                if(CollectionUtils.isNotEmpty(result)){
+                    sysUserThirdService.saveOrUpdateBatch(result);
+                }
             }
         }
     }

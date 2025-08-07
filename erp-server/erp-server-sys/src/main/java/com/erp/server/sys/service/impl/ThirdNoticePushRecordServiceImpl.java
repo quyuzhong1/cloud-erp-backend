@@ -18,6 +18,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -25,6 +26,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
@@ -48,6 +50,7 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
@@ -63,22 +66,21 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.ThirdNoticePushRecordMapper;
 import com.erp.server.sys.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
 import com.google.gson.Gson;
 import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.redisson.executor.CronExpression;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -86,10 +88,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
 import static com.erp.server.sys.rocketmq.consumer.MqRecordConsumerService.TABLE_BUSINESS_KEY;
@@ -274,7 +272,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据参数判断一下通知的单据类型
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        String[] split = dto.getDb().split("-");
+        String sysClassify = split[split.length - 1];
+        mqParamsDTO.setSysClassify(sysClassify);
         //查询出common 、表头、明细的配置
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
@@ -346,14 +346,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     public void sendThirdNoticeByMqAsync(Map<String, Object> jsonMap, List<String> diffFields) {
         //参数校验
         if (MapUtils.isEmpty(jsonMap) || CollectionUtils.isEmpty(diffFields)) {
-            log.warn("MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
+            log.error("MQ消息处理中止 - 参数不合法 jsonMap:{}, diffFields:{}", jsonMap, diffFields);
             return;
         }
         //根据table获取业务单据类型（带缓存）
         String table = jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table"));
         String businessKey = getBusinessKeyWithCache(table);
         if (StringUtils.isBlank(businessKey)) {
-            log.warn("未找到table[{}]对应的业务类型", table);
+            log.error("未找到table[{}]对应的业务类型", table);
             return;
         }
 
@@ -364,13 +364,20 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
                 .list();
         if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-            log.debug("业务类型[{}]无有效通知配置", businessKey);
+            log.error("业务类型[{}]无有效通知配置", businessKey);
             return;
         }
 
         //构建MQ记录DTO
         MqConsumerRecordDTO.MqDTO dto = buildMqRecordDTO(jsonMap, diffFields, businessKey);
         if (Objects.isNull(dto)) {
+            return;
+        }
+
+        // //保存mq消费记录
+        String id = mqConsumerRecordService.addMqRecord(dto);
+        if (StringUtils.isBlank(id)) {
+            log.error("保存MQ消费记录失败");
             return;
         }
 
@@ -392,12 +399,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //获取到符合条件的配置
         if(isQualifiedCfgIds.size() > 0){
             dto.setIsQualifiedCfgIds(isQualifiedCfgIds);
-            // //保存mq消费记录
-            String id = mqConsumerRecordService.addMqRecord(dto);
-            if (StringUtils.isBlank(id)) {
-                log.error("保存MQ消费记录失败");
-                return;
-            }
             //设置记录ID并触发通知
             dto.setMqConsumerRecordId(id);
             sendThirdNoticeByMq(dto);
@@ -417,14 +418,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         String operationType = String.valueOf(jsonMap.getOrDefault("P_TAG_IUD", ""));
 
         if (StringUtils.isAnyBlank(db, table, operationType)) {
-            log.warn("关键参数缺失 - db:{}, table:{}, operationType:{}", db, table, operationType);
+            log.error("关键参数缺失 - db:{}, table:{}, operationType:{}", db, table, operationType);
             return null;
         }
 
         // 字段格式转换
         Map<String, Object> convertedMap = convertToCamelCaseMap(jsonMap);
         if (MapUtils.isEmpty(convertedMap)) {
-            log.warn("参数转换失败 - convertedMap:{}", jsonMap);
+            log.error("参数转换失败 - convertedMap:{}", jsonMap);
             return null;
         }
 
@@ -445,8 +446,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      */
     @Override
     public String getBusinessKeyWithCache(String table){
-        String bussinessKey = String.valueOf(redisUtil.hget(TABLE_BUSINESS_KEY, table));
-        if(StringUtils.isBlank(bussinessKey)){
+        Object obj = redisUtil.hget(TABLE_BUSINESS_KEY, table);
+        String bussinessKey = "";
+        if(Objects.nonNull(obj)){
+            bussinessKey = String.valueOf(obj);
+        }else {
             List<CfgQueryOptionEntity> cfgQueryOptionEntityList = FeignQuery.create(CfgQueryOptionEntity.class)
                     .eq(CfgQueryOptionEntity::getTableName, table)
                     .eq(CfgQueryOptionEntity::getFieldBelongsType,CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode()) //限定主表类型
@@ -456,7 +460,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             if(CollUtil.isEmpty(cfgQueryOptionEntityList)){
                 return bussinessKey;
             }
-
             bussinessKey = cfgQueryOptionEntityList.get(0).getBussinessKey();
 
             //缓存table 和 busineskey的映射关系，有效期1小时
@@ -499,7 +502,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         //根据参数判断一下通知的单据类型
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        String[] split = dto.getDb().split("-");
+        String sysClassify = split[split.length - 1];
+        mqParamsDTO.setSysClassify(sysClassify);
         //查询出common 、表头、明细的配置
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
@@ -582,10 +587,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         if(CollUtil.isEmpty(fieldList)){
             return;
         }
-//        //校验规则条件
-//        if (!checkRule(dto, noticeEntity, ruleList, bussinessKey)) {
-//            return ;
-//        }
         //根据通知方式查找人员 目前只有飞书
         if (StringUtils.isNotBlank(noticeEntity.getNoticeMethod())) {
             List<String> noticeMethodList = Arrays.asList(noticeEntity.getNoticeMethod().split(","));
@@ -860,7 +861,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         if(Boolean.FALSE.equals(allMatch)){
                             return Boolean.FALSE;
                         }
-
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
                     //新增
@@ -911,7 +911,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         .collect(Collectors.toList());
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
-                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
+                Boolean match = spElServer.matchExpressionDefaultByConditionList(conditionElementList, map,"");
                 if(Boolean.FALSE.equals(match)){
                     return Boolean.FALSE;
                 }
