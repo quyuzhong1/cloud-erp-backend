@@ -38,6 +38,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.listener.B2CCustomerImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -496,5 +497,23 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         dto.setApproveStatus(ApproveStatusEnum.APPROVE);
         customerB2cService.save(dto);
         return customerId;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkAndUpdateCountry(String mainId, String country) {
+        if (StringUtils.isBlank(country)){
+            return;
+        }
+        SoB2cReceiverEntity receiverEntity = getByMainId(mainId);
+        if (null == receiverEntity) {
+            return;
+        }
+        if (StringUtils.isNotBlank(receiverEntity.getCountry())) {
+            return;
+        }
+        receiverEntity.setCountry(country);
+        updateById(receiverEntity);
     }
 }
