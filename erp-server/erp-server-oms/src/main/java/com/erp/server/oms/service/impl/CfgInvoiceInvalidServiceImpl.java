@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CfgInvoiceInvalidEntity;
+import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.mapper.CfgInvoiceInvalidMapper;
