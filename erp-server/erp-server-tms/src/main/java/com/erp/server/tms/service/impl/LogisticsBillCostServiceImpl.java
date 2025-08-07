@@ -1807,8 +1807,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
 		}
 
-		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
-				? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
 		List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
 		Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(costList)) {
