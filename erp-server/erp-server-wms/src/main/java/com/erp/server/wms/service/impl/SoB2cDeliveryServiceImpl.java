@@ -1561,52 +1561,48 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         SoB2cEntity soB2cEntity = generateDeliveryAndOutStockDTO.getEntity();
         SoB2cDTO.DeliveryWithNotOutboundDTO dto = generateDeliveryAndOutStockDTO.getDto();
         SoB2cLogisticsEntity soB2cLogisticsEntity = generateDeliveryAndOutStockDTO.getSoB2cLogisticsEntity();
         List<SoB2cDetailEntity> detailList = generateDeliveryAndOutStockDTO.getDetailEntityList();
-        SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(soB2cEntity.getId());
-        SoB2cDeliveryEntity soB2cDeliveryEntity;
-        if(ObjectUtil.isNotEmpty(existEntity)){
-            soB2cDeliveryEntity = existEntity;
-        }else{
-            SoB2cDeliveryDTO.AddDTO soB2cDelivery = new SoB2cDeliveryDTO.AddDTO();
-            soB2cDelivery.setSoCode(soB2cEntity.getCode());
-            soB2cDelivery.setShopId(soB2cEntity.getShopId());
-            soB2cDelivery.setSourceId(soB2cEntity.getId());
-            soB2cDelivery.setSourceCode(soB2cEntity.getCode());
-            soB2cDelivery.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-            soB2cDelivery.setDeliveryTime(dto.getDeliveryTime());
-            soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
-            soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
-            soB2cDelivery.setTransportNo(soB2cLogisticsEntity.getCode());
-            soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
-            if (OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equals(soB2cLogisticsEntity.getLogisticType())) {
-                soB2cDelivery.setLogisticType(B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode());
-            }
-            List<SoB2cDeliveryDetailDTO.AddDTO> deliveryDetailList = new ArrayList<>(detailList.size());
-            for (SoB2cDetailEntity detailItem : detailList) {
-                SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
-                addDTO.setSkuId(detailItem.getSkuId());
-                addDTO.setSkuNo(detailItem.getSkuNo());
-                addDTO.setWarehouseId(detailItem.getWarehouseId());
-                addDTO.setWarehouseName(detailItem.getWarehouseName());
-                addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
-                addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
-                addDTO.setSourceDetailId(detailItem.getId());
-                addDTO.setDeliveryQty(detailItem.getQty());
-                deliveryDetailList.add(addDTO);
-            }
-            soB2cDelivery.setDetailList(deliveryDetailList);
-            soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
+
+        SoB2cDeliveryDTO.AddDTO soB2cDelivery = new SoB2cDeliveryDTO.AddDTO();
+        soB2cDelivery.setSoCode(soB2cEntity.getCode());
+        soB2cDelivery.setShopId(soB2cEntity.getShopId());
+        soB2cDelivery.setSourceId(soB2cEntity.getId());
+        soB2cDelivery.setSourceCode(soB2cEntity.getCode());
+        soB2cDelivery.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        soB2cDelivery.setDeliveryTime(dto.getDeliveryTime());
+        soB2cDelivery.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        soB2cDelivery.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
+        soB2cDelivery.setTransportNo(soB2cLogisticsEntity.getCode());
+        soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+        if (OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equals(soB2cLogisticsEntity.getLogisticType())) {
+            soB2cDelivery.setLogisticType(B2cDeliveryLogisticTypeEnum.TRANSIT_SHIPMENT.getCode());
         }
+        List<SoB2cDeliveryDetailDTO.AddDTO> deliveryDetailList = new ArrayList<>(detailList.size());
+        for (SoB2cDetailEntity detailItem : detailList) {
+            SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
+            addDTO.setSkuId(detailItem.getSkuId());
+            addDTO.setSkuNo(detailItem.getSkuNo());
+            addDTO.setWarehouseId(detailItem.getWarehouseId());
+            addDTO.setWarehouseName(detailItem.getWarehouseName());
+            addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+            addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
+            addDTO.setSourceDetailId(detailItem.getId());
+            addDTO.setDeliveryQty(detailItem.getQty());
+            deliveryDetailList.add(addDTO);
+        }
+        soB2cDelivery.setDetailList(deliveryDetailList);
+        SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(soB2cEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
         if (exist) {
             return;
         }
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(soB2cEntity.getCode());
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(soB2cEntity.getId(),dto.getWarehouseId());
         //查询三方仓发货明细，重新赋值明细数据
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(soB2cDeliveryEntity.getId()));
         if (CollectionUtils.isNotEmpty(soB2cDeliveryDetailEntities)) {
