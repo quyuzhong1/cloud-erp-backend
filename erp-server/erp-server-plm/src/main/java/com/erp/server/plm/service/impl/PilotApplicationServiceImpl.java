@@ -742,6 +742,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         //附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(pilotApplicationEntity.getId()));
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(detailViewList.size());
+        for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
@@ -755,8 +769,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
                 detailDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
             }
-            //实际成本
-            fillActualCost(detailDTO);
+            //实际含税单价
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(detailDTO.getSkuId(), null);
+            if(Objects.isNull(priceViewDTO)){
+                log.error("没有找到价目表：{} {}", detailDTO.getSkuNo(), detailDTO.getMainSupplierName());
+            }else {
+                detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                BigDecimal divide = priceViewDTO.getTaxRate().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal add = divide.add(BigDecimal.ONE);
+                detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(add, 4, RoundingMode.HALF_UP));
+            }
             //产品名称
             Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
             skuOptional.ifPresent(sku -> {
@@ -955,6 +977,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseList.add(obj);
         }
         purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(list.size());
+        for (PilotApplicationDTO.ListDTO detailDTO : list){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         for (PilotApplicationDTO.ListDTO item : list) {
             item.setInvalidStatusName(Objects.nonNull(item.getInvalidStatus()) && item.getInvalidStatus() ? "已作废" : "未作废");
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
@@ -972,24 +1008,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
             }
             //实际含税单价
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            searchDTO.setPurchaseQty(item.getApplyQty());
-            searchDTO.setSupplierId(item.getMainSupplierId());
-            searchDTO.setSkuId(item.getSkuId());
-            searchDTO.setSkuNo(item.getSkuNo());
             try {
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
-                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
-                    if (item.getApplyQty() >= priceViewDTO.getMinQty() && item.getApplyQty() <= priceViewDTO.getMaxQty()) {
-                        item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
-                        break;
-                    }
-                }
-                if (StringUtils.isBlank(item.getActualTaxCost())) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(item.getSkuId(), null);
+                if(Objects.isNull(priceViewDTO)){
                     item.setActualTaxCost("无价目表");
+                }else {
+                    item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
                 }
-            } catch (Exception e) {
-                item.setActualTaxCost("无价目表");
+            }catch (Exception e) {
+                item.setTargetTaxCost("无价目表");
             }
             //采购申请量
             int applyQty = 0;

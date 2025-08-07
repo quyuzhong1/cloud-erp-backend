@@ -68,6 +68,8 @@
         li.platform_fn_sku,
         li.create_time as systemCreateTime,
         li.source_type as sourceType,
+        li.platform_status as platformStatus,
+        li.platform_parent_spu_no as platformParentSpuNo,
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
@@ -114,6 +116,8 @@
         li.platform_fn_sku,
         li.platform_update_time,
         li.create_time as systemCreateTime,
+        li.platform_status as platformStatus,
+        li.platform_parent_spu_no as platformParentSpuNo,
         sm.create_user_name,
         sm.create_time,
         sm.expire_time,
@@ -208,6 +212,8 @@
         li.platform_fn_sku,
         li.third_barcode,
         li.platform_sku_id,
+        li.platform_status as platformStatus,
+        li.platform_parent_spu_no as platformParentSpuNo,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.update_user_name,
@@ -252,6 +258,8 @@
         li.platform_sku_id,
         li.match_result,
         li.third_barcode,
+        li.platform_status as platformStatus,
+        li.platform_parent_spu_no as platformParentSpuNo,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
@@ -411,7 +419,9 @@
         li.platform_spu_name,
         li.platform_fn_sku,
         li.platform_sku_id as platformSkuId,
-        li.auth_id as authId
+        li.auth_id as authId,
+        li.platform_status as platformStatus,
+        li.is_parent as isParent
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
@@ -686,6 +696,8 @@
         li.label_url as labelUrl,
         li.label_file_name as labelFileName,
         li.label_source_type as labelSourceType,
+        li.platform_status as platformStatus,
+        li.platform_parent_spu_no as platformParentSpuNo,
         sm.create_user_name as createUserName,
         sm.create_time as createTime,
         sm.update_user_name as updateUserName,

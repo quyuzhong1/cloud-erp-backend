@@ -82,6 +82,20 @@ public class MercadoSkuDmpHandler extends DmpInputDbConvertDmpHandler {
                     }
                 }
 
+                //父平台产品
+                Object itemRelations = mongoDataMap.get("itemRelations");
+                if (null != itemRelations) {
+                    List<Object> itemRelationsList = (List<Object>) itemRelations;
+                    if(CollectionUtil.isNotEmpty(itemRelationsList)){
+                        Object itemRelation = itemRelationsList.get(0);
+                        Map<String, Object> itemRelationMap = (Map<String, Object>) itemRelation;
+                        Object parentId = itemRelationMap.get("id");
+                        if(null != parentId){
+                            dmpDataMap.put("platformParentSpuNo", String.valueOf(parentId));
+                        }
+                    }
+                }
+
                 //规格属性
                 Object attributesObj = dmpDataMap.get("attributes");
 

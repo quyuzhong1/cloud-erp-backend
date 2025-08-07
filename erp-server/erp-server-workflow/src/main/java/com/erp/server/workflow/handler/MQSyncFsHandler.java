@@ -165,6 +165,9 @@ public class MQSyncFsHandler {
                         handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
                     }
                 }else{//其余均为明细表
+                    //设置默认为空
+                    handlerValueMap.put(entity.getFieldId(),"");
+
                     List<Object> detail =( List<Object> ) variablesMap.get(queryOptionEntity.getFieldBelongsType());
                     if(CollUtil.isNotEmpty(detail)){
                         StringBuffer sb = new StringBuffer();

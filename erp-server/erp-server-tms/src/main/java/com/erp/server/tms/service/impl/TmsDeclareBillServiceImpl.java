@@ -864,14 +864,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
             return false;
         }
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-        if(cfgSettingEntity.getDisabled()){
-            return false;
-        }
-        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
-        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoFirstMileDeclare()) || !dto.getIsAutoFirstMileDeclare() ||
-                StringUtils.isBlank(dto.getFirstMileDeclareGenerateTiming()) || !dto.getFirstMileDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
-            return false;
+        //自动下推需要校验配置
+        if(Boolean.TRUE.equals(autoGenerateBillDTO.getCheckCfg())){
+            CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+            if(cfgSettingEntity.getDisabled()){
+                return false;
+            }
+            CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+            if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoFirstMileDeclare()) || !dto.getIsAutoFirstMileDeclare() ||
+                    StringUtils.isBlank(dto.getFirstMileDeclareGenerateTiming()) || !dto.getFirstMileDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+                return false;
+            }
         }
         //生成报关单
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
@@ -907,15 +910,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
             return false;
         }
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
-        if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
-            return false;
+        //自动下推需要校验配置
+        if(Boolean.TRUE.equals(autoGenerateBillDTO.getCheckCfg())){
+            CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.BILL_AUTO_ADD.getCode());
+            if(Objects.isNull(cfgSettingEntity) || cfgSettingEntity.getDisabled()){
+                return false;
+            }
+            CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
+            if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoB2BDeclare()) || !dto.getIsAutoB2BDeclare() ||
+                    StringUtils.isBlank(dto.getB2BDeclareGenerateTiming()) || !dto.getB2BDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
+                return false;
+            }
         }
-        CfgSettingValueDTO.BillAutoAddDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.BillAutoAddDTO.class);
-        if(Objects.isNull(dto) || Objects.isNull(dto.getIsAutoB2BDeclare()) || !dto.getIsAutoB2BDeclare() ||
-                StringUtils.isBlank(dto.getB2BDeclareGenerateTiming()) || !dto.getB2BDeclareGenerateTiming().equals(autoGenerateBillDTO.getBillGenerateTimingEnum().getCode())){
-            return false;
-        }
+
         //生成报关单
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
         addDTO.setSourceId(autoGenerateBillDTO.getId());

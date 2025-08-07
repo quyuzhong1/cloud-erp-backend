@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -31,6 +32,8 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     * @return
     */
     BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO dto);
+
+    void autoGenerateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum);
 
     /**
     * 修改
@@ -374,4 +377,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth, String shipmentCode, String asin, String msku);
 
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(List<String> deliveryCodes);
+
+    BatchResultDTO generateFirstMileDeclare(String id);
 }
