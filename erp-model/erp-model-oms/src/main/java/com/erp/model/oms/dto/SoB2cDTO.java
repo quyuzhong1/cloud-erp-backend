@@ -3413,6 +3413,12 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

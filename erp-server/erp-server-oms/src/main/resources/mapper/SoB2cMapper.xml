@@ -106,7 +106,10 @@
         fdp.code as partitionCode,
         fdp.name as partitionName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
-        sb2c.nfe_invoice_status as nfeInvoiceStatus
+        sb2c.nfe_invoice_status as nfeInvoiceStatus,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime,
+        COALESCE(NULLIF(twd.code, ''), NULLIF(sbd.code, '')) AS deliveryCode
     </sql>
     <sql id="Full_Managed_Column_List">
         sb2c.id,
@@ -266,7 +269,9 @@
 		sbd.finish_print_time as finishPrintTime,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,                                                                                                  sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime,
+        COALESCE(NULLIF(twd.code, ''), NULLIF(sbd.code, '')) AS deliveryCode
     </sql>
     <!-- 通用查询结果列 -->
     <sql id="Export_Fully_managed_Column_List">
@@ -371,12 +376,15 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join erp_wms.third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         where
@@ -1106,12 +1114,15 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join erp_wms.third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <where>
