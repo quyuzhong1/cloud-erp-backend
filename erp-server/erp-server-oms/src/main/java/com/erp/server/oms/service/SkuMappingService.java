@@ -333,5 +333,15 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     List<BatchResultDTO> pushProduct(List<String> ids);
 
-//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+    /**
+     * 单个同步商品
+     * @author will
+     * @date 2025/8/7 16:31
+     * @param platform
+     * @param shopId
+     * @param platformSkuNo
+     * @return void
+     */
+    BatchResultDTO syncPlatformProductByOne(String platform, String shopId, String platformSkuNo);
+
 }

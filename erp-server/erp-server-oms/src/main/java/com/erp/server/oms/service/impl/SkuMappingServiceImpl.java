@@ -2245,6 +2245,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return batchResultDTOList;
     }
 
+    @Override
+    public BatchResultDTO syncPlatformProductByOne(String platform, String shopId, String platformSkuNo) {
+        return null;
+    }
+
     private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {
         List<String> listingIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskByIdAndType(listingIds,SourceTypeEnum.CAINIAO_LISTING.getCode());
