@@ -330,4 +330,32 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         log.warn("业务员状态更新成功, ids: {}, disabled: {}", dto.getIds(), dto.getDisabled());
     }
 
+    @Override
+    public List<UserInfoDTO.BusinessOperationUserDTO> listUser(KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listUser(dto);
+        if (CollUtil.isEmpty(dbList)){
+            return Collections.emptyList();
+        }
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        dbList.forEach(item -> {
+            if (CharSequenceUtil.isNotBlank(item.getUserId()) && item.getUserId().equals(userId)){
+                item.setIsMyState(1);
+            }else {
+                item.setIsMyState(0);
+            }
+            Integer deleteState = item.getDeleteState();
+            Integer userState = item.getUserState();
+            if (MathUtil.ZERO.equals(deleteState) || MathUtil.ZERO.equals(userState)) {
+                item.setDisabled(Boolean.TRUE);
+            } else {
+                item.setDisabled(Boolean.FALSE);
+            }
+            //部门为空时设置为时效
+            if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
+                item.setDisabled(Boolean.TRUE);
+            }
+        });
+        return dbList;
+    }
+
 }

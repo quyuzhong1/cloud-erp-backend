@@ -1,12 +1,13 @@
 package com.erp.model.sys.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -111,4 +112,39 @@ public class AuthUserShopDTO implements Serializable {
         private String userId;
         private List<String> shopIdList;
     }
+
+    /**
+     * 平台权限店铺查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthParamDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+    }
+
+    /**
+     * 平台权限店铺查询结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopAuthListDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+    }
+
 }

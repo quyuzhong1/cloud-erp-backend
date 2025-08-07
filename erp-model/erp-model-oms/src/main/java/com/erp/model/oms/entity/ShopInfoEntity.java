@@ -174,7 +174,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("ioss_tax_no")
     private String iossTaxNo;
-
+    /**
+     * EORI税号
+     */
+    @TableField("eori_tax_no")
+    private String eoriTaxNo;
     /**
      * 平台店铺状态:none=无, open=正常, closed关闭
      * ShopPlatformStatusEnum

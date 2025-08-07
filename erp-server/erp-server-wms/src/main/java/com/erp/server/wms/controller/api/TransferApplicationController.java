@@ -390,8 +390,8 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:viewGenerateTransferInfo",
             tableAlias = "ta"
     )
-    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferInfo(dto.getIds());
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferInfo(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferInfo(dto.getDetailIdList());
         return success(list);
     }
 
@@ -422,8 +422,8 @@ public class TransferApplicationController extends BaseController {
             menuCode = "wms:transferApplication:viewGenerateTransferOut",
             tableAlias = "ta"
     )
-    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferOut(dto.getIds());
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferOut(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferOut(dto.getDetailIdList());
         return success(list);
     }
 

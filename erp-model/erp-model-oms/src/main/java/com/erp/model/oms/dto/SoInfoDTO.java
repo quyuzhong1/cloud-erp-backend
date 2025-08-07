@@ -296,6 +296,11 @@ public class SoInfoDTO implements Serializable {
         private Integer effectiveNoticeQty;
 
         /**
+         * 剩余发货通知数量
+         */
+        private Integer remainingNoticeQty;
+
+        /**
          * 是否缺货
          * 如果可出数量小于销售数量，即显示缺货标识
          */

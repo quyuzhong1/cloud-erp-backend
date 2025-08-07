@@ -57,6 +57,14 @@ public interface WmsVirtualWarehouseFeign {
     @GetMapping("/listWarehouseBySql")
     List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
 
+    /**
+     * 根据仓库ID列表查询虚拟仓关联关系
+     * @param warehouseIdList 仓库ID列表
+     * @return List<VirtualWarehouseRelationEntity>
+     */
+    @PostMapping("/getByWarehouseIds")
+    List<VirtualWarehouseRelationEntity> getByWarehouseIds(@RequestBody List<String> warehouseIdList);
+
 }
 
 

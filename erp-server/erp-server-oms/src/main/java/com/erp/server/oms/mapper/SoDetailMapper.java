@@ -80,6 +80,22 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
     List<SoDetailDTO.TypeCountDTO> listDeliveryCount(@Param("permissionSql") String permissionSql);
 
     /**
+     * 待发货统计（新逻辑）
+     * so_info审核通过 + 发货明细部分未发货 并且 发货明细未关闭
+     * @param permissionSql 权限SQL
+     * @return 统计结果
+     */
+    Integer listWaitDeliveryCount(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 已发货统计（新逻辑）
+     * so_info审核通过 + 所有明细已发货，或 so_info审核通过 + 发货明细部分未发货并且发货明细已关闭
+     * @param permissionSql 权限SQL
+     * @return 统计结果
+     */
+    Integer listDeliveredCount(@Param("permissionSql") String permissionSql);
+
+    /**
      * 查询所有虚拟仓B2B销售订单数据
      * @author will
      * @date 2024/9/26 17:03

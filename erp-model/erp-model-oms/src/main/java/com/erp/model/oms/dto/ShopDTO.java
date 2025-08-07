@@ -460,6 +460,10 @@ public class ShopDTO implements Serializable {
          */
         private String voecTaxNo;
         /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
+        /**
          * 国家id
          */
         private String dictCountryCode;
@@ -687,6 +691,10 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
         /**
          * 销售组织
          */

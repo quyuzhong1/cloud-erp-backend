@@ -67,6 +67,13 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             return getQueryAllSql();
         }
 
+        /**
+         * 剩余发货通知数量
+         */
+        if("remainingNoticeQty".equals(field)){
+            return "(sod.qty - COALESCE(sod.effective_notice_qty, 0)) " + compareCodeSplicingValueSql;
+        }
+
         if("tab".equals(field)){
             switch (value.toString()) {
                 case OmsConstant.WAIT_SUBMIT:
@@ -86,16 +93,18 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
                     //审核不通过
                     super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.REJECT.getStatus());
                     break;
-                //未发货
+                //待发货：审核通过 + 发货明细部分未发货 AND 发货明细未关闭
                 case OmsConstant.WAIT_DELIVERY:
-                    super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.APPROVE.getStatus());
-                    super.buildDefaultDTO("sod.delivery_status",Arrays.asList(DeliveryStatusEnum.UN_SHIPPED.getCode(),DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode()));
-                break;
-                //已发货
+                    return "si.approve_status = 'approve' AND EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment') " +
+                           "AND sd.is_close = FALSE)";
+                //已发货：审核通过 + 所有明细已发货，或审核通过 + 发货明细部分未发货并且发货明细已关闭
                 case OmsConstant.DELIVERY:
-                    super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.APPROVE.getStatus());
-                    super.buildDefaultDTO("sod.delivery_status",Arrays.asList(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode()));
-                break;
+                    return "si.approve_status = 'approve' AND ((NOT EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND sd.delivery_status != 'completeShipment')) " +
+                           "OR (EXISTS (SELECT 1 FROM so_detail sd WHERE sd.main_id = si.id AND sd.is_deleted = FALSE " +
+                           "AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment') " +
+                           "AND sd.is_close = TRUE)))";
 
             }
         }

@@ -630,14 +630,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
     @Override
-    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(ids);
+    public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = viewGenerateData(detailIdList);
         return list;
     }
 
@@ -955,11 +955,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @description: 下推数据查询
      * @author Will
      * @date: 2023/5/12 9:12
-     * @param ids
+     * @param detailIdList
      * @return List<ViewGenerateTransferInfoDTO>
      */
-    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> ids) {
-        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(ids);
+    private List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>  viewGenerateData(List<String> detailIdList) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(detailIdList);
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
