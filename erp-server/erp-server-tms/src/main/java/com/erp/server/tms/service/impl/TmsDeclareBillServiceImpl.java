@@ -663,7 +663,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待报关的单据才能删除"));
                 continue;
             }
-            resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"删除成功"));
+            resultList.add(BatchResultDTO.success(entity.getId(),entity.getCode(),"删除成功"));
             removeIds.add(entity.getId());
             List<String> mergeIds = Arrays.asList(entity.getMergeSourceId().split(","));
             if(CollectionUtils.isNotEmpty(mergeIds)){
