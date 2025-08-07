@@ -371,6 +371,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierDTO.SupplierViewDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierViewDTO.class);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
+        result.setTaxRate(MathUtil.multiplyWithTwo(result.getTaxRate(),MathUtil.BigDecimal_100));
         String paymentConditionName="";
         String paymentConditionCode = supplier.getPaymentCondition();
         //付款条件
@@ -1224,10 +1225,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierCredentialEntity> addCredentialList = supplierCredentialService.transform(supplier.getId(), addDTO.getCredentialList());
 
         supplierPlantAddrService.importUpdate(supplier.getId(), addDTO.getPlantAddrList(),type);
-        supplierAccountService.saveOrUpdateBatch(addAccountList);
-        supplierContactService.saveOrUpdateBatch(addContactList);
-        supplierCredentialService.saveOrUpdateBatch(addCredentialList);
-
+        if (CollUtil.isNotEmpty(addAccountList)) {
+            supplierAccountService.saveOrUpdateBatch(addAccountList);
+        }
+        if (CollUtil.isNotEmpty(addContactList)) {
+            supplierContactService.saveOrUpdateBatch(addContactList);
+        }
+        if (CollUtil.isNotEmpty(addCredentialList)) {
+            supplierCredentialService.saveOrUpdateBatch(addCredentialList);
+        }
         String content = "导入一个供应商信息[%s]";
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "新增操作");
     }
@@ -2143,9 +2149,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 return;
             }
             addDTO.setPlantAddrList(plantAddrList);
-            addDTO.setContactList(Collections.singletonList(contactAddDTO));
-            addDTO.setBankAccountList(Collections.singletonList(accountAddDTO));
-            addDTO.setCredentialList(Collections.singletonList(credentialAddDTO));
+            if (ObjectUtil.isNotEmpty(contactAddDTO)) {
+                addDTO.setContactList(Collections.singletonList(contactAddDTO));
+            }
+            if (ObjectUtil.isNotEmpty(accountAddDTO)) {
+                addDTO.setBankAccountList(Collections.singletonList(accountAddDTO));
+            }
+            if (ObjectUtil.isNotEmpty(credentialAddDTO)) {
+                addDTO.setCredentialList(Collections.singletonList(credentialAddDTO));
+            }
             self.batchImportSupplier(addDTO,type);
         }
     }
@@ -2245,7 +2257,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierCredentialDTO.ImportAddDTO credential = new SupplierCredentialDTO.ImportAddDTO();
         //资质信息名称为空则无需处理
         if (CharSequenceUtil.isBlank(excelDTO.getCredentialName())) {
-            return credential;
+            return null;
         }
         SupplierCredentialEntity supplierCredentialEntity = credentialList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getName(), excelDTO.getCredentialName())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(supplierCredentialEntity)) {
@@ -2256,7 +2268,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
         } else if (isUpdatePart) {
             errorMsgList.add("资质不存在,不支持部分更新");
-            return credential;
+            return null;
         }
         credential.setName(excelDTO.getCredentialName());
         //资质备注
@@ -2302,7 +2314,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //账户信息名称为空则无需处理
         if (CharSequenceUtil.isBlank(excelDTO.getPayee())) {
             log.warn("账户名称为空,无需处理");
-            return bankAccount;
+            return null;
         }
         SupplierAccountEntity supplierAccountEntity = accountList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getPayee(), excelDTO.getPayee())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(supplierAccountEntity)) {
@@ -2313,7 +2325,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
         } else if (isUpdatePart) {
             errorMsgList.add("银行不存在,不支持部分更新");
-            return bankAccount;
+            return null;
         }
 
         //全量更新时需要校验必填，账户名称、开户行、银行账号
@@ -2395,7 +2407,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //联系人信息名称为空则无需处理
         if (CharSequenceUtil.isBlank(excelDTO.getPerson())) {
             log.warn("联系人信息名称为空,无需处理");
-            return contact;
+            return null;
         }
         SupplierContactEntity supplierContactEntity = contactList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), addDTO.getId()) && CharSequenceUtil.equals(obj.getPerson(), excelDTO.getPerson())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(supplierContactEntity)) {
@@ -2406,7 +2418,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
         } else if (isUpdatePart) {
             errorMsgList.add("联系人信息不存在,不支持部分更新");
-            return contact;
+            return null;
         }
         contact.setPerson(excelDTO.getPerson());
         //全量更新时需要校验必填，联系人和电话
@@ -2444,7 +2456,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         //电话
         if (CharSequenceUtil.isNotBlank(excelDTO.getTelNumber())) {
-            contact.setRemark(excelDTO.getTelNumber());
+            contact.setTelNumber(excelDTO.getTelNumber());
         } else if (!isUpdatePart) {
             contact.setTelNumber("");
         }
