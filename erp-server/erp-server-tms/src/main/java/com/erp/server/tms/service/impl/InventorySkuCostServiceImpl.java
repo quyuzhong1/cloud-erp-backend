@@ -331,12 +331,12 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
-        }
+//        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+//        if (CollectionUtils.isEmpty(excelDateList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        } else if (excelDateList.size() > 5000) {
+//            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+//        }
         List<InventorySkuCostDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
         List<InventorySkuCostDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
