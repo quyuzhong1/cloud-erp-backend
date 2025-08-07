@@ -98,6 +98,14 @@ public class LogisticsBillCostDTO implements Serializable {
          * 渠道名称【可排序】
          */
         private String  channelName;
+        /**
+         * 物流商id
+         */
+        private String  logisticsSupplierId;
+        /**
+         * 物流商名称
+         */
+        private String  logisticsSupplierName;
 
         /**
          * 物流运单号【可排序】
@@ -678,7 +686,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillDetailId;
 
         private String trackNo;
-        
+        /**
+         * 对账类型
+         */
+        private String payType;
+
         /**
     	 * 计费重[预估]
     	 */

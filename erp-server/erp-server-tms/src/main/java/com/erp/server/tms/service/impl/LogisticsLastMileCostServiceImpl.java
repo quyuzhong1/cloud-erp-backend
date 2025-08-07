@@ -7,12 +7,14 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.ImportTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -165,17 +167,18 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     /**
+     * @param successList 成功数据
+     * @param errorList   错误数据
+     * @param headList    表头
+     * @param headMap     表头
+     * @param importType
      * @description: 导入数据处理
      * @author Will
      * @date: 2024/5/10 18:41
-     * @param successList 成功数据
-     * @param errorList 错误数据
-     * @param headList 表头
-     * @param headMap 表头
      */
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
-    public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,Map<Integer,String> headMap) {
+    public void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer,String> headMap, String importType) {
 
         if (headList.size() != headList.stream().distinct().collect(Collectors.toList()).size()) {
             throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_HEAD_EXIST);
@@ -286,6 +289,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             updateDataDTO.setId(logisticsBillCostEntity.getId());
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(excelDTO.getBillingWeightStr()));
             updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
+            updateDataDTO.setPayType(excelDTO.getPayType());
             
             updateList.forEach(u -> u.setCurrency(updateDataDTO.getCurrency()));
             List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
@@ -315,9 +319,30 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if(CollUtil.isEmpty(updateList)) {
             	continue;
             }
-            updateDataDTO.setCostDetailList(updateList);
-            this.update(updateDataDTO,Boolean.TRUE);
+            if (ImportTypeEnum.ADD.getCode().equals(importType)){
+                List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,updateList);
+                logisticsBillCostService.addPayAndRefund(dtoList);
+            }else {
+                updateDataDTO.setCostDetailList(updateList);
+                this.update(updateDataDTO,Boolean.TRUE);
+            }
         }
+    }
+
+    private List<LogisticsBillCostDTO.AddDataDTO> buildAddDTO(LogisticsBillCostDTO.UpdateDTO updateDataDTO, List<UpdateDTO> updateList) {
+        List<LogisticsBillCostDTO.AddDataDTO> dtoList = new ArrayList<>();
+        updateList.forEach(u -> {
+            LogisticsBillCostDTO.AddDataDTO addDataDTO = new LogisticsBillCostDTO.AddDataDTO();
+            addDataDTO.setPayType(updateDataDTO.getPayType());
+            addDataDTO.setSourceId(updateDataDTO.getId());
+            addDataDTO.setBillingWeight(updateDataDTO.getBillingWeight());
+            addDataDTO.setBillingWeightLogistics(updateDataDTO.getBillingWeightLogistics());
+            addDataDTO.setCurrency(updateDataDTO.getCurrency());
+            addDataDTO.setCfgCostId(u.getCfgCostId());
+            addDataDTO.setCostValue(u.getCostValue());
+            dtoList.add(addDataDTO);
+        });
+        return dtoList;
     }
 
     /**
@@ -395,7 +420,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importLogisticsLastMileCost(BaseDTO.ImportDTO dto) {
-        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId());
+        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId(),dto.getImportType());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();

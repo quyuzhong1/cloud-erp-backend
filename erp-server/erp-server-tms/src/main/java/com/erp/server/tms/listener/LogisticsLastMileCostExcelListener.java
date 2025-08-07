@@ -7,7 +7,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.core.utils.FieldValidUtil;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
 import lombok.Getter;
@@ -26,6 +25,7 @@ import java.util.stream.Collectors;
 public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Map<Integer,String>> {
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
+    private final String importType;
     @Getter
     private Integer count = 0;
     /**
@@ -51,8 +51,9 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
 
     private final LogisticsLastMileCostService logisticsLastMileCostService = SpringUtil.getBean(LogisticsLastMileCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public LogisticsLastMileCostExcelListener(String taskId) {
+    public LogisticsLastMileCostExcelListener(String taskId, String importType) {
         this.taskId = taskId;
+        this.importType = importType;
     }
 
    /**
@@ -66,7 +67,6 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     @Transactional(rollbackFor = Exception.class)
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
         count += 1;
-//        List<String> errorMsgList = new ArrayList<>();
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());
@@ -77,19 +77,11 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         JSONObject excelDTO = new JSONObject(map);
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
-        //存在错误数据则直接返回
-//        if (errorMsgList.size() > 0) {
-//            String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
-//            excelDTO.set("错误信息",errorMsg);
-//            errorList.add(excelDTO);
-//            return;
-//        }
-
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap);
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
@@ -118,7 +110,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         if (!successList.isEmpty()) {
             try {
                 List<JSONObject> errorList2 = new ArrayList<>();
-                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap);
+                logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap, importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(jsonObject -> {
