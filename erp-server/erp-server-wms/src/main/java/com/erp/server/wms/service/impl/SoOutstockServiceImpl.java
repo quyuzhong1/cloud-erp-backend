@@ -1748,7 +1748,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setCnyTaxPrice(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
-            item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
+            item.setAllAmountLocalCurrency(MathUtil.multiplyWithTwo(item.getCnyTaxPrice(), new BigDecimal(item.getActualQty()),4));
 
             //装箱状态
             item.setPackingStatusName(PackingTaskStatusEnum.getName(item.getPackingStatus()));

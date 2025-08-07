@@ -436,7 +436,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity) {
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
