@@ -1702,4 +1702,25 @@ public class SkuMappingDTO implements Serializable {
          */
         private String labelFileName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncPlatformProductDTO {
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String platform;
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺ID不能为空")
+        private String shopId;
+
+        /**
+         * 平台sku集合
+         */
+        @NotEmpty(message = "平台Sku不能为空")
+        private List<String> platformSkuNoList;
+    }
 }
