@@ -306,31 +306,13 @@ public class SoReturnNoticeController extends BaseController {
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<String> ids = idsDTO.getIds();
-        if (CollectionUtils.isEmpty(ids)) {
-            return success(Collections.emptyList());
+        try {
+            List<BatchResultDTO> resultDTOS = soReturnNoticeService.deleteByIds(idsDTO.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售退货通知单失败", e);
+            return failure(e.getMessage());
         }
-
-        Map<String, SoReturnNoticeEntity> entityMap = soReturnNoticeService.mapByIds(ids);
-        List<BatchResultDTO> results = new ArrayList<>();
-
-        for (String id : ids) {
-            SoReturnNoticeEntity entity = entityMap.get(id);
-            if (entity == null) {
-                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
-                continue;
-            }
-
-            try {
-                BatchResultDTO result = soReturnNoticeService.deleteEntity(entity);
-                results.add(result);
-            } catch (Exception e) {
-                log.error("删除销售退货通知单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
-                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
-            }
-        }
-
-        return success(results);
     }
 
     /**

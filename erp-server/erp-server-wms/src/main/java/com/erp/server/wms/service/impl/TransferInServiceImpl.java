@@ -551,6 +551,43 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<TransferInEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99066);
+        }
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除分布式调入单[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "删除");
+            //删除明细
+            transferInDetailService.removeByMainIdList(ids);
+            //推送金蝶
+            list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

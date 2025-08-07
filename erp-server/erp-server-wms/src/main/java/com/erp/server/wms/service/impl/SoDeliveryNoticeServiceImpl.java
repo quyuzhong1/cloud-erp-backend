@@ -2263,4 +2263,55 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity()));
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        // 先验证所有ID是否存在
+        List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(deliveryNoticeEntityList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货通知单");
+        }
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+        if (CollectionUtils.isEmpty(soDeliveryNoticeDetailList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货通知单明细");
+        }
+        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
+        if(CollectionUtils.isNotEmpty(machineInfoEntityList)){
+            throw new ServiceException("存在关联的加工单{}，B2B发货通知单禁止删除",machineInfoEntityList.stream().map(MachineInfoEntity::getCode).collect(Collectors.toList()));
+        }
+        pickingListsService.exist(ids);
+        //待提交支持删除
+        long count = deliveryNoticeEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+
+        if (count != deliveryNoticeEntityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(deliveryNoticeEntityList.stream().map(SoDeliveryNoticeEntity::getCode).collect(Collectors.toList()));
+        deliveryNoticeEntityList.forEach(v->{
+            PackingTaskEntity taskEntity = taskEntityList.stream().filter(t->t.getSourceCode().equals(v.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(taskEntity) && !taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.UNPACKED.getCode())){
+                throw new ServiceException("装箱中&已装箱不允许删除");
+            }
+        });
+        //删除装箱任务
+        taskEntityList.forEach(v->packingTaskService.delete(v));
+        //删除详情表
+        soDeliveryNoticeDetailService.delete(ids);
+
+        boolean result = this.removeByIds(ids);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        //释放冻结库存
+        handleUnLockVirtualInventory(deliveryNoticeEntityList,soDeliveryNoticeDetailList);
+        
+        // 返回成功结果
+        return deliveryNoticeEntityList.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
 }

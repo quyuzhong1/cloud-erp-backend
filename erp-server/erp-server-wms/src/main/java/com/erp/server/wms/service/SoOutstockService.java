@@ -145,6 +145,16 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     Boolean delete(List<String> ids);
 
     /**
+     * @description: 原子批量删除销售出库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * 删除单个实体
      * @author yl
      * @date 2023-05-19 12:16

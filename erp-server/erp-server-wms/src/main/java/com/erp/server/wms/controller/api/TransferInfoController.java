@@ -280,22 +280,13 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        Map<String, TransferInfoEntity> entityMap = transferInfoService.mapByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            TransferInfoEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "直接调拨单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(transferInfoService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("直接调拨单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = transferInfoService.delete(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除直接调拨单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

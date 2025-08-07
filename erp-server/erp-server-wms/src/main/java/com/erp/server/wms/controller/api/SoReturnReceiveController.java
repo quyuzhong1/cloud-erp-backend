@@ -314,22 +314,13 @@ public class SoReturnReceiveController extends BaseController {
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
-        Map<String, SoReturnReceiveEntity> entityMap = soReturnReceiveService.mapByIds(idsDTO.getIds());
-        for (String id : idsDTO.getIds()) {
-            SoReturnReceiveEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "销售退货签收单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(soReturnReceiveService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("销售退货签收单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = soReturnReceiveService.deleteByIds(idsDTO.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售退货签收单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

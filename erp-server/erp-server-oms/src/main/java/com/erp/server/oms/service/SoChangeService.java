@@ -130,22 +130,13 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
     Boolean deleteByIds(List<String> ids);
 
     /**
-     * 删除单个销售变更单
-     * @author yl
-     * @date 2023-05-25 11:05
-     * @param entity
-     * @return com.common.business.dto.base.BatchResultDTO
-     */
-    BatchResultDTO deleteEntity(SoChangeEntity entity);
-
-    /**
-     * 根据ID列表获取实体Map
+     * 删除销售变更单（返回详细结果）
      * @author yl
      * @date 2023-05-25 11:05
      * @param ids
-     * @return java.util.Map<java.lang.String, com.erp.model.oms.entity.SoChangeEntity>
+     * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
      */
-    Map<String, SoChangeEntity> mapByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
 
     
     /**

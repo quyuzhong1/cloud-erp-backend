@@ -996,33 +996,37 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deleteEntity(SoChangeEntity entity) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<SoChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus) || entity.getInvalidStatus()) {
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        List<String> ids = Collections.singletonList(entity.getId());
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
             String content = "删除销售变更单[%s]";
-            List<Pair<String, String>> pairList = Collections.singletonList(new Pair<>(entity.getId(), entity.getCode()));
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "删除");
             //删除明细
             soChangeDetailService.removeByMainIdList(ids);
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
-        } else {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
-        }
-    }
 
-    @Override
-    public Map<String, SoChangeEntity> mapByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
-        List<SoChangeEntity> list = this.listByIds(ids);
-        return list.stream().collect(Collectors.toMap(SoChangeEntity::getId, Function.identity()));
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
     }
 
 

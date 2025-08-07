@@ -693,6 +693,40 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除详情表
+        soReturnReceiveDetailService.delete(ids);
+        boolean result = this.removeByIds(ids);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
+        // 添加批量操作日志
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),entityList.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = entityList.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "删除操作");
+
+        // 返回成功结果
+        return entityList.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO deleteEntity(SoReturnReceiveEntity entity) {
         //待提交支持删除
         if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {

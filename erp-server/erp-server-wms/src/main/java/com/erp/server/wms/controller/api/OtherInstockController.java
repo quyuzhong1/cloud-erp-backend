@@ -232,22 +232,13 @@ public class OtherInstockController extends BaseController {
             serviceClass = OtherInstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        Map<String, OtherInstockEntity> entityMap = otherInstockService.mapByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            OtherInstockEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "其他入库单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(otherInstockService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("其他入库单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = otherInstockService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除其他入库单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
