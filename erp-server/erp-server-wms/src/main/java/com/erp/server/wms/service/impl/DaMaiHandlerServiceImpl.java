@@ -9,11 +9,10 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.damai.dto.request.DaMaiCalculateFeeRequest;
 import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
 import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
-import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
-import com.sdk.wms.damai.dto.response.DaMaiCreateInboundResp;
-import com.sdk.wms.damai.dto.response.DaMaiWarehouseResp;
+import com.sdk.wms.damai.dto.response.*;
 import com.sdk.wms.damai.service.DaMaiService;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
@@ -160,7 +159,38 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
-        return null;
+        DaMaiCalculateFeeRequest daMaiCalculateFeeRequest = DaMaiCalculateFeeRequest.builder()
+                .consigneeCountryCode(calculateFeeReq.getCountryCode())
+                .consigneePostalCode(calculateFeeReq.getPostCode())
+                .whCode(calculateFeeReq.getWarehouseCode())
+                .grossWeight(calculateFeeReq.getWeight().toString())
+                .length(calculateFeeReq.getLength().toString())
+                .width(calculateFeeReq.getWidth().toString())
+                .height(calculateFeeReq.getHeight().toString())
+                .build();
+        DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>> resp = daMaiService.calculateFee(ThirdWarehouseContext.getAuthMap(), daMaiCalculateFeeRequest);
+        if(StringUtils.isNotBlank(resp.getMsg())){
+            return failure(resp.getMsg());
+        }
+        List<DaMaiCalculateFeeResp> daMaiCalculateFeeResps = resp.getData();
+        if(CollectionUtils.isEmpty(daMaiCalculateFeeResps)){
+            return success(Collections.emptyList());
+        }
+        daMaiCalculateFeeResps = daMaiCalculateFeeResps.stream().filter(v->StringUtils.isNotBlank(v.getErrMsg())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(daMaiCalculateFeeResps)){
+            return success(Collections.emptyList());
+        }
+        List<ThirdWarehouseCalculateFeeResponse> responseList = new ArrayList<>();
+        for (DaMaiCalculateFeeResp daMaiCalculateFeeResp : daMaiCalculateFeeResps) {
+            ThirdWarehouseCalculateFeeResponse response = new ThirdWarehouseCalculateFeeResponse();
+            response.setChannelCode(daMaiCalculateFeeResp.getProductCode());
+            response.setCurrency(daMaiCalculateFeeResp.getCurrencyCode());
+            response.setOtherCost(daMaiCalculateFeeResp.getOtherAmount());
+            response.setShippingCost(daMaiCalculateFeeResp.getBaseFreightAmount());
+            response.setTotalShippingCost(daMaiCalculateFeeResp.getTotalBillableWeight());
+            responseList.add(response);
+        }
+        return success(responseList);
     }
 
     @Override

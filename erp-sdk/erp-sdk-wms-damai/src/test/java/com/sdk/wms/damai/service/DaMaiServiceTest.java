@@ -2,10 +2,7 @@ package com.sdk.wms.damai.service;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessCommonConstants;
-import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
-import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
-import com.sdk.wms.damai.dto.request.DaMaiInventoryAgeRequest;
-import com.sdk.wms.damai.dto.request.DaMaiInventoryTransRequest;
+import com.sdk.wms.damai.dto.request.*;
 import com.sdk.wms.damai.dto.response.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,6 +102,22 @@ public class DaMaiServiceTest {
     @Test
     public void getInventory() {
         DaMaiPageBaseResp<List<DaMaiInventoryResp>> resp = daMaiService.getInventory(authMap);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void calculateFee() {
+        DaMaiCalculateFeeRequest daMaiCalculateFeeRequest = DaMaiCalculateFeeRequest.builder()
+                .consigneeCountryCode("CN")
+                .grossWeight("0.5")
+                .length("12")
+                .width("11")
+                .height("10")
+                .packageQty("1")
+                .residentialFlag("1")
+                .podFlag("0")
+                .build();
+        DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>> resp = daMaiService.calculateFee(authMap,daMaiCalculateFeeRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }

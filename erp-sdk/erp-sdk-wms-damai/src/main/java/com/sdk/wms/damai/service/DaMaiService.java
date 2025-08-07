@@ -5,10 +5,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
-import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
-import com.sdk.wms.damai.dto.request.DaMaiInventoryAgeRequest;
-import com.sdk.wms.damai.dto.request.DaMaiInventoryTransRequest;
+import com.sdk.wms.damai.dto.request.*;
 import com.sdk.wms.damai.dto.response.*;
 import com.sdk.wms.damai.utils.DaMaiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -251,6 +248,18 @@ public class DaMaiService {
         errorResp.setData(allData);
         return errorResp;
     }
+    /**
+     * 运费测算
+     * @param authMap
+     * @return
+     */
+    public DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>> calculateFee(Map<String,Object> authMap, DaMaiCalculateFeeRequest daMaiCalculateFeeRequest){
+        String path = "/omsService/non/feeApi/calculateFee";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCalculateFeeRequest), headerMap);
+        return DaMaiUtils.parsePageToResp(bodyStr, new TypeReference<DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>>>() {});
+    }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("appToken", authMap.get("appToken").toString());
