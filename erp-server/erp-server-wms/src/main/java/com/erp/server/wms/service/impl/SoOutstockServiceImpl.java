@@ -1588,9 +1588,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 		String shopPermissionSql = authDataFeign.getShopPermissionSqlByDynamicDataSource("so.shop_id" , dynamicDataSource);
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
-            permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
+            permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B') OR (so.order_type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
-            permissionSql = " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
+            permissionSql = " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B') OR (so.order_type = 'AfterSale'))";
         }
         return permissionSql;
     }
