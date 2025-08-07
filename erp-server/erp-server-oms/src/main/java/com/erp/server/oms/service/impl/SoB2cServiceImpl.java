@@ -2380,6 +2380,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         thirdWarehouseUploadFileReq.setFileData(logisticsBase64);
         thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
         thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+        //速派通采用other_documents_invoice
+        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            thirdWarehouseUploadFileReq.setModule("other_documents_invoice");
+        }
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
         if(!uploadFileResponse.isSuccess()){
             throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
@@ -2889,6 +2893,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //上传发票
+
         autoPushInvoice(entity, overseasProviderWarehouse, channelEntity,createOutboundReq);
 
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
