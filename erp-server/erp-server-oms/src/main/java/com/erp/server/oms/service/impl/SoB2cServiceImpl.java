@@ -7903,6 +7903,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             return false;
         }
+        // 更新国家信息
+        soB2cReceiverService.checkAndUpdateCountry(soB2cEntity.getId(), dto.getCountry());
+
         // 记录明细仓库
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
