@@ -413,6 +413,10 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
 
         /**
          * 汇率
@@ -1858,6 +1862,10 @@ public class SoInfoDTO implements Serializable {
          * 销售备注
          */
         private String soRemark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
 
         private String syncKingdeeId;
 

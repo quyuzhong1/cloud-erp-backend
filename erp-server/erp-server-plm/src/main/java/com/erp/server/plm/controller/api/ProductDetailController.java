@@ -929,6 +929,22 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author jack
+     * @date 2025-07-11
+     */
+    @PostMapping("/search/checkParams/skuInfo")
+    public ApiResult<List<SkuVO>> searchCheckParamsSkuInfo(@RequestBody ProductDetailDTO.SearchDTO dto) {
+        if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getSearchKeyword())){
+            return success();
+        }
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
+        return success(skuList);
+    }
+
+    /**
      * 搜索父级sku
      *
      * @param searchKeyword

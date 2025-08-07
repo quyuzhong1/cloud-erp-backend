@@ -13,13 +13,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
+import com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
-import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.InvoiceNodeEnum;
-import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
+import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper;
 import com.erp.server.oms.service.*;
@@ -65,6 +63,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Resource
+    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
+    @Resource
+    private RuleConditionService ruleConditionService;
 
     @Override
     public CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
@@ -73,10 +75,25 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 dto.getKey(),
                 dto.getNames()
         );
+        if (ObjectUtil.isEmpty(viewDTOS)) {
+            return viewDTOS;
+        }
+        //填充规则列表
+        List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList = cfgRuleInvoiceProductAmountService.listByCfgId(dto.getId());
+        if (CollUtil.isEmpty(productAmountDTOList)){
+            return viewDTOS;
+        }
+        List<String> ruleIds = productAmountDTOList.stream().map(CfgRuleInvoiceProductAmountDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+        List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleIds(ruleIds, DictBasicTypeEnum.FIELD.getType());
+        productAmountDTOList.forEach(e -> {
+            e.setDictInvoiceRuleName(InvoiceRuleEnum.getName(e.getDictInvoiceRule()));
+            List<RuleConditionDTO.ViewDTO> collect = conditionList.stream().filter(f -> e.getId().equals(f.getRuleId())).collect(Collectors.toList());
+            e.setConditionList(collect);
+        });
+        viewDTOS.setProductAmountDTOList(productAmountDTOList);
         return viewDTOS;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddOrUpdateDTO dto) {
@@ -99,6 +116,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         }
         // 处理更新中的删除逻辑
         List<CfgInvoiceSettingDetailEntity> relatedToAddAndUpdateList= handleInvoiceSettingDetails(dto.getDetailDTOList(), mainId);
+        //处理产品总价计算规则
+        cfgRuleInvoiceProductAmountService.batchAddOrUpdate(dto.getProductAmountDTOList(), mainId);
         // 操作日志
         if (ObjectUtil.isNotEmpty(relatedToAddAndUpdateList)) {
             List<Pair<String, String>> pairList = relatedToAddAndUpdateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -140,6 +159,16 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
     @Override
     public CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId) {
+        List<CfgInvoiceSettingDetailEntity> invoiceSettingDetail = baseMapper.getInvoiceSettingDetail(dictPlatform, shopId);
+        if (CollUtil.isEmpty(invoiceSettingDetail)){
+            return null;
+        }else {
+            return invoiceSettingDetail.get(0);
+        }
+    }
+
+    @Override
+    public List<CfgInvoiceSettingDetailEntity> listInvoiceSettingDetail(String dictPlatform, String shopId) {
         return baseMapper.getInvoiceSettingDetail(dictPlatform, shopId);
     }
 
@@ -171,7 +200,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
             try {
-                invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+                invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.FALSE);
             }catch (Exception e){
                 log.error("生成nfe发票失败，{}",e.getMessage());
             }
@@ -268,7 +297,11 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 entity.setRatio((ratio == null ? BigDecimal.ZERO : ratio).divide(new BigDecimal("100")));
                 entity.setDictPlatform(platformValue);
                 entity.setMainId(mainId); // 确保设置了mainId
-
+                if (Objects.nonNull(detail.getIsCheckIe()) && detail.getIsCheckIe()){
+                    entity.setDictVerifyType(InvoiceVerifyTypeEnum.IE.getCode());
+                }else {
+                    entity.setDictVerifyType(InvoiceVerifyTypeEnum.NONE.getCode());
+                }
                 // 判断是新增还是更新
                 String id = detail.getId();
                 if (ObjectUtil.isEmpty(id) || idsWithChangedShopId.contains(id)) {
