@@ -3928,17 +3928,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
-        // 先验证所有ID是否存在
         List<SoOutstockEntity> list = this.listByIds(ids);
-        if (list.size() != ids.size()) {
-            throw new ServiceException(ApiError.ERROR_NOT_FOUND, "部分销售出库单");
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
         }
-        
-        // 验证所有实体的状态是否允许删除
-        for (SoOutstockEntity entity : list) {
-            if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
-                throw new ServiceException(ApiError.ERROR_98009);
-            }
+        long invalidCount = list.stream().filter(SoOutstockEntity::getInvalidStatus).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
         }
 
         //获取需要同步数帝云的数据
