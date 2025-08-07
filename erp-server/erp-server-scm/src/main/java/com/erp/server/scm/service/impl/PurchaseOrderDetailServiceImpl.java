@@ -414,6 +414,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setTaxPrice(viewDTO.getTaxPrice());
                     addDTO.setTaxRate(viewDTO.getTaxRate());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
+                } else {
+                    String error = CharSequenceUtil.format("SKU【{}】未找到数量【{}】的供应商报价信息", addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                    throw new ServiceException(error);
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){
