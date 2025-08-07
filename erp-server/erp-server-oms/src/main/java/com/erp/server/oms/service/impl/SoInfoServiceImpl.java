@@ -1060,6 +1060,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
+                // 设置SPU信息
+                item.setSpuId(sku.getProductId());
+                item.setSpuNo(sku.getSpuNo());
+                item.setSpuName(sku.getSpuName());
             }
             //发货状态
             String deliveryStatus = DeliveryStatusEnum.UN_SHIPPED.getCode();

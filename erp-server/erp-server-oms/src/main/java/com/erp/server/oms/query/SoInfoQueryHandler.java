@@ -12,10 +12,13 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.plm.vo.SkuVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,9 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
@@ -58,14 +64,72 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
          * 虚拟仓是否缺货
          */
         if("isVirtualOutStock".equals(field)){
-//            String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
-//            if ((Boolean) value) {
-//                return sql + "< 0";
-//            } else {
-//                return sql + ">= 0";
-//            }
             return getQueryAllSql();
         }
+        /**
+         * SPU编号查询
+         */
+        if("spuNo".equals(field)){
+            String queryField = "pi.spu_no";
+            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
+                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryEmptySql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
+            }
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryAllSql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+            }
+        }
+
+        /**
+         * SPU名称查询
+         */
+        if("spuName".equals(field)){
+            String queryField = "pi.name";
+            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
+                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryEmptySql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
+            }
+            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
+                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
+                advanceQueryDTOList.add(advanceQueryDTO);
+                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
+                List<SkuVO> skuVOS = plmTaskFeign.getSkuInfoAdvanceQuery(advanceQueryContainer);
+                List<String> skuIds = skuVOS.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(skuIds)){
+                    return this.getQueryAllSql();
+                }
+                super.buildSplicingSQLDTO("sod.sku_id",QueryConditionEnum.NOT_IN_LIST,skuIds,QueryDataTypeEnum.STRING);
+            }
+        }
+
 
         /**
          * 剩余发货通知数量
