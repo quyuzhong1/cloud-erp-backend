@@ -841,6 +841,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
     ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
+    ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{}】未找到数量【{}】的供应商报价信息"),
 
 
     /**

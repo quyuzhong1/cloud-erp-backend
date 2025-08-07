@@ -3869,14 +3869,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setDetails(details);
             //新增错误信息
             List<String> addErrorMsgList = new ArrayList<>();
+            Boolean isPriceError = Boolean.FALSE;
             try {
-                //新增采购申请单
+                //新增采购订单
                 selfService.add(addDTO);
-            } catch (Exception e) {
-                addErrorMsgList.add(e.getMessage());
+            } catch (ServiceException e) {
+                if (ApiError.ERROR_PURCHASE_PRICE_SKU.code.equals(e.getCode())) {
+                    addErrorMsgList.addAll(Arrays.stream(e.getMsg().split(",")).collect(Collectors.toList()));
+                    isPriceError = Boolean.TRUE;
+                } else {
+                    addErrorMsgList.add(e.getMessage());
+                }
             }
+            //新增返回错误
             if (CollUtil.isNotEmpty(addErrorMsgList)) {
-                value.forEach(obj -> obj.setErrorMsg(FieldValidUtil.getMsgSort(addErrorMsgList)));
+                for (PurchaseOrderMainExcelDTO excelDTO : value) {
+                    if (isPriceError) {
+                        addErrorMsgList.stream().filter(obj -> CharSequenceUtil.contains(obj,excelDTO.getSkuNo())).findFirst().ifPresent(obj -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(obj))));
+                    } else {
+                        excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(addErrorMsgList));
+                    }
+                }
                 errorList.addAll(value);
             }
         }
