@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,6 +17,7 @@ import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO.PositionDetailsList;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,6 +33,7 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
@@ -71,6 +74,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static cn.hutool.core.text.CharSequenceUtil.format;
 
 /**
  * @author Lambda
@@ -125,6 +130,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SysPartitionFeign sysPartitionFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private OperateLogService operateLogService;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -372,6 +379,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
         //保存销售出库单
         soOutstockService.save(soOutstock);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
         //根据销售出库单创建物流单和自发货费用
