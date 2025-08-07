@@ -380,7 +380,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 throw new ServiceException(StrUtil.format("采购退货单【{}】明细记录不存在", poReturnEntity.getCode()));
             }
         }
-
+        List<String> errorList = new ArrayList<>();
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
             //子件
@@ -415,8 +415,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setTaxRate(viewDTO.getTaxRate());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                 } else {
-                    String error = CharSequenceUtil.format("SKU【{}】未找到数量【{}】的供应商报价信息", addDTO.getSkuNo(), addDTO.getPurchaseQty());
-                    throw new ServiceException(error);
+                    String purchasePriceError = CharSequenceUtil.format(ApiError.ERROR_PURCHASE_PRICE_SKU.msg, addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                    errorList.add(purchasePriceError);
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){
@@ -437,34 +437,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     }
                 }
             }
-//
-//
-//            //采购单价赋值
-//            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
-//                            obj.getSkuId().equals(addDTO.getSkuId())
-//                            && obj.getSupplierId().equals(supplierEntity.getSupplierId())
-//                            && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())
-//                            && (addDTO.getPurchaseQty() == obj.getPurchaseQty()))
-//                    .findFirst().orElse(null);
-//            if (ObjectUtils.isEmpty(viewDTO)) {
-//                continue;
-//            }
-//            //汇率
-//            BigDecimal taxRate = viewDTO.getTaxRate();
-//            //单价
-//            BigDecimal taxPrice = viewDTO.getTaxPrice();
-//            if (ObjectUtils.isEmpty(addDTO)) {
-//                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", addDTO.getSkuNo(), addDTO.getPurchaseQty());
-//                throw new ServiceException(new ApiResult(1,error));
-//            }
-//            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO && PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())) {
-//                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", addDTO.getSkuNo(), addDTO.getPurchaseQty());
-//                throw new ServiceException(new ApiResult(1,error));
-//            }
-//            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
-//                addDTO.setTaxPrice(taxPrice);
-//            }
-//            addDTO.setTaxRate(taxRate);
+        }
+        if (CollUtil.isNotEmpty(errorList)) {
+            String error = String.join(",", errorList);
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_SKU.code,error);
         }
     }
 
