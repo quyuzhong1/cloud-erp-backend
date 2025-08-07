@@ -713,7 +713,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
 
         // 添加批量操作日志
-        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),list.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),entityList.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = entityList.stream()
                 .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
                 .collect(Collectors.toList());

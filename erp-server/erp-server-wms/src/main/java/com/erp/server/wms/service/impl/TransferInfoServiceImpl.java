@@ -528,8 +528,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
-        this.removeByIds(ids);
-        
+        boolean result = this.removeByIds(ids);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+
         // 返回成功结果
         return list.stream()
                 .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))

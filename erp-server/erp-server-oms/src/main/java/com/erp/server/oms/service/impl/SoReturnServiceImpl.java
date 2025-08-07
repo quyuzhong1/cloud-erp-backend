@@ -1076,6 +1076,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //删除详情表
         soReturnDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);
+        if (!flag){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
         
         // 添加批量操作日志
         String content = "批量删除销售退货订单";

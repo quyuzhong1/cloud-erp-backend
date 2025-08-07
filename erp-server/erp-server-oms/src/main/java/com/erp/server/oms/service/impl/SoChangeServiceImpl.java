@@ -1020,6 +1020,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //删除明细
             soChangeDetailService.removeByMainIdList(ids);
 
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         // 返回成功结果
         return list.stream()

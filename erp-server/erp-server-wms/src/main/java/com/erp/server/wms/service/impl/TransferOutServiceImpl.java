@@ -401,7 +401,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
         // 删除主单数据
         log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        super.removeByIds(ids);
+        //删除主表数据
+        boolean result =  super.removeByIds(ids);
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
 
         //推送金蝶
         list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));

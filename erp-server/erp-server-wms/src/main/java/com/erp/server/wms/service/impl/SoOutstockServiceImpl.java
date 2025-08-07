@@ -3972,6 +3972,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //清空销售订单的出库时间
             this.handleSoOutDate(list);
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         // 返回成功结果
         return list.stream()
