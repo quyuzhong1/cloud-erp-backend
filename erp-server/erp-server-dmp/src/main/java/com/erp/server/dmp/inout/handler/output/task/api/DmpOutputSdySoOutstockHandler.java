@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.SourceTypeEnum;
@@ -340,6 +341,11 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						}
 					}
 				}
+	            
+	            LocalDateTime estimateInvestmentTime = dmpSoOutstockDetailEntity.getEstimateInvestmentTime();
+	            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getEstimate_investment_time()) && estimateInvestmentTime != null) {
+	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+	            }
 
 				// 添加发货类型
 				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
