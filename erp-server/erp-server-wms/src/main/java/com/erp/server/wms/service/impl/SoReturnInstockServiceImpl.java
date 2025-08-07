@@ -322,9 +322,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("sri.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
-            permissionSql = permissionSql + " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B'))";
+            permissionSql = permissionSql + " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B') OR (sri.type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
-            permissionSql = " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B'))";
+            permissionSql = " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B') OR (sri.type = 'AfterSale'))";
         }
         return permissionSql;
     }

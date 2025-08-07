@@ -180,9 +180,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
-            permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+            permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B') OR (srr.type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
-            permissionSql = " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+            permissionSql = " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B') OR (srr.type = 'AfterSale'))";
         }
         return permissionSql;
     }
