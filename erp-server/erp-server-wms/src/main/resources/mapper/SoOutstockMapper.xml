@@ -62,9 +62,12 @@
         sod.virtual_warehouse_id as virtualWarehouseId,
         so.packing_status,
         so.logistics_channel_id,
-        so.logistics_channel_name
+        so.logistics_channel_name,
+        COALESCE(si.partition_id, sbr.partition_id) as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE AND sod.is_deleted=FALSE
@@ -130,9 +133,12 @@
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
         sod.virtual_warehouse_id as virtualWarehouseId,
-           sod.warehouse_location AS warehouseLocation
+           sod.warehouse_location AS warehouseLocation,
+           COALESCE(si.partition_id, sbr.partition_id) as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE AND  sod.is_deleted=FALSE
