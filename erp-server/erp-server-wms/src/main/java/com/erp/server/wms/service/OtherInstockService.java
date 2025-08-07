@@ -104,6 +104,16 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     Boolean delete(List<String> ids);
 
     /**
+     * @description: 原子批量删除其他入库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
      * @description: 删除单个实体
      * @author Will
      * @date: 2023/5/17 15:15

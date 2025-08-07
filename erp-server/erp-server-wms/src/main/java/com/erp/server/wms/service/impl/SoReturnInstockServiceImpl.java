@@ -2325,4 +2325,53 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnInstockEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity()));
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+
+        //获取需要推送数帝云的数据
+        List<SoReturnInstockDetailEntity> detailAllList = new ArrayList<>();
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        detailAllList.addAll(soReturnInstockDetailEntityList);
+
+        //发送金蝶
+        sendPushTask(entityList,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //推送数帝云
+        this.syncToSdyHandler(entityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //删除详情表
+        soReturnInstockDetailService.delete(ids);
+        //删除主表
+        // 执行批量删除
+        Boolean result = this.removeByIds(ids);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        
+        // 添加批量操作日志
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货入库单", UserContext.getDefaultLoginUser().getUserName(),entityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = entityList.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "删除操作");
+        
+        // 返回成功结果
+        return entityList.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
 }

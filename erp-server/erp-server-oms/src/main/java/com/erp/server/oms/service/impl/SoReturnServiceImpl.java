@@ -1060,28 +1060,34 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deleteEntity(SoReturnEntity entity) {
-        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+    public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
+        List<SoReturnEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        List<String> ids = Collections.singletonList(entity.getId());
+
         //删除详情表
         soReturnDetailService.delete(ids);
-        boolean result = this.removeByIds(ids);
-        if (result) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
-        } else {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
-        }
-    }
-
-    @Override
-    public Map<String, SoReturnEntity> mapByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
-        }
-        List<SoReturnEntity> list = this.listByIds(ids);
-        return list.stream().collect(Collectors.toMap(SoReturnEntity::getId, Function.identity()));
+        boolean flag = this.removeByIds(ids);
+        
+        // 添加批量操作日志
+        String content = "批量删除销售退货订单";
+        List<Pair<String, String>> pairList = entityList.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_RETURN.getCode(), pairList, "删除");
+        
+        // 返回成功结果
+        return entityList.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
     }
 
     @Override

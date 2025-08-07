@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -307,6 +306,20 @@ public class SoReturnController extends BaseController {
     }
 
     /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货订单")
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto) {
+        Boolean flag = soReturnService.exportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 批量删除
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
@@ -322,36 +335,13 @@ public class SoReturnController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
-        Map<String, SoReturnEntity> entityMap = soReturnService.mapByIds(idsDTO.getIds());
-        for (String id : idsDTO.getIds()) {
-            SoReturnEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "销售退货订单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(soReturnService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("销售退货订单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = soReturnService.delete(idsDTO.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售退货订单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 导出
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货订单")
-    @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto) {
-        Boolean flag = soReturnService.exportExcel(dto);
-        return flag == true ? success() : failure();
     }
 
     /**

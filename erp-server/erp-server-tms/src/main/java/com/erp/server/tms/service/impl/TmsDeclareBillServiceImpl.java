@@ -686,6 +686,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isNotEmpty(removeIds)){
             this.removeByIds(removeIds);
         }
+        for (TmsDeclareBillEntity entity : entityList) {
+            resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"删除成功"));
+        }
         if(CollectionUtils.isNotEmpty(updateFhdSourceIds)){
             updateFhdSourceIds = updateFhdSourceIds.stream().distinct().collect(Collectors.toList());
             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();

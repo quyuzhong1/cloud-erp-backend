@@ -325,31 +325,13 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<String> ids = idsDTO.getIds();
-        if (CollectionUtils.isEmpty(ids)) {
-            return success(Collections.emptyList());
+        try {
+            List<BatchResultDTO> resultDTOS = soReturnInstockService.deleteByIds(idsDTO.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售退货入库单失败", e);
+            return failure(e.getMessage());
         }
-
-        Map<String, SoReturnInstockEntity> entityMap = soReturnInstockService.mapByIds(ids);
-        List<BatchResultDTO> results = new ArrayList<>();
-
-        for (String id : ids) {
-            SoReturnInstockEntity entity = entityMap.get(id);
-            if (entity == null) {
-                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
-                continue;
-            }
-
-            try {
-                BatchResultDTO result = soReturnInstockService.deleteEntity(entity);
-                results.add(result);
-            } catch (Exception e) {
-                log.error("删除销售退货入库单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
-                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
-            }
-        }
-
-        return success(results);
     }
 
     /**

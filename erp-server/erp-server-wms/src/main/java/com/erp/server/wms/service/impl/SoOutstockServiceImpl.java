@@ -3923,4 +3923,59 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoOutstockEntity::getId, Function.identity()));
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        // 先验证所有ID是否存在
+        List<SoOutstockEntity> list = this.listByIds(ids);
+        if (list.size() != ids.size()) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND, "部分销售出库单");
+        }
+        
+        // 验证所有实体的状态是否允许删除
+        for (SoOutstockEntity entity : list) {
+            if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+                throw new ServiceException(ApiError.ERROR_98009);
+            }
+        }
+
+        //获取需要同步数帝云的数据
+        List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
+        soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+
+        Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除销售订单[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
+
+            //删除明细
+            soOutstockDetailService.removeByMainIdList(ids);
+
+            //自动删除同批次的直接调拨单
+            soOutstockService.deleteTransferInfo(list);
+
+            //B2B发送金蝶
+            sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+            //推送数帝云
+            for (SoOutstockEntity outstockEntity : list) {
+                List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
+                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+            }
+
+            //清空销售订单的出库时间
+            this.handleSoOutDate(list);
+        }
+        // 返回成功结果
+        return list.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
+                .collect(Collectors.toList());
+    }
 }

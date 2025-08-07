@@ -324,31 +324,13 @@ public class SoDeliveryNoticeController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<String> ids = idsDTO.getIds();
-        if (CollectionUtils.isEmpty(ids)) {
-            return success(Collections.emptyList());
+        try {
+            List<BatchResultDTO> resultDTOS = soDeliveryNoticeService.deleteByIds(idsDTO.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除发货通知单失败", e);
+            return failure(e.getMessage());
         }
-
-        Map<String, SoDeliveryNoticeEntity> entityMap = soDeliveryNoticeService.mapByIds(ids);
-        List<BatchResultDTO> results = new ArrayList<>();
-
-        for (String id : ids) {
-            SoDeliveryNoticeEntity entity = entityMap.get(id);
-            if (entity == null) {
-                results.add(BatchResultDTO.fail(id, "", "记录不存在"));
-                continue;
-            }
-
-            try {
-                BatchResultDTO result = soDeliveryNoticeService.deleteEntity(entity);
-                results.add(result);
-            } catch (Exception e) {
-                log.error("删除发货通知单失败，id: {}, 单据编号: {}, 错误: {}", id, entity.getCode(), e.getMessage(), e);
-                results.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
-            }
-        }
-
-        return success(results);
     }
 
     /**

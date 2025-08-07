@@ -27,7 +27,6 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -293,22 +292,13 @@ public class SoChangeController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        Map<String, SoChangeEntity> entityMap = soChangeService.mapByIds(dto.getIds());
-        for (String id : dto.getIds()) {
-            SoChangeEntity entity = entityMap.get(id);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id, id, "销售变更单不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(soChangeService.deleteEntity(entity));
-            }catch (Exception e){
-                log.error("销售变更单删除失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
+        try {
+            List<BatchResultDTO> resultDTOS = soChangeService.deleteByIds(dto.getIds(), true);
+            return success(resultDTOS);
+        } catch (Exception e) {
+            log.error("批量删除销售变更单失败", e);
+            return failure(e.getMessage());
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
