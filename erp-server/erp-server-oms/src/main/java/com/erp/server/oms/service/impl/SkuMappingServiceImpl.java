@@ -77,7 +77,6 @@ import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
 import com.erp.server.oms.service.*;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2289,7 +2288,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollUtil.isEmpty(requestList)) {
             throw new ServiceException("所选数据未找到同步信息");
         }
-        Gson gson = new Gson();
+        //打印返回数据
+        log.warn("店铺商品同步返回数据:{}", JSONUtil.toJsonStr(requestList));
+
         List<Item> items = JSONArray.parseArray(requestList.get(0), Item.class);
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<ListingInfoEntity> listingUpdateList = new ArrayList<>();
