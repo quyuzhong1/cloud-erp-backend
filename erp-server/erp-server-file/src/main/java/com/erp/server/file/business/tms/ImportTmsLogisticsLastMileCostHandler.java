@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_LAST_MILE_COST;
 
-@Component
+//@Component
 @Slf4j
 public class ImportTmsLogisticsLastMileCostHandler extends AbstractImportEventHandler<BaseDTO.ImportDTO> {
     @Resource

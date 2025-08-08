@@ -49,6 +49,10 @@ public class BaseDTO implements Serializable {
          * ImportTypeEnum
          */
         private String importType;
+        /**
+         * 数据总条数
+         */
+        private Integer importCount;
     }
 
     @EqualsAndHashCode(callSuper = true)
