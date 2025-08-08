@@ -2247,7 +2247,33 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public BatchResultDTO syncPlatformProductByOne(String platform, String shopId, String platformSkuNo) {
-        return null;
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+        if(ObjectUtil.isEmpty(shopInfoEntity)){
+            throw new ServiceException("店铺不存在");
+        }
+        if(!AuthStatusEnum.ALREADY.getCode().equals(shopInfoEntity.getAuthStatus())){
+            throw new ServiceException("只有已授权店铺可以同步");
+        }
+        if(Boolean.TRUE.equals(shopInfoEntity.getDisabled())){
+            throw new ServiceException("已禁用店铺无法同步");
+        }
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setSystemCode(shopInfoEntity.getDictPlatform());
+        dto.setBillType(BusinessTypeEnum.PRODUCT_LISTING.getCode());
+        dto.setNextLevelId(shopInfoEntity.getId());
+        // 亚马逊指定正常任务类型兼容限流重试
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
+            dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        }
+        try {
+            dmpInoutTaskFeign.doInputTask(Collections.singletonList(dto));
+        }catch (Exception e){
+            if (e.getMessage().contains("任务不存在")){
+                throw new ServiceException("店铺授权异常，请检查店铺授权");
+            }
+            throw new ServiceException(e.getMessage());
+        }
+        return BatchResultDTO.success(platformSkuNo,platformSkuNo,"商品同步成功");
     }
 
     private void syncProductToWarehouse(List<ListingInfoEntity> entityList) {
