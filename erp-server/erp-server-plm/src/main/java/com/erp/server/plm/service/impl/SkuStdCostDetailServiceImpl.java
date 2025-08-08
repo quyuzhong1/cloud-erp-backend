@@ -1,0 +1,498 @@
+package com.erp.server.plm.service.impl;
+
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.model.plm.entity.SkuStdCostEntity;
+import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.enums.SkuStdCostTabEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
+import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.SkuStdCostDetailService;
+import com.erp.server.plm.service.SkuStdCostService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * sku标准成本明细表 服务实现类
+ * </p>
+ *
+ * @author Jim
+ * @since 2025-08-08
+ */
+@Slf4j
+@Service
+public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDetailMapper, SkuStdCostDetailEntity> implements SkuStdCostDetailService {
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+    @Autowired
+    private CommonService commonService;
+    @Resource
+    private SkuStdCostService skuStdCostService;
+
+
+    @Override
+    public List<SkuStdCostDetailDTO.ListDTO> changeList(BaseIdsDTO.IdsDTO dto) {
+        return Collections.emptyList();
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO addDTO) {
+        SkuStdCostDetailEntity SkuStdCostDetailEntity = new SkuStdCostDetailEntity();
+        BeanMapperUtils.copy(addDTO, SkuStdCostDetailEntity);
+
+        // 数据处理
+        handleData(SkuStdCostDetailEntity);
+
+        log.info("开始新增sku标准成本单");
+        boolean save = super.save(SkuStdCostDetailEntity);
+        if (!save) {
+            throw new ServiceException("sku标准成本单保存失败");
+        }
+        return BatchResultDTO.success(SkuStdCostDetailEntity.getId(), "");
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
+    private void handleData(SkuStdCostDetailEntity skuStdCostDetailEntity) {
+        // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(SkuStdCostDetailDTO.UpdateDTO addOrUpdateDTO) {
+        SkuStdCostDetailEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku标准成本单"));
+        // 待提交和审核不通过允许修改
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        SkuStdCostDetailEntity SkuStdCostDetailEntity = BeanMapperUtils.map(SkuStdCostDetailEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(SkuStdCostDetailEntity);
+        log.info("编辑 开始修改sku标准成本单数据，单号：【{}】", old.getId());
+        boolean save = super.updateById(SkuStdCostDetailEntity);
+        if (!save) {
+            throw new ServiceException("sku标准成本单保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public PagingVO<SkuStdCostDetailDTO.ListDTO> paging(PagingDTO<SkuStdCostDetailDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SkuStdCostDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<SkuStdCostDetailDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SkuStdCostDetailDTO.PagingParamDTO searchParam = new SkuStdCostDetailDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<SkuStdCostDetailDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        Map<String, Integer> approveStatutCountMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.TabListDTO::getTabFlag, SkuStdCostDetailDTO.TabListDTO::getCount));
+        // 获取状态列表
+        List<String> tabCodeList = SkuStdCostTabEnum.getCodeList();
+        // 查询每个sku最新
+        Long allNewCount = baseMapper.allNewCount(searchParam);
+
+        tabCodeList.forEach(tabCode -> {
+            //  全部=业务要求最新 ALL("all", "全部"),
+            if (SkuStdCostTabEnum.ALL.getCode().equals(tabCode)) {
+                // 计算合计数量
+                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.ALL.getCode(), SkuStdCostTabEnum.ALL.getName(), allNewCount.intValue()));
+                return;
+            }
+            // TO_BE_APPROVE("toBeApprove", "待我审核"),
+            if (SkuStdCostTabEnum.TO_BE_APPROVE.getCode().equals(tabCode)) {
+                //需要审核的业务ids
+                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
+                int waitApproveCount = 0;
+                if (CollectionUtils.isNotEmpty(businessIds)) {
+                    List<SkuStdCostDetailEntity> changeEntityList = lambdaQuery().in(SkuStdCostDetailEntity::getId, businessIds).list();
+                    changeEntityList = changeEntityList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+                    waitApproveCount = changeEntityList.size();
+                }
+                SkuStdCostDetailDTO.TabListDTO tabListDTO = new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.TO_BE_APPROVE.getCode(), SkuStdCostTabEnum.TO_BE_APPROVE.getName(), waitApproveCount);
+                list.add(tabListDTO);
+                return;
+            }
+            //  APPROVE("approve", "已审核"),
+            if (SkuStdCostTabEnum.APPROVE.getCode().equals(tabCode)) {
+                Integer count = approveStatutCountMap.getOrDefault(tabCode, 0);
+                // 计算合计数量
+                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.APPROVE.getCode(), SkuStdCostTabEnum.APPROVE.getName(), count));
+                return;
+            }
+            //  REJECT("reject", "不通过"),
+            if (SkuStdCostTabEnum.REJECT.getCode().equals(tabCode)) {
+                Integer count = approveStatutCountMap.getOrDefault(tabCode, 0);
+                // 计算合计数量
+                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.REJECT.getCode(), SkuStdCostTabEnum.REJECT.getName(), count));
+                return;
+            }
+            //  HISTORY("history", "历史价格")(所有)
+            if (SkuStdCostTabEnum.HISTORY.getCode().equals(tabCode)) {
+                // 计算合计数量
+                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.HISTORY.getCode(), SkuStdCostTabEnum.HISTORY.getName(), list.stream().mapToInt(SkuStdCostDetailDTO.TabListDTO::getCount).sum()));
+                return;
+            }
+        });
+        return list;
+    }
+
+    @Override
+    public void exportList(SkuStdCostDetailDTO.ExportDTO param, HttpServletResponse response) {
+        List<SkuStdCostDetailDTO.ListDTO> list = this.baseMapper.listExport(param);
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 数据处理
+        fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/skuStdCost.xlsx";
+        String name = "sku标准成本单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO submit(String id) {
+        SkuStdCostDetailEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到sku标准成本单数据");
+        }
+        validateSubmit(entity);
+        // 更新单据审核状态
+        log.info("提交 开始修改sku标准成本单状态数据，id：【{}】", id);
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+
+        // TODO 启动流程（如果需要的话）
+        log.info("提交 开始启动sku标准成本单流程，id=：【{}】", entity.getId());
+        startProcess(entity);
+
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
+    }
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAndSubmit(SkuStdCostDetailDTO.UpdateDTO dto) {
+        // 修改
+        this.update(dto);
+        // 提交
+        this.submit(dto.getId());
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+        }
+        SkuStdCostDetailEntity entity = getByIdOpt(dto.getId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        // 审核中的数据允许审核
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        // 调用流程审核
+        approveProcess(entity, dto);
+
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    /**
+     * 审核流程处理
+     *
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(SkuStdCostDetailEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
+        approveDTO.setBusinessKey(null);
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO disApprove(String id) {
+        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+
+        // 反审核条件判断
+        validateDisApprove(entity);
+        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+
+        // 更新审核信息
+        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private Boolean validateDisApprove(SkuStdCostDetailEntity entity) {
+        // 已审核支持反审核
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        // TODO 下游盘点计划单反审核
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO delete(String id) {
+        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        // 只有待提交数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        // TODO 删除明细数据（如果有明细数据的话）
+        // 删除主单数据
+        log.info("删除 开始删除sku标准成本单主单数据，id：【{}】", id);
+        super.removeById(id);
+        // 删除日志数据
+        return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DELETE);
+    }
+
+    /**
+     * 撤销
+     */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO cancelProcess(String id) {
+        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
+        // 只有审核中的单据允许撤销
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        // TODO 撤销流程
+        log.info("撤销 开始撤销流程，id：【{}】", id);
+
+        log.info("撤销 开始修改sku标准成本单状态，id：【{}】", id);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //操作日志
+        log.info("撤销 开始记录操作日志，id：【{}】", id);
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        revokeDTO.setBusinessKey(null);
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, SkuStdCostDetailEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
+        // todo 明细数据处理 上下游数据处理
+
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public SkuStdCostDetailDTO.ViewDTO view(String id) {
+        SkuStdCostDetailEntity SkuStdCostDetailEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
+        SkuStdCostDetailDTO.ViewDTO data = BeanMapperUtils.map(SkuStdCostDetailDTO.ViewDTO.class, SkuStdCostDetailEntity);
+        // 数据填充处理
+        fillOne(data);
+        // TODO 查询明细数据（如果有的话）
+        return data;
+    }
+
+    /**
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
+
+    public void startProcess(SkuStdCostDetailEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getId());
+        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        startDTO.setBusinessKey(null);
+        startDTO.setBusinessName(entity.getId());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
+    private void fillOne(SkuStdCostDetailDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+    }
+
+    /**
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
+    public void updateForApprove(String id, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        this.lambdaUpdate().eq(SkuStdCostDetailEntity::getId, id)
+                .set(SkuStdCostDetailEntity::getApproveUserId, userInfo.getUid())
+                .set(SkuStdCostDetailEntity::getApproveUserName, userInfo.getUserName())
+                .set(SkuStdCostDetailEntity::getApproveStatus, approveStatus)
+                .set(SkuStdCostDetailEntity::getApproveTime, LocalDateTime.now())
+                .update(new SkuStdCostDetailEntity());
+    }
+
+    /**
+     * 反审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForDisApprove(String id, String approveStatus) {
+        this.lambdaUpdate().eq(SkuStdCostDetailEntity::getId, id)
+                .set(SkuStdCostDetailEntity::getApproveUserId, "")
+                .set(SkuStdCostDetailEntity::getApproveUserName, "")
+                .set(SkuStdCostDetailEntity::getApproveStatus, approveStatus)
+                .set(SkuStdCostDetailEntity::getApproveTime, null)
+                .update(new SkuStdCostDetailEntity());
+    }
+
+    /**
+     * 更新审核状态
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(String id, String approveStatus) {
+        lambdaUpdate().eq(SkuStdCostDetailEntity::getId, id)
+                .set(SkuStdCostDetailEntity::getApproveStatus, approveStatus)
+                .update(new SkuStdCostDetailEntity());
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<SkuStdCostDetailDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 属性赋值
+        for (SkuStdCostDetailDTO.ListDTO data : list) {
+            // 审核状态
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            // 销售状态名称
+            data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+        }
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void validateSubmit(SkuStdCostDetailEntity entity) {
+        // 待提交或审核不通过并且未作废允许提交
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        return;
+    }
+
+    @Override
+    public boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return false;
+    }
+
+}

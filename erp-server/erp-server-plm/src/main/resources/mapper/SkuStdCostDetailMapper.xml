@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.SkuStdCostDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.SkuStdCostDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="effective_date" property="effectiveDate" />
+       <result column="expire_date" property="expireDate" />
+       <result column="std_cost_pirce" property="stdCostPirce" />
+       <result column="std_sale_price" property="stdSalePrice" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="remark" property="remark" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, effective_date, expire_date, std_cost_pirce, std_sale_price, bom_version, remark, approve_status, approve_user_id, approve_user_name, approve_time
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*) AS count
+        FROM sku_std_cost_detail
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+        sscd.id AS id,                                 -- 列表id
+        sscd.sku_id AS skuId,                          -- skuId
+        sscd.sku_no AS skuNo,                          -- sku编号
+        pd.name AS skuName,                             -- sku名称（此处主表无字段，可后续关联SKU基础信息表）
+        sscd.is_comb AS isComb,                        -- 是否组合装
+        ps.sale_state AS saleState,                    -- 销售状态（此处主表无字段，可后续关联销售状态表）
+        sscd.last_outstock_date AS lastOutstockDate,   -- 最新出库时间
+        sscd.create_time AS createTime,                -- 创建时间
+        sscd.create_user_name AS createUserName,       -- 创建人名称
+        sscd.update_time AS updateTime,                -- 更新时间
+        sscd.update_user_name AS updateUserName,       -- 更新人名称
+        sscd.approve_status AS approveStatus,          -- 审核状态
+        sscd.std_cost_price AS stdCostPrice,           -- 标准成本(不含税)
+        sscd.currency AS currency,                     -- 币别
+        sscd.effective_date AS effectiveDate,          -- 生效日期
+        sscd.expire_date AS expireDate,                -- 失效日期
+        sscd.approve_user_id AS approveUserId,         -- 审核人ID
+        sscd.approve_user_name AS approveUserName,     -- 审核人名称
+        sscd.approve_time AS approveTime               -- 审核时间
+        FROM
+        sku_std_cost_detail as sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on psscd.sku_id = ssc.sku_id;
+        WHERE ${params.sqlMap.default}
+        and sscd.is_deleted = false and ssc.is_deleted = false and pd.i.is_deleted = false and ps.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sscd.update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sku_std_cost where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+
+    </select>
+
+    <select id="allNewCount" resultType="java.lang.Long">
+        WITH detail_ranked AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY main_id
+                       ORDER BY effective_date DESC, update_time DESC
+                       ) AS rn
+            FROM sku_std_cost_detail
+            WHERE is_deleted = false
+        )
+        SELECT count(*)
+        FROM sku_std_cost s
+        LEFT JOIN detail_ranked d ON s.id = d.main_id AND d.rn = 1
+        WHERE s.is_deleted = FALSE and d.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+    </select>
+
+
+</mapper>
