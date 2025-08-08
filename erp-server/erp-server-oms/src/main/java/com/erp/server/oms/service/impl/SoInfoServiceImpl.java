@@ -3694,7 +3694,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             String finalSalesOrgId1 = salesOrgId;
             KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
-                    k.getOrgId().equals(finalSalesOrgId1) &&
+                    k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
                     xsyCode.equals(k.getTypeCode())
             ).findFirst().orElse(null);
             if (Objects.isNull(businessOperator)) {
