@@ -31,6 +31,7 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
+import com.erp.server.dmp.service.DmpSoOutstockDetailService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     private DmpOutputCreateFactory dmpOutputCreateFactory;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private DmpSoOutstockDetailService dmpSoOutstockDetailService;
 
     @Override
     protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
@@ -429,8 +432,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                         shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
                     }
                 }
-
-                shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                
+                Map<String, Object> wdtSoOutstockMap = cacheMap.get("wdtSoOutstock");
+                if(wdtSoOutstockMap.containsKey(dmpSoDetailEntity.getThirdDetailId())) {
+                	shudiyunB2cOrderDTO.setGoods_status("已发货");
+                }else {
+                	shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
+                }
 
                 //取消金额、数量
                 if (dmpSoDetailEntity.getRefundNum().compareTo(BigDecimal.ZERO) > 0) {
@@ -747,6 +755,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
 
         Map<String, String> map = new HashMap<>();
         Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+        List<String> wdtThirdCodeList = DmpSoInfoEntityMap.values().stream()
+        		.filter(d -> PlatformDictEnum.WDT.getCode().equalsIgnoreCase(d.getSourceSystem()))
+        		.map(DmpSoInfoEntity::getThirdCode)
+        		.collect(Collectors.toList());
+        Map<String, Object> wdtSoOutstockMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(wdtThirdCodeList)) {
+        	wdtSoOutstockMap = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, wdtThirdCodeList)
+        			.select(DmpSoOutstockDetailEntity::getSrcOrderDetailId).list()
+        			.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
+        }
+        cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
         for(String changId : changeIds) {
             Map<String, ShudiyunB2cOrderDTO> result = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId) , cacheMap);
             if(!result.isEmpty()) {
