@@ -328,6 +328,11 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
         
         /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
