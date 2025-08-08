@@ -210,5 +210,14 @@ public class ThirdNoticePushRecordDTO implements Serializable {
 
         private List<String> userIds;
     }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendThirdNoticeParamsDTO  {
+        private  Map<String, Object> jsonMap;
+        private List<String> diffFields;
+    }
 
 }

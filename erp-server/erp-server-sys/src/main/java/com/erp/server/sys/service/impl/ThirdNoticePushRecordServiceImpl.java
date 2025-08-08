@@ -894,6 +894,15 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     if(ThirdNoticePushRecordNoticeNodeEnum.QC_BACK_FILL_PACKAGING.getCode().equals(feildValue)){
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
+                    //释放SKU虚拟仓库存
+                    if(ThirdNoticePushRecordNoticeNodeEnum.UNLOCK_VIRTUAL_INVENTORY.getCode().equals(feildValue)){
+                        //判断是否有释放SKU虚拟仓库存
+                        Object o = variablesMap.getOrDefault(ThirdNoticePushRecordNoticeNodeEnum.UNLOCK_VIRTUAL_INVENTORY.getCode(),null);
+                        if(Objects.isNull(o) || Boolean.FALSE.equals(o)){
+                            return Boolean.FALSE;
+                        }
+                        variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
+                    }
                 }
             }
 
@@ -1425,6 +1434,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
         return resultList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
     }
+
+
+
 
 
 }
