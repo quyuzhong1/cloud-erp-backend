@@ -1568,6 +1568,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cLogisticsEntity soB2cLogisticsEntity = generateDeliveryAndOutStockDTO.getSoB2cLogisticsEntity();
         List<SoB2cDetailEntity> detailList = generateDeliveryAndOutStockDTO.getDetailEntityList();
 
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+
         SoB2cDeliveryDTO.AddDTO soB2cDelivery = new SoB2cDeliveryDTO.AddDTO();
         soB2cDelivery.setSoCode(soB2cEntity.getCode());
         soB2cDelivery.setShopId(soB2cEntity.getShopId());
@@ -1587,8 +1589,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
             addDTO.setSkuId(detailItem.getSkuId());
             addDTO.setSkuNo(detailItem.getSkuNo());
-            addDTO.setWarehouseId(detailItem.getWarehouseId());
-            addDTO.setWarehouseName(detailItem.getWarehouseName());
+            addDTO.setWarehouseId(warehouseEntity.getId());
+            addDTO.setWarehouseName(warehouseEntity.getName());
             addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
             addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
             addDTO.setSourceDetailId(detailItem.getId());
@@ -1621,6 +1623,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 addDTO.setActualQty(soB2cDetailEntity.getQty());
                 addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
                 addDTO.setRemark(dto.getActualDeliveryCode());
+                addDTO.setWarehouseId(warehouseEntity.getId());
+                addDTO.setWarehouseName(warehouseEntity.getName());
                 wantDetailList.add(addDTO);
             }
             generateB2cDTO.setDetailList(wantDetailList);

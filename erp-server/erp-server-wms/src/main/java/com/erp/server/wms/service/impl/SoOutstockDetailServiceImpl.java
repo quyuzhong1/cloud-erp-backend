@@ -924,14 +924,15 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
             if(costMap.containsKey(bomChildrenSkuDTO.getParentSkuId())){
                 costMap.put(bomChildrenSkuDTO.getParentSkuId(),
-                        costMap.get(bomChildrenSkuDTO.getParentSkuId()).add(skuVO.getActualTaxCost()));
+                        costMap.get(bomChildrenSkuDTO.getParentSkuId()).add(skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()))));
             }else{
-                costMap.put(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost());
+                costMap.put(bomChildrenSkuDTO.getParentSkuId(), skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity())));
             }
         }
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
+            BigDecimal price = BigDecimal.ZERO;
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 //平台仓订单没有明细通过sku关联
                 soDetailEntity = soDetailList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
@@ -950,21 +951,23 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         //有其他子件 将单价分摊
                         SkuVO skuVO = skuVOList.stream().filter(v -> v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
                         if(Objects.isNull(skuVO.getActualTaxCost()) ||skuVO.getActualTaxCost().compareTo(BigDecimal.ZERO)==0){
-                            soDetailEntity.setPrice(BigDecimal.ZERO);
+                            price = BigDecimal.ZERO;
                         }else{
                             BigDecimal totalCost = costMap.get(bomChildrenSkuDTO.getParentSkuId());
-                            BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(detailEntity.getActualQty()));
-                            soDetailEntity.setPrice(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP));
+                            BigDecimal currentCost = skuVO.getActualTaxCost().multiply(new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                            price = soDetailEntity.getPrice().multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP)).divide(new BigDecimal(bomChildrenSkuDTO.getQuantity()), 4, RoundingMode.HALF_UP);
                         }
                     }
+                }else{
+                    price = soDetailEntity.getPrice();
                 }
+            }else{
+                price = soDetailEntity.getPrice();
             }
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
                 detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
             }
-
-            BigDecimal price=soDetailEntity.getPrice();
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();

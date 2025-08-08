@@ -199,7 +199,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 soB2cFeign.deleteError(deleteDTO);
             }
 
-            platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto);
+            platformOutboundConsumerService.generateSoOut(mainEntity, thirdWarehouseDeliveryEntity, dto,"");
         }
 
         if (SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode().equals(dto.getOrderStatus())) {
@@ -246,14 +246,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     @DistributeLocker(keyName = "dto.referenceNo")
-    public void generateSoOut(SoB2cEntity mainEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, PlatformOutboundDTO dto) {
+    public void generateSoOut(SoB2cEntity mainEntity, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, PlatformOutboundDTO dto,String warehouseId) {
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(mainEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
         if (exist) {
             log.warn("销售订单{} 已生成销售出库单, 忽略生成", mainEntity.getCode() );
             return;
         }
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoByCode(mainEntity.getCode());
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(mainEntity.getId(),warehouseId);
         //查询三方仓发货明细，重新赋值明细数据
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
             List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryDetailService.listByMainId(thirdWarehouseDeliveryEntity.getId());
@@ -273,6 +273,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     addDTO.setPlanQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
                     addDTO.setActualQty(thirdWarehouseDeliveryDetailEntity.getDeliveryQty());
                     addDTO.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                    if(StringUtils.isNotBlank(warehouseId)){
+                        addDTO.setWarehouseId(warehouseId);
+                    }
                     if(StringUtils.isNotBlank(thirdWarehouseDeliveryEntity.getActualDeliveryCode())){
                         addDTO.setRemark(thirdWarehouseDeliveryEntity.getActualDeliveryCode());
                     }else{

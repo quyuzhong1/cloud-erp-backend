@@ -15,7 +15,8 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.*;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
@@ -26,8 +27,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
@@ -193,7 +192,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
         platformOutboundDTO.setTrackNo(deliveryWithNotOutboundDTO.getTrackNo());
         thirdWarehouseDeliveryEntity.setActualDeliveryCode(deliveryWithNotOutboundDTO.getActualDeliveryCode());
-        platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO);
+        platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO,deliveryWithNotOutboundDTO.getWarehouseId());
         entity = soB2cFeign.getById(entity.getId());
         if(entity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
             throw new ServiceException("生成销售出库单失败,请查看订单异常");
@@ -332,30 +331,20 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
         platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
-        platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO);
+        platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"");
         return BatchResultDTO.success();
     }
 
     @Override
-    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(String soId) {
-        SoB2cEntity entity = soB2cFeign.getById(soId);
-        //已发货
-        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-        String billStatus = entity.getBillStatus();
-
-        //已存在也不生成
-        ThirdWarehouseDeliveryEntity exist = this.getLatestBySoId(entity.getId());
-        if (ObjectUtil.isNotEmpty(exist)) {
-            log.warn("销售订单{}已存在三方仓发货单,不再重复生成", entity.getCode());
-            return exist;
-        }
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailDTO.AddDTO> detailList) {
+        SoB2cEntity entity = soB2cFeign.getById(soOutstockEntity.getSoId());
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
             throw new ServiceException("销售订单明细不存在");
         }
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
-        addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
-        addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        addThirdWarehouseDeliveryEntity.setSoCode(soOutstockEntity.getSoCode());
+        addThirdWarehouseDeliveryEntity.setSoId(soOutstockEntity.getSoId());
         addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
@@ -363,15 +352,16 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+        for (SoOutstockDetailDTO.AddDTO addDTO : detailList) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-            thirdWarehouseDeliveryDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-            thirdWarehouseDeliveryDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
-            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(soB2cDetailEntity.getQty());
-            thirdWarehouseDeliveryDetailEntity.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(soB2cDetailEntity.getSkuId());
-            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(soB2cDetailEntity.getSkuNo());
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+                    .filter(v -> v.getSkuId().equals(addDTO.getSkuId()) && v.getWarehouseId().equals(addDTO.getWarehouseId()))
+                    .findFirst().orElse(new SoB2cDetailEntity());
             thirdWarehouseDeliveryDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
