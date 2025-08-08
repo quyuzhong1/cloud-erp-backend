@@ -152,7 +152,10 @@ public enum ModuleTypeEnum {
     CONTRACT_INFO("128", "合同管理"),
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
     LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
+    CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
+    DICT_HS_CODE("131", "出口申报要素"),
 
+    THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
 
 
     ;

@@ -57,6 +57,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","",""),
+    IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","",""),
+    EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出","",""),
 
 
     //oms
@@ -200,6 +202,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT("EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT", "虚拟仓库设置导出","",""),
     EXPORT_WMS_QC_NOTICE_REPORT("EXPORT_WMS_QC_NOTICE_REPORT", "质检通知单导出","",""),
     EXPORT_WMS_VIRTUAL_ADJUST_REPORT("EXPORT_WMS_VIRTUAL_ADJUST_REPORT", "虚拟库存调整导出","",""),
+    EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT("EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT", "三方仓发货单导出","",""),
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","",""),
@@ -233,6 +236,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_LOGISTICS_LARGE("EXPORT_TMS_LOGISTICS_LARGE", "物流大表导出","",""),
     EXPORT_TMS_FIRST_MILE_CHANGE_RECORD("EXPORT_TMS_FIRST_MILE_CHANGE_RECORD", "头程调整记录导出","",""),
     EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "物流-第三方渠道关系表导出","",""),
+    EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出"),
+    EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出"),
+
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入自发货费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost"),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost"),
     //mrp

@@ -77,4 +77,8 @@ public interface ExportTmsFeign {
     PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportLogisticsThirdChannelRef")
     PagingVO<LogisticsThirdChannelRefDTO.PagingVO> exportLogisticsThirdChannelRef(@RequestBody PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDictHsCode")
+    PagingVO<DictHsCodeDTO.ListDTO> exportDictHsCode(@RequestBody  PagingDTO<DictHsCodeDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsCfgSailing")
+    PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto);
 }

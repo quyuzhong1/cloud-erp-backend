@@ -171,4 +171,6 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     Boolean exportErrorPools();
 
     PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+
+    List<SoB2cErrorEntity> listSoB2cErrorByMainIds(List<String> errorSoIds);
 }

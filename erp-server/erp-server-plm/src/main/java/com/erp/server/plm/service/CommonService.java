@@ -1,8 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.common.business.dto.FindUserDTO;
+import com.erp.model.plm.dto.ZipTaskResultDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -38,4 +41,6 @@ public interface CommonService {
      * @return List<String>
      */
     List<String> uploadImg(MultipartFile[] multipartFileList);
+
+    MultipartFile compressImage(MultipartFile multipartFile, Long size);
 }

@@ -102,6 +102,8 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private ProductCustomsService productCustomsService;
+    @Resource
+    private ProductDetailImagesService productDetailImagesService;
 
     /**
      * 临时接口-添加产品国外海关编码
@@ -927,6 +929,22 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author jack
+     * @date 2025-07-11
+     */
+    @PostMapping("/search/checkParams/skuInfo")
+    public ApiResult<List<SkuVO>> searchCheckParamsSkuInfo(@RequestBody ProductDetailDTO.SearchDTO dto) {
+        if (Objects.isNull(dto) || StringUtils.isEmpty(dto.getSearchKeyword())){
+            return success();
+        }
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
+        return success(skuList);
+    }
+
+    /**
      * 搜索父级sku
      *
      * @param searchKeyword
@@ -1372,4 +1390,39 @@ public class ProductDetailController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     *  上传SKU图片（主页）
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping("/uploadProductImage")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:uploadProductImage",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "skuId"
+    )
+    public ApiResult uploadProductImage(@RequestBody @Validated ProductDetailDTO.ProductImagesDTO dto) {
+        Boolean flag = productDetailImagesService.uploadProductImage(dto);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     *  上传zip包 图片
+     * @Author jack
+     * @Date 2025-07-25
+     **/
+    @PostMapping(value = "/importZip")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:importZip",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<Object> importZip(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
+        Boolean flag = productDetailImagesService.importZip(dto);
+        return flag == true ? success() : failure();
+    }
+
 }

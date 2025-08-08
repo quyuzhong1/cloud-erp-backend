@@ -2343,7 +2343,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     //则根据拣货策略找到的SKU的缺货仓位，取第一个仓位显示，未找到仓位时留空
                     CfgRulePickingDTO.CfgRulePickingInventoryDTO cfgRulePickingInventoryDTO = cfgRulePickingInventoryDTOList.stream().filter(v -> v.getWarehouseId().equals(warehouseId) && v.getSkuNo().equals(skuNo)).findFirst().orElse(null);
                     if(null != cfgRulePickingInventoryDTO){
-                        inWarehouseLocation = cfgRulePickingInventoryDTO.getWarehouseAreaId();
+                        inWarehouseLocation = cfgRulePickingInventoryDTO.getWarehouseLocation();
                     }
                 }
                 if(null != inWarehouseLocation){

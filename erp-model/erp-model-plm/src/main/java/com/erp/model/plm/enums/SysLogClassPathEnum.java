@@ -14,7 +14,10 @@ public enum SysLogClassPathEnum {
     PRODUCTINFOENTITY(1, "SPU", String.valueOf(ProductInfoEntity.class)),
     PROJECTTASKENTITY(2, "任务列表", String.valueOf(ProjectTaskEntity.class)),
     BOM_SKU_ENTITY(2, "bomSku", String.valueOf(BomSkuEntity.class)),
-    MOULD_DETAIL_ENTITY(4, "模具管理", String.valueOf(MouldDetailEntity.class));
+    MOULD_DETAIL_ENTITY(4, "模具管理", String.valueOf(MouldDetailEntity.class)),
+    PRODUCTCUSTOMSENTITY(5, "目的国清关", String.valueOf(ProductCustomsEntity.class)),
+    PRODUCTLOGISTICSENTITY(6, "物流产品", String.valueOf(ProductLogisticsEntity.class));
+
 
 
     private Integer code;

@@ -169,6 +169,34 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         return viewList;
     }
 
+    @Override
+    public List<RuleConditionDTO.ViewDTO> listByRuleIds(List<String> ruleId, String type) {
+        List<RuleConditionEntity> ruleConditionList = this.listDbRuleIds(ruleId);
+        List<RuleConditionDTO.ViewDTO> viewList = BeanMapper.copyList(ruleConditionList, RuleConditionDTO.ViewDTO.class);
+        String logicType = DictBasicTypeEnum.COMPARE.getType();
+        List<DictRuleConditionEntity> dictRuleConditionList = dictRuleConditionService.listDbByTypes(Arrays.asList(type, logicType));
+
+        List<BaseDropDownDTO.CommonDTO> fieldList = dictRuleConditionService.listRuleField();
+        for (RuleConditionDTO.ViewDTO item : viewList) {
+            String field = item.getField();
+            String fieldName = fieldList.stream().filter(d -> d.getCode().equals(field)).findFirst().
+                    map(BaseDropDownDTO.CommonDTO::getValue).orElse("");
+            item.setFieldName(fieldName);
+            String compare = item.getCompare();
+            String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(compare)).findFirst().
+                    map(DictRuleConditionEntity::getValue).orElse("");
+            item.setCompareName(compareName);
+            String logic = item.getLogic();
+            String logicName = "";
+            if (StringUtils.isNotBlank(logic)) {
+                logicName = DictBasicTypeEnum.getName(logic);
+            }
+            item.setLogicName(logicName);
+
+        }
+        return viewList;
+    }
+
 
     /**
      * 修改规则条件
@@ -256,6 +284,13 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             item.setValueType(valueType);
         }
         return list;
+    }
+
+    @Override
+    public void removeByRuleId(String ruleId) {
+        if (CharSequenceUtil.isNotBlank(ruleId)) {
+            this.lambdaUpdate().eq(RuleConditionEntity::getRuleId, ruleId).remove();
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionUseTypeEnum;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.erp.server.workflow.service.WorkMenuService;
@@ -67,7 +68,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             queryWrapper.eq(CfgQueryOptionEntity::getFieldBelongsType, fieldBelongsType);
         }
         queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
-        queryWrapper.eq(CfgQueryOptionEntity::getUseType, useType);
+        queryWrapper.eq(CfgQueryOptionEntity::getUseType, CfgQueryOptionUseTypeEnum.CFG_APPROVE_SYNC.getCode());
         queryWrapper.eq(CfgQueryOptionEntity::getExtendType,"");//扩展字段
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
@@ -81,8 +82,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         });
         cfgQueryOptionEntities.addAll(common);
         //移除包含id字段
+        List<String> excludeFields = Arrays.asList("id", "mainId");
         cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
-                .filter(e -> !e.getConditionField().contains("id") && !e.getConditionField().contains("Id"))
+                .filter(e -> !excludeFields.contains(e.getConditionField()))
                 .collect(Collectors.toList());
         return BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.cfgApproveSyncDropDownDTO.class);
     }

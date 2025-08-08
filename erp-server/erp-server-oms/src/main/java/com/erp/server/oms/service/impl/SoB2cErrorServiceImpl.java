@@ -45,6 +45,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -138,6 +139,8 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public String generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson,String code) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
@@ -505,6 +508,18 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         });
 
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<SoB2cErrorEntity> listSoB2cErrorByMainIds(List<String> errorSoIds) {
+        if (CollectionUtils.isEmpty(errorSoIds)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cErrorEntity> soB2cErrorEntities = this.lambdaQuery()
+                .in(SoB2cErrorEntity::getMainId, errorSoIds)
+                .orderByDesc(SoB2cErrorEntity::getCreateTime)
+                .list();
+        return soB2cErrorEntities;
     }
 
     /**

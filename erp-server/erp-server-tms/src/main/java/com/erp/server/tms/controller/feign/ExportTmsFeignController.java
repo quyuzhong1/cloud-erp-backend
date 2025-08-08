@@ -79,6 +79,12 @@ public class ExportTmsFeignController {
     @Resource
     private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
+    @Resource
+    private DictHsCodeService dictHsCodeService;
+
+    @Resource
+    private TmsCfgSailingService tmsCfgSailingService;
+
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
@@ -389,5 +395,22 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = LogisticsThirdChannelRefQueryHandler.class)
     public PagingVO<LogisticsThirdChannelRefDTO.PagingVO> exportLogisticsThirdChannelRef(@RequestBody PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto){
         return logisticsThirdChannelRefService.paging(dto);
+    }
+
+    /**
+     * 出口申报要素导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportDictHsCode")
+    @WebAdvanceQuery
+    public PagingVO<DictHsCodeDTO.ListDTO> exportDictHsCode(@RequestBody  PagingDTO<DictHsCodeDTO.PagingParamDTO> dto){
+        return dictHsCodeService.paging(dto);
+    }
+
+    @PostMapping("/exportTmsCfgSailing")
+    @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
+    PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto){
+        return tmsCfgSailingService.paging(dto);
     }
 }

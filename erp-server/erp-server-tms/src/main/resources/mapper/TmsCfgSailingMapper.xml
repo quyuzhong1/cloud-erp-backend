@@ -40,7 +40,8 @@
         start_date as startDate,
         start_time as startTime,
         end_date as endDate,
-        end_time as endTime
+        end_time as endTime,
+        effective_date as effectiveDate
     </sql>
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.tms.dto.TmsCfgSailingDTO$ListDTO">

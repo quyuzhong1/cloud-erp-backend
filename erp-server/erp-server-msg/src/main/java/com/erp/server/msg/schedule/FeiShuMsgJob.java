@@ -42,8 +42,6 @@ import java.util.*;
 @EnableScheduling
 public class FeiShuMsgJob {
     @Resource
-    private MongoTemplate mongoTemplate;
-    @Resource
     private MsgContext msgContext;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -68,10 +66,14 @@ public class FeiShuMsgJob {
             statusList.add(SyncStatusEnum.IN_SYNC.getCode());
             statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
         }
-
-
         //获取汇总消息
-        List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
+        List<DmpTaskMsgDTO> warnTaskReport = null;
+        try {
+            warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
+        }catch (Exception e){
+            log.error("飞书预警消息汇总报告:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollUtil.isNotEmpty(warnTaskReport)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
@@ -116,7 +118,13 @@ public class FeiShuMsgJob {
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         //获取汇总消息
-        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = null;
+        try {
+            warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        }catch (Exception e){
+            log.error("飞书预警消息渠道汇总报告:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollectionUtil.isNotEmpty(warnReportByChannel)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
@@ -145,7 +153,13 @@ public class FeiShuMsgJob {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("{}:请求参数：{}",LocalDateTime.now(), jobParam);
         List<String> typeList = CharSequenceUtil.isNotBlank(jobParam) ? Arrays.asList(jobParam.split(",")) : Collections.emptyList();
-        List<SoB2cErrorDTO.TypeCountDTO> list = soB2cFeign.getB2CErrorReport(typeList);
+        List<SoB2cErrorDTO.TypeCountDTO> list = null;
+        try {
+            list = soB2cFeign.getB2CErrorReport(typeList);
+        }catch (Exception e){
+            log.error("B2C销售订单异常订单汇总提醒:error", e);
+            XxlJobHelper.log(e);
+        }
         if (CollUtil.isNotEmpty(list)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");

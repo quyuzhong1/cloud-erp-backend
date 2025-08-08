@@ -641,6 +641,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        //已下推的要货申请， 已审核的要货申请，sku数量超过或等于未下推计划数量就不展示
+//        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
+//        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
