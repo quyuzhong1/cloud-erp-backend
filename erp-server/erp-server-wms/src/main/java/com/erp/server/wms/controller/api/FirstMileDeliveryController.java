@@ -699,6 +699,7 @@ public class FirstMileDeliveryController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/retryOutstock")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量重新出库")
     public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

@@ -239,6 +239,21 @@ public class SoInfoDTO implements Serializable {
         private String skuNo;
 
         /**
+         * SPU ID
+         */
+        private String spuId;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * SPU名称
+         */
+        private String spuName;
+
+        /**
          * 币种
          */
         private String currency;

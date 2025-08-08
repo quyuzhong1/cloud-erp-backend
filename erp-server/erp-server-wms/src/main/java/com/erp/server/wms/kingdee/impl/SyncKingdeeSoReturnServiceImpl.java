@@ -372,12 +372,17 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //退货数量
             map.put("returnQty", detailEntity.getRealQty());
             map.put("salesQty", soDetailEntity.getQty());
-            //单价
-            map.put("price", soDetailEntity.getPrice());
-            //含税单价
-            BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), multiplyTax);
+            //单价 = 退货金额（本位币）/ 退货数量
+            Integer realQty = detailEntity.getRealQty();
+            if(Objects.isNull(realQty) || realQty <= 0){
+                realQty = 1;
+            }
+            BigDecimal returnAmountLocalCurrency = detailEntity.getReturnAmountLocalCurrency();
+            BigDecimal price = MathUtil.divide(returnAmountLocalCurrency, BigDecimal.valueOf(realQty));
+            map.put("price", price);
+            //含税单价 = 含税退货金额（本位币）/ 退货数量
+            BigDecimal taxReturnAmountLocalCurrency = detailEntity.getTaxReturnAmountLocalCurrency();
+            BigDecimal taxPrice = MathUtil.divide(taxReturnAmountLocalCurrency, BigDecimal.valueOf(realQty));
             //含税单价
             map.put("taxPrice", taxPrice);
             //是否赠品

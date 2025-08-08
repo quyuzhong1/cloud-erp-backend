@@ -6,7 +6,10 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
@@ -18,7 +21,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -486,6 +488,18 @@ public class SkuMappingController extends BaseController {
     public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         skuMappingService.syncPlatformProduct(dto.getIds());
         return success();
+    }
+
+    /**
+     * 单个同步商品
+     * @author will
+     * @date 2025/8/7 16:29
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/syncPlatformProductByOne")
+    public ApiResult<List<BatchResultDTO>> syncPlatformProductByOne(@RequestBody @Validated SkuMappingDTO.SyncPlatformProductDTO dto){
+        return success(skuMappingService.syncPlatformProductByOne(dto));
     }
 
     /**

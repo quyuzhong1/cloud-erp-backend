@@ -1,10 +1,14 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -20,6 +24,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
@@ -34,6 +41,8 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeNodeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -50,6 +59,7 @@ import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.constant.OmsConstant;
@@ -64,10 +74,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -142,6 +155,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     private RedisUtil redisUtil;
     @Resource
     private SkuMappingService skuMappingService;
+
+    @Resource
+    private MQProducerService mqProducerService;
+
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -980,6 +997,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
             item.setProductName(skuName);
             item.setUnit(unit);
+            
+            // 设置SPU信息
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuVO != null) {
+                item.setSpuId(skuVO.getProductId());
+                item.setSpuNo(skuVO.getSpuNo());
+                item.setSpuName(skuVO.getSpuName());
+            }
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -1721,7 +1746,32 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //更新库存锁定数量
         oldList.stream().forEach(obj -> obj.setFrozenQty(MathUtil.ZERO));
-        this.updateBatchById(oldList);
+        boolean save = this.updateBatchById(oldList);
+        //更新成功则发送一个mq 消息
+        if(save){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    // 使用Hutool转换
+                    Map<String, Object> before = BeanUtil.beanToMap(soInfoEntity);
+                    Map<String, Object> after = new HashMap<>(before);
+                    after.put("table", "so_info");
+                    after.put("P_TAG_IUD", "U");
+                    after.put("db", "oms");
+                    after.put(ThirdNoticePushRecordNoticeNodeEnum.UNLOCK_VIRTUAL_INVENTORY.getCode(), Boolean.TRUE);
+
+                    List<Map<String, Map<String, Object>>> list = new ArrayList<>();
+                    Map<String, Map<String, Object>> map = new HashMap<>();
+                    map.put("before", before);
+                    map.put("after", after);
+                    list.add(map);
+
+                    // 转换为JSON字符串
+                    String jsonStr = JSONUtil.toJsonStr(list);
+                    mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, soInfoEntity.getId(), 0);
+                }
+            });
+        }
         return new BatchResultDTO(soInfoEntity.getId(), CharSequenceUtil.format("【{}】",soInfoEntity.getCode()),"释放库存成功",Boolean.TRUE);
     }
 
@@ -1881,7 +1931,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             
             //B2B销售订单明细行冻结库存检查 - 修改数量时不允许小于冻结数量
             if (CharSequenceUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
-                if (soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+                if (soDetailEntity.getFrozenQty() < updateDTO.getQty()) {
                     throw new ServiceException( CharSequenceUtil.format("SKU【{}】发货数量不允许小于冻结数量【{}】，如需修改请联系PMC释放库存后操作",soDetailEntity.getSkuNo(), soDetailEntity.getFrozenQty()));
                 }
             }

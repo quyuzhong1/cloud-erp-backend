@@ -43,6 +43,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         if("sb2cd.virtual_warehouse_id".equals(field)){
             return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
+        if("deliveryCode".equals(field)){
+            return "( twd.code "+compareCodeSplicingValueSql+" OR sbd.code "+compareCodeSplicingValueSql+" ) ";
+        }
         //标签类型
         if("lable".equals(field)){
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
