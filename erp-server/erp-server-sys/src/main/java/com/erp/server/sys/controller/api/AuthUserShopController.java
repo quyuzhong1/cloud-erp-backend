@@ -87,7 +87,7 @@ public class AuthUserShopController extends BaseController {
      * @return ApiResult<List<AuthUserShopDTO.ShopAuthListDTO>>
      */
     @PostMapping("/listAuthShop")
-    public ApiResult<List<AuthUserShopDTO.ShopAuthListDTO>> listAuthShop(AuthUserShopDTO.ShopAuthParamDTO paramDTO){
+    public ApiResult<List<AuthUserShopDTO.ShopAuthListDTO>> listAuthShop(@RequestBody @Validated AuthUserShopDTO.ShopAuthParamDTO paramDTO){
         return success(authUserShopService.listAuthShop(paramDTO));
     }
 }

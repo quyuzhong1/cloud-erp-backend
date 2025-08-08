@@ -25,6 +25,8 @@ public enum BusinessTypeEnum implements EnumMessage {
     // TODO 补充来源类型
     REFUND("refund","退款单", null),
     PRODUCT("product","商品", SourceTypeEnum.LISTING_INFO),
+    PRODUCT_LISTING("product_listing","商品列表", SourceTypeEnum.LISTING_INFO),
+
     GLOBAL_PRODUCT("global_product","全球商品", SourceTypeEnum.LISTING_INFO),
     // TODO 补充来源类型
     RETURN("return","退货单", null),

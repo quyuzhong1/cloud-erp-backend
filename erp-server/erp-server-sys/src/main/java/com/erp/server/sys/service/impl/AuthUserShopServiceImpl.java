@@ -334,7 +334,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             return Collections.emptyList();
         }
         long authCount = authShopList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter(obj -> obj.contains(ShopAuthTypeEnum.ENUM_ALL.getCode())).count();
-        if (authCount > 1) {
+        if (authCount > 0) {
             return omsShopList.stream().map(obj -> new AuthUserShopDTO.ShopAuthListDTO(obj.getDictPlatform(), obj.getId(), obj.getName())).collect(Collectors.toList());
         }
         List<String> shopIdList = authShopList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
