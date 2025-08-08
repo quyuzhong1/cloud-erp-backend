@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -25,6 +26,7 @@ import java.util.Map;
  * @since 2023-05-10
  */
 @Mapper
+@DS("postgres")
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
     IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params);

@@ -295,6 +295,8 @@
             sum(sod.all_amount_local_currency) as totalTaxAmount
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id
+        LEFT JOIN so_info si ON so.so_id = si.id
+        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
         WHERE
         ${params.sqlMap.default}
            and so.is_deleted = FALSE AND sod.is_deleted = FALSE
@@ -441,7 +443,7 @@
 		<include refid="SoDataCompareByCondition"/>
     </select>
     <select id="listApproveBySourceDetailIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
-        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join public.so_outstock so on
+        select sod.sku_id,sod.sku_no,sod.actual_qty from so_outstock_detail as sod inner join so_outstock so on
         so.id = sod.main_id
         where
             so.approve_status = 'approve'
