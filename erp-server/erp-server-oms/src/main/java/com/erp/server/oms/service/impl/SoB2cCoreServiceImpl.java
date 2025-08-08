@@ -32,6 +32,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -436,17 +437,42 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     }
 
     @Override
-    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity) {
+    public void generateDeliveryAndOutStock(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto,SoB2cLogisticsEntity soB2cLogisticsEntity,SoB2cReceiverEntity soB2cReceiverEntity) {
+        //虚拟仓库查询
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(entity.getDictPlatform());
+        platformDTO.setRelationId(entity.getShopId());
+        platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+        platformDTO.setPartitionId(soB2cReceiverEntity.getPartitionId());
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        if(CollectionUtils.isNotEmpty(virtualWarehouseList)){
+            String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
+            for (SoB2cDetailEntity detailEntity : detailEntityList) {
+                detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            }
+        }
+        //先更新订单信息
+        entity.setSignOrderError("");
+        soB2cService.updateById(entity);
+        soB2cDetailService.updateBatchById(detailEntityList);
+
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
-        List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
-        Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
-        if(isThirdWarehouse){
-            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
-            thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
-        }else{
-            GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
-            soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+        try {
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+            Boolean isThirdWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
+            if(isThirdWarehouse){
+                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,overseasWarehouseList.get(0),soB2cLogisticsEntity);
+                thirdWarehouseDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+            }else{
+                GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO = new GenerateDeliveryAndOutStockDTO(entity,detailEntityList,dto,new OverseasProviderWarehouseDTO.ViewDTO(),soB2cLogisticsEntity);
+                soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
+            }
+        }catch (Exception e){
+            entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            entity.setIsNotOutbound(false);
+            soB2cService.updateById(entity);
+            throw new ServiceException(e.getMessage());
         }
     }
 }
