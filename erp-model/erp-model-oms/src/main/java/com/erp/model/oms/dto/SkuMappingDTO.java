@@ -1346,6 +1346,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MappingSkuViewDTO {
+        /**
+         * listingId
+         */
+        private String listingId;
 
         private String id;
 

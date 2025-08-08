@@ -12,31 +12,18 @@
 
 package com.erp.sdk.oms.amz.spapi.model.listingsitems;
 
-import java.util.Objects;
-import java.util.Arrays;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.FulfillmentAvailability;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemAttributes;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemIssues;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemOffers;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemProcurement;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemProductTypes;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemRelationships;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ItemSummaries;
+import lombok.Data;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 /**
  * A listings item.
  */
 
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-07T17:52:05.725887800+08:00[Asia/Shanghai]")
-
+@Data
 public class Item {
   @SerializedName("sku")
   private String sku = null;

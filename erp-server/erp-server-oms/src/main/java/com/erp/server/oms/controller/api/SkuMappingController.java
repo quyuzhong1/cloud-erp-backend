@@ -493,18 +493,7 @@ public class SkuMappingController extends BaseController {
      */
     @PostMapping("/syncPlatformProductByOne")
     public ApiResult<List<BatchResultDTO>> syncPlatformProductByOne(@RequestBody @Validated SkuMappingDTO.SyncPlatformProductDTO dto){
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getPlatformSkuNoList().size());
-        for (String platformSkuNo : dto.getPlatformSkuNoList()) {
-            BatchResultDTO resultDTO;
-            try {
-                resultDTO = skuMappingService.syncPlatformProductByOne(dto.getPlatform(),dto.getShopId(),platformSkuNo);
-            }catch (Exception e){
-                log.error("sku对照表 同步商品失败",e);
-                resultDTO = BatchResultDTO.fail(platformSkuNo, platformSkuNo, e.getMessage());
-            }
-            resultDTOS.add(resultDTO);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return success(skuMappingService.syncPlatformProductByOne(dto));
     }
 
     /**
