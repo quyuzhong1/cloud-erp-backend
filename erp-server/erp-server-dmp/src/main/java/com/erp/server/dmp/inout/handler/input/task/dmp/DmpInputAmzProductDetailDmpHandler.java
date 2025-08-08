@@ -216,7 +216,7 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             }
         }
         for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-            String billNo = dmpInputMongoChildEntity.get(PRODUCT_ID).toString();
+            String billNo = dmpInputMongoChildEntity.getOrDefault(PRODUCT_ID, "").toString();
             String dmpId = billNoIdMap.get(billNo);
             dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
         }
