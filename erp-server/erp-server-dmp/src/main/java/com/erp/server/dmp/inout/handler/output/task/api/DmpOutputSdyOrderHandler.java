@@ -73,6 +73,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     @Override
     protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
     		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	if(isRetryPush) {
+    		return;
+    	}
     	//创建旺店通原始订单任务
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
@@ -82,21 +85,24 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         }else {
             shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
+        
+        List<String> platformCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "配货单".equals(s.getTransaction_type()) 
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("JY") 
+        		&& StringUtils.isNotBlank(s.getRoot_node_no_initial()))
+        	.map(ShudiyunB2cOrderDTO::getRoot_node_no_initial).collect(Collectors.toList());
 
-        shudiyunB2cOrderDTOList.forEach(shudiyunB2cOrderDTO -> {
-            if (dmpCfgOutputEntity.getId().equals("1859427581292469023")) {
-                DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
-                request.setCfgOutputId("1861317267527064372");
-                List<QueryParam> queryParams = new ArrayList<>();
-                QueryParam queryParam = new QueryParam();
-                queryParam.setType(QueryTypeEnum.EQ);
-                queryParam.setName("third_code");
-                queryParam.setValue(shudiyunB2cOrderDTO.getBiz_no());
-                queryParams.add(queryParam);
-                request.setQueryParams(queryParams);
-                dmpOutputCreateFactory.doHotfixOutputTask(request);
-            }
-        });
+        if(CollUtil.isNotEmpty(platformCodeList)) {
+        	DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+            request.setCfgOutputId("1861317267527064372");
+            List<QueryParam> queryParams = new ArrayList<>();
+            QueryParam queryParam = new QueryParam();
+            queryParam.setType(QueryTypeEnum.IN);
+            queryParam.setName("platform_code");
+            queryParam.setValue(platformCodeList);
+            queryParams.add(queryParam);
+            request.setQueryParams(queryParams);
+            dmpOutputCreateFactory.doHotfixOutputTask(request);
+        }
     }
 
     /**

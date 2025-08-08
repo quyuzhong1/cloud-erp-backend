@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.*;
@@ -23,6 +26,9 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -32,6 +38,8 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -43,8 +51,10 @@ import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -68,8 +78,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private CfgTimezoneService cfgTimezoneService;
 	@Resource
 	private DictBasicService dictBasicService;
+	@Resource
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
+	@Resource
+	private DmpSoInfoService dmpSoInfoService;
+	@Resource
+	private DmpSoDetailService dmpSoDetailService;
 
-	
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
@@ -467,6 +482,58 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 		}
 	}
     
+	@Override
+    protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
+    		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	if(isRetryPush) {
+    		return;
+    	}
+    	//创建旺店通配货单任务
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+        String requestData = dmpOutputTaskRecordEntity.getRequestData();
+        if(requestData.trim().startsWith("{")) {
+            ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
+            shudiyunB2cOrderDTOList.add(dto);
+        }else {
+            shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
+        }
+
+        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type()) 
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK") 
+        		&& StringUtils.isNotBlank(s.getParent_node_no()))
+        	.map(ShudiyunB2cOrderDTO::getParent_node_no).collect(Collectors.toList());
+
+        
+        if(CollUtil.isNotEmpty(thirdCodeList)) {
+        	List<String> mainIds = dmpSoInfoService.lambdaQuery()
+        			.eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
+        			.in(DmpSoInfoEntity::getThirdCode, thirdCodeList)
+        			.select(DmpSoInfoEntity::getId)
+        			.list().stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+        	if(CollUtil.isNotEmpty(mainIds)) {
+        		List<String> filterMainIds = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getMainId, mainIds)
+	        		.in(DmpSoDetailEntity::getPlatformStatus, Arrays.asList("80" , "90"))
+	        		.select(DmpSoDetailEntity::getMainId)
+	        		.list()
+	        		.stream().map(DmpSoDetailEntity::getMainId).collect(Collectors.toList());
+        		if(CollUtil.isNotEmpty(filterMainIds)) {
+        			Stream.of("1859427581292469023" , "1859427581292469024").forEach(s -> {
+                		DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+                        request.setCfgOutputId(s);
+                        List<QueryParam> queryParams = new ArrayList<>();
+                        QueryParam queryParam = new QueryParam();
+                        queryParam.setType(QueryTypeEnum.IN);
+                        queryParam.setName("id");
+                        queryParam.setValue(filterMainIds);
+                        queryParams.add(queryParam);
+                        request.setQueryParams(queryParams);
+                        dmpOutputCreateFactory.doHotfixOutputTask(request);
+                	});
+        		}
+        	}
+        }
+    }
+	
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");
