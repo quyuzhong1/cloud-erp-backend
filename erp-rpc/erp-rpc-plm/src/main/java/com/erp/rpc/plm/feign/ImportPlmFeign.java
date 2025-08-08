@@ -11,6 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface ImportPlmFeign {
 
     @PostMapping("/feign/import/productDetailImages")
-    void productDetailImages(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto);
+    void productDetailImages(@RequestBody BaseDTO.ImportDTO dto);
 
 }
