@@ -73,8 +73,8 @@ public class DmpEtlTaskEntity extends BaseEntity<DmpEtlTaskEntity> {
     /**
     * 实例id
     */
-    @TableField("etl_instance_id")
-    private String etlInstanceId;
+    @TableField("instance_id")
+    private String instanceId;
 
 
     public static final String CFG_ETL_ID = "cfg_etl_id";
