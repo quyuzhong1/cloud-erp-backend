@@ -148,11 +148,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 查询每个sku最新
         Long allNewCount = baseMapper.allNewCount(searchParam);
 
+        List<SkuStdCostDetailDTO.TabListDTO> resultList = new LinkedList<>();
         tabCodeList.forEach(tabCode -> {
             //  全部=业务要求最新 ALL("all", "全部"),
             if (SkuStdCostTabEnum.ALL.getCode().equals(tabCode)) {
                 // 计算合计数量
-                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.ALL.getCode(), SkuStdCostTabEnum.ALL.getName(), allNewCount.intValue()));
+                resultList.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.ALL.getCode(), SkuStdCostTabEnum.ALL.getName(), allNewCount.intValue()));
                 return;
             }
             // TO_BE_APPROVE("toBeApprove", "待我审核"),
@@ -166,31 +167,31 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                     waitApproveCount = changeEntityList.size();
                 }
                 SkuStdCostDetailDTO.TabListDTO tabListDTO = new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.TO_BE_APPROVE.getCode(), SkuStdCostTabEnum.TO_BE_APPROVE.getName(), waitApproveCount);
-                list.add(tabListDTO);
+                resultList.add(tabListDTO);
                 return;
             }
             //  APPROVE("approve", "已审核"),
             if (SkuStdCostTabEnum.APPROVE.getCode().equals(tabCode)) {
                 Integer count = approveStatutCountMap.getOrDefault(tabCode, 0);
                 // 计算合计数量
-                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.APPROVE.getCode(), SkuStdCostTabEnum.APPROVE.getName(), count));
+                resultList.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.APPROVE.getCode(), SkuStdCostTabEnum.APPROVE.getName(), count));
                 return;
             }
             //  REJECT("reject", "不通过"),
             if (SkuStdCostTabEnum.REJECT.getCode().equals(tabCode)) {
                 Integer count = approveStatutCountMap.getOrDefault(tabCode, 0);
                 // 计算合计数量
-                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.REJECT.getCode(), SkuStdCostTabEnum.REJECT.getName(), count));
+                resultList.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.REJECT.getCode(), SkuStdCostTabEnum.REJECT.getName(), count));
                 return;
             }
             //  HISTORY("history", "历史价格")(所有)
             if (SkuStdCostTabEnum.HISTORY.getCode().equals(tabCode)) {
                 // 计算合计数量
-                list.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.HISTORY.getCode(), SkuStdCostTabEnum.HISTORY.getName(), list.stream().mapToInt(SkuStdCostDetailDTO.TabListDTO::getCount).sum()));
+                resultList.add(new SkuStdCostDetailDTO.TabListDTO(SkuStdCostTabEnum.HISTORY.getCode(), SkuStdCostTabEnum.HISTORY.getName(), list.stream().mapToInt(SkuStdCostDetailDTO.TabListDTO::getCount).sum()));
                 return;
             }
         });
-        return list;
+        return resultList;
     }
 
     @Override
