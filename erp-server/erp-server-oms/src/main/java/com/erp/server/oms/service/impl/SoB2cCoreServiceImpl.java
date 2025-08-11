@@ -445,10 +445,12 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
         platformDTO.setPartitionId(soB2cReceiverEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
-        if(CollectionUtils.isNotEmpty(virtualWarehouseList)){
-            String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
-            for (SoB2cDetailEntity detailEntity : detailEntityList) {
+        for (SoB2cDetailEntity detailEntity : detailEntityList) {
+            if(CollectionUtils.isNotEmpty(virtualWarehouseList)){
+                String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
                 detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            }else{
+                detailEntity.setVirtualWarehouseId("");
             }
         }
         //先更新订单信息
