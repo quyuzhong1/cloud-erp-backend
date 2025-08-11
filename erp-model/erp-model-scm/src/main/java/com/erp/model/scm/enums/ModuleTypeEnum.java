@@ -153,6 +153,7 @@ public enum ModuleTypeEnum {
     SUPPLIER_REF_WAREHOUSE("129", "仓库绑定"),
     CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
     DICT_HS_CODE("131", "出口申报要素"),
+    SKU_STD_COST_DETAIL("140", "SKU标准成本"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
 

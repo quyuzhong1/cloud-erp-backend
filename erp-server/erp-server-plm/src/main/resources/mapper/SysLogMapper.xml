@@ -7,6 +7,7 @@
         select
             sl.class_path,
             sl.business_id,
+            sl.module_type,
             sl.create_time as create_time,
             max(sl.create_user_name) as create_user_name,
             array_to_string(array_agg(DISTINCT sl.operation),',') as operation,
@@ -14,6 +15,9 @@
         from sys_log sl
         <where>
             sl.is_deleted = FALSE
+            <if test="params.moduleType !=null and params.moduleType!=''">
+                AND sl.module_type = #{params.moduleType}
+            </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}
             </if>
