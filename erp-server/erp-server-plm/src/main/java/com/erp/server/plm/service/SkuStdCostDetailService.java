@@ -5,12 +5,11 @@ import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.plm.dto.SkuStdCostDetailDTO;
-import com.erp.model.plm.entity.SkuStdCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -27,17 +26,19 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @param dto
      * @return
      */
-    List<SkuStdCostDetailDTO.ListDTO> changeList(BaseIdsDTO.IdsDTO dto);
+    List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(BaseIdsDTO.IdsDTO dto);
 
     /**
      * 修改变更
      *
      * @param dto
+     * @param listDTO
+     * @param listDTO1
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO dto);
+    BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO dto, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO listDTO1);
 
 
     /**
@@ -177,4 +178,10 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     PagingVO<SkuStdCostDetailDTO.ListDTO> historyPaging(PagingDTO<SkuStdCostDetailDTO.HistoryPagingParamDTO> dto);
 
+    /**
+     * 查询最新sku已审核信息
+     * @param skuIds
+     * @return
+     */
+    Map<String, SkuStdCostDetailDTO.ListDTO> mapLastBySkuIds(List<String> skuIds);
 }

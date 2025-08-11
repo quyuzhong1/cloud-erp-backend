@@ -46,6 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,76 +74,83 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
 
     @Override
-    public List<SkuStdCostDetailDTO.ListDTO> changeList(BaseIdsDTO.IdsDTO dto) {
-        List<SkuStdCostDetailDTO.ListDTO> list = baseMapper.listDTOByIds(dto);
-        // 校验单据是否可以变更
-        validateChange(list, dto);
-        // 填充信息
-        fillList(list);
-        return list;
+    public List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(BaseIdsDTO.IdsDTO dto) {
+        return baseMapper.listDTOByIds(dto);
     }
+
 
     /**
      * 校验单据是否可以变更
+     *
+     * @param commonDTO   公共修改参数
+     * @param listDTO     当前提交的sku标准成本信息
+     * @param lastListDTO 最新sku标准成本信息
      */
-    private void validateChange(List<SkuStdCostDetailDTO.ListDTO> list, BaseIdsDTO.IdsDTO dto) {
-        Map<String, SkuStdCostDetailDTO.ListDTO> listMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, e -> e));
-
-        // 查询对应sku最新可变更记录
-        Map<String, SkuStdCostDetailDTO.ListDTO> lastListMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> skuIds = list.stream().map(SkuStdCostDetailDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-            List<SkuStdCostDetailDTO.ListDTO> lastList = baseMapper.lastList(skuIds, ApproveStatusEnum.APPROVE.getCode());
-            lastListMap = lastList.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getSkuId, e -> e));
+    private SkuStdCostDetailEntity validateChange(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
+        LocalDate submitEffectiveDate = commonDTO.getEffectiveDate();
+        // 1.校验状态：仅支持【已审核】变更
+        if (!ApproveStatusEnum.APPROVE.getCode().equalsIgnoreCase(listDTO.getApproveStatus())) {
+            ServiceException.runError("SKU={}:仅支持【已审核】变更", listDTO.getSkuNo());
+        }
+        // 2.校验日期：生效日期必须大于历史日期
+        if (!submitEffectiveDate.isAfter(listDTO.getEffectiveDate())) {
+            ServiceException.runError("生效日期必须大于历史日期：当前生效日期={}, 最新生效日期={}", submitEffectiveDate, listDTO.getEffectiveDate());
         }
 
-        for (String id : dto.getIds()) {
-            SkuStdCostDetailDTO.ListDTO listDTO = listMap.get(id);
-            if (null == listDTO) {
-                ServiceException.runError("id={}:记录不存在",id);
-            }
-            // 1.校验状态：仅支持【已审核】变更
-            if (!ApproveStatusEnum.APPROVE.getCode().equalsIgnoreCase(listDTO.getApproveStatus())){
-                ServiceException.runError("SKU={}:仅支持【已审核】变更", listDTO.getSkuNo());
-            }
-            // 2.校验日期：生效日期必须大于历史日期
-            // 3.限制类型：组合品不支持变更
-            if (listDTO.getIsComb()){
-                ServiceException.runError("SKU={}:组合品不支持变更", listDTO.getSkuNo());
+        // 3.限制类型：组合品不支持变更
+        if (listDTO.getIsComb()) {
+            ServiceException.runError("SKU={}:组合品不支持变更", listDTO.getSkuNo());
+        }
+        if (null != lastListDTO) {
+            if (!ApproveStatusEnum.APPROVE.getCode().equalsIgnoreCase(lastListDTO.getApproveStatus())) {
+                ServiceException.runError("SKU={}:存在【未审核】记录,不支持变更", lastListDTO.getSkuNo());
             }
             // 4.限制历史：历史单据不支持变更-只有最新的SKU支持变更
-            SkuStdCostDetailDTO.ListDTO lastListDTO = lastListMap.get(listDTO.getSkuId());
-            if (null != lastListDTO && !listDTO.getId().equals(lastListDTO.getId())) {
+            if (!listDTO.getId().equals(lastListDTO.getId())) {
                 ServiceException.runError("历史单据不支持变更-只有最新的SKU支持变更:sku={},最新生效时间={}", listDTO.getSkuNo(), lastListDTO.getEffectiveDate());
             }
         }
-
+        SkuStdCostDetailEntity newDetailEntity = new SkuStdCostDetailEntity();
+        newDetailEntity.setStdCostPrice(commonDTO.getStdCostPrice());
+        newDetailEntity.setEffectiveDate(commonDTO.getEffectiveDate());
+        newDetailEntity.setCurrency(commonDTO.getCurrency());
+        newDetailEntity.setMainId(listDTO.getMainId());
+        return newDetailEntity;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO addDTO) {
-        SkuStdCostDetailEntity SkuStdCostDetailEntity = new SkuStdCostDetailEntity();
-        BeanMapperUtils.copy(addDTO, SkuStdCostDetailEntity);
-
-        // 数据处理
-        handleData(SkuStdCostDetailEntity);
+    public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
+        // 数据校验
+        SkuStdCostDetailEntity newDetailEntity = validateChange(addDTO, listDTO, lastListDTO);
 
         log.info("开始新增sku标准成本单");
-        boolean save = super.save(SkuStdCostDetailEntity);
+        boolean save = super.save(newDetailEntity);
         if (!save) {
             throw new ServiceException("sku标准成本单保存失败");
         }
-        return BatchResultDTO.success(SkuStdCostDetailEntity.getId(), "");
+        return BatchResultDTO.success(newDetailEntity.getId(), "");
     }
 
 
     /**
-     * 新增修改处理数据
+     * 修改处理数据
      */
-    private void handleData(SkuStdCostDetailEntity skuStdCostDetailEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateDTO addOrUpdateDTO) {
+        // 验证数据 & 数据赋值
+        old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
+        // 校验日期
+        if (old.getEffectiveDate() == null && addOrUpdateDTO.getEffectiveDate() == null) {
+            ServiceException.runError("【生效日期】不能为空");
+        }
+        if (old.getEffectiveDate() != null && addOrUpdateDTO.getEffectiveDate() != null) {
+            ServiceException.runError("【生效日期】不可修改");
+        }
+        // 设置值（只有新增时才会走到这里）
+        if (old.getEffectiveDate() == null) {
+            old.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
+        }
     }
 
     /**
@@ -157,21 +165,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-//        SkuStdCostDetailEntity SkuStdCostDetailEntity = BeanMapperUtils.map(SkuStdCostDetailEntity.class, addOrUpdateDTO);
-        old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
-        if (null == old.getEffectiveDate()){
-            if (null == addOrUpdateDTO.getEffectiveDate()){
-                ServiceException.runError("【生效日期】不能为空");
-            }
-            old.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
-        } else {
-            if (null != addOrUpdateDTO.getEffectiveDate()){
-                ServiceException.runError("【生效日期】不可修改");
-            }
-        }
-
         // 数据处理
-        handleData(old);
+        updateHandleData(old, addOrUpdateDTO);
         log.info("编辑 开始修改sku标准成本单数据，单号：【{}】", old.getId());
         boolean save = super.updateById(old);
         if (!save) {
@@ -259,7 +254,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         // 数据处理
         fillList(list);
-
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/skuStdCost.xlsx";
@@ -311,8 +305,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        SkuStdCostDetailEntity entity = getByIdOpt(dto.getId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单数据"));
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        SkuStdCostDetailEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -356,11 +350,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(SkuStdCostDetailEntity entity) {
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
 
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -381,7 +374,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Override
     public BatchResultDTO delete(String id) {
         SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -406,7 +399,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
         //  撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
 
@@ -484,7 +477,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 销售状态名称
         data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
         // 币种符号
-        if (StringUtils.isNotBlank(data.getCurrency())){
+        if (StringUtils.isNotBlank(data.getCurrency())) {
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
             data.setCurrencySymbol(currencyList.get(0).getSymbol());
         } else {
@@ -590,6 +583,15 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public Map<String, SkuStdCostDetailDTO.ListDTO> mapLastBySkuIds(List<String> skuIds) {
+        if (CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SkuStdCostDetailDTO.ListDTO> lastList = baseMapper.lastList(skuIds, null);
+        return lastList.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getSkuId, e -> e));
     }
 
 }

@@ -63,7 +63,7 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
     List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(@Param("params") BaseIdsDTO.IdsDTO params);
 
 
-    List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveCode") String approveCode);
+    List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveStatus") String approveStatus);
 
     IPage<SkuStdCostDetailDTO.ListDTO> historyPaging(Page query, @Param("params") SkuStdCostDetailDTO.HistoryPagingParamDTO params);
 }

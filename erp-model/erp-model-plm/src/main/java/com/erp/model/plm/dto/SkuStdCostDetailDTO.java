@@ -86,12 +86,21 @@ public class SkuStdCostDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ChangeDTO {
+    public static class ChangeDTO extends ChangeCommonDTO {
         /**
          * 列表id
          */
         @NotNull(message = "列表id不能为空")
         private String id;
+
+    }
+
+    /**
+     * 价格变更
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChangeCommonDTO {
 
         /**
          * 标准成本(不含税)
@@ -441,6 +450,11 @@ public class SkuStdCostDetailDTO implements Serializable {
          * 更新人名称
          */
         private String updateUserName;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
     }
 
     /**

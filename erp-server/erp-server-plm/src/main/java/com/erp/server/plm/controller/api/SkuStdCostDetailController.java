@@ -2,10 +2,13 @@ package com.erp.server.plm.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.utils.StringUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -20,14 +23,14 @@ import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SkuStdCostService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,25 +50,6 @@ public class SkuStdCostDetailController extends BaseController {
     @Resource
     private SkuStdCostDetailService skuStdCostDetailService;
 
-
-    /**
-     * 价格变更列表(校验列表是否可变更)
-     *
-     * @param dto
-     * @return ApiResult<List < SkuStdCostDetailDTO.ListDTO>>
-     * @author Jim
-     * @date: 2025-08-08
-     */
-    @PostMapping("/changeList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "plm:skuStdCost:paging",
-            tableAlias = ""
-    )
-    public ApiResult<List<SkuStdCostDetailDTO.ListDTO>> changeList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(skuStdCostDetailService.changeList(dto));
-    }
-
     /**
      * 价格变更
      *
@@ -78,24 +62,36 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "sku标准成本表价格变更")
     public ApiResult<List<BatchResultDTO>> changeAdd(@RequestBody @Validated List<SkuStdCostDetailDTO.ChangeDTO> dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.size());
-        List<String> ids = dto.stream().map(e -> e.getId()).distinct().collect(Collectors.toList());
+        List<String> ids = dto.stream().map(SkuStdCostDetailDTO.ChangeDTO::getId).distinct().collect(Collectors.toList());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByIds(new BaseIdsDTO.IdsDTO(ids));
+        Map<String, SkuStdCostDetailDTO.ListDTO> idEntityMap = listDTOS.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, w -> w));
+
+        // 查询对应sku最新可变更记录
+        Map<String, SkuStdCostDetailDTO.ListDTO> lastListMap = skuStdCostDetailService.mapLastBySkuIds(
+                listDTOS.stream().map(SkuStdCostDetailDTO.ListDTO::getSkuId).distinct().filter(StringUtils::isNotBlank).collect(Collectors.toList())
+        );
+
         for (SkuStdCostDetailDTO.ChangeDTO changeDTO : dto) {
             BatchResultDTO deleteResult;
+            SkuStdCostDetailDTO.ListDTO itemListDTO = idEntityMap.get(changeDTO.getId());
+            if (ObjectUtil.isEmpty(itemListDTO)) {
+                deleteResult = BatchResultDTO.fail(changeDTO.getId(), changeDTO.getId(), "sku标准成本表价格单不存在, 变更失败");
+                resultDTOS.add(deleteResult);
+                continue;
+            }
             try {
-                deleteResult = skuStdCostDetailService.changeAdd(changeDTO);
+                deleteResult = skuStdCostDetailService.changeAdd(changeDTO, itemListDTO, lastListMap.get(itemListDTO.getSkuId()));
             } catch (Exception e) {
                 log.error("sku标准成本表价格变更失败", e);
                 String id = changeDTO.getId();
-                SkuStdCostDetailEntity entity = idEntityMap.get(changeDTO.getId());
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "sku标准成本表价格单不存在, 删除失败");
+                SkuStdCostDetailDTO.ListDTO listDTO = idEntityMap.get(changeDTO.getId());
+                if (ObjectUtil.isEmpty(listDTO)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "sku标准成本表价格单不存在, 变更失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getMainId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(listDTO.getId(), listDTO.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

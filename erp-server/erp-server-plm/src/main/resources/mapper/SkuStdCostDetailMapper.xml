@@ -59,7 +59,8 @@
         sscd.expire_date AS expireDate,
         sscd.approve_user_id AS approveUserId,
         sscd.approve_user_name AS approveUserName,
-        sscd.approve_time AS approveTime
+        sscd.approve_time AS approveTime,
+        ssc.id AS mainId
     </sql>
 
     <select id="tabList" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$TabListDTO">
@@ -187,8 +188,11 @@
         <if test="null != skuIds != null and skuIds.size() > 0">
             and ssc.sku_id in
             <foreach collection="skuIds" item="item" open="(" separator="," close=")">
-                #{item}
+                #{item}::text
             </foreach>
+        </if>
+        <if test="approveStatus!=null and approveStatus!=''">
+            and sscd.approve_status = ${params.approveStatus}::text
         </if>
     </select>
 
