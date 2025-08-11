@@ -112,6 +112,12 @@
         LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
         WHERE ${params.sqlMap.default}
         and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and sscd.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

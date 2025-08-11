@@ -47,7 +47,7 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
      * @param params
      * @return
      */
-    List<SkuStdCostDetailDTO.ListDTO> listExport(@Param("params") SkuStdCostDetailDTO.ExportDTO params);
+    IPage<SkuStdCostDetailDTO.ListDTO> listExport(Page query, @Param("params") SkuStdCostDetailDTO.ExportDTO params);
 
 
     /**

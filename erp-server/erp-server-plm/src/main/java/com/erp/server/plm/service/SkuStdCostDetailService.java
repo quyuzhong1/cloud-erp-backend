@@ -191,4 +191,11 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @return
      */
     BatchResultDTO comboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO);
+
+    /**
+     * 导出查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SkuStdCostDetailDTO.ListDTO> listExport(PagingDTO<SkuStdCostDetailDTO.ExportDTO> dto);
 }
