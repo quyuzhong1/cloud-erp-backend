@@ -13,6 +13,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
@@ -425,7 +426,9 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response) {
-        skuStdCostDetailService.downloadTemplate(response);
+        String path = "classpath:excel/skuStdCostDetailTemplate.xlsx";
+        String excelName = "templateSkuStdCostDetail.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
         return success();
     }
 }

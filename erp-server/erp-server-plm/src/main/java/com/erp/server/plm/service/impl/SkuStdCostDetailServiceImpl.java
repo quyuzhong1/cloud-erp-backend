@@ -502,27 +502,4 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         return false;
     }
 
-    @Override
-    public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/skuStdCostDetailTemplate.xlsx";
-        String excelName = "templateSkuStdCostDetail.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            log.error("导入SKU标准成本模板 downloadTemplate  出错了 e=={}", ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
-    }
-
 }
