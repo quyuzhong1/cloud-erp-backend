@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
@@ -16,7 +17,7 @@ import java.util.List;
  * @author Jim
  * @date 2023/11/29
  */
-@FeignClient(name = "erp-wms", contextId = "otherInstock")
+@FeignClient(name = "erp-wms", contextId = "otherInstock" ,configuration = {FeignErrorDecoder.class})
 public interface OtherInstockFeign {
 
      /**

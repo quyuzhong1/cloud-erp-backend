@@ -71,12 +71,12 @@ public class FileTaskController extends BaseController {
     /**
      *  重新开始下载任务
      */
-    @PostMapping("/restart")
-    public ApiResult<List<BatchResultDTO>> restart(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @PostMapping("/retry")
+    public ApiResult<List<BatchResultDTO>> retry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (String id : dto.getIds()) {
             try {
-                fileTaskContext.restart(id);
+                fileTaskContext.retry(id);
                 resultDTOS.add(BatchResultDTO.success(id,null, "重新导入"));
             }catch (Exception e){
                 resultDTOS.add(BatchResultDTO.fail(id , null, e.getMessage()));

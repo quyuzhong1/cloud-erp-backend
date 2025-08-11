@@ -91,7 +91,7 @@ public class FileTaskContext {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), loginUser), threadPoolTaskExecutor);
+                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), loginUser, false), threadPoolTaskExecutor);
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
@@ -122,14 +122,15 @@ public class FileTaskContext {
      * 文件任务删除
      * 基于乐观锁版本，多服务器需优化为分布式锁
      */
-    public void restart(String id) {
+    @Transactional(rollbackFor = Exception.class)
+    public void retry(String id) {
         FileTask fileTask = fileTaskRepository.getById(id);
         ExceptionUtils.emptyThrow(fileTask, String.format("文件任务不存在[%s],请联系IT检查请求", id));
         LoginUser currentUser = UserContext.getNonLoginUser();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), currentUser), threadPoolTaskExecutor);
+                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), currentUser, true), threadPoolTaskExecutor);
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
@@ -186,11 +187,11 @@ public class FileTaskContext {
      *
      * @param id 文件任务Id
      */
-    public void importProcess(String id, LoginUser user) {
+    public void importProcess(String id, LoginUser user, Boolean isRetry) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(id);
         FileTask fileTask = fileTaskRepository.getById(id);
-        if (!ObjectUtils.isEmpty(fileTask) && fileTask.isPending()) {
+        if ((!ObjectUtils.isEmpty(fileTask) && fileTask.isPending()) || isRetry) {
             // 设置任务状态为处理中
             importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.name());
             // 设置任务开始时间

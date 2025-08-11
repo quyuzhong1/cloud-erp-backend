@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "overseasWarehouseFeign")
+@FeignClient(name = "erp-wms", contextId = "overseasWarehouseFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsOverseasWarehouseFeign {
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -21,7 +22,7 @@ import java.util.List;
  * @Date 2023-12-18 11:37
  * @Created by yl
  */
-@FeignClient(name = "erp-wms", contextId = "soB2cDeliveryFeign")
+@FeignClient(name = "erp-wms", contextId = "soB2cDeliveryFeign" ,configuration = {FeignErrorDecoder.class})
 public interface SoB2cDeliveryFeign {
 
     /** 

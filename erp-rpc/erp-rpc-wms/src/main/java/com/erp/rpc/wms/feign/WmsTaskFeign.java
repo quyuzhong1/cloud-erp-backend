@@ -23,7 +23,7 @@ import java.util.Map;
 
  * @date 2023/3/17 15:56
  */
-@FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-wms",contextId = "wmsTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsTaskFeign {
 
 
