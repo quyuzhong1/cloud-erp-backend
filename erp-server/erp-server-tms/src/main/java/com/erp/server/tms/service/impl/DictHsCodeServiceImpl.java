@@ -183,13 +183,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
             log.error("导入出口申请要素错误！", e);
             return Boolean.FALSE;
         }
-        List<DictHsCodeExcelDTO> errorList = excelListenerUtil.getErrorList();
 
-        if (errorList.size() > 0) {
-            String fileName = "出口申报要素错误信息";
-            ExcelUtil.export(fileName, "error", errorList, DictHsCodeExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
 
         List<DictHsCodeExcelDTO> successList = excelListenerUtil.getSuccessList();
         if(CollUtil.isNotEmpty(successList)){
@@ -221,6 +215,14 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                 }
             }
         }
+
+        List<DictHsCodeExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "出口申报要素错误信息";
+            ExcelUtil.export(fileName, "error", errorList, DictHsCodeExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+
         return Boolean.TRUE;
     }
 
