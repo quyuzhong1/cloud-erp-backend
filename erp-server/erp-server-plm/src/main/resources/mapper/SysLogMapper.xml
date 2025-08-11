@@ -32,7 +32,7 @@
                 )
             </if>
         </where>
-        group by sl.class_path,sl.business_id,sl.create_time
+        group by sl.class_path,sl.business_id,sl.create_time,sl.module_type
         order by sl.create_time desc
     </select>
 
@@ -47,6 +47,9 @@
         from sys_log sl
         <where>
             sl.is_deleted = FALSE
+            <if test="params.moduleType !=null and params.moduleType!=''">
+                AND sl.module_type = #{params.moduleType}
+            </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}
             </if>
@@ -54,7 +57,7 @@
                 AND sl.pid = #{params.pid}
             </if>
         </where>
-        group by sl.class_path,sl.business_id,sl.create_time
+        group by sl.class_path,sl.business_id,sl.create_time,sl.module_type
         order by sl.create_time desc
     </select>
 
