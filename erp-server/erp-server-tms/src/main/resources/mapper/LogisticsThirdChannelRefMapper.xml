@@ -57,6 +57,7 @@
             ltcr.is_push_mobile as isPushMobile,
             ltcr.push_type as pushType,
             ltcr.create_user_name as createUserName,
+            ltcr.create_time as createTime,
             ltcr.disabled as disabled,
             ltcrd.id as detailId,
             ltcrd.shop_id as shopId,

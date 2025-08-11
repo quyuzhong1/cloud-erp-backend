@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +27,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     private static final int BATCH_COUNT = 1000;
     private final String taskId;
     private final String importType;
+    private final Integer importCount;
     @Getter
     private Integer count = 0;
     /**
@@ -51,9 +53,10 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
 
     private final LogisticsLastMileCostService logisticsLastMileCostService = SpringUtil.getBean(LogisticsLastMileCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
-    public LogisticsLastMileCostExcelListener(String taskId, String importType) {
+    public LogisticsLastMileCostExcelListener(String taskId, String importType, Integer importCount) {
         this.taskId = taskId;
         this.importType = importType;
+        this.importCount = importCount;
     }
 
    /**
@@ -67,6 +70,10 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
     @Transactional(rollbackFor = Exception.class)
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
         count += 1;
+        //已经导入的数据跳过进度
+        if (Objects.nonNull(importCount) && count < importCount){
+            return;
+        }
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());

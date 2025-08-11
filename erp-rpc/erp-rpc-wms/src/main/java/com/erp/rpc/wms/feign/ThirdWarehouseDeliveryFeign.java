@@ -1,9 +1,7 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +12,7 @@ import java.util.List;
 /**
  * 三方仓发货feign
  */
-@FeignClient(name = "erp-wms", contextId = "thirdWarehouseDeliveryFeign")
+@FeignClient(name = "erp-wms", contextId = "thirdWarehouseDeliveryFeign",configuration = {FeignErrorDecoder.class})
 public interface ThirdWarehouseDeliveryFeign {
 
     /** 

@@ -420,7 +420,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importLogisticsLastMileCost(BaseDTO.ImportDTO dto) {
-        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId(),dto.getImportType());
+        LogisticsLastMileCostExcelListener excelListenerUtil = new LogisticsLastMileCostExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();

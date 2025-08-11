@@ -2678,6 +2678,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds) {
+        if (CollUtil.isEmpty(deliveryIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listOverseasProvider(deliveryIds);
+    }
+
+    @Override
     public BatchResultDTO generateFirstMileDeclare(String id) {
         FirstMileDeliveryEntity entity = getById(id);
         if (Objects.isNull(entity)) {
@@ -2737,14 +2745,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
-    }
-
-    @Override
-    public List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds) {
-        if (CollUtil.isEmpty(deliveryIds)){
-            return Collections.emptyList();
-        }
-        return baseMapper.listOverseasProvider(deliveryIds);
     }
 
     @Override

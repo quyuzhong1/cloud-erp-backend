@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.validation.Valid;
 import java.util.List;
 
-@FeignClient(name = "erp-dmp" , contextId = "DmpInoutTaskFeign")
+@FeignClient(name = "erp-dmp" , contextId = "DmpInoutTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpInoutTaskFeign {
 	/**
      * 更新任务状态

@@ -43,7 +43,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 规则列表
          */
-        private List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList;
+        private List<CfgRuleInvoiceAmountDTO.ViewDTO> productAmountDTOList;
     }
 
     /**
@@ -66,7 +66,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 规则列表
          */
-        private List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList;
+        private List<CfgRuleInvoiceAmountDTO.ViewDTO> productAmountDTOList;
     }
 
     /**

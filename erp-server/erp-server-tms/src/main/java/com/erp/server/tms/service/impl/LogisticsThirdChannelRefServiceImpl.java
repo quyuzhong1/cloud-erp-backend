@@ -217,6 +217,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         if (entity.getDisabled().equals(disabled)){
             return BatchResultDTO.fail(id, entity.getLogisticsSupplierName(),"渠道配置数据状态未变更");
         }
+        this.lambdaUpdate().set(LogisticsThirdChannelRefEntity::getDisabled, disabled).eq(LogisticsThirdChannelRefEntity::getId, id).update();
         String msg = CharSequenceUtil.format("用户【{}】变更id为【{}】的【{}】单据状态为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "物流-第三方渠道关系单", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_THIRD_CHANNEL_REF.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(),entity.getLogisticsSupplierName(), "操作成功");

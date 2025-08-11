@@ -1,5 +1,7 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "ShopInfo")
+@FeignClient(name = "erp-oms", contextId = "omsShopInfoFeign",configuration = {FeignErrorDecoder.class})
 public interface ShopInfoFeign {
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "erp-tms", contextId = "logisticsBillCost")
+@FeignClient(name = "erp-tms", contextId = "logisticsBillCost" ,configuration = {FeignErrorDecoder.class})
 public interface LogisticsBillCostFeign {
 
     /**

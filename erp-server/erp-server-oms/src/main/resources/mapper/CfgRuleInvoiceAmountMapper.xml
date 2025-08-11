@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.oms.mapper.CfgRuleInvoiceProductAmountMapper">
+<mapper namespace="com.erp.server.oms.mapper.CfgRuleInvoiceAmountMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgRuleInvoiceProductAmountEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgRuleInvoiceAmountEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -34,9 +34,9 @@
         is_deleted,
         name, disabled, remark, priority, cfg_id, dict_invoice_rule, ratio
     </sql>
-    <select id="listByCfgId" resultType="com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO$ViewDTO">
+    <select id="listByCfgId" resultType="com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO$ViewDTO">
         select <include refid="Base_Column_List"/>
-        from cfg_rule_invoice_product_amount
+        from cfg_rule_invoice_amount
         where cfg_id = #{cfgId} and is_deleted = false
         order by priority asc
     </select>

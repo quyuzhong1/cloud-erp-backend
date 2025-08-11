@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,7 @@ import java.util.List;
  * @date 2024-08-14
  * @author tanmujin
  */
-@FeignClient(name = "erp-wms", contextId = "wdtWarehouseLocationMapping")
+@FeignClient(name = "erp-wms", contextId = "wdtWarehouseLocationMapping",configuration = {FeignErrorDecoder.class})
 public interface WdtWarehouseLocationMappingFeign {
 
     @GetMapping(value = "/listBySysWarehouseId")

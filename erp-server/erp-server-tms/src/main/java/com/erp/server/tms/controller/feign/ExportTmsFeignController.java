@@ -383,6 +383,21 @@ public class ExportTmsFeignController {
     }
 
     /**
+     * 物流-第三方渠道关系表导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportLogisticsThirdChannelRef")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            menuCode = "tms:logisticsThirdChannelRef:paging",
+            tableAlias = "ltcr"
+    )
+    @WebAdvanceQuery(handler = LogisticsThirdChannelRefQueryHandler.class)
+    public PagingVO<LogisticsThirdChannelRefDTO.PagingVO> exportLogisticsThirdChannelRef(@RequestBody PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto){
+        return logisticsThirdChannelRefService.paging(dto);
+    }
+
+    /**
      * 出口申报要素导出
      * @param dto
      * @return
@@ -397,20 +412,5 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto){
         return tmsCfgSailingService.paging(dto);
-    }
-
-    /**
-     * 物流-第三方渠道关系表导出
-     * @param dto
-     * @return
-     */
-    @PostMapping("/exportLogisticsThirdChannelRef")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            menuCode = "tms:logisticsThirdChannelRef:paging",
-            tableAlias = "ltcr"
-    )
-    @WebAdvanceQuery(handler = LogisticsThirdChannelRefQueryHandler.class)
-    public PagingVO<LogisticsThirdChannelRefDTO.PagingVO> exportLogisticsThirdChannelRef(@RequestBody PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto){
-        return logisticsThirdChannelRefService.paging(dto);
     }
 }

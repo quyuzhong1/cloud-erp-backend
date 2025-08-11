@@ -124,6 +124,7 @@
                ko.type_code,
                krp.code AS userPostCode,
                kd.kingdee_dept_code AS  deptCode,
+               kd.erp_dept_id as erpDeptId,
                ko.use_org_id AS orgId,
                krp.erp_user_id AS userId
         FROM kingdee_operator_ref_post ko

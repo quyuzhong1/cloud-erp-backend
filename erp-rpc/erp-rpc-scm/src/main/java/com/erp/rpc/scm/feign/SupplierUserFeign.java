@@ -22,7 +22,7 @@ import java.util.List;
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-scm", contextId = "supplierUser",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-scm", contextId = "supplierUserFeign",configuration = {FeignErrorDecoder.class})
 public interface SupplierUserFeign {
 
     /**

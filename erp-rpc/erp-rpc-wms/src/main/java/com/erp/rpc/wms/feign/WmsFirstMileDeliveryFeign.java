@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "firstMileDeliveryFeign")
+@FeignClient(name = "erp-wms", contextId = "firstMileDeliveryFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsFirstMileDeliveryFeign {
 
 
