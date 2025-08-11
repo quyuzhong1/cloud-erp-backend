@@ -83,7 +83,7 @@
         LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
         LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
         WHERE ${params.sqlMap.default}
-        and sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -190,6 +190,32 @@
                 #{item}
             </foreach>
         </if>
+    </select>
+
+    <select id="historyPaging" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+            <include refid="Common_Column_List"/>
+        FROM
+        sku_std_cost_detail sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false and
+        sscd.approve_status = 'approve'
+        <if test="params.skuId!=null and params.skuId!=''">
+            and ssc.sku_id = ${params.skuId}::text
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sscd.update_time desc
     </select>
 
 

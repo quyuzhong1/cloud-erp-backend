@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -62,4 +64,6 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
 
 
     List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveCode") String approveCode);
+
+    IPage<SkuStdCostDetailDTO.ListDTO> historyPaging(Page query, @Param("params") SkuStdCostDetailDTO.HistoryPagingParamDTO params);
 }

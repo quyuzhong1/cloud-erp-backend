@@ -4,12 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 import java.util.List;
@@ -72,6 +73,11 @@ public class SkuStdCostDetailDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
 
     }
 
@@ -449,5 +455,36 @@ public class SkuStdCostDetailDTO implements Serializable {
         private List<String> ids;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
 
+        /**
+         * 导入类型，change导入变更，update导入更新
+         */
+        @NotNull(message = "导入类型不能为空")
+        private SkuStdCostImportTypeEnum importType;
+
+
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+    }
+
+    /**
+     * 报价分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HistoryPagingParamDTO extends SortDTO {
+
+        /**
+         * SKU ID
+         */
+        @NotNull(message = "SKU ID不能为空")
+        private String skuId;
+
+    }
 }

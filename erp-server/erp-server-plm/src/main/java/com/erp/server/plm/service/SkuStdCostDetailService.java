@@ -114,12 +114,12 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
     /**
      * 反审核
      *
-     * @param id
+     * @param entity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO disApprove(String id);
+    BatchResultDTO disApprove(SkuStdCostDetailEntity entity);
 
     /**
      * 删除
@@ -169,4 +169,12 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @param response
      */
     boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 报价历史列表查询
+     * @param dto
+     * @return
+     */
+    PagingVO<SkuStdCostDetailDTO.ListDTO> historyPaging(PagingDTO<SkuStdCostDetailDTO.HistoryPagingParamDTO> dto);
+
 }

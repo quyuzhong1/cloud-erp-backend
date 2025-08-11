@@ -355,8 +355,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO disApprove(String id) {
-        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单单数据"));
+    public BatchResultDTO disApprove(SkuStdCostDetailEntity entity) {
         SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
 
         // 反审核条件判断
@@ -364,7 +363,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateForDisApprove(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
@@ -578,6 +577,19 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Override
     public boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         return false;
+    }
+
+    @Override
+    public PagingVO<SkuStdCostDetailDTO.ListDTO> historyPaging(PagingDTO<SkuStdCostDetailDTO.HistoryPagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SkuStdCostDetailDTO.ListDTO> pageData = baseMapper.historyPaging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
 }

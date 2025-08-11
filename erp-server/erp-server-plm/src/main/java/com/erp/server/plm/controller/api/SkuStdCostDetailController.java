@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +50,11 @@ public class SkuStdCostDetailController extends BaseController {
 
     /**
      * 价格变更列表(校验列表是否可变更)
+     *
+     * @param dto
+     * @return ApiResult<List < SkuStdCostDetailDTO.ListDTO>>
      * @author Jim
      * @date: 2025-08-08
-     * @param dto
-     * @return ApiResult<List<SkuStdCostDetailDTO.ListDTO>>
      */
     @PostMapping("/changeList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -65,12 +67,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 价格变更
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 价格变更
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/change")
     @LogAction(value = LogActionEnum.INSERT, desc = "sku标准成本表价格变更")
     public ApiResult<List<BatchResultDTO>> changeAdd(@RequestBody @Validated List<SkuStdCostDetailDTO.ChangeDTO> dto) {
@@ -83,8 +86,8 @@ public class SkuStdCostDetailController extends BaseController {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = skuStdCostDetailService.changeAdd(changeDTO);
-            }catch (Exception e){
-                log.error("sku标准成本表价格变更失败",e);
+            } catch (Exception e) {
+                log.error("sku标准成本表价格变更失败", e);
                 String id = changeDTO.getId();
                 SkuStdCostDetailEntity entity = idEntityMap.get(changeDTO.getId());
                 if (ObjectUtil.isEmpty(entity)) {
@@ -100,28 +103,30 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "sku标准成本表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "plm:skuStdCost:update",
-        serviceClass = SkuStdCostService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:skuStdCost:update",
+            serviceClass = SkuStdCostService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SkuStdCostDetailDTO.UpdateDTO dto) {
         skuStdCostDetailService.update(dto);
         return success();
     }
 
     /**
-    * 获取状态统计
-    * @return
-    */
+     * 获取状态统计
+     *
+     * @return
+     */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -129,16 +134,17 @@ public class SkuStdCostDetailController extends BaseController {
             tableAlias = ""
     )
     public ApiResult<List<SkuStdCostDetailDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(skuStdCostDetailService.tabList(dto));
+        return success(skuStdCostDetailService.tabList(dto));
     }
 
     /**
-    * 列表查询
-    * @author Jim
-    * @date: 2025-08-08
-    * @param dto
-    * @return ApiResult<PagingVO<SkuStdCostDetailDTO.ListDTO>>
-    */
+     * 列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SkuStdCostDetailDTO.ListDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -151,12 +157,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 修改并提交审核
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<Void>
-    */
+     * 修改并提交审核
+     *
+     * @param dto
+     * @return ApiResult<Void>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -169,12 +176,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 提交审核
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 提交审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -184,16 +192,16 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "sku标准成本表提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		//数据查询放入外层，处理结果统一更新或单条更新
-		List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-		Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        //数据查询放入外层，处理结果统一更新或单条更新
+        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
+        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
                 submit = skuStdCostDetailService.submit(id);
-            }catch (Exception e){
-                log.error("sku标准成本单 提交审核失败",e);
+            } catch (Exception e) {
+                log.error("sku标准成本单 提交审核失败", e);
                 SkuStdCostDetailEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
@@ -208,12 +216,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 审核
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -223,16 +232,16 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "sku标准成本表审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// 数据查询放入外层，处理结果统一更新或单条更新
-		List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-		Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
+        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = skuStdCostDetailService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("sku标准成本单审核失败",e);
+                approveResult = skuStdCostDetailService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+            } catch (Exception e) {
+                log.error("sku标准成本单审核失败", e);
                 SkuStdCostDetailEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 审核失败");
@@ -247,12 +256,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 反审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -262,17 +272,22 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "sku标准成本表反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// 数据查询放入外层，处理结果统一更新或单条更新
-		List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-		Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
+        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
         for (String id : dto.getIds()) {
+            SkuStdCostDetailEntity entity = idEntityMap.get(id);
             BatchResultDTO disApproveResult;
+            if (null == entity){
+                disApproveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 反审核失败");
+                resultDTOS.add(disApproveResult);
+                continue;
+            }
             try {
-                disApproveResult = skuStdCostDetailService.disApprove(id);
-            }catch (Exception e){
-                log.error("sku标准成本单反审核失败",e);
-                SkuStdCostDetailEntity entity = idEntityMap.get(id);
+                disApproveResult = skuStdCostDetailService.disApprove(entity);
+            } catch (Exception e) {
+                log.error("sku标准成本单反审核失败", e);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
@@ -287,12 +302,13 @@ public class SkuStdCostDetailController extends BaseController {
 
 
     /**
-    * 删除
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 删除
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -302,16 +318,16 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "sku标准成本表删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// 数据查询放入外层，处理结果统一更新或单条更新
-		List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-		Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 数据查询放入外层，处理结果统一更新或单条更新
+        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
+        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = skuStdCostDetailService.delete(id);
-            }catch (Exception e){
-                log.error("sku标准成本单删除失败",e);
+            } catch (Exception e) {
+                log.error("sku标准成本单删除失败", e);
                 SkuStdCostDetailEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 删除失败");
@@ -326,12 +342,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 撤销
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 撤销
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -341,7 +358,7 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "sku标准成本表撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
         List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
         Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
@@ -349,8 +366,8 @@ public class SkuStdCostDetailController extends BaseController {
             BatchResultDTO cancelResult;
             try {
                 cancelResult = skuStdCostDetailService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("sku标准成本单撤回流程失败",e);
+            } catch (Exception e) {
+                log.error("sku标准成本单撤回流程失败", e);
                 SkuStdCostDetailEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 撤回流程失败");
@@ -365,12 +382,13 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 详情
-    * @author Jim
-    * @date:  2025-08-08
-    * @param id
-    * @return ApiResult<SkuStdCostDetailDTO.ViewDTO>>
-    */
+     * 详情
+     *
+     * @param id
+     * @return ApiResult<SkuStdCostDetailDTO.ViewDTO>>
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -383,13 +401,14 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-    * 导出Excel数据
-    * @author Jim
-    * @date:  2025-08-08
-    * @param dto
-    * @param response
-    * @return
-    */
+     * 导出Excel数据
+     *
+     * @param dto
+     * @param response
+     * @return
+     * @author Jim
+     * @date: 2025-08-08
+     */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -404,24 +423,25 @@ public class SkuStdCostDetailController extends BaseController {
 
     /**
      * sku标准成本-导入
-     * @author Jim
-     * @date:  2025-08-08
-     * @param excelFile
+     *
      * @param response
+     * @author Jim
+     * @date: 2025-08-08
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "sku标准成本-导入")
     @PostMapping("/importFile")
-    public ApiResult<Object> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        boolean flag = skuStdCostDetailService.importFile(excelFile, response);
+    public ApiResult<Object> importFile(@ModelAttribute @Validated SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response) {
+//        boolean flag = skuStdCostDetailService.importFile(importDTO, response);
+        boolean flag = true;
         return flag ? this.success() : this.failure();
     }
 
     /**
      * 下载导入模板
      *
-     * @author Jim
-     * @date:  2025-08-08
      * @param response
+     * @author Jim
+     * @date: 2025-08-08
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
     @GetMapping("/downloadTemplate")
@@ -430,5 +450,22 @@ public class SkuStdCostDetailController extends BaseController {
         String excelName = "templateSkuStdCostDetail.xlsx";
         ExcelUtil.downloadTemplate(path, excelName, response);
         return success();
+    }
+
+    /**
+     * 报价历史列表查询
+     * @author Jim
+     * @date: 2025-08-08
+     * @param dto
+     * @return ApiResult<PagingVO<SkuStdCostDetailDTO.ListDTO>>
+     */
+    @PostMapping("/historyPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:skuStdCost:paging",
+            tableAlias = ""
+    )
+    public ApiResult<PagingVO<SkuStdCostDetailDTO.ListDTO>> historyPaging(@RequestBody @Validated PagingDTO<SkuStdCostDetailDTO.HistoryPagingParamDTO> dto) {
+        return success(skuStdCostDetailService.historyPaging(dto));
     }
 }
