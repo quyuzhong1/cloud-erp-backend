@@ -86,6 +86,11 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
      */
     @TableField("exec_system")
     private String execSystem;
+    /**
+     * restcloud执行流程api路径
+     */
+    @TableField("exec_url")
+    private String execUrl;
 
     public static final String SYSTEM_ID = "system_id";
 

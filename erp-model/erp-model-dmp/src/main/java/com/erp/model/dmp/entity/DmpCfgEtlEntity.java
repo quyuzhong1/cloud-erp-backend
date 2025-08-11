@@ -95,6 +95,11 @@ public class DmpCfgEtlEntity extends BaseEntity<DmpCfgEtlEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+     * restcloud执行流程api路径
+     */
+    @TableField("exec_url")
+    private String execUrl;
 
 
     public static final String DISABLED = "disabled";
