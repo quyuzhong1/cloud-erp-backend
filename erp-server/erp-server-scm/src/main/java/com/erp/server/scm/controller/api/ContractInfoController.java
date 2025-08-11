@@ -316,11 +316,6 @@ public class ContractInfoController extends BaseController {
     * @return ApiResult<ContractInfoDTO.ViewDTO>>
     */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "scm:contractInfo:view",
-            serviceClass = ContractInfoService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<ContractInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(contractInfoService.view(id));

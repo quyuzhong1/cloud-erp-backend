@@ -116,11 +116,6 @@ public class TemplateManagementController extends BaseController {
      * @return ApiResult<AfterSaleDTO.ViewDTO>>
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "sys:templateManagement:view",
-            serviceClass = TemplateManagementService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<TemplateManagementDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(templateManagementService.view(id));

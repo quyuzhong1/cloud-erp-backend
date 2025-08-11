@@ -14,7 +14,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum TemplateManagementBizTypeEnum implements EnumMessage {
     PURCHASEFRAMEWORK("purchaseFramework", "采购框架合同"),
-	SOCONTRACT("soContract", "销售订单合同"),
+    PURCHASEORDER("purchaseOrder", "采购订单合同"),
+    SALESORDER("salesOrder", "销售订单合同"),
     ;
     /**
      * 类型
