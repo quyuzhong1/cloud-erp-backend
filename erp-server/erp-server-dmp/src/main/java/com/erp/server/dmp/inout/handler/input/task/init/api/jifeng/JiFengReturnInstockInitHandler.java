@@ -58,7 +58,7 @@ public class JiFengReturnInstockInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
                 .list();
-        if(CollUtil.isEmpty(overseasProviderEntityList)) {
+        if (CollUtil.isEmpty(overseasProviderEntityList)) {
             throw new ServiceException("极风授权信息不存在");
         }
         // 取对应授权ID授权

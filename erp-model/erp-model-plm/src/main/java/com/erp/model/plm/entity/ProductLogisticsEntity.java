@@ -253,6 +253,12 @@ public class ProductLogisticsEntity extends BaseEntity<ProductLogisticsEntity> i
     @TableField("second_qty")
     private BigDecimal secondQty;
 
+    /**
+     * LogisticsProductCustomsStatusEnum 报关信息状态 not:待维护 completed:已维护
+     */
+    @TableField("customs_status")
+    private String customsStatus;
+
     @TableField(exist = false)
     private String skuNo;
 

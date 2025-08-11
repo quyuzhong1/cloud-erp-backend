@@ -102,4 +102,130 @@
           </if>
     </select>
 
+    <sql id="paging_sql">
+        SELECT
+        pc.ID AS ID,
+        pc.create_user_id AS createUserId,
+        pc.create_user_name AS createUserName,
+        pc.create_time AS createTime,
+        pc.update_user_id AS updateUserId,
+        pc.update_user_name AS updateUserName,
+        pc.update_time AS updateTime,
+        pc.VERSION AS VERSION,
+        pc.is_deleted AS isDeleted,
+        pd.ID AS skuId,
+        pd.sku_no AS skuNo,
+        pd.images_url AS imagesUrl,
+        pl.declare_chinese_name AS declareChineseName,
+        pl.customs_code AS chinaCustomsCode,
+        pc.destination_customs_en_name as destinationCustomsEnName,
+        pc.country as country,
+        pc.country_name as countryName,
+        pc.to_declare_price AS toDeclarePrice,
+        pc.to_currency AS toCurrency,
+        pc.to_currency_symbol AS toCurrencySymbol,
+        pc.customs_code AS destinationCustomsCode,
+        pc.tax_rate as taxRate,
+        pc.destination_vat_rate as destinationVatRate,
+        pc.destination_additional_duty_rate as destinationAdditionalDutyRate,
+        pc.destination_anti_dumping_duty_rate as destinationAntiDumpingDutyRate,
+        pc.destination_other_tax_rate as destinationOtherTaxRate,
+        pc.TYPE,
+        pl.declare_model as declareModel,
+        pl.declare_element as declareElement
+        FROM
+        product_customs pc
+        LEFT JOIN product_detail pd ON pc.sku_id = pd.ID
+        AND pd.is_deleted =
+        FALSE LEFT JOIN product_info pi ON pi.ID = pd.product_id
+        AND pi.is_deleted =
+        FALSE LEFT JOIN product_logistics pl ON pl.sku_id = pc.sku_id
+        AND pl.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        and  pc.is_deleted = FALSE
+        and pc.type = 'clearanceCustoms'
+        <if test="params.ids != null and params.ids.size > 0">
+            and pc.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pc.sku_id desc,
+        CASE WHEN pc.country = 'default' THEN 0 ELSE 1 END ASC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductCustomsDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="view" resultType="com.erp.model.plm.dto.ProductCustomsDTO$ViewDetailDTO">
+        SELECT
+        pc.ID AS ID,
+        pd.ID AS skuId,
+        pd.sku_no AS skuNo,
+        pd.images_url AS imagesUrl,
+        pl.declare_chinese_name AS declareName,
+        pl.customs_code AS chinaCustomsCode,
+        pc.country AS country,
+        pc.country_name AS countryName,
+        pc.to_declare_price AS toDeclarePrice,
+        pc.to_currency AS toCurrency,
+        pc.to_currency_symbol AS toCurrencySymbol,
+        pc.customs_code AS destinationCustomsCode,
+        pc.tax_rate as taxRate,
+        pc.destination_vat_rate as destinationVatRate,
+        pc.destination_additional_duty_rate as destinationAdditionalDutyRate,
+        pc.destination_anti_dumping_duty_rate as destinationAntiDumpingDutyRate,
+        pc.destination_other_tax_rate as destinationOtherTaxRate,
+        pc.destination_customs_en_name as destinationCustomsEnName,
+        pl.declare_model as declareModel,
+        pl.declare_element as declareElement
+        FROM
+        product_detail pd
+        LEFT JOIN product_customs pc ON pc.sku_id = pd.ID
+        AND pd.is_deleted =
+        FALSE LEFT JOIN product_info pi ON pi.ID = pd.product_id
+        AND pi.is_deleted =
+        FALSE LEFT JOIN product_logistics pl ON pl.sku_id = pc.sku_id
+        AND pl.is_deleted = FALSE
+        WHERE
+        pc.is_deleted = FALSE
+        and pc.type = 'clearanceCustoms'
+        and pd.id = #{skuId}
+        ORDER BY
+            CASE WHEN pc.country = 'default' THEN 0 ELSE 1 END ASC,
+            pc.id ASC
+    </select>
+    <select id="listByIds" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+        SELECT
+        pc.id,
+        pd.id AS skuId,
+        pd.images_url,
+        pd.sku_no,
+        pc.country,
+        pc.country_name as countryName,
+        pc.to_declare_price as toDeclarePrice,
+        pc.to_currency as toCurrency,
+        pc.to_currency_symbol as toCurrencySymbol,
+        pc.customs_code,
+        pc.tax_rate,
+        pc.type
+        FROM product_customs pc
+        LEFT JOIN product_detail pd ON pc.sku_id = pd."id" AND pd.is_deleted = FALSE
+        WHERE pc.is_deleted = FALSE
+        and pc.id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

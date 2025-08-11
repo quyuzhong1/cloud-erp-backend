@@ -68,6 +68,9 @@ public class DmpInputWeiShiWarehouseInitHandler extends DmpInputInitHandler{
 			throw new ServiceException("纬狮对应授权ID信息不存在");
 		}
 		WeiShiBaseResp<List<WeiShiWarehouseResp>> resp = weiShiService.getWarehouseList(overseasProviderEntity.getAuthJson());
+		if (null == resp || resp.getData() == null) {
+			throw new ServiceException("纬狮获取仓库列表失败: 响应结果为空");
+		}
 		if(!resp.getCode().equals(200)){
 			throw new ServiceException("纬狮获取仓库列表失败: " + resp.getMsg());
 		}
