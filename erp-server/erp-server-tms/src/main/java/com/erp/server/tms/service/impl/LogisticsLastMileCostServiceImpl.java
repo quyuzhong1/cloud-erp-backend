@@ -283,7 +283,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
             		&& CharSequenceUtil.equals(obj.getPayType(),excelDTO.getPayType()))
                     .findFirst().orElse(null);
-
+            if (ImportTypeEnum.ADD.getCode().equals(importType) && Objects.isNull(logisticsBillCostEntity)){
+                logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())).findFirst().orElse(null);
+            }
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
