@@ -73,6 +73,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TemplateManagementDTO.AddDTO addDTO) {
+        if(addDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
+            throw new ServiceException("采购框架合同无法创建模板");
+        }
         TemplateManagementEntity templateManagementEntity = new TemplateManagementEntity();
         BeanMapperUtils.copy(addDTO, templateManagementEntity);
 
@@ -108,6 +111,9 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(TemplateManagementDTO.UpdateDTO addOrUpdateDTO) {
+        if(addOrUpdateDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
+            throw new ServiceException("采购框架合同无法创建模板");
+        }
         TemplateManagementEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
         TemplateManagementEntity templateManagementEntity = BeanMapperUtils.map(TemplateManagementEntity.class, addOrUpdateDTO);
@@ -131,7 +137,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         }
         // 记录操作日志
         log.info("编辑 开始记录模板管理日志数据，单号：【{}】", templateManagementEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), templateManagementEntity.getCode(), "模板管理");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "模板管理");
         operateLogService.addModuleOperateLogByObj(old, templateManagementEntity, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), templateManagementEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -215,7 +221,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         List<TemplateManagementEntity> list = listByIds(ids);
         Map<String, TemplateManagementEntity> idEntityMap = list.stream().collect(Collectors.toMap(TemplateManagementEntity::getId, w -> w));
 
-        List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, ids).list();
+        List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).in(ContractInfoEntity::getTemplateId, ids).list();
         Map<String, ContractInfoEntity> contractInfoMap = contractInfoList.stream().collect(Collectors.toMap(ContractInfoEntity::getTemplateId, Function.identity(),(o1,o2)->o1));
 
         for (String id : ids) {
@@ -243,12 +249,15 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @Override
     public BatchResultDTO setDisabled(String id, Boolean disabledStatus) {
         TemplateManagementEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模板管理"));
-
+        List<ContractInfoEntity> contractInfoList = FeignQuery.create(ContractInfoEntity.class).eq(ContractInfoEntity::getTemplateId, id).list();
+        if(CollUtil.isNotEmpty(contractInfoList)){
+            return BatchResultDTO.fail(id, entity.getName(), "合同管理已引用不可设置停用");
+        }
         entity.setDisabled(disabledStatus);
         super.updateById(entity);
 
         // 日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新启用状态由{}为{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", disabledStatus ? "停用" : "启用", disabledStatus ? "启用" : "停用" );
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新启用状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", disabledStatus ? "停用" : "启用", disabledStatus ? "启用" : "停用" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.UPDATE);
     }
@@ -271,7 +280,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         super.updateById(entity);
 
         // 日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新默认状态由{}为{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", isDefault ? "默认" : "不默认", newValue ?  "默认" : "不默认" );
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据更新默认状态由【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模板管理", isDefault ? "默认" : "不默认", newValue ?  "默认" : "不默认" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TEMPLATE_MANAGEMENT.getCode(), entity.getId(), "更新模板管理");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.UPDATE);
     }
