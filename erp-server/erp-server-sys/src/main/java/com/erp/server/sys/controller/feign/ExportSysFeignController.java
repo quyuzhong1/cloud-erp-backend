@@ -61,13 +61,8 @@ public class ExportSysFeignController {
     }
 
     @PostMapping("/exportTemplateManagement")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "sys:templateManagement:export",
-            tableAlias = "tm"
-    )
     @WebAdvanceQuery(handler = TemplateManagementQueryHandler.class)
-    public PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(PagingDTO<TemplateManagementDTO.PagingParamDTO> dto){
+    public PagingVO<TemplateManagementDTO.ListDTO> exportTemplateManagement(@RequestBody  PagingDTO<TemplateManagementDTO.PagingParamDTO> dto){
         return templateManagementService.paging(dto);
     }
 }
