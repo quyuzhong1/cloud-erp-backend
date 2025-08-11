@@ -269,10 +269,10 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
         Boolean isDefault = entity.getIsDefault();
         Boolean newValue = isDefault ? Boolean.FALSE : Boolean.TRUE;
         if(Boolean.TRUE.equals(newValue)){
-            String type = entity.getType();
-            Integer count = lambdaQuery().eq(TemplateManagementEntity::getType, type).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
+            String bizType = entity.getBizType();
+            Integer count = lambdaQuery().eq(TemplateManagementEntity::getBizType, bizType).eq(TemplateManagementEntity::getIsDefault, Boolean.TRUE).count();
             if(count > 0){
-                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementTypeEnum.getName(type));
+                throw new ServiceException(ApiError.ERROR_9057,TemplateManagementBizTypeEnum.getName(bizType));
             }
         }
 
