@@ -8,14 +8,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.damai.dto.request.DaMaiCalculateFeeRequest;
-import com.sdk.wms.damai.dto.request.DaMaiCancelInboundRequest;
-import com.sdk.wms.damai.dto.request.DaMaiCreateInboundRequest;
+import com.sdk.wms.damai.dto.request.*;
 import com.sdk.wms.damai.dto.response.*;
 import com.sdk.wms.damai.service.DaMaiService;
-import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +20,6 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -205,12 +201,68 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        DaMaiCreateOrderRequest daMaiCreateOrderRequest = this.buildOrderDto(createOutboundReq);
+        DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(resp.getData().getSoNo());
     }
+
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return null;
+        DaMaiCancelOrderRequest daMaiCancelOrderRequest = new DaMaiCancelOrderRequest();
+        daMaiCancelOrderRequest.setSoNo(cancelOutboundReq.getOrderCode());
+        DaMaiBaseResp<String> resp = daMaiService.cancelOrder(ThirdWarehouseContext.getAuthMap(),daMaiCancelOrderRequest);
+        if(!isSuccess(resp)){
+            return failure(resp.getMsg());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+    }
+
+    private DaMaiCreateOrderRequest buildOrderDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+
+        List<DaMaiCreateOrderRequest.SoSkuListDTO> soSkuList = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item -> {
+            DaMaiCreateOrderRequest.SoSkuListDTO soSkuListDTO = DaMaiCreateOrderRequest.SoSkuListDTO.builder()
+                    .custSkuCode(item.getProductSku())
+                    .skuQty(item.getQuantity())
+                    .build();
+            soSkuList.add(soSkuListDTO);
+        });
+        DaMaiCreateOrderRequest daMaiCreateOrderRequest = DaMaiCreateOrderRequest.builder()
+                .carriersCode(createOutboundReq.getShippingMethod())
+                .custRefNo(createOutboundReq.getReferenceNo())
+                .whCode(createOutboundReq.getWarehouseCode())
+                .shippingType(createOutboundReq.isOnlineFlag()?"CUSTOMER_PROVIDE":"CHANNEL")
+                .endProviderCode(createOutboundReq.getLastMileCarrier())
+                .trackingNoList(createOutboundReq.isOnlineFlag()?
+                        Collections.singletonList(createOutboundReq.getTrackingNo()):null)
+                .consigneeName(createOutboundReq.getReceiverInfo().getName())
+                .consigneeTel(createOutboundReq.getReceiverInfo().getPhone())
+                .consigneeTelExt(createOutboundReq.getReceiverInfo().getBuyerNumber())
+                .consigneeEmail(createOutboundReq.getReceiverInfo().getEmail())
+                .consigneeCountryCode(createOutboundReq.getReceiverInfo().getCountryCode())
+                .consigneeProvince(createOutboundReq.getReceiverInfo().getProvince())
+                .consigneeCity(createOutboundReq.getReceiverInfo().getCity())
+                .consigneeAddress1(StringUtils.isBlank(createOutboundReq.getReceiverInfo().getAddress1())?
+                        StringUtils.isBlank(createOutboundReq.getReceiverInfo().getAddress2())?createOutboundReq.getReceiverInfo().getAddress3():
+                        createOutboundReq.getReceiverInfo().getAddress2():createOutboundReq.getReceiverInfo().getAddress1())
+                .consigneeAddress2(createOutboundReq.getReceiverInfo().getAddress2())
+                .consigneeAddress3(createOutboundReq.getReceiverInfo().getAddress3())
+                .consigneePostalCode(createOutboundReq.getReceiverInfo().getZipCode())
+                .label(createOutboundReq.isOnlineFlag()? DaMaiCreateOrderRequest.LabelDTO.builder()
+                        .fileType("pdf")
+                        .fileDate(createOutboundReq.getLabelData())
+                        .build():null)
+                .attachment(StringUtils.isNotBlank(createOutboundReq.getInvoiceData())? DaMaiCreateOrderRequest.Attachment.builder()
+                        .fileType("pdf")
+                        .fileDate(createOutboundReq.getInvoiceData())
+                        .build():null)
+                .soSkuList(soSkuList)
+                .build();
+        return daMaiCreateOrderRequest;
     }
 
     @Override

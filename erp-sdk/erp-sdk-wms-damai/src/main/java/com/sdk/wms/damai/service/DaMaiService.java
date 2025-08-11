@@ -260,6 +260,48 @@ public class DaMaiService {
         return DaMaiUtils.parsePageToResp(bodyStr, new TypeReference<DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>>>() {});
     }
 
+    /**
+     * 创建出库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<DaMaiCreateOrderResp> createOrder(Map<String,Object> authMap, DaMaiCreateOrderRequest daMaiCreateOrderRequest){
+        String path = "/omsService/non/soApi/createOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiCreateOrderRequest));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCreateOrderRequest), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        return DaMaiUtils.parseToResp(bodyStr, DaMaiCreateOrderResp.class);
+    }
+
+    /**
+     * 取消入库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<String> cancelOrder(Map<String,Object> authMap, DaMaiCancelOrderRequest daMaiCancelOrderRequest){
+        String path = "/omsService/non/soApi/cancelOrder";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(daMaiCancelOrderRequest));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiCancelOrderRequest), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        DaMaiBaseResp<String> response = DaMaiUtils.parseToResp(bodyStr,String.class);
+        return response;
+    }
+
+    /**
+     * 查询入库单
+     * @param authMap
+     * @return
+     */
+    public DaMaiBaseResp<List<DaMaiGetOrderResp>> getOrderList(Map<String,Object> authMap, DaMaiGetOrderRequest daMaiGetOrderRequest){
+        String path = "/omsService/non/soApi/getOrderList";
+        Map<String, String> headerMap = buildHearderMap(authMap);
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONUtil.toJsonStr(daMaiGetOrderRequest), headerMap);
+        DaMaiBaseResp<List<DaMaiGetOrderResp>> response = DaMaiUtils.parseToResp(bodyStr,new TypeReference<DaMaiBaseResp<List<DaMaiGetOrderResp>>>() {});
+        return response;
+    }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("appToken", authMap.get("appToken").toString());

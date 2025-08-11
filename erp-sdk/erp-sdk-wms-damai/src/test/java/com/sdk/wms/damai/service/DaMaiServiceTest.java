@@ -108,7 +108,7 @@ public class DaMaiServiceTest {
     @Test
     public void calculateFee() {
         DaMaiCalculateFeeRequest daMaiCalculateFeeRequest = DaMaiCalculateFeeRequest.builder()
-                .consigneeCountryCode("CN")
+                .consigneeCountryCode("JIAYOU-001")
                 .grossWeight("0.5")
                 .length("12")
                 .width("11")
@@ -118,6 +118,68 @@ public class DaMaiServiceTest {
                 .podFlag("0")
                 .build();
         DaMaiPageBaseResp<List<DaMaiCalculateFeeResp>> resp = daMaiService.calculateFee(authMap,daMaiCalculateFeeRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void createOrder() {
+        DaMaiCreateOrderRequest daMaiCreateOrderRequest = DaMaiCreateOrderRequest.builder()
+                .carriersCode("JIAYOU-001")
+                .custRefNo("wj20250801111")
+                .whCode("CAVCR1")
+                .shippingType("CHANNEL")
+                .endProviderCode("")
+                .consigneeName("test")
+                .consigneeCountryCode("CA")
+                .consigneeProvince("California")
+                .consigneeCity("Los Angeles")
+                .consigneeAddress1("123 Main St")
+                .soSkuList(Arrays.asList(
+                        DaMaiCreateOrderRequest.SoSkuListDTO.builder()
+                                .custSkuCode("TEST-PHONE")
+                                .skuQty(1)
+                                .build(),
+                        DaMaiCreateOrderRequest.SoSkuListDTO.builder()
+                                .custSkuCode("TEST-001")
+                                .skuQty(2)
+                                .build()
+                ))
+//                .soSkuDeclaredList(Arrays.asList(
+//                        DaMaiCreateOrderRequest.SoSkuDeclaredListDTO.builder()
+//                                .skuCode("TEST-PHONE")
+//                                .skuNameEn("Test Phone")
+//                                .declaredWeight("123")
+//                                .declaredValue("100.00")
+//                                .skuQty(1)
+//                                .build(),
+//                        DaMaiCreateOrderRequest.SoSkuDeclaredListDTO.builder()
+//                                .skuCode("TEST-001")
+//                                .skuNameEn("Test Item 001")
+//                                .declaredWeight("123")
+//                                .declaredValue("50.00")
+//                                .skuQty(1)
+//                                .build()
+//                ))
+                .build();
+        DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(authMap,daMaiCreateOrderRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+
+
+    @Test
+    public void cancelOrder() {
+        DaMaiCancelOrderRequest daMaiCancelOrderRequest = new DaMaiCancelOrderRequest();
+        daMaiCancelOrderRequest.setSoNo("ODP8D202508110001");
+        DaMaiBaseResp<String> resp = daMaiService.cancelOrder(authMap,daMaiCancelOrderRequest);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void getOrderList() {
+        DaMaiGetOrderRequest daMaiCancelOrderRequest = new DaMaiGetOrderRequest();
+        daMaiCancelOrderRequest.setCustRefNoList(Arrays.asList("wj2025080801","wj20250801111","OD-7DX-20250718-0001"));
+        DaMaiBaseResp<List<DaMaiGetOrderResp>>  resp = daMaiService.getOrderList(authMap,daMaiCancelOrderRequest);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }

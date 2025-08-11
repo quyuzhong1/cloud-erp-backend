@@ -1,4 +1,4 @@
-package com.erp.server.dmp.inout.handler.output.task.mq.jifeng;
+package com.erp.server.dmp.inout.handler.output.task.mq.damai;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -10,6 +10,7 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
+import com.sdk.wms.damai.enums.DaMaiEnums;
 import com.sdk.wms.jifeng.enums.JiFengEnums;
 import io.seata.common.util.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -19,7 +20,7 @@ import java.util.*;
 
 @Service
 @Scope("prototype")
-public class JiFengOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class DaMaiOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -71,10 +72,13 @@ public class JiFengOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
     		return null;
     	}
     	String orderStatus = dmpThirdOutboundEntity.getOrderStatus();
-		String erpOrderStatus = JiFengEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
+		String erpOrderStatus = DaMaiEnums.OrderStatusEnum.getErpOrderStatus(orderStatus);
 		if(StringUtils.isBlank(erpOrderStatus)) {
 			return null;
 		}
+		String interceptStatus = dmpThirdOutboundEntity.getInterceptStatus();
+		String erpInterceptStatus = JiFengEnums.InterceptStatusEnum.getErpOrderStatus(interceptStatus);
+
     	PlatformOutboundDTO platformOutboundDTO = BeanUtil.copyProperties(dmpThirdOutboundEntity, PlatformOutboundDTO.class);
     	String sourcePlatform = dmpThirdOutboundEntity.getSourcePlatform();
 		platformOutboundDTO.setPlatform(sourcePlatform);
@@ -83,6 +87,7 @@ public class JiFengOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(JiFengEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
+		platformOutboundDTO.setInterceptStatus(erpInterceptStatus);
 
         return platformOutboundDTO;
     }
