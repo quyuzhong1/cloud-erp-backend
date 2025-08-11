@@ -77,7 +77,7 @@ public class ShopifySoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+                return soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
             } catch (Exception e) {
                 log.error("[虾皮生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -87,6 +87,7 @@ public class ShopifySoB2cHandle extends AbstractSoB2cHandle  {
                 addError.setMainId(mainEntity.getId());
                 addError.setMessage(e.getMessage());
                 soB2cErrorService.add(addError);
+                return false;
             }
         }
         return true;

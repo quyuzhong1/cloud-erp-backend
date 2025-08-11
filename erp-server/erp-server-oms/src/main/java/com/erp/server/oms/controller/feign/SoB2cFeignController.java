@@ -55,6 +55,8 @@ public class SoB2cFeignController extends BaseController {
     private SoB2cService soB2cService;
 
     @Resource
+    private SoB2cCoreService soB2cCoreService;
+    @Resource
     private SoB2cReceiverService soB2cReceiverService;
 
     @Resource
@@ -920,6 +922,15 @@ public class SoB2cFeignController extends BaseController {
     public void clearOutDateBySoIds(@RequestBody List<String> clearOutDateSoIds) {
         soB2cService.clearOutDateBySoIds(clearOutDateSoIds);
     }
+
+    /**
+     * 清空销售出库单的单据日期
+     */
+    @PostMapping("/handleSoOutStock")
+    public Boolean handleSoOutStock(@RequestBody String soId) {
+       return soB2cCoreService.handleSoOutStock(soId);
+    }
+
     /**
      * 销售订单审核
      * @Author Luo_WG

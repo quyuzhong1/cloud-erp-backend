@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -471,10 +472,51 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
             }
         }catch (Exception e){
+            entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
             entity.setIsNotOutbound(false);
             soB2cService.updateById(entity);
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    @Override
+    public Boolean handleSoOutStock(String soId) {
+        SoB2cEntity soB2cEntity = soB2cService.getById(soId);
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST, soId);
+        }
+        //明细
+        List<SoB2cDetailEntity> thisDetailList = soB2cDetailService.listByMainId(soId);
+        //出库
+        String outPutClass =  "";
+        String sourceCode = "";
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }  else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "MercadoLocalOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        } else if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputShopeeOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getPlatformCode();
+        }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
+            outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+            outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
+            sourceCode = soB2cEntity.getThirdCode();
+        }
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
+        PlatformOrderDTO dto = null;
+        if (CollectionUtils.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordEntityList.get(0);
+            dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+            dto.setBillDate(LocalDate.now());
+        }
+        soB2cEntity.setSoOutstockDate(LocalDate.now());
+        soB2cEntity.setDetailEntityList(thisDetailList);
+        soB2cEntity.setCoverOutDate(true);
+        return SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
     }
 }

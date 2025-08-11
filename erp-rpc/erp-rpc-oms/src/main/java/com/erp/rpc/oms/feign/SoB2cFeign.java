@@ -723,4 +723,8 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2cError/listSoB2cErrorByMainIds")
     List<SoB2cErrorEntity> listSoB2cErrorByMainIds(@RequestBody List<String> errorSoIds);
+
+    @PostMapping("feign/soB2c/handleSoOutStock")
+    Boolean handleSoOutStock(@RequestBody String soId);
+
 }

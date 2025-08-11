@@ -929,6 +929,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
         }
         for (SoOutstockDetailEntity detailEntity : detailList) {
+            String symbol = currencyList.stream().filter(c -> c.getId().equals(detailEntity.getCurrency())).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            detailEntity.setCurrencySymbol(symbol);
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             BigDecimal price = BigDecimal.ZERO;
@@ -975,7 +977,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setAmount(amount);
             String currency = soDetailEntity.getCurrency();
             detailEntity.setCurrency(currency);
-            String symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
+            symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
             BigDecimal amountLocalCurrency=amount;
             if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
