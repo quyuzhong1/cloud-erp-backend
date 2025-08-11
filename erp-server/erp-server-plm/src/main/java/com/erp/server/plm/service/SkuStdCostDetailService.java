@@ -184,4 +184,11 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @return
      */
     Map<String, SkuStdCostDetailDTO.ListDTO> mapLastBySkuIds(List<String> skuIds);
+
+    /**
+     * 组合SKU重算标准成本
+     * @param listDTO
+     * @return
+     */
+    BatchResultDTO comboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO);
 }

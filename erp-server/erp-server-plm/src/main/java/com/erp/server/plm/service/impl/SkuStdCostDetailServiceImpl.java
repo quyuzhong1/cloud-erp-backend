@@ -594,4 +594,23 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         return lastList.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getSkuId, e -> e));
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO comboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO) {
+        validateComboRecalculate(listDTO);
+
+        // TODO 重算组合品单据并更新
+
+        return BatchResultDTO.success(listDTO.getId(), listDTO.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    private void validateComboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO) {
+        if (!listDTO.getIsComb()){
+            ServiceException.runError("仅支持组合品价格重算");
+        }
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(listDTO.getApproveStatus())){
+            ServiceException.runError("仅支持【待提交】组合品价格重算");
+        }
+    }
+
 }
