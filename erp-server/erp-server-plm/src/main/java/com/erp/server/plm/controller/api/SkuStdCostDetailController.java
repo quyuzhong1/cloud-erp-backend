@@ -415,4 +415,17 @@ public class SkuStdCostDetailController extends BaseController {
         return flag ? this.success() : this.failure();
     }
 
+    /**
+     * 下载导入模板
+     *
+     * @author Jim
+     * @date:  2025-08-08
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+        skuStdCostDetailService.downloadTemplate(response);
+        return success();
+    }
 }

@@ -170,4 +170,12 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
+    /**
+     * 下载导入模板
+     *
+     * @author Jim
+     * @date:  2025-08-08
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
 }
