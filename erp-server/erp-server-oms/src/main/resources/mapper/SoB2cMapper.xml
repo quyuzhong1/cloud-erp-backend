@@ -380,12 +380,12 @@
         left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join erp_wms.third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
+        left join (SELECT  so_id, GROUP_CONCAT(code, ',') AS code FROM erp_wms.third_warehouse_delivery  WHERE is_deleted = false   AND status != 'cancelDelivery' GROUP BY so_id) twd on twd.so_id = sb2c.id
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join foreign_third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
+        left join (SELECT so_id,STRING_AGG(code, ',') AS code FROM foreign_third_warehouse_delivery  where is_deleted = false  AND status != 'cancelDelivery' GROUP BY so_id) twd on twd.so_id = sb2c.id
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         where
@@ -1118,12 +1118,12 @@
         left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join erp_wms.third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
+        left join (SELECT  so_id, GROUP_CONCAT(code, ',') AS code FROM erp_wms.third_warehouse_delivery  WHERE is_deleted = false   AND status != 'cancelDelivery' GROUP BY so_id) twd on twd.so_id = sb2c.id
         left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join foreign_third_warehouse_delivery twd on twd.so_id = sb2c.id and twd.is_deleted = false and twd.status != 'cancelDelivery'
+        left join (SELECT so_id,STRING_AGG(code, ',') AS code FROM foreign_third_warehouse_delivery  where is_deleted = false  AND status != 'cancelDelivery' GROUP BY so_id) twd on twd.so_id = sb2c.id
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         </if>
         <where>

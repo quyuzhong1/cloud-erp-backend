@@ -420,6 +420,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         //是否虚拟仓缺货
         Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        //发货单号
+        Boolean deliveryCode = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("deliveryCode")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+
         if (Objects.nonNull(isOutStock)) {
             return this.filterIsOutStockList(pagingParamDTO, isOutStock, params.getIsFullyManaged());
         } else if (Objects.nonNull(isVirtualOutStock)) {
