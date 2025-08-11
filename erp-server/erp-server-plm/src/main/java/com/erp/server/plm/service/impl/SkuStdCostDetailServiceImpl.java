@@ -3,10 +3,10 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -29,7 +29,9 @@ import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.enums.SkuStdCostTabEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
 import com.erp.server.plm.service.CommonService;
@@ -37,19 +39,13 @@ import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SkuStdCostService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,11 +68,55 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private CommonService commonService;
     @Resource
     private SkuStdCostService skuStdCostService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     @Override
     public List<SkuStdCostDetailDTO.ListDTO> changeList(BaseIdsDTO.IdsDTO dto) {
-        return Collections.emptyList();
+        List<SkuStdCostDetailDTO.ListDTO> list = baseMapper.listDTOByIds(dto);
+        // 校验单据是否可以变更
+        validateChange(list, dto);
+        // 填充信息
+        fillList(list);
+        return list;
+    }
+
+    /**
+     * 校验单据是否可以变更
+     */
+    private void validateChange(List<SkuStdCostDetailDTO.ListDTO> list, BaseIdsDTO.IdsDTO dto) {
+        Map<String, SkuStdCostDetailDTO.ListDTO> listMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, e -> e));
+
+        // 查询对应sku最新可变更记录
+        Map<String, SkuStdCostDetailDTO.ListDTO> lastListMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> skuIds = list.stream().map(SkuStdCostDetailDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+            List<SkuStdCostDetailDTO.ListDTO> lastList = baseMapper.lastList(skuIds, ApproveStatusEnum.APPROVE.getCode());
+            lastListMap = lastList.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getSkuId, e -> e));
+        }
+
+        for (String id : dto.getIds()) {
+            SkuStdCostDetailDTO.ListDTO listDTO = listMap.get(id);
+            if (null == listDTO) {
+                ServiceException.runError("id={}:记录不存在",id);
+            }
+            // 1.校验状态：仅支持【已审核】变更
+            if (!ApproveStatusEnum.APPROVE.getCode().equalsIgnoreCase(listDTO.getApproveStatus())){
+                ServiceException.runError("SKU={}:仅支持【已审核】变更", listDTO.getSkuNo());
+            }
+            // 2.校验日期：生效日期必须大于历史日期
+            // 3.限制类型：组合品不支持变更
+            if (listDTO.getIsComb()){
+                ServiceException.runError("SKU={}:组合品不支持变更", listDTO.getSkuNo());
+            }
+            // 4.限制历史：历史单据不支持变更-只有最新的SKU支持变更
+            SkuStdCostDetailDTO.ListDTO lastListDTO = lastListMap.get(listDTO.getSkuId());
+            if (null != lastListDTO && !listDTO.getId().equals(lastListDTO.getId())) {
+                ServiceException.runError("历史单据不支持变更-只有最新的SKU支持变更:sku={},最新生效时间={}", listDTO.getSkuNo(), lastListDTO.getEffectiveDate());
+            }
+        }
+
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -117,16 +157,26 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        SkuStdCostDetailEntity SkuStdCostDetailEntity = BeanMapperUtils.map(SkuStdCostDetailEntity.class, addOrUpdateDTO);
+//        SkuStdCostDetailEntity SkuStdCostDetailEntity = BeanMapperUtils.map(SkuStdCostDetailEntity.class, addOrUpdateDTO);
+        old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
+        if (null == old.getEffectiveDate()){
+            if (null == addOrUpdateDTO.getEffectiveDate()){
+                ServiceException.runError("【生效日期】不能为空");
+            }
+            old.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
+        } else {
+            if (null != addOrUpdateDTO.getEffectiveDate()){
+                ServiceException.runError("【生效日期】不可修改");
+            }
+        }
 
         // 数据处理
-        handleData(SkuStdCostDetailEntity);
+        handleData(old);
         log.info("编辑 开始修改sku标准成本单数据，单号：【{}】", old.getId());
-        boolean save = super.updateById(SkuStdCostDetailEntity);
+        boolean save = super.updateById(old);
         if (!save) {
             throw new ServiceException("sku标准成本单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         return Boolean.TRUE;
     }
 
@@ -284,8 +334,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        // 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
+        approveDTO.setBusinessKey(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -321,7 +371,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     private Boolean validateDisApprove(SkuStdCostDetailEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // TODO 下游盘点计划单反审核
@@ -354,11 +404,11 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     public BatchResultDTO cancelProcess(String id) {
         SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(()-> new ServiceException("未找到sku标准成本单主单数据"));
-        // TODO 撤销流程
+        //  撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
 
         log.info("撤销 开始修改sku标准成本单状态，id：【{}】", id);
@@ -368,8 +418,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        // 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        revokeDTO.setBusinessKey(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.CANCEL_PROCESS);
@@ -391,11 +441,15 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Override
     public SkuStdCostDetailDTO.ViewDTO view(String id) {
-        SkuStdCostDetailEntity SkuStdCostDetailEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
-        SkuStdCostDetailDTO.ViewDTO data = BeanMapperUtils.map(SkuStdCostDetailDTO.ViewDTO.class, SkuStdCostDetailEntity);
+        List<SkuStdCostDetailDTO.ListDTO> listDTOS = baseMapper.listDTOByIds(new BaseIdsDTO.IdsDTO(Collections.singletonList(id)));
+        if (CollectionUtils.isEmpty(listDTOS)) {
+            ServiceException.runError("未找到sku标准成本单数据");
+        }
+        SkuStdCostDetailDTO.ListDTO listDTO = listDTOS.get(0);
+        SkuStdCostDetailDTO.ViewDTO data = BeanMapperUtils.map(SkuStdCostDetailDTO.ViewDTO.class, listDTO);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+
         return data;
     }
 
@@ -411,8 +465,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        // 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
+        startDTO.setBusinessKey(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
         startDTO.setBusinessName(entity.getId());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -425,6 +479,17 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private void fillOne(SkuStdCostDetailDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
+        }
+        // 审核状态
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        // 销售状态名称
+        data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+        // 币种符号
+        if (StringUtils.isNotBlank(data.getCurrency())){
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(data.getCurrency()));
+            data.setCurrencySymbol(currencyList.get(0).getSymbol());
+        } else {
+            data.setCurrencySymbol("");
         }
     }
 
@@ -478,12 +543,25 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        //币种信息
+        List<String> currencyIdList = list.stream().map(SkuStdCostDetailDTO.ListDTO::getCurrency)
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        Map<String, String> currencyMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(currencyIdList)) {
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+            currencyMap = currencyList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getSymbol));
+        }
+
         // 属性赋值
         for (SkuStdCostDetailDTO.ListDTO data : list) {
             // 审核状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+            // 币种
+            data.setCurrencySymbol(currencyMap.getOrDefault(data.getCurrency(), ""));
         }
     }
 

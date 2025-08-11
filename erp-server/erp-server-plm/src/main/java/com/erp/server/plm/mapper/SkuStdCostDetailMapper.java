@@ -2,8 +2,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
-import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -59,4 +58,8 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
 
     Long allNewCount(@Param("params") SkuStdCostDetailDTO.PagingParamDTO searchParam);
 
+    List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(@Param("params") BaseIdsDTO.IdsDTO params);
+
+
+    List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveCode") String approveCode);
 }

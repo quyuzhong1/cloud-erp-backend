@@ -115,6 +115,7 @@ public class SkuStdCostDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO {
 
+
         /**
          * 列表id
          */
@@ -141,9 +142,9 @@ public class SkuStdCostDetailDTO implements Serializable {
         private Boolean isComb;
 
         /**
-         * 销售状态
+         * 销售状态:接口地址：/plm/common/enumDropDown?type=SaleState
          */
-        private String saleState;
+        private Integer saleState;
 
         /**
          * 销售状态名称
@@ -151,7 +152,7 @@ public class SkuStdCostDetailDTO implements Serializable {
         private String saleStateName;
 
         /**
-         * 审核状态
+         * 审核状态:waitSubmit=待提交，approveIng=审核中，approve=已审核，reject=审核不通过
          */
         private String approveStatus;
 
@@ -174,6 +175,56 @@ public class SkuStdCostDetailDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 生效日期
+         */
+        private LocalDate effectiveDate;
+
+        /**
+         * 失效日期
+         */
+        private LocalDate expireDate;
+
+        /**
+         * 最新出库时间
+         */
+        private LocalDate lastOutstockDate;
+
+        /**
+         * 审核人ID
+         */
+        private String approveUserId;
+
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
 
     }
 
@@ -206,6 +257,12 @@ public class SkuStdCostDetailDTO implements Serializable {
         @NotNull(message = "标准成本(不含税)不能为空")
         @Digits(integer = 12, fraction = 4, message = "标准成本(不含税)整数位不能超过12位，小数位不能超过4位")
         private BigDecimal stdCostPrice;
+
+        /**
+         * 生效日期 (无生效日期的时候可修改)
+         */
+        private LocalDate effectiveDate;
+
     }
 
     @Data
@@ -295,7 +352,7 @@ public class SkuStdCostDetailDTO implements Serializable {
         private Boolean isComb;
 
         /**
-         * 销售状态
+         * 销售状态:接口地址：/plm/common/enumDropDown?type=SaleState
          */
         private Integer saleState;
 
@@ -305,7 +362,7 @@ public class SkuStdCostDetailDTO implements Serializable {
         private String saleStateName;
 
         /**
-         * 审核状态
+         * 审核状态:waitSubmit=待提交，approveIng=审核中，approve=已审核，reject=审核不通过
          */
         private String approveStatus;
 
