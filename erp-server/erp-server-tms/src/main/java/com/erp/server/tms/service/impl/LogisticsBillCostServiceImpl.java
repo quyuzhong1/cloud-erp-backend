@@ -1369,7 +1369,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             		.collect(Collectors.toList());
             LogisticsBillCostEntity logisticsBillCostEntity = null;
             if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
-                errorMsgList.add("未找到出库单和运输单号对应对账类型的物流费用单");
+                if(!ImportTypeEnum.ADD.getCode().equals(importType)){
+                    errorMsgList.add("未找到出库单和运输单号对应对账类型的物流费用单");
+                }
             } else {
             	if(logisticsBillCostEntityList.size() > 1) {
                     if (ImportTypeEnum.ADD.getCode().equals(importType)){

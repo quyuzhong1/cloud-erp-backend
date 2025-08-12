@@ -7,7 +7,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -266,7 +265,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             }
             excelDTO.setPayType(payType);
             //数据验证
-            List<String> importMsgList = checkImportData(excelDTO,logisticsBillCostList,logisticsBillDetailList,DictCostAttributionEnum.LAST_MILE.getCode());
+            List<String> importMsgList = checkImportData(excelDTO,logisticsBillCostList,logisticsBillDetailList,DictCostAttributionEnum.LAST_MILE.getCode(), importType);
             if (CollectionUtils.isNotEmpty(importMsgList)) {
                 errorMsgList.addAll(importMsgList);
             }
@@ -348,23 +347,27 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     /**
-     * @description: 导入数据处理
-     * @author Will
-     * @date: 2024/5/11 14:24
      * @param excelDTO
      * @param logisticsBillCostList
      * @param logisticsBillDetailList
      * @param dictCostAttribution
+     * @param importType
      * @return List<String>
+     * @description: 导入数据处理
+     * @author Will
+     * @date: 2024/5/11 14:24
      */
     private List<String> checkImportData (LogisticsLastMileCostExcelDTO excelDTO
-            , List<LogisticsBillCostEntity> logisticsBillCostList, List<LogisticsBillDetailEntity> logisticsBillDetailList , String dictCostAttribution) {
+            , List<LogisticsBillCostEntity> logisticsBillCostList, List<LogisticsBillDetailEntity> logisticsBillDetailList , String dictCostAttribution, String importType) {
         List<String> errorMsgList = new ArrayList<>();
         //物流单明细
         LogisticsBillDetailEntity detailEntity = logisticsBillDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode())
                 && CharSequenceUtil.equals(excelDTO.getTrackNo(), obj.getTrackNo())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(detailEntity)) {
             errorMsgList.add("未找到出库单和物流跟踪单号对应的物流单明细");
+            return errorMsgList;
+        }
+        if (ImportTypeEnum.ADD.getCode().equals(importType)) {
             return errorMsgList;
         }
         //物流费用单
