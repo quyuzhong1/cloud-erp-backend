@@ -385,9 +385,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         result.setPaymentConditionName(paymentConditionName);
 
         //跟单员名称
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(supplier.getPoFollowerId());
-        if (ObjectUtil.isNotEmpty(findUserDTO)) {
-            result.setPoFollowerName(findUserDTO.getUserName());
+        if (CharSequenceUtil.isNotBlank(supplier.getPoFollowerId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(supplier.getPoFollowerId());
+            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+                result.setPoFollowerName(findUserDTO.getUserName());
+            }
         }
 
         //根据供应商id 查询 联系人信息
@@ -1494,8 +1496,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             entity.setPoFollowerId(dto.getPoFollowerId());
             content = CharSequenceUtil.format("采购跟单员更新为【{}】",  findUserDTO.getUserName());
         }
+        //更新数据
+        super.updateById(entity);
+        //添加日志
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "字段更新");
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
