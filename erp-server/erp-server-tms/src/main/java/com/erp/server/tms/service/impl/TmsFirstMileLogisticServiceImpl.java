@@ -1442,6 +1442,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     throw new ServiceException(ApiError.NOT_EXIST_BILL, "对账单");
                 }
             }
+            if (!reconciliationEntity.getSupplierType().equals(supplierType)){
+                throw new ServiceException("对账单供应商类型与当前物流单供应商类型不一致");
+            }
             if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equalsIgnoreCase(reconciliationEntity.getApproveStatus())){
                 throw new ServiceException("对账单不处于待提交");
             }

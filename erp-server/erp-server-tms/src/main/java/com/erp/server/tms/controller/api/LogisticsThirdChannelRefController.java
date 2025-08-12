@@ -191,11 +191,11 @@ public class LogisticsThirdChannelRefController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsThirdChannelRef:updateStatus",
-            serviceClass = LogisticsThirdChannelRefService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "tms:logisticsThirdChannelRef:updateStatus",
+//            serviceClass = LogisticsThirdChannelRefService.class,
+//            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated LogisticsThirdChannelRefDTO.DisabledParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

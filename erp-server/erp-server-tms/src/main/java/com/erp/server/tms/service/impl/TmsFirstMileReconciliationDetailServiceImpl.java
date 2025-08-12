@@ -445,6 +445,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             LogisticsBillCostEntity entity = billEntityList.stream()
                     .filter(e -> Objects.nonNull(e) && Objects.equals(billId, e.getLogisticsBillId())
                             && (CharSequenceUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
+            //非物流单下推重新创建费用项
+            if (!mainEntity.getSupplierType().equals(SupplierTypeEnum.LOGISTICS.getCode())){
+                entity.setId(null);
+            }
             entity.setLogisticsBillId(billId);
             entity.setTransportNo(logisticsBillEntity.getTransportNo());
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
