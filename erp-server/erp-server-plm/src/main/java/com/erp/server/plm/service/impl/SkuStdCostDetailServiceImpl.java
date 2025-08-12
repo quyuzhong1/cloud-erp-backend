@@ -4,6 +4,9 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -19,18 +22,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.model.plm.enums.SkuStdCostTabEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.listener.SkuStdCostChangeExcelListener;
 import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
@@ -44,7 +54,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -555,8 +567,15 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     @Override
-    public boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return false;
+    public boolean importFile(SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response) {
+        switch (importDTO.getImportType()) {
+            case CHANGE:
+                return importChangeFile(importDTO.getExcelFile(), response);
+            case UPDATE:
+                return importUpdateFile(importDTO.getExcelFile(), response);
+            default:
+                throw new ServiceException("输入导入的类型有误");
+        }
     }
 
     @Override
@@ -613,4 +632,51 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         return new PagingVO(pageData);
     }
 
+    private boolean importUpdateFile(@NotNull(message = "导入文件不能为空") MultipartFile excelFile, HttpServletResponse response) {
+        SkuStdCostChangeExcelListener excelListenerUtil = new SkuStdCostChangeExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).headRowNumber(2) .doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        SkuStdCostChangeExcelDTO importDTO = new SkuStdCostChangeExcelDTO();
+        //导入数据处理
+        List<SkuStdCostChangeExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<SkuStdCostChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //导入数据保存
+//        List<TmsFirstMileReconciliationDetailDTO.ListDTO> successImportList = handleImportData(successList, errorList);
+
+        String url = "";
+        if (!org.springframework.util.CollectionUtils.isEmpty(errorList)) {
+            String fileName = "SKU标准成本变更导入错误数据.xlsx";
+            // 根据 no 进行数值排序
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SkuStdCostChangeExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/skuStdCostError.xlsx";
+        String name = "skuStdCostError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+    }
+
+    private boolean importChangeFile(@NotNull(message = "导入文件不能为空") MultipartFile excelFile, HttpServletResponse response) {
+        return false;
+    }
 }

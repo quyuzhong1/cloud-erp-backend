@@ -2,13 +2,10 @@ package com.erp.server.plm.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.utils.StringUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -30,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -427,8 +423,7 @@ public class SkuStdCostDetailController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "sku标准成本-导入")
     @PostMapping("/importFile")
     public ApiResult<Object> importFile(@ModelAttribute @Validated SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response) {
-//        boolean flag = skuStdCostDetailService.importFile(importDTO, response);
-        boolean flag = true;
+        boolean flag = skuStdCostDetailService.importFile(importDTO, response);
         return flag ? this.success() : this.failure();
     }
 

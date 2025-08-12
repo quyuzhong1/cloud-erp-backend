@@ -166,10 +166,10 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * sku标准成本-导入
      * @author Jim
      * @date:  2025-08-08
-     * @param excelFile
+     * @param importDTO
      * @param response
      */
-    boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    boolean importFile(SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response);
 
     /**
      * 报价历史列表查询
