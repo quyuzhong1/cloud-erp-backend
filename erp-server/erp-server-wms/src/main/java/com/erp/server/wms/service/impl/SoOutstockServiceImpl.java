@@ -4074,53 +4074,55 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<SoOutstockEntity> list = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+        List<SoOutstockEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoOutstockEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        long invalidCount = list.stream().filter(SoOutstockEntity::getInvalidStatus).count();
-        if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+        List<String> removeIdList = removeList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
-
         //获取需要同步数帝云的数据
         List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(removeIdList);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
 
         Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
-        Boolean result = this.removeByIds(ids);
+        Boolean result = this.removeByIds(removeIdList);
         if (result) {
             //添加日志
             String content = "删除销售订单[%s]";
-            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
 
             //删除明细
-            soOutstockDetailService.removeByMainIdList(ids);
+            soOutstockDetailService.removeByMainIdList(removeIdList);
 
             //自动删除同批次的直接调拨单
-            soOutstockService.deleteTransferInfo(list);
+            soOutstockService.deleteTransferInfo(removeList);
 
             //B2B发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+            sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
 
             //推送数帝云
-            for (SoOutstockEntity outstockEntity : list) {
+            for (SoOutstockEntity outstockEntity : removeList) {
                 List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
             //清空销售订单的出库时间
-            this.handleSoOutDate(list);
+            this.handleSoOutDate(removeList);
         }else {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         // 返回成功结果
-        return list.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 }

@@ -1376,22 +1376,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 客户sku
         if (RuleTypeEnum.CUSTOMER == entity.getType()) {
             this.deleteCustomer(entity, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 无平台
         if (StringUtils.isBlank(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 销售平台
         if (RuleTypeEnum.PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 仓库平台
         if (RuleTypeEnum.WAREHOUSE == entity.getType() && null == OmsPlatformEnum.getByCode(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(),listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
 
         // 有平台

@@ -478,8 +478,9 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+
+        List<BatchResultDTO> resultDTOList =soInfoService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

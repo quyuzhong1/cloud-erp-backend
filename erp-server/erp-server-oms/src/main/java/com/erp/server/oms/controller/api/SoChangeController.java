@@ -292,13 +292,8 @@ public class SoChangeController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        try {
-            List<BatchResultDTO> resultDTOS = soChangeService.deleteByIds(dto.getIds(), true);
-            return success(resultDTOS);
-        } catch (Exception e) {
-            log.error("批量删除销售变更单失败", e);
-            return failure(e.getMessage());
-        }
+        List<BatchResultDTO> resultDTOList = soChangeService.deleteByIds(dto.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

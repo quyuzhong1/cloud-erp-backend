@@ -258,7 +258,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 }
             });
         }
-        return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
 

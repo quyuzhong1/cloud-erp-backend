@@ -1065,32 +1065,45 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        //待提交支持删除
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        //待提交支持删除
+//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+//        ).count();
+//        if (count != entityList.size()) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SoReturnEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        for (SoReturnEntity entity : entityList) {
+            if (!entity.getApproveStatus().equals(waitSubmitStatus)
+                    ||entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-
+        List<String> removeIdList = removeList.stream().map(SoReturnEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
         //删除详情表
-        soReturnDetailService.delete(ids);
-        boolean flag = this.removeByIds(ids);
+        soReturnDetailService.delete(removeIdList);
+        boolean flag = this.removeByIds(removeIdList);
         if (!flag){
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         
         // 添加批量操作日志
         String content = "批量删除销售退货订单";
-        List<Pair<String, String>> pairList = entityList.stream()
+        List<Pair<String, String>> pairList = resultDTOList.stream()
                 .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
                 .collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_RETURN.getCode(), pairList, "删除");
         
         // 返回成功结果
-        return entityList.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 
     @Override

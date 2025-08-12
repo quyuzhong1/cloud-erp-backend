@@ -7,7 +7,9 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -48,6 +50,7 @@ import java.net.URLDecoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.text.CharSequenceUtil.format;
@@ -320,15 +323,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         log.info("编辑 开始更新产品认证,ids={}", ids);
+        List<ProductCertificateEntity> entityList = this.listByIds(ids);
         //删除认证信息
        this.removeByIds(ids);
 
         //删除附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(ids);
         if (CollectionUtils.isEmpty(attachmentList)) {
-            return Boolean.FALSE;
+            throw new ServiceException("附件信息为空");
         }
         //删除附件表数据
         List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
@@ -337,7 +341,11 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             //fastdfs删除附件
             fileFeign.deleteFile(entity.getAttachUrl());
         }
-        return Boolean.TRUE;
+        Map<String, ProductDetailEntity> stringProductDetailEntityMap = productDetailService.getByIdList(entityList.stream().map(ProductCertificateEntity::getSkuId).collect(Collectors.toList())).stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(),(v1,v2)->v1));
+        return entityList.stream()
+                .map(
+                entity->BatchResultDTO.success(entity.getId(),stringProductDetailEntityMap.get(entity.getSkuId())!=null?stringProductDetailEntityMap.get(entity.getSkuId()).getSkuNo():entity.getSkuId()))
+                .collect(Collectors.toList());
     }
 
     @Override

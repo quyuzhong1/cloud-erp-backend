@@ -89,7 +89,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 18:38
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
 
     /**

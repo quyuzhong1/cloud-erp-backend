@@ -281,13 +281,8 @@ public class TransferInController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        try {
-            List<BatchResultDTO> resultDTOS = transferInService.deleteByIds(dto.getIds(), true);
-            return success(resultDTOS);
-        } catch (Exception e) {
-            log.error("批量删除分布式调入单失败", e);
-            return failure(e.getMessage());
-        }
+        List<BatchResultDTO> resultDTOList = transferInService.deleteByIds(dto.getIds(), true);
+        return  resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

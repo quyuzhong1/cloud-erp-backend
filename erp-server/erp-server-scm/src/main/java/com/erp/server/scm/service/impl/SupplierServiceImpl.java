@@ -718,45 +718,59 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO> deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            return true;
+            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
         }
         List<SupplierEntity> supplierList = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = supplierList.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = supplierList.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SupplierEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SupplierEntity entity : supplierList) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SupplierEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
         //检查是否关联供应商 如果有就不能删除
-        purchasePriceService.checkIsRefSupplier(ids);
+        purchasePriceService.checkIsRefSupplier(removeIdList);
         //检查采购订单是否有关联到供应商id  如果有就不能删除
-        purchaseOrderSupplierService.checkIsRefSupplier(ids);
+        purchaseOrderSupplierService.checkIsRefSupplier(removeIdList);
         //删除供应商
-        Boolean result = this.removeByIds(ids);
+        Boolean result = this.removeByIds(removeIdList);
         if (result) {
             //根据 供应商id 删除联系人信息
-            supplierContactService.removeBySupplierIds(ids);
+            supplierContactService.removeBySupplierIds(removeIdList);
 
             //根据 供应商id 删除账户信息
-            supplierAccountService.removeBySupplierIds(ids);
+            supplierAccountService.removeBySupplierIds(removeIdList);
 
             //根据 供应商id 删除资质信息
-            supplierCredentialService.removeBySupplierIds(ids);
+            supplierCredentialService.removeBySupplierIds(removeIdList);
 
 
             //添加日志
             String content = "删除供应商[%s]";
-            List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
 
             //发送金蝶
-            sendPushTask(supplierList,SyncOperateEnum.OPERATE_DELETE.getCode());
+            sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
         }
 
 
-        return result;
+        return resultDTOList;
     }
 
 

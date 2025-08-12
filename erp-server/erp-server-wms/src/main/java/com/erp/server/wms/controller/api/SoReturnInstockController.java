@@ -325,13 +325,8 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        try {
-            List<BatchResultDTO> resultDTOS = soReturnInstockService.deleteByIds(idsDTO.getIds(), true);
-            return success(resultDTOS);
-        } catch (Exception e) {
-            log.error("批量删除销售退货入库单失败", e);
-            return failure(e.getMessage());
-        }
+        List<BatchResultDTO> resultDTOList = soReturnInstockService.deleteByIds(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
