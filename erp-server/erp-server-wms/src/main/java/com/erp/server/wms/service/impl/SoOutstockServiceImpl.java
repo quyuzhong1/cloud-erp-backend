@@ -1378,6 +1378,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
+            //删除三方仓发货单
+            List<String> sourceIds = list.stream()
+                    .filter(obj -> SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(obj.getSourceType()))
+                    .map(BaseEntity::getId)
+                    .collect(Collectors.toList());
+            thirdWarehouseDeliveryService.deleteByIds(sourceIds);
+
             //清空销售订单的出库时间
             this.handleSoOutDate(list);
         }

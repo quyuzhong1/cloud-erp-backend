@@ -3,12 +3,15 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -28,6 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -54,6 +58,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
+
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -81,6 +87,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private ThirdWarehouseDeliveryDetailService detailService;
 
@@ -321,17 +330,21 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             return BatchResultDTO.fail(id, entity.getCode(), "销售订单不存在, 重新出库失败");
         }
-        if (soB2cEntity.hasPlatformWarehouseOrder()) {
-            return BatchResultDTO.fail(id, entity.getCode(), "平台仓订单无法 重新出库");
-        }
         if (!entity.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())) {
             return BatchResultDTO.fail(id, entity.getCode(), "只有已发货才能重新出库");
         }
-        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
-        PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
-        platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
-        platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
-        platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"");
+        if (soB2cEntity.hasPlatformWarehouseOrder()) {
+            Boolean result = soB2cFeign.handleSoOutStock(soB2cEntity.getId());
+            if (!result) {
+                return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 请查看订单异常");
+            }
+        }else{
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId())).get(0);
+            PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
+            platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
+            platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
+            platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"");
+        }
         return BatchResultDTO.success();
     }
 
@@ -368,6 +381,15 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
         return service.add(addThirdWarehouseDeliveryEntity);
 
+    }
+
+    @Override
+    public void deleteByIds(List<String> sourceIds) {
+        if(CollectionUtils.isEmpty(sourceIds)){
+            return;
+        }
+        this.removeByIds(sourceIds);
+        detailService.removeByMainIds(sourceIds);
     }
 
 }
