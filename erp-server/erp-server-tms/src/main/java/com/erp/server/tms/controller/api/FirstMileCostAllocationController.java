@@ -251,7 +251,7 @@ public class FirstMileCostAllocationController extends BaseController {
      * 下推费用分摊
      */
     @PostMapping("/pushAllocatedCost")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "重新分摊")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "重新分摊")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:firstMileCostAllocation:calcAllocatedCost",

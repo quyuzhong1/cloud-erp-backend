@@ -380,6 +380,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     record.setTelNumber(e.getMobile());
                     record.setThirdRefId(pagingVO.getId());
                 });
+            }else if (LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode().equals(pushType)){
+                record.setThirdRefId(pagingVO.getId());
             }
         }
         if (CollUtil.isNotEmpty(detailIds)){
