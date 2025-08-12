@@ -1,6 +1,7 @@
 package com.erp.model.plm.enums;
 
 import com.common.core.constant.EnumMessage;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -23,7 +24,7 @@ public enum SkuStdCostImportTypeEnum implements EnumMessage {
         return Arrays.stream(SkuStdCostImportTypeEnum.values())
                 .filter(e -> e.getCode().equals(code))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new ServiceException("SKU标准导入类型不存在: " + code));
     }
 
     public static String getNameByCode(String code) {

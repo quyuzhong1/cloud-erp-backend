@@ -100,6 +100,7 @@ public class SkuStdCostDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ChangeCommonDTO {
 
         /**
@@ -483,14 +484,14 @@ public class SkuStdCostDetailDTO implements Serializable {
          * 导入类型，change导入变更，update导入更新
          */
         @NotNull(message = "导入类型不能为空")
-        private SkuStdCostImportTypeEnum importType;
-
+        private String importType;
 
         /**
-         * 导入文件
+         * 文件URL
          */
-        @NotNull(message = "导入文件不能为空")
-        private MultipartFile excelFile;
+        @NotNull(message = "【文件URL】不能为空")
+        private String fileUrl;
+
     }
 
     /**

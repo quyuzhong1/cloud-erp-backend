@@ -29,7 +29,7 @@ public class SkuStdCostChangeExcelDTO implements Serializable {
 
     @ExcelProperty(value = "生效日期", index = 2)
     @FieldValid(fieldName = "生效日期", formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String effectiveDate;
+    private String effectiveDateStr;
 
     @ExcelProperty(value = "币别", index = 3)
     @FieldValid(fieldName = "币别", isNotBlank = true)

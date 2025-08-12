@@ -13,4 +13,8 @@ public interface ImportPlmFeign {
     @PostMapping("/feign/import/productDetailImages")
     void productDetailImages(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto);
 
+
+    @PostMapping("/feign/import/skuStdCostDetail")
+    void skuStdCostDetail(@RequestBody BaseDTO.ImportTypeDTO dto);
+
 }

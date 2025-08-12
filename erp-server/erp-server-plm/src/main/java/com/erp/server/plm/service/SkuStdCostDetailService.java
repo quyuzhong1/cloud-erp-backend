@@ -5,7 +5,6 @@ import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -181,16 +180,6 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
     Boolean approveEnd(ApproveOneDTO dto, SkuStdCostDetailEntity entity);
 
     /**
-     * sku标准成本-导入
-     *
-     * @param importDTO
-     * @param response
-     * @author Jim
-     * @date: 2025-08-08
-     */
-    boolean importFile(SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response);
-
-    /**
      * 报价历史列表查询
      *
      * @param dto
@@ -221,4 +210,23 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @return
      */
     PagingVO<SkuStdCostDetailDTO.ListDTO> listExport(PagingDTO<SkuStdCostDetailDTO.ExportDTO> dto);
+
+    /**
+     * sku标准成本-异步导入
+     *
+     * @param importDTO
+     * @author Jim
+     * @date: 2025-08-08
+     */
+    boolean importExcel(SkuStdCostDetailDTO.ExcelImportDTO importDTO);
+
+    /**
+     * 导入变更处理
+     */
+    void importChangeSkuStdCostDetail(BaseDTO.ImportTypeDTO dto);
+
+    /**
+     * 导入更新处理
+     */
+    void importUpdateSkuStdCostDetail(BaseDTO.ImportTypeDTO dto);
 }

@@ -414,16 +414,15 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-     * sku标准成本-导入
+     * sku标准成本-异步导入
      *
-     * @param response
      * @author Jim
      * @date: 2025-08-08
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "sku标准成本-导入")
-    @PostMapping("/importFile")
-    public ApiResult<Object> importFile(@ModelAttribute @Validated SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response) {
-        boolean flag = skuStdCostDetailService.importFile(importDTO, response);
+    @LogAction(value = LogActionEnum.IMPORT, desc = "sku标准成本-异步导入")
+    @PostMapping("/importExcel")
+    public ApiResult<Object> importExcel(@RequestBody @Validated SkuStdCostDetailDTO.ExcelImportDTO importDTO) {
+        boolean flag = skuStdCostDetailService.importExcel(importDTO);
         return flag ? this.success() : this.failure();
     }
 
