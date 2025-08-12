@@ -65,12 +65,12 @@ public class SupplierDTO implements Serializable {
     }
 
         /**
-     * 批量修改供应商分类
+     * 批量修改字段更新
      */
     @Data
     @NoArgsConstructor
     @Valid
-    public static class BatchUpdateCategoryDTO {
+    public static class BatchUpdateFieldDTO {
 
         /**
          * 主键集合
@@ -82,8 +82,12 @@ public class SupplierDTO implements Serializable {
         /**
          * 分类Id
          */
-        @NotBlank(message = "供应商分类不能为空")
         private String categoryId;
+
+        /**
+         * 跟单员id
+         */
+        private String poFollowerId;
 
     }
 
@@ -173,6 +177,16 @@ public class SupplierDTO implements Serializable {
          * 采购员
          */
         private String purchaseUserName;
+
+        /**
+         * 采购跟单员id
+         */
+        private String poFollowerId;
+
+        /**
+         * 采购跟单员名称
+         */
+        private String poFollowerName;
 
 
         /**
@@ -359,10 +373,20 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 采购跟单员
+         */
+        private String poFollowerId;
+
+
+        /**
+         * 采购员名称
+         */
+        private String poFollowerName;
+
+        /**
          * 采购员id
          */
         private String purchaseUserId;
-
 
         /**
          * 公司地址
@@ -534,6 +558,11 @@ public class SupplierDTO implements Serializable {
          * 采购员id
          */
         private String purchaseUserId;
+
+        /**
+         * 采购跟单员id
+         */
+        private String poFollowerId;
 
 
         /**
@@ -840,6 +869,16 @@ public class SupplierDTO implements Serializable {
          * 结算付款币种
          */
         private String payCurrency;
+
+        /**
+         * 采购跟单员id
+         */
+        private String poFollowerId;
+
+        /**
+         * 采购跟单员名称
+         */
+        private String poFollowerName;
 
         /**
          * 采购员

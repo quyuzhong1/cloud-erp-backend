@@ -50,6 +50,7 @@
         sup.payment_condition as paymentCondition,
         sup.purchase_user_id AS purchaseUserId,
         sup.purchase_user_name AS purchaseUserName,
+        sup.po_tracker_id as poTrackerId,
         sup.approve_time as approveTime,
         sup.identification_code as identificationCode,
         sup.registered_capital as registeredCapital,
@@ -89,6 +90,7 @@
         sup.payment_condition as paymentCondition,
         sup.purchase_user_id AS purchaseUserId,
         sup.purchase_user_name AS purchaseUserName,
+        sup.po_follower_id as poFollowerId,
         sup.approve_time as approveTime,
         <if test="params.fieldList != null and params.fieldList.size > 0">
             sc.person as person,

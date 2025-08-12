@@ -277,7 +277,10 @@ public class PoReconciliationDTO implements Serializable {
         */
         private LocalDate receiveDate;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -417,6 +420,12 @@ public class PoReconciliationDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 抬头备注
+         */
+        @NotBlank(message = "抬头备注不能为空")
+        private String remark;
 
         /**
          * 附件名集合

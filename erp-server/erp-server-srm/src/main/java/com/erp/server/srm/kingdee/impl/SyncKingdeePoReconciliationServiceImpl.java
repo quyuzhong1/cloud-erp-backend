@@ -150,6 +150,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             return resultMap;
         }
 
+        //对账结束日期
+        resultMap.put("endDate", entity.getEndDate());
+
         //供应商名称
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         resultMap.put("supplierCode", supplierEntity.getCode());
@@ -241,8 +244,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
 
             //结算币别
             CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detail.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-            jsonObject.put("currencyCode", viewDTO.getKingdeeCode());
-
+            jsonObject.set("currencyCode", viewDTO.getKingdeeCode());
+            //抬头备注
+            jsonObject.set("remark", detail.getRemark());
 
             //采购订单号
             jsonObject.set("poCode", detail.getPoCode());

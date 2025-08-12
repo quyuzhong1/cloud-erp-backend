@@ -444,7 +444,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 continue;
             }
             List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
-            poReconciliationDetailScmService.fillList(detailDTOList);
+            poReconciliationDetailScmService.fillList(detailDTOList,Boolean.FALSE);
 
             //出货小计
             BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_INSTOCK.getCode().equals(obj.getSourceType()))
