@@ -969,6 +969,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
                 detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
             }
+            //如果本身有单价，还是取本身的单价
+            if (detailEntity.getPrice() != null && detailEntity.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                price = detailEntity.getPrice();
+            }
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
