@@ -10,6 +10,7 @@ import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -17,6 +18,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.enums.OrgFunctionsEnum;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 
@@ -147,6 +149,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         		String orgFunctions = r.getOrgFunctions();
         		if(StringUtils.isNotBlank(orgFunctions)) {
         			r.setOrgFunctionList(Stream.of(orgFunctions.split(",")).collect(Collectors.toList()));
+        			r.setOrgFunctionNames(Stream.of(orgFunctions.split(",")).map(o -> EnumMessage.getNameByCode(OrgFunctionsEnum.class, o)).collect(Collectors.joining(",")));
         		}
         	});
         }
