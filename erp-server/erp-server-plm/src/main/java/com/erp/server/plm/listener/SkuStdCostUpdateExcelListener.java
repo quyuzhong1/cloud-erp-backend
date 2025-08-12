@@ -6,8 +6,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.dto.base.BaseDTO;
-import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
@@ -17,8 +16,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -26,14 +23,14 @@ import java.util.stream.Collectors;
 
 
 /**
- * SKU标准成本变更监听
+ * SKU标准成本修改监听
  *
  * @author Jim
  * {@code @date:} 2024/08/11
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdCostChangeExcelDTO> {
+public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdCostChangeExcelDTO> {
 
     private final String taskId;
 
@@ -66,7 +63,7 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
     private Map<String, String> skuMap;
 
 
-    public SkuStdCostChangeExcelListener(String taskId, Map<String, String> skuMap) {
+    public SkuStdCostUpdateExcelListener(String taskId, Map<String, String> skuMap) {
         this.taskId = taskId;
         this.skuMap = skuMap;
     }
@@ -89,10 +86,6 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
         if (CharSequenceUtil.isBlank(excelDTO.getStdCostPrice())) {
             errorMsgList.add("【标准成本(不含税)】不能为空");
         }
-        if (CharSequenceUtil.isBlank(excelDTO.getEffectiveDateStr())) {
-            errorMsgList.add("【生效日期】不能都为空");
-        }
-
         String skuNo = excelDTO.getSkuNo();
         if (StringUtils.isNotBlank(skuNo)) {
             String skuId = skuMap.getOrDefault(skuNo, "");
@@ -130,30 +123,47 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
         }
         //获取所有SKU编码
         List<String> skuIdList = dataList.stream().map(SkuStdCostChangeExcelDTO::getSkuId).distinct().collect(Collectors.toList());
-        Map<String, SkuStdCostDetailDTO.ListDTO> lastListDTOMap = skuStdCostDetailService.mapLastBySkuIds(skuIdList);
+        List<SkuStdCostDetailDTO.ListDTO>  waitSubmitListDTOS= skuStdCostDetailService.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(null, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), skuIdList));
+
+        Map<String, List<SkuStdCostDetailDTO.ListDTO>> waitSubmitListDTOMap = new HashMap<>();
+        Map<String, SkuStdCostDetailEntity> detailEntityMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(waitSubmitListDTOS)) {
+            List<String> ids = waitSubmitListDTOS.stream().map(SkuStdCostDetailDTO.ListDTO::getId).collect(Collectors.toList());
+            detailEntityMap = skuStdCostDetailService.mapByIds(ids);
+            waitSubmitListDTOMap = waitSubmitListDTOS.stream().collect(Collectors.groupingBy(SkuStdCostDetailDTO.ListDTO::getSkuId));
+        }
 
         for (SkuStdCostChangeExcelDTO excelDTO : dataList) {
-            SkuStdCostDetailDTO.ListDTO listDTO = lastListDTOMap.get(excelDTO.getSkuId());
-            if (null == listDTO) {
+            List<SkuStdCostDetailDTO.ListDTO> listDTOS = waitSubmitListDTOMap.get(excelDTO.getSkuId());
+            if (CollectionUtils.isNotEmpty(listDTOS)) {
                 excelDTO.setErrorMsg(CharSequenceUtil.format("SKU={}:不存在【已审核】,不支持变更", excelDTO.getSkuNo()));
                 errorList.add(excelDTO);
                 continue;
             }
             // 校验
-            SkuStdCostDetailDTO.ChangeCommonDTO changeCommonDTO = new SkuStdCostDetailDTO.ChangeCommonDTO(
-                    new BigDecimal(excelDTO.getStdCostPrice()),
-                    excelDTO.getCurrency(),
-                    LocalDateUtil.parseStrToLocalDate(excelDTO.getEffectiveDateStr()));
-            try {
-                skuStdCostDetailService.validateChangeParams(changeCommonDTO, listDTO, listDTO);
-            } catch (Exception e) {
-                excelDTO.setErrorMsg(e.getMessage());
-                errorList.add(excelDTO);
-                continue;
+
+            for (SkuStdCostDetailDTO.ListDTO listDTO : listDTOS) {
+                SkuStdCostDetailEntity detailEntity = detailEntityMap.get(listDTO.getId());
+                if (detailEntity == null) {
+                    excelDTO.setErrorMsg(CharSequenceUtil.format("记录ID={}不存在", listDTO.getId()));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                try {
+                    // 更新校验
+                    SkuStdCostDetailDTO.UpdateCommonDTO updateCommonDTO = new SkuStdCostDetailDTO.UpdateCommonDTO(
+                            new BigDecimal(excelDTO.getStdCostPrice()),
+                            excelDTO.getCurrency(),
+                            LocalDateUtil.parseStrToLocalDate(excelDTO.getEffectiveDateStr()));
+                    skuStdCostDetailService.updateHandleData(detailEntity, updateCommonDTO);
+                    successList.add(detailEntity);
+                } catch (Exception e) {
+                    excelDTO.setErrorMsg(e.getMessage());
+                    errorList.add(excelDTO);
+                }
             }
-            SkuStdCostDetailEntity skuStdCostDetailEntity = skuStdCostDetailService.buildChangeEntity(changeCommonDTO, listDTO.getMainId());
-            successList.add(skuStdCostDetailEntity);
+
         }
-        skuStdCostDetailService.saveBatch(successList);
+        skuStdCostDetailService.updateBatchById(successList);
     }
 }

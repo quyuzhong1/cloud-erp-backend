@@ -60,7 +60,7 @@ public class SkuStdCostDetailController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.size());
         List<String> ids = dto.stream().map(SkuStdCostDetailDTO.ChangeDTO::getId).distinct().collect(Collectors.toList());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByIds(new BaseIdsDTO.IdsDTO(ids));
+        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(ids, null, null));
         Map<String, SkuStdCostDetailDTO.ListDTO> idEntityMap = listDTOS.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, w -> w));
 
         // 查询对应sku最新可变更记录
@@ -477,7 +477,7 @@ public class SkuStdCostDetailController extends BaseController {
     public ApiResult<List<BatchResultDTO>> comboRecalculate(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByIds(new BaseIdsDTO.IdsDTO(ids));
+        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(ids, null, null));
         Map<String, SkuStdCostDetailDTO.ListDTO> idEntityMap = listDTOS.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO comboRecalculateResult;

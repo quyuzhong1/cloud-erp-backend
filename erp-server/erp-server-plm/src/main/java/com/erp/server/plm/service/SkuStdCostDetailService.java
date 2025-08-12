@@ -21,12 +21,12 @@ import java.util.Map;
 public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEntity> {
 
     /**
-     * 价格变更列表(校验列表是否可变更)
+     * 价格列表
      *
      * @param dto
      * @return
      */
-    List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(BaseIdsDTO.IdsDTO dto);
+    List<SkuStdCostDetailDTO.ListDTO> listDTOByParams(SkuStdCostDetailDTO.ParamsDTO dto) ;
 
     /**
      * 校验单据是否可以变更
@@ -58,6 +58,15 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO dto, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO listDTO1);
 
+
+    /**
+     * 修改处理
+     *
+     * @return
+     * @author Jim
+     * @date: 2025-08-08
+     */
+    void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO);
 
     /**
      * 修改

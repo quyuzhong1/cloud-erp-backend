@@ -151,7 +151,7 @@
 
     </select>
 
-    <select id="listDTOByIds" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+    <select id="listDTOByParams" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
         SELECT
             <include refid="Common_Column_List"/>
         FROM
@@ -165,6 +165,15 @@
             <foreach collection="params.ids" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        <if test="null != params and params.skuIds != null and params.skuIds.size() > 0">
+            and ssc.sku_id in
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.approveStatus!=null and params.approveStatus!=''">
+            and sscd.approve_status = ${params.approveStatus}::text
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -198,7 +207,7 @@
             </foreach>
         </if>
         <if test="approveStatus!=null and approveStatus!=''">
-            and sscd.approve_status = ${params.approveStatus}::text
+            and sscd.approve_status = ${approveStatus}::text
         </if>
     </select>
 

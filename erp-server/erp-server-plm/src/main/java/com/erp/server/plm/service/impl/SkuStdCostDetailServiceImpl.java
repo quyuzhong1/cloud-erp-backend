@@ -5,8 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,13 +19,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -53,14 +49,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -94,8 +87,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private FileFeign fileFeign;
 
     @Override
-    public List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(BaseIdsDTO.IdsDTO dto) {
-        return baseMapper.listDTOByIds(dto);
+    public List<SkuStdCostDetailDTO.ListDTO> listDTOByParams(SkuStdCostDetailDTO.ParamsDTO dto) {
+        return baseMapper.listDTOByParams(dto);
     }
 
 
@@ -159,10 +152,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     /**
      * 修改处理数据
      */
-    private void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateDTO addOrUpdateDTO) {
+    @Override
+    public void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO) {
         // 验证数据 & 数据赋值
         old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
         old.setCurrency(addOrUpdateDTO.getCurrency());
+        if (ApproveStatusEnum.WAIT_SUBMIT.equals(old.getApproveStatus())) {
+            ServiceException.runError("非【待提交】状态不能修改");
+        }
         // 校验日期
         if (old.getEffectiveDate() == null && addOrUpdateDTO.getEffectiveDate() == null) {
             ServiceException.runError("【生效日期】不能为空");
@@ -440,7 +437,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Override
     public SkuStdCostDetailDTO.ViewDTO view(String id) {
-        List<SkuStdCostDetailDTO.ListDTO> listDTOS = baseMapper.listDTOByIds(new BaseIdsDTO.IdsDTO(Collections.singletonList(id)));
+        List<SkuStdCostDetailDTO.ListDTO> listDTOS = baseMapper.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(Collections.singletonList(id), null, null));
         if (CollectionUtils.isEmpty(listDTOS)) {
             ServiceException.runError("未找到sku标准成本单数据");
         }

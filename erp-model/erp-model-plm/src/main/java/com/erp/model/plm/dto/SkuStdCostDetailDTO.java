@@ -5,20 +5,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -120,6 +119,34 @@ public class SkuStdCostDetailDTO implements Serializable {
          * 生效日期
          */
         @NotNull(message = "生效日期不能为空")
+        private LocalDate effectiveDate;
+    }
+
+
+    /**
+     * 价格修改
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateCommonDTO {
+
+        /**
+         * 标准成本(不含税)
+         */
+        @NotNull(message = "标准成本(不含税)不能为空")
+        @Digits(integer = 12, fraction = 4, message = "标准成本(不含税)整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal stdCostPrice;
+
+        /**
+         * 币别
+         */
+        @NotNull(message = "币别不能为空")
+        private String currency;
+
+        /**
+         * 生效日期
+         */
         private LocalDate effectiveDate;
     }
 
@@ -259,31 +286,13 @@ public class SkuStdCostDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO extends UpdateCommonDTO{
 
         /**
          * 主键id
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
-        /**
-         * 标准成本(不含税)
-         */
-        @NotNull(message = "标准成本(不含税)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "标准成本(不含税)整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal stdCostPrice;
-
-        /**
-         * 币别
-         */
-        @NotNull(message = "币别不能为空")
-        private String currency;
-
-        /**
-         * 生效日期 (无生效日期的时候可修改)
-         */
-        private LocalDate effectiveDate;
 
     }
 
@@ -506,6 +515,29 @@ public class SkuStdCostDetailDTO implements Serializable {
          */
         @NotNull(message = "SKU ID不能为空")
         private String skuId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    public static class ParamsDTO extends PermissionsDTO {
+
+        /**
+         * id
+         */
+        private List<String> ids;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * SKU ID集合
+         */
+        private List<String> skuIds;
 
     }
 }

@@ -10,8 +10,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -60,7 +58,7 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
 
     Long allNewCount(@Param("params") SkuStdCostDetailDTO.PagingParamDTO searchParam);
 
-    List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(@Param("params") BaseIdsDTO.IdsDTO params);
+    List<SkuStdCostDetailDTO.ListDTO> listDTOByParams(@Param("params") SkuStdCostDetailDTO.ParamsDTO params);
 
 
     List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveStatus") String approveStatus);
