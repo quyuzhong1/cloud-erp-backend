@@ -292,7 +292,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
             }
         });
         thirdpartyRefBusinessService.removeByBusinessId(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getRegionName(), OperationTypeEnum.DELETE);
 
     }
 

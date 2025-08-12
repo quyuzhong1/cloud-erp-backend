@@ -202,9 +202,9 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:update",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
-        overseasProviderService.delete(dto.getId());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdDTO dto) {
+        List<BatchResultDTO> resultDTOList =overseasProviderService.delete(dto.getId());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

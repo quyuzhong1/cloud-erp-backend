@@ -5,11 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchStateDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -17,15 +15,22 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.sys.enums.OrgFunctionsEnum;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
+
+import cn.hutool.core.collection.CollUtil;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Administrator
@@ -51,6 +56,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         checkName("", dto.getCompanyName());
         BeanMapperUtils.copy(dto, entity);
         entity.setCode(entity.getKingdeeCode());
+        entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.save(entity);
     }
 
@@ -99,6 +105,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setCurrency(dto.getCurrency());
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
+        entity.setOrgFunctions(dto.getOrgFunctionList().stream().collect(Collectors.joining(",")));
         return this.updateById(entity);
     }
 
@@ -134,7 +141,17 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<SysAccountingCompanyEntity> pageData = baseMapper.paging(query, params);
+        List<SysAccountingCompanyEntity> records = pageData.getRecords();
+        if(CollUtil.isNotEmpty(records)) {
+        	records.forEach(r -> {
+        		String orgFunctions = r.getOrgFunctions();
+        		if(StringUtils.isNotBlank(orgFunctions)) {
+        			r.setOrgFunctionList(Stream.of(orgFunctions.split(",")).collect(Collectors.toList()));
+        			r.setOrgFunctionNames(Stream.of(orgFunctions.split(",")).map(o -> EnumMessage.getNameByCode(OrgFunctionsEnum.class, o)).collect(Collectors.joining(",")));
+        		}
+        	});
+        }
         return new PagingVO(pageData);
     }
 
@@ -244,6 +261,16 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         SysAccountingCompanyEntity entity = this.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("公司信息" + id));
         return entity;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> delete(List<String> ids) {
+        List<SysAccountingCompanyEntity> list = this.listByIds(ids);
+        this.removeByIds(ids);
+        return list.stream()
+                .map(entity->BatchResultDTO.success(entity.getId(), entity.getCompanyName(),"删除成功"))
+                .collect(Collectors.toList());
     }
 
 

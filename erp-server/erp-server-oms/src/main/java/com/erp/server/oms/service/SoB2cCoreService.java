@@ -63,4 +63,6 @@ public interface SoB2cCoreService {
     void checkPayMent(SoB2cEntity entity);
 
     void generateDeliveryAndOutStock(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, SoB2cReceiverEntity soB2cReceiverEntity);
+
+    Boolean handleSoOutStock(String soId);
 }

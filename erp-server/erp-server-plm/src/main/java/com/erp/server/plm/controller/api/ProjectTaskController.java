@@ -213,8 +213,8 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult<Object> remove(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = projectTaskService.removeTask(dto.getId());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO>resultDTOList = projectTaskService.removeTask(dto.getId());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 
@@ -896,9 +896,9 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "ids"
     )
-    public ApiResult<Object> removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectTaskService.removeBatch(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = projectTaskService.removeBatch(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

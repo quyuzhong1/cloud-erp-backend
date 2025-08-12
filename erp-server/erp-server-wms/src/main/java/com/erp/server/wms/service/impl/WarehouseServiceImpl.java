@@ -984,21 +984,36 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO> deleteByIds(List<String> ids) {
         // 删除缓存
         removeCache(ids);
 
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<WarehouseEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (WarehouseEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getKingdeeWarehouseCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(WarehouseEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
 
         //删除发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
-        return this.removeByIds(ids);
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+        this.removeByIds(removeList);
+        return resultDTOList;
     }
 
 

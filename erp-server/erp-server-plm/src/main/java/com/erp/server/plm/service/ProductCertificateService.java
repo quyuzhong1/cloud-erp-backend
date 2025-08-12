@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductCertificateDTO;
@@ -84,7 +85,7 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @param ids
      * @return Boolean
      */
-    Boolean delete(List<String> ids);
+    List<BatchResultDTO> delete(List<String> ids);
     /**
      * @description: 导入
      * @author Will

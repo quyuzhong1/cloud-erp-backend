@@ -174,7 +174,11 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setTransaction_type("退货入库单");
     	        shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
     	        shudiyunB2cOrderDTO.setBiz_status(returnInstockStatus);
-    	        shudiyunB2cOrderDTO.setStatus(dmpReturnInstockDetailEntity.getDataStatus());
+    	        String dataStatus = dmpReturnInstockDetailEntity.getDataStatus();
+    	        if(StringUtils.isNotBlank(dataStatus) && "待提交".equals(dataStatus)) {
+    	        	dataStatus = "已删除";
+    	        }
+				shudiyunB2cOrderDTO.setStatus(dataStatus);
 
     	        shudiyunB2cOrderDTO.setSales_company_code(salesCompanyCode);
     	        shudiyunB2cOrderDTO.setReceiving_company_code(receivingCompanyCode);

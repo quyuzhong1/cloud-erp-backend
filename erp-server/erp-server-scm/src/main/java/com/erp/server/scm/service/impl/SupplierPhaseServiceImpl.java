@@ -28,14 +28,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.dto.excel.SupplierPhaseExportExcelDTO;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.scm.enums.SupplierPhaseTabFlagEnum;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -58,6 +61,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE;
@@ -354,14 +358,33 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 17:54
      */
     @Override
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO> deleteByIds(List<String> ids) {
+
         List<SupplierPhaseEntity> list = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !s.getApproveStatus().equals(waitSubmitStatus)).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SupplierEntity> supplierEntityList = supplierService.listByIds(list.stream().map(SupplierPhaseEntity::getSupplierId).collect(Collectors.toList()));
+        Map<String,SupplierEntity> stringSupplierEntityMap = supplierEntityList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity(),(v1, v2)->v1));
+        List<SupplierPhaseEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SupplierPhaseEntity entity : list) {
+            SupplierEntity supplierEntity = stringSupplierEntityMap.get(entity.getSupplierId());
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), supplierEntity!=null?supplierEntity.getCode():entity.getSupplierId(),"删除成功"));
         }
-        return this.removeByIds(ids);
+        List<String> removeIdList = removeList.stream().map(SupplierPhaseEntity::getId).collect(Collectors.toList());
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        this.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
 

@@ -588,11 +588,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .set(CfgApproveSyncFieldMapEntity::getIsDeleted, Boolean.TRUE)
                 .eq(CfgApproveSyncFieldMapEntity::getMainId, id)
                 .update();
-
+        //单据类型
+        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "三方通知配置");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), entity.getId(), "删除三方通知配置数据");
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(),businessTypeMap.getOrDefault(entity.getBusinessType(),""), OperationTypeEnum.DELETE);
     }
 
     @Override
