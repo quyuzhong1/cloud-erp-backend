@@ -80,6 +80,12 @@ public class SysAccountingCompanyEntity implements Serializable {
     private String orgFunctions;
     
     /**
+     * 组织职能名称
+     */
+    @TableField(exist = false)
+    private String orgFunctionNames;
+    
+    /**
      * 组织职能列表
      */
     @TableField(exist = false)
