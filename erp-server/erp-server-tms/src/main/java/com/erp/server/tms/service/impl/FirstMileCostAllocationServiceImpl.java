@@ -470,7 +470,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     entity.setStatus(ConfirmStatusEnum.WAIT_CONFIRM.getCode());
                     entity.setReconciliationId(reconciliationDetailEntity.getMainId());
                     entity.setReconciliationMonth(reconciliationDetailEntity.getReconciliationMonth());
-                    List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList2 = null;
+                    List<InitFirstMileAllocationDetailEntity> initFirstMileAllocationDetailEntityList2 = new ArrayList<>();
                     if (SupplierTypeEnum.LOGISTICS.getCode().equals(reconciliationDetailEntity.getSupplierType())){
                         initFirstMileAllocationDetailEntityList2 = initFirstMileAllocationDetailEntityList;
                     }
