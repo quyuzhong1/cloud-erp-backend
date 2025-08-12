@@ -50,7 +50,7 @@ public class BaseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ImportResultDTO extends ImportDTO {
+    public static class ImportResultDTO extends ImportTypeDTO {
         /**
          * 失败文件URL
          */
@@ -76,5 +76,24 @@ public class BaseDTO implements Serializable {
          * 结束时间
          */
         private LocalDateTime finishTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportTypeDTO implements Serializable {
+        /**
+         * 文件URL
+         */
+        private String fileUrl;
+        /**
+         * 导入类型
+         */
+        private String importType;
+        /**
+         * 任务id[后端使用]
+         */
+        private String taskId;
+
     }
 }
