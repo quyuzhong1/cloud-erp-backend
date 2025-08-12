@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.DictHsCodeDTO;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -200,6 +201,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                     dictHsCodeEntity.setId(oldEntity.getId());
                     dictHsCodeEntity.setVersion(oldEntity.getVersion());
                     dictHsCodeEntity.setCountry(oldEntity.getCountry());
+                    dictHsCodeEntity.setExportRebateRate(new BigDecimal(dto.getExportRebateRate()));
                     updateById(dictHsCodeEntity);
                     // 记录主单操作日志
                     String msg = StrUtil.format("用户【{}】编辑海关编码为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictHsCodeEntity.getHsCode(), "出口申报要素单");
@@ -211,6 +213,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
                         //默认中国
                         entity.setCountry("CN");
                     }
+                    entity.setExportRebateRate(new BigDecimal(dto.getExportRebateRate()));
                     save(entity);
                     // 操作日志
                     operateLogService.addModuleOperateLog("新增出口申报要素信息", ModuleTypeEnum.DICT_HS_CODE.getCode(), entity.getId(), "新增操作");
