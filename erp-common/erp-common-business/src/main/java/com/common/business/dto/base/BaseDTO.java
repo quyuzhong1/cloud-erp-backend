@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -85,10 +86,12 @@ public class BaseDTO implements Serializable {
         /**
          * 文件URL
          */
+        @NotNull(message = "【文件URL】不能为空")
         private String fileUrl;
         /**
          * 导入类型
          */
+        @NotNull(message = "【导入类型】不能为空")
         private String importType;
         /**
          * 任务id[后端使用]
