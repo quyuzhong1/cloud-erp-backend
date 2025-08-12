@@ -1350,7 +1350,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //删除三方仓发货单
             List<String> sourceIds = list.stream()
                     .filter(obj -> SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(obj.getSourceType()))
-                    .map(BaseEntity::getId)
+                    .map(SoOutstockEntity::getSourceId)
                     .collect(Collectors.toList());
             thirdWarehouseDeliveryService.deleteByIds(sourceIds);
 
