@@ -9502,6 +9502,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage())));
                 continue;
             }
+            updateLogisticList.add(soB2cLogisticsEntity);
             if (dto.getPlatformShipFlag() && this.checkPlatformShipOrder(soB2cEntity.getId()) && !soB2cEntity.hasPlatformWarehouseOrder()) {
                 //调用第三方平台SDK声明发货
                 try {
@@ -9530,6 +9531,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {
                 syncSoB2cService.syncDataToSdy(soB2cEntity, noInventorySkuDetailList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
+        }
+        if (CollectionUtils.isNotEmpty(updateLogisticList)) {
+            soB2cLogisticsService.updateBatchById(updateLogisticList);
         }
         return resultDTOList;
     }
