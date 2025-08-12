@@ -266,6 +266,14 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         private BigDecimal discountRate;
         /**
+         * 折扣税率,%
+         */
+        private String discountRateStr;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
          * 预付金额
          */
         private BigDecimal prepayAmount;

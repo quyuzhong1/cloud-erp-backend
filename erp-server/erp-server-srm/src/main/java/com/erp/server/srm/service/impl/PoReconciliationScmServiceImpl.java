@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.StatementDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -26,6 +27,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -34,10 +36,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.PoReconciliationDetailImportExcelDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.AttachmentDTO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -423,6 +422,19 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 if (CollectionUtils.isNotEmpty(dictBasicList)) {
                     exportDTO.setSettleDictName(dictBasicList.get(0).getName());
                 }
+                //付款条件名称
+                List<KingdeePaymentConditionEntity> payList = FeignQuery.create(KingdeePaymentConditionEntity.class).eq(KingdeePaymentConditionEntity::getCode, supplierEntity.getPaymentCondition()).list();
+                if (CollUtil.isNotEmpty(payList)) {
+                    exportDTO.setPaymentConditionName(payList.get(0).getName());
+                }
+                //采购跟单员
+                if (ObjectUtils.isNotEmpty(supplierEntity.getPoFollowerId())) {
+                    FindUserDTO user = sysUserFeign.getUserByUserId(supplierEntity.getPoFollowerId());
+                    if (ObjectUtils.isNotEmpty(user)) {
+                        exportDTO.setPoFollowerName(user.getUserName());
+                        exportDTO.setPoFollowerTelNumber(user.getMobile());
+                    }
+                }
             }
             //联系人
             SupplierContactEntity supplierContactEntity = supplierDefaultDTO.getSupplierContactEntity();
@@ -439,7 +451,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 exportDTO.setBankAccount(accountEntity.getBankAccount());
             }
             //明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId()))
+                    .sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceType)
+                    .thenComparing(Comparator.comparing(PoReconciliationDetailEntity::getDate))
+                    ).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }

@@ -316,6 +316,21 @@ public class PoReconciliationDTO implements Serializable {
         private String settleDictName;
 
         /**
+         * 付款条件明名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 采购跟单员名称
+         */
+        private String poFollowerName;
+
+        /**
+         * 采购跟单员电话号码
+         */
+        private String poFollowerTelNumber;
+
+        /**
          * 出货小计
          */
         private BigDecimal totalDeliveryAmount;

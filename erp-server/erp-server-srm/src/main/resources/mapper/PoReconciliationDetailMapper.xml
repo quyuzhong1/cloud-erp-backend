@@ -13,8 +13,6 @@
         prd.return_source_type as returnSourceType,
         prd.po_id as poId,
         prd.po_code as poCode,
-        po.source_type as poSourceType,
-        po.source_type as poSourceType,
         prd.date as date,
         prd.sku_id as skuId,
         prd.sku_no as skuNo,
@@ -45,8 +43,10 @@
     <select id="paging" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
         select
                <include refid="Base_Column_List" />
+            , po.source_type as poSourceType,
+            po.source_type as poSourceType
         from po_reconciliation_detail prd
-        left join purchase_order po on prd.po_id = po.id and po.is_deleted = false
+        left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false and prd.main_id = ''
@@ -70,7 +70,10 @@
     <select id="listExport" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
         select
                 <include refid="Base_Column_List" />
+                , po.source_type as poSourceType,
+                po.source_type as poSourceType
         from po_reconciliation_detail prd
+        left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false
