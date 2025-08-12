@@ -70,7 +70,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             errorMsgList.addAll(msgList);
         }
         //查询服务商
-        String platformType = TrackPlatformTypeEnum.getCode(excelDTO.getPlatformType());
+        String platformType = TrackPlatformTypeEnum.getCode(excelDTO.getPlatformTypeName());
         if (CharSequenceUtil.isBlank(platformType)) {
             errorMsgList.add("服务商不存在");
         }else {
@@ -85,7 +85,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             errorMsgList.add("是否推送电话必须是是/否");
         }
         //推送类型
-        String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushType());
+        String pushType = LogisticsThirdChannelRefPushTypeEnum.getCodeByName(excelDTO.getPushTypeName());
         if (CharSequenceUtil.isBlank(pushType)) {
             errorMsgList.add("推送类型不存在");
         }else {
@@ -137,14 +137,14 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                 if (CharSequenceUtil.isBlank(e.getLogisticsChannelId())){
                     errorMsgList.add(CharSequenceUtil.format("渠道【{}】未匹配到", e.getLogisticsChannelName()));
                 }
-                if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(e.getPushType())){
+                if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(e.getPushType()) && e.getIsPushMobile()){
                     shopInfoEntityList.stream().filter(shopInfoEntity -> shopInfoEntity.getName().equals(e.getShopName())).findFirst().ifPresent(shopInfoEntity -> {
                         e.setShopId(shopInfoEntity.getId());
                     });
                     if (CharSequenceUtil.isBlank(e.getShopId())){
                         errorMsgList.add(CharSequenceUtil.format("店铺【{}】未匹配到", e.getShopName()));
                     }
-                }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(e.getPushType())){
+                }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(e.getPushType()) && e.getIsPushMobile()){
                     if (CharSequenceUtil.isBlank(e.getShopName())){
                         errorMsgList.add("平台不能为空");
                     }
@@ -155,7 +155,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                         e.setDictPlatform(dictEnum.getCode());
                     }
                 }else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(e.getPushType()) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(e.getPushType())){
-                    if (CharSequenceUtil.isBlank(e.getMobile())){
+                    if (CharSequenceUtil.isBlank(e.getMobile()) && e.getIsPushMobile()){
                         errorMsgList.add("手机号不能为空");
                     }
                 }

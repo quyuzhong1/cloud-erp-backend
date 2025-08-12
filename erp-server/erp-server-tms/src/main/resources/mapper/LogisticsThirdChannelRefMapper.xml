@@ -107,9 +107,9 @@
             ltcrd.mobile as mobile
         from
             logistics_third_channel_ref ltcr
-                left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id
+            left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id and ltcrd.is_deleted = false
         where
-            ltcr.is_deleted = false and ltcrd.is_deleted = false
+            ltcr.is_deleted = false
             and ltcr.platform_type = #{platformType}
         order by ltcr.create_time desc
     </select>
