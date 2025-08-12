@@ -419,7 +419,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
                 exportDTO.setTitil( CharSequenceUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
                 //结算方式名称
-                List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
+                List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPaymentCondition()));
                 if (CollectionUtils.isNotEmpty(dictBasicList)) {
                     exportDTO.setSettleDictName(dictBasicList.get(0).getName());
                 }
