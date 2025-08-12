@@ -146,8 +146,8 @@ public class ExportPlmFeignController {
         return productCustomsService.paging(dto);
     }
 
-    @PostMapping("/feign/export/exportSkuStdCostDetail")
-    @WebAdvanceQuery()
+    @PostMapping("/exportSkuStdCostDetail")
+    @WebAdvanceQuery(handler = SkuStdCostDetailQueryHandler.class)
     public PagingVO<SkuStdCostDetailDTO.ListDTO> exportSkuStdCostDetail(@RequestBody @Validated PagingDTO<SkuStdCostDetailDTO.ExportDTO> dto){
         return skuStdCostDetailService.listExport(dto);
     }

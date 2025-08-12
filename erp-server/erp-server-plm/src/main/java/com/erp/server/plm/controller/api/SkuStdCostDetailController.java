@@ -409,8 +409,9 @@ public class SkuStdCostDetailController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "sku标准成本表导出Excel数据")
     @WebAdvanceQuery(handler = SkuStdCostDetailQueryHandler.class)
-    public void exportList(@RequestBody @Validated SkuStdCostDetailDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SkuStdCostDetailDTO.ExportDTO dto, HttpServletResponse response) {
         skuStdCostDetailService.exportList(dto, response);
+        return success(true);
     }
 
     /**
