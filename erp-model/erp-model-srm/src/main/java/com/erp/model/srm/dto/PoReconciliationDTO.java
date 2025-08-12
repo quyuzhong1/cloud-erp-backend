@@ -460,6 +460,55 @@ public class PoReconciliationDTO implements Serializable {
     }
 
 
+    /**
+     * 对账单导出明细Excel
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDetailDTO {
+        /**
+         * 对账单号
+         */
+        private String code;
+        /**
+         * 对账状态
+         */
+        private String status;
+        /**
+         * 对账状态名称
+         */
+        private String statusName;
 
+        /**
+         * 对账周期
+         */
+        private String cycle;
+
+        /**
+         * 结算组织id
+         */
+        private String settleOrgId;
+
+         /**
+          * 结算组织名称
+          */
+        private String settleOrgName;
+         /**
+          * 供应商id
+          */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 单据单号
+         */
+        private String sourceCode;
+        /**
+         * 采购单号
+         */
+        private String poCode;
+    }
 
 }

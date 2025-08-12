@@ -82,7 +82,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -358,6 +358,12 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_95131);
         }
+    }
+
+    @Override
+    public Boolean exportDetailList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("采购对账单-明细数据导出", EXPORT_SCM_PO_RECONCILIATION_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     @Override

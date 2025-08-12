@@ -173,4 +173,13 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return void
      */
     void downloadTemplate(HttpServletResponse response);
+    /**
+     * 导出明细Excel数据
+     * @author will
+     * @date 2025/8/12 16:21
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportDetailList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
 }
