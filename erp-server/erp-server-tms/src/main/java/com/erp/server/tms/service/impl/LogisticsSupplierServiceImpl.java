@@ -175,7 +175,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
         List<String> supplierIds =Collections.singletonList(id);
         //渠道列表
-        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds, new LogisticsSupplierDTO.PagingParamDTO());
+        LogisticsSupplierDTO.PagingParamDTO params = new LogisticsSupplierDTO.PagingParamDTO();
+        params.setSqlMap(new HashMap<>());
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds,params);
         //获取服务商编号
         //包装仓库/渠道信息
         List<LogisticsChannelDTO.BaseDTO>returnChannelList=new ArrayList<>();
