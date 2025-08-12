@@ -37,7 +37,7 @@ public class DictHsCodeExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*出口退税率（%）", index = 2)
     @FieldValid(fieldName = "*出口退税率（%）",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
-    private BigDecimal exportRebateRate;
+    private String exportRebateRate;
 
     /**
      * *报关单位
