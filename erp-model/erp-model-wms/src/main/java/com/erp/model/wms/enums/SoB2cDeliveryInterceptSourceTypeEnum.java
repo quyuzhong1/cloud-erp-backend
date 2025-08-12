@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
  * b2c发货拦截单状态
  */
 public enum SoB2cDeliveryInterceptSourceTypeEnum implements EnumMessage {
-    SO_B2C("soB2c", "erp生成"),
-    API("api", "api生成"),
+    SO_B2C("soB2c", "人工拦截单"),
+    API("api", "api拦截单"),
     ;
 
     @EnumValue
