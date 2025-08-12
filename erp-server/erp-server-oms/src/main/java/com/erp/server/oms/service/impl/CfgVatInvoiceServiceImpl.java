@@ -227,9 +227,9 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         for (CfgVatInvoiceEntity entity : list) {
             ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, entity.getShopId());
             if (!Objects.isNull(shopInfo)){
-                BatchResultDTO.success(entity.getId(), shopInfo.getName(), "删除成功");
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), shopInfo.getName(), "删除成功"));
             }else {
-                BatchResultDTO.success(entity.getId(), entity.getShopId(), "删除成功");
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getShopId(), "删除成功"));
             }
         }
         return resultDTOList;
