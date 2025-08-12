@@ -10,7 +10,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
-import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
+import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.service.SkuStdCostDetailService;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdCostChangeExcelDTO> {
+public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdCostUpdateExcelDTO> {
 
     private final String taskId;
 
@@ -38,12 +38,12 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
     /**
      * 错误信息
      */
-    private List<SkuStdCostChangeExcelDTO> errorList = new ArrayList<>();
+    private List<SkuStdCostUpdateExcelDTO> errorList = new ArrayList<>();
 
     /**
      * 可处理数据
      */
-    private List<SkuStdCostChangeExcelDTO> dataList = new ArrayList<>();
+    private List<SkuStdCostUpdateExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
@@ -72,7 +72,7 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
      * 每解析一行数据回调一遍
      */
     @Override
-    public void invoke(SkuStdCostChangeExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(SkuStdCostUpdateExcelDTO excelDTO, AnalysisContext analysisContext) {
         count += 1;
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
@@ -122,7 +122,7 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
             return;
         }
         //获取所有SKU编码
-        List<String> skuIdList = dataList.stream().map(SkuStdCostChangeExcelDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = dataList.stream().map(SkuStdCostUpdateExcelDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuStdCostDetailDTO.ListDTO>  waitSubmitListDTOS= skuStdCostDetailService.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(null, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), skuIdList));
 
         Map<String, List<SkuStdCostDetailDTO.ListDTO>> waitSubmitListDTOMap = new HashMap<>();
@@ -133,9 +133,9 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
             waitSubmitListDTOMap = waitSubmitListDTOS.stream().collect(Collectors.groupingBy(SkuStdCostDetailDTO.ListDTO::getSkuId));
         }
 
-        for (SkuStdCostChangeExcelDTO excelDTO : dataList) {
+        for (SkuStdCostUpdateExcelDTO excelDTO : dataList) {
             List<SkuStdCostDetailDTO.ListDTO> listDTOS = waitSubmitListDTOMap.get(excelDTO.getSkuId());
-            if (CollectionUtils.isNotEmpty(listDTOS)) {
+            if (CollectionUtils.isEmpty(listDTOS)) {
                 excelDTO.setErrorMsg(CharSequenceUtil.format("SKU={}:不存在【已审核】,不支持变更", excelDTO.getSkuNo()));
                 errorList.add(excelDTO);
                 continue;

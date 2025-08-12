@@ -53,8 +53,10 @@ public class ImportPlmFeignController {
             switch (importTypeEnum) {
                 case CHANGE:
                     skuStdCostDetailService.importChangeSkuStdCostDetail(dto);
+                    break;
                 case UPDATE:
                     skuStdCostDetailService.importUpdateSkuStdCostDetail(dto);
+                    break;
                 default:
                     throw new ServiceException("输入导入的类型有误");
             }

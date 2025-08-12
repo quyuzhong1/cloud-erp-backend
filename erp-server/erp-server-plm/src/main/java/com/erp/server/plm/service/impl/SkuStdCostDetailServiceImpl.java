@@ -26,6 +26,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
+import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
@@ -39,11 +40,9 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.listener.SkuStdCostChangeExcelListener;
+import com.erp.server.plm.listener.SkuStdCostUpdateExcelListener;
 import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.SkuStdCostDetailService;
-import com.erp.server.plm.service.SkuStdCostService;
+import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -643,7 +642,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         SkuStdCostChangeExcelListener excelListenerUtil = new SkuStdCostChangeExcelListener(dto.getTaskId(), skuMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), SkuStdCostChangeExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         }catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
@@ -656,7 +655,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         List<SkuStdCostChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "尾程费用错误数据.xlsx";
+            String fileName = "SKU标准成本变更导入错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, SkuStdCostChangeExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
@@ -671,6 +670,34 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Override
     public void importUpdateSkuStdCostDetail(BaseDTO.ImportTypeDTO dto) {
+        //SKU
+        Map<String, String> skuMap = productDetailService.list().stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (o1, o2) -> o1));
+        SkuStdCostUpdateExcelListener excelListenerUtil = new SkuStdCostUpdateExcelListener(dto.getTaskId(), skuMap);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SkuStdCostUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        }catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
 
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        //导出错误数据
+        List<SkuStdCostUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "SKU标准成本更新导入错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SkuStdCostUpdateExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
     }
 }

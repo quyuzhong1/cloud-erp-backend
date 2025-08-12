@@ -172,8 +172,8 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.approveStatus!=null and params.approveStatus!=''">
-            and sscd.approve_status = ${params.approveStatus}::text
+        <if test="null != params and params.approveStatus!=null and params.approveStatus!=''">
+            and sscd.approve_status = #{params.approveStatus}::text
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -194,12 +194,11 @@
         SELECT
         <include refid="Common_Column_List"/>
         FROM
-            sku_std_cost_detail as sscd
+            detail_ranked as sscd
         LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
         LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
         LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
-        LEFT JOIN detail_ranked dr on dr.id = sscd.id and dr.rn = 1
-        WHERE sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        WHERE sscd.rn = 1 and sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
         <if test="null != skuIds != null and skuIds.size() > 0">
             and ssc.sku_id in
             <foreach collection="skuIds" item="item" open="(" separator="," close=")">
@@ -207,7 +206,7 @@
             </foreach>
         </if>
         <if test="approveStatus!=null and approveStatus!=''">
-            and sscd.approve_status = ${approveStatus}::text
+            and sscd.approve_status = #{approveStatus}::text
         </if>
     </select>
 
@@ -222,7 +221,7 @@
         WHERE sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false and
         sscd.approve_status = 'approve'
         <if test="params.skuId!=null and params.skuId!=''">
-            and ssc.sku_id = ${params.skuId}::text
+            and ssc.sku_id = #{params.skuId}::text
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
