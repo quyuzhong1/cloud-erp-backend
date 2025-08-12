@@ -23,10 +23,29 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
     /**
      * 价格变更列表(校验列表是否可变更)
+     *
      * @param dto
      * @return
      */
     List<SkuStdCostDetailDTO.ListDTO> listDTOByIds(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 校验单据是否可以变更
+     *
+     * @param commonDTO   公共修改参数
+     * @param listDTO     当前提交的sku标准成本信息
+     * @param lastListDTO 最新sku标准成本信息
+     */
+    void validateChangeParams(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO);
+
+    /**
+     * 构建变更实体
+     *
+     * @param commonDTO
+     * @param mainId
+     * @return
+     */
+    SkuStdCostDetailEntity buildChangeEntity(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, String mainId);
 
     /**
      * 修改变更
@@ -80,7 +99,6 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @date: 2025-08-08
      */
     SkuStdCostDetailDTO.ViewDTO view(String id);
-
 
     /**
      * 修改并提交审核
@@ -164,15 +182,17 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
     /**
      * sku标准成本-导入
-     * @author Jim
-     * @date:  2025-08-08
+     *
      * @param importDTO
      * @param response
+     * @author Jim
+     * @date: 2025-08-08
      */
     boolean importFile(SkuStdCostDetailDTO.ExcelImportDTO importDTO, HttpServletResponse response);
 
     /**
      * 报价历史列表查询
+     *
      * @param dto
      * @return
      */
@@ -180,6 +200,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
     /**
      * 查询最新sku已审核信息
+     *
      * @param skuIds
      * @return
      */
@@ -187,6 +208,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
     /**
      * 组合SKU重算标准成本
+     *
      * @param listDTO
      * @return
      */
@@ -194,6 +216,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
     /**
      * 导出查询
+     *
      * @param dto
      * @return
      */

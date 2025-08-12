@@ -22,20 +22,16 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
-import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.model.plm.enums.SkuStdCostTabEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
-import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -43,6 +39,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.listener.SkuStdCostChangeExcelListener;
 import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SkuStdCostService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -55,14 +52,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_COUNTRY;
 
 /**
  * <p>
@@ -86,6 +80,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private SysUserFeign sysUserFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private ProductDetailService productDetailService;
 
 
     @Override
@@ -94,14 +90,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
 
-    /**
-     * 校验单据是否可以变更
-     *
-     * @param commonDTO   公共修改参数
-     * @param listDTO     当前提交的sku标准成本信息
-     * @param lastListDTO 最新sku标准成本信息
-     */
-    private SkuStdCostDetailEntity validateChange(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
+    @Override
+    public void validateChangeParams(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         LocalDate submitEffectiveDate = commonDTO.getEffectiveDate();
         // 1.校验状态：仅支持【已审核】变更
         if (!ApproveStatusEnum.APPROVE.getCode().equalsIgnoreCase(listDTO.getApproveStatus())) {
@@ -125,11 +115,16 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 ServiceException.runError("历史单据不支持变更-只有最新的SKU支持变更:sku={},最新生效时间={}", listDTO.getSkuNo(), lastListDTO.getEffectiveDate());
             }
         }
+    }
+
+
+    @Override
+    public SkuStdCostDetailEntity buildChangeEntity(SkuStdCostDetailDTO.ChangeCommonDTO commonDTO, String mainId) {
         SkuStdCostDetailEntity newDetailEntity = new SkuStdCostDetailEntity();
         newDetailEntity.setStdCostPrice(commonDTO.getStdCostPrice());
         newDetailEntity.setEffectiveDate(commonDTO.getEffectiveDate());
         newDetailEntity.setCurrency(commonDTO.getCurrency());
-        newDetailEntity.setMainId(listDTO.getMainId());
+        newDetailEntity.setMainId(mainId);
         return newDetailEntity;
     }
 
@@ -138,7 +133,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Override
     public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         // 数据校验
-        SkuStdCostDetailEntity newDetailEntity = validateChange(addDTO, listDTO, lastListDTO);
+        validateChangeParams(addDTO, listDTO, lastListDTO);
+        // 构建实体
+        SkuStdCostDetailEntity newDetailEntity = buildChangeEntity(addDTO, listDTO.getMainId());
+
 
         log.info("开始新增sku标准成本单");
         boolean save = super.save(newDetailEntity);
@@ -155,6 +153,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateDTO addOrUpdateDTO) {
         // 验证数据 & 数据赋值
         old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
+        old.setCurrency(addOrUpdateDTO.getCurrency());
         // 校验日期
         if (old.getEffectiveDate() == null && addOrUpdateDTO.getEffectiveDate() == null) {
             ServiceException.runError("【生效日期】不能为空");
@@ -633,9 +632,11 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     private boolean importUpdateFile(@NotNull(message = "导入文件不能为空") MultipartFile excelFile, HttpServletResponse response) {
-        SkuStdCostChangeExcelListener excelListenerUtil = new SkuStdCostChangeExcelListener();
+        //SKU
+        Map<String, String> skuMap = productDetailService.list().stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (o1, o2) -> o1));
+        SkuStdCostChangeExcelListener excelListenerUtil = new SkuStdCostChangeExcelListener(skuMap);
         try {
-            EasyExcel.read(excelFile.getInputStream(), FirstMileReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).headRowNumber(2) .doRead();
+            EasyExcel.read(excelFile.getInputStream(), SkuStdCostChangeExcelDTO.class, excelListenerUtil).sheet(0).headRowNumber(2) .doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -643,23 +644,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        SkuStdCostChangeExcelDTO importDTO = new SkuStdCostChangeExcelDTO();
-        //导入数据处理
-        List<SkuStdCostChangeExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<SkuStdCostChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
-        //导入数据保存
-//        List<TmsFirstMileReconciliationDetailDTO.ListDTO> successImportList = handleImportData(successList, errorList);
 
-        String url = "";
-        if (!org.springframework.util.CollectionUtils.isEmpty(errorList)) {
-            String fileName = "SKU标准成本变更导入错误数据.xlsx";
-            // 根据 no 进行数值排序
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, SkuStdCostChangeExcelDTO.class);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
-            }
-        }
         if (errorList.isEmpty()) {
             return Boolean.TRUE;
         }

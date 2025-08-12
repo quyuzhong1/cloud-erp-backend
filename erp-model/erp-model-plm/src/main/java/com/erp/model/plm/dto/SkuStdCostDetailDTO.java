@@ -274,6 +274,12 @@ public class SkuStdCostDetailDTO implements Serializable {
         private BigDecimal stdCostPrice;
 
         /**
+         * 币别
+         */
+        @NotNull(message = "币别不能为空")
+        private String currency;
+
+        /**
          * 生效日期 (无生效日期的时候可修改)
          */
         private LocalDate effectiveDate;

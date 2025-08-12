@@ -7,15 +7,9 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
-import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -39,25 +33,30 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
      * 错误信息
      */
     private List<SkuStdCostChangeExcelDTO> errorList = new ArrayList<>();
-    /**
-     * 全部数据（用于判断导入是否为空）
-     */
-    private List<SkuStdCostChangeExcelDTO> dataList = new ArrayList<>();
 
     /**
-     * 记录哪些序号有错误信息
+     * 可处理数据
      */
-    private Set<String> errorNoSet = new HashSet<>();
+    private List<SkuStdCostChangeExcelDTO> dataList = new ArrayList<>();
 
     /**
      * 成功信息
      */
     private List<SkuStdCostChangeExcelDTO> successList = new ArrayList<>();
 
+    /**
+     * 已导入的sku列表
+     */
+    private List<String> existImportSkuNoList = new LinkedList<>();
+
     private final SkuStdCostDetailService skuStdCostDetailService = SpringUtil.getBean(SkuStdCostDetailService.class);
 
+    //sku信息
+    private Map<String, String> skuMap;
 
-    public SkuStdCostChangeExcelListener() {
+
+    public SkuStdCostChangeExcelListener(Map<String, String> skuMap) {
+        this.skuMap = skuMap;
     }
 
     /**
@@ -73,7 +72,7 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if (CharSequenceUtil.isBlank(excelDTO.getSku())) {
+        if (CharSequenceUtil.isBlank(excelDTO.getSkuNo())) {
             errorMsgList.add("【SKU】不能为空");
         }
         if (CharSequenceUtil.isBlank(excelDTO.getStdCostPrice())) {
@@ -83,15 +82,27 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
             errorMsgList.add("【生效日期】不能都为空");
         }
 
+        String skuNo = excelDTO.getSkuNo();
+        if (StringUtils.isNotBlank(skuNo)) {
+            String skuId = skuMap.getOrDefault(skuNo, "");
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(skuId)) {
+                excelDTO.setSkuId(skuId);
+            } else {
+                errorMsgList.add("SKU不存在");
+            }
+        }
+        //导入数据是否存在重复
+        if (existImportSkuNoList.contains(excelDTO.getSkuNo())) {
+            errorMsgList.add(CharSequenceUtil.format("导入SKU【{}】重复", excelDTO.getSkuNo()));
+        }
+
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
-            if (StringUtils.isNotBlank(excelDTO.getSku())) {
-                errorNoSet.add(excelDTO.getSku());
-            }
             return;
         }
+
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
     }
@@ -107,6 +118,22 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (CollectionUtils.isEmpty(dataList)) {
             return;
+        }
+        //获取所有SKU编码
+        List<String> skuIdList = dataList.stream().map(SkuStdCostChangeExcelDTO::getSkuId).distinct().collect(Collectors.toList());
+        Map<String, SkuStdCostDetailDTO.ListDTO> lastListDTOMap = skuStdCostDetailService.mapLastBySkuIds(skuIdList);
+
+        for (SkuStdCostChangeExcelDTO excelDTO : dataList) {
+            SkuStdCostDetailDTO.ListDTO listDTO = lastListDTOMap.get(excelDTO.getSkuId());
+            if (null == listDTO) {
+                excelDTO.setErrorMsg("SKU不存在");
+                errorList.add(excelDTO);
+                continue;
+            }
+
+            // 处理重复sku导入问题
+        }
+
 
 //        Map<String, List<FirstMileReconciliationStandardExcelDTO>> dataMap = dataList.stream()
 //                .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
@@ -146,22 +173,22 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
 //                    if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
 //                    return false;
 //                }).collect(Collectors.toList());
-//                if (CollUtil.isEmpty(entityList)) {
-//                    StringBuilder msg = new StringBuilder();
-//                    if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
-//                        msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
-//                    }
-//                    if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-//                        msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-//                    }
-//                    if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
-//                        msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
-//                    }
-//                    msg.append("未匹配到物流单");
-//                    excelDTO.setErrorMsg(msg.toString());
-//                    errorNoSet.add(excelDTO.getNo());
-//                    continue;
-//                }
+//        if (CollUtil.isEmpty(entityList)) {
+//            StringBuilder msg = new StringBuilder();
+//            if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {
+//                msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
+//            }
+//            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {
+//                msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+//            }
+//            if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {
+//                msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
+//            }
+//            msg.append("未匹配到物流单");
+//            excelDTO.setErrorMsg(msg.toString());
+//            errorNoSet.add(excelDTO.getNo());
+//            continue;
+//        }
 //                //校验两个参数及以上都存在时。是否存在关联的多条物流单
 //                List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
 //                    if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
@@ -260,6 +287,5 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
 //            }else {
 //                successList.addAll(value);
 //            }
-        }
     }
 }
