@@ -34,7 +34,7 @@ public class WeiShiCreateInboundRequest {
     private String batchNo;
     @JsonProperty("remark")
     private String remark;
-    @JsonProperty(" transportSize")
+    @JsonProperty("transportSize")
     private String transportSize;
     @JsonProperty("deliveryVoucherBase64")
     private String deliveryVoucherBase64;
