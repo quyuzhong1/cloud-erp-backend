@@ -61,8 +61,8 @@ public class CfgQueryOptionServiceTest {
         dto.setModel("plm");
         //表名, 多个使用英文逗号隔开
         dto.setTableName("pilot_application,pilot_application_detail11");
-        //表归属类型： ,main（主表）,detailList(明细)，自定义名称（根据实际单据）
-        dto.setFieldBelongsType("main");
+        //表归属类型：main（主表）,detailList(明细)，自定义名称（根据实际单据）
+        dto.setFieldBelongsType("main,detailList");
         //业务key，跟流程单据key保持一致（menu）
         dto.setBussinessKey("pilotApplication");
         //使用类型，CfgQueryOptionUseTypeEnum枚举

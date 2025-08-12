@@ -234,17 +234,18 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 return;
             }
             String[] tableNames = tableName.split(",");
-            for (String name : tableNames) {
+            String[] fieldBelongsTypes = fieldBelongsType.split(",");
+            for (int i = 0; i < tableNames.length; i++) {
                 //判断同一个单据下的fieldBelongsType 是否已存在。 不存在才新增，存在则跳过
                 Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey)
-                        .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsType)
-                        .eq(CfgQueryOptionEntity::getTableName,name)
+                        .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsTypes[i])
+                        .eq(CfgQueryOptionEntity::getTableName,tableNames[i])
                         .eq(CfgQueryOptionEntity::getUseType,useType)
                         .count();
                 if(count > 0){
                     continue;
                 }
-                saveFromSql(dto,name);
+                saveFromSql(dto,tableNames[i]);
             }
         }
     }
