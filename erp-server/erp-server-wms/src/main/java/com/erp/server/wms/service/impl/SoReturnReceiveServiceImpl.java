@@ -694,35 +694,48 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
-        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        //待提交支持删除
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+
+//        //待提交支持删除
+//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+//        ).count();
+//        if (count != entityList.size()) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SoReturnReceiveEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoReturnReceiveEntity entity : entityList) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoReturnReceiveEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
         //删除详情表
-        soReturnReceiveDetailService.delete(ids);
-        boolean result = this.removeByIds(ids);
+        soReturnReceiveDetailService.delete(removeIdList);
+        boolean result = this.removeByIds(removeIdList);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
 
         // 添加批量操作日志
-        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),entityList.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = entityList.stream()
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货签收单", UserContext.getDefaultLoginUser().getUserName(),removeList.stream().map(SoReturnReceiveEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream()
                 .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
                 .collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "删除操作");
 
         // 返回成功结果
-        return entityList.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 
     @Override

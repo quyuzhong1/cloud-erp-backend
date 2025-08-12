@@ -29,6 +29,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -356,30 +357,45 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+
         //根据ids查询
         List<TransferApplicationEntity> list = getList(ids);
         //待提交并且未作废允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<TransferApplicationEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        for (TransferApplicationEntity entity : list) {
+            if (!entity.getApproveStatus().equals(waitSubmitStatus)
+                    ||entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        log.info("调拨申请删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        List<String> removeIdList = removeList.stream().map(TransferApplicationEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("调拨申请删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
         //删除明细数据
-        transferApplicationDetailService.removeByMainIds(ids);
+        transferApplicationDetailService.removeByMainIds(removeIdList);
         //删除操作日志
-        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         //删除主表数据
-        boolean result = this.removeByIds(ids);
+        boolean result = this.removeByIds(removeIdList);
         if (!result){
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
 
         // 返回成功结果
-        return list.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 
     @Override

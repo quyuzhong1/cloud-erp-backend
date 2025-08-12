@@ -442,28 +442,40 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
         //待提交并且未作废允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus()).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus()).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<OtherInstockEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (OtherInstockEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        log.info("其他入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        List<String> removeIdList = removeList.stream().map(OtherInstockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("其他入库单删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
         //删除明细数据
-        otherInstockDetailService.removeByMainIds(ids);
+        otherInstockDetailService.removeByMainIds(removeIdList);
         //删除操作日志
-        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(OtherInstockEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(OtherInstockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "删除操作");
         //发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表数据
-        boolean result = this.removeByIds(ids);
+        boolean result = this.removeByIds(removeIdList);
         if (!result){
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         // 返回成功结果
-        return list.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 
     @Override

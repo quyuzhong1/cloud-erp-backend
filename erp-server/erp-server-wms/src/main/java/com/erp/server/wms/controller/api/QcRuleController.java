@@ -236,9 +236,9 @@ public class QcRuleController extends BaseController {
             menuCode = "wms:qcRule:delete",
             serviceClass = QcRuleService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcRuleService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>>delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = qcRuleService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 

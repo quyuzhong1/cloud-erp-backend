@@ -347,13 +347,8 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        try {
-            List<BatchResultDTO> resultDTOS = soOutstockService.deleteByIds(dto.getIds(), true);
-            return success(resultDTOS);
-        } catch (Exception e) {
-            log.error("批量删除销售出库单失败", e);
-            return failure(e.getMessage());
-        }
+        List<BatchResultDTO> resultDTOList = soOutstockService.deleteByIds(dto.getIds(), true);
+        return  resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

@@ -172,9 +172,42 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public BatchResultDTO delete(String id) {
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<String> supplierIds =Collections.singletonList(id);
+        //渠道列表
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds, new LogisticsSupplierDTO.PagingParamDTO());
+        //获取服务商编号
+        //包装仓库/渠道信息
+        List<LogisticsChannelDTO.BaseDTO>returnChannelList=new ArrayList<>();
+        List<LogisticsWarehouseEntity> warehouseEntityList = logisticsWarehouseList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getMainId()) && e.getMainId().equals(entity.getId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(warehouseEntityList)){
+            //封装仓库下的渠道
+            List<String> hasWarehouseChannelId = new ArrayList<>();
+            for(LogisticsWarehouseEntity logisticsWarehouseEntity: warehouseEntityList){
+                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
+                                && c.getSourceId().equals(logisticsWarehouseEntity.getId()) && c.getMainId().equals(entity.getId()))
+                        .collect(Collectors.toList());
+                hasWarehouseChannelId.addAll(channelList.stream().map(v->v.getId()).collect(Collectors.toList()));
+                returnChannelList.addAll(channelList);
+            }
+            //封装没有仓库的渠道
+            List<LogisticsChannelDTO.BaseDTO> otherChannel = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                            && c.getMainId().equals(entity.getId()) && !hasWarehouseChannelId.contains(c.getId()))
+                    .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(otherChannel)){
+                returnChannelList.addAll(otherChannel);
+            }
+        }else {
+            List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                            && c.getMainId().equals(entity.getId()))
+                    .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+            returnChannelList.addAll(channelList);
+        }
         //TODO 检查订单是否引用
         this.removeById(id);
-        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+
         List<String> mainIdList = new ArrayList<>(10);
         mainIdList.add(id);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
@@ -183,7 +216,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         //删除渠道根据来源id
         logisticsChannelService.removeByMainIdList(mainIdList);
-        return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
+
+        return BatchResultDTO.success(entity.getId(), CollectionUtils.isNotEmpty(returnChannelList)?returnChannelList.stream().map(LogisticsChannelDTO.BaseDTO::getName).collect(Collectors.joining(",")):entity.getSupplierName(), OperationTypeEnum.DELETE);
 
     }
 

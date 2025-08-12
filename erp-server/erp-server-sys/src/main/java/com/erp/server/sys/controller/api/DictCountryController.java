@@ -207,7 +207,7 @@ public class DictCountryController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getNameCn(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

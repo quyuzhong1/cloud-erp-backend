@@ -306,13 +306,8 @@ public class SoReturnNoticeController extends BaseController {
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        try {
-            List<BatchResultDTO> resultDTOS = soReturnNoticeService.deleteByIds(idsDTO.getIds(), true);
-            return success(resultDTOS);
-        } catch (Exception e) {
-            log.error("批量删除销售退货通知单失败", e);
-            return failure(e.getMessage());
-        }
+        List<BatchResultDTO> resultDTOList = soReturnNoticeService.deleteByIds(idsDTO.getIds(), true);
+        return  resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

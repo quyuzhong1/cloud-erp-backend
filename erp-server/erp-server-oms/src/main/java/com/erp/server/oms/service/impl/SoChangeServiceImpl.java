@@ -1003,30 +1003,35 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92034);
         }
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+        List<SoChangeEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoChangeEntity entity : list) {
+            if (!entity.getApproveStatus().getStatus().equals(waitSubmitStatus)
+                    ||entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
-        if (invalidCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+        List<String> removeIdList = removeList.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
-        Boolean result = this.removeByIds(ids);
+        Boolean result = this.removeByIds(removeIdList);
         if (result) {
             //添加日志
             String content = "删除销售变更单[%s]";
-            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "删除");
             //删除明细
-            soChangeDetailService.removeByMainIdList(ids);
+            soChangeDetailService.removeByMainIdList(removeIdList);
 
         }else {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         // 返回成功结果
-        return list.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 
 
