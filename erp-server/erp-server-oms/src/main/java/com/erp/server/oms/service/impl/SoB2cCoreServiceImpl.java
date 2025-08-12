@@ -458,7 +458,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         entity.setSignOrderError("");
         soB2cService.updateById(entity);
         soB2cDetailService.updateBatchById(detailEntityList);
-        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+
         //判断是三方仓还是自发货生成不同的发货单
         //检测是否是API 对接的仓库
         try {
