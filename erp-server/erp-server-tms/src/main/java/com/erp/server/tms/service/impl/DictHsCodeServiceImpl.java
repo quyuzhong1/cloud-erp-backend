@@ -72,6 +72,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
 
         Integer count = lambdaQuery()
                 .eq(DictHsCodeEntity::getHsCode, dictHsCodeEntity.getHsCode())
+                .eq(DictHsCodeEntity::getCountry, "CN")
                 .count();
         if(count > 0 ){
             throw new ServiceException(ApiError.ERROR_96008,dictHsCodeEntity.getHsCode());
@@ -104,6 +105,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
 
         Integer count = lambdaQuery()
                 .eq(DictHsCodeEntity::getHsCode, dictHsCodeEntity.getHsCode())
+                .eq(DictHsCodeEntity::getCountry, "CN")
                 .ne(DictHsCodeEntity::getId, dictHsCodeEntity.getId())
                 .count();
         if(count > 0 ){
@@ -188,7 +190,7 @@ public class DictHsCodeServiceImpl extends SuperServiceImpl<DictHsCodeMapper, Di
         List<DictHsCodeExcelDTO> successList = excelListenerUtil.getSuccessList();
         if(CollUtil.isNotEmpty(successList)){
             List<String> hsCodes = successList.stream().map(DictHsCodeExcelDTO::getHsCode).collect(Collectors.toList());
-            List<DictHsCodeEntity> oldList = lambdaQuery().in(DictHsCodeEntity::getHsCode, hsCodes).list();
+            List<DictHsCodeEntity> oldList = lambdaQuery().in(DictHsCodeEntity::getHsCode, hsCodes).eq(DictHsCodeEntity::getCountry, "CN").list();
             Map<String, DictHsCodeEntity> oldMap = oldList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, w -> w , (o1,o2)->o1));
 
             for (DictHsCodeExcelDTO dto : successList) {
