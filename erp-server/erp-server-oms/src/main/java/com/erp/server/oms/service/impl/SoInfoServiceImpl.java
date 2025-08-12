@@ -577,6 +577,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             variablesMap.put("receiveAddress", customerAddressEntity.getAddress());
         }
 
+        //sku数量
+        long skuCount = detailList.stream().map(SoDetailEntity::getSkuId).distinct().count();
+        variablesMap.put("skuCount", skuCount);
+
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty()).subtract(obj.getDiscountAmount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);

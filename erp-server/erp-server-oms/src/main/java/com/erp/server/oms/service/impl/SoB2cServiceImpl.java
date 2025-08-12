@@ -3852,6 +3852,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
             variablesMap.put("soB2cRefCategoryDTO",BeanUtil.copyToList(soB2cRefCategoryList,Map.class));
         }
+        //sku数量
+        long skuCount = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().count();
+        variablesMap.put("skuCount", skuCount);
+
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
