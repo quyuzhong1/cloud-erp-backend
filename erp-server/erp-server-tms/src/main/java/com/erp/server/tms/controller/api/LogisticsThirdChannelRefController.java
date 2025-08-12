@@ -68,11 +68,6 @@ public class LogisticsThirdChannelRefController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流-第三方渠道关系表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "tms:logisticsThirdChannelRef:update",
-        serviceClass = LogisticsThirdChannelRefService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated LogisticsThirdChannelRefDTO.UpdateDTO dto) {
         logisticsThirdChannelRefService.update(dto);
         return success();
@@ -87,10 +82,6 @@ public class LogisticsThirdChannelRefController extends BaseController {
      * @date 2025-07-30
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            menuCode = "tms:logisticsThirdChannelRef:paging",
-            tableAlias = "ltcr"
-    )
     @WebAdvanceQuery(handler = LogisticsThirdChannelRefQueryHandler.class)
     public ApiResult<PagingVO<LogisticsThirdChannelRefDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsThirdChannelRefDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsThirdChannelRefDTO.PagingVO> pagingVO = logisticsThirdChannelRefService.paging(dto);
@@ -118,11 +109,6 @@ public class LogisticsThirdChannelRefController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsThirdChannelRef:delete",
-            serviceClass = LogisticsThirdChannelRefService.class,
-            keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "物流-第三方渠道关系表删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -191,11 +177,6 @@ public class LogisticsThirdChannelRefController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "tms:logisticsThirdChannelRef:updateStatus",
-//            serviceClass = LogisticsThirdChannelRefService.class,
-//            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated LogisticsThirdChannelRefDTO.DisabledParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
