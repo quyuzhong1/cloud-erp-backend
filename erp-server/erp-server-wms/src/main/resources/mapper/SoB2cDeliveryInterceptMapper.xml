@@ -23,6 +23,7 @@
         SELECT
             sbdi.id,
             sbdi.code,
+            sbdi.source_type,
             sbdi.so_code,
             sbdi.so_delivery_code,
             sbdi.so_outstock_code,

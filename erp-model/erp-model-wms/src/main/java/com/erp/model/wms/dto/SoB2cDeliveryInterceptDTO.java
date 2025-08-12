@@ -336,6 +336,7 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 产品编号
          */
         private String skuNo;
+        private String sourceType;
         /**
          * 产品名称
          */
