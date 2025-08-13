@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.SkuStdCostDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.SkuStdCostDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="effective_date" property="effectiveDate" />
+       <result column="expire_date" property="expireDate" />
+       <result column="std_cost_pirce" property="stdCostPirce" />
+       <result column="std_sale_price" property="stdSalePrice" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="remark" property="remark" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, effective_date, expire_date, std_cost_pirce, std_sale_price, bom_version, remark, approve_status, approve_user_id, approve_user_name, approve_time
+    </sql>
+
+    <!-- 公共查询结果列 -->
+    <sql id="Common_Column_List">
+        sscd.id AS id,
+        ssc.sku_id AS skuId,
+        ssc.sku_no AS skuNo,
+        pd.name AS skuName,
+        ssc.is_comb AS isComb,
+        ps.sale_state AS saleState,
+        ssc.last_outstock_date AS lastOutstockDate,
+        sscd.create_time AS createTime,
+        sscd.create_user_name AS createUserName,
+        sscd.update_time AS updateTime,
+        sscd.update_user_name AS updateUserName,
+        sscd.approve_status AS approveStatus,
+        sscd.std_cost_price AS stdCostPrice,
+        sscd.currency AS currency,
+        sscd.effective_date AS effectiveDate,
+        sscd.expire_date AS expireDate,
+        sscd.approve_user_id AS approveUserId,
+        sscd.approve_user_name AS approveUserName,
+        sscd.approve_time AS approveTime,
+        ssc.id AS mainId
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*) AS count
+        FROM sku_std_cost_detail
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+        <include refid="Common_Column_List"/>
+        FROM
+        (SELECT sscd.*, ROW_NUMBER() OVER (PARTITION BY main_id ORDER BY effective_date DESC, update_time DESC) AS rn FROM sku_std_cost_detail sscd WHERE sscd.is_deleted = false) sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE ${params.sqlMap.default}
+        and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sscd.update_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sku_std_cost_detail where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+            <include refid="Common_Column_List"/>
+        FROM
+        (SELECT sscd.*, ROW_NUMBER() OVER (PARTITION BY main_id ORDER BY effective_date DESC, update_time DESC) AS rn FROM sku_std_cost_detail sscd WHERE sscd.is_deleted = false) sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE ${params.sqlMap.default}
+        and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and sscd.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sscd.update_time desc
+    </select>
+
+    <select id="allNewCount" resultType="java.lang.Long">
+        WITH detail_ranked AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY main_id
+                       ORDER BY effective_date DESC, update_time DESC
+                       ) AS rn
+            FROM sku_std_cost_detail
+            WHERE is_deleted = false
+        )
+        SELECT count(*)
+        FROM sku_std_cost s
+        LEFT JOIN detail_ranked d ON s.id = d.main_id AND d.rn = 1
+        WHERE s.is_deleted = FALSE and d.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+    </select>
+
+    <select id="listDTOByParams" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+            <include refid="Common_Column_List"/>
+        FROM
+        sku_std_cost_detail as sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        <if test="null != params and params.ids != null and params.ids.size() > 0">
+            and sscd.id in
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != params and params.skuIds != null and params.skuIds.size() > 0">
+            and ssc.sku_id in
+            <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != params and params.approveStatus!=null and params.approveStatus!=''">
+            and sscd.approve_status = #{params.approveStatus}::text
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="lastList" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        WITH detail_ranked AS (
+            SELECT *,
+            ROW_NUMBER() OVER (
+            PARTITION BY main_id
+            ORDER BY effective_date DESC, update_time DESC
+            ) AS rn
+            FROM sku_std_cost_detail
+            WHERE is_deleted = false
+        )
+        SELECT
+        <include refid="Common_Column_List"/>
+        FROM
+            detail_ranked as sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE sscd.rn = 1 and sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false
+        <if test="null != skuIds != null and skuIds.size() > 0">
+            and ssc.sku_id in
+            <foreach collection="skuIds" item="item" open="(" separator="," close=")">
+                #{item}::text
+            </foreach>
+        </if>
+        <if test="approveStatus!=null and approveStatus!=''">
+            and sscd.approve_status = #{approveStatus}::text
+        </if>
+    </select>
+
+    <select id="historyPaging" resultType="com.erp.model.plm.dto.SkuStdCostDetailDTO$ListDTO">
+        SELECT
+            <include refid="Common_Column_List"/>
+        FROM
+        sku_std_cost_detail sscd
+        LEFT JOIN sku_std_cost as ssc on sscd.main_id = ssc.id
+        LEFT JOIN product_detail as pd on pd.id = ssc.sku_id
+        LEFT JOIN product_sale as ps on ps.sku_id = ssc.sku_id
+        WHERE sscd.is_deleted = false and ssc.is_deleted = false and pd.is_deleted = false and ps.is_deleted = false and
+        sscd.approve_status = 'approve'
+        <if test="params.skuId!=null and params.skuId!=''">
+            and ssc.sku_id = #{params.skuId}::text
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sscd.update_time desc
+    </select>
+
+
+</mapper>
