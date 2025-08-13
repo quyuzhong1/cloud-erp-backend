@@ -2,11 +2,13 @@ package com.erp.server.plm.service;
 
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +21,12 @@ import java.util.Map;
  * @since 2025-08-08
  */
 public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEntity> {
+
+    /**
+     * SKU审核通过添加记录
+     * @param entity
+     */
+    void checkAndAddFirst(ProductDetailEntity entity, LocalDate lastOutstockDate);
 
     /**
      * 价格列表

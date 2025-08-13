@@ -19,6 +19,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
@@ -45,6 +46,7 @@ import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -84,6 +87,33 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private ProductDetailService productDetailService;
     @Resource
     private FileFeign fileFeign;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkAndAddFirst(ProductDetailEntity entity, LocalDate lastOutstockDate) {
+        Integer count = skuStdCostService.lambdaQuery()
+                .eq(SkuStdCostEntity::getSkuId, entity.getId())
+                .count();
+        if (count > 0) {
+            return;
+        }
+        SkuStdCostEntity skuStdCostEntity = new SkuStdCostEntity()
+                .setSkuId(entity.getId())
+                .setSkuNo(entity.getSkuNo())
+                .setIsComb(false)
+                .setLastOutstockDate(lastOutstockDate)
+                ;
+        skuStdCostService.save(skuStdCostEntity);
+        SkuStdCostDetailEntity detailEntity = new SkuStdCostDetailEntity()
+                .setMainId(entity.getId())
+                .setStdCostPrice(BigDecimal.ZERO)
+                .setStdSalePrice(BigDecimal.ZERO)
+                .setCurrency(CurrencyEnum.CNY.getCurrencyCode())
+                .setRemark("")
+                .setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT)
+                ;
+        this.save(detailEntity);
+    }
 
     @Override
     public List<SkuStdCostDetailDTO.ListDTO> listDTOByParams(SkuStdCostDetailDTO.ParamsDTO dto) {

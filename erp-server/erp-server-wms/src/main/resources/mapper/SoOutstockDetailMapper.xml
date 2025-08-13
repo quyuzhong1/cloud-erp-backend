@@ -124,4 +124,21 @@
         </foreach>
     </select>
 
+    <select id="mapLastOutstockDateBySkuIds" resultType="com.erp.model.wms.dto.SoOutstockDTO$LastBillDateDTO">
+            SELECT
+            sod.sku_id AS skuId,
+            MAX(so.bill_date) AS billDate
+            FROM so_outstock_detail sod
+            INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+            WHERE so.approve_status = 'approve'
+            AND sod.sku_id IN
+            <foreach collection="skuIds" item="skuId" open="(" close=")" separator=",">
+                #{skuId}
+            </foreach>
+            and so.is_deleted = FALSE and sod.is_deleted = FALSE
+            GROUP BY sod.sku_id
+
+    </select>
+
+
 </mapper>

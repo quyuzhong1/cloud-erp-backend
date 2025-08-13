@@ -1829,4 +1829,17 @@ public class SoOutstockDTO implements Serializable {
          */
         private String currencySymbol;
     }
+
+    /**
+     * sku最后一次出库日期
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LastBillDateDTO {
+
+        private String skuId;
+
+
+        private LocalDate billDate;
+    }
 }

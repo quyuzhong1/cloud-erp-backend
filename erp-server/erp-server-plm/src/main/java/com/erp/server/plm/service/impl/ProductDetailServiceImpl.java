@@ -296,6 +296,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private SkuStdCostDetailService skuStdCostDetailService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -4119,6 +4122,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //审核通过
         if (dto.getType().equals(ApproveType.PASS)) {
+            // 审核通过添加SKU标准成本记录
+            skuStdCostDetailService.checkAndAddFirst(entity, null);
+
             //审核通过 重算目的国申报单价
             resetDestDeclarePrice(Collections.singletonList(entity), Boolean.FALSE);
             //发送通知
