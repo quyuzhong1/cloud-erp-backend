@@ -68,7 +68,7 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      * @param id
      * @return
      */
-    BatchResultDTO delete(String id);
+    BatchResultDTO delete(LogisticsThirdChannelRefEntity id);
 
     /**
      * 启用/停用
