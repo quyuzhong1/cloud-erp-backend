@@ -812,12 +812,6 @@ public class SoB2cController extends BaseController {
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
         }
-        //订单自动预报 不影响提交发货流程
-        try {
-            soB2cService.autoOrderForecast(dto.getIds());
-        }catch (Exception e){
-            log.error("订单自动预报",e);
-        }
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {

@@ -2208,6 +2208,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_STATUS_ERROR, entity.getCode());
         }
+        try {
+            this.autoOrderForecast(Collections.singletonList(id));
+        }catch (Exception e){
+            log.error("自动预报失败",e);
+        }
         //全托管并且是平台订单就进行校验状态
         if (isFullyManagedOrder(entity.getDictPlatform()) && SourceTypeEnum.SO_B2C.getCode().equals(entity.getSourceType())){
             //检查平台状态
