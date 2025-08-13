@@ -533,6 +533,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 账单类型： actual=实际， initPeriod=期初
          */
         private String reconciliationType;
+        /**
+         * 供应商类型
+         * LogisticsSupplierTypeEnum
+         */
+        private String supplierType;
 
         /**
          * 费用明细详情(导入时传递)

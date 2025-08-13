@@ -1336,7 +1336,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         LocalDate reconciliationMonth = LocalDate.now();
         if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = ApplicationContextUtils.getBean(TmsFirstMileReconciliationService.class).getById(mainId);
-    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    		reconciliationMonth = Objects.nonNull(tmsFirstMileReconciliationEntity) ? tmsFirstMileReconciliationEntity.getReconciliationMonth() : record.getReceiveDate();
     	}else {
     		reconciliationMonth = record.getReceiveDate();
     	}
@@ -2694,6 +2694,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         // 查询周期内已签收未对账的物流单
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
+        //过滤非物流类型对账
+        list = list.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
