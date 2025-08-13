@@ -67,7 +67,7 @@ public class ImportLogisticsThirdChannelRefExcelDTO implements Serializable {
      * *查询渠道名称
      */
     @ExcelProperty(value = "查询渠道名称", index = 6)
-    @FieldValid(fieldName = "查询渠道名称",isNotBlank = true ,maxLength = 64)
+    @FieldValid(fieldName = "查询渠道名称",maxLength = 64)
     private String thirdChannelName;
     /**
      * *是否推送电话

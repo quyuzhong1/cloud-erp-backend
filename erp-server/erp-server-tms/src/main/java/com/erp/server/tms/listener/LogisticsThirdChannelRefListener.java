@@ -46,8 +46,6 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
     private final LogisticsSupplierService logisticsSupplierService = SpringUtil.getBean(LogisticsSupplierService.class);
     private final LogisticsChannelService logisticsChannelService = SpringUtil.getBean(LogisticsChannelService.class);
-    private final LogisticsThirdChannelRefService logisticsThirdChannelRefService = SpringUtil.getBean(LogisticsThirdChannelRefService.class);
-
     public LogisticsThirdChannelRefListener() {
 
     }
@@ -162,7 +160,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                 if (!errorMsgList.isEmpty()) {
                     e.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(e);
-                    return;
+                    continue;
                 }
                 successList.add(e);
             }
