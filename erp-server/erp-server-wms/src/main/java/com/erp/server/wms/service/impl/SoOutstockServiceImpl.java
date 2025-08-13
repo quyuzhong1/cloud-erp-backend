@@ -3024,18 +3024,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setSalesDeptId(Objects.nonNull(customer) ? customer.getSalesDeptId() : CharSequenceUtil.EMPTY);
         }
 
+        //如果是平台仓发货，处理发货单生成情况
+        if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.generatePlatformDelivery(soOutstock);
+            soOutstock.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            soOutstock.setSourceId(thirdWarehouseDeliveryEntity.getId());
+        }
+
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
             List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
-
             //如果是平台仓发货，处理发货单生成情况
             if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
-                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.generatePlatformDelivery(soOutstock,detailEntities);
-                soOutstock.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
-                soOutstock.setSourceId(thirdWarehouseDeliveryEntity.getId());
+                thirdWarehouseDeliveryService.generatePlatformDetailDelivery(soOutstock.getSourceId(),detailEntities);
             }
 
             return soOutstock.getId();

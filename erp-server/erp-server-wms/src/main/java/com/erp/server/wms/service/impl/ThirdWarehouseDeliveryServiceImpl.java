@@ -124,10 +124,13 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if(!save) {
             throw new ServiceException("三方仓发货单保存失败");
         }
-        entity.getDetailEntityList().forEach(v->{
-            v.setMainId(entity.getId());
-        });
-        detailService.saveBatch(entity.getDetailEntityList());
+        if(CollectionUtils.isNotEmpty(entity.getDetailEntityList())) {
+            entity.getDetailEntityList().forEach(v->{
+                v.setMainId(entity.getId());
+            });
+            detailService.saveBatch(entity.getDetailEntityList());
+        }
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方仓发货单" , entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),entity.getId(), "新增操作");
@@ -349,7 +352,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
-    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> detailList) {
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity) {
         SoB2cEntity entity = soB2cFeign.getById(soOutstockEntity.getSoId());
 
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
@@ -361,18 +364,18 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setCode(code);
         addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
-        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-        for (SoOutstockDetailEntity addDTO : detailList) {
-            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
-            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
-            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
-            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
-            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
-            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
-        }
-        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+//        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+//        for (SoOutstockDetailEntity addDTO : detailList) {
+//            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+//            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+//            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+//            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+//            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
+//            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+//            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
+//            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+//        }
+//        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
         return service.add(addThirdWarehouseDeliveryEntity);
 
     }
@@ -384,6 +387,23 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         }
         this.removeByIds(sourceIds);
         detailService.removeByMainIds(sourceIds);
+    }
+
+    @Override
+    public void generatePlatformDetailDelivery(String sourceId, List<SoOutstockDetailEntity> detailEntities) {
+        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+        for (SoOutstockDetailEntity addDTO : detailEntities) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
+            thirdWarehouseDeliveryDetailEntity.setMainId(sourceId);
+            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        detailService.saveBatch(thirdWarehouseDetailList);
     }
 
 }

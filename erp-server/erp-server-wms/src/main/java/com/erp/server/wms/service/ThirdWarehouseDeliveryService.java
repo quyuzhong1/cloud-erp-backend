@@ -48,7 +48,9 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
 
     BatchResultDTO retryOutstock(String id);
 
-    ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity,List<SoOutstockDetailEntity> detailList);
+    ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity);
 
     void deleteByIds(List<String> sourceIds);
+
+    void generatePlatformDetailDelivery(String sourceId, List<SoOutstockDetailEntity> detailEntities);
 }
