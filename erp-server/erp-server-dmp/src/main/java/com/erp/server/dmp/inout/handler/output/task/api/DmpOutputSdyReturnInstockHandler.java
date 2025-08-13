@@ -139,6 +139,9 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     		String thirdReturnInstockId = dmpReturnInstockEntity.getThirdReturnInstockId();
     		String thirdReturnInstockCode = dmpReturnInstockEntity.getThirdReturnInstockCode();
     		String returnInstockStatus = dmpReturnInstockEntity.getReturnInstockStatus();
+    		if(StringUtils.isNotBlank(returnInstockStatus) && "待提交".equals(returnInstockStatus)) {
+    			returnInstockStatus = "已删除";
+	        }
     		LocalDateTime returnInstockTime = dmpReturnInstockEntity.getReturnInstockTime();
     		String logisticCompanyCode = dmpReturnInstockEntity.getLogisticCompanyCode();
     		String logisticCompanyName = dmpReturnInstockEntity.getLogisticCompanyName();
@@ -175,9 +178,6 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
     	        shudiyunB2cOrderDTO.setBiz_status(returnInstockStatus);
     	        String dataStatus = dmpReturnInstockDetailEntity.getDataStatus();
-    	        if(StringUtils.isNotBlank(dataStatus) && "待提交".equals(dataStatus)) {
-    	        	dataStatus = "已删除";
-    	        }
 				shudiyunB2cOrderDTO.setStatus(dataStatus);
 
     	        shudiyunB2cOrderDTO.setSales_company_code(salesCompanyCode);
