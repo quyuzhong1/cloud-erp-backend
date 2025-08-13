@@ -172,8 +172,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         poReconciliationDetailScmService.update(updateDTO.getDetailList(),updateDTO.getId());
         //更新主表对账金额
         updateAmount(updateDTO.getId());
+        //更新备注
+        updateRemark(updateDTO);
         return Boolean.TRUE;
     }
+
 
     /**
      * @description: 更新对账金额
@@ -364,6 +367,35 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     public Boolean exportDetailList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("采购对账单-明细数据导出", EXPORT_SCM_PO_RECONCILIATION_DETAIL.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(PagingDTO<PoReconciliationDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<PoReconciliationDTO.ExportDetailDTO> pageData = this.baseMapper.exportAllPoReconciliationDetail(query, pagingParamDTO.getParams());
+        handleExportAllData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    /**
+     * 查询所有的对账单明细
+     * @author will
+     * @date 2025/8/12 18:20
+     * @param list
+     * @return void
+     */
+    private void handleExportAllData (List<PoReconciliationDTO.ExportDetailDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (PoReconciliationDTO.ExportDetailDTO exportDetailDTO :list) {
+            //对账状态名称
+            exportDetailDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(exportDetailDTO.getStatus()));
+            //对账周期
+            exportDetailDTO.setCycle(CharSequenceUtil.format("{}-{}",exportDetailDTO.getStartDate(),exportDetailDTO.getEndDate()));
+        }
+
     }
 
     @Override
@@ -760,5 +792,19 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperateEnum.getCode()) || CollUtil.isNotEmpty(poReconciliationDetailList)){
             syncKingdeePoReconciliationService.syncDataToKingdee(entity,poReconciliationDetailList, syncOperateEnum.getCode());
         }
+    }
+
+    /**
+     * 更新主表备注
+     *
+     * @param updateDTO
+     * @author will
+     * @date 2025/8/12 18:29
+     */
+    private void updateRemark(PoReconciliationDTO.ScmUpdateDTO updateDTO) {
+        lambdaUpdate()
+                .eq(PoReconciliationEntity::getId, updateDTO.getId())
+                .set(PoReconciliationEntity::getRemark, updateDTO.getRemark())
+                .update();
     }
 }

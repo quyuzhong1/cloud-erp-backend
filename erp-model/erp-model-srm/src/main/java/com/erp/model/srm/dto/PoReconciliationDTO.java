@@ -480,6 +480,15 @@ public class PoReconciliationDTO implements Serializable {
         private String statusName;
 
         /**
+         * 对账开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 对账结束日期
+         */
+        private LocalDate endDate;
+
+        /**
          * 对账周期
          */
         private String cycle;
@@ -509,6 +518,100 @@ public class PoReconciliationDTO implements Serializable {
          * 采购单号
          */
         private String poCode;
+
+        /**
+         * 采购订单来源单号
+         */
+        private String poSourceCode;
+        /**
+         * 送货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate date;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 数量
+         */
+        private String qty;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 折扣率（%）
+         */
+        private BigDecimal discountRate;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+        /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
+        /**
+         * 价税合计（折后）
+         */
+        private BigDecimal discountTaxAmount;
+        /**
+         * 结算方式
+         */
+        private String settleDict;
+        /**
+         * 结算方式名称
+         */
+        private String settleDictName;
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+        /**
+         * 业务状态
+         */
+        private String businessStatus;
+        /**
+         * 业务状态名称
+         */
+        private String businessStatusName;
+        /**
+         * 单据备注
+         */
+        private String remark;
+        /**
+         * 供方备注
+         */
+        private String supplierRemark;
+        /**
+         * 采方备注
+         */
+        private String purchaseRemark;
     }
 
 }

@@ -29,4 +29,7 @@ public interface ExportSrmFeign {
     StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(@RequestBody PoReconciliationDTO.PagingParamDTO dto);
     @PostMapping("/feign/export/salesSharing")
     PagingVO<SalesSharingDTO.ListDTO> exportSalesSharing(PagingDTO<SalesSharingDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportAllPoReconciliationDetail")
+    PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(@RequestBody PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
 }

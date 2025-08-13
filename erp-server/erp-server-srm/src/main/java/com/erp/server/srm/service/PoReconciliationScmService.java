@@ -182,4 +182,12 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return Boolean
      */
     Boolean exportDetailList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response);
+    /**
+     * 查询所有的对账单明细
+     * @author will
+     * @date 2025/8/12 17:59
+     * @param dto
+     * @return PagingVO<ExportDetailDTO>
+     */
+    PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto);
 }

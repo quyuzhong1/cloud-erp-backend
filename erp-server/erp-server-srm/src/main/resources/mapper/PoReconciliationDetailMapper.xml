@@ -98,7 +98,10 @@
     <select id="listDetail" resultType="com.erp.model.srm.dto.PoReconciliationDetailDTO$ListDTO">
         select
             <include refid="Base_Column_List" />
+        , po.source_type as poSourceType,
+        po.source_type as poSourceType
         from po_reconciliation_detail prd
+        left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and prd.is_deleted = false
