@@ -428,8 +428,18 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
+        // 明细数据处理 上下游数据处理
+        // 查询最近已审核为空的记录设置失效时间
+        SkuStdCostDetailEntity lastEntity = lambdaQuery()
+                .eq(SkuStdCostDetailEntity::getMainId, entity.getMainId())
+                .eq(SkuStdCostDetailEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .isNull(SkuStdCostDetailEntity::getExpireDate)
+                .last(" limit 1")
+                .one();
+        if (null != lastEntity) {
+            lastEntity.setExpireDate(entity.getEffectiveDate());
+            this.updateById(lastEntity);
+        }
         return Boolean.TRUE;
     }
 
