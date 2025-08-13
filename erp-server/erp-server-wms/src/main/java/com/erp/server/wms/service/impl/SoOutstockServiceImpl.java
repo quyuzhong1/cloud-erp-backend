@@ -3202,7 +3202,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
         // 判断过滤/新增/更新销售出库单
-        List<SoOutstockEntity> entityList = this.listBySourceId(Collections.singletonList(soB2cEntity.getId()));
+        List<SoOutstockEntity> entityList = this.listBySoIds(Collections.singletonList(soB2cEntity.getId()));
 
         if (CollectionUtils.isNotEmpty(entityList)) {
             mainEntityMap =  entityList.stream()
