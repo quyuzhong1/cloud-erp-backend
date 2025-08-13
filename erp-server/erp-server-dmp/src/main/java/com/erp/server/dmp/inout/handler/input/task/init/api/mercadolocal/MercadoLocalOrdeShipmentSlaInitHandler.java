@@ -11,6 +11,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -58,6 +60,21 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 			return new ArrayList<>();
 		}
 
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, dmpInputTaskEntity.getParentTaskId()).list();
+		DmpInputTaskEntity dmpInputTaskEntity = list.stream().filter(req -> "1899659842348408323".equals(req.getCfgInputId())).findFirst().orElse(null);
+		//查询shipment数据
+		List<Map<String, Object>> shipmentMongoList = null;
+		if(Objects.nonNull(dmpInputTaskEntity)){
+			List<ParamData> paramDataList = new ArrayList<>();
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
+			List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_local_shipment_data");
+		}
+		if (CollectionUtil.isEmpty(shipmentMongoList)) {
+			return new ArrayList<>();
+		}
+
+		Map<Object, Map<String, Object>> shipmentMongoListMap = shipmentMongoList.stream().collect(Collectors.toMap(e -> e.get("fid"), e -> e));
+
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
 		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
@@ -81,8 +98,19 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 			}
 
 			Map<String, Object> shipping = (Map<String, Object>)findMongoDatum.get("shipping");
+			Object fid = shipping.get("id");
 
-			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shipping.get("id").toString());
+			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", fid.toString());
+
+			Map<String, Object>  shipmentMap = shipmentMongoListMap.getOrDefault(fid, null);
+			if(Objects.isNull(shipmentMap)){
+				continue;
+			}
+
+			Map<String, Object> logistic = (Map<String, Object>) shipmentMap.get("logistic");
+			if(logistic.get("type").equals("fulfillment")){
+				continue;
+			}
 
 			//入参
 			HashMap<String, Object> orderParams = new HashMap<>(1);
