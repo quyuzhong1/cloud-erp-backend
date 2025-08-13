@@ -77,9 +77,9 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             excelDTO.setPlatformType(platformType);
         }
         //是否推送电话
-        if (excelDTO.getPushMobileName().equals("是")){
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("是")){
             excelDTO.setIsPushMobile(Boolean.TRUE);
-        }else if (excelDTO.getPushMobileName().equals("否")){
+        }else if (CharSequenceUtil.isNotBlank(excelDTO.getPushMobileName()) && excelDTO.getPushMobileName().equals("否")){
             excelDTO.setIsPushMobile(Boolean.FALSE);
         }else {
             errorMsgList.add("是否推送电话必须是是/否");

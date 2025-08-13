@@ -206,8 +206,9 @@ public class FileTaskContext {
                 ExceptionUtils.emptyThrow(eventEnum, String.format("事件类型[%s]不存在,请联系IT人员检查配置", fileTask.getEvent()));
                 UserContext.setLoginUser(user);
                 // 处理文件 直接分发调用方法
-                FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
-                if (Objects.nonNull(eventHandler)){
+                if (CharSequenceUtil.isNotBlank(eventEnum.getHandler())){
+                    FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
+                    ExceptionUtils.emptyThrow(eventHandler, String.format("事件Hanlder[%s]不存在,请联系IT人员检查配置", eventEnum.getHandler()));
                     eventHandler.handle(fileTask);
                 }else {
                     BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {});

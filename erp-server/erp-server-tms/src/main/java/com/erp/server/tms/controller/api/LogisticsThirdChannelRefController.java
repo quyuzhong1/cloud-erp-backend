@@ -112,19 +112,20 @@ public class LogisticsThirdChannelRefController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "物流-第三方渠道关系表删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<LogisticsThirdChannelRefEntity> entityList = logisticsThirdChannelRefService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
+            LogisticsThirdChannelRefEntity refEntity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(refEntity)) {
+                deleteResult = BatchResultDTO.fail(id, id, "物流-第三方渠道关系表数据不存在, 删除失败");
+                resultDTOS.add(deleteResult);
+                continue;
+            }
             try {
-                deleteResult = logisticsThirdChannelRefService.delete(id);
+                deleteResult = logisticsThirdChannelRefService.delete(refEntity);
             }catch (Exception e){
                 log.error("物流-第三方渠道关系表删除失败",e);
-                LogisticsThirdChannelRefEntity entity = logisticsThirdChannelRefService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "物流-第三方渠道关系表数据不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(refEntity.getLogisticsChannelName(), refEntity.getLogisticsSupplierName(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -179,19 +180,20 @@ public class LogisticsThirdChannelRefController extends BaseController {
     @PostMapping("/updateStatus")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated LogisticsThirdChannelRefDTO.DisabledParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<LogisticsThirdChannelRefEntity> entityList = logisticsThirdChannelRefService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
+            LogisticsThirdChannelRefEntity refEntity = entityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(refEntity)) {
+                submit = BatchResultDTO.fail(id, id, "物流-第三方渠道关系表不存在, 停用/启用失败");
+                resultDTOS.add(submit);
+                continue;
+            }
             try {
                 submit = logisticsThirdChannelRefService.updateStatus(id,dto.getDisabled());
             }catch (Exception e){
                 log.error("物流-第三方渠道关系表 停用/启用失败",e);
-                LogisticsThirdChannelRefEntity entity = logisticsThirdChannelRefService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "物流-第三方渠道关系表不存在, 停用/启用失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getLogisticsSupplierName(), e.getMessage());
+                submit = BatchResultDTO.fail(refEntity.getLogisticsChannelName(), refEntity.getLogisticsSupplierName(), e.getMessage());
             }
             resultDTOS.add(submit);
         }

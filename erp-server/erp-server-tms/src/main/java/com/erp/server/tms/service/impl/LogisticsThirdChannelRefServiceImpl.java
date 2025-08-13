@@ -13,16 +13,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDetailDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
-import com.erp.model.tms.enums.ShippingFeeRuleEnum;
 import com.erp.model.tms.enums.TrackPlatformTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.convert.LogisticsThirdChannelRefConverter;
@@ -39,7 +34,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 
@@ -101,7 +95,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", getDefaultLoginUser().getUserName(), "物流-第三方渠道关系单" , logisticsThirdChannelRefEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据我司渠道为【{}】", getDefaultLoginUser().getUserName(), "物流-第三方渠道关系单" , logisticsThirdChannelRefEntity.getLogisticsChannelName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_THIRD_CHANNEL_REF.getCode(), logisticsThirdChannelRefEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
         logisticsThirdChannelRefDetailService.updateDetail(logisticsThirdChannelRefEntity,detailList);
@@ -132,7 +126,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         logisticsThirdChannelRefDetailService.updateDetail(logisticsThirdChannelRefEntity,detailList);
         // 记录主单操作日志
         log.info("编辑 开始记录物流-第三方渠道关系单日志数据，id：【{}】", logisticsThirdChannelRefEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", getDefaultLoginUser().getUserName(), logisticsThirdChannelRefEntity.getId(), "物流-第三方渠道关系单");
+        String msg = StrUtil.format("用户【{}】编辑我司渠道为【{}】的【{}】单据 ", getDefaultLoginUser().getUserName(), logisticsThirdChannelRefEntity.getLogisticsChannelName(), "物流-第三方渠道关系单");
         operateLogService.addModuleOperateLogByObj(old, logisticsThirdChannelRefEntity, ModuleTypeEnum.LOGISTICS_THIRD_CHANNEL_REF.getCode(), logisticsThirdChannelRefEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -195,17 +189,17 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO delete(String id) {
+    public BatchResultDTO delete(LogisticsThirdChannelRefEntity entity) {
         //检查是否引用
-        Integer count = logisticsBillDetailService.countByThirdRefId(id);
+        Integer count = logisticsBillDetailService.countByThirdRefId(entity.getId());
         if (count > 0){
-            return BatchResultDTO.fail(id, id,"该渠道配置已被使用，不能删除");
+            return BatchResultDTO.fail(entity.getLogisticsChannelName(), entity.getLogisticsSupplierName(),"该渠道配置已被使用，不能删除");
         }
         //主表
-        this.removeById(id);
+        this.removeById(entity.getId());
         //明细
-        logisticsThirdChannelRefDetailService.removeByMainId(id);
-        return BatchResultDTO.success(id, id,"操作成功");
+        logisticsThirdChannelRefDetailService.removeByMainId(entity.getId());
+        return BatchResultDTO.success(entity.getLogisticsChannelName(), entity.getLogisticsSupplierName(),"操作成功");
     }
 
     @Override
@@ -218,9 +212,9 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             return BatchResultDTO.fail(id, entity.getLogisticsSupplierName(),"渠道配置数据状态未变更");
         }
         this.lambdaUpdate().set(LogisticsThirdChannelRefEntity::getDisabled, disabled).eq(LogisticsThirdChannelRefEntity::getId, id).update();
-        String msg = CharSequenceUtil.format("用户【{}】变更id为【{}】的【{}】单据状态为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "物流-第三方渠道关系单", disabled ? "停用" : "启用");
+        String msg = CharSequenceUtil.format("用户【{}】变更我司渠道为【{}】的【{}】单据状态为【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getLogisticsChannelName(), "物流-第三方渠道关系单", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_THIRD_CHANNEL_REF.getCode(), entity.getId(), "启用/停用");
-        return BatchResultDTO.success(entity.getId(),entity.getLogisticsSupplierName(), "操作成功");
+        return BatchResultDTO.success(entity.getLogisticsChannelName(),entity.getLogisticsSupplierName(), "操作成功");
     }
 
     @Override
