@@ -35,7 +35,18 @@ import java.util.Map;
 public class SkuStdCostDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateDTO extends SortDTO {
 
+
+        @NotNull(message = "SKU IDS不能为空")
+        private List<String> skuIds;
+
+        @NotNull(message = "billDate不能为空")
+        private LocalDate billDate;
+    }
 
 
 

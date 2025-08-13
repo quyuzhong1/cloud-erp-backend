@@ -14,6 +14,8 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
@@ -567,4 +569,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return ApiResult<List<BatchResultDTO>>
      */
     BatchResultDTO generateB2bDeclar(String id);
+
+    /**
+     * @param entity
+     */
+    void updateSkuStdCostOutstock(SoOutstockEntity entity);
 }

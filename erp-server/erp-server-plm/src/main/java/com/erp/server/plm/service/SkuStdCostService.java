@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 
 /**
@@ -14,5 +15,5 @@ import com.erp.model.plm.entity.SkuStdCostEntity;
 public interface SkuStdCostService extends SuperService<SkuStdCostEntity> {
 
 
-
+    void update(SkuStdCostDTO.UpdateDTO dto);
 }
