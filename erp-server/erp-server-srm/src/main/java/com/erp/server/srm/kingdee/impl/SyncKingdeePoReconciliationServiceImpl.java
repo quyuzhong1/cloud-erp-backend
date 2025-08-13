@@ -170,6 +170,9 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
         //日期
         resultMap.put("date", LocalDate.now());
 
+        //抬头备注
+        resultMap.put("remark", entity.getRemark());
+
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
@@ -245,8 +248,7 @@ public class SyncKingdeePoReconciliationServiceImpl implements SyncKingdeePoReco
             //结算币别
             CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detail.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
             jsonObject.set("currencyCode", viewDTO.getKingdeeCode());
-            //抬头备注
-            jsonObject.set("remark", detail.getRemark());
+
 
             //采购订单号
             jsonObject.set("poCode", detail.getPoCode());
