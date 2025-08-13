@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -898,6 +899,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getSoId()));
         if(CollectionUtils.isEmpty(soDetailList)){
             return;
@@ -968,6 +970,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
                 detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            }
+            if(StringUtils.isBlank(detailEntity.getPlatformCode()) && Objects.nonNull(soB2cEntity)){
+                detailEntity.setPlatformCode(soB2cEntity.getPlatformCode());
+            }
+            if(StringUtils.isBlank(detailEntity.getSoDetailId())){
+                detailEntity.setSoDetailId(soDetailEntity.getId());
             }
             //单价信息
             detailEntity.setPrice(price);
