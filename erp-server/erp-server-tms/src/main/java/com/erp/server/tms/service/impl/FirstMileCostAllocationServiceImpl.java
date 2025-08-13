@@ -1138,7 +1138,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //期初为暂估费用 且当月开始有实际账单
                 //期初费用分摊是实际还是暂估 实际时计算使用本月签收 暂估时使用累计签收
                 //对账单来源判断 如果来源于期初分摊对账单 取期初签收 实际账单取本月累计签收
-                if (Objects.nonNull(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity()) && ReconciliationTypeEnum.ACTUAL.getCode().equals(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity().getReconciliationType())){
+                if (Objects.nonNull(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity()) && (ReconciliationTypeEnum.ACTUAL.getCode().equals(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity().getReconciliationType()) || ReconciliationTypeEnum.INIT_PERIOD.getCode().equals(currentPeriodAllocatedCostDTO.getReconciliationDetailEntity().getReconciliationType()))){
                     if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isHasInitCostReconciliation()){
                         currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(MathUtil.multiplyWithTwo(currentPeriodAllocatedCostDTO.getProductAllocatedAmount(), BigDecimal.valueOf(currentPeriodAllocatedCostDTO.getReceiveQty()), 2));
                     }else {
