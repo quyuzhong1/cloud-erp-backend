@@ -122,9 +122,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
+    public List<SoOutstockDetailEntity> add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return;
+            return new ArrayList<>();
         }
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -177,6 +177,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
+        return addList;
     }
 
 

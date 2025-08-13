@@ -3,6 +3,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.common.business.service.SuperService;
@@ -47,7 +48,7 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
 
     BatchResultDTO retryOutstock(String id);
 
-    ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity,List<SoOutstockDetailDTO.AddDTO> detailList);
+    ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity,List<SoOutstockDetailEntity> detailList);
 
     void deleteByIds(List<String> sourceIds);
 }
