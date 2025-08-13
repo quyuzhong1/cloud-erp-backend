@@ -92,4 +92,7 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
     void importB2cCustomerFile(MultipartFile excelFile, HttpServletResponse response);
 
     void updateInvoiceAddress(String soId, String invoiceAddress);
+
+
+    void checkAndUpdateCountry(String mainId, String country);
 }
