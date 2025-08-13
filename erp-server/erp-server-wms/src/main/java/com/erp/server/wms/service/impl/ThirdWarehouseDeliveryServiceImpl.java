@@ -349,12 +349,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
-    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailDTO.AddDTO> detailList) {
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> detailList) {
         SoB2cEntity entity = soB2cFeign.getById(soOutstockEntity.getSoId());
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getId()));
-        if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
-            throw new ServiceException("销售订单明细不存在");
-        }
+
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         addThirdWarehouseDeliveryEntity.setSoCode(soOutstockEntity.getSoCode());
         addThirdWarehouseDeliveryEntity.setSoId(soOutstockEntity.getSoId());
@@ -365,17 +362,14 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-        for (SoOutstockDetailDTO.AddDTO addDTO : detailList) {
+        for (SoOutstockDetailEntity addDTO : detailList) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
             thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
             thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
-                    .filter(v -> v.getSkuId().equals(addDTO.getSkuId()) && v.getWarehouseId().equals(addDTO.getWarehouseId()))
-                    .findFirst().orElse(new SoB2cDetailEntity());
-            thirdWarehouseDeliveryDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
