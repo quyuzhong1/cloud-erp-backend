@@ -81,6 +81,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("purchase_user_name")
     private String purchaseUserName;
 
+    /**
+     * 采购跟单员id
+     */
+    @TableField("po_follower_id")
+    private String poFollowerId;
+
 
     /**
      * 阶段

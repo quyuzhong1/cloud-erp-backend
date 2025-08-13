@@ -199,7 +199,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    
+
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     /**
@@ -383,6 +383,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         result.setPaymentCondition(paymentConditionCode);
         result.setPaymentConditionName(paymentConditionName);
+
+        //跟单员名称
+        if (CharSequenceUtil.isNotBlank(supplier.getPoFollowerId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(supplier.getPoFollowerId());
+            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+                result.setPoFollowerName(findUserDTO.getUserName());
+            }
+        }
+
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         //隐藏电话中间数字*
@@ -574,6 +583,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
 
+        //查下跟单员名称
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() : userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
         //供应商工厂地
         List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
 
@@ -615,6 +627,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //付款条件
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPaymentConditionName(paymentConditionName);
+            //跟单员名称
+            item.setPoFollowerName(userMap.get(item.getPoFollowerId()));
             //供应商工厂地
             String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
             item.setPlantAddrNames(plantAddrsNames);
@@ -1462,35 +1476,45 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto) {
-        List<SupplierEntity> supplierEntityList = this.listByIds(dto.getIds());
-        if(CollectionUtils.isEmpty(supplierEntityList)){
+    public BatchResultDTO updateField(String id,SupplierDTO.BatchUpdateFieldDTO dto) {
+        SupplierEntity entity = this.getById(id);
+        if(ObjectUtil.isEmpty(entity)){
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        DictBasicEntity dictBasicEntity = dictBasicService.getById(dto.getCategoryId());
-        if(Objects.isNull(dictBasicEntity)){
-            throw new ServiceException("供应商分类信息为空");
+        //审核中不支持更新
+        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING);
         }
-        List<SupplierEntity> updateList = new ArrayList<>();
-        List<Pair<String, String>> pairList = new ArrayList<>();
-        supplierEntityList.forEach(v->{
-            if(!v.getCategoryId().equals(dto.getCategoryId())){
-                Pair<String, String> pair = new Pair<>(v.getId(),v.getCategoryName());
-                v.setCategoryId(dictBasicEntity.getId());
-                v.setCategoryName(dictBasicEntity.getName());
-                pairList.add(pair);
-                updateList.add(v);
+        //选填值不能全部为空
+        if (CharSequenceUtil.isBlank(dto.getCategoryId()) && CharSequenceUtil.isBlank(dto.getPoFollowerId())) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"字段内容");
+        }
+        //日志内容
+        String content = "";
+        //更新分类
+        if (CharSequenceUtil.isNotBlank(dto.getCategoryId())) {
+            DictBasicEntity dictBasicEntity = dictBasicService.getById(dto.getCategoryId());
+            if(Objects.isNull(dictBasicEntity)){
+                throw new ServiceException("供应商分类信息为空");
             }
-        });
-        if(CollectionUtils.isEmpty(updateList)){
-            return;
+            entity.setCategoryId(dto.getCategoryId());
+            entity.setCategoryName(dictBasicEntity.getName());
+            content = CharSequenceUtil.format("供应商分类更新为【{}】",  dictBasicEntity.getName());
         }
-        if(!this.updateBatchById(updateList)){
-            throw new ServiceException("更新供应商分类信息失败");
+       //更新跟单员
+        if (CharSequenceUtil.isNotBlank(dto.getPoFollowerId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getPoFollowerId());
+            if (ObjectUtil.isEmpty(findUserDTO)) {
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
+            }
+            entity.setPoFollowerId(dto.getPoFollowerId());
+            content = CharSequenceUtil.format("采购跟单员更新为【{}】",  findUserDTO.getUserName());
         }
-        String content = "供应商分类由[%s]变更为"+dictBasicEntity.getName();
-        batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "供应商分类变更");
-
+        //更新数据
+        super.updateById(entity);
+        //添加日志
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "字段更新");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
@@ -1523,6 +1547,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() : userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
 
         //供应商id 集合
         List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
@@ -1631,6 +1659,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     exportExcel.setTelNumber(contact.getTelNumber());
                 }
             }
+            //采购跟单员
+            exportExcel.setPoFollowerName(userMap.get(item.getPoFollowerId()));
 
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
@@ -2516,19 +2546,31 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             addDTO.setGradeName("");
 
         }
-        //采购员
+        //采购开发员
         if (StringUtils.isNotBlank(excelDTO.getPurchaseUserName())) {
             String purchaseUserId = userList.stream().filter(u -> u.getUserName().equals(excelDTO.getPurchaseUserName())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
             if (StringUtils.isBlank(purchaseUserId)) {
-                errorMsgList.add("采购员不存在");
+                errorMsgList.add("采购开发员不存在");
             }
             addDTO.setPurchaseUserId(purchaseUserId);
             addDTO.setPurchaseUserName(excelDTO.getPurchaseUserName());
         } else if (!isUpdatePart) {
             addDTO.setPurchaseUserId("");
             addDTO.setPurchaseUserName("");
-
+        }
+        //采购跟单员
+        if (StringUtils.isNotBlank(excelDTO.getPoFollowerName())) {
+            String poTrackerId = userList.stream().filter(u -> u.getUserName().equals(excelDTO.getPoFollowerName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+            if (StringUtils.isBlank(poTrackerId)) {
+                errorMsgList.add("采购跟单员不存在");
+            }
+            addDTO.setPoFollowerId(poTrackerId);
+            addDTO.setPoFollowerName(excelDTO.getPoFollowerName());
+        } else if (!isUpdatePart) {
+            addDTO.setPoFollowerId("");
+            addDTO.setPoFollowerName("");
         }
         //公司地址
         if (CharSequenceUtil.isNotBlank(excelDTO.getCompanyAddress())) {
