@@ -346,6 +346,10 @@ public class PoReconciliationDetailDTO implements Serializable {
         * 采购订单id
         */
         private String poId;
+        /**
+         * 采购订单来源单号
+         */
+        private String poSourceCode;
 
         /**
         * 单据日期

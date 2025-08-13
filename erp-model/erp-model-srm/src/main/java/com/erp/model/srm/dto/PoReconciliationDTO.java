@@ -511,6 +511,18 @@ public class PoReconciliationDTO implements Serializable {
          */
         private String supplierName;
         /**
+         * 退货来源类型
+         */
+        private String returnSourceType;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+        /**
          * 单据单号
          */
         private String sourceCode;
@@ -553,13 +565,21 @@ public class PoReconciliationDTO implements Serializable {
          */
         private BigDecimal taxRate;
         /**
+         * 税率%
+         */
+        private String taxRateStr;
+        /**
          * 含税单价
          */
         private BigDecimal taxPrice;
         /**
-         * 折扣率（%）
+         * 折扣率
          */
         private BigDecimal discountRate;
+        /**
+         * 折扣率%
+         */
+        private String discountRateStr;
         /**
          * 折扣额
          */

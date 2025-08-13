@@ -33,18 +33,23 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.PoReconciliationDetailImportExcelDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.AttachmentDTO;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
@@ -389,11 +394,44 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        //sku信息
+        List<String> skuIdList = list.stream().map(PoReconciliationDTO.ExportDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = CollUtil.isEmpty(productDetailList) ? new HashMap<>() : productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+
+        //结算方式
+        List<DictBasicDTO> dictBasicList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+
+        //付款条件
+        List<String> paymentConditionList = list.stream().map(PoReconciliationDTO.ExportDetailDTO::getPaymentCondition).distinct().collect(Collectors.toList());
+        List<KingdeePaymentConditionEntity> payList = FeignQuery.create(KingdeePaymentConditionEntity.class)
+                .in(KingdeePaymentConditionEntity::getCode, paymentConditionList)
+                .list();
+
         for (PoReconciliationDTO.ExportDetailDTO exportDetailDTO :list) {
+            //单据类型
+            exportDetailDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(exportDetailDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(exportDetailDTO.getReturnSourceType()) : "采购入库");
             //对账状态名称
             exportDetailDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(exportDetailDTO.getStatus()));
             //对账周期
-            exportDetailDTO.setCycle(CharSequenceUtil.format("{}-{}",exportDetailDTO.getStartDate(),exportDetailDTO.getEndDate()));
+            exportDetailDTO.setCycle( CharSequenceUtil.format("{}-{}",LocalDateTimeUtil.format(exportDetailDTO.getStartDate(), DateTimeFormatter.ofPattern("yy.MM.dd")),LocalDateTimeUtil.format(exportDetailDTO.getEndDate(), DateTimeFormatter.ofPattern("yy.MM.dd"))));
+            //产品名称
+            exportDetailDTO.setProductName(skuMap.get(exportDetailDTO.getSkuId()));
+            //税率%
+            exportDetailDTO.setTaxRateStr(CharSequenceUtil.format("{}{}",MathUtil.multiplyWithFour(exportDetailDTO.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString(),"%"));
+            //折扣率%
+            exportDetailDTO.setDiscountRateStr(CharSequenceUtil.format("{}{}",MathUtil.multiplyWithFour(exportDetailDTO.getDiscountRate(),MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString(),"%"));
+            //折扣额
+            BigDecimal discountAmount = MathUtil.multiplyWithFour(exportDetailDTO.getTaxAmount(), exportDetailDTO.getDiscountRate());
+            exportDetailDTO.setDiscountAmount(discountAmount);
+            //结算方式名称
+            exportDetailDTO.setSettleDictName(settleDictMap.get(exportDetailDTO.getSettleDict()));
+            //付款条件名称
+            String paymentConditionName = payList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCode(), exportDetailDTO.getPaymentCondition())).map(KingdeePaymentConditionEntity::getName).findFirst().orElse("");
+            exportDetailDTO.setPaymentConditionName(paymentConditionName);
+            //业务状态名称
+            exportDetailDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(exportDetailDTO.getBusinessStatus()));
         }
 
     }

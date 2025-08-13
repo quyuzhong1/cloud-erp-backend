@@ -40,6 +40,6 @@ public class ExportScmPoReconciliationDetailHandler extends AbstractPageFileEven
 
     @Override
     public String getExcelPath() {
-        return "excel/scm/purchaseOrderExport.xlsx";
+        return "excel/srm/scmPoReconciliationDetail.xlsx";
     }
 }
