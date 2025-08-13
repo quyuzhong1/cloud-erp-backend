@@ -1,7 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.*;
-import com.common.business.dto.base.*;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -593,4 +599,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return Map<String, SoOutstockEntity>
      */
     Map<String, SoOutstockEntity> mapByIds(List<String> ids);
+
+    /**
+     * @param entity
+     */
+    void updateSkuStdCostOutstock(SoOutstockEntity entity);
 }

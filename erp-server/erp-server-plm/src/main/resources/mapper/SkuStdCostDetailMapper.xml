@@ -15,7 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="effective_date" property="effectiveDate" />
        <result column="expire_date" property="expireDate" />
-       <result column="std_cost_pirce" property="stdCostPirce" />
+       <result column="std_cost_price" property="stdCostPrice" />
        <result column="std_sale_price" property="stdSalePrice" />
        <result column="bom_version" property="bomVersion" />
        <result column="remark" property="remark" />

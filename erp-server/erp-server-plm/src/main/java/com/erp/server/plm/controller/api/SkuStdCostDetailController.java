@@ -15,18 +15,24 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SkuStdCostService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +51,10 @@ public class SkuStdCostDetailController extends BaseController {
 
     @Resource
     private SkuStdCostDetailService skuStdCostDetailService;
+    @Resource
+    private ProductDetailService productDetailService;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     /**
      * 价格变更
@@ -271,7 +281,7 @@ public class SkuStdCostDetailController extends BaseController {
         for (String id : dto.getIds()) {
             SkuStdCostDetailEntity entity = idEntityMap.get(id);
             BatchResultDTO disApproveResult;
-            if (null == entity){
+            if (null == entity) {
                 disApproveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 反审核失败");
                 resultDTOS.add(disApproveResult);
                 continue;
@@ -445,10 +455,11 @@ public class SkuStdCostDetailController extends BaseController {
 
     /**
      * 报价历史列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SkuStdCostDetailDTO.ListDTO>>
      * @author Jim
      * @date: 2025-08-08
-     * @param dto
-     * @return ApiResult<PagingVO<SkuStdCostDetailDTO.ListDTO>>
      */
     @PostMapping("/historyPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -501,6 +512,46 @@ public class SkuStdCostDetailController extends BaseController {
                 comboRecalculateResult = BatchResultDTO.fail(listDTO.getId(), listDTO.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(comboRecalculateResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 首次添加sku标准成本表价格
+     *
+     * @return ApiResult<String>
+     * @author Jim
+     * @date: 2025-08-08
+     */
+    @PostMapping("/firsAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "首次添加sku标准成本表价格")
+    public ApiResult<List<BatchResultDTO>> firsAdd(@RequestBody @Validated List<String> skuNos) {
+        List<ProductDetailEntity> detailEntityList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(skuNos)) {
+            detailEntityList = productDetailService.lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .list();
+        } else {
+            detailEntityList = productDetailService.listBySkuNos(skuNos);
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(detailEntityList.size());
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            return success(resultDTOS);
+        }
+        // 查询sku最新出库时间
+        List<String> skuIds = detailEntityList.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        Map<String, LocalDate> lastOutstockDateMap = soOutstockFeign.mapLastOutstockDateBySkuIds(skuIds);
+
+        for (ProductDetailEntity skuEntity : detailEntityList) {
+            BatchResultDTO itemResult;
+            try {
+                skuStdCostDetailService.checkAndAddFirst(skuEntity, lastOutstockDateMap.getOrDefault(skuEntity.getId(), null));
+                itemResult = BatchResultDTO.success(skuEntity.getId(), skuEntity.getSkuNo(), "首次添加sku标准成本表价格成功");
+            } catch (Exception e) {
+                log.error("首次添加sku标准成本表价格失败", e);
+                itemResult = BatchResultDTO.fail(skuEntity.getId(), skuEntity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(itemResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

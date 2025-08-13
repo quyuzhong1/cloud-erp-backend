@@ -50,12 +50,12 @@ public class SkuStdCostDetailEntity extends BaseEntity<SkuStdCostDetailEntity> {
     /**
      * 标准成本
      */
-    @TableField("std_sale_price")
+    @TableField("std_cost_price")
     private BigDecimal stdCostPrice;
     /**
      * 标准零售价(不含税)
      */
-    @TableField("std_cost_price")
+    @TableField("std_sale_price")
     private BigDecimal stdSalePrice;
     /**
      * 币别

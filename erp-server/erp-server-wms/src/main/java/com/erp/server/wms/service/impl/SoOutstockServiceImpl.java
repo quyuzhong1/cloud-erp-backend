@@ -50,6 +50,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
+import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
@@ -701,6 +703,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+        // 更新SKU标准成本价出库时间
+        updateSkuStdCostOutstock(entity);
 
         // 调用流程审核
         approveProcess(entity, dto);
@@ -710,6 +714,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
 
     }
+
 
     /**
      * 审核流程处理
@@ -4063,6 +4068,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateSkuStdCostOutstock(SoOutstockEntity entity) {
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.lambdaQuery()
+                .eq(SoOutstockDetailEntity::getMainId, entity.getId())
+                .list();
+        if (CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
+    }
 
 
     @Override
