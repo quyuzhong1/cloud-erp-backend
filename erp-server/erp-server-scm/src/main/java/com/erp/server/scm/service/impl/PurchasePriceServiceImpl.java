@@ -810,10 +810,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<PurchasePriceDetailEntity> updateItemList = Lists.newArrayList();
             // 此处需要过滤掉修改的明细
             for(PurchasePriceDetailDTO.ImportSaveDTO detailItem : detailList) {
-                LocalDate expireDate = null;
-                if(Objects.nonNull(detailItem.getEffectiveDate())) {
-                    expireDate = detailItem.getEffectiveDate().plusDays(100);
-                }
                 BigDecimal taxRate = null;
                 if(Objects.nonNull(detailItem.getTaxRate())) {
                     BigDecimal rate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
@@ -823,7 +819,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     for(String detailId : detailItem.getIds()) {
                         PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
                         BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
-                        savePurchasePriceDetailEntity.setExpireDate(expireDate);
                         savePurchasePriceDetailEntity.setTaxRate(taxRate);
                         savePurchasePriceDetailEntity.setId(detailId);
                         if (StringUtils.isBlank(savePurchasePriceDetailEntity.getCurrency())){
@@ -834,7 +829,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 } else {
                     PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
                     BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
-                    savePurchasePriceDetailEntity.setExpireDate(expireDate);
                     savePurchasePriceDetailEntity.setTaxRate(taxRate);
                     savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
                     addItemList.add(savePurchasePriceDetailEntity);

@@ -117,6 +117,7 @@ public class RulePromptWordController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量修改汉化管理规则表状态,ids={ids},状态变更为={disabled} (true=启用 false=停用) ")
     public ApiResult<?> batchUpdateStatus(@RequestBody @Validated RulePromptWordDTO.UpdateStatusDTO dto) {
         rulePromptWordService.batchUpdateStatus(dto);
         return success();

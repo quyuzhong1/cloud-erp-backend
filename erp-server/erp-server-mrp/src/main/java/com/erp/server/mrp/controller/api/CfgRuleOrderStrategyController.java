@@ -1,10 +1,12 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgRuleOrderStrategyDTO;
 import com.erp.server.mrp.service.CfgRuleOrderStrategyService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ public class CfgRuleOrderStrategyController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "策略规则修改")
     public ApiResult<?> update(@RequestBody @Validated CfgRuleOrderStrategyDTO.UpdateDTO dto) {
         cfgRuleOrderStrategyService.update(dto);
         return success();

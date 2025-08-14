@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -84,8 +85,8 @@ public class SysRoleController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除角色")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody List<String> ids){
-        sysRoleService.removeRoleById(ids);
-        return success();
+        List<BatchResultDTO> resultDTOList =sysRoleService.removeRoleById(ids);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制角色:id={id}")

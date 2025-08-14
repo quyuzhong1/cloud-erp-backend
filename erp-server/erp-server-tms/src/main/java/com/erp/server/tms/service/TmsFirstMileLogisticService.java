@@ -16,6 +16,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -104,7 +105,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     BigDecimal calculateShippingCost(TmsFirstMileLogisticDTO.CalculateShippingCostDTO dto);
     void sendMsgWhenChannelChange(List<String> shopChargeIdList,String titleContent,String messageContent);
 
-    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(List<String> ids);
+    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> waitSubmitReconciliation(TmsFirstMileLogisticDTO.WaitDTO dto);
 
     /**
      * 待对账物流单(分页)
@@ -114,13 +115,12 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 根据物流单ID分组查询物流单信息
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds);
-
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds, String supplierType);
 
     /**
      * 根据物流跟踪单分组查询物流单信息
      */
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndSupplierIds(List<String> trackNoList, List<String> logisticsSupplierIdList);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listByTransportNoListAndReconciliationIds(List<String> trackNoList, List<String> reconciliationIds);
 
     List<Map<String,Object>> getTrackStatusList();
 
@@ -128,7 +128,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 生成物流单
      */
-    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap,String reconciliationType);
+    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap, String reconciliationType, @NotBlank String type, String supplierId, String supplierName);
 
     /**
      * 更新对账状态

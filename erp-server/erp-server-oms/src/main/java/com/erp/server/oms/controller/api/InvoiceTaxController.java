@@ -2,10 +2,12 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.server.oms.service.InvoiceTaxService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class InvoiceTaxController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/addOrUpdate")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增或修改")
     public ApiResult<List<BatchResultDTO>> addOrUpdate(@RequestBody @Validated List<InvoiceTaxDTO.UpdateDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
         for (InvoiceTaxDTO.UpdateDTO updateDTO :list) {

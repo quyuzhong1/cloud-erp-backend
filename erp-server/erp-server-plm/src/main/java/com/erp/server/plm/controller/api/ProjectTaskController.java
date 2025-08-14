@@ -213,8 +213,8 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult<Object> remove(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = projectTaskService.removeTask(dto.getId());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO>resultDTOList = projectTaskService.removeTask(dto.getId());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 
@@ -224,7 +224,7 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新前置任务列表:id={id}")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新前置任务列表:id={id}")
     @PostMapping("/update/pre/task")
     public ApiResult<Object> setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
         Boolean flag = preTaskService.updatePreTask(dto);
@@ -817,6 +817,7 @@ public class ProjectTaskController extends BaseController {
      * @date 2022-11-29 14:42
      */
     @PostMapping(value = "/finishSku")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = " 配置表单-输出物-完成sku")
     public ApiResult<Object> finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
         projectTaskService.taskFinishSku(dto);
         return success();
@@ -895,9 +896,9 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "ids"
     )
-    public ApiResult<Object> removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectTaskService.removeBatch(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = projectTaskService.removeBatch(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

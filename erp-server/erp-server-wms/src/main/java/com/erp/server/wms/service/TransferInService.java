@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -84,6 +85,34 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return java.lang.Boolean
      */
     Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 原子批量删除分布式调入单
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个分布式调入单
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param entity
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(TransferInEntity entity);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param ids
+     * @return java.util.Map<java.lang.String, com.erp.model.wms.entity.TransferInEntity>
+     */
+    Map<String, TransferInEntity> mapByIds(List<String> ids);
 
     /**
      * 反审核

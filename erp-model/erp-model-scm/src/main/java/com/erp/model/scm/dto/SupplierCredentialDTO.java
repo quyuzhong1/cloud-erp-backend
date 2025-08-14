@@ -6,12 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -270,7 +268,10 @@ public class SupplierCredentialDTO  implements Serializable {
     @NoArgsConstructor
     public  static class ImportAddDTO {
 
-
+        /**
+         * 主键id
+         */
+        private String id;
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         private String supplierName;

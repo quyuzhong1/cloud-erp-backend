@@ -161,7 +161,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
 
     WarehouseAreaDTO.View viewArea(String id);
 
-    void deleteArea(List<String> ids);
+    List<BatchResultDTO> deleteArea(List<String> ids);
 
     void updateStatusArea(UpdateStateDTO.BatchUpdateDTO dto);
 
@@ -182,7 +182,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    List<String> deleteBatch(WarehouseLocationDTO.IdsDto idsDto);
+    List<BatchResultDTO> deleteBatch(WarehouseLocationDTO.IdsDto idsDto);
 
     /**
      * 导入仓位Excel

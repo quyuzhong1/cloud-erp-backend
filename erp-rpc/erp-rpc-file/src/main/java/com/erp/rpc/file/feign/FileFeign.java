@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.util.List;
 
-@FeignClient(name = "erp-file", contextId = "file",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-file", contextId = "fileFeign",configuration = {FeignErrorDecoder.class})
 public interface FileFeign {
     /**
      * 上传文件

@@ -378,5 +378,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(List<String> deliveryCodes);
 
+    List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds);
+
     BatchResultDTO generateFirstMileDeclare(String id);
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,10 +20,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.pickingstrategy.*;
-import com.erp.model.wms.entity.CfgRuleConditionEntity;
-import com.erp.model.wms.entity.CfgRulePackingActionEntity;
-import com.erp.model.wms.entity.CfgRulePickingEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
@@ -120,13 +118,19 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
+        List<CfgRulePickingEntity> list = this.listByIds(ids);
         //删除拣货规则
         removeByIds(ids);
         //删除规则
         cfgRuleConditionService.removeByRuleIds(ids);
         //删除拣货动作
         cfgRulePackingActionService.removeByRuleIds(ids);
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (CfgRulePickingEntity entity : list) {
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getName(),"删除成功"));
+        }
+        return resultDTOList;
     }
 
     @Override

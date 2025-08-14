@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -214,6 +215,24 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
             return Boolean.TRUE;
         }
         return this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
+    }
+
+    @Override
+    public List<BatchResultDTO> delete(List<String> ids, Boolean isReturnDetail) {
+        // 返回成功结果
+        List<CfgVatInvoiceEntity> list = this.listByIds(ids);
+        boolean remove = this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
+
+        List<BatchResultDTO>resultDTOList=new ArrayList<>();
+        for (CfgVatInvoiceEntity entity : list) {
+            ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, entity.getShopId());
+            if (!Objects.isNull(shopInfo)){
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), shopInfo.getName(), "删除成功"));
+            }else {
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getShopId(), "删除成功"));
+            }
+        }
+        return resultDTOList;
     }
 
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {

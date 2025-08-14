@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "soB2cReturn")
+@FeignClient(name = "erp-oms", contextId = "soB2cReturnFeign",configuration = {FeignErrorDecoder.class})
 public interface SoB2cReturnFeign {
     /**
      * 根据主键ids查询销售退货单主表信息

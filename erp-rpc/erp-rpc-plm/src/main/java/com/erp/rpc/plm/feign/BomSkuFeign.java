@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
@@ -15,7 +16,7 @@ import java.util.Map;
  * @date 2024-08-31
  * @author tanmujin
  */
-@FeignClient(name = "erp-plm", path = "/feign/bom", contextId = "bomSkuFeign")
+@FeignClient(name = "erp-plm", path = "/feign/bom", contextId = "bomSkuFeign",configuration = {FeignErrorDecoder.class})
 public interface BomSkuFeign {
 
     /**

@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -60,6 +61,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION;
@@ -483,15 +485,31 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void deleteArea(List<String> ids) {
-        List<WarehouseLocationEntity> occupyStatusAreas = list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
-                .eq(WarehouseLocationEntity::getOccupyStatus, true)
-                .in(WarehouseLocationEntity::getId, ids));
-        if (!CollectionUtils.isEmpty(occupyStatusAreas)) {
-            String codes = occupyStatusAreas.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.POSITION_BINDING_EXIST, codes);
+    public List<BatchResultDTO> deleteArea(List<String> ids) {
+//        List<WarehouseLocationEntity> occupyStatusAreas = list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+//                .eq(WarehouseLocationEntity::getOccupyStatus, true)
+//                .in(WarehouseLocationEntity::getId, ids));
+//        if (!CollectionUtils.isEmpty(occupyStatusAreas)) {
+//            String codes = occupyStatusAreas.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.joining(","));
+//            throw new ServiceException(ApiError.POSITION_BINDING_EXIST, codes);
+//        }
+        List<WarehouseLocationEntity> list = this.listByIds(ids);
+        List<WarehouseLocationEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (WarehouseLocationEntity entity : list) {
+            if (entity.getOccupyStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.POSITION_BINDING_EXIST.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        this.removeByIds(ids);
+        List<String> removeIdList = removeList.stream().map(WarehouseLocationEntity::getId).collect(Collectors.toList());
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        this.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
     @Override
@@ -602,8 +620,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public List<String> deleteBatch(WarehouseLocationDTO.IdsDto idsDto) {
-        List<String> errorList = new ArrayList<>();
+    public List<BatchResultDTO> deleteBatch(WarehouseLocationDTO.IdsDto idsDto) {
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
         LoginUser user = UserContext.getNonLoginUser();
 
         List<WarehouseLocationEntity> list = baseMapper.selectBatchIds(idsDto.getIds());
@@ -614,10 +632,11 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             List<InventoryEntity> inventoryList = inventoryMapper.selectList(queryWrapper);
             if (! CollectionUtils.isEmpty(inventoryList)) {
                 //仓位有商品，不能删除
-                errorList.add(String.format("仓位：%s 存在商品，不能删除", entity.getCode()));
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format("仓位：%s 存在商品，不能删除", entity.getCode())));
                 continue;
             }
             baseMapper.deleteById(entity.getId());
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
             List<WarehouseLocationEntity> brotherList = baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", entity.getWarehouseId()).eq("is_deleted", false).eq("parent_id", entity.getParentId()));
             if(brotherList.isEmpty()){
                 WarehouseLocationEntity updateArea = new WarehouseLocationEntity();
@@ -627,7 +646,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             }
             operateLogService.addModuleOperateLog(String.format("删除仓位【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION.getCode(), entity.getId(), "删除", user.getUid(), user.getUserName());
         }
-        return errorList;
+        return resultDTOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
