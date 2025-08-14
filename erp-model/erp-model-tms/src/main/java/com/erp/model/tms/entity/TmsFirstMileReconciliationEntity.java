@@ -161,6 +161,8 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
         this.code = code;
         this.approveStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         this.reconciliationDate = LocalDate.now();
+        //获取当前月份第一天
+        this.reconciliationMonth = endDate.withDayOfMonth(1);
         this.startDate = startDate;
         this.endDate = endDate;
         this.logisticsSupplierId = logisticsSupplierId;
