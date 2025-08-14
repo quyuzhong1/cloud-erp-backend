@@ -819,6 +819,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                         v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                     });
                 }
+                deliveryDTO.getPackingDTOList().forEach(v -> {
+                    v.setSku(v.getBoxDesc());
+                });
                 dto.setPackingDTOList(deliveryDTO.getPackingDTOList());
             }
         }
