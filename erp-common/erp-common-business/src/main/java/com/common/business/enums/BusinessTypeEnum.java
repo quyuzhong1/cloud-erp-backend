@@ -20,7 +20,6 @@ import lombok.Getter;
 public enum BusinessTypeEnum implements EnumMessage {
     // 销售订单
     ORDER("order","销售订单", SourceTypeEnum.SO_B2C),
-    SO_MULTI_CHANNEL("so_multi_channel","多渠道订单", SourceTypeEnum.SO_MULTI_CHANNEL),
     OTHER_OUT_STOCK("other_out_stock","其他出库单", SourceTypeEnum.OTHER_OUTSTOCK),
     // TODO 补充来源类型
     REFUND("refund","退款单", null),
