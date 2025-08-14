@@ -5,26 +5,24 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
-import com.erp.model.tms.dto.LogisticsThirdChannelRefDetailDTO;
+import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.model.tms.enums.TrackPlatformTypeEnum;
-import com.erp.server.tms.convert.LogisticsThirdChannelRefConverter;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
-import com.erp.server.tms.service.LogisticsThirdChannelRefService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class LogisticsThirdChannelRefListener extends AnalysisEventListener<ImportLogisticsThirdChannelRefExcelDTO> {
 
@@ -46,6 +44,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
 
     private final LogisticsSupplierService logisticsSupplierService = SpringUtil.getBean(LogisticsSupplierService.class);
     private final LogisticsChannelService logisticsChannelService = SpringUtil.getBean(LogisticsChannelService.class);
+    private final DictBasicService dictBasicService = SpringUtil.getBean(DictBasicService.class);
     public LogisticsThirdChannelRefListener() {
 
     }
@@ -120,6 +119,7 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
             //查询我司渠道
             List<LogisticsChannelEntity> channelEntityList = logisticsChannelService.list();
             List<ShopInfoEntity> shopInfoEntityList = FeignQuery.list(ShopInfoEntity.class);
+            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey("channelSalesPlatform");
             //处理数据
             for (ImportLogisticsThirdChannelRefExcelDTO e : dataList) {
                 List<String> errorMsgList = new ArrayList<>();
@@ -146,11 +146,11 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                     if (CharSequenceUtil.isBlank(e.getShopName())){
                         errorMsgList.add("平台不能为空");
                     }
-                    PlatformDictEnum dictEnum = PlatformDictEnum.getByName(e.getShopName());
-                    if (Objects.isNull(dictEnum)){
+                    DictBasicDTO.ViewDTO dict = dictList.stream().filter(f -> f.getName().equals(e.getShopName())).findFirst().orElse(null);
+                    if (Objects.isNull(dict)){
                         errorMsgList.add(CharSequenceUtil.format("平台【{}】未匹配到", e.getShopName()));
                     }else {
-                        e.setDictPlatform(dictEnum.getCode());
+                        e.setDictPlatform(dict.getCode());
                     }
                 }else if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(e.getPushType()) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(e.getPushType())){
                     if (CharSequenceUtil.isBlank(e.getMobile()) && e.getIsPushMobile()){
