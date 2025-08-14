@@ -1942,8 +1942,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
 
-            this.lambdaUpdate().eq(SoB2cEntity::getId, id).
-                    set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if(resultDTO.getIsPlatformShip()){
                 //更新平台已标发
@@ -6897,6 +6895,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 isTransit = resultDTO.getIsTransit();
                 transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
             }
+        }
+        //不出库发货不走中转
+        if(entity.getIsNotOutbound()){
+            isTransit = false;
         }
         if (isTransit && CollUtil.isNotEmpty(transferWarehouseIdList)) {
             warehouseId = transferWarehouseIdList.get(transferWarehouseIdList.size() - 1);

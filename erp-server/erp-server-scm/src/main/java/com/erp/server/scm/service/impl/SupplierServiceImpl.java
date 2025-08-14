@@ -671,7 +671,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getCategoryName (Map<String, DictBasicEntity> dictMap,String categoryId) {
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
         DictBasicEntity childEntity = dictMap.get(categoryId);
         if (ObjectUtil.isEmpty(childEntity)) {
             return str.toString();
@@ -692,15 +692,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getCategoryName(List<BasicCategoryEntity> productCategoryList,Object value) {
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
         //子级品类
-        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString())).findFirst().orElse(null);
         if (ObjUtil.isEmpty(childCategory)) {
             return str.toString();
         }
-        BasicCategoryEntity parentCategoryEntity = productCategoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), childCategory.getPid())).findFirst().orElse(new BasicCategoryEntity());
+        BasicCategoryEntity parentCategoryEntity = productCategoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), childCategory.getPid())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(parentCategoryEntity)) {
-            str.append(childCategory.getName());
+           return str.append(childCategory.getName()).toString();
         } else {
             str.append(parentCategoryEntity.getName()).append("->").append(childCategory.getName());
         }
