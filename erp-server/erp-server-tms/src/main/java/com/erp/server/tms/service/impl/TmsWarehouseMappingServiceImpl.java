@@ -131,7 +131,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         // 删除主单数据
         log.info("删除 开始删除仓库匹配数据，id：【{}】", id);
         this.removeById(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getLogisticsWarehouseCode(), OperationTypeEnum.DELETE);
     }
 
     @Override

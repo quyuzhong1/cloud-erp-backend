@@ -125,4 +125,29 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 获取最新的价目数据 -->
+    <select id="getLatest" resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">
+        select
+            ppcd.sku_id,
+            ppcd.sku_no,
+            ppcd.delivery_day,
+            ppcd.min_qty,
+            ppcd.max_qty,
+            ppcd.currency,
+            ppcd.tax_price,
+            ppcd.tax_rate,
+            ppcd.disabled,
+            ppcd.effective_date,
+            ppcd.expire_date,
+            ppcd.purchase_price_detail_id,
+            ppcd.purchase_price_change_id,
+            ppcd.supplier_id
+        from purchase_price_change_detail ppcd
+        LEFT JOIN purchase_price_change ppc ON ppcd.purchase_price_change_id = ppc.id AND ppcd.is_deleted = FALSE
+        <where>
+            ppcd.is_deleted = FALSE and ppc.approve_status = 'approve'  and ppcd.purchase_price_detail_id = #{purchasePriceDetailId}
+            and ppcd.id > #{id}
+        </where>
+    </select>
 </mapper>

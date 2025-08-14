@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.sys.dto.SysRoleDTO;
 import com.erp.model.sys.entity.SysRoleEntity;
 
@@ -22,7 +23,7 @@ public interface SysRoleService extends IService<SysRoleEntity> {
      * 根据角色id 删除 角色
      * @param id
      */
-    void removeRoleById(List<String> id);
+    List<BatchResultDTO>  removeRoleById(List<String> id);
 
 
     void copyRole(String roleId);

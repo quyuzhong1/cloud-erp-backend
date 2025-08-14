@@ -106,6 +106,7 @@ public class TmsFirstMileReconciliationController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliation:updateAndSubmit",
             serviceClass = TmsFirstMileReconciliationService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdateDTO dto) {
         tmsFirstMileReconciliationService.updateAndSubmit(dto);
         return success();

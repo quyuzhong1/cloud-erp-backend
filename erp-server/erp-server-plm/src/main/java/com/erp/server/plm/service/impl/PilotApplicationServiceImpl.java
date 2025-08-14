@@ -39,6 +39,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -46,6 +47,8 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -146,6 +149,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
 
+        // 获取用户信息
+        fillUserInfo(addDTO);
+        
         // 数据处理
         handleData(addDTO, pilotApplicationEntity);
 
@@ -184,6 +190,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return new BaseResultDTO.AddDTO(pilotApplicationEntity.getId(), code);
+    }
+
+    /**
+     * 填充用户信息
+     * @param addDTO 试产申请DTO
+     */
+    private void fillUserInfo(PilotApplicationDTO.AddDTO addDTO) {
+        if (addDTO.getDqeOwnerId() == null) {
+            log.warn("DQE负责人ID为空，跳过用户信息填充");
+            return;
+        }
+        
+        try {
+            SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(addDTO.getDqeOwnerId());
+            if (sysUserDTO != null && StringUtils.isNotBlank(sysUserDTO.getUserName())) {
+                addDTO.setDqeOwnerName(sysUserDTO.getUserName());
+                log.debug("成功获取用户信息，用户ID: {}, 用户名: {}", addDTO.getDqeOwnerId(), sysUserDTO.getUserName());
+            } else {
+                log.warn("未找到用户信息，用户ID: {}", addDTO.getDqeOwnerId());
+                addDTO.setDqeOwnerName("未知用户");
+            }
+        } catch (Exception e) {
+            log.error("获取用户信息失败，用户ID: {}, 错误信息: {}", addDTO.getDqeOwnerId(), e.getMessage(), e);
+            addDTO.setDqeOwnerName("获取失败");
+        }
     }
 
     /**
@@ -240,6 +271,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerId())){
+            pilotApplicationEntity.setDqeOwnerId(updateDTO.getDqeOwnerId());
+        }
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerName())){
+            pilotApplicationEntity.setDqeOwnerName(updateDTO.getDqeOwnerName());
+        }
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -577,6 +614,26 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             detailEntity.setProductName(productName);
         }
         map.put("productDetailList", detailList);
+
+        // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailList)) {
+            List<String> chargeIdList = productDetailList.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                map.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailList 为空");
+        }
         return map;
     }
 
@@ -821,6 +878,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         view.setAttachmentList(attachmentList);
+        view.setDqeOwnerId(pilotApplicationEntity.getDqeOwnerId());
+        view.setDqeOwnerName(pilotApplicationEntity.getDqeOwnerName());
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -1201,6 +1260,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setDqeOwnerId(addDTO.getDqeOwnerId());
+        entity.setDqeOwnerName(addDTO.getDqeOwnerName());
     }
 
     @Override

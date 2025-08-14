@@ -2,8 +2,11 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.DictRuleConditionDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.service.DictRuleConditionService;
@@ -23,6 +26,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/dictRuleCondition")
+@LogSystemModule("条件字典表")
 public class DictRuleConditionController extends BaseController {
 
     @Resource
@@ -36,6 +40,7 @@ public class DictRuleConditionController extends BaseController {
      * @author Lambda
      * @date: 2023-08-30
      */
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated DictRuleConditionDTO.AddDTO dto) {
         return success(dictRuleConditionService.add(dto));
@@ -48,6 +53,7 @@ public class DictRuleConditionController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "保存或者修改字典信息")
     public ApiResult<Object> saveOrUpdate(@RequestBody @Validated List<DictRuleConditionDTO.UpdateDTO> dto) {
         Boolean result = dictRuleConditionService.batchSaveOrUpdate(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -62,6 +68,7 @@ public class DictRuleConditionController extends BaseController {
      * @date: 2023-08-30
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     public ApiResult<Object> update(@RequestBody @Validated DictRuleConditionDTO.UpdateDTO dto) {
         dictRuleConditionService.update(dto);
         return success();

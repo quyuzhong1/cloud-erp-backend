@@ -59,6 +59,7 @@
     <select id="getAuthShopByPlatformType" resultType="com.erp.model.oms.entity.ShopAuthEntity">
         SELECT
             auth.*,
+            info.name AS shopName,
             info.extend_data AS extendData,
             info.dict_area_code as areaCode
         FROM

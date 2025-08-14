@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -18,9 +19,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +50,21 @@ public class SupplierDTO implements Serializable {
 
     }
 
-    /**
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ViewParamDTO {
+
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 是否需要查看电话
+         */
+        private Boolean isViewTel = Boolean.FALSE;
+    }
+
+        /**
      * 批量修改供应商分类
      */
     @Data
@@ -107,6 +126,10 @@ public class SupplierDTO implements Serializable {
     @Valid
     public static class ImportAddDTO {
 
+        /**
+         * 供应商主键id
+         */
+        private String id;
 
         /**
          * 名称
@@ -174,6 +197,16 @@ public class SupplierDTO implements Serializable {
         private String payMethodId;
 
         /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
          * 结算付款币种
          */
         //@NotBlank(message = "结算币种不能为空")
@@ -186,6 +219,35 @@ public class SupplierDTO implements Serializable {
          */
         @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 公司注册资金（万）
+         */
+        private BigDecimal registeredCapital;
+
+        /**
+         * 供应商属性
+         */
+        private JSONArray propertyJson;
+        /**
+         * 供应商品类
+         */
+        private JSONArray productCategoryJson;
+
+        /**
+         * 供应商应用分类
+         */
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 体系认证
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
 
         /**
          * 供应商联系信息
@@ -363,6 +425,41 @@ public class SupplierDTO implements Serializable {
         private String paymentCompanyName;
 
         /**
+         * 供货识别码
+         */
+        private String identificationCode;
+
+        /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合,字典property类型
+         */
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合,get,plm/applicationCategory/list
+         */
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 体系认证其他选项值
+         */
+        private String certificateOtherValue;
+
+        /**
          * 供应商联系信息
          */
         @Valid
@@ -379,6 +476,11 @@ public class SupplierDTO implements Serializable {
          */
         @Valid
         private List<SupplierCredentialDTO.UpdateDTO> credentialList;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.ViewDTO> plantAddrList;
 
     }
 
@@ -498,6 +600,47 @@ public class SupplierDTO implements Serializable {
         @Size(max = 200, message = "付款公司名称最大200字符")
         private String paymentCompanyName;
 
+        /**
+         * 公司注册资金（万）
+         */
+        @NotNull(message = "注册资金不能为空")
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合,字典property类型
+         */
+        @NotEmpty(message = "供应商属性不能为空")
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        @NotEmpty(message = "体系认证不能为空")
+        private JSONArray certificateJson;
+
+        /**
+         * 体系认证其他选项的值
+         */
+        private String certificateOtherValue;
+
+        /**
+         * 产品分类集合,get,plm/category/tree
+         */
+        @NotEmpty(message = "产品分类不能为空")
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合,get,plm/applicationCategory/list
+         */
+        @NotEmpty(message = "应用分类不能为空")
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 工厂所在地,get,sys/dict/city/countryTreeList
+         */
+        @NotEmpty(message = "工厂所在地不能为空")
+        @Valid
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
     }
 
 
@@ -540,8 +683,33 @@ public class SupplierDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 选中导出字段
+         */
+        @Valid
+        private List<ExportField> fieldList;
     }
 
+    /**
+     * 导出字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段
+         */
+        @NotBlank(message = "导出字段编码不能为空")
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        @NotBlank(message = "导出字段名称不能为空")
+        private String fieldName;
+    }
 
     /**
      * 供应商分页信息
@@ -679,6 +847,10 @@ public class SupplierDTO implements Serializable {
         private String purchaseUserName;
 
         /**
+         * 联系人id
+         */
+        private String contactId;
+        /**
          * 联系人名
          */
         private String contactPerson;
@@ -731,12 +903,156 @@ public class SupplierDTO implements Serializable {
          */
         private String createUserName;
 
+        /**
+         * 供应商代码
+         */
+        private String identificationCode;
 
+        /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
 
+        /**
+         * 供应商属性集合
+         */
+        private JSONArray propertyJson;
+        /**
+         * 供应商属性名称
+         */
+        private String propertyNames;
+
+        /**
+         * 体系认证集合
+         */
+        private JSONArray certificateJson;
+        /**
+         * 体系认证名称
+         */
+        private String certificateNames;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+        /**
+         * 产品分类名称
+         */
+        private String productCategoryNames;
+        /**
+         * 应用分类集合
+         */
+        private JSONArray applicationCategoryJson;
+        /**
+         * 应用分类名称
+         */
+        private String applicationCategoryNames;
+        /**
+         * 工厂所在地名称
+         */
+        private String plantAddrNames;
     }
 
 
     /**
+     * 供应商分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingExportDTO  extends  PagingViewDTO{
+
+        /**
+         * 联系人-人员
+         */
+        private String person;
+        /**
+         * 联系人-职务
+         */
+        private String position;
+        /**
+         * 联系人-电话
+         */
+        private String telNumber;
+        /**
+         * 联系人-邮箱
+         */
+        private String email;
+        /**
+         * 联系人-默认联系人
+         */
+        private Boolean contactIsDefault;
+        /**
+         * 联系人-默认联系人，是/否
+         */
+        private String contactIsDefaultName;
+        /**
+         * 联系人-启用状态
+         */
+        private Boolean contactDisabled;
+        /**
+         * 联系人-启用状态，是/否
+         */
+        private String contactDisabledName;
+        /**
+         * 联系人-备注
+         */
+        private String contactRemark;
+        /**
+         * 账户-账户名称
+         */
+        private String payee;
+        /**
+         * 账户-收款银行
+         */
+        private String bankName;
+        /**
+         * 账户-银行账号
+         */
+        private String bankAccount;
+        /**
+         * 账户-开户支行
+         */
+        private String bankSubbranch;
+        /**
+         * 账户-支付方式
+         */
+        private String payMethodId;
+        /**
+         * 账户-是否默认
+         */
+        private Boolean accountDefault;
+        /**
+         * 账户-是否默认,是/否
+         */
+        private String accountDefaultName;
+        /**
+         * 账户-备注
+         */
+        private String accountRemark;
+        /**
+         * 资质 -主键id
+         */
+        private String credentialId;
+        /**
+         * 资质-名称
+         */
+        private String credentialName;
+        /**
+         * 资质-有效期
+         */
+        private LocalDate effectiveDate;
+        /**
+         * 资质-失效期
+         */
+        private LocalDate expireDate;
+        /**
+         * 资质-备注
+         */
+        private String credentialRemark;
+    }
+
+
+        /**
      * 导出供应商
      */
     @Data
@@ -813,6 +1129,41 @@ public class SupplierDTO implements Serializable {
          * 公司地址
          */
         private String companyAddress;
+
+        /**
+         * 供货识别码
+         */
+        private String identificationCode;
+
+        /**
+         * 公司注册资金（万）
+         */
+        private Integer registeredCapital;
+
+        /**
+         * 供应商属性集合
+         */
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 产品分类集合
+         */
+        private JSONArray productCategoryJson;
+
+        /**
+         * 应用分类集合
+         */
+        private JSONArray applicationCategoryJson;
+
+        /**
+         * 工厂所在地
+         */
+        private List<SupplierPlantAddrDTO.AddDTO> plantAddrList;
     }
 
     /**

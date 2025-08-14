@@ -194,6 +194,9 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        <if test="params.supplierId != null and params.supplierId != ''">
+            and ls.id = #{params.supplierId}
+        </if>
         <if test="params.disabled != null">
             and lc.disabled=#{params.disabled}
         </if>

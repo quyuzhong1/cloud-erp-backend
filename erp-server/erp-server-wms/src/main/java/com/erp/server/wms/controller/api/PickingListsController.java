@@ -5,10 +5,12 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -17,10 +19,12 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +38,8 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/picking-lists")
+@LogSystemModule("拣货单")
+@Slf4j
 public class PickingListsController extends BaseController {
 
     @Resource
@@ -65,6 +71,7 @@ public class PickingListsController extends BaseController {
      * @param dto 编辑参数
      **/
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "拣货车类型修改")
     public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
         pickingListsService.update(dto);
         return success();
@@ -99,11 +106,18 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除拣货单")
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
-        PickingListsEntity pickingListsEntity = pickingListsService.getById(dto.getId());
-        pickingListsService.delete(dto.getId());
-        requisitionApplicationService.writeBackRequisitionPickPushDownStatus(pickingListsEntity.getSourceId());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody BaseIdDTO dto) {
+        PickingListsEntity pickingListsEntity=null;
+        try {
+            pickingListsEntity = pickingListsService.getById(dto.getId());
+            pickingListsService.delete(dto.getId());
+            requisitionApplicationService.writeBackRequisitionPickPushDownStatus(pickingListsEntity.getSourceId());
+            return success(Collections.singletonList(BatchResultDTO.success(pickingListsEntity.getId(), pickingListsEntity.getCode(), "删除成功")));
+        }catch (Exception e){
+            log.error("删除拣货单失败", e);
+            return failure(pickingListsEntity!=null? Collections.singletonList(BatchResultDTO.fail(pickingListsEntity.getId(), pickingListsEntity.getCode(), e.getMessage())):Collections.singletonList(BatchResultDTO.fail(dto.getId(), dto.getId(), e.getMessage())));
+        }
+
     }
 
     /**

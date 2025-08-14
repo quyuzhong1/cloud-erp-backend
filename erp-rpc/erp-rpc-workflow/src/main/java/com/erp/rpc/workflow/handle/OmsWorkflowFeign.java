@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow.handle;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.ApproveDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @author Will
  * @date: 2023/7/3 15:27
  */
-@FeignClient(value = "erp-oms", contextId = "workflow-oms")
+@FeignClient(value = "erp-oms", contextId = "workflow-oms",configuration = {FeignErrorDecoder.class})
 public interface OmsWorkflowFeign extends BaseWorkflowService{
 
     /**

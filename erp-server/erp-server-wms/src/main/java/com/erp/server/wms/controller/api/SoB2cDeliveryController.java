@@ -59,8 +59,8 @@ public class SoB2cDeliveryController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
     @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
-        Boolean addResult = soB2cDeliveryService.add(dto);
-        return addResult ? success() : failure();
+        soB2cDeliveryService.add(dto);
+        return success();
     }
 
     /**
@@ -146,6 +146,7 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:delivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "发货")
     public ApiResult<List<BatchResultDTO>> delivery(@RequestBody @Validated SoB2cDeliveryDTO.DeliverDTO dto) {
         List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -195,6 +196,7 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:falseDelivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "手动标发")
     public ApiResult<List<BatchResultDTO>> falseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -375,6 +377,7 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:logisticsIntercept",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "物流拦截")
     public ApiResult<List<BatchResultDTO>> logisticsIntercept(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
         List<BatchResultDTO> resultDTOS = soB2cDeliveryService.logisticsIntercept(idsDTO.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -424,6 +427,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @see BaseResultDTO.AddDTO
      */
     @PostMapping("/batchCancelShipment")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "取消发货")
     public ApiResult<List<BatchResultDTO>> batchCancelShipment(@RequestBody @Validated SoB2cDeliveryDTO.CancelShipmentView dto){
         Map<String, List<SoB2cDeliveryDTO.CancelShipmentDTO>> collect = dto.getCancelShipments().stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.CancelShipmentDTO::getId));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.keySet().size());
@@ -466,6 +470,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/retryOutstock")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "重新出库")
     public ApiResult<List<BatchResultDTO>> retryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

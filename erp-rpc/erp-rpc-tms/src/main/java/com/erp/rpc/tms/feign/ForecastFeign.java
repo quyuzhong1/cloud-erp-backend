@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
 import com.erp.model.tms.dto.SettingForecastDTO;
@@ -20,7 +21,7 @@ import java.util.List;
  * @Date 2024-01-19 17:16
  * @Created by yl
  */
-@FeignClient(name = "erp-tms", contextId = "forecast")
+@FeignClient(name = "erp-tms", contextId = "forecast" ,configuration = {FeignErrorDecoder.class})
 public interface ForecastFeign {
 
 

@@ -1,12 +1,13 @@
 package com.erp.rpc.wms.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-wms", contextId = "attachment")
+@FeignClient(name = "erp-wms", contextId = "attachment" ,configuration = {FeignErrorDecoder.class})
 public interface AttachmentFeign {
 
     /**

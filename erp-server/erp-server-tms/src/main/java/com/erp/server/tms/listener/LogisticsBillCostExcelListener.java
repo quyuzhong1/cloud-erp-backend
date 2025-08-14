@@ -1,7 +1,6 @@
 package com.erp.server.tms.listener;
 
 import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -17,11 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class LogisticsBillCostExcelListener extends AnalysisEventListener<LogisticsBillCostExcelDTO> {
     private static final int BATCH_COUNT = 1000;
 
     private final String taskId;
+    private final String importType;
+    private final Integer importCount;
     @Getter
     private Integer count = 0;
     /**
@@ -43,8 +45,10 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
-    public LogisticsBillCostExcelListener(String taskId) {
+    public LogisticsBillCostExcelListener(String taskId, String importType, Integer importCount) {
         this.taskId = taskId;
+        this.importType = importType;
+        this.importCount = importCount;
     }
 
    /**
@@ -58,6 +62,10 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
     @Transactional(rollbackFor = Exception.class)
     public void invoke(LogisticsBillCostExcelDTO excelDTO, AnalysisContext analysisContext) {
         count += 1;
+        //已经导入的数据跳过进度
+        if (Objects.nonNull(importCount) && count < importCount){
+            return;
+        }
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -75,7 +83,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (successList.size() >= BATCH_COUNT){
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(),importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -98,7 +106,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
         if (!successList.isEmpty()) {
             try {
                 List<LogisticsBillCostExcelDTO> errorList2 = new ArrayList<>();
-                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode());
+                logisticsBillCostService.handleImportSuccessList(successList, errorList2, DictCostAttributionEnum.SELF_DELIVER.getCode(), importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));

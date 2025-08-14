@@ -26,7 +26,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
 import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
-import com.erp.rpc.wms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.service.*;

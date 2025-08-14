@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2024年01月11日
  * @version: 1.0
  */
-@FeignClient(name = "erp-srm", contextId = "cfgSetting",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-srm", contextId = "srmCfgSettingFeign",configuration = {FeignErrorDecoder.class})
 public interface SrmCfgSettingFeign {
 
     @PostMapping("/feign/cfgSetting/getConfigList")

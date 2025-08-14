@@ -45,7 +45,19 @@ public interface LogisticsAddressConverter {
             @Mapping(target = "isDefault", source = "isDefault"),
             @Mapping(target = "language", source = "language"),
             @Mapping(target = "isBySync", constant = "true"),
-            @Mapping(target = "tradeManageId", source = "tradeManageId")
+            @Mapping(target = "tradeManageId", source = "tradeManageId"),
+            @Mapping(target = "addressSecond", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "shopId", ignore = true),
+            @Mapping(target = "type", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true)
     })
     LogisticsAddressEntity sellerAddressToLogisticsAddress(Address sender);
     List<LogisticsAddressEntity> sellerAddressToLogisticsAddress(List<Address> senders);

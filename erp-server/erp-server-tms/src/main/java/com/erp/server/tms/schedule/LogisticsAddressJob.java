@@ -71,7 +71,8 @@ public class LogisticsAddressJob {
         if (CollectionUtils.isNotEmpty(mapList)) {
             mapList.forEach(map -> {
                 String shopId = map.get("shopId");
-                logisticsBaseService.syncTikTokLogisticsAddress(shopId);
+                String shopName = map.get("shopName");
+                logisticsBaseService.syncTikTokLogisticsAddress(shopId, shopName);
             });
         }
         XxlJobHelper.log("====结束同步TikTok全托管卖家地址====");

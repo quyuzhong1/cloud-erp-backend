@@ -42,6 +42,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -297,21 +298,36 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
         //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<SalesDemandEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SalesDemandEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        List<String> removeIdList = removeList.stream().map(SalesDemandEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(removeIdList));
         //删除明细数据
-        salesDemandDetailService.removeBySalesDemandIds(ids);
+        salesDemandDetailService.removeBySalesDemandIds(removeIdList);
         //删除操作日志
-        moduleOperateLogService.removeByBusinessIds(ids);
+        moduleOperateLogService.removeByBusinessIds(removeIdList);
         //删除主表数据
-        return this.removeByIds(ids);
+        this.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
     @Override

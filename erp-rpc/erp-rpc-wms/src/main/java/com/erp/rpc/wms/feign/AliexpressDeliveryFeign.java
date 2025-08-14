@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "AliexpressDelivery")
+@FeignClient(name = "erp-wms", contextId = "AliexpressDelivery" ,configuration = {FeignErrorDecoder.class})
 public interface AliexpressDeliveryFeign {
 
     /**

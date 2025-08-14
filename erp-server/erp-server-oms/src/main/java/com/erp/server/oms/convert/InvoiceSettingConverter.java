@@ -7,7 +7,7 @@ package com.erp.server.oms.convert;
  */
 
 import com.common.business.mapper.ObjectMapperWork;
-import com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO;
+import com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.sdk.third.tf.entity.AddCompanyDTO;
@@ -62,9 +62,9 @@ public interface InvoiceSettingConverter {
     })
     UpdateCompanyDTO invoiceSettinToUpdateCompanyDTOTo(CfgInvoiceSettingEntity cfgVatInvoiceEntity);
 
-    CfgRuleInvoiceProductAmountDTO.AddDTO toAddDTO(CfgRuleInvoiceProductAmountDTO.ViewDTO viewDTO);
+    CfgRuleInvoiceAmountDTO.AddDTO toAddDTO(CfgRuleInvoiceAmountDTO.ViewDTO viewDTO);
 
-    CfgRuleInvoiceProductAmountDTO.UpdateDTO toUpdateDTO(CfgRuleInvoiceProductAmountDTO.ViewDTO viewDTO);
+    CfgRuleInvoiceAmountDTO.UpdateDTO toUpdateDTO(CfgRuleInvoiceAmountDTO.ViewDTO viewDTO);
 
     @Mapping(target = "name", source = "value")
     RuleConditionDTO.AddDTO conditionViewToAddDTO(RuleConditionDTO.ViewDTO condition);

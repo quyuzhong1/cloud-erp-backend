@@ -1,12 +1,8 @@
 package com.erp.model.srm.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +11,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -201,6 +196,14 @@ public class DeliveryOrderDTO implements Serializable {
          * 供应商名称
          */
         private String supplierName;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
 
         /**
          * skuId
@@ -422,6 +425,14 @@ public class DeliveryOrderDTO implements Serializable {
          * 订单单号
          */
         private String sourceCode;
+        /**
+         * 订单类型
+         */
+        private String type;
+        /**
+         * 订单类型名称
+         */
+        private String typeName;
 
         /**
          * skuId

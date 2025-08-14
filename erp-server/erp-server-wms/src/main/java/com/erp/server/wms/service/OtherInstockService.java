@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -101,6 +102,25 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @return Boolean
      */
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除其他入库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * @description: 删除单个实体
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param entity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO deleteEntity(OtherInstockEntity entity);
     /**
      * @description: 作废
      * @author Will
@@ -239,4 +259,11 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     List<OtherInstockEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, OtherInstockEntity>
+     */
+    Map<String, OtherInstockEntity> mapByIds(List<String> ids);
 }

@@ -261,5 +261,13 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean thirdApproveEnd(PurchaseApplicationDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
-
+    /**
+     * 导入主表数据
+     * @author will
+     * @date 2025/7/30 17:56
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
 }

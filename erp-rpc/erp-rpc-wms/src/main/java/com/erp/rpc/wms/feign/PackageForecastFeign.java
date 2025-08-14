@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +17,7 @@ import java.util.List;
  * @Date 2024-01-30 11:21
  * @Created by yl
  */
-@FeignClient(name = "erp-wms", contextId = "packageForecastFeign")
+@FeignClient(name = "erp-wms", contextId = "packageForecastFeign" ,configuration = {FeignErrorDecoder.class})
 public interface PackageForecastFeign {
 
     /**

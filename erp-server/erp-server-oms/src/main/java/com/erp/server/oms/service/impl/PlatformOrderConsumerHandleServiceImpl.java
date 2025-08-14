@@ -23,6 +23,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformRefundOrderConsumerService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformReturnOrderConsumerService;
@@ -115,6 +116,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SoB2cCoreService soB2cCoreService;
 
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         String oldBillStatus = dto.getBillStatus();
@@ -185,7 +189,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-        // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){

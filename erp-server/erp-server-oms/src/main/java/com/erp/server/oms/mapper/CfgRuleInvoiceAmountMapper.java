@@ -1,6 +1,6 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO;
-import com.erp.model.oms.entity.CfgRuleInvoiceProductAmountEntity;
+import com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO;
+import com.erp.model.oms.entity.CfgRuleInvoiceAmountEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -17,12 +17,12 @@ import java.util.List;
  * @since 2025-07-14
  */
 @Mapper
-public interface CfgRuleInvoiceProductAmountMapper extends BaseMapper<CfgRuleInvoiceProductAmountEntity> {
+public interface CfgRuleInvoiceAmountMapper extends BaseMapper<CfgRuleInvoiceAmountEntity> {
 
     /**
      * 根据配置获取规则列表
      * @param id
      * @return
      */
-    List<CfgRuleInvoiceProductAmountDTO.ViewDTO> listByCfgId(String id);
+    List<CfgRuleInvoiceAmountDTO.ViewDTO> listByCfgId(String id);
 }

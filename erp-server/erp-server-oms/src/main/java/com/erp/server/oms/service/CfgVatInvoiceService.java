@@ -79,6 +79,9 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
      */
     Boolean delete(List<String> ids);
 
+
+    List<BatchResultDTO> delete(List<String> ids,Boolean isReturnDetail);
+
     /**
      * 根据店铺id更新销售订单发票配置状态
      *

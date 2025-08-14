@@ -753,10 +753,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         LogisticsChannelDTO.SelectDTO params = dto.getParams();
         IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
-//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
-        //排序
-//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
-//        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
     /**

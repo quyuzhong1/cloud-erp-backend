@@ -103,7 +103,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     void updateThirdWarehouse(OverseasProviderDTO.UpdateThirdWarehouseDTO dto);
 
-    void delete(String id);
+    List<BatchResultDTO> delete(String id);
 
     List<String> getShortName(String platformCode);
 

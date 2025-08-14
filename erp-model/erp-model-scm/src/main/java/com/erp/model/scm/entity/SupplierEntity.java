@@ -1,5 +1,6 @@
 package com.erp.model.scm.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -9,6 +10,7 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -196,6 +198,48 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("voucher_no")
     private String voucherNo;
+
+    /**
+     * 供货识别码
+     */
+    @TableField("identification_code")
+    private String identificationCode;
+
+    /**
+     * 注册资金(万)
+     */
+    @TableField("registered_capital")
+    private Integer registeredCapital;
+
+    /**
+     * 供应商属性Json
+     */
+    @TableField(value = "property_json", jdbcType = JdbcType.OTHER)
+    private JSONArray propertyJson;
+
+    /**
+     * 供应商产品品类idJson
+     */
+    @TableField(value = "product_category_json", jdbcType = JdbcType.OTHER)
+    private JSONArray productCategoryJson;
+
+    /**
+     * 供应商应用分类idJson
+     */
+    @TableField(value = "application_category_json", jdbcType = JdbcType.OTHER)
+    private JSONArray applicationCategoryJson;
+
+    /**
+     * 供应商体系认证Json
+     */
+    @TableField(value = "certificate_json", jdbcType = JdbcType.OTHER)
+    private JSONArray certificateJson;
+
+    /**
+     * 体系认证其他选项的值
+     */
+    @TableField("certificate_other_value")
+    private String certificateOtherValue;
 
     @Override
     public Serializable pkVal() {
