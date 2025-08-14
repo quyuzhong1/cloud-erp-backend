@@ -402,6 +402,7 @@ public class ContractInfoController extends BaseController {
             tableAlias = "ci"
     )
     @WebAdvanceQuery(handler = ContractInfoQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出附件")
     public ResponseEntity<StreamingResponseBody> exportZip(@RequestBody @Validated ContractInfoDTO.PagingParamDTO dto) {
         ExportZipResultDTO resultDTO = contractInfoService.exportZip(dto);
         // 编码文件名（兼容所有Java版本）

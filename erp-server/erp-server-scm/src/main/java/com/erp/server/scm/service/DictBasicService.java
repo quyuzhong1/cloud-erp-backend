@@ -4,6 +4,7 @@ package com.erp.server.scm.service;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.enums.DictBasicEnum;
 
 import java.util.List;
 
@@ -45,4 +46,21 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
      */
     List<DictBasicEntity> getByKeyList(List<String> keyList);
+    /**
+     * 根据名称和类型查询
+     * @author will
+     * @date 2025/7/31 10:08
+     * @param nameList
+     * @param dictBasicEnum
+     * @return List<DictBasicEntity>
+     */
+    List<DictBasicEntity> listByNameList(List<String> nameList, DictBasicEnum dictBasicEnum);
+    /**
+     * 级联
+     * @author will
+     * @date 2025/8/1 10:27
+     * @param key
+     * @return List<DictBasicDTO>
+     */
+    List<DictBasicDTO> tree(String key);
 }

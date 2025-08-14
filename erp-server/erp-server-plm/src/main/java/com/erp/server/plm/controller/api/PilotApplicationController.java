@@ -123,6 +123,7 @@ public class PilotApplicationController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddAndSubmmitDTO> addAndSubmit(@RequestBody @Validated PilotApplicationDTO.AddDTO dto) {
         //新增
         BaseResultDTO.AddDTO add ;
@@ -163,6 +164,7 @@ public class PilotApplicationController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:updateAndSubmit",
@@ -578,6 +580,7 @@ public class PilotApplicationController extends BaseController {
      * @date: 2025/04/15 11:29
      */
     @PostMapping("/unInvalid")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消作废")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

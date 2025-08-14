@@ -195,7 +195,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String confirmType;
 
     /**
-     * 执行状态 ,PurchaseOrderConfirmTypeEnum枚举
+     * 执行状态，ExecutionStatusEnum枚举
      */
     @TableField("execution_status")
     private String executionStatus;

@@ -127,6 +127,7 @@ public class QcNoticeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "质检通知单新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated QcNoticeDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = qcNoticeService.addAndSubmit(dto);
         return success(result);
@@ -145,6 +146,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:updateAndSubmit",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "质检通知单修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated QcNoticeDTO.UpdateDTO dto) {
         qcNoticeService.updateAndSubmit(dto);
         return success();
@@ -408,6 +410,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:cancelQcInfoFinish",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "撤销质检")
     public ApiResult<List<BatchResultDTO>> cancelQcInfoFinish(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         List<BatchResultDTO> resultDTOS = qcNoticeService.cancelQcInfoFinish(dto.getDetailIdList());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -467,6 +470,7 @@ public class QcNoticeController extends BaseController {
      * @date:  2025-04-21
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单明细导入")
     public ApiResult<QcNoticeDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(qcNoticeService.importFile(excelFile, response));
     }

@@ -7,8 +7,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.server.wms.query.VirtualInventoryDiffQueryHandler;
 import com.erp.server.wms.service.VirtualInventoryDiffService;
@@ -30,6 +33,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@LogSystemModule("虚拟库存差异表")
 @RequestMapping("/virtualInventoryDiff")
 public class VirtualInventoryDiffController extends BaseController {
 
@@ -91,6 +95,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "库存差异列表导出")
     public ApiResult exportExcel(@RequestBody VirtualInventoryDiffDTO.SearchParamDTO dto) {
         Boolean flag = virtualInventoryDiffService.exportExcel(dto);
         return flag == true ? success() : failure();
@@ -116,6 +121,7 @@ public class VirtualInventoryDiffController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateVirtualInventory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "一键调整保存")
     public ApiResult updateVirtualInventory(@RequestBody @Validated List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
         virtualInventoryDiffService.updateVirtualInventory(list);
         return success();

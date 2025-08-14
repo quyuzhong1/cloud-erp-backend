@@ -471,7 +471,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
             }
         });
         thirdpartyRefBusinessService.removeByBusinessId(id);
-        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getNameCn(), OperationTypeEnum.DELETE);
 
     }
 

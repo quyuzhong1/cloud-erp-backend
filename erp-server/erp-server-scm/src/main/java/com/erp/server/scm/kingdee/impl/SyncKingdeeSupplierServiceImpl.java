@@ -149,6 +149,10 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
+        //供货识别码
+        resultMap.put("identificationCode",entity.getIdentificationCode());
+        //注册资金(万)
+        resultMap.put("registeredCapital",entity.getRegisteredCapital());
         //名称
         resultMap.put("name",entity.getName());
         //公司地址

@@ -114,12 +114,19 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
 //    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
     private String effectiveDate;
 
+    /**
+     * 失效时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "失效时间", index = 12)
+//    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE_S)
+    private String expireDate;
 
     /**
      * 启用状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "启用状态", index = 12)
+    @ExcelProperty(value = "启用状态", index = 13)
     @FieldValid(fieldName = "启用状态",isNotBlank = true,fieldValues ="启用,停用" )
     private String disabled;
 

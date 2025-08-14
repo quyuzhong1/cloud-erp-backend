@@ -939,30 +939,50 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public  List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<CustomerInfoEntity> list = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+//        //占用状态
+//        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
+//        if (occupyCount > 0) {
+//            throw new ServiceException(ApiError.ERROR_92018);
+//        }
+        List<CustomerInfoEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (CustomerInfoEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            if (entity.getOccupyStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92018.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
         }
-        //占用状态
-        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
-        if (occupyCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
+        List<String> removeIdList = removeList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
 
         //删除客户
-        Boolean result = this.removeByIds(ids);
+        Boolean result = this.removeByIds(removeIdList);
         if (result) {
             //添加日志
             String content = "删除客户[%s]";
-            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+            sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
-        return result;
+        return resultDTOList;
     }
 
 
