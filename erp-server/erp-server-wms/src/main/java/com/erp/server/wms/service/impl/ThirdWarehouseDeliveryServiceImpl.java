@@ -423,6 +423,8 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
                 thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
                 thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuId(addDTO.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(addDTO.getSkuNo());
                 thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
                 thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
                 thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
