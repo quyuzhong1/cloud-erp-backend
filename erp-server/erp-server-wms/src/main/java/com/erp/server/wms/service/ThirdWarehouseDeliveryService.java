@@ -50,7 +50,11 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
 
     ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity);
 
+    List<ThirdWarehouseDeliveryEntity> batchGeneratePlatformDelivery(List<SoOutstockEntity> soOutstockEntity);
+
     void deleteByIds(List<String> sourceIds);
 
     void generatePlatformDetailDelivery(String sourceId, List<SoOutstockDetailEntity> detailEntities);
+
+    void batchAdd(List<ThirdWarehouseDeliveryEntity> addList);
 }
