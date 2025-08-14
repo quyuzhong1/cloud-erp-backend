@@ -11,7 +11,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.service.DmpSoReturnInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +51,8 @@ import javax.annotation.Resource;
 public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandler {
 	@Resource
 	private DmpSoReturnInfoService dmpSoReturnInfoService;
+	@Resource
+	private SysUserFeign sysUserFeign;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -114,11 +120,17 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         Map<String, DictBasicEntity> dictMaps = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, d -> d , (d1 , d2) -> d1));
         
         Map<String, String> warehouseMap = FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
-        
+
+		// 部门信息
+		List<KingdeeDepartmentEntity> kingdeeDeptList = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+
+		List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+
+
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap , warehouseMap);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap , warehouseMap, deptList, kingdeeDeptList);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -128,7 +140,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap , Map<String, String> warehouseMap){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap , Map<String, String> warehouseMap, List<SysDepartmentEntity> deptList, List<KingdeeDepartmentEntity> kingdeeDeptList){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpReturnInstockEntity != null && CollUtil.isNotEmpty(dmpReturnInstockDetailEntityList)) {
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
@@ -273,10 +285,26 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setMilitary_region_code(dmpReturnInstockDetailEntity.getMilitaryRegionCode());
     	        // 军区名称
     	        shudiyunB2cOrderDTO.setMilitary_region_name(dmpReturnInstockDetailEntity.getMilitaryRegionName());
-    	        // 部门编码
-    	        shudiyunB2cOrderDTO.setDepartment_code(dmpReturnInstockDetailEntity.getDepartmentCode());
+
+				String kingdeeDeptCode = "";
+				String kingdeeDeptName = "";
+				SysDepartmentEntity sysDepartmentEntity = deptList.stream()
+						.filter(e -> e.getCode().equals(dmpReturnInstockDetailEntity.getDepartmentCode()))
+						.findFirst()
+						.orElse(null);
+				if (null != sysDepartmentEntity){
+					KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeDeptList.stream()
+							.filter(e -> e.getErpDeptId().equals(sysDepartmentEntity.getId()) && e.getUseOrgCode().equals(dmpReturnInstockEntity.getOrganizationCode()))
+							.findFirst()
+							.orElseThrow(() -> new ServiceException("金蝶部门编码不存在：部门Id=" + dmpReturnInstockDetailEntity.getDepartmentCode()));
+					kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+					kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+				}
+
+				// 部门编码
+    	        shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
     	        // 部门名称
-    	        shudiyunB2cOrderDTO.setDepartment_name(dmpReturnInstockDetailEntity.getDepartmentName());
+    	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
     			
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
