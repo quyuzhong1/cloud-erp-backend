@@ -25,12 +25,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.model.plm.enums.SkuStdCostTabEnum;
@@ -87,6 +89,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private ProductDetailService productDetailService;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private BomSkuService bomSkuService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -97,6 +101,15 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (count > 0) {
             return;
         }
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(Collections.singletonList(entity.getId()))
+                .stream()
+                .filter(b ->  BomTypeEnum.COMBINATION.getType().equals(b.getType()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
+            // 销售套装不添加
+            return;
+        }
+
         SkuStdCostEntity skuStdCostEntity = new SkuStdCostEntity()
                 .setSkuId(entity.getId())
                 .setSkuNo(entity.getSkuNo())
@@ -105,7 +118,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 ;
         skuStdCostService.save(skuStdCostEntity);
         SkuStdCostDetailEntity detailEntity = new SkuStdCostDetailEntity()
-                .setMainId(entity.getId())
+                .setMainId(skuStdCostEntity.getId())
                 .setStdCostPrice(BigDecimal.ZERO)
                 .setStdSalePrice(BigDecimal.ZERO)
                 .setCurrency(CurrencyEnum.CNY.getCurrencyCode())
