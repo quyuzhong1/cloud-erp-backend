@@ -228,6 +228,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             record.setInterceptStatusName(InterceptStatusEnum.getName(record.getInterceptStatus()));
             //单据类型
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
+            record.setSourceTypeName(SoB2cDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             //产品信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
