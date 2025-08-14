@@ -25,6 +25,7 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
@@ -657,6 +658,36 @@ public class FirstMileDeliveryController extends BaseController {
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 下推头程报关单 (不校验系统配置)
+     * @author jack
+     * @date: 2025-07-18
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/generateFirstMileDeclare")
+    public ApiResult<List<BatchResultDTO>> generateFirstMileDeclare(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = firstMileDeliveryService.generateFirstMileDeclare(id);
+            }catch (Exception e){
+                log.error("下推头程报关单失败",e);
+                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "下推头程报关单失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

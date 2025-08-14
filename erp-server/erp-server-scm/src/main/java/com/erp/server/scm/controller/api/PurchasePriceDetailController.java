@@ -198,5 +198,16 @@ public class PurchasePriceDetailController extends BaseController {
     }
 
 
-
+    /**
+     * 批量查询含税单价
+     * @param
+     * @return
+     * @date: 2025-07-22
+     * @author: jack
+     */
+    @PostMapping("/listTaxPrice")
+    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> listTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto){
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> list = purchasePriceDetailService.listTaxPrice(Arrays.asList(dto), Boolean.TRUE);
+        return success(list);
+    }
 }

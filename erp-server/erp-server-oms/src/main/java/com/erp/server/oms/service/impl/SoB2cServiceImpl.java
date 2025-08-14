@@ -3815,6 +3815,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isNotEmpty(soB2cRefCategoryList)) {
             variablesMap.put("soB2cRefCategoryDTO",BeanUtil.copyToList(soB2cRefCategoryList,Map.class));
         }
+        //sku数量
+        long skuCount = detailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().count();
+        variablesMap.put("skuCount", skuCount);
+
         //总销售数量
         Integer qtyTotal = detailList.stream().map(SoB2cDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
@@ -7893,6 +7897,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             return false;
         }
+        // 更新国家信息
+        soB2cReceiverService.checkAndUpdateCountry(soB2cEntity.getId(), dto.getCountry());
+
         // 记录明细仓库
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollectionUtils.isNotEmpty(detailEntityList)) {

@@ -127,6 +127,24 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("partition_id")
     private String partitionId;
 
+    /**
+     * 开票地址
+     */
+    @TableField("invoice_address")
+    private String invoiceAddress;
+
+    /**
+     * IE号
+     */
+    @TableField("ie_no")
+    private String ieNo;
+    /**
+     * 证件类型（CPF自然人，CNPJ公司）
+     */
+    @TableField("taxid_type")
+    private String taxidType;
+
+
     @TableField(exist = false)
     private String partitionCode;
 

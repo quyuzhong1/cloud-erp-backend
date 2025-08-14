@@ -18,4 +18,7 @@ public interface PurchasePriceDetailFeign {
 
     @PostMapping("/feign/purchasePriceDetail/getTaxPrice")
     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+
+    @PostMapping("/feign/purchasePriceDetail/listTaxPrice")
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> listTaxPrice(@RequestBody @Validated List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list);
 }

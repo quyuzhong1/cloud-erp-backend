@@ -3324,6 +3324,10 @@ public class SoB2cDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
         /**
          * 销售出库时间

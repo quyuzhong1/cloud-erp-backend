@@ -41,7 +41,8 @@
         cisd.is_contain_ship_fee,
         cisd.tax_type,
         cisd.invoice_node,
-        cisd.is_auto_upload
+        cisd.is_auto_upload,
+        cisd.dict_verify_type
     </sql>
 
     <!-- 结果映射 -->
@@ -60,6 +61,8 @@
                 <result column="tax_type" property="taxType"/>
                 <result column="invoice_node" property="invoiceNode"/>
                 <result column="is_auto_upload" property="isAutoUpload"/>
+                <result column="dict_verify_type" property="dictVerifyType"/>
+                <result column="isCheckIe" property="isCheckIe"/>
             </collection>
         </collection>
     </resultMap>
@@ -87,7 +90,6 @@
         inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
         where cis.is_deleted = false and cis.disabled = false
         and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
-        limit 1
     </select>
     <!-- 可选：如果不想在Java代码中处理ratio乘以100的逻辑，可以在SQL中处理 -->
     <select id="selectDetailsByMainIdGroupByPlatformWithRatioAdjusted" resultMap="DetailGroupResultMap">
@@ -102,6 +104,8 @@
         d.tax_type,
         d.invoice_node,
         d.is_auto_upload,
+        d.dict_verify_type,
+        case when d.dict_verify_type = 'ie' then true else false end as isCheckIe,
         d.create_time,
         d.update_time,
         COALESCE(dict.name, d.dict_platform) as platform_name

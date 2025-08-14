@@ -128,9 +128,9 @@
                ko.use_org_id AS orgId,
                krp.erp_user_id AS userId
         FROM kingdee_operator_ref_post ko
-                 LEFT JOIN kingdee_user_ref_post krp
+                 INNER JOIN kingdee_user_ref_post krp
                            ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE
-                 LEFT JOIN kingdee_department kd
+                INNER JOIN kingdee_department kd
                            ON kd.id = krp.kingdee_department_id AND kd.is_deleted = FALSE
         WHERE ko.is_deleted = FALSE
         <if test="userIdList!=null and userIdList.size>0">

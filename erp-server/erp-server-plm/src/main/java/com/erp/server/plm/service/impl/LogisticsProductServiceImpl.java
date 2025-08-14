@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -32,15 +34,15 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
-import com.erp.model.plm.dto.ProductCustomsDTO;
+import com.erp.model.plm.dto.excel.UpdateDeclarePriceExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ProductRegistrationDTO;
+import com.erp.model.tms.entity.DictHsCodeEntity;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.enums.ProductRegistrationEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -53,6 +55,7 @@ import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.LogisticsProductExcelListener;
+import com.erp.server.plm.listener.UpdateDeclarePriceExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -131,7 +134,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SysLogService sysLogService;
-    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -274,30 +276,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             declareInfo.setDestCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
         }
         result.setDeclareInfo(declareInfo);
-        //国家列表
-        List<DictCountryDTO.ListDTO>  countryList = sysUserFeign.countryList();
-        List<ProductCustomsEntity> productCustomsList = productCustomsService.listBySkuId(skuId);
-        List<ProductCustomsDTO.ViewDTO> customsList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(productCustomsList)) {
-            customsList = BeanMapper.copyList(productCustomsList, ProductCustomsDTO.ViewDTO.class);
-            customsList.forEach(viewDTO -> {
-                if (StringUtils.isEmpty(viewDTO.getToCurrency())){
-                    viewDTO.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
-                    viewDTO.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                }
-                if (StringUtils.isNotBlank(viewDTO.getCountry())) {
-                    String[] split = viewDTO.getCountry().split(",");
-                    List<String> countryIdList = Arrays.asList(split);
-                    List<DictCountryDTO.ListDTO> dictCountryList = countryList.stream().filter(c->countryIdList.contains(c.getId())).collect(Collectors.toList());
-                    String countryName = dictCountryList.stream().map(DictCountryDTO.ListDTO::getNameCn).collect(Collectors.joining(","));
-                    viewDTO.setCountryName(countryName);
-                }
-            });
-        }
-        productCustomsList.forEach(req -> {
-
-        });
-        result.setCustomsList(customsList);
         return result;
     }
 
@@ -312,41 +290,66 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(LogisticsProductDTO.UpdateDTO dto) {
+        ProductLogisticsEntity oldEntity = null ;
+        if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())) {
+            oldEntity = productLogisticsService.getById(dto.getDeclareInfo().getId());
+            if (Objects.isNull(oldEntity)) {
+                throw new ServiceException("物流产品信息不存在");
+            }
+        }
         //报关信息
         LogisticsProductDTO.DeclareInfoDTO declareInfo = dto.getDeclareInfo();
         ProductLogisticsEntity productLogistics = new ProductLogisticsEntity();
+        BeanMapper.copy(oldEntity, productLogistics);
+
         BeanMapper.copy(declareInfo, productLogistics);
         handleProductLogistics(productLogistics);
 
-        List<ProductCustomsDTO.ViewDTO> customsList = dto.getCustomsList();
-        List<ProductCustomsEntity> productCustomsList = BeanMapper.copyList(customsList, ProductCustomsEntity.class);
-        List<String> deleteIdList = handleCustoms(productCustomsList);
-        Boolean logisticsResult = productLogisticsService.saveOrUpdate(productLogistics);
-        if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            productCustomsService.removeByIds(deleteIdList);
+        //海关编码
+        String customsCode = productLogistics.getCustomsCode();
+        if(StringUtils.isNotBlank(customsCode)){
+            //查询中国海关编码
+            List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class)
+                    .eq(DictHsCodeEntity::getCountry,"CN")
+                    .eq(DictHsCodeEntity::getHsCode, customsCode).list();
+            if(CollUtil.isEmpty(hsCodeList)){
+                throw new ServiceException(ApiError.ERROR_95292);
+            }
         }
-        List<String> customsIds = productCustomsList.stream().map(ProductCustomsEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<String> skuIds = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductCustomsEntity> productCustomsEntities = CollUtil.isNotEmpty(customsIds) ? productCustomsService.listByIds(customsIds) : Collections.emptyList();
-        List<ProductDetailEntity> productDetailEntityList = CollUtil.isNotEmpty(skuIds) ? productDetailService.listByIds(skuIds) : Collections.emptyList();
-        productCustomsList.forEach(productCustomsEntity -> {
-            if (StringUtils.isNotEmpty(productCustomsEntity.getToCurrency())){
-                productCustomsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(productCustomsEntity.getToCurrency()));
+
+        //若海关编码，报关中文名，申报要素，出口申报价，报关单位都不为空则设置为已维护
+        if(StringUtils.isNotBlank(customsCode)
+                && StringUtils.isNotBlank(declareInfo.getDeclareChineseName())
+                && StringUtils.isNotBlank(declareInfo.getDeclareElement())
+                && declareInfo.getDeclarePrice() != null
+                && declareInfo.getDeclareUnit() != null){
+            productLogistics.setCustomsStatus(LogisticsProductCustomsStatusEnum.COMPLETED.getCode());
+        }
+
+        boolean save = productLogisticsService.saveOrUpdate(productLogistics);
+        if (!save) {
+            throw new ServiceException("物流产品信息保存失败");
+        }
+
+        if(StringUtils.isNotBlank(dto.getDeclareInfo().getId())){
+            ProductDetailEntity productDetailEntity = productDetailService.getById(oldEntity.getSkuId());
+            String skuNo = "";
+            if(Objects.nonNull(productDetailEntity)){
+                skuNo = productDetailEntity.getSkuNo();
             }
-            if (CharSequenceUtil.isNotBlank(productCustomsEntity.getId())){
-                ProductCustomsEntity customs = productCustomsEntities.stream().filter(e -> Objects.nonNull(e) && productCustomsEntity.getId().equals(e.getId())).findFirst().orElse(null);
-                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(productCustomsEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                if (Objects.nonNull(customs)){
-                    String msg = CharSequenceUtil.format("手动修改【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productCustomsEntity.getSkuNo(),customs.getCountry(), productCustomsEntity.getCountry(),customs.getToDeclarePrice(), productCustomsEntity.getToDeclarePrice());
-                    sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
-                            .setBusinessId(productCustomsEntity.getSkuId()).setOperation("编辑操作").setContent(msg));
-                }
-                productCustomsService.updateById(productCustomsEntity);
-            }else {
-                productCustomsService.save(productCustomsEntity);
+            String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
+            sysLogService.addSysLogByUpdate(oldEntity, productLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "", msg);
+        }else{
+            ProductDetailEntity productDetailEntity = productDetailService.getById(oldEntity.getSkuId());
+            String skuNo = "";
+            if(Objects.nonNull(productDetailEntity)){
+                skuNo = productDetailEntity.getSkuNo();
             }
-        });
-        return logisticsResult;
+            // 记录操作日志
+            String msg = CharSequenceUtil.format("用户【{}】新增【{}】SKU为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流产品信息", skuNo);
+            sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogistics.getId(), "");
+        }
+        return save;
     }
 
 
@@ -363,7 +366,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         try {
             read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error("导入物流场频错误！{}", e);
+            log.error("导入物流产品信息错误！{}", e);
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！{}", e);
@@ -378,7 +381,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //处理验证成功数据
         handleImportSuccessList(successList, errorList);
 
-        if (errorList.size() > 0) {
+        if (!errorList.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             String excelPath = "excel/logisticsProductError.xlsx";
             String name = "productLogistics";
@@ -394,6 +397,84 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         return Boolean.TRUE;
     }
+
+
+    @Override
+    public Boolean importUpdateDeclarePrice(MultipartFile excelFile, HttpServletResponse response) {
+        UpdateDeclarePriceExcelListener excelListenerUtil = new UpdateDeclarePriceExcelListener();
+        try {
+            read(excelFile.getInputStream(), UpdateDeclarePriceExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入更新出口申报价！{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<UpdateDeclarePriceExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<UpdateDeclarePriceExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        //处理验证成功数据
+        List<UpdateDeclarePriceExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //sku no list
+        List<String> skuNoList = successList.stream().map(UpdateDeclarePriceExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
+
+        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
+
+        Map<String, ProductLogisticsEntity> productLogisticsMap = productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId, v -> v, (o1, o2) -> o1));
+
+        for (UpdateDeclarePriceExcelDTO dto : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            String skuNo = dto.getSkuNo();
+            String skuId = skuMap.getOrDefault(skuNo, "");
+            if(StringUtils.isBlank(skuId)){
+                errorMsgList.add("sku不存在或者sku未审核通过");
+            }
+
+            ProductLogisticsEntity productLogisticsEntity = productLogisticsMap.getOrDefault(skuId, null);
+            if(Objects.isNull(productLogisticsEntity)){
+                errorMsgList.add("物流产品信息不存在");
+            }
+
+            //报关申报价
+            String declarePriceStr = dto.getDeclarePrice();
+            String declareCurrency = dto.getDeclareCurrency();
+            String symbol = CurrencyEnum.getSymbolByCode(declareCurrency);
+            if(StringUtils.isBlank(symbol)){
+                errorMsgList.add("出口申报价币种不存在");
+            }
+
+            if(CollUtil.isNotEmpty(errorMsgList)){
+                dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(dto);
+                continue;
+            }
+            ProductLogisticsEntity logistics = new ProductLogisticsEntity();
+            BeanMapper.copy(productLogisticsEntity,logistics);
+            logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
+            logistics.setDeclareCurrency(declareCurrency);
+            logistics.setDeclareCurrencySymbol(symbol);
+            productLogisticsService.updateById(logistics);
+            //日志
+            String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
+            sysLogService.addSysLogByUpdate(productLogisticsEntity,logistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), productLogisticsEntity.getId(), "",msg);
+        }
+
+        if (!errorList.isEmpty()) {
+            String fileName = "更新出口申报价错误信息";
+            ExcelUtil.export(fileName, "declarePrice", errorList, UpdateDeclarePriceExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -533,6 +614,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
 
         log.info("提交 开始启动物流产品流程，id=：【{}】", entity.getId());
         startProcess(entity);
+
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+        String skuNo = "";
+        if(Objects.nonNull(productDetailEntity)){
+            skuNo = productDetailEntity.getSkuNo();
+        }
+        // 记录操作日志
+        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】提交审核 ", UserContext.getDefaultLoginUser().getUserName(), skuNo);
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
 
@@ -556,6 +646,15 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_LOGISTICS.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
+
+
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+        String skuNo = "";
+        if(Objects.nonNull(productDetailEntity)){
+            skuNo = productDetailEntity.getSkuNo();
+        }
+        String msg = CharSequenceUtil.format("物流产品信息【{}】撤销流程", skuNo);
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -577,6 +676,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         // 调用流程审核
         approveProcess(entity, dto);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        // 操作日志
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+        String skuNo = "";
+        if(Objects.nonNull(productDetailEntity)){
+            skuNo = productDetailEntity.getSkuNo();
+        }
+        String msg = CharSequenceUtil.format("用户【{}】SKU为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), skuNo, "物流产品信息", approveType.getName(), dto.getComment());
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -602,6 +709,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         // 更新审核信息
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+        String skuNo = "";
+        if(Objects.nonNull(productDetailEntity)){
+            skuNo = productDetailEntity.getSkuNo();
+        }
+        String msg = CharSequenceUtil.format("物流产品信息【{}】反审核流程", skuNo);
+        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), entity.getId(), "");
 
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
@@ -751,80 +866,93 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        CurrencyEnum usd = CurrencyEnum.USD;
-        CurrencyEnum cny = CurrencyEnum.CNY;
+        //海关编码集合
+        List<String> customsCodeList = successList.stream()
+                .map(LogisticsProductExcelDTO::getCustomsCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        //查询中国海关编码
+        List<DictHsCodeEntity> hsCodeList = FeignQuery.create(DictHsCodeEntity.class)
+                .eq(DictHsCodeEntity::getCountry,"CN")
+                .in(DictHsCodeEntity::getHsCode, customsCodeList).list();
+        Map<String, DictHsCodeEntity> hsCodeMap = hsCodeList.stream().collect(Collectors.toMap(DictHsCodeEntity::getHsCode, e -> e, (o1, o2) -> o1));
+
         //sku no list
         List<String> skuNoList = successList.stream().map(LogisticsProductExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        //国家
-        List<String> countryNameList = successList.stream().filter(c -> StringUtils.isNotBlank(c.getCountry())).
-                map(LogisticsProductExcelDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = CollectionUtils.isNotEmpty(countryNameList) ? sysDictFeign.listCountryByNames(countryNameList) : Collections.emptyList();
-
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
         Map<String, List<LogisticsProductExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(LogisticsProductExcelDTO::getSkuNo));
         for (Map.Entry<String, List<LogisticsProductExcelDTO>> entry : map.entrySet()) {
             String skuNo = entry.getKey();
+            List<LogisticsProductExcelDTO> value = entry.getValue();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
                     map(SkuVO::getSkuId).orElse("");
-            Boolean isError = Boolean.FALSE;
-            ProductLogisticsEntity logistics = productLogisticsList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
-
-            List<LogisticsProductExcelDTO> value = entry.getValue();
-            if (Objects.isNull(logistics)){
+            if (StringUtils.isBlank(skuId)){
                 value.forEach(logisticsProductExcelDTO -> {
                     logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
                 });
+                errorList.addAll(value);
                 continue;
             }
-            List<ProductCustomsEntity> customsList = new ArrayList<>(value.size());
+
+            Boolean isError = Boolean.FALSE;
+            ProductLogisticsEntity oldLogistics = productLogisticsList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.isNull(oldLogistics)){
+                value.forEach(logisticsProductExcelDTO -> {
+                    logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
+                });
+                errorList.addAll(value);
+                continue;
+            }
+
+            ProductLogisticsEntity newLogistics = new ProductLogisticsEntity();
+            BeanMapper.copy(oldLogistics,newLogistics);
 
             for (LogisticsProductExcelDTO item : value) {
                 List<String> errorMsgList = new ArrayList<>();
-                String id = logistics.getId();
-                BeanMapper.copy(item, logistics);
-                logistics.setId(id);
-                //国家
-                String countryName = item.getCountry();
-                String country = "default";
-                if (StringUtils.isNotBlank(countryName)) {
-                    country = countryList.stream().filter(s -> s.getNameCn().equals(countryName)).findFirst().
-                            map(DictCountryEntity::getId).orElse("");
-                    if (StringUtils.isBlank(country)) {
-                        errorMsgList.add("国家不存在");
-                    }
-                }
-                ProductCustomsEntity customs = new ProductCustomsEntity();
-                //根据sku获取是否存在记录
-                ProductCustomsEntity oldEntity = productCustomsService.getBySkuIdAndCountry(skuId, country);
-                if (Objects.nonNull(oldEntity)){
-                    BeanMapperUtils.copy(oldEntity,customs);
-                }
+                String id = newLogistics.getId();
+                BeanMapper.copyNonNull(item, newLogistics);
+                newLogistics.setId(id);
+
                 //报关申报价
                 String declarePriceStr = item.getDeclarePrice();
                 if (StringUtils.isNotBlank(declarePriceStr)) {
-                    logistics.setDeclarePrice(new BigDecimal(declarePriceStr));
-                    logistics.setDeclareCurrency(cny.getCurrencyCode());
-                    logistics.setDeclareCurrencySymbol(cny.getCurrencySymbol());
+                    newLogistics.setDeclarePrice(new BigDecimal(declarePriceStr));
                 }
-                //目的国申报价
-                String destDeclarePriceStr = item.getDestDeclarePrice();
-                if (StringUtils.isNotBlank(destDeclarePriceStr)) {
-                    logistics.setDestDeclarePrice(new BigDecimal(destDeclarePriceStr));
-                    logistics.setDestCurrencySymbol(usd.getCurrencySymbol());
-                    logistics.setDestCurrency(usd.getCurrencyCode());
-                    customs.setToDeclarePrice(new BigDecimal(destDeclarePriceStr));
-                    customs.setToCurrency(usd.getCurrencyCode());
-                    customs.setToCurrencySymbol(usd.getCurrencySymbol());
+                //申报价币种
+                String declareCurrency = item.getDeclareCurrency();
+                if(StringUtils.isNotBlank(declareCurrency)){
+                    CurrencyEnum currencyEnum = CurrencyEnum.getByNameOrCode(declareCurrency);
+                    if(Objects.isNull(currencyEnum)){
+                        errorMsgList.add("【"+declareCurrency+"】币种不存在");
+                    }else {
+                        newLogistics.setDeclareCurrency(currencyEnum.getCurrencyCode());
+                        newLogistics.setDeclareCurrencySymbol(currencyEnum.getCurrencySymbol());
+                    }
                 }
-                logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
-                logistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
+
+                //海关编码
+                String customsCode = item.getCustomsCode();
+                DictHsCodeEntity dictHsCodeEntity = hsCodeMap.getOrDefault(customsCode, null);
+                if(Objects.isNull(dictHsCodeEntity)){
+                    errorMsgList.add(ApiError.ERROR_95292.msg);
+                }else {
+                    //如果logistics中报关名、报关单位、申报要素不存在或者为空，则使用dictHsCodeEntity的值
+                    newLogistics.setDeclareChineseName(isBlank(newLogistics.getDeclareChineseName()) ? dictHsCodeEntity.getDescription() : newLogistics.getDeclareChineseName());
+
+                    newLogistics.setDeclareUnit(isBlank(newLogistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : newLogistics.getDeclareUnit());
+
+                    newLogistics.setDeclareElement(isBlank(newLogistics.getDeclareElement()) ? dictHsCodeEntity.getDeclareElement() : newLogistics.getDeclareElement());
+                }
+
+                newLogistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? newLogistics.getFirstQty() : new BigDecimal(item.getFirstQtyStr()));
+                newLogistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? newLogistics.getSecondQty() : new BigDecimal(item.getSecondQtyStr()));
                 if (StringUtils.isBlank(skuId)) {
                     errorMsgList.add("sku不存在或者sku未审核通过");
                 }
-                if (!CharSequenceUtil.equals(logistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
+                if (!CharSequenceUtil.equals(newLogistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
                     errorMsgList.add("只有待提交物流产品支持导入");
                 }
                 String combinationDeclareTypeStr = item.getCombinationDeclareType();
@@ -834,25 +962,19 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 }else {
                     combinationDeclareType = CombinationDeclareTypeEnums.getCode(combinationDeclareTypeStr);
                 }
-                logistics.setCombinationDeclareType(combinationDeclareType);
+                newLogistics.setCombinationDeclareType(combinationDeclareType);
                 if (StringUtils.isBlank(combinationDeclareType)) {
                     errorMsgList.add("组合品申报不存在");
                 }
-                customs.setSkuId(skuId);
-                if (StringUtils.isNotBlank(item.getDestCustomsCode())){
-                    customs.setCustomsCode(item.getDestCustomsCode());
+
+                //若海关编码，报关中文名，申报要素，出口申报价，报关单位都不为空则设置为已维护
+                if(StringUtils.isNotBlank(customsCode)
+                        && StringUtils.isNotBlank(newLogistics.getDeclareChineseName())
+                        && StringUtils.isNotBlank(newLogistics.getDeclareElement())
+                        && newLogistics.getDeclarePrice() != null
+                        && newLogistics.getDeclareUnit() != null){
+                    newLogistics.setCustomsStatus(LogisticsProductCustomsStatusEnum.COMPLETED.getCode());
                 }
-                if (StringUtils.isNotBlank(country)){
-                    customs.setCountryName(countryName);
-                    customs.setCountry(country);
-                }
-                customs.setSkuNo(item.getSkuNo());
-                String taxRateStr = item.getTaxRate();
-                if (StringUtils.isNotBlank(taxRateStr)) {
-                    BigDecimal taxRate = new BigDecimal(taxRateStr);
-                    customs.setTaxRate(taxRate);
-                }
-                customsList.add(customs);
 
                 //存在错误信息则
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -861,20 +983,17 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     break;
                 }
             }
-
-
             //更新错误数据
             if (isError) {
                 errorList.addAll(value);
                 continue;
             }
+            productLogisticsService.saveOrUpdate(newLogistics);
 
-           productLogisticsService.saveOrUpdate(logistics);
-            productCustomsService.saveOrUpdateBatch(customsList);
-            productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
+            //日志
+            String msg = CharSequenceUtil.format("编辑【{}】物流产品信息", skuNo);
+            sysLogService.addSysLogByUpdate(oldLogistics,newLogistics, SysLogClassPathEnum.PRODUCTLOGISTICSENTITY.getDesc(), newLogistics.getId(), "",msg);
         }
-
-
     }
 
     private List<String> handleCustoms(List<ProductCustomsEntity> productCustomsList) {
@@ -916,18 +1035,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         //报关币种
         String declareCurrency = productLogistics.getDeclareCurrency();
-        //目的国币种
-        String destCurrency = productLogistics.getDestCurrency();
 
-        List<String> currencyCodeList = Arrays.asList(declareCurrency, destCurrency);
+        List<String> currencyCodeList = Arrays.asList(declareCurrency);
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         String declareCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(declareCurrency)).findFirst().
                 map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
         productLogistics.setDeclareCurrencySymbol(declareCurrencySymbol);
-
-        String destCurrencySymbol = currencyList.stream().filter(c -> c.getId().equals(destCurrency)).findFirst().
-                map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
-        productLogistics.setDestCurrencySymbol(destCurrencySymbol);
     }
 
     /**
@@ -970,6 +1083,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
             item.setIsCombination(isCombination);
             item.setLogisticsApproveStatusName(ApproveStatusEnum.getName(item.getLogisticsApproveStatus()));
+
+            item.setCustomsStatusName(LogisticsProductCustomsStatusEnum.getName(item.getCustomsStatus()));
         }
     }
 

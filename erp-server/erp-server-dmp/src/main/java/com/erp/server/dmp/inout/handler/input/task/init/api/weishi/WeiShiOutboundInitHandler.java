@@ -101,6 +101,9 @@ public class WeiShiOutboundInitHandler extends DmpInputInitHandler {
 			WeiShiGetOutboundRequest weiShiGetOutboundRequest = new WeiShiGetOutboundRequest();
 			weiShiGetOutboundRequest.setOrderNo(code);
 			WeiShiBaseResp<WeiShiOutboundResp> resp = weiShiService.getOutbound(weiShiGetOutboundRequest,overseasProviderEntity.getAuthJson());
+			if (null == resp || resp.getData() == null) {
+				throw new ServiceException("纬狮获取出库单数据失败: 响应结果为空");
+			}
 			if(resp.getCode() != 200){
 				log.warn("纬狮获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMsg());
 				throw new ServiceException("纬狮获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMsg());

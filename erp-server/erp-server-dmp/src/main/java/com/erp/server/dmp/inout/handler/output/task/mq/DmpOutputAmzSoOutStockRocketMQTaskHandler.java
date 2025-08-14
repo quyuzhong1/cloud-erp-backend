@@ -135,6 +135,7 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
             // 解析不到对应店铺, 默认推送
             platformSoOutStockDTO.setShopId(dmpEntity.getRequestShopId());
         }
+        platformSoOutStockDTO.setCountry(dmpEntity.getShipCountry());
         return platformSoOutStockDTO;
     }
 

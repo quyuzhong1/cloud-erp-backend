@@ -126,4 +126,9 @@ public class PlatformProductDTO extends UniqueDto {
      * 平台的SKU id
      */
     private String platformSkuId;
+
+    /**
+     * 父平台产品ID（父ASIN）
+     */
+    private String platformParentSpuNo;
 }
