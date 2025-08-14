@@ -576,6 +576,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             variablesMap.put("receiveAddress", customerAddressEntity.getAddress());
         }
 
+        //sku数量
+        long skuCount = detailList.stream().map(SoDetailEntity::getSkuId).distinct().count();
+        variablesMap.put("skuCount", skuCount);
+
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty()).subtract(obj.getDiscountAmount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
@@ -1973,6 +1977,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
             customer.setCustomerSellerId(customerInfo.getSellerId());
+            customer.setCustomerRemark(customerInfo.getRemark());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息

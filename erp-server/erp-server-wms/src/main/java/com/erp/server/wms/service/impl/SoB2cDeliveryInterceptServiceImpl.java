@@ -684,6 +684,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
         interceptUpdateOrderDTO.setIds(Collections.singletonList(entity.getSourceId()));
+        if(soB2cEntity.getIsCancel()){
+            interceptUpdateOrderDTO.setInvalidStatus(true);
+        }
         soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
         return BatchResultDTO.success(soB2cDeliveryInterceptEntity.getId(),soB2cDeliveryInterceptEntity.getCode(),"处理成功");
     }

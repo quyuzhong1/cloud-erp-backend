@@ -1,4 +1,7 @@
 package com.erp.server.plm.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.ProductCustomsDTO;
 import com.erp.model.plm.dto.ProductCustomsSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -6,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -41,4 +46,10 @@ public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
     List<ProductCustomsEntity> listBySkuId(String skuId);
 
     List<ProductCustomsEntity> listProductCustomsBySkuIds(@Param("dto") ProductCustomsSkuDTO dto);
+
+    IPage<ProductCustomsDTO.ListDTO> paging(Page query,@Param("params") ProductCustomsDTO.PagingParamDTO params);
+
+    List<ProductCustomsDTO.ViewDetailDTO> view(@Param("skuId") String skuId);
+
+    List<ProductCustomsEntity> listByIds(@Param("ids") List<String> ids);
 }

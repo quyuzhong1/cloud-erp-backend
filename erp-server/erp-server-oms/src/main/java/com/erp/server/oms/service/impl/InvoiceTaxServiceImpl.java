@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -18,17 +19,18 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.InvoiceTaxEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.mapper.InvoiceTaxMapper;
-import com.erp.server.oms.service.InvoiceTaxService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,7 +49,9 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
     private OperateLogService operateLogService;
     @Autowired
     private SkuMappingService skuMappingService;
-
+    @Lazy
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
     /**
     * 修改
     */
@@ -62,7 +66,10 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
         if(!save) {
             throw new ServiceException("发票税务信息保存失败");
         }
-
+        //修改买家发票地址
+        if (CharSequenceUtil.isNotBlank(addOrUpdateDTO.getSoId())){
+            soB2cReceiverService.updateInvoiceAddress(addOrUpdateDTO.getSoId(),addOrUpdateDTO.getInvoiceAddress());
+        }
         // 记录主单操作日志
         log.info("编辑 开始记录发票税务信息日志数据，id：【{}】", invoiceTaxEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), invoiceTaxEntity.getId(), "发票税务信息");
@@ -120,6 +127,15 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
             }
         }
         super.saveOrUpdateBatch(addOrUpdateList);
+    }
+
+    @Override
+    public List<InvoiceTaxDTO.UpdateDTO> invoiceAddressView(BaseIdsDTO.IdsDTO dto) {
+        if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getIds())){
+            return Collections.emptyList();
+        }
+        List<InvoiceTaxDTO.UpdateDTO> updateDTOS = baseMapper.invoiceAddressView(dto.getIds());
+        return null;
     }
 
     /**

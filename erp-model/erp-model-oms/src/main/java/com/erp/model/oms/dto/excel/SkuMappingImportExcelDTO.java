@@ -119,11 +119,20 @@ public class SkuMappingImportExcelDTO {
     @ExcelProperty(value = "开票产品名称", index = 12)
     @FieldValid(fieldName = "开票产品名称")
     private String invoiceProductName;
+
+    /**
+     * 平台状态
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "平台状态", index = 13)
+    @FieldValid(fieldName = "平台状态")
+    private String platformStatusName;
+
     /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 13)
+    @ExcelProperty(value = "错误数据", index = 14)
     private String errorMsg;
 
 

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,10 @@ public class ThirdWarehouseCreateInboundReq {
     private String referenceNo;
 
     /**
+     * file base64
+     */
+    private String fileBase64;
+    /**
      * 交货方式 （自送，揽收）
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}
      */
@@ -76,7 +81,10 @@ public class ThirdWarehouseCreateInboundReq {
      * 物流产品代码
      */
     private String smCode;
-
+    /**
+     * 柜型
+     */
+    private String containerType;
     /**
      * 物流方式
      * {@link com.erp.model.wms.enums.LogisticsMethodEnum}
@@ -92,6 +100,17 @@ public class ThirdWarehouseCreateInboundReq {
      */
     private LocalDateTime etaDate;
 
+    /**
+     * 揽收时间起
+     */
+    @TableField(value = "collect_start_time")
+    private LocalDateTime collectStartTime;
+
+    /**
+     * 揽收时间止
+     */
+    @TableField(value = "collect_end_time")
+    private LocalDateTime collectEndTime;
     /**
      * 入库单创建时取0，发货单审核通过更新为1
      * {@link com.common.business.enums.OverseasVerifyEnum}

@@ -5,8 +5,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,15 +17,25 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.dto.TmsCfgSailingDTO;
+import com.erp.model.tms.dto.excel.TmsCfgSailingExcelDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsCfgSailingEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.TmsCfgSailingDateTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.listener.TmsCfgSailingExcelListener;
 import com.erp.server.tms.mapper.TmsCfgSailingMapper;
 import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsChannelService;
@@ -31,19 +44,29 @@ import com.erp.server.tms.service.TmsCfgSailingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_CFG_SAILING;
 
 /**
  * <p>
@@ -65,6 +88,9 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
 
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -275,7 +301,9 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
        List<String> logisticsChannelIdList = list.stream().map(TmsCfgSailingDTO.ListDTO::getLogisticsChannelId).collect(Collectors.toList());
        List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.listByIds(logisticsChannelIdList);
 
-        List<DictBasicEntity> dictList  = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.WEEK.getType(), DictBasicEnum.MONTH.getType()));
+        List<DictBasicEntity> dictList  = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.WEEK.getType(), DictBasicEnum.MONTH.getType(),"dateType"));
+
+        DateTimeFormatter dataForamt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         for (TmsCfgSailingDTO.ListDTO listDTO : list) {
 
@@ -296,8 +324,103 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
             String endDateName = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), listDTO.getDateType()) && CharSequenceUtil.equals(obj.getCode(), listDTO.getEndDate().toString()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setEndDateName(endDateName);
+
+            //日期类型
+            String dateTypeName = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), "dateType") && CharSequenceUtil.equals(obj.getCode(), listDTO.getDateType()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listDTO.setDateTypeName(dateTypeName);
+
+            if(Objects.nonNull(listDTO.getEffectiveDate())){
+                String effectiveDateStr = listDTO.getEffectiveDate().format(dataForamt);
+                listDTO.setEffectiveDateStr(effectiveDateStr);
+            }
        }
 
+    }
+
+    @Override
+    public void exportList(TmsCfgSailingDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("截单开船导出", EXPORT_TMS_CFG_SAILING.getCode(), param);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //物流商信息
+        List<LogisticsSupplierEntity> logisticsSupplierList = logisticsSupplierService.list();
+        //渠道信息
+        List<LogisticsChannelEntity> logisticsChannelList = logisticsChannelService.list();
+
+        List<DictBasicEntity> dictList  = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.WEEK.getType(), DictBasicEnum.MONTH.getType(),"dateType"));
+
+        TmsCfgSailingExcelListener excelListenerUtil = new TmsCfgSailingExcelListener(logisticsSupplierList,logisticsChannelList,dictList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TmsCfgSailingExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入截单开船错误！", e);
+            return Boolean.FALSE;
+        }
+        List<TmsCfgSailingExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String excelPath = "excel/tmsCfgSailingError.xlsx";
+            String name = "tmsCfgSailingError";
+            try {
+                new ExcelPrintUtils().patchExport(errorList,
+                        response,
+                        StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                        excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+        }
+
+        List<TmsCfgSailingEntity> successList = excelListenerUtil.getSuccessList();
+        if(CollUtil.isNotEmpty(successList)){
+            List<String> logisticsSupplierIds = successList.stream().map(TmsCfgSailingEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+
+            //查询原信息
+            List<TmsCfgSailingEntity> oldList = lambdaQuery()
+                    .in(TmsCfgSailingEntity::getLogisticsSupplierId, logisticsSupplierIds)
+                    .list();
+
+            for (TmsCfgSailingEntity tmsCfgSailingEntity : successList) {
+                TmsCfgSailingEntity oldEntity = oldList.stream()
+                        .filter(e -> Objects.equals(e.getLogisticsSupplierId(), tmsCfgSailingEntity.getLogisticsSupplierId()) && Objects.equals(e.getLogisticsChannelId(), tmsCfgSailingEntity.getLogisticsChannelId()))
+                        .findFirst()
+                        .orElse(null);
+                if(Objects.isNull(oldEntity)){ //新增
+                    save(tmsCfgSailingEntity);
+                }else { //更新
+                    tmsCfgSailingEntity.setId(oldEntity.getId());
+                    BeanMapper.copy(tmsCfgSailingEntity,oldEntity);
+                    updateById(oldEntity);
+                }
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/tmsCfgSailingTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 
 

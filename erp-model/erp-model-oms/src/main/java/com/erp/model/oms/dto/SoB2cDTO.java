@@ -2670,6 +2670,10 @@ public class SoB2cDTO implements Serializable {
          * 是否冻结
          */
         private Boolean isFrozen;
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
 
         /**
          * 审核状态
@@ -3301,6 +3305,10 @@ public class SoB2cDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
         /**
          * 销售出库时间

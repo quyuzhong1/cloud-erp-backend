@@ -348,7 +348,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "cfgApproveSync";
     }
     /**
      *
@@ -371,8 +371,7 @@ public class CfgQueryOptionDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class GenListDTO  {
-
+    public static class GenDTO  {
         //系统分类
         private String model;
         //表名
@@ -384,7 +383,12 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
          * 使用类型，CfgQueryOptionUseTypeEnum枚举
          */
-        private String useType = "allData";
+        private String useType = "";
+
+        private String sql;
+        private String url;
+        private String account;
+        private String password ;
     }
     /**
      *

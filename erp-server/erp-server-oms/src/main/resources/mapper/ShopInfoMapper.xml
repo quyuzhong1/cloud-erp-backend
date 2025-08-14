@@ -52,6 +52,7 @@
         trade_currency,
         enable_time,
         down_time,
+        init_pull_time,
         auth_expire_date,
         <if test="params.shopIdList != null and params.shopIdList.size > 0">
             si.id = ANY(#{params.shopIdList,jdbcType=ARRAY,typeHandler=com.erp.server.oms.handler.PgStringArrayTypeHandler}::varchar[]) as isAuth,

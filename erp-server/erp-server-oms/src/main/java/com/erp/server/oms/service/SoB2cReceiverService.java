@@ -90,4 +90,9 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
     IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query);
 
     void importB2cCustomerFile(MultipartFile excelFile, HttpServletResponse response);
+
+    void updateInvoiceAddress(String soId, String invoiceAddress);
+
+
+    void checkAndUpdateCountry(String mainId, String country);
 }

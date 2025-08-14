@@ -134,6 +134,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 拣货备注
+     */
+    @TableField("pick_remark")
+    private String pickRemark;
 
     /**
      * 对应金蝶详情id
