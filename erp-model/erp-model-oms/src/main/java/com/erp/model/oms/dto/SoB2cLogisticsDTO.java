@@ -291,11 +291,11 @@ public class SoB2cLogisticsDTO implements Serializable {
         /**
          * 物流运单号
          */
+        @NotBlank(message = "物流运单号不能为空")
         private String transportNo;
         /**
          * 物流跟踪号
          */
-        @NotBlank(message = "物流跟踪号不能为空")
        private String trackNo;
     }
 }

@@ -90,6 +90,10 @@ public class JiFengOutboundInitHandler extends DmpInputInitHandler {
 		List<List<String>> partSoCodeList = ListUtils.partition(allSoCodes, 50);
 		for (List<String> soCodes : partSoCodeList) {
 			JiFengBaseResp<List<JiFengOutboundResp>> resp = jiFengService.getOrder(overseasProviderEntity.getAuthJson(),soCodes);
+			if(Objects.isNull(resp)){
+				log.warn("极风获取订单数据失败，响应结果为空");
+				throw new ServiceException("极风获取订单数据失败，响应结果为空");
+			}
 			if(resp.getCode() != 0){
 				log.warn("极风获取数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
 				throw new ServiceException("极风获取订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());

@@ -101,8 +101,11 @@ public class RetryThirdWarehouseDeliveryJob {
                     .map(SoOutstockEntity::getSourceId)
                     .filter(StringUtils::isNotBlank)
                     .collect(Collectors.toList());
-            //查询已生成的三方仓发货单
-            List<ThirdWarehouseDeliveryEntity> thirdWarehouseEntities = thirdWarehouseDeliveryService.listByIds(sourceIds);
+            List<ThirdWarehouseDeliveryEntity> thirdWarehouseEntities = new ArrayList<>();
+            if(CollectionUtils.isNotEmpty(sourceIds)){
+                //查询已生成的三方仓发货单
+                thirdWarehouseEntities = thirdWarehouseDeliveryService.listByIds(sourceIds);
+            }
             List<String> existSourceIds = thirdWarehouseEntities.stream()
                     .map(ThirdWarehouseDeliveryEntity::getId)
                     .collect(Collectors.toList());
