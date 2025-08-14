@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow.handle;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.ApproveDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,7 +13,7 @@ import java.util.Map;
  * @author Will
  * @date: 2023/7/3 15:27
  */
-@FeignClient(value = "erp-plm", contextId = "workflow-plm")
+@FeignClient(value = "erp-plm", contextId = "workflow-plm",configuration = {FeignErrorDecoder.class})
 public interface PlmWorkflowFeign extends BaseWorkflowService{
 
     /**

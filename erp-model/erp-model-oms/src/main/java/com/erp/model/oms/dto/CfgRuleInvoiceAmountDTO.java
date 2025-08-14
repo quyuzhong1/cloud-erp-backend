@@ -3,9 +3,8 @@ package com.erp.model.oms.dto;
 import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -22,7 +21,7 @@ import javax.validation.constraints.Digits;
 */
 @Data
 @NoArgsConstructor
-public class CfgRuleInvoiceProductAmountDTO implements Serializable {
+public class CfgRuleInvoiceAmountDTO implements Serializable {
 
 
 

@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "logisticsAuth")
+@FeignClient(name = "erp-tms", contextId = "logisticsAuth" ,configuration = {FeignErrorDecoder.class})
 public interface LogisticsAuthFeign {
     /**
      * 根据id获取授权信息

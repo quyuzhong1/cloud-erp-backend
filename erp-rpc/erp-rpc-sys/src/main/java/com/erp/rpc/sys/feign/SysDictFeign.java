@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +17,7 @@ import java.util.List;
  * @CreateTime: 2023-06-21  15:10
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-sys", contextId = "dictBasic")
+@FeignClient(name = "erp-sys", contextId = "dictBasic",configuration = {FeignErrorDecoder.class})
 public interface SysDictFeign {
 
     /**

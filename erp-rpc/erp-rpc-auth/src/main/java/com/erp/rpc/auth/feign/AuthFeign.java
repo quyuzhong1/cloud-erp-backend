@@ -1,5 +1,6 @@
 package com.erp.rpc.auth.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @Date 2022-08-19 11:58
  * @Created by yl
  */
-@FeignClient("erp-auth")
+@FeignClient(name = "erp-auth", contextId = "authFeign",configuration = {FeignErrorDecoder.class})
 public interface AuthFeign {
 
     //设置登录ip账号登录

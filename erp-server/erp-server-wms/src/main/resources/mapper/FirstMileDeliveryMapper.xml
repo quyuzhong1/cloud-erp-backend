@@ -619,4 +619,24 @@
           and fmd.approve_time BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
         ORDER BY fmd.approve_time desc
     </select>
+    <select id="listOverseasProvider"
+            resultType="com.erp.model.wms.dto.OverseasProviderWarehouseDTO$ProviderDTO">
+        select
+            fmd.id as deliveryId,
+            opw.id as refid,
+            opw.disabled,
+            op.auth_status as authStatus,
+            op.id as providerId,
+            op."name" as providerName
+        from  first_mile_delivery  fmd
+                  LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fmd.dest_warehouse_id
+                  LEFT JOIN overseas_provider op on op.id = opw.main_id
+        where fmd.is_deleted = false and opw.is_deleted = false and op.is_deleted = false
+          and opw.disabled = false
+          and op.auth_status = 'already'
+          and fmd.id in
+          <foreach collection="deliveryIds" item="item" open="(" close=")" separator=",">
+              #{item}
+          </foreach>
+    </select>
 </mapper>

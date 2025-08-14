@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -17,7 +18,7 @@ import java.util.List;
  * @Created by yl
  */
 
-@FeignClient(name = "erp-sys", contextId = "kingdee")
+@FeignClient(name = "erp-sys", contextId = "kingdeeFeign",configuration = {FeignErrorDecoder.class})
 public interface KingdeeFeign {
 
     @PostMapping("/feign/kingdee/getDeptInfo")

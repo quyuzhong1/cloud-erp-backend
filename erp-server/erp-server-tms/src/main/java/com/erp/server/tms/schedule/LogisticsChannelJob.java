@@ -8,10 +8,12 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.erp.server.tms.service.LogisticsThirdChannelRefService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -45,6 +47,8 @@ public class LogisticsChannelJob {
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     /**
      * 注册小包（快递）物流单号
@@ -233,14 +237,17 @@ public class LogisticsChannelJob {
         XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
+        //获取第三方推送配置
+        List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList = logisticsThirdChannelRefService.listByPlatform(LogisticsPlatformEnum.TRACK123.getCode());
+        XxlJobHelper.log("获取第三方推送配置：{}", list.size());
         if (list.size() > MathUtil.NUMBER_100){
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             XxlJobHelper.log("拆分列表数：{}", partition.size());
             //物流商数据处理
-            partition.forEach(e -> logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
+            partition.forEach(e -> logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType(),channelRefList));
         }else {
-            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), list,query.getTransportType());
+            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), list,query.getTransportType(), channelRefList);
         }
         log.info("========同步物流轨迹数据完成==========");
     }

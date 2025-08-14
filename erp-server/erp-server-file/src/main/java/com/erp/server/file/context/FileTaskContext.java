@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.erp.server.file.core.FileEventHandler;
 import com.erp.server.file.dto.FileTaskDTO;
 import com.erp.server.file.dto.FileTaskParamsDTO;
@@ -18,6 +21,7 @@ import com.erp.server.file.service.FileService;
 import com.erp.server.file.utils.ExceptionUtils;
 import com.erp.server.file.vo.FileTaskVO;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -30,6 +34,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -86,7 +91,7 @@ public class FileTaskContext {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), loginUser), threadPoolTaskExecutor);
+                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), loginUser, false), threadPoolTaskExecutor);
                 log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
             }
         });
@@ -117,14 +122,18 @@ public class FileTaskContext {
      * 文件任务删除
      * 基于乐观锁版本，多服务器需优化为分布式锁
      */
-    public void cancel(String id) {
+    @Transactional(rollbackFor = Exception.class)
+    public void retry(String id) {
         FileTask fileTask = fileTaskRepository.getById(id);
         ExceptionUtils.emptyThrow(fileTask, String.format("文件任务不存在[%s],请联系IT检查请求", id));
-        // 加锁执行删除
-        fileTask.setStatus(FileTaskStatusEnum.CANCEL.name());
-        fileTask.setFinishTime(LocalDateTime.now());
-        fileTask.setRemark("手动取消");
-        fileTaskRepository.updateById(fileTask);
+        LoginUser currentUser = UserContext.getNonLoginUser();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                CompletableFuture.runAsync(() -> importProcess(fileTask.getId(), currentUser, true), threadPoolTaskExecutor);
+                log.info("文件任务[{}]消息已投递,事务已提交", fileTask.getId());
+            }
+        });
     }
 
 
@@ -178,11 +187,11 @@ public class FileTaskContext {
      *
      * @param id 文件任务Id
      */
-    public void importProcess(String id, LoginUser user) {
+    public void importProcess(String id, LoginUser user, Boolean isRetry) {
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(id);
         FileTask fileTask = fileTaskRepository.getById(id);
-        if (!ObjectUtils.isEmpty(fileTask) && fileTask.isPending()) {
+        if ((!ObjectUtils.isEmpty(fileTask) && fileTask.isPending()) || isRetry) {
             // 设置任务状态为处理中
             importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.name());
             // 设置任务开始时间
@@ -193,11 +202,20 @@ public class FileTaskContext {
             try {
                 log.info("文件任务[{}]获取成功,状态[PROCESS]", id);
                 // 获取文件任务处理器
-                FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
-                ExceptionUtils.emptyThrow(eventHandler, String.format("事件类型[%s]不存在,请联系IT人员检查配置", fileTask.getEvent()));
+                FileTaskEventEnum eventEnum = FileTaskEventEnum.getByCode(fileTask.getEvent());
+                ExceptionUtils.emptyThrow(eventEnum, String.format("事件类型[%s]不存在,请联系IT人员检查配置", fileTask.getEvent()));
                 UserContext.setLoginUser(user);
-                // 处理文件
-                eventHandler.handle(fileTask);
+                // 处理文件 直接分发调用方法
+                if (CharSequenceUtil.isNotBlank(eventEnum.getHandler())){
+                    FileEventHandler eventHandler = fileTaskFactory.getFileHandler(fileTask.getEvent());
+                    ExceptionUtils.emptyThrow(eventHandler, String.format("事件Hanlder[%s]不存在,请联系IT人员检查配置", eventEnum.getHandler()));
+                    eventHandler.handle(fileTask);
+                }else {
+                    BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {});
+                    dto.setTaskId(fileTask.getId());
+                    dto.setImportCount(fileTask.getCount());
+                    FeignQuery.invoke(eventEnum.getClassName(), eventEnum.getMethodName(), Collections.singletonList(dto));
+                }
                 // 设置任务状态为 全部成功
                 importResultDTO.setStatus(FileTaskStatusEnum.FINISH.name());
             } catch (Exception e) {
@@ -290,5 +308,12 @@ public class FileTaskContext {
             return;
         }
         fileTaskRepository.updateTask(importResultDTO);
+    }
+    public <P> P readValue(String params, TypeReference<P> type) {
+        try {
+            return objectMapper.readValue(params, type);
+        } catch (JsonProcessingException e) {
+            throw new ServiceException(e.getMessage());
+        }
     }
 }

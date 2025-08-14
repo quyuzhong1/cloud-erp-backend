@@ -521,6 +521,14 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private String reconciliationType;
         /**
+         * 供应商类型
+         */
+        private String supplierType;
+        /**
+         * 供应商类型
+         */
+        private String supplierTypeName;
+        /**
          * 对账单明细id
          */
         private String reconciliationDetailId;

@@ -78,4 +78,14 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return
      */
     List<LogisticsBillCostDTO.BillCostNoBillDTO> selectLogisticsBillCostNoBill();
+
+    /**
+     * 根据物流单Id和主单Id查询费用详情
+     *
+     * @param reconciliationIds
+     * @param billIds
+     * @param type
+     * @return
+     */
+    List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(@Param("billIds") List<String> billIds, @Param("reconciliationIds") List<String> reconciliationIds,@Param("type") String type);
 }

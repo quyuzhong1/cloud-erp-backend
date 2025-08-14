@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -19,7 +20,7 @@ import java.util.List;
  * @Date 2025-05-14
  */
 
-@FeignClient(name = "erp-sys", contextId = "sysRefererConfig")
+@FeignClient(name = "erp-sys", contextId = "sysRefereConfigFeign",configuration = {FeignErrorDecoder.class})
 public interface SysRefereConfigFeign {
 
     @GetMapping("/feign/sysRefererConfig/getByReferer")

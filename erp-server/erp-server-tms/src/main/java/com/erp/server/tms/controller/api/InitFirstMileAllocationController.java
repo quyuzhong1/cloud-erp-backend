@@ -300,12 +300,6 @@ public class InitFirstMileAllocationController extends BaseController {
      * 生成头程对账单
      */
     @PostMapping("/generateFirstMileReconciliation")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:initFirstMileAllocation:generateReconciliation",
-            serviceClass = InitFirstMileAllocationService.class,
-            keyIdName = "ids"
-    )
     public ApiResult<List<BatchResultDTO>> generateReconciliation(@RequestBody @Valid InitFirstMileAllocationDTO.ReconciliationDTO dto) {
         List<BatchResultDTO> resultDTOS = initFirstMileAllocationService.generateReconciliation(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

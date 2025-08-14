@@ -13,11 +13,8 @@ import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -160,13 +157,14 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     List<LogisticsBillCostDTO.ListDTO> listLogisticsLastMileCostExport(LogisticsBillCostDTO.PagingParamDTO dto);
     /**
+     * @param successList
+     * @param errorList
+     * @param importType
      * @description: 导入数据处理
      * @author Will
      * @date: 2024/5/9 20:16
-     * @param successList
-     * @param errorList
      */
-    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution );
+    void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList, List<LogisticsBillCostExcelDTO > errorList, String dictCostAttribution, String importType);
     /**
      * @description: 更新店铺
      * @author Will
@@ -227,4 +225,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     Boolean importExcel(BaseDTO.ImportDTO dto);
 
     void importLogisticsBillCost(BaseDTO.ImportDTO dto);
+
+    List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type);
 }

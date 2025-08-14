@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -27,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "soB2c")
+@FeignClient(name = "erp-oms", contextId = "soB2cFeign",configuration = {FeignErrorDecoder.class})
 public interface SoB2cFeign {
 
     /**

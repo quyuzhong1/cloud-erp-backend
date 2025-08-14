@@ -487,6 +487,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return new PagingVO<>(page);
     }
 
+    @Override
+    public PagingVO<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsSupplierDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsSupplierDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsSupplierDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
+    }
 
 
     /**

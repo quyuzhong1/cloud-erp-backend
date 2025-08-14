@@ -84,7 +84,7 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @param reportPeriodId
      * @return
      */
-    List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, String reportPeriodId);
+    List<FirstMileCostAllocationEntity> listBySourceIds(List<String> sourceIds, String reportPeriodId, String supplierId, String supplierType);
 
     /**
      * 自动生成费用分摊
@@ -124,7 +124,7 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     /**
      * 查看费用分摊详情
-     * @param dto
+     * @param ids
      * @return
      */
     List<FirstMileCostAllocationDTO.PagingVO> viewCostAllocation(List<String> ids);
