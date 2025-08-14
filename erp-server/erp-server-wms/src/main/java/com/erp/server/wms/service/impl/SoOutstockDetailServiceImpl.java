@@ -936,6 +936,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         for (SoOutstockDetailEntity detailEntity : detailList) {
             String symbol = currencyList.stream().filter(c -> c.getId().equals(detailEntity.getCurrency())).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
+            if(StringUtils.isBlank(detailEntity.getPlatformCode()) && Objects.nonNull(soB2cEntity)){
+                detailEntity.setPlatformCode(soB2cEntity.getPlatformCode());
+            }
             //销售订单明细
             SoB2cDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             BigDecimal price = BigDecimal.ZERO;
@@ -973,9 +976,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //虚拟仓库
             if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
                 detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
-            }
-            if(StringUtils.isBlank(detailEntity.getPlatformCode()) && Objects.nonNull(soB2cEntity)){
-                detailEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             }
             if(StringUtils.isBlank(detailEntity.getSoDetailId())){
                 detailEntity.setSoDetailId(soDetailEntity.getId());
