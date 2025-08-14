@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,8 +18,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -28,7 +28,6 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -57,7 +56,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -89,7 +87,11 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     private ShopInfoFeign shopInfoFeign;
 
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
+    private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
     @Resource
     private ThirdWarehouseDeliveryDetailService detailService;
 
@@ -381,6 +383,63 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ThirdWarehouseDeliveryEntity> batchGeneratePlatformDelivery(List<SoOutstockEntity> soOutstockEntityList) {
+        List<String> soIds = soOutstockEntityList.stream()
+                .map(SoOutstockEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> ids = soOutstockEntityList.stream()
+                .map(SoOutstockEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(ids);
+
+        List<ThirdWarehouseDeliveryEntity> addList = new ArrayList<>();
+        for (SoOutstockEntity soOutstock : soOutstockEntityList) {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream()
+                    .filter(soB2c -> soB2c.getId().equals(soOutstock.getSoId()))
+                    .findFirst()
+                    .orElse(new SoB2cEntity());
+            List<SoOutstockDetailEntity> soOutstockDetailEntities = detailEntities.stream()
+                    .filter(detail -> detail.getMainId().equals(soOutstock.getId()))
+                    .collect(Collectors.toList());
+
+            ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+            String idStr = IdWorker.getIdStr();
+            addThirdWarehouseDeliveryEntity.setId(idStr);
+            addThirdWarehouseDeliveryEntity.setSoCode(soOutstock.getSoCode());
+            addThirdWarehouseDeliveryEntity.setSoId(soOutstock.getSoId());
+            addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
+            addThirdWarehouseDeliveryEntity.setCode(code);
+            addThirdWarehouseDeliveryEntity.setDictPlatform(soB2cEntity.getDictPlatform());
+            addThirdWarehouseDeliveryEntity.setPlatformCode(soB2cEntity.getPlatformCode());
+            List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+            for (SoOutstockDetailEntity addDTO : soOutstockDetailEntities) {
+                ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+                thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+                thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+                thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+                thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
+                thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+                thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
+                thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+            }
+            soOutstock.setSourceId(idStr);
+            soOutstock.setSourceCode(code);
+            addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+            addList.add(addThirdWarehouseDeliveryEntity);
+        }
+        service.batchAdd(addList);
+        soOutstockService.updateBatchById(soOutstockEntityList);
+        return addList;
+    }
+
+    @Override
     public void deleteByIds(List<String> sourceIds) {
         if(CollectionUtils.isEmpty(sourceIds)){
             return;
@@ -404,6 +463,31 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         detailService.saveBatch(thirdWarehouseDetailList);
+    }
+
+    @Override
+    public void batchAdd(List<ThirdWarehouseDeliveryEntity> addList) {
+        // 生成单号
+        boolean save = super.saveBatch(addList);
+        if(!save) {
+            throw new ServiceException("三方仓发货单保存失败");
+        }
+        addList.forEach(v->{
+            v.getDetailEntityList().forEach(t->{
+                t.setMainId(v.getId());
+            });
+        });
+        List<ThirdWarehouseDeliveryDetailEntity> detailEntityList = addList.stream()
+                .flatMap(v->v.getDetailEntityList().stream())
+                .collect(Collectors.toList());
+        detailService.saveBatch(detailEntityList);
+
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
+        for (ThirdWarehouseDeliveryEntity entity : addList) {
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方仓发货单" , entity.getId()), ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),entity.getId(),"新增操作"));
+        }
+        operateLogService.batchAddModuleOperateLog(operateLogList);
+
     }
 
 }
