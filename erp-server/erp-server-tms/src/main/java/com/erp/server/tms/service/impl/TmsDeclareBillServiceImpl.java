@@ -420,6 +420,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(deliveryDTOList.size()>1){
                 deliveryDTOList = deliveryDTOList.stream().filter(v->v.getSourceCode().equals(entity.getSourceCode())).collect(Collectors.toList());
             }
+            allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
             deliveryDTO.setPackingDTOList(allPackDTOList);
             BeanUtil.copyProperties(deliveryDTO,viewDTO, CopyOptions.create().setOverride(false));
