@@ -102,7 +102,6 @@ public enum SourceTypeEnum {
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
-    SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
     SHOP( "shop", "店铺","shop_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
