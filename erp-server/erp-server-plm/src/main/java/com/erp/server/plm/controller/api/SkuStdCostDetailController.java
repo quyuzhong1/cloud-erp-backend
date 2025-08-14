@@ -14,17 +14,21 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
+import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SkuStdCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +59,8 @@ public class SkuStdCostDetailController extends BaseController {
     private ProductDetailService productDetailService;
     @Resource
     private SoOutstockFeign soOutstockFeign;
+    @Resource
+    private BomSkuService bomSkuService;
 
     /**
      * 价格变更
@@ -534,16 +540,31 @@ public class SkuStdCostDetailController extends BaseController {
         } else {
             detailEntityList = productDetailService.listBySkuNos(skuNos);
         }
+
         List<BatchResultDTO> resultDTOS = new ArrayList<>(detailEntityList.size());
         if (CollectionUtils.isEmpty(detailEntityList)) {
             return success(resultDTOS);
         }
-        // 查询sku最新出库时间
         List<String> skuIds = detailEntityList.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
+        // 销售套装
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = bomChildrenSkuDTOS.stream()
+                .filter(b ->  BomTypeEnum.COMBINATION.getType().equals(b.getType()))
+                .collect(Collectors.toList());
+        List<String> parentIds = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
+            parentIds = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        }
+        // 查询sku最新出库时间
         Map<String, LocalDate> lastOutstockDateMap = soOutstockFeign.mapLastOutstockDateBySkuIds(skuIds);
 
         for (ProductDetailEntity skuEntity : detailEntityList) {
             BatchResultDTO itemResult;
+            if (parentIds.contains(skuEntity.getId())) {
+                itemResult = BatchResultDTO.fail(skuEntity.getId(), skuEntity.getSkuNo(), "销售套装不允许添加sku标准成本表价格");
+                resultDTOS.add(itemResult);
+                continue;
+            }
             try {
                 skuStdCostDetailService.checkAndAddFirst(skuEntity, lastOutstockDateMap.getOrDefault(skuEntity.getId(), null));
                 itemResult = BatchResultDTO.success(skuEntity.getId(), skuEntity.getSkuNo(), "首次添加sku标准成本表价格成功");

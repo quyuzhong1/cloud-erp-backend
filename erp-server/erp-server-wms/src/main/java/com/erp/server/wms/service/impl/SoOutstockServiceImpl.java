@@ -4158,4 +4158,49 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 返回成功结果
         return resultDTOList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO generateB2bDeclar(String id) {
+        SoOutstockEntity entity = getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99058.msg );
+        }
+        //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
+        Boolean isB2B = OrderTypeEnum.B2B.getCode().equals(entity.getOrderType());
+        if(!isB2B || Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_92283.msg );
+        }
+        //生成B2B报关单
+        if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
+            //走TMS自动生成逻辑
+            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                    .id(entity.getId())
+                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
+                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
+                    .soOutstockEntity(entity)
+                    .checkCfg(Boolean.FALSE) //不检查配置
+                    .build();
+            try {
+                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
+                if(autoGenerateResult){
+                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
+                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
+                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
+                    this.updateStatus(updateStatusDTO);
+                }else {
+                    throw new ServiceException("下推生成报关单失败");
+                }
+            }catch (Exception e){
+                log.error("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
+                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+            }
+        }else {
+            throw new ServiceException("仅限B2B类型的且报关状态为待报关的出库单可生成报关单");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+
 }
