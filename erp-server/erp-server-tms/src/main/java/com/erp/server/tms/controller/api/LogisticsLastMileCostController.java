@@ -8,6 +8,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 import com.common.business.dto.base.*;
+import com.common.business.enums.ImportTypeEnum;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -354,7 +354,7 @@ public class LogisticsLastMileCostController extends BaseController {
       * @param dto
       * @return ApiResult<List<BatchResultDTO>>
       */
-     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @LogAction(value = LogActionEnum.DELETE, desc = "删除:ids={ids}")
      @PostMapping("/delete")
      @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
      tableField = "create_user_id",

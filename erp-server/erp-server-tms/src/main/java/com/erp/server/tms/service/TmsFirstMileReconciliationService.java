@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -160,10 +161,10 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     /**
      * 根据审核状态查询单据
      */
-    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status);
+    List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status, @NotBlank String supplierType);
 
 
-    TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, LocalDate startDate, LocalDate endDate, String currency);
+    TmsFirstMileReconciliationEntity getByGenerate(String logisticsSupplierId, String supplierType, LocalDate startDate, LocalDate endDate, String currency);
 
     String checkAndGetSupplier(String id);
 

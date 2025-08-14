@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -127,6 +128,15 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return java.lang.Boolean
      */
     Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 删除销售变更单（返回详细结果）
+     * @author yl
+     * @date 2023-05-25 11:05
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
 
     
     /**

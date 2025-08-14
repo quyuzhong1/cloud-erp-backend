@@ -1,8 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictNodeDTO;
 import com.erp.server.sys.service.DictNodeService;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +21,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/dictNode")
+@LogSystemModule("通知管理")
 public class DictNodeController extends BaseController {
 
     @Resource
@@ -30,6 +34,7 @@ public class DictNodeController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加节点")
     public ApiResult add(@RequestBody @Validated DictNodeDTO.AddDTO dto) {
         Boolean addResult = dictNodeService.add(dto);
         return addResult ? success() : failure();

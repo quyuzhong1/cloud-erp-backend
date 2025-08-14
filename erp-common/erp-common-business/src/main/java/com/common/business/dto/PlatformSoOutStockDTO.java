@@ -35,6 +35,11 @@ public class PlatformSoOutStockDTO extends UniqueDto {
     private String shopId;
 
     /**
+     * 收货国家
+     */
+    private String country;
+
+    /**
      * 明细列表
      */
     private List<PlatformSoOutStockDetailDTO> detailList;

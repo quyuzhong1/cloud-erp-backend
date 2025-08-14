@@ -73,7 +73,7 @@ public class WalmartSoB2cHandle  extends AbstractSoB2cHandle {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+                return soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
             } catch (Exception e) {
                 log.error("[沃尔玛生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();

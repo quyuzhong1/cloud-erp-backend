@@ -99,7 +99,16 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
      */
     @TableField("track_content")
     private String trackContent;
-
+    /**
+     * 注册轨迹手机号
+     */
+    @TableField("register_mobile")
+    private String registerMobile;
+    /**
+     * 第三方配置关系id
+     */
+    @TableField("third_ref_id")
+    private String thirdRefId;
     /**
      * 平台订单号
      */

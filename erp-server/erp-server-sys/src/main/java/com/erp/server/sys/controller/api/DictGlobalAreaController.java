@@ -8,6 +8,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/dict/global/area")
+@LogSystemModule("地址管理-区域管理")
 public class DictGlobalAreaController extends BaseController {
 
     @Resource
@@ -75,6 +77,7 @@ public class DictGlobalAreaController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = DictGlobalAreaQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
     public ApiResult<Boolean> paging(@RequestBody @Validated DictGlobalAreaDTO.PagingParamDTO dto) {
         dictGlobalAreaService.exportList(dto);
         return success(true);
@@ -116,6 +119,7 @@ public class DictGlobalAreaController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加地区")
     public ApiResult add(@RequestBody @Validated DictGlobalAreaDTO.AddDTO dto) {
         Boolean result = dictGlobalAreaService.addGlobalArea(dto);
         return result ? success() : failure();
@@ -130,6 +134,7 @@ public class DictGlobalAreaController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改地区")
     public ApiResult update(@RequestBody @Validated DictGlobalAreaDTO.UpdateDTO dto) {
         Boolean result = dictGlobalAreaService.update(dto);
         return result ? success() : failure();
@@ -141,6 +146,7 @@ public class DictGlobalAreaController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -155,7 +161,7 @@ public class DictGlobalAreaController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getRegionName(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

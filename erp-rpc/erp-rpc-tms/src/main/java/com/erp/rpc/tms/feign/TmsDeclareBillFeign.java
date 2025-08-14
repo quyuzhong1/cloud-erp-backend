@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "tmsDeclareBill")
+@FeignClient(name = "erp-tms", contextId = "tmsDeclareBill" ,configuration = {FeignErrorDecoder.class})
 public interface TmsDeclareBillFeign {
     /**
      * 根据来源id查询报关单

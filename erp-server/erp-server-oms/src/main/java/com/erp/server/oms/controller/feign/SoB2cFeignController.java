@@ -55,6 +55,8 @@ public class SoB2cFeignController extends BaseController {
     private SoB2cService soB2cService;
 
     @Resource
+    private SoB2cCoreService soB2cCoreService;
+    @Resource
     private SoB2cReceiverService soB2cReceiverService;
 
     @Resource
@@ -895,11 +897,13 @@ public class SoB2cFeignController extends BaseController {
     public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         if (null == soB2cEntity){
-            ServiceException.runError("未找到B2C销售订单:{}", soId);
+//            ServiceException.runError("未找到B2C销售订单:{}", soId);
+        	return;
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)){
-            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+//            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+        	return;
         }
         syncSoB2cService.syncSdyOrderHandler(soB2cEntity, soB2cDetailEntityList, operateEnum, sourceType);
     }
@@ -920,6 +924,15 @@ public class SoB2cFeignController extends BaseController {
     public void clearOutDateBySoIds(@RequestBody List<String> clearOutDateSoIds) {
         soB2cService.clearOutDateBySoIds(clearOutDateSoIds);
     }
+
+    /**
+     * 清空销售出库单的单据日期
+     */
+    @PostMapping("/handleSoOutStock")
+    public Boolean handleSoOutStock(@RequestBody String soId) {
+       return soB2cCoreService.handleSoOutStock(soId);
+    }
+
     /**
      * 销售订单审核
      * @Author Luo_WG

@@ -49,6 +49,7 @@ public class ApplicationCategoryController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品应用分类修改")
     public ApiResult<String> update(@RequestBody @Validated ApplicationCategoryDTO.UpdateDTO dto) {
         applicationCategoryService.update(dto);
         return success();
@@ -61,6 +62,7 @@ public class ApplicationCategoryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品应用分类删除")
     public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
         applicationCategoryService.delete(dto.getId());
         return success();

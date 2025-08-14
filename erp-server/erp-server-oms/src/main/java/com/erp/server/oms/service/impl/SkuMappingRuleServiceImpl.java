@@ -376,6 +376,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 匹配sku
         List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>();
         List<ListingInfoEntity> updateListingList = new ArrayList<>();
+        List<ListingInfoEntity> noMatchListingList = new ArrayList<>();
         for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
             String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
             ruleLoop : for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
@@ -436,7 +437,43 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             }
                         }
                     }
-                }else{
+                }else if (SkuMappingRuleEnum.NO_MATCH.equals(skuMappingRuleEnum)) {
+                    // 无需匹配类型针对的是 listingInfo 中的 platformStatus 和 isParent 字段
+//                    if (!skuVOMap.containsKey(handlePlatformSkuNo)) {
+//                        continue;
+//                    }
+                    Map<String, Object> ruleContent = skuMappingRuleEntity.getRuleContent();
+                    Object obj = ruleContent.get("noMatchList");
+                    if (obj == null) {
+                        continue;
+                    }
+                    List<String> noMatch = (List<String>) obj;
+                    if (CollectionUtils.isEmpty(noMatch)) {
+                        continue;
+                    }
+                    Boolean matched = Boolean.FALSE;
+                    Boolean isParent = listingInfoWithSkuMappingDTO.getIsParent();
+                    if (noMatch.contains("parent") && Boolean.TRUE.equals(isParent)) {
+                        matched = Boolean.TRUE;
+                    } else {
+                        String platformStatus = listingInfoWithSkuMappingDTO.getPlatformStatus();
+                        if (StringUtils.isNotBlank(platformStatus)) {
+                            if (noMatch.contains(platformStatus.toLowerCase())) {
+                                matched = Boolean.TRUE;
+                            }
+                        }
+                    }
+                    String matchResult = listingInfoWithSkuMappingDTO.getMatchResult();
+                    // 匹配结果无需匹配并且符合匹配规则，则需要更新 listingInfo 的 matchResult
+                    if (Boolean.TRUE.equals(matched) && ListingMatchResultEnum.FALSE.getCode().equals(matchResult)) {
+                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                        listingInfoEntity.setMatchResult(ListingMatchResultEnum.NOT.getCode());
+                        listingInfoEntity.setRemark("");
+                        noMatchListingList.add(listingInfoEntity);
+                        break;
+                    }
+                } else{
                     String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
                     String[] ruleRegexList = ruleRegexArrStr.split(", ");
                     for(String ruleRegex : ruleRegexList){
@@ -479,6 +516,14 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);
+        }
+        //更新为无需匹配
+        if(CollectionUtils.isNotEmpty(noMatchListingList)){
+            listingInfoService.updateBatchById(noMatchListingList,2000);
+            for (ListingInfoEntity listingInfoEntity : noMatchListingList) {
+                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，平台sku【{}】平台状态【未匹配】变更为【{}】", UserContext.getDefaultLoginUser().getUserName(),listingInfoEntity.getPlatformSkuNo(),ListingMatchResultEnum.NOT.getName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "无需匹配");
+            }
         }
     }
 

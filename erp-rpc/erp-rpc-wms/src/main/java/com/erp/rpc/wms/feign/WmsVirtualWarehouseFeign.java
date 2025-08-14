@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -19,7 +20,7 @@ import java.util.List;
  *
  * @author hyj
  */
-@FeignClient(name = "erp-wms", contextId = "virtualWarehouse", path = "/feign/virtualWarehouse")
+@FeignClient(name = "erp-wms", contextId = "virtualWarehouse", path = "/feign/virtualWarehouse",configuration = {FeignErrorDecoder.class})
 public interface WmsVirtualWarehouseFeign {
 
     /**

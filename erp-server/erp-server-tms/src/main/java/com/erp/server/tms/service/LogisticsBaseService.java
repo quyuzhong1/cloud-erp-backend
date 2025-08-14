@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -43,9 +44,10 @@ public interface LogisticsBaseService {
      *
      * @param platformType
      * @param records
+     * @param channelRefList
      * @return
      */
-    void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
+    void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList);
 
     List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType);
 
@@ -92,5 +94,5 @@ public interface LogisticsBaseService {
     /**
      * TikTok全托管同步物流地址
      */
-    void syncTikTokLogisticsAddress(String shopId);
+    void syncTikTokLogisticsAddress(String shopId, String shopName);
 }

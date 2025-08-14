@@ -73,6 +73,7 @@ public class LogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateTrackInfo")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量更新物流信息")
     public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsTrackDTO.UpdateTrackDTO> updateDTOS) {
         if (CollectionUtils.isEmpty(updateDTOS)) {
             return failure("数据不能为空");

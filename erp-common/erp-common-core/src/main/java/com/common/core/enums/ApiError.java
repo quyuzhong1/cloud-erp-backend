@@ -127,6 +127,7 @@ public enum ApiError implements Serializable {
     ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{}未找到"),
+    ERROR_HAS_EXIST(1068,"{}已存在"),
 
 
 
@@ -602,6 +603,12 @@ public enum ApiError implements Serializable {
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
 
     ERROR_95291(95291,"审核中不支持上传"),
+
+    ERROR_95290(95290,"【{}】已存在【{}】国家"),
+
+    ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
+
+
     /**
      * TMS 错误
      * 从96000 开始
@@ -614,6 +621,7 @@ public enum ApiError implements Serializable {
     ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
     ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
     ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
+    ERROR_96008(96008, "中国海关编码【{}】已存在"),
 
     /**
      * bi 错误
@@ -839,6 +847,11 @@ public enum ApiError implements Serializable {
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
+    ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
+    ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
+    ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
+    ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{}】未找到数量【{}】的供应商报价信息"),
+
 
     /**
      * WMS 错误
@@ -1172,7 +1185,7 @@ public enum ApiError implements Serializable {
     ERROR_92257(92257,"来源单号未找到"),
     ERROR_92258(92258,"请选择拣货单"),
     ERROR_92259(92259,"当前周期【{}】单号【{}】已存在对账单记录"),
-    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
+    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】同一个对账类型【{}】同一个物流商【{}】仅可生成一次对账单"),
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
@@ -1300,6 +1313,15 @@ public enum ApiError implements Serializable {
     ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
     ERROR_PO_RETURN_REPLENISH_QTY_CHECK(92279, "SKU【{}】补货数量必须大于0"),
     ERROR_PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(92279, "SKU【{}】扣款数量必须大于0"),
+    ERROR_92280(92280, "仅限未作废已审核通过的B2B订单类型的销售出库单"),
+    ERROR_92281(92281, "仅限未作废已审核通过的头程发货单"),
+    ERROR_92282(92282, "装箱未完成"),
+    ERROR_92283(92283, "仅限未作废的B2B订单类型的销售出库单"),
+    ERROR_92284(92284, "仅限未作废未审核通过的发货单"),
+    ERROR_92285(92285, "装箱未完成，不能下推报关单"),
+
+    TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
+    TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
 
     /**
      * OMS 错误
@@ -1581,6 +1603,9 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
     ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
     ERROR_SO_INFO_EXIST_REF_BILL(92193,"销售订单已存在关联单据【{}】，不支持该操作"),
+    ERROR_INVOICE_NFE_CREATE_INVOICING(92192,"选择订单开票中不支持重新生成发票"),
+    ERROR_INVOICE_NFE_RETURN(92193,"退票发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_VOIDED(92194,"作废发票失败，原因：{}"),
 
 
 
@@ -1772,7 +1797,9 @@ public enum ApiError implements Serializable {
         } else {
             ServiceException serviceException = (ServiceException) e;
             return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
-                    serviceException.getMsg().contains("Read timed out");
+                    serviceException.getMsg().contains("Read timed out") ||
+                    serviceException.getMsg().contains("获取锁失败,请求超时")
+                    ;
         }
     }
 }

@@ -110,6 +110,7 @@ public class CfgRuleInvoiceController extends BaseController {
      * @date 2025-05-23
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<BatchResultDTO> list = new ArrayList<>(dto.getIds().size());
         List<CfgRuleInvoiceEntity> entityList = cfgRuleInvoiceService.listByIds(dto.getIds());

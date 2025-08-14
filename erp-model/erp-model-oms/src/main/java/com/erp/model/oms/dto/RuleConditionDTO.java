@@ -29,6 +29,10 @@ public class RuleConditionDTO implements Serializable {
     public static class ViewDTO extends CommonDTO {
 
         private String id;
+        /**
+         * 规则id
+         */
+        private String ruleId;
 
         /**
          * 字段名

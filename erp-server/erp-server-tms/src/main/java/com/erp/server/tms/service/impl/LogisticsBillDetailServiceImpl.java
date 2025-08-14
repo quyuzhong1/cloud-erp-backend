@@ -369,4 +369,21 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
     }
+
+    @Override
+    public void updateRegisterParams(List<LogisticsTrackDTO.UpdateTrackDTO> refList) {
+        if (CollUtil.isEmpty(refList)){
+            return;
+        }
+        refList.forEach(e -> this.lambdaUpdate()
+                .set(LogisticsBillDetailEntity::getRegisterMobile, CharSequenceUtil.isNotBlank(e.getTelNumber()) ? e.getTelNumber() : "")
+                .set(LogisticsBillDetailEntity::getThirdRefId, CharSequenceUtil.isNotBlank(e.getThirdRefId()) ? e.getThirdRefId() : "")
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                .eq(LogisticsBillDetailEntity::getId, e.getId()).update());
+    }
+
+    @Override
+    public Integer countByThirdRefId(String id) {
+        return this.lambdaQuery().eq(LogisticsBillDetailEntity::getThirdRefId, id).count();
+    }
 }

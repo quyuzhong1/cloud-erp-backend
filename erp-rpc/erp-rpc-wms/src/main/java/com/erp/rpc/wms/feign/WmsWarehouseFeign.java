@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author Jim
  * @date 2023/11/29
  */
-@FeignClient(name = "erp-wms", contextId = "warehouse", path = "/feign/warehouse")
+@FeignClient(name = "erp-wms", contextId = "warehouse", path = "/feign/warehouse",configuration = {FeignErrorDecoder.class})
 public interface WmsWarehouseFeign {
 
     /**

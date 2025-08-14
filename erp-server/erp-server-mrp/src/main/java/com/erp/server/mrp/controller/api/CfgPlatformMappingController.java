@@ -2,10 +2,12 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class CfgPlatformMappingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "平台映射表修改")
     public ApiResult<String> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
         cfgPlatformMappingService.update(updateList);
         return success();

@@ -39,6 +39,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -46,6 +47,8 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -146,6 +149,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BaseResultDTO.AddDTO add(PilotApplicationDTO.AddDTO addDTO) {
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
 
+        // 获取用户信息
+        fillUserInfo(addDTO);
+        
         // 数据处理
         handleData(addDTO, pilotApplicationEntity);
 
@@ -184,6 +190,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
 
         return new BaseResultDTO.AddDTO(pilotApplicationEntity.getId(), code);
+    }
+
+    /**
+     * 填充用户信息
+     * @param addDTO 试产申请DTO
+     */
+    private void fillUserInfo(PilotApplicationDTO.AddDTO addDTO) {
+        if (addDTO.getDqeOwnerId() == null) {
+            log.warn("DQE负责人ID为空，跳过用户信息填充");
+            return;
+        }
+        
+        try {
+            SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(addDTO.getDqeOwnerId());
+            if (sysUserDTO != null && StringUtils.isNotBlank(sysUserDTO.getUserName())) {
+                addDTO.setDqeOwnerName(sysUserDTO.getUserName());
+                log.debug("成功获取用户信息，用户ID: {}, 用户名: {}", addDTO.getDqeOwnerId(), sysUserDTO.getUserName());
+            } else {
+                log.warn("未找到用户信息，用户ID: {}", addDTO.getDqeOwnerId());
+                addDTO.setDqeOwnerName("未知用户");
+            }
+        } catch (Exception e) {
+            log.error("获取用户信息失败，用户ID: {}, 错误信息: {}", addDTO.getDqeOwnerId(), e.getMessage(), e);
+            addDTO.setDqeOwnerName("获取失败");
+        }
     }
 
     /**
@@ -240,6 +271,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity pilotApplicationEntity = new PilotApplicationEntity();
         pilotApplicationEntity.setId(updateDTO.getId());
         pilotApplicationEntity.setRemark(updateDTO.getRemark());
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerId())){
+            pilotApplicationEntity.setDqeOwnerId(updateDTO.getDqeOwnerId());
+        }
+        if (StringUtils.isNotBlank(updateDTO.getDqeOwnerName())){
+            pilotApplicationEntity.setDqeOwnerName(updateDTO.getDqeOwnerName());
+        }
 
         log.info("编辑 开始修改试产申请数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(pilotApplicationEntity);
@@ -577,6 +614,26 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             detailEntity.setProductName(productName);
         }
         map.put("productDetailList", detailList);
+
+        // 从 productDetailList 中提取 chargeId 并生成逗号分隔的字符串
+        if (CollUtil.isNotEmpty(productDetailList)) {
+            List<String> chargeIdList = productDetailList.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getChargeId()))
+                    .map(ProductDetailEntity::getChargeId)
+                    .distinct() // 去重
+                    .collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(chargeIdList)) {
+                // 使用 PRODUCT_MANAGER 的 code 作为 key，逗号分隔的字符串作为 value
+                String chargeIdString = String.join(",", chargeIdList);
+                map.put(DictBasicEnum.PRODUCT_MANAGER.getCode(), chargeIdString);
+                log.debug("提取到 {} 个 chargeId: {}", chargeIdList.size(), chargeIdString);
+            } else {
+                log.debug("未找到有效的 chargeId");
+            }
+        } else {
+            log.debug("productDetailList 为空");
+        }
         return map;
     }
 
@@ -742,6 +799,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         //附件
         List<PlmAttachmentEntity> attachmentList = plmAttachmentService.listByBusinessIds(Collections.singletonList(pilotApplicationEntity.getId()));
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(detailViewList.size());
+        for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         //处理产品明细
         for (PilotApplicationDetailDTO.ViewDTO detailDTO : detailViewList) {
             //一级供应商名称
@@ -755,8 +826,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setTargetTaxCost(productCostEntity.getTargetTaxCost());
                 detailDTO.setTargetNoTaxCost(productCostEntity.getTargetNoTaxCost());
             }
-            //实际成本
-            fillActualCost(detailDTO);
+            //实际含税单价
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(detailDTO.getSkuId(), null);
+            if(Objects.isNull(priceViewDTO)){
+                log.error("没有找到价目表：{} {}", detailDTO.getSkuNo(), detailDTO.getMainSupplierName());
+            }else {
+                detailDTO.setActualTaxCost(priceViewDTO.getTaxPrice());
+                BigDecimal divide = priceViewDTO.getTaxRate().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal add = divide.add(BigDecimal.ONE);
+                detailDTO.setActualNoTaxCost(priceViewDTO.getTaxPrice().divide(add, 4, RoundingMode.HALF_UP));
+            }
             //产品名称
             Optional<ProductDetailEntity> skuOptional = skuList.stream().filter(item -> item.getId().equals(detailDTO.getSkuId())).findFirst();
             skuOptional.ifPresent(sku -> {
@@ -799,6 +878,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         view.setProductDetailList(detailViewList);
         view.setTaskList(taskViewList);
         view.setAttachmentList(attachmentList);
+        view.setDqeOwnerId(pilotApplicationEntity.getDqeOwnerId());
+        view.setDqeOwnerName(pilotApplicationEntity.getDqeOwnerName());
         //审核记录
         List<PilotApplicationDTO.AuditorHandleDTO> approveList = this.getApproveProcessList(pilotApplicationEntity);
         view.setApproveFlowList(approveList);
@@ -955,6 +1036,20 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseList.add(obj);
         }
         purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
+
+        //批量查询采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> taxPriceSearchList = new ArrayList<>(list.size());
+        for (PilotApplicationDTO.ListDTO detailDTO : list){
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setPurchaseQty(detailDTO.getApplyQty());
+            searchDTO.setSupplierId(detailDTO.getMainSupplierId());
+            searchDTO.setSkuId(detailDTO.getSkuId());
+            searchDTO.setSkuNo(detailDTO.getSkuNo());
+            taxPriceSearchList.add(searchDTO);
+        }
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultList = purchasePriceDetailFeign.listTaxPrice(taxPriceSearchList);
+        Map<String, PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> taxPriceResultMap = taxPriceResultList.stream().collect(Collectors.toMap(PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO::getSkuId, e -> e, (o1, o2) -> o1));
+
         for (PilotApplicationDTO.ListDTO item : list) {
             item.setInvalidStatusName(Objects.nonNull(item.getInvalidStatus()) && item.getInvalidStatus() ? "已作废" : "未作废");
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
@@ -972,24 +1067,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setTargetTaxCost(productCostEntity.getTargetTaxCost() != null ? productCostEntity.getTargetTaxCost().toPlainString() : "");
             }
             //实际含税单价
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            searchDTO.setPurchaseQty(item.getApplyQty());
-            searchDTO.setSupplierId(item.getMainSupplierId());
-            searchDTO.setSkuId(item.getSkuId());
-            searchDTO.setSkuNo(item.getSkuNo());
             try {
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailFeign.getTaxPrice(searchDTO);
-                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
-                    if (item.getApplyQty() >= priceViewDTO.getMinQty() && item.getApplyQty() <= priceViewDTO.getMaxQty()) {
-                        item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
-                        break;
-                    }
-                }
-                if (StringUtils.isBlank(item.getActualTaxCost())) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO priceViewDTO = taxPriceResultMap.getOrDefault(item.getSkuId(), null);
+                if(Objects.isNull(priceViewDTO)){
                     item.setActualTaxCost("无价目表");
+                }else {
+                    item.setActualTaxCost(priceViewDTO.getTaxPrice().toPlainString());
                 }
-            } catch (Exception e) {
-                item.setActualTaxCost("无价目表");
+            }catch (Exception e) {
+                item.setTargetTaxCost("无价目表");
             }
             //采购申请量
             int applyQty = 0;
@@ -1174,6 +1260,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         entity.setBillDate(addDTO.getBillDate());
         entity.setRemark(addDTO.getRemark());
         entity.setApproveStatus(addDTO.getApproveStatus());
+        entity.setDqeOwnerId(addDTO.getDqeOwnerId());
+        entity.setDqeOwnerName(addDTO.getDqeOwnerName());
     }
 
     @Override

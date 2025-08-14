@@ -12,7 +12,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -508,4 +507,37 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     void calSupplierPurchaseQty();
 
     List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(List<String> supplierIds);
+    /**
+     * 历史未完结订单分页查询
+     * @author will
+     * @date 2025/7/29 15:15
+     * @param dto
+     * @return PagingVO<AdjustListDTO>
+     */
+    PagingVO<PurchaseOrderDTO.AdjustListDTO> adjustPaging(PagingDTO<PurchaseOrderDTO.SearchAdjustParamDTO> dto);
+    /**
+     * 导出历史未完结订单
+     * @author will
+     * @date 2025/7/29 19:09
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportAdjustExcel(PurchaseOrderDTO.SearchAdjustParamDTO dto);
+    /**
+     * 批量调价
+     * @author will
+     * @date 2025/7/30 09:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean batchAdjustPrice(PurchaseOrderDTO.AdjustPriceDTO dto);
+    /**
+     * 导入采购订单主表信息
+     * @author will
+     * @date 2025/7/30 18:27
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
 }

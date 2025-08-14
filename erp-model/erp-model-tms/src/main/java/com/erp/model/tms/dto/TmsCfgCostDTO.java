@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -88,6 +89,11 @@ public class TmsCfgCostDTO implements Serializable {
         private Boolean isDefault;
 
         /**
+         * 是否分摊（t是，f否）
+         */
+        private Boolean isAllocate;
+
+        /**
          * 创建人名称【可排序】
          */
         private String  createUserName;
@@ -140,6 +146,10 @@ public class TmsCfgCostDTO implements Serializable {
          * 是否默认，true是，false否
          */
         private Boolean isDefault;
+        /**
+         * 是否分摊（t是，f否）
+         */
+        private Boolean isAllocate;
     }
 
     /**
@@ -197,6 +207,11 @@ public class TmsCfgCostDTO implements Serializable {
          */
         @NotNull(message = "默认值不能为空")
         private Boolean isDefault;
+
+        /**
+         * 是否分摊（t是，f否）
+         */
+        private Boolean isAllocate;
     }
 
     @Data

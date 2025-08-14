@@ -3,6 +3,9 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +24,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.enums.*;
+import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,9 +65,6 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
@@ -145,6 +149,15 @@ public class DmpInoutController extends BaseController {
 	@Qualifier("dmpSdyOutputPushExecutorPool")
 	private ExecutorService dmpSdyOutputPushExecutorPool;
 
+	@Autowired
+	private DmpInputTaskFactory dmpInputTaskFactory;
+	@Autowired
+	private DmpInputTaskService dmpInputTaskService;
+	@Autowired
+	@Qualifier("dmpInputExecutorPool")
+	private ExecutorService dmpInputExecutorPool;
+
+
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
         return success(dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest));
@@ -160,52 +173,65 @@ public class DmpInoutController extends BaseController {
     }
 
     @PostMapping("getCache")
-    public ApiResult<?> getCache() {
+    public ApiResult<?> getCache(@RequestParam(required = false) String f) {
         Map<String, Object> typeCacheMap = new HashMap<>();
-        typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
+        if(StringUtils.isNotBlank(f)) {
+        	try {
+				Field field = dmpHandlerCache.getClass().getDeclaredField(f);
+				field.setAccessible(true);
+				Object object = field.get(dmpHandlerCache);
+				field.setAccessible(false);
+				typeCacheMap.put(f, object);
+			} catch (Exception e) {
+				log.error("获取中台缓存错误" , e);
+				return ApiResult.error("获取中台缓存错误：" + ExceptionUtil.stacktraceToString(e));
+			}
+        }else {
+        	typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
 
-        List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-                .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
+            List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+                    .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 
 
-        Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
-        for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
-            String id = dmpCfgInputConvertEntity.getId();
-            convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
+            Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
+            for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
+                String id = dmpCfgInputConvertEntity.getId();
+                convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
 
+            }
+
+            Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
+            List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
+            for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
+                String id = dmpCfgInputConvertMappingEntity.getId();
+                convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
+            }
+
+            typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
+            typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
+
+            typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
+            typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutput", dmpHandlerCache.getDmpCfgOutputEntityList(d -> true));
+            typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
+
+            List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
+                    .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+                    .eq(DmpCfgMqEntity::getDisabled, false).list();
+            Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
+            Map<String, String> rocketMQTemplateMap = new HashMap<>();
+            for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
+                String mqId = dmpCfgMqEntity.getId();
+                rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
+                rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
+            }
+            typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
+            typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
+            typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
+            typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
+            typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
         }
-
-        Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
-        List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
-        for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
-            String id = dmpCfgInputConvertMappingEntity.getId();
-            convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
-        }
-
-        typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
-        typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
-
-        typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
-        typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
-        typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
-
-        List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
-                .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
-                .eq(DmpCfgMqEntity::getDisabled, false).list();
-        Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
-        Map<String, String> rocketMQTemplateMap = new HashMap<>();
-        for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
-            String mqId = dmpCfgMqEntity.getId();
-            rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
-            rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
-        }
-        typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
-        typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
-        typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
-        typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-        typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
-
         return success(typeCacheMap);
     }
 
@@ -557,6 +583,7 @@ public class DmpInoutController extends BaseController {
 
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1859427581292469023", DmpBasicSystemCodeEnum.WDT.getCode());
+    	sourceSystemMaps.put("1859427581292469024", DmpBasicSystemCodeEnum.WDT.getCode());
     	bizTypeSourceSystemMaps.put("soDeliver", sourceSystemMaps);
     	
     	sourceSystemMaps = new HashMap<>();
@@ -779,5 +806,84 @@ public class DmpInoutController extends BaseController {
         	log.warn("完成重推数帝云erp退货入库单，系统：" + sourceSystem);
     	}
     }
+
+
+	@PostMapping("doInputNormalTask")
+	public void doInputTask(@RequestBody String jobParam) {
+		String size = "1000";
+		List<String> cfgInputIds = null;
+		List<String> ids = null;
+		DmpInputTaskTaskTypeEnum dmpInputTaskTaskTypeEnum = DmpInputTaskTaskTypeEnum.NORMAL;
+		List<String> execStatusList = Arrays.asList(DmpInputTaskStatusEnum.INIT.getCode()
+				, DmpInputTaskStatusEnum.FDS.getCode() , DmpInputTaskStatusEnum.MONGO.getCode()
+				, DmpInputTaskStatusEnum.DMP.getCode());
+		if(StringUtils.isNotBlank(jobParam)) {
+			JSONObject parseObject = JSON.parseObject(jobParam);
+			String sizeParam = parseObject.getString("size");
+			if(StringUtils.isNotBlank(sizeParam)) {
+				size = sizeParam;
+			}
+			String mainIdsParam = parseObject.getString("cfgInputIds");
+			if(StringUtils.isNotBlank(mainIdsParam)) {
+				cfgInputIds = Arrays.asList(mainIdsParam.split(","));
+			}
+			String idsParam = parseObject.getString("ids");
+			if(StringUtils.isNotBlank(idsParam)) {
+				ids = Arrays.asList(idsParam.split(","));
+				if(CollUtil.isNotEmpty(ids)) {
+					List<DmpInputTaskEntity> errorList = dmpInputTaskService.lambdaQuery()
+							.in(DmpInputTaskEntity::getId, ids)
+							.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+							.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+							.list();
+					List<DmpInputTaskEntity> updateList = new ArrayList<>();
+					if(CollUtil.isNotEmpty(errorList)) {
+						for(DmpInputTaskEntity e : errorList) {
+							String errorMessage = e.getErrorMessage();
+							if(StringUtils.isNotBlank(errorMessage)) {
+								String[] split = errorMessage.split("@@");
+								if(split.length > 1) {
+									String status = split[0];
+									if(execStatusList.contains(status)) {
+										e.setErrorCount(0);
+										e.setStatus(status);
+										updateList.add(e);
+									}
+								}
+							}
+						}
+					}
+					if(CollUtil.isNotEmpty(updateList)) {
+						dmpInputTaskService.updateBatchById(updateList);
+					}
+				}
+			}
+		}
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery()
+				.in(DmpInputTaskEntity::getStatus, execStatusList)
+				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
+				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
+				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
+				.orderByAsc(DmpInputTaskEntity::getUpdateTime)
+				.last(dmpInputTaskTaskTypeEnum != DmpInputTaskTaskTypeEnum.COMPENSATE , " limit " + size)
+				.list();
+		if(dmpInputTaskTaskTypeEnum == DmpInputTaskTaskTypeEnum.COMPENSATE) {
+			Map<String, List<DmpInputTaskEntity>> cfgInputNextLevelMaps = list.stream().collect(Collectors.groupingBy(l -> l.getCfgInputId() + "_" + l.getNextLevelId()));
+			list = new ArrayList<>();
+			for(Map.Entry<String, List<DmpInputTaskEntity>> cfgInputNextLevelMap : cfgInputNextLevelMaps.entrySet()) {
+				list.add(cfgInputNextLevelMap.getValue().get(0));
+			}
+		}
+
+		for(DmpInputTaskEntity l : list) {
+			dmpInputExecutorPool.execute(() -> {
+				DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+				dmpInputFinishRequest.setInputTaskId(l.getId());
+				dmpInputFinishRequest.setExecTimeout(l.getExecTimeout());
+				dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+			});
+		}
+	}
 
 }

@@ -7,8 +7,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -72,7 +70,7 @@ public interface LogisticsLastMileCostService {
      */
     Boolean downloadTemplate(HttpServletResponse response);
 
-    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer, String> headMap);
+    void handleImportSuccessList(List<JSONObject> successList, List<JSONObject> errorList, List<String> headList, Map<Integer, String> headMap, String importType);
 
     /**
      * @param dto

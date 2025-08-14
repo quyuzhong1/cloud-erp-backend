@@ -41,11 +41,11 @@ public class SysLogRecordController extends BaseController {
      * @since 2023-09-04
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:sysLogRecord:paging",
-            tableAlias = "sys_log_record"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:sysLogRecord:paging",
+//            tableAlias = "sys_log_record"
+//    )
     public ApiResult<PagingVO<SysLogRecordDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SysLogRecordDTO.PagingParamDTO> dto) {
         return success(sysLogRecordService.paging(dto));
     }

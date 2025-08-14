@@ -14,12 +14,11 @@ import java.util.List;
  * @author jack
  */
 @FeignClient(name = "erp-scm", contextId = "salesDemand",configuration = {FeignErrorDecoder.class})
-@RequestMapping("/feign/salesDemand")
 public interface SaleDemandFeign {
     /**
      *
      */
-    @PostMapping("/listBySourceIds")
+    @PostMapping("/feign/salesDemand/listBySourceIds")
     List<SalesDemandEntity> listBySourceIds(List<String> sourceIds);
 
 }

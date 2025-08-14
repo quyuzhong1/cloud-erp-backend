@@ -7,12 +7,14 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
@@ -89,25 +91,35 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void removeByIdList(List<String> ids) {
-        LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SysDepartmentEntity::getParentId, ids);
-        int count = this.count(queryWrapper);
-        //表示有父类的id
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_9013);
-        }
+    public List<BatchResultDTO> removeByIdList(List<String> ids) {
         List<SysDepartmentEntity> list = this.listByIds(ids);
 
-        boolean flag = this.removeByIds(ids);
+        List<SysDepartmentEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SysDepartmentEntity entity : list) {
+            LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysDepartmentEntity::getParentId, entity.getId());
+            int count = this.count(queryWrapper);
+            if (count>0){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_9013.msg));
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SysDepartmentEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        boolean flag = this.removeByIds(removeIdList);
         //删除成功就要去移除对应的员工
         if (flag) {
-            sysDepartmentUserService.removeByDepartmentIds(ids);
-            if (CollectionUtils.isNotEmpty(list)) {
+            sysDepartmentUserService.removeByDepartmentIds(removeIdList);
+            if (CollectionUtils.isNotEmpty(removeList)) {
                 //金蝶删除
                 //list.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
             }
         }
+        return resultDTOList;
     }
 
     /**

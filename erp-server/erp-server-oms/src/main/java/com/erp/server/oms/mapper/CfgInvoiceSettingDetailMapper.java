@@ -36,7 +36,7 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @param shopId
      * @return CfgInvoiceSettingDetailEntity
      */
-    CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
+    List<CfgInvoiceSettingDetailEntity> getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
 
 
     /**

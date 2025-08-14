@@ -1,12 +1,13 @@
 package com.erp.rpc.file.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient("erp-file")
+@FeignClient(value = "erp-file",contextId = "downloadTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface DownloadTaskFeign {
 
     @PostMapping("/feign/downloadTask/saveExportTask")
