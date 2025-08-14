@@ -604,6 +604,9 @@
                     #{reconciliationId}
                 </foreach>
             </if>
+            <if test="supplierType!=null and supplierType!=''">
+                and tfmr.supplier_type = #{supplierType}
+            </if>
         </where>
     </select>
 

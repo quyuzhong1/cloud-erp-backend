@@ -1344,7 +1344,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds) {
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listReconciliationByMainIds(List<String> logisticsBillIds, String supplierType) {
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> listDTOS = this.baseMapper.waitReconciliationList(
                 OrderTypeEnum.FIRST_MILE.getCode(),
                 "",
@@ -1353,7 +1353,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 null,
                 null,
-                null, null);
+                null, null,null);
+        if (CharSequenceUtil.isNotBlank(supplierType)){
+            listDTOS = listDTOS.stream().filter(e->supplierType.equals(e.getSupplierType()) || CharSequenceUtil.isBlank(e.getSupplierType())).collect(Collectors.toList());
+        }
         //处理businessCode
         List<String> deliveryCodes = listDTOS.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getRelationCode).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
@@ -1378,7 +1381,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 null,
                 null,
-                reconciliationIds);
+                reconciliationIds, null);
     }
 
     @Override
@@ -1400,7 +1403,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap, String reconciliationType, String supplierType, String supplierId, String supplierName) {
         // 校验物理商是否一致
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id));
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id), supplierType);
         if (CollectionUtils.isEmpty(sourceDetailList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
         }
@@ -2001,7 +2004,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 startDate,
                 endDate,
-                null);
+                null,null);
     }
 
     @Override
