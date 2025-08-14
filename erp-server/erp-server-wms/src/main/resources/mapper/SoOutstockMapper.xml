@@ -12,6 +12,7 @@
         SELECT
         so.id,
         so.code,
+        sod.platform_code as platformCode,
         so.third_code as thirdCode,
         so.so_id AS soId,
         so.so_code AS soCode,
@@ -85,6 +86,7 @@
        SELECT
            so.id,
            so.code,
+           sod.platform_code as platformCode,
            so.third_code as thirdCode,
            so.so_id AS soId,
            so.so_code AS soCode,
