@@ -6892,6 +6892,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
             }
         }
+        //不出库发货不走中转
+        if(entity.getIsNotOutbound()){
+            isTransit = false;
+        }
         if (isTransit && CollUtil.isNotEmpty(transferWarehouseIdList)) {
             warehouseId = transferWarehouseIdList.get(transferWarehouseIdList.size() - 1);
         } else {
