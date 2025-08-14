@@ -76,30 +76,30 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
     @Override
     public boolean handleAutoSubmitDelivery(String soId, String name) {
         SoB2cEntity entity = this.getByIdOpt(soId).orElseThrow(() -> new ServiceException("销售订单不存在，soId: " + soId));
-        
-        // 1. 首先判断保宏预报状态
-        String transferStatus = entity.getTransferStatus();
-        if (TransferStatusEnum.WAIT.getCode().equals(transferStatus)) {
-            log.info("订单【{}】中转预报状态为待中转，等待预报状态变更为预报成功后再执行自动提交发货", entity.getCode());
-            return false;
-        }
-        
-        // 2. 预报状态通过后判断开票状态
-        String nfeInvoiceStatus = entity.getNfeInvoiceStatus();
-        
-        // 检查是否有开票标识且不等于以下状态：无需开票、待上传、上传失败、已上传、无需上传
-        boolean hasNfeInvoice = StringUtils.isNotBlank(nfeInvoiceStatus) && 
-            !SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode().equals(nfeInvoiceStatus) && 
-            !SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode().equals(nfeInvoiceStatus) && 
-            !SoB2cNfeStatusEnum.UPLOAD_FAILURE.getCode().equals(nfeInvoiceStatus) && 
-            !SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode().equals(nfeInvoiceStatus) && 
-            !SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode().equals(nfeInvoiceStatus);
-            
-        if (hasNfeInvoice) {
-            log.info("订单【{}】有开票标识且状态不为无需开票、待上传、上传失败、已上传、无需上传，等待状态变更为允许状态后触发自动提交发货", entity.getCode());
-            return false;
-        }
-        
+//
+//        // 1. 首先判断保宏预报状态
+//        String transferStatus = entity.getTransferStatus();
+//        if (TransferStatusEnum.WAIT.getCode().equals(transferStatus)) {
+//            log.info("订单【{}】中转预报状态为待中转，等待预报状态变更为预报成功后再执行自动提交发货", entity.getCode());
+//            return false;
+//        }
+//
+//        // 2. 预报状态通过后判断开票状态
+//        String nfeInvoiceStatus = entity.getNfeInvoiceStatus();
+//
+//        // 检查是否有开票标识且不等于以下状态：无需开票、待上传、上传失败、已上传、无需上传
+//        boolean hasNfeInvoice = StringUtils.isNotBlank(nfeInvoiceStatus) &&
+//            !SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode().equals(nfeInvoiceStatus) &&
+//            !SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode().equals(nfeInvoiceStatus) &&
+//            !SoB2cNfeStatusEnum.UPLOAD_FAILURE.getCode().equals(nfeInvoiceStatus) &&
+//            !SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode().equals(nfeInvoiceStatus) &&
+//            !SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode().equals(nfeInvoiceStatus);
+//
+//        if (hasNfeInvoice) {
+//            log.info("订单【{}】有开票标识且状态不为无需开票、待上传、上传失败、已上传、无需上传，等待状态变更为允许状态后触发自动提交发货", entity.getCode());
+//            return false;
+//        }
+//
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soId);
         if (soB2cLogisticsEntity == null || StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
             log.warn("销售订单物流信息为空，soId: {}", soId);
