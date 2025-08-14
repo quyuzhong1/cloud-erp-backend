@@ -19,10 +19,12 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 
 import com.common.business.enums.PlatformDictEnum;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.sys.entity.*;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
@@ -45,10 +47,6 @@ import com.common.core.utils.Tools;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
@@ -169,10 +167,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	List<SysDepartmentEntity> deptEntityList = sysUserFeign.getDeptEntityList();
         	Map<String, String> departmentMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(deptEntityList)) {
-        		departmentMap = deptEntityList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, SysDepartmentEntity::getName , (s1 , s2) -> s1));
+        		departmentMap = deptEntityList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, JSONUtil::toJsonStr, (s1 , s2) -> s1));
         	}
         	cfgMaps.put("department", departmentMap);
-        	
+
         	List<String> currencyList = new ArrayList<>();
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getPayCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
         	currencyList.addAll(changeDmpSoOutstockDetailEntity.stream().map(DmpSoOutstockDetailEntity::getCurrency).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
@@ -208,9 +206,15 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), DictBasicDTO.ViewDTO::getValue));
 				cfgMaps.put("wdtSdyPlatformDeliveryType", deliveryTypeMap);
 			}
-			
 			cfgMaps.put("warehouse", FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode)));
+			// 部门信息
+			List<KingdeeDepartmentEntity> kingdeeDeptList = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+			Map<String, String> kingdeeDeptListMap = kingdeeDeptList.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k->JSONUtil.toJsonStr(k)));
+			cfgMaps.put("kingdeeDeptList", kingdeeDeptListMap);
 		}
+
+		List<SysDepartmentEntity> deptEntityList = sysUserFeign.getDeptEntityList();
+
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
         	if(!result.isEmpty()) {
@@ -285,16 +289,19 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     				}
 					shudiyunB2cOrderDTO.setMilitary_region_name(military_region_name);
     			}
-    			String saleDeptName = dmpSoOutstockDetailEntity.getSaleDeptName();
-				shudiyunB2cOrderDTO.setDepartment_code(saleDeptName);
-				if(saleDeptName != null) {
-					String department_name = cfgMaps.get("department").get(saleDeptName);
-					if(department_name == null) {
-						department_name = "";
+    			String saleDeptCode = dmpSoOutstockDetailEntity.getSaleDeptName();
+				String kingdeeDeptCode = "";
+				String kingdeeDeptName = "";
+				if(saleDeptCode != null) {
+					KingdeeDepartmentEntity kingdeeDepartmentEntity = getKingdeeDept(cfgMaps, saleDeptCode, dmpSoOutstockEntity.getSaleOrgId());
+					if (null != kingdeeDepartmentEntity){
+						kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+						kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
 					}
-					shudiyunB2cOrderDTO.setDepartment_name(department_name);
 				}
-    			
+				shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
+				shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
+
     	        shudiyunB2cOrderDTO.setBiz_uni_key(thirdCode + dmpSoOutstockDetailEntity.getThirdDetailId());
     	        shudiyunB2cOrderDTO.setBiz_no(thirdBillNo);
     	        shudiyunB2cOrderDTO.setBiz_time(billDateFormat);
@@ -356,7 +363,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						}
 					}
 				}
-	            
+
 	            LocalDateTime estimateInvestmentTime = dmpSoOutstockDetailEntity.getEstimateInvestmentTime();
 	            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getEstimate_investment_time()) && estimateInvestmentTime != null) {
 	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -422,6 +429,31 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	}
     	return result;
     }
+
+	private KingdeeDepartmentEntity getKingdeeDept(Map<String, Map<String, String>> cfgMaps, String saleDeptCode, String saleOrgId) {
+		Map<String, String> departmentMap = cfgMaps.get("department");
+		if (departmentMap == null) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		String json = departmentMap.get(saleDeptCode);
+		if (StringUtils.isBlank(json)) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		SysDepartmentEntity sysDepartmentEntity = JSONUtil.toBean(json, SysDepartmentEntity.class);
+		Map<String, String> kingdeeDeptListMap = cfgMaps.get("kingdeeDeptList");
+		if (kingdeeDeptListMap == null) {
+			log.warn("未找到部门信息，部门名称：{}，部门编码：{}", saleDeptCode, saleDeptCode);
+			return null;
+		}
+		String kingdeeJson = kingdeeDeptListMap.get(sysDepartmentEntity.getId() + "_" + saleOrgId);
+		if (StringUtils.isBlank(kingdeeJson)) {
+			log.warn("未找到部门信息，部门名称：{}，部门ID：{}，组织ID：{}", saleDeptCode, sysDepartmentEntity.getId(), saleOrgId);
+			return null;
+		}
+		return JSONUtil.toBean(kingdeeJson, KingdeeDepartmentEntity.class);
+	}
 
 
 	/**
@@ -498,12 +530,12 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
 
-        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type()) 
-        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK") 
+        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type())
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK")
         		&& StringUtils.isNotBlank(s.getParent_node_no()))
         	.map(ShudiyunB2cOrderDTO::getParent_node_no).collect(Collectors.toList());
 
-        
+
         if(CollUtil.isNotEmpty(thirdCodeList)) {
         	List<String> mainIds = dmpSoInfoService.lambdaQuery()
         			.eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
@@ -533,10 +565,25 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	}
         }
     }
-	
+
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");
     }
 
+	private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgId) {
+		if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgId)) {
+			Map<String, Object> kingdeeDepartment = cacheMap.get("kingdeeDepartment");
+			if(kingdeeDepartment == null) {
+				List<KingdeeDepartmentEntity> list = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+				kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k -> k , (k1 , k2) -> k1));
+				cacheMap.put("kingdeeDepartment", kingdeeDepartment);
+			}
+			Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgId);
+			if(object != null) {
+				return (KingdeeDepartmentEntity)object;
+			}
+		}
+		return new KingdeeDepartmentEntity();
+	}
 }
