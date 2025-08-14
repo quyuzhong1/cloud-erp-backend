@@ -1083,7 +1083,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             detailEntity.setEndPeriodTransitCost(BigDecimal.ZERO);
         } else {
             //期初在途不为0
-            if(detailEntity.getInitTransitCost().compareTo(BigDecimal.ZERO) != 0){
+            if(detailEntity.getInitTransitCost().compareTo(BigDecimal.ZERO) != 0 || (detailEntity.getInitTransitCost().compareTo(BigDecimal.ZERO) == 0 && detailEntity.getInitEstimatedCost().compareTo(BigDecimal.ZERO) == 0 && entity.getReportPeriodMonth().isAfter(entity.getReconciliationMonth()))){
                 //期初在途费用-冲期初-本期分摊费用
                 detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
             }else {
