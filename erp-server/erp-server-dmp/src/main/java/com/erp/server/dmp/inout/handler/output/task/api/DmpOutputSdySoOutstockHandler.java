@@ -19,6 +19,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.entity.*;
 import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DictBasicService;
@@ -192,11 +193,15 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 			cfgMaps.put("warehouse", FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode)));
 			// 部门信息
 			List<KingdeeDepartmentEntity> kingdeeDeptList = FeignQuery.create(KingdeeDepartmentEntity.class).list();
-			Map<String, String> kingdeeDeptListMap = kingdeeDeptList.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k->JSONUtil.toJsonStr(k)));
+			Map<String, String> kingdeeDeptListMap = kingdeeDeptList.stream()
+					.collect(Collectors.toMap(
+							k -> k.getErpDeptId() + "_" + k.getUseOrgId(),
+                            JSONUtil::toJsonStr,
+							(v1, v2) -> v1 // 遇到重复 key 时取第一个
+					));
 			cfgMaps.put("kingdeeDeptList", kingdeeDeptListMap);
 		}
 
-		List<SysDepartmentEntity> deptEntityList = sysUserFeign.getDeptEntityList();
 
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
@@ -276,10 +281,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				String kingdeeDeptCode = "";
 				String kingdeeDeptName = "";
 				if(saleDeptCode != null) {
-					KingdeeDepartmentEntity kingdeeDepartmentEntity = getKingdeeDept(cfgMaps, saleDeptCode, dmpSoOutstockEntity.getSaleOrgId());
-					if (null != kingdeeDepartmentEntity){
-						kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
-						kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+					CustomerInfoEntity customerInfo = queryAndCacheDictCustomerEntity(cfgMaps, dmpSoOutstockEntity.getShopId());
+					if (null != customerInfo) {
+						KingdeeDepartmentEntity kingdeeDepartmentEntity = getKingdeeDept(cfgMaps, saleDeptCode, customerInfo.getUseOrgId());
+						if (null != kingdeeDepartmentEntity){
+							kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+							kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+						}
 					}
 				}
 				shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
@@ -497,19 +505,22 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	return Arrays.asList("biz_no" , "sku_code");
     }
 
-	private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgId) {
-		if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgId)) {
-			Map<String, Object> kingdeeDepartment = cacheMap.get("kingdeeDepartment");
-			if(kingdeeDepartment == null) {
-				List<KingdeeDepartmentEntity> list = FeignQuery.create(KingdeeDepartmentEntity.class).list();
-				kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k -> k , (k1 , k2) -> k1));
-				cacheMap.put("kingdeeDepartment", kingdeeDepartment);
+	private static CustomerInfoEntity queryAndCacheDictCustomerEntity(Map<String, Map<String, String>> cacheMap, String customerCode) {
+		Map<String, String> customerInfoMap = cacheMap.get("customerInfo");
+		if (null == customerInfoMap) {
+			customerInfoMap = new HashMap<>();
+			List<CustomerInfoEntity> customerEntityList = FeignQuery.create(CustomerInfoEntity.class).list();
+			if (CollUtil.isNotEmpty(customerEntityList)) {
+				Map<String, String> allCustomer = customerEntityList.stream()
+						.collect(Collectors.toMap(CustomerInfoEntity::getCode, JSONUtil::toJsonStr, (k1, k2) -> k1));
+				customerInfoMap.putAll(allCustomer);
 			}
-			Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgId);
-			if(object != null) {
-				return (KingdeeDepartmentEntity)object;
-			}
+			cacheMap.put("customerInfo", customerInfoMap);
 		}
-		return new KingdeeDepartmentEntity();
+		String json = customerInfoMap.get(customerCode);
+		if (StringUtils.isNotBlank(json)) {
+			return JSONUtil.toBean(json, CustomerInfoEntity.class);
+		}
+		return null;
 	}
 }
