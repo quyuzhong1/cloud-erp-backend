@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -331,9 +333,12 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 				String kingdeeDepartmentCode = "";
 				SysDepartmentEntity sysDepartmentEntity = queryAndCacheDepartment(cacheMap, departmentCode);
 				if (null != sysDepartmentEntity) {
-					KingdeeDepartmentEntity kingdeeDepartmentEntity = queryAndCacheKingdeeDepartment(cacheMap, sysDepartmentEntity.getId(), dmpSoDeliveryEntity.getOrganizationCode());
-					kingdeeDepartmentCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
-					kingdeeDepartmentName = kingdeeDepartmentEntity.getKingdeeDeptName();
+					CustomerInfoEntity customerInfo = queryAndCacheDictCustomerEntity(cacheMap, dmpSoDeliveryEntity.getShopNo());
+					if (null != customerInfo) {
+						KingdeeDepartmentEntity kingdeeDepartmentEntity = queryAndCacheKingdeeDepartment(cacheMap, sysDepartmentEntity.getId(), customerInfo.getUseOrgId());
+						kingdeeDepartmentCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+						kingdeeDepartmentName = kingdeeDepartmentEntity.getKingdeeDeptName();
+					}
                 }
     	        // 部门编码
     	        shudiyunB2cOrderDTO.setDepartment_code(kingdeeDepartmentCode);
@@ -372,15 +377,15 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 		return dmpDictBasic;
 	}
 
-	private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgCode) {
-		if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgCode)) {
+	private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgId) {
+		if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgId)) {
 			Map<String, Object> kingdeeDepartment = cacheMap.get("kingdeeDepartment");
 			if(kingdeeDepartment == null) {
 				List<KingdeeDepartmentEntity> list = FeignQuery.create(KingdeeDepartmentEntity.class).list();
-				kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgCode(), k -> k , (k1 , k2) -> k1));
+				kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k -> k , (k1 , k2) -> k1));
 				cacheMap.put("kingdeeDepartment", kingdeeDepartment);
 			}
-			Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgCode);
+			Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgId);
 			if(object != null) {
 				return (KingdeeDepartmentEntity)object;
 			}
@@ -407,6 +412,21 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 					)
 					.findFirst()
 					.orElse(null);
+	}
+
+	private static CustomerInfoEntity queryAndCacheDictCustomerEntity(Map<String, Map<String, Object>> cacheMap, String customerCode) {
+		Map<String, Object> customerInfoMap = cacheMap.get("customerInfo");
+		if (null == customerInfoMap) {
+			customerInfoMap = new HashMap<>();
+			List<CustomerInfoEntity> customerEntityList = FeignQuery.create(CustomerInfoEntity.class).list();
+			if (CollUtil.isNotEmpty(customerEntityList)) {
+				Map<String, CustomerInfoEntity> allCustomer = customerEntityList.stream()
+						.collect(Collectors.toMap(CustomerInfoEntity::getCode, k -> k, (k1, k2) -> k1));
+				customerInfoMap.putAll(allCustomer);
+			}
+			cacheMap.put("customerInfo", customerInfoMap);
+		}
+        return (CustomerInfoEntity) customerInfoMap.get(customerCode);
 	}
 
 }

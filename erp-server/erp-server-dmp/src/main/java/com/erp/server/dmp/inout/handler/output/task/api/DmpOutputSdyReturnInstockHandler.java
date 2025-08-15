@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -114,23 +115,33 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 					.stream().collect(Collectors.groupingBy(DmpSoReturnInfoEntity::getThirdCode));
 		}
 
+		Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
                 .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                 .list();
-        Map<String, DictBasicEntity> dictMaps = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, d -> d , (d1 , d2) -> d1));
-        
-        Map<String, String> warehouseMap = FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
+        Map<String, Object> dictMaps = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, d -> d , (d1 , d2) -> d1));
+        cacheMap.put("dictInfo", dictMaps);
 
+        Map<String, Object> warehouseMap = FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
+		cacheMap.put("warehouseInfo", warehouseMap);
 		// 部门信息
 		List<KingdeeDepartmentEntity> kingdeeDeptList = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+		Map<String, Object> kingdeeDeptListMap = kingdeeDeptList.stream()
+				.collect(Collectors.toMap(
+						k -> k.getErpDeptId() + "_" + k.getUseOrgId(),
+						k -> k,
+						(v1, v2) -> v1));
+		cacheMap.put("kingdeeDeptList", kingdeeDeptListMap);
 
 		List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+		Map<String, Object> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, k -> k, (k1, k2) -> k1));
+		cacheMap.put("deptList", deptMap);
 
-
-        Map<String, String> map = new HashMap<>();
+		Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps, soReturnInfoMap , warehouseMap, deptList, kingdeeDeptList);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId,  soReturnInfoMap, cacheMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -140,13 +151,18 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps, Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap , Map<String, String> warehouseMap, List<SysDepartmentEntity> deptList, List<KingdeeDepartmentEntity> kingdeeDeptList){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, List<DmpSoReturnInfoEntity>> soReturnInfoMap, Map<String, Map<String, Object>> cacheMap) {
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpReturnInstockEntity != null && CollUtil.isNotEmpty(dmpReturnInstockDetailEntityList)) {
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
     			return result;
     		}
-    		Tools.nullToBlank(dmpReturnInstockEntity);
+			Map<String, Object> dictMaps = cacheMap.get("dictInfo");
+			Map<String, Object> warehouseMap = cacheMap.get("warehouseInfo");
+			Map<String, Object> deptListMap = cacheMap.get("deptList");
+			Map<String, Object> kingdeeDeptListMap = cacheMap.get("kingdeeDeptList");
+
+			Tools.nullToBlank(dmpReturnInstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdReturnInstockId = dmpReturnInstockEntity.getThirdReturnInstockId();
     		String thirdReturnInstockCode = dmpReturnInstockEntity.getThirdReturnInstockCode();
@@ -197,7 +213,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                 shudiyunB2cOrderDTO.setOrganization_code(organizationCode);
                 shudiyunB2cOrderDTO.setOrganization_name(organizationName);
                 
-                DictBasicEntity dictBasicEntity = dictMaps.get(sourcePlatform);
+                DictBasicEntity dictBasicEntity = (DictBasicEntity) dictMaps.get(sourcePlatform);
                 if(dictBasicEntity != null) {
                 	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
     	            shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
@@ -242,7 +258,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 				shudiyunB2cOrderDTO.setReturned_quantity(returnInstockQty);
 
     	        shudiyunB2cOrderDTO.setRemark(dmpReturnInstockDetailEntity.getRemark());
-    	        shudiyunB2cOrderDTO.setWarehouse_no(warehouseMap.get(dmpReturnInstockDetailEntity.getWarehouseNo()));
+    	        shudiyunB2cOrderDTO.setWarehouse_no((String) warehouseMap.getOrDefault(dmpReturnInstockDetailEntity.getWarehouseNo(), ""));
     	        shudiyunB2cOrderDTO.setWarehouse_name(dmpReturnInstockDetailEntity.getWarehouseName());
     	        shudiyunB2cOrderDTO.setReturn_receipt_time(returnInstockTimeFormat);
     	        shudiyunB2cOrderDTO.setReturn_receipt_amount(dmpReturnInstockDetailEntity.getReturnInstockAmount());
@@ -292,17 +308,19 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 
 				String kingdeeDeptCode = "";
 				String kingdeeDeptName = "";
-				SysDepartmentEntity sysDepartmentEntity = deptList.stream()
-						.filter(e -> e.getCode().equals(dmpReturnInstockDetailEntity.getDepartmentCode()))
-						.findFirst()
-						.orElse(null);
-				if (null != sysDepartmentEntity){
-					KingdeeDepartmentEntity kingdeeDepartmentEntity = kingdeeDeptList.stream()
-							.filter(e -> e.getErpDeptId().equals(sysDepartmentEntity.getId()) && e.getUseOrgCode().equals(dmpReturnInstockEntity.getOrganizationCode()))
-							.findFirst()
-							.orElseThrow(() -> new ServiceException("金蝶部门编码不存在：部门Id=" + dmpReturnInstockDetailEntity.getDepartmentCode()));
-					kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
-					kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+				Object sysDepartmentEntityObj = deptListMap.get(dmpReturnInstockDetailEntity.getDepartmentCode());
+				if (null != sysDepartmentEntityObj){
+					SysDepartmentEntity sysDepartmentEntity = (SysDepartmentEntity) sysDepartmentEntityObj;
+					CustomerInfoEntity customerInfo = queryAndCacheDictCustomerEntity(cacheMap, dmpReturnInstockEntity.getShopNo());
+					if (null != customerInfo){
+						Object KingdeeDepartmentEntityObj = kingdeeDeptListMap.get(sysDepartmentEntity.getId() + "_" + customerInfo.getUseOrgId());
+						if (null != KingdeeDepartmentEntityObj){
+							KingdeeDepartmentEntity kingdeeDepartmentEntity = (KingdeeDepartmentEntity) KingdeeDepartmentEntityObj;
+							kingdeeDeptCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+							kingdeeDeptName = kingdeeDepartmentEntity.getKingdeeDeptName();
+						}
+
+					}
 				}
 
 				// 部门编码
@@ -320,4 +338,19 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");
     }
+
+	private static CustomerInfoEntity queryAndCacheDictCustomerEntity(Map<String, Map<String, Object>> cacheMap, String customerCode) {
+		Map<String, Object> customerInfoMap = cacheMap.get("customerInfo");
+		if (null == customerInfoMap) {
+			customerInfoMap = new HashMap<>();
+			List<CustomerInfoEntity> customerEntityList = FeignQuery.create(CustomerInfoEntity.class).list();
+			if (CollUtil.isNotEmpty(customerEntityList)) {
+				Map<String, CustomerInfoEntity> allCustomer = customerEntityList.stream()
+						.collect(Collectors.toMap(CustomerInfoEntity::getCode, k -> k, (k1, k2) -> k1));
+				customerInfoMap.putAll(allCustomer);
+			}
+			cacheMap.put("customerInfo", customerInfoMap);
+		}
+		return (CustomerInfoEntity) customerInfoMap.get(customerCode);
+	}
 }
