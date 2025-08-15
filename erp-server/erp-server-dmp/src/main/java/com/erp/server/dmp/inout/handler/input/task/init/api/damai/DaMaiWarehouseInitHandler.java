@@ -46,7 +46,7 @@ public class DaMaiWarehouseInitHandler extends DmpInputInitHandler {
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
 
-        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.JIFENG.getCode()));
+        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.DA_MAI.getCode()));
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
             return Collections.emptyList();
         }
