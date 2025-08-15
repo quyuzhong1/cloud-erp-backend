@@ -2201,6 +2201,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.autoOrderForecast(Collections.singletonList(id));
         }catch (Exception e){
             log.error("自动预报失败",e);
+            throw new ServiceException("自动预报失败:{}",e.getMessage());
         }
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);

@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
