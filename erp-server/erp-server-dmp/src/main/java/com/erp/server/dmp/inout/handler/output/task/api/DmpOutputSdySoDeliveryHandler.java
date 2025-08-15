@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,6 +43,8 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	
 	@Resource
 	private DmpSoDeliveryService dmpSoDeliveryService;
+	@Resource
+	private SysUserFeign sysUserFeign;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -320,10 +325,20 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setMilitary_region_code(dmpSoDeliveryDetailEntity.getMilitaryRegionCode());
     	        // 军区名称
     	        shudiyunB2cOrderDTO.setMilitary_region_name(dmpSoDeliveryDetailEntity.getMilitaryRegionName());
+
+				String departmentCode = dmpSoDeliveryDetailEntity.getDepartmentCode();
+				String kingdeeDepartmentName = "";
+				String kingdeeDepartmentCode = "";
+				SysDepartmentEntity sysDepartmentEntity = queryAndCacheDepartment(cacheMap, departmentCode);
+				if (null != sysDepartmentEntity) {
+					KingdeeDepartmentEntity kingdeeDepartmentEntity = queryAndCacheKingdeeDepartment(cacheMap, sysDepartmentEntity.getId(), dmpSoDeliveryEntity.getOrganizationCode());
+					kingdeeDepartmentCode = kingdeeDepartmentEntity.getKingdeeDeptCode();
+					kingdeeDepartmentName = kingdeeDepartmentEntity.getKingdeeDeptName();
+                }
     	        // 部门编码
-    	        shudiyunB2cOrderDTO.setDepartment_code(dmpSoDeliveryDetailEntity.getDepartmentCode());
+    	        shudiyunB2cOrderDTO.setDepartment_code(kingdeeDepartmentCode);
     	        // 部门名称
-    	        shudiyunB2cOrderDTO.setDepartment_name(dmpSoDeliveryDetailEntity.getDepartmentName());
+    	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDepartmentName);
     			
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
@@ -356,4 +371,42 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 		}
 		return dmpDictBasic;
 	}
+
+	private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgCode) {
+		if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgCode)) {
+			Map<String, Object> kingdeeDepartment = cacheMap.get("kingdeeDepartment");
+			if(kingdeeDepartment == null) {
+				List<KingdeeDepartmentEntity> list = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+				kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgCode(), k -> k , (k1 , k2) -> k1));
+				cacheMap.put("kingdeeDepartment", kingdeeDepartment);
+			}
+			Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgCode);
+			if(object != null) {
+				return (KingdeeDepartmentEntity)object;
+			}
+		}
+		return new KingdeeDepartmentEntity();
+	}
+
+	private SysDepartmentEntity queryAndCacheDepartment(Map<String, Map<String, Object>> cacheMap, String deptCode) {
+		if (StringUtils.isBlank(deptCode)){
+			return null;
+		}
+		List<SysDepartmentEntity> deptList = new LinkedList<>();
+		Map<String, Object> deptListObj = cacheMap.get("deptList");
+		if (null == deptListObj) {
+			// 部门信息
+			deptList = sysUserFeign.getDeptEntityList();
+			deptListObj = deptList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, k -> k, (k1, k2) -> k1));
+            cacheMap.put("deptList", deptListObj);
+        } else {
+			Object entityObj = deptListObj.get(deptCode);
+			return (SysDepartmentEntity) entityObj;
+		}
+		return deptList.stream().filter(e -> e.getCode().equals(deptCode)
+					)
+					.findFirst()
+					.orElse(null);
+	}
+
 }
