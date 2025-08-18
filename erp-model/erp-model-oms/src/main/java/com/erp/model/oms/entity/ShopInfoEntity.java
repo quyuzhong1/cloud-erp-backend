@@ -157,6 +157,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private Boolean isHaveWarehouse;
 
     /**
+     * 是否多渠道发货
+     */
+    @TableField("is_multi_channel_delivery")
+    private Boolean isMultiChannelDelivery;
+
+    /**
      * 平台店铺编码/卖家编码
      * 亚马逊平台=卖家ID
      */

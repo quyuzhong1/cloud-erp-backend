@@ -294,6 +294,11 @@ public class ShopDTO implements Serializable {
         private Boolean  isHaveWarehouse;
 
         /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannelDelivery;
+
+        /**
          * 数据下载时间
          */
         @NotNull(message = "数据下载时间不能为空")
@@ -450,7 +455,10 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓  true 包含
          */
         private Boolean  isHaveWarehouse;
-
+        /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannelDelivery;
         /**
          * ioss税号
          */
@@ -674,6 +682,10 @@ public class ShopDTO implements Serializable {
          */
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
+        /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannelDelivery;
         /**
          * 数据下载时间
          */
