@@ -11,6 +11,7 @@ import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
@@ -84,6 +85,10 @@ public class AfterSaleOpenApi {
         dto.setType("wx");
         if(CollUtil.isEmpty(dto.getDetailList()) && CollUtil.isEmpty(dto.getAttachmentList())){
             return  ApiResult.error(500, "sku明细或图片附件至少填写一种");
+        }
+        //平台订单号只能包含数字、大小写字母和常用特殊字符
+        if( StringUtils.isNotBlank(dto.getPlatformCode()) && !dto.getPlatformCode().matches("^[a-zA-Z0-9\\s\\-_.,;:!?@#$%^&*()+=<>{}\\[\\]\\\\|/]*$")){
+            return  ApiResult.error(500, "平台订单号只能包含数字、大小写字母和常用特殊字符");
         }
         return afterSaleFeign.add(dto);
     }
