@@ -6,6 +6,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
@@ -20,6 +21,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -73,19 +75,25 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             for (Map.Entry<Integer, List<ThirdWarehouseCreateInboundReq.Item>> entry : originItemMap.entrySet()) {
                 Integer tempBoxNo = entry.getKey();
                 List<ThirdWarehouseCreateInboundReq.Item> tempItemList = entry.getValue();
-                if(boxNo >= tempBoxNo){
+                if(boxNo <= tempBoxNo){
                     continue;
                 }
                 if(itemList.size() != tempItemList.size()){
                     continue;
                 }
+                boolean isSame = true;
+                //key 为 sku+数量
+                Map<String,ThirdWarehouseCreateInboundReq.Item> tempMap = itemList.stream().collect(Collectors.toMap(v-> {
+                    return v.getProductSku() + "_" +v.getQuantity();
+                }, Function.identity(),(v1,v2)->v1));
                 for (ThirdWarehouseCreateInboundReq.Item tempItem : tempItemList) {
-                    for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
-                        if(!tempItem.getProductSku().equals(item.getProductSku()) || !tempItem.getQuantity().equals(item.getQuantity())){
-                            batchNo = item.getBatchNo();
-                            break;
-                        }
+                    if (!tempMap.containsKey(tempItem.getProductSku() + "_" + tempItem.getQuantity())) {
+                        isSame = false;
+                        break;
                     }
+                }
+                if(isSame){
+                    batchNo = tempItemList.get(0).getBatchNo();
                 }
             }
             Map<String,Integer> skuMap = itemList.stream()
@@ -94,13 +102,14 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 String finalBatchNo = batchNo;
                 List<DaMaiCreateInboundRequest.AsnAnSkuListDTO> sameBatchList = asnAnSkuList.stream()
                         .filter(v -> v.getCustPackageNo().equals(finalBatchNo)).collect(Collectors.toList());
-                itemList.get(0).setBatchNo(batchNo);
+                itemList.forEach(v->v.setBatchNo(finalBatchNo));
                 //箱数+1，重新计算单箱sku数量
                 for (DaMaiCreateInboundRequest.AsnAnSkuListDTO asnAnSkuListDTO : sameBatchList) {
+                    Integer currentTotal = asnAnSkuListDTO.getTotalSkuQty() * asnAnSkuListDTO.getPackQty();
                     Integer packQty = asnAnSkuListDTO.getPackQty();
                     packQty = packQty + 1;
                     asnAnSkuListDTO.setPackQty(packQty);
-                    asnAnSkuListDTO.setTotalSkuQty((asnAnSkuListDTO.getTotalSkuQty() + skuMap.get(asnAnSkuListDTO.getCustSkuCode()))/packQty);
+                    asnAnSkuListDTO.setTotalSkuQty((currentTotal + skuMap.get(asnAnSkuListDTO.getCustSkuCode()))/packQty);
                 }
             }else{
                 //批次号，当前日期
