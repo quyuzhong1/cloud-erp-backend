@@ -76,8 +76,6 @@ public class DaMaiOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 		if(StringUtils.isBlank(erpOrderStatus)) {
 			return null;
 		}
-		String interceptStatus = dmpThirdOutboundEntity.getInterceptStatus();
-		String erpInterceptStatus = JiFengEnums.InterceptStatusEnum.getErpOrderStatus(interceptStatus);
 
     	PlatformOutboundDTO platformOutboundDTO = BeanUtil.copyProperties(dmpThirdOutboundEntity, PlatformOutboundDTO.class);
     	String sourcePlatform = dmpThirdOutboundEntity.getSourcePlatform();
@@ -87,7 +85,6 @@ public class DaMaiOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(JiFengEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
-		platformOutboundDTO.setInterceptStatus(erpInterceptStatus);
 
         return platformOutboundDTO;
     }

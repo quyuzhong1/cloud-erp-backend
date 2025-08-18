@@ -138,6 +138,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .eq(OverseasProviderWarehouseEntity::getDisabled,false)
                 .orderByAsc(OverseasProviderWarehouseEntity::getId)
                 .last("LIMIT 1")
                 .one();
