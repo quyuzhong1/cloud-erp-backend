@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -32,10 +33,8 @@ import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.SaleStateEnum;
-import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
-import com.erp.model.plm.enums.SkuStdCostTabEnum;
+import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -48,7 +47,6 @@ import com.erp.server.plm.mapper.SkuStdCostDetailMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,6 +89,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private FileFeign fileFeign;
     @Resource
     private BomSkuService bomSkuService;
+    @Resource
+    private SysLogService sysLogService;
+
+    private static final String CLASSPATH = String.valueOf(SkuStdCostDetailEntity.class);
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -175,7 +177,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
+    public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeCommonDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         // 数据校验
         validateChangeParams(addDTO, listDTO, lastListDTO);
         // 构建实体
@@ -187,6 +189,16 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!save) {
             throw new ServiceException("sku标准成本单保存失败");
         }
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】,sku:【{}】,生效日期：【{}】, 标准成本(不含税)【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                "sku标准成本表价格变更",
+                listDTO.getSkuNo(),
+                addDTO.getEffectiveDate(),
+                addDTO.getStdCostPrice() + addDTO.getCurrency()
+                );
+        //操作日志
+        sysLogService.addSysLogBySave(msg, CLASSPATH, newDetailEntity.getId(), listDTO.getSkuId());
+
         return BatchResultDTO.success(newDetailEntity.getId(), "");
     }
 
@@ -195,10 +207,13 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
      * 修改处理数据
      */
     @Override
-    public void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO) {
+    public SkuStdCostDetailEntity updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO) {
+        SkuStdCostDetailEntity newEntity = new SkuStdCostDetailEntity();
+        // 复制旧数据
+        BeanUtil.copyProperties(old, newEntity, true);
         // 验证数据 & 数据赋值
-        old.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
-        old.setCurrency(addOrUpdateDTO.getCurrency());
+        newEntity.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
+        newEntity.setCurrency(addOrUpdateDTO.getCurrency());
         if (!ApproveStatusEnum.WAIT_SUBMIT.equals(old.getApproveStatus())) {
             ServiceException.runError("非【待提交】状态不能修改");
         }
@@ -211,8 +226,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         // 设置值（只有新增时才会走到这里）
         if (old.getEffectiveDate() == null) {
-            old.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
+            newEntity.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
         }
+        return newEntity;
     }
 
     /**
@@ -227,14 +243,24 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        return updateAndLog(addOrUpdateDTO, old);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateAndLog(SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO, SkuStdCostDetailEntity old) {
         // 数据处理
-        updateHandleData(old, addOrUpdateDTO);
+        SkuStdCostDetailEntity newEntity = updateHandleData(old, addOrUpdateDTO);
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(old.getMainId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku标准成本主单"));
         log.info("编辑 开始修改sku标准成本单数据，单号：【{}】", old.getId());
-        boolean save = super.updateById(old);
-        if (!save) {
+        boolean update = super.updateById(newEntity);
+        if (!update) {
             throw new ServiceException("sku标准成本单保存失败");
         }
-        return Boolean.TRUE;
+        String msg = CharSequenceUtil.format("编辑【{}】sku标准成本", mainEntity.getSkuNo());
+        //操作日志
+        sysLogService.addSysLogByUpdate(old, newEntity, CLASSPATH, old.getId(), mainEntity.getSkuId(), msg);
+        return update;
     }
 
 
@@ -325,9 +351,20 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         log.info("提交 开始修改sku标准成本单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
+        // 启动流程（如果需要的话）
         log.info("提交 开始启动sku标准成本单流程，id=：【{}】", entity.getId());
         startProcess(entity);
+
+        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku标准成本主单"));
+
+        //操作日志
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+                .setBusinessId(entity.getId())
+                .setPid(mainEntity.getSkuId())
+                .setOperation("状态变更")
+                .setClassPath(CLASSPATH);
+        sysLogService.addSysLogByOther(sysLogEntity);
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.SUBMIT);
     }
@@ -360,6 +397,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 调用流程审核
         approveProcess(entity, dto);
 
+        //操作日志
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据审核通过 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+                .setBusinessId(entity.getId())
+                .setPid(mainEntity.getSkuId())
+                .setOperation("状态变更")
+                .setClassPath(CLASSPATH);
+        sysLogService.addSysLogByOther(sysLogEntity);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -404,6 +449,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 更新审核信息
         updateForDisApprove(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        //操作日志
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据反审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+                .setBusinessId(entity.getId())
+                .setPid(mainEntity.getSkuId())
+                .setOperation("状态变更")
+                .setClassPath(CLASSPATH);
+        sysLogService.addSysLogByOther(sysLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -429,7 +482,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 删除主单数据
         log.info("删除 开始删除sku标准成本单主单数据，id：【{}】", id);
         super.removeById(id);
-        // 删除日志数据
+        //操作日志
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据删除 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+                .setBusinessId(entity.getId())
+                .setPid(mainEntity.getSkuId())
+                .setOperation("状态变更")
+                .setClassPath(CLASSPATH);
+        sysLogService.addSysLogByOther(sysLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.DELETE);
     }
 
@@ -460,6 +520,15 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         revokeDTO.setBusinessKey(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
+
+        //操作日志
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据撤销 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
+                .setBusinessId(entity.getId())
+                .setPid(mainEntity.getSkuId())
+                .setOperation("状态变更")
+                .setClassPath(CLASSPATH);
+        sysLogService.addSysLogByOther(sysLogEntity);
         return BatchResultDTO.success(entity.getId(), mainEntity.getSkuNo(), OperationTypeEnum.CANCEL_PROCESS);
     }
 

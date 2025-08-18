@@ -2,6 +2,7 @@ package com.erp.server.plm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
@@ -45,9 +46,14 @@ public class SkuStdCostDetailQueryHandler extends AbstractQueryHandler {
     }
 
     /**
-     *
+     * 获取选项卡对应的SQL
      */
     public String getTabSql(Object value) {
+        // 全部(sku对应最新)
+        if (SkuStdCostTabEnum.ALL.getCode().equals(value)) {
+            super.buildSplicingSQLDTO("rn", QueryConditionEnum.EQ, 1, QueryDataTypeEnum.NUMBER);
+        }
+
         //待我审核
         if (SkuStdCostTabEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
@@ -61,18 +67,15 @@ public class SkuStdCostDetailQueryHandler extends AbstractQueryHandler {
                 return this.getQueryEmptySql();
             }
         }
+        //已审核
+        if (SkuStdCostTabEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        }
         // 不通过
-        if (PurchasePriceTabFlagEnum.REJECT.getCode().equals(value)) {
+        if (SkuStdCostTabEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
-        //已审核启用
-        if (PurchasePriceTabFlagEnum.APPROVE_ENABLE.getCode().equals(value)) {
-            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-        }
-        //已审核停用
-        if (PurchasePriceTabFlagEnum.APPROVE_DISABLED.getCode().equals(value)) {
-            super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-        }
+        // 历史(包含所有)
         return super.getSplicingSQL();
     }
 

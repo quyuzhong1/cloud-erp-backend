@@ -1,11 +1,11 @@
 package com.erp.server.plm.service;
 
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -64,7 +64,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeDTO dto, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO listDTO1);
+    BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeCommonDTO dto, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO listDTO1);
 
 
     /**
@@ -74,7 +74,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @author Jim
      * @date: 2025-08-08
      */
-    void updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO);
+    SkuStdCostDetailEntity updateHandleData(SkuStdCostDetailEntity old, SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO);
 
     /**
      * 修改
@@ -85,6 +85,14 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @date: 2025-08-08
      */
     Boolean update(SkuStdCostDetailDTO.UpdateDTO dto);
+
+
+    /**
+     * 修改
+     * @param addOrUpdateDTO
+     * @param old
+     */
+    Boolean updateAndLog(SkuStdCostDetailDTO.UpdateCommonDTO addOrUpdateDTO, SkuStdCostDetailEntity old);
 
     /**
      * 分页列表查询
