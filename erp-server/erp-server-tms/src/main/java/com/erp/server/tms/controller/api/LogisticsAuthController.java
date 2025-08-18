@@ -70,7 +70,8 @@ public class LogisticsAuthController extends BaseController {
                 ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
-                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
             authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
         }
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);

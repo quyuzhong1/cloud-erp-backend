@@ -224,35 +224,39 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE.getCode());
             }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode());
+            }else if(LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.AMAZON.getCode());
             }else{
                 throw new ServiceException("不支持的平台，请联系IT处理");
             }
         } catch (Exception e) {
             log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
         }
-        if (result != null && (!result.isSuccess() || CollectionUtil.isEmpty(result.getData()))) {
+        if (Objects.isNull(result) || CollUtil.isEmpty(result.getData()) || !result.isSuccess() ){
             throw new ServiceException("请先完成店铺授权后再执行物流授权");
         }
+        ShopAuthEntity shopAuthEntity = null;
         //美客多校验账号店铺是否存在授权
-        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)) {
 
             String shopAccount = authMap.get("shopAccount");
-            if(CharSequenceUtil.isBlank(shopAccount)){
+            if (CharSequenceUtil.isBlank(shopAccount)) {
                 throw new ServiceException("请输入账号");
             }
             List<ShopAuthEntity> authEntityList = result.getData();
-            if(CollUtil.isEmpty(authEntityList)){
+            if (CollUtil.isEmpty(authEntityList)) {
                 throw new ServiceException("请先完成店铺授权后再执行物流授权");
             }
             List<String> shopIds = authEntityList.stream().map(ShopAuthEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
-            if(CollUtil.isEmpty(shopInfoEntityList)){
+            if (CollUtil.isEmpty(shopInfoEntityList)) {
                 throw new ServiceException("店铺信息未找到");
             }
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> shopAccount.equals(e.getAccount()) && AuthStatusEnum.ALREADY.getCode().equals(e.getAuthStatus())).findFirst().orElse(null);
-            if(Objects.isNull(shopInfoEntity)){
+            if (Objects.isNull(shopInfoEntity)) {
                 throw new ServiceException("请先完成店铺授权后再执行物流授权");
             }
+            shopAuthEntity = authEntityList.stream().filter(e -> shopInfoEntity.getId().equals(e.getShopId())).findFirst().orElse(null);
         }
         //根据主店铺获取子店铺token
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -267,6 +271,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.AMAZON_ACCESS_TOKEN;
         }else{
             throw new ServiceException("不支持的平台，请联系IT处理");
         }
@@ -282,14 +288,16 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("请先完成中台授权后再执行物流授权");
         }
-        ShopAuthEntity shopAuthEntity = result.getData().get(0);
+        if (Objects.isNull(shopAuthEntity)){
+            shopAuthEntity = result.getData().get(0);
+        }
         if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopeeId());
             authMap.put("token",shopAuthEntity.getAccessToken());
             authMap.put("host",cfgAppClient.getUrl());
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
-        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
             authMap.put("token",shopAuthEntity.getAccessToken());
         }
