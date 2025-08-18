@@ -15,8 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
+import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
+import javax.validation.Validator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 售后申请表
@@ -31,6 +34,9 @@ public class AfterSaleOpenApi {
     private AfterSaleFeign afterSaleFeign;
     @Resource
     private OmsDropDownFeign omsDropDownFeign;
+
+    @Resource
+    private Validator validator;
 
 
     /**
@@ -86,9 +92,11 @@ public class AfterSaleOpenApi {
         if(CollUtil.isEmpty(dto.getDetailList()) && CollUtil.isEmpty(dto.getAttachmentList())){
             return  ApiResult.error(500, "sku明细或图片附件至少填写一种");
         }
-        //平台订单号只能包含数字、大小写字母和常用特殊字符
-        if( StringUtils.isNotBlank(dto.getPlatformCode()) && !dto.getPlatformCode().matches("^[a-zA-Z0-9\\s\\-_.,;:!?@#$%^&*()+=<>{}\\[\\]\\\\|/]*$")){
-            return  ApiResult.error(500, "平台订单号只能包含数字、大小写字母和常用特殊字符");
+        // 手动校验参数
+        Set<ConstraintViolation<AfterSaleDTO.AddDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            ConstraintViolation<AfterSaleDTO.AddDTO> firstViolation = violations.iterator().next();
+            return ApiResult.error(500, firstViolation.getMessage());
         }
         return afterSaleFeign.add(dto);
     }
