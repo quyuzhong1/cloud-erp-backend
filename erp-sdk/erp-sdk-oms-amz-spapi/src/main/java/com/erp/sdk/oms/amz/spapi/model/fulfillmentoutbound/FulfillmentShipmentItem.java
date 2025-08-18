@@ -10,19 +10,24 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.StringList;
 
+import java.io.IOException;
 /**
  * Item information for a shipment in a fulfillment order.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class FulfillmentShipmentItem {
   @SerializedName("sellerSku")
   private String sellerSku = null;
@@ -39,6 +44,9 @@ public class FulfillmentShipmentItem {
   @SerializedName("serialNumber")
   private String serialNumber = null;
 
+  @SerializedName("manufacturerLotCodes")
+  private StringList manufacturerLotCodes = null;
+
   public FulfillmentShipmentItem sellerSku(String sellerSku) {
     this.sellerSku = sellerSku;
     return this;
@@ -48,7 +56,7 @@ public class FulfillmentShipmentItem {
    * The seller SKU of the item.
    * @return sellerSku
   **/
-
+  
   public String getSellerSku() {
     return sellerSku;
   }
@@ -63,10 +71,10 @@ public class FulfillmentShipmentItem {
   }
 
    /**
-   * The fulfillment order item identifier that the seller created and submitted with a call to the createFulfillmentOrder operation.
+   * The fulfillment order item identifier that the seller created and submitted with a call to the &#x60;createFulfillmentOrder&#x60; operation.
    * @return sellerFulfillmentOrderItemId
   **/
-
+  
   public String getSellerFulfillmentOrderItemId() {
     return sellerFulfillmentOrderItemId;
   }
@@ -84,7 +92,7 @@ public class FulfillmentShipmentItem {
    * Get quantity
    * @return quantity
   **/
-
+  
   public Integer getQuantity() {
     return quantity;
   }
@@ -102,7 +110,7 @@ public class FulfillmentShipmentItem {
    * An identifier for the package that contains the item quantity.
    * @return packageNumber
   **/
-
+  
   public Integer getPackageNumber() {
     return packageNumber;
   }
@@ -120,7 +128,7 @@ public class FulfillmentShipmentItem {
    * The serial number of the shipped item.
    * @return serialNumber
   **/
-
+  
   public String getSerialNumber() {
     return serialNumber;
   }
@@ -129,9 +137,27 @@ public class FulfillmentShipmentItem {
     this.serialNumber = serialNumber;
   }
 
+  public FulfillmentShipmentItem manufacturerLotCodes(StringList manufacturerLotCodes) {
+    this.manufacturerLotCodes = manufacturerLotCodes;
+    return this;
+  }
+
+   /**
+   * Get manufacturerLotCodes
+   * @return manufacturerLotCodes
+  **/
+  
+  public StringList getManufacturerLotCodes() {
+    return manufacturerLotCodes;
+  }
+
+  public void setManufacturerLotCodes(StringList manufacturerLotCodes) {
+    this.manufacturerLotCodes = manufacturerLotCodes;
+  }
+
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -143,12 +169,13 @@ public class FulfillmentShipmentItem {
         Objects.equals(this.sellerFulfillmentOrderItemId, fulfillmentShipmentItem.sellerFulfillmentOrderItemId) &&
         Objects.equals(this.quantity, fulfillmentShipmentItem.quantity) &&
         Objects.equals(this.packageNumber, fulfillmentShipmentItem.packageNumber) &&
-        Objects.equals(this.serialNumber, fulfillmentShipmentItem.serialNumber);
+        Objects.equals(this.serialNumber, fulfillmentShipmentItem.serialNumber) &&
+        Objects.equals(this.manufacturerLotCodes, fulfillmentShipmentItem.manufacturerLotCodes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sellerSku, sellerFulfillmentOrderItemId, quantity, packageNumber, serialNumber);
+    return Objects.hash(sellerSku, sellerFulfillmentOrderItemId, quantity, packageNumber, serialNumber, manufacturerLotCodes);
   }
 
 
@@ -162,6 +189,7 @@ public class FulfillmentShipmentItem {
     sb.append("    quantity: ").append(toIndentedString(quantity)).append("\n");
     sb.append("    packageNumber: ").append(toIndentedString(packageNumber)).append("\n");
     sb.append("    serialNumber: ").append(toIndentedString(serialNumber)).append("\n");
+    sb.append("    manufacturerLotCodes: ").append(toIndentedString(manufacturerLotCodes)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -170,7 +198,7 @@ public class FulfillmentShipmentItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -178,4 +206,3 @@ public class FulfillmentShipmentItem {
   }
 
 }
-
