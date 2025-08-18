@@ -451,7 +451,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //采购单价赋值
             PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                             obj.getSkuId().equals(entity.getSkuId())
-                            && obj.getSupplierId().equals(entity.getSupplierId())
+                            && obj.getSupplierId().equals(dto.getSupplierId())
                             && CharSequenceUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId()))
                     .findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
