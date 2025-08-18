@@ -131,4 +131,13 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     void updateRegisterStatusByParams(List<LogisticsBillDetailDTO.BillDetailDTO> sucessList, int status);
 
     void updateTrackEnableByIds(List<String> detailIds);
+
+    void updateRegisterParams(List<LogisticsTrackDTO.UpdateTrackDTO> refList);
+
+    /**
+     * 根据第三方配置关系id查询详情数量
+     * @param id
+     * @return
+     */
+    Integer countByThirdRefId(String id);
 }

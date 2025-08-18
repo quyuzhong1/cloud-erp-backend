@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "soInfo")
+@FeignClient(name = "erp-oms", contextId = "soInfoFeign",configuration = {FeignErrorDecoder.class})
 public interface SoInfoFeign {
 
     @PostMapping("feign/soInfo/getSoInfoById")

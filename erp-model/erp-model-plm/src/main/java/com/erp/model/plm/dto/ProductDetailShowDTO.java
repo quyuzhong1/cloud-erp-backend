@@ -376,6 +376,10 @@ public class ProductDetailShowDTO implements Serializable {
      * 箱规高
      */
     private BigDecimal boxHeight;
+    /**
+     * 物流属性
+     */
+    private String productProperty;
 
     /**
      * 目标不含税成本

@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 采购退货入库单
@@ -151,6 +152,25 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * @description: 原子批量删除销售退货入库单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoReturnInstockEntity entity);
 
     /**
      * 导出
@@ -347,4 +367,11 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return
      */
     BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoReturnInstockEntity>
+     */
+    Map<String, SoReturnInstockEntity> mapByIds(List<String> ids);
 }

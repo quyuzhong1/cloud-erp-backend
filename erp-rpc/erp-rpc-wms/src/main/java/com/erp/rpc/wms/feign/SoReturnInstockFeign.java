@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * 退货入库单 feign
  */
-@FeignClient(name = "erp-wms", contextId = "soReturnInstock")
+@FeignClient(name = "erp-wms", contextId = "soReturnInstock" ,configuration = {FeignErrorDecoder.class})
 public interface SoReturnInstockFeign {
     /**
      * 获取退货入库单

@@ -115,6 +115,7 @@ public class OverseasProviderController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @LogAction(value = LogActionEnum.GRANT, desc = "服务商授权")
     @PostMapping("/authorize")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -141,6 +142,7 @@ public class OverseasProviderController extends BaseController {
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
 //    @LogViewService
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消授权")
     public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
         return flag ? success() : failure();
@@ -200,9 +202,9 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:update",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
-        overseasProviderService.delete(dto.getId());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdDTO dto) {
+        List<BatchResultDTO> resultDTOList =overseasProviderService.delete(dto.getId());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

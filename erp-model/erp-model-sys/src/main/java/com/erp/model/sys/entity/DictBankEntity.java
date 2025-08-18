@@ -26,6 +26,12 @@ import java.io.Serializable;
 public class DictBankEntity extends BaseEntity<DictBankEntity> {
 
     /**
+     * 银行编号
+     */
+    @TableField("bank_no")
+    private String bankNo;
+
+    /**
      * 银行名称
      */
     @TableField("name")
@@ -43,12 +49,21 @@ public class DictBankEntity extends BaseEntity<DictBankEntity> {
     @TableField("headquarter_address")
     private String headquarterAddress;
 
+    /**
+     * 是否禁用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+
+    public static final String FIELD_BANK_NO = "bank_no";
 
     public static final String FIELD_NAME = "name";
 
     public static final String SERVICES_PHONE = "services_phone";
 
     public static final String HEADQUARTER_ADDRESS = "headquarter_address";
+
+    public static final String DISABLED = "disabled";
 
     @Override
     public Serializable pkVal() {

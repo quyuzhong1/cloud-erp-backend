@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
-@FeignClient(name = "erp-srm" ,configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-srm" ,contextId = "srmTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface SrmTaskFeign {
     /**
      * 更新业务单据状态

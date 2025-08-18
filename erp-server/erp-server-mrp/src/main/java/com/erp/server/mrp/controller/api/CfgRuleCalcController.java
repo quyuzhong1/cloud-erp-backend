@@ -4,9 +4,11 @@ package com.erp.server.mrp.controller.api;
 import com.common.business.dto.base.BatchParamsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CalcSalesInfoFavoriteDTO;
 import com.erp.model.mrp.dto.CfgRuleCalcDTO;
 import com.erp.server.mrp.service.CfgRuleCalcService;
@@ -51,6 +53,7 @@ public class CfgRuleCalcController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增试算配置")
     public ApiResult<BatchResultDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto) {
         return success(cfgRuleCalcService.add(dto));
     }
@@ -73,6 +76,7 @@ public class CfgRuleCalcController extends BaseController {
      * 下载历史销量
      * @param dto 参数
      */
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载历史销量")
     @PostMapping("/downloadHistorySales")
     public ApiResult<String> downloadHistorySales(@RequestBody @Validated CfgRuleCalcDTO.DownloadDTO dto) {
         cfgRuleCalcService.downloadHistorySales(dto);
@@ -96,6 +100,7 @@ public class CfgRuleCalcController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/addFavorite")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增关注模板 试算模板id={cfgRuleCalcId}")
     public ApiResult<String> addFavorite(@RequestBody @Validated CalcSalesInfoFavoriteDTO.AddDTO dto) {
         cfgRuleCalcService.addFavorite(dto);
         return success();
@@ -106,6 +111,7 @@ public class CfgRuleCalcController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/cancelFavorite")
+    @LogAction(value = LogActionEnum.DELETE, desc = "取消关注模板 试算模板id={cfgRuleCalcId}")
     public ApiResult<String> cancelFavorite(@RequestBody @Validated CalcSalesInfoFavoriteDTO.CancelDTO dto) {
         cfgRuleCalcService.cancelFavorite(dto);
         return success();

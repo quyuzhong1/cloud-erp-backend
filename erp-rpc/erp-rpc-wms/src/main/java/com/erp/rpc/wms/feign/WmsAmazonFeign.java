@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformOtherOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "amazonFeign")
+@FeignClient(name = "erp-wms", contextId = "amazonFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsAmazonFeign {
 
 

@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
@@ -8,7 +9,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-wms", contextId = "shipmentFeign")
+@FeignClient(name = "erp-wms", contextId = "shipmentFeign",configuration = {FeignErrorDecoder.class})
 public interface WmsShipmentFeign {
 
 

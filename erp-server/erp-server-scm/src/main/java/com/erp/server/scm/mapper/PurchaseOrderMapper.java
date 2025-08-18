@@ -216,4 +216,13 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
 
 
     List<PurchaseOrderDTO.SupplierSkuDTO> listSkuBySupplierIds(@Param("supplierIds") List<String> supplierIds);
+    /**
+     * 历史未完结订单分页查询
+     * @author will
+     * @date 2025/7/29 15:17
+     * @param query
+     * @param params
+     * @return IPage<AdjustListDTO>
+     */
+    IPage<PurchaseOrderDTO.AdjustListDTO> adjustPaging(Page query,@Param("params") PurchaseOrderDTO.SearchAdjustParamDTO params);
 }

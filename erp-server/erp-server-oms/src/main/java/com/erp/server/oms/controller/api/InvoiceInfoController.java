@@ -157,6 +157,7 @@ public class InvoiceInfoController extends BaseController {
      * 上传发票
      */
     @PostMapping("/uploadInvoice")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "上传发票")
     public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -258,6 +259,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<Object>
      */
     @PostMapping("/updateCce")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "开具Cce")
     public ApiResult<BatchResultDTO> updateCce(@RequestBody @Valid InvoiceInfoDTO.UpdateCceDTO dto) {
         return success(invoiceInfoService.updateCce(dto));
     }
@@ -270,6 +272,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/cancelInvoice")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消发票")
     public ApiResult<BatchResultDTO> cancelInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
         return success(invoiceInfoService.cancelInvoice(dto.getId(),dto.getRemark()));
     }

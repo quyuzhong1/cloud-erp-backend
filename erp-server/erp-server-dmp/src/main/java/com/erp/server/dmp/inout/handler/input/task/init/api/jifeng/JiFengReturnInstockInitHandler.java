@@ -75,6 +75,9 @@ public class JiFengReturnInstockInitHandler extends DmpInputInitHandler {
         request.setBeginTime(dmpInputTaskEntity.getStartTime().minusHours(9).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         request.setEndTime(dmpInputTaskEntity.getEndTime().minusHours(9).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         JiFengBaseResp<List<JiFengReturnOrderResp.RowsDTO>> resp = jiFengService.getReturnOrder(overseasProviderEntity.getAuthJson(),request);
+        if (resp == null) {
+            return Collections.emptyList();
+        }
         if (resp.getCode() != 0) {
             log.error("极风接口返回异常:{}", JSON.toJSONString(resp));
             throw new ServiceException("极风接口返回异常:" + resp.getMessage());

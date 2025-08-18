@@ -1,7 +1,10 @@
 package com.erp.server.admin.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
@@ -24,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("menu")
+@LogSystemModule("系统功能菜单")
 public class AdminApiController  extends BaseController {
 
     @Autowired
@@ -60,12 +64,14 @@ public class AdminApiController  extends BaseController {
     /**
      * 保存或者修改
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "保存系统菜单")
     @RequestMapping("/saveOrUpdate")
     public ApiResult<Object> save(@RequestBody @Validated MenuEntity sysMenu) {
         boolean resultFlag = menuService.saveOrUpdateMenu(sysMenu);
         return resultFlag ? success() : failure();
     }
 
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量保存系统菜单")
     @RequestMapping("/batchSave")
     public ApiResult<Object> batchSave(@RequestBody @Validated List<SysMenuDTO> list) {
         menuService.batchSaveMenu(list);
@@ -76,6 +82,7 @@ public class AdminApiController  extends BaseController {
     /**
      * 修改
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改系统菜单")
     @RequestMapping("/update")
     public ApiResult<Object> update(@RequestBody @Validated MenuEntity sysMenu) {
         menuService.updateById(sysMenu);
@@ -86,6 +93,7 @@ public class AdminApiController  extends BaseController {
     /**
      * 删除
      */
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除系统菜单")
     @RequestMapping("/remove")
     public ApiResult<Object> delete(@RequestBody List<String> menuIds) {
         menuService.removeMenuByIds(menuIds);

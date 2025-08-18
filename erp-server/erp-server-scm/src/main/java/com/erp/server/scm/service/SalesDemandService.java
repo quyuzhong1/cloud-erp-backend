@@ -107,7 +107,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean delete(List<String> ids);
+    List<BatchResultDTO> delete(List<String> ids);
     /**
      * @description: 提交
      * @author Will

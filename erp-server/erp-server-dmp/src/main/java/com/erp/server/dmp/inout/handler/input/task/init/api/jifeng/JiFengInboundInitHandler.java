@@ -81,7 +81,7 @@ public class JiFengInboundInitHandler extends DmpInputInitHandler {
             
             for(String receiveCode : receiveCodeList) {
 				JiFengBaseResp<JiFengInboundResp> resp = jiFengService.getInbound(overseasProviderEntity.getAuthJson(),receiveCode);
-            	if(resp.getCode() != 0) {
+            	if(Objects.isNull(resp) || resp.getCode() != 0) {
 					log.error("极风获取入库单失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
             		continue;
             	}

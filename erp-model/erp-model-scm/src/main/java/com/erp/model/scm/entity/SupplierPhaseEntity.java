@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -30,12 +31,6 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
     private String supplierId;
 
     /**
-     * 操作类型
-     */
-    @TableField("operate_type")
-    private String operateType;
-
-    /**
      * 当前阶段
      */
     @TableField(value="current_phase")
@@ -48,11 +43,38 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
     private String targetPhase;
 
     /**
+     * 当前等级
+     */
+    @TableField(value="current_grade_id")
+    private String currentGradeId;
+
+    /**
+     * 目标等级
+     */
+    @TableField(value="target_grade_id")
+    private String targetGradeId;
+
+    /**
      * 审核状态 
      */
     @TableField(value="approve_status" )
     private String approveStatus;
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
 
     /**
      * 说明

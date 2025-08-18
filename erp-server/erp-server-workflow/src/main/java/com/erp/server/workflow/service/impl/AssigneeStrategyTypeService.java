@@ -6,15 +6,13 @@ import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -110,5 +108,40 @@ public class AssigneeStrategyTypeService {
         String assignee = dto.getPropertiesDTO().getSomebody_exp();
         List<String> expStrList = CharSequenceUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.emptyList();
         return ProcessManagementServiceImpl.replaceApproveVariables(expStrList, dto.getVariablesMap());
+    }
+    /**
+     * 指定角色
+     * @param value 参数
+     * @return 审批人
+     */
+
+    public List<String> designatedRoleAssignee(CamundaDTO.StrategyParamDTO value) {
+        //根据类型判断
+        //现在只有SKU产品经理的查找逻辑
+        DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(value.getPropertiesDTO().getAssignee());
+        if (dictBasicEnum == null) {
+            return Collections.emptyList();
+        }
+        // 这里只处理SKU产品经理
+        if (DictBasicEnum.PRODUCT_MANAGER.equals(dictBasicEnum)) {
+            // 从变量map中获取skuProductManagerId
+            Map<String, Object> variablesMap = value.getVariablesMap();
+            String skuProductManagerId = (String) variablesMap.getOrDefault(DictBasicEnum.PRODUCT_MANAGER.getCode(), "");
+            return CharSequenceUtil.isNotBlank(skuProductManagerId) ? Arrays.asList(skuProductManagerId.split(",")) : Collections.emptyList();
+        }
+        // 其他角色类型可根据需要补充
+        return Collections.emptyList();
+    }
+    /**
+     * DQE负责人
+     * @param value 参数
+     * @return 审批人
+     */
+    public List<String> dqeOwnerAssignee(CamundaDTO.StrategyParamDTO value) {
+        //获取DQE负责人
+        //从参数map里面获取
+        Map<String, Object> variablesMap = value.getVariablesMap();
+        String dqeOwnerId = (String) variablesMap.getOrDefault("dqeOwnerId","");
+        return   CharSequenceUtil.isNotBlank(dqeOwnerId) ? Arrays.asList(dqeOwnerId.split(",")) : Collections.emptyList();
     }
 }

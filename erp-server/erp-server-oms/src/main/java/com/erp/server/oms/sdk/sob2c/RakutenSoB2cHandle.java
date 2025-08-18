@@ -80,7 +80,14 @@ public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
 
                 //平台仓拆分
                 List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
-                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
+                boolean result = true;
+
+                for (SoOutstockDTO.GenerateB2cDTO b2cDTO : generateB2cList) {
+                    if(!soOutstockFeign.generateB2cSoOutstockByData(b2cDTO)){
+                        result = false;
+                    }
+                }
+                return result;
             } catch (Exception e) {
                 log.error("[乐天生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -90,6 +97,7 @@ public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
                 addError.setMainId(mainEntity.getId());
                 addError.setMessage(e.getMessage());
                 soB2cErrorService.add(addError);
+                return false;
             }
         }
         return true;

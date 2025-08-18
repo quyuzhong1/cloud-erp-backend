@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "overseasProviderFeign")
+@FeignClient(name = "erp-wms", contextId = "overseasProviderFeign" ,configuration = {FeignErrorDecoder.class})
 public interface OverseasProviderFeign {
     /**
      * 根据平台编号查询平台信息

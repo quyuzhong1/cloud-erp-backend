@@ -91,6 +91,7 @@ public class FirstMileDeliveryController extends BaseController {
     menuCode = "wms:fbaDelivery:update",
     serviceClass = FirstMileDeliveryService.class,
     keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "头程发货单修改")
     public ApiResult update(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
         firstMileDeliveryService.update(dto);
         return success();
@@ -140,6 +141,7 @@ public class FirstMileDeliveryController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddAndSubmmitDTO> addAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.AddDTO dto) {
         // 新增
         BaseResultDTO.AddDTO resultAdd;
@@ -179,6 +181,7 @@ public class FirstMileDeliveryController extends BaseController {
             menuCode = "wms:fbaDelivery:updateAndSubmit",
             serviceClass = FirstMileDeliveryService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<BaseResultDTO.AddAndSubmmitDTO> updateAndSubmit(@RequestBody @Validated FirstMileDeliveryDTO.UpdateDTO dto) {
         try {
             firstMileDeliveryService.update(dto);

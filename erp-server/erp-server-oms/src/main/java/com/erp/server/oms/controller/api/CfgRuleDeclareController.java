@@ -95,6 +95,7 @@ public class CfgRuleDeclareController extends BaseController {
      * @date 2023-08-30 14:13
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "申报规则更改启用禁用状态")
     public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = cfgRuleDeclareService.updateStatus(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();

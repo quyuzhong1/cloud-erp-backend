@@ -5,10 +5,12 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.dto.MouldInfoImportDTO;
@@ -83,6 +85,7 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/draft")
+    @LogAction(value = LogActionEnum.INSERT, desc = "暂存")
     public ApiResult<BatchResultDTO> draft(@RequestBody @Validated MouldInfoDTO.DraftDTO dto) {
         return success(mouldInfoService.draft(dto));
     }
@@ -94,6 +97,7 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "保存并提交")
     public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated MouldInfoDTO.UpdateDTO dto) {
         return success(mouldInfoService.addAndSubmit(dto));
     }
@@ -107,6 +111,7 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/submit")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -136,6 +141,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -165,6 +171,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -195,6 +202,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/disApprove")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -224,6 +232,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -253,6 +262,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新备注")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -282,6 +292,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateStoreLocation")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新存放位置")
     public ApiResult<List<BatchResultDTO>> updateStoreLocation(@RequestBody @Validated MouldInfoDTO.StoreLocationDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());
         for (String id : dto.getDetailIdList()) {
@@ -311,6 +322,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateEnableTime")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新启用时间")
     public ApiResult<List<BatchResultDTO>> updateEnableTime(@RequestBody @Validated MouldInfoDTO.EnableTimeDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());
         for (String id : dto.getDetailIdList()) {
@@ -340,6 +352,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "模具管理导出")
     public ApiResult<Void> export(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         mouldInfoService.export(dto);
         return success();
@@ -456,6 +469,7 @@ public class MouldInfoController extends BaseController {
      * 导入
      */
     @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入模具信息")
     public ApiResult<MouldInfoImportDTO> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         MouldInfoImportDTO result = mouldInfoService.importExcel(excelFile, response);
         return success(result);

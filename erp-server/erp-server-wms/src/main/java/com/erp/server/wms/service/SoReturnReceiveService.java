@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 采购退货签收单
@@ -143,6 +144,25 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
     Boolean delete(List<String> ids);
 
     /**
+     * @description: 原子批量删除销售退货签收单
+     * @author Will
+     * @date: 2023/5/17 15:15
+     * @param ids
+     * @param returnDetails
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+
+    /**
+     * 删除单个实体
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param entity
+     * @return BatchResultDTO
+     **/
+    BatchResultDTO deleteEntity(SoReturnReceiveEntity entity);
+
+    /**
      * 导出
      *
      * @param dto dto
@@ -232,4 +252,11 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
     Boolean pdaDisApprove(List<String> ids);
 
     PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoReturnReceiveEntity>
+     */
+    Map<String, SoReturnReceiveEntity> mapByIds(List<String> ids);
 }

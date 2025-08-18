@@ -6,9 +6,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.constant.CommonConstants;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("dict/country")
+@LogSystemModule("地址管理-国家管理")
 public class DictCountryController extends BaseController {
 
 
@@ -46,6 +50,7 @@ public class DictCountryController extends BaseController {
      * @return
      */
     @GetMapping("/init")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "金蝶初始化数据")
     public ApiResult init() {
         Boolean result = dictCountryService.init();
         return result ? success() : failure();
@@ -70,6 +75,7 @@ public class DictCountryController extends BaseController {
      * @return
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "国家Excel导出")
     @WebAdvanceQuery(handler = DictParentBaseQueryHandler.class)
     public ApiResult<Boolean> paging(@RequestBody @Validated DictCountryDTO.PagingParamDTO dto) {
         dictCountryService.exportList(dto);
@@ -83,6 +89,7 @@ public class DictCountryController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加国家")
     public ApiResult add(@RequestBody @Validated DictCountryDTO.AddDTO dto) {
         Boolean result = dictCountryService.add(dto);
         return result ? success() : failure();
@@ -95,6 +102,7 @@ public class DictCountryController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改国家")
     public ApiResult update(@RequestBody @Validated DictCountryDTO.UpdateDTO dto) {
         Boolean result = dictCountryService.update(dto);
         return result ? success() : failure();
@@ -206,6 +214,7 @@ public class DictCountryController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<List<BatchResultDTO>>  delete(@RequestBody  @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -220,7 +229,7 @@ public class DictCountryController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getNameCn(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

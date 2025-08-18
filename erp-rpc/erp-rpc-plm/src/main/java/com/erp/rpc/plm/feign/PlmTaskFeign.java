@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -31,7 +32,7 @@ import java.util.Set;
  * @Date 2022-10-21 9:06
  * @Created by yl
  */
-@FeignClient(name = "erp-plm")
+@FeignClient(name = "erp-plm", contextId = "plmTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface PlmTaskFeign {
 
     /**

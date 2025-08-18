@@ -12,7 +12,7 @@ import lombok.Getter;
 public enum CurrencyEnum {
 
     //有的第三方接口使用这个
-    RMB("RMB","人民币","¥"),
+//    RMB("RMB","人民币","¥"),
 
     CNY("CNY","人民币","¥"),
     CNH("CNH","离岸人民币","¥"),

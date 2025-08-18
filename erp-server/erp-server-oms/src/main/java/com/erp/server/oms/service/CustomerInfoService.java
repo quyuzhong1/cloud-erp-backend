@@ -166,7 +166,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 14:30
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO>  deleteByIds(List<String> ids);
 
 
     /**

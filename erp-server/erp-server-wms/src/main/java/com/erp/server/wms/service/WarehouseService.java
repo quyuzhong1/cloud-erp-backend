@@ -129,7 +129,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
     /**
      * 获取仓库详情

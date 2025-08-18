@@ -17,4 +17,6 @@ public interface ThirdWarehouseDeliveryDetailService extends SuperService<ThirdW
 
 
     List<ThirdWarehouseDeliveryDetailEntity> listByMainId(String mainId);
+
+    void removeByMainIds(List<String> mainIds);
 }

@@ -636,7 +636,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.lambdaQuery().select(WmsDeliveryPlanDetailEntity::getMainId).in(WmsDeliveryPlanDetailEntity::getId,detailIds).list();
         List<String> ids = wmsDeliveryPlanDetailEntities.stream().map(WmsDeliveryPlanDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
-
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
@@ -646,7 +645,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 //        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
 //        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
         //根据skuId查询拥有的子sku
-        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //查询skuId产品信息

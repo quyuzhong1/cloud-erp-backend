@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.sys.dto.SysLogRecordDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -13,7 +14,7 @@ import java.util.List;
  * @author Jim
  * @since 2023-08-25
  **/
-@FeignClient(name = "erp-sys", contextId = "log")
+@FeignClient(name = "erp-sys", contextId = "sysLogRecordFeign",configuration = {FeignErrorDecoder.class})
 public interface SysLogRecordFeign {
 
     /**
