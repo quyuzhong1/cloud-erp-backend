@@ -237,7 +237,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
         ShopAuthEntity shopAuthEntity = null;
         //美客多校验账号店铺是否存在授权
-        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)) {
+        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
 
             String shopAccount = authMap.get("shopAccount");
             if (CharSequenceUtil.isBlank(shopAccount)) {
@@ -271,7 +271,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
-        }else if(LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)){
+        }else if(LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.AMAZON_ACCESS_TOKEN;
         }else{
             throw new ServiceException("不支持的平台，请联系IT处理");
@@ -297,7 +297,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             authMap.put("host",cfgAppClient.getUrl());
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
-        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMAZON.getCode().equals(logisticsPlatform)){
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
             authMap.put("token",shopAuthEntity.getAccessToken());
         }
