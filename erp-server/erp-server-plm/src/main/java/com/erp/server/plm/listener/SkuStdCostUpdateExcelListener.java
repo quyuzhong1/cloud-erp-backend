@@ -155,7 +155,7 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
                             new BigDecimal(excelDTO.getStdCostPrice()),
                             excelDTO.getCurrency(),
                             LocalDateUtil.parseStrToLocalDate(excelDTO.getEffectiveDateStr()));
-                    skuStdCostDetailService.updateHandleData(detailEntity, updateCommonDTO);
+                    skuStdCostDetailService.updateAndLog(updateCommonDTO, detailEntity);
                     successList.add(detailEntity);
                 } catch (Exception e) {
                     excelDTO.setErrorMsg(e.getMessage());
@@ -164,6 +164,5 @@ public class SkuStdCostUpdateExcelListener extends AnalysisEventListener<SkuStdC
             }
 
         }
-        skuStdCostDetailService.updateBatchById(successList);
     }
 }
