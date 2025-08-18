@@ -41,10 +41,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.DictBasicEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.model.scm.enums.SupplierTabEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -1348,7 +1345,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             return dataList.stream().map(data -> {
                 BaseIdDTO baseIdDTO = new BaseIdDTO();
@@ -1387,7 +1394,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             // 未审核通过的设置为禁用
             dataList.stream().forEach(data -> {
