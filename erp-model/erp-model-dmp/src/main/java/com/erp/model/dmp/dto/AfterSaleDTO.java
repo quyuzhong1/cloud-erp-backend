@@ -501,7 +501,7 @@ public class AfterSaleDTO implements Serializable {
         @NotBlank(message = "平台订单号不能为空")
         @Size(max = 32,message = "平台订单号最大长度不能超过32位")
         @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]*$",
-                message = "字段只能包含数字、大小写字母和常用特殊字符")
+                message = "平台订单号只能包含数字、大小写字母和常用特殊字符")
         private String platformCode;
 
         /**
