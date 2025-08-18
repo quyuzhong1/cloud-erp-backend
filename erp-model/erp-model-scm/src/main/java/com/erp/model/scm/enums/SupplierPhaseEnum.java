@@ -15,10 +15,12 @@ import java.util.Arrays;
  */
 public enum SupplierPhaseEnum {
 
-    POTENTIAL("potential", "潜在", 0),
-    ACCESS("access", "准入", 1),
-    CONFORM("conform", "合格", 2),
-    ELIMINATE("eliminate", "淘汰", 3);
+    STRATEGY("strategy", "战略", 0),
+    PREFERRED("preferred", "优选", 1),
+    QUALIFIED("qualified", "合格", 2),
+    PREELIMINATION("preElimination", "预淘汰", 3),
+    ELIMINATED("eliminated", "已淘汰", 4),
+    ;
 
 
     @EnumValue

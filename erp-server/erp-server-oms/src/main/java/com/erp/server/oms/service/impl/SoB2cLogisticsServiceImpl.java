@@ -527,6 +527,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                .set(SoB2cLogisticsEntity::getLogisticsChannelId, channel.getId())
                .set(SoB2cLogisticsEntity::getLogisticsChannelName, channel.getName())
                .set(SoB2cLogisticsEntity::getCode, dto.getTransportNo())
+               .set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.ERP.getCode())
                .set(SoB2cLogisticsEntity::getTrackNo, dto.getTrackNo()).update();
          operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "物流转单");
         return BatchResultDTO.success(dto.getId(),soB2cEntity.getCode(),"转单成功");

@@ -35,7 +35,7 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @param platform
      * @return
      */
-    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName, String thirdBarcode, String authId, String platform);
+    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName, String thirdBarcode, String authId, String platform,String platformStatus);
 
     /**
      * 根据平台sku 获取到对应的list

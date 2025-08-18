@@ -92,6 +92,7 @@ public class SkuMappingController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      */
     @PostMapping("/addWarehouseSku")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加库存对应sku")
     public ApiResult add(@RequestBody @Validated SkuMappingDTO.AddWarehouseSkuDTO dto) {
         String id = skuMappingService.addWarehouseSku(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -146,6 +147,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/addCustomer")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增客户SKU")
     public ApiResult<String> addCustomer(@ModelAttribute @Validated(value = {AddGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
         return success(skuMappingService.addCustomer(dto));
     }
@@ -156,6 +158,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/updateCustomer")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新客户SKU")
     public ApiResult<String> updateCustomer(@ModelAttribute @Validated(value = {UpdateGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
         return success(skuMappingService.updateCustomer(dto));
     }
@@ -163,6 +166,7 @@ public class SkuMappingController extends BaseController {
      * 批量更新客户SKU标签
      */
     @PostMapping("/batchUpdateCustomerLabel")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量更新客户SKU标签")
     public ApiResult<List<BatchResultDTO>> batchUpdateCustomerLabel(@RequestBody @Validated ValidList<SkuMappingDTO.CustomerLabelDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (SkuMappingDTO.CustomerLabelDTO dto : dtoList){
@@ -179,6 +183,7 @@ public class SkuMappingController extends BaseController {
      * 批量生成客户条码
      */
     @PostMapping("/batchGenerateCustomerLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量生成客户条码")
     public ApiResult<List<BatchResultDTO>> batchGenerateCustomerLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<SkuMappingEntity> mappingEntityList = skuMappingService.listByIds(dto.getIds());
@@ -211,6 +216,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入平台sku对照表")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "type") String type,HttpServletResponse response) {
         Boolean result = skuMappingService.importExcel(excelFile,type, response);
         return result ? success() : failure();

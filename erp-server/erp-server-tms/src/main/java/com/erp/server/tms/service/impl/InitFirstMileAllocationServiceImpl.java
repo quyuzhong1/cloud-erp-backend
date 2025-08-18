@@ -31,6 +31,7 @@ import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.SupplierTypeEnum;
 import com.erp.model.tms.enums.ReconciliationTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -90,6 +91,8 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(InitFirstMileAllocationDTO.AddDTO addDTO) {
@@ -406,6 +409,10 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         
         Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
+        Set<String> supplierIds = supplierIdMaps.keySet();
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+        Map<String, String> supplierNameMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getSupplierId, LogisticsSupplierEntity::getSupplierName));
+
         for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
         	// 当前添加的主账单记录
             Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
@@ -413,7 +420,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
                 BatchResultDTO updateResult;
                 String id = logisticsBillEntity.getId();
                 try {
-                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode());
+                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.INIT_PERIOD.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), logisticsBillEntity.getLogisticsSupplierId(), supplierNameMap.getOrDefault(logisticsBillEntity.getLogisticsSupplierId(), ""));
 
                 } catch (Exception e) {
                     log.error("头程对账生成失败", e);

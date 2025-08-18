@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "transferDeclare")
+@FeignClient(name = "erp-tms", contextId = "transferDeclare" ,configuration = {FeignErrorDecoder.class})
 public interface TransferDeclareFeign {
 
     /**

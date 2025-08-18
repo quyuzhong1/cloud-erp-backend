@@ -97,6 +97,10 @@ public class SoOutstockDTO implements Serializable {
         private String code;
 
         /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
          * 第三方单据编号
          */
         private String thirdCode;
@@ -404,6 +408,18 @@ public class SoOutstockDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+        /**
+         * 订单备注
+         */
+        private String remark;
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
         /**
          * 分区ID
          */
@@ -976,6 +992,14 @@ public class SoOutstockDTO implements Serializable {
          * 订单标签
          */
         private String tradeLabel;
+        /**
+         * 订单备注
+         */
+        private String remark;
+        /**
+         * 客户备注
+         */
+        private String customerRemark;
 
         /**
          * 军区id

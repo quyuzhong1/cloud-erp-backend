@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpBankInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpBankInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="bank_no" property="bankNo" />
+       <result column="bank_name" property="bankName" />
+       <result column="bank_type" property="bankType" />
+       <result column="province" property="province" />
+       <result column="city" property="city" />
+       <result column="district" property="district" />
+       <result column="create_org_id" property="createOrgId" />
+       <result column="use_org_id" property="useOrgId" />
+       <result column="bank_address" property="bankAddress" />
+       <result column="bank_description" property="bankDescription" />
+       <result column="country" property="country" />
+       <result column="status" property="status" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        platform_create_time,
+        platform_update_time,
+        source_system,
+        input_task_id,
+        convert_id,
+        next_level_id,
+        unique_encrypt,
+        data_encrypt,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        source_id,
+        bank_no,
+        bank_name,
+        bank_type,
+        province,
+        city,
+        district,
+        create_org_id,
+        use_org_id,
+        bank_address,
+        bank_description,
+        country,
+        status,
+        disabled
+    </sql>
+
+
+</mapper> 

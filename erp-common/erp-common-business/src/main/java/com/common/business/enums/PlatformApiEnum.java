@@ -117,6 +117,8 @@ public enum PlatformApiEnum {
 
     TRACK123_GET_TRACK(27,"getTask", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
 
+    BD_BANK(30,"BD_BANK", MongoTableNameContant.ORIGINAL_GC_PRODUCT, TaskConstant.GOODCANG_PULL_DATA_TASK),
+
     /**
      * 领星api
      */

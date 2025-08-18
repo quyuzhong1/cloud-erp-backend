@@ -10,6 +10,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/fully")
 @Validated
+@LogSystemModule("全托管订单")
 public class FullyManagedOrderController extends BaseController {
 
     @Resource
@@ -111,6 +113,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
         /**
          * 1,创建订单
@@ -150,6 +153,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         soB2cService.uploadLogisticsStatus(dto);
@@ -169,6 +173,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/submit")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -218,6 +223,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核全平台销售订单")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -288,6 +294,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废全平台销售订单")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -318,6 +325,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 15:32
      */
     @PostMapping("/unInvalid")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消作废全平台销售订单")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -376,6 +384,7 @@ public class FullyManagedOrderController extends BaseController {
      * @create 2024-01-09 11:47
      */
     @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程全平台销售订单")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -442,6 +451,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 15:37
      */
     @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改订单备注")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -472,6 +482,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 15:46
      */
     @PostMapping("/updateCategory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "编辑分类")
     public ApiResult<List<BatchResultDTO>> updateCategory(@RequestBody @Validated SoB2cDTO.SoB2cAddCategoryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -555,6 +566,7 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/saveFullyDistribution")
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @LogAction(value = LogActionEnum.INSERT, desc = "订单配货保存（前端手动配货）")
     public ApiResult<List<BatchResultDTO>> saveFullyDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -668,6 +680,7 @@ public class FullyManagedOrderController extends BaseController {
     @PostMapping("/submitDelivery")
     @Idempotent
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
@@ -701,6 +714,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 16:51
      */
     @PostMapping("/deliveryIntercept")
+    @LogAction(value = LogActionEnum.INSERT, desc = "发货拦截")
     public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -731,6 +745,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 16:53
      */
     @PostMapping("/cancelDeliveryIntercept")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消发货拦截")
     public ApiResult<List<BatchResultDTO>> cancelDeliveryIntercept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -774,6 +789,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/21 9:20
      */
     @PostMapping("/splitSave")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拆分保存")
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated List<SoB2cDTO.SplitSaveDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
         List<String> allSoIdList = new ArrayList<>();
@@ -822,6 +838,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/21 9:24
      */
     @PostMapping("/cancelSplit")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消拆分")
     public ApiResult<List<BatchResultDTO>> cancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -936,7 +953,7 @@ public class FullyManagedOrderController extends BaseController {
      */
     @PostMapping("/deliveryWithNotOutbound")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "不出库发货")
-    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
+    public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated List<SoB2cDTO.DeliveryWithNotOutboundDTO> dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -1001,6 +1018,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2024-06-17
      */
     @PostMapping("/addGift")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加赠品")
     public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated List<SoB2cDTO.GiftDTO> dtoList) {
         Map<String, List<SoB2cDTO.GiftDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(SoB2cDTO.GiftDTO::getId));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.size());
@@ -1210,6 +1228,7 @@ public class FullyManagedOrderController extends BaseController {
      * @return
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入全托管订单")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = fullyManagedOrderService.importExcel(excelFile, response);
         return result ? success() : failure();

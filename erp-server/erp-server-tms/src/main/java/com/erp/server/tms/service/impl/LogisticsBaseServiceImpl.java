@@ -18,10 +18,12 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
@@ -264,7 +266,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
+    public void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList) {
         if (CollectionUtils.isEmpty(records)){
             return;
         }
@@ -279,15 +281,12 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         //查询过滤单号开头配置
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("trackNoFilterPrefix"));
         List<String> prefixList = dictList.stream().map(DictBasicEntity::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        //获取映射信息
-        List<String> channelIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<LogisticsThirdChannelRefEntity> refEntityList = logisticsThirdChannelRefService.listByChannelIds(channelIds);
         //构建注册数据
-        buildRegisterData(records,refEntityList);
+        buildRegisterData(records,channelRefList,prefixList);
         //跟据类型判断走小包、海运
         ApiResult<List<RegisterResponseVO>> listApiResult;
         if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
-            listApiResult = processRegisterExpressDeliveryData(mapList, records, service,prefixList);
+            listApiResult = processRegisterExpressDeliveryData(mapList, records, service);
         } else {
             listApiResult = processRegisterOceanData(mapList,records,service);
         }
@@ -326,40 +325,10 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
     }
 
-    private void buildRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records, List<LogisticsThirdChannelRefEntity> refEntityList) {
-        if (CollUtil.isEmpty(records) || CollUtil.isEmpty(refEntityList)){
+    private void buildRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records, List<LogisticsThirdChannelRefDTO.PagingVO> channelRefList, List<String> prefixList) {
+        if (CollUtil.isEmpty(records)){
             return;
         }
-        records.forEach(record -> {
-            LogisticsThirdChannelRefEntity refEntity = refEntityList.stream().filter(e -> e.getLogisticsChannelId().equals(record.getChannelId())).findFirst().orElse(null);
-            if (Objects.nonNull(refEntity)){
-                record.setIsPushMobile(refEntity.getIsPushMobile());
-                record.setThirdSupplierCode(refEntity.getThirdSupplierCode());
-                if (CharSequenceUtil.isNotBlank(refEntity.getMobile())){
-                    record.setTelNumber(refEntity.getMobile());
-                }
-            }else {
-                record.setIsPushMobile(Boolean.FALSE);
-            }
-        });
-    }
-
-    /**
-     * @param mapList
-     * @param records
-     * @param service
-     * @param prefixList
-     * @return ApiResult<List < LogisticsTrackEntity>>
-     * @description: 获取快递运单轨迹
-     * @author Will
-     * @date: 2024/4/8 14:44
-     */
-    private ApiResult<List<RegisterResponseVO>> processRegisterExpressDeliveryData  (List<Map<String, String>> mapList, List<LogisticsTrackDTO.UpdateTrackDTO> records, LogisticsService service, List<String> prefixList) {
-        if (CollectionUtils.isEmpty(records)){
-            return ApiResult.success(null);
-        }
-        List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
-        //根据配置进行组装注册数据
         List<String> detailIds = new ArrayList<>();
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
@@ -367,6 +336,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 trackNo = record.getTrackNo();
             }
             if (CharSequenceUtil.isBlank(trackNo)){
+                detailIds.add(record.getId());
                 continue;
             }
             //根据配置过滤是否符合配置
@@ -377,15 +347,81 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     continue;
                 }
             }
+            if (CollUtil.isEmpty(channelRefList)){
+                continue;
+            }
+            //处理供应商编码和手机号
+            List<LogisticsThirdChannelRefDTO.PagingVO> collect = channelRefList.stream().filter(e -> e.getLogisticsChannelId().equals(record.getChannelId()) && !e.getDisabled()).collect(Collectors.toList());
+            if (CollUtil.isEmpty(collect)){
+                record.setTelNumber("");
+                record.setThirdSupplierCode("");
+                continue;
+            }
+            LogisticsThirdChannelRefDTO.PagingVO pagingVO = collect.get(0);
+            Boolean isPushMobile = pagingVO.getIsPushMobile();
+            if (!isPushMobile){
+                record.setTelNumber("");
+                record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
+                record.setThirdRefId(pagingVO.getId());
+                continue;
+            }
+            String pushType = pagingVO.getPushType();
+            record.setThirdSupplierCode(pagingVO.getThirdSupplierCode());
+            if (LogisticsThirdChannelRefPushTypeEnum.SENDER.getCode().equals(pushType) || LogisticsThirdChannelRefPushTypeEnum.RECEIVER.getCode().equals(pushType)){
+                record.setTelNumber(pagingVO.getMobile());
+                record.setThirdRefId(pagingVO.getId());
+            }else if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(pushType)){
+                collect.stream().filter(e -> e.getShopId().equals(record.getShopId())).findFirst().ifPresent(e -> {
+                    record.setTelNumber(e.getMobile());
+                    record.setThirdRefId(pagingVO.getId());
+                });
+            }else if (LogisticsThirdChannelRefPushTypeEnum.PLATFORM_SENDER.getCode().equals(pushType)){
+                collect.stream().filter(e -> e.getDictPlatform().equals(record.getSalesPlatform())).findFirst().ifPresent(e -> {
+                    record.setTelNumber(e.getMobile());
+                    record.setThirdRefId(pagingVO.getId());
+                });
+            }else if (LogisticsThirdChannelRefPushTypeEnum.ORDER_RECEIVER.getCode().equals(pushType)){
+                record.setThirdRefId(pagingVO.getId());
+            }
+        }
+        if (CollUtil.isNotEmpty(detailIds)){
+            logisticsBillDetailService.updateTrackEnableByIds(detailIds);
+        }
+        //更新注册手机号和关联关系
+        List<LogisticsTrackDTO.UpdateTrackDTO> refList = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getThirdRefId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(refList)){
+            logisticsBillDetailService.updateRegisterParams(refList);
+        }
+    }
+
+    /**
+     * @param mapList
+     * @param records
+     * @param service
+     * @return ApiResult<List < LogisticsTrackEntity>>
+     * @description: 获取快递运单轨迹
+     * @author Will
+     * @date: 2024/4/8 14:44
+     */
+    private ApiResult<List<RegisterResponseVO>> processRegisterExpressDeliveryData  (List<Map<String, String>> mapList, List<LogisticsTrackDTO.UpdateTrackDTO> records, LogisticsService service) {
+        if (CollectionUtils.isEmpty(records)){
+            return ApiResult.success(null);
+        }
+        List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
+        //根据配置进行组装注册数据
+        for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
+            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
+                trackNo = record.getTrackNo();
+            }
+            if (CharSequenceUtil.isBlank(trackNo)){
+                continue;
+            }
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
                     .courierCode(record.getThirdSupplierCode())
-                    .isPushMobile(record.getIsPushMobile())
                     .build());
-        }
-        if (CollUtil.isNotEmpty(detailIds)){
-            logisticsBillDetailService.updateTrackEnableByIds(detailIds);
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
             return ApiResult.success(null);
@@ -626,6 +662,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     public void syncLogisticsAddress(Map<String, String> authMap) {
         IopResponse sellerInfo = null;
         String shopId = authMap.get("shopId");
+        String shopName = authMap.get("shopName");
         try {
             sellerInfo = aliExpressShipperService.getLogisticsAddress(authMap);
         } catch (ApiException e) {
@@ -643,6 +680,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.DELIVER);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -652,6 +690,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.COLLECT);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -661,6 +700,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 sender.setType(LogisticsAddressTypeEnum.REFUND);
                 sender.setIsBySync(true);
                 sender.setShopId(shopId);
+                sender.setName(sender.getName() + "-" + shopName);
                 list.add(sender);
             });
         }
@@ -670,7 +710,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     @Override
-    public void syncTikTokLogisticsAddress(String shopId) {
+    public void syncTikTokLogisticsAddress(String shopId, String shopName) {
         List<LogisticsAddressEntity> dbList = logisticsAddressService.listByTypeAndShopId(LogisticsAddressTypeEnum.COLLECT, shopId);
         List<TikTokFullyAddressResp.DataDTO.AddressesDTO> tiktokFullyAddressList = tikTokFullService.listAddress(shopId);
         List<LogisticsAddressEntity> saveOrUpdateList = new ArrayList<>();
@@ -685,7 +725,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     .findFirst()
                     .orElse(new LogisticsAddressEntity());
             logisticsAddressEntity.setShopId(shopId);
-            logisticsAddressEntity.setName(addressesDTO.getContactName());
+            logisticsAddressEntity.setName(addressesDTO.getContactName() + "-" + shopName);
             logisticsAddressEntity.setType(LogisticsAddressTypeEnum.COLLECT);
             logisticsAddressEntity.setContact(addressesDTO.getContactName());
             logisticsAddressEntity.setAddressFirst(addressesDTO.getFullAddress());

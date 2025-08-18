@@ -1,8 +1,8 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
+import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 
 import java.util.List;
 
@@ -39,4 +39,12 @@ public interface KingdeePaymentConditionService extends SuperService<KingdeePaym
      * @author Lambda
      */
     KingdeePaymentConditionEntity getByCode(String code);
+    /**
+     * 根据付款条件名称查询
+     * @author will
+     * @date 2025/7/31 10:13
+     * @param paymentConditionNames
+     * @return List<KingdeePaymentConditionEntity>
+     */
+    List<KingdeePaymentConditionEntity> listByNameList(List<String> paymentConditionNames);
 }

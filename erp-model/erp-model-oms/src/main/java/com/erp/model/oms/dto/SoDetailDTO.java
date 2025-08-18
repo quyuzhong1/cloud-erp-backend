@@ -93,6 +93,11 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 拣货备注
+         */
+        @Size(max = 200, message = "拣货备注最大200字符")
+        private String pickRemark;
 
         /**
          * 采购单价
@@ -346,6 +351,10 @@ public class SoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
 
         /**
          * 采购单价
@@ -624,6 +633,11 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 拣货备注
+         */
+        @Size(max = 200, message = "拣货备注最大200字符")
+        private String pickRemark;
         /**
          * 客户PO号
          */

@@ -1513,8 +1513,8 @@ public class ShopifyRestClient {
     public List<ShopifyFulfillmentOrder> getFulfillmentOrdersFromOrder(final String shopifyOrderId) {
         final List<ShopifyFulfillmentOrder> fulfillmentOrders = new LinkedList<>();
         final Response response = get(buildOrdersEndpoint().path(shopifyOrderId).path(FULFILLMENT_ORDERS));
-        final ShopifyFulfillmentOrdersRoot shopifyFulfillmentOrdersRoot = response
-                .readEntity(ShopifyFulfillmentOrdersRoot.class);
+        String rawResponse = response.readEntity(String.class);
+        final ShopifyFulfillmentOrdersRoot shopifyFulfillmentOrdersRoot  = com.alibaba.fastjson.JSON.parseObject(rawResponse,ShopifyFulfillmentOrdersRoot.class);
 
         fulfillmentOrders.addAll(shopifyFulfillmentOrdersRoot.getFulfillmentOrders());
 

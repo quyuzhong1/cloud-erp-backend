@@ -341,7 +341,11 @@ public class PickingListsDTO {
          * 分组字段
          */
         private String groupName;
-        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO, String toCountry) {
+        /**
+         * 拣货备注
+         */
+        private String pickRemark;
+        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO, String toCountry, String pickRemark) {
             this.parentSkuNo = detail.getSkuNo();
             this.productName = productName;
             this.sourceCode = entity.getSourceCode();
@@ -352,6 +356,7 @@ public class PickingListsDTO {
             this.sourceDetailId = detail.getSourceDetailId();
             this.customerPO = customerPO;
             this.toCountry = toCountry;
+            this.pickRemark = pickRemark;
         }
     }
 

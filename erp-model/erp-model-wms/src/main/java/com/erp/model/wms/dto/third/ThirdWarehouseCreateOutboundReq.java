@@ -245,6 +245,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String sourceSkuId;
 
         private String platformDetailId;
+        private String detailId;
         /**
          * 海关编码
          */

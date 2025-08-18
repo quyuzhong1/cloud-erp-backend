@@ -92,7 +92,14 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
                 if(CollectionUtils.isEmpty(generateB2cList)){
                     return false;
                 }
-                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
+                boolean result = true;
+
+                for (SoOutstockDTO.GenerateB2cDTO b2cDTO : generateB2cList) {
+                    if(!soOutstockFeign.generateB2cSoOutstockByData(b2cDTO)){
+                        result = false;
+                    }
+                }
+                return result;
             } catch (Exception e) {
                 log.error("[TeMu生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -103,6 +110,7 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
                 addError.setMessage(e.getMessage());
                 addError.setDetailId(soB2cDetailEntityList.get(0).getId());
                 soB2cErrorService.add(addError);
+                return false;
             }
         }
         return true;

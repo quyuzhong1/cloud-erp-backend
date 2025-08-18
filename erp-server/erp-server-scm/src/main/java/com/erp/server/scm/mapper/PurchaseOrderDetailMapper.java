@@ -2,6 +2,7 @@ package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -67,4 +68,12 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return List<ImportEndReceiveDTO>
      */
     List<PurchaseOrderDetailDTO.ImportEndReceiveDTO> listImportEndReceive(@Param(value = "codeList") List<String> codeList,@Param(value = "skuNoList") List<String> skuNoList);
+    /**
+     * 查询调整采购订单明细
+     * @author will
+     * @date 2025/7/29 14:10
+     * @param params
+     * @return List<PurchaseOrderAdjustResultDTO>
+     */
+    List<PurchasePriceChangeDTO.PurchaseOrderAdjustResultDTO> listAdjustPurchaseOrder(@Param(value = "params") List<PurchasePriceChangeDTO.PurchaseOrderAdjustParamDTO> params);
 }

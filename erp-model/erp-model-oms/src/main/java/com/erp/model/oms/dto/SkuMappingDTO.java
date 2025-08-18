@@ -257,9 +257,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String labelSourceType;
 
-
-
-
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
     }
     /**
      * 分页参数
@@ -346,6 +347,11 @@ public class SkuMappingDTO implements Serializable {
          * 税务信息
          */
         private TaxCodeDTO taxCodeDTO;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
     }
 
     @Data
@@ -460,6 +466,11 @@ public class SkuMappingDTO implements Serializable {
          * 授权Id
          */
         private String authId;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
 
     }
 
@@ -674,6 +685,13 @@ public class SkuMappingDTO implements Serializable {
          * 开票产品名称
          */
         private String invoiceProductName;
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
+        private String platformParentSpuNo;
+
     }
 
 
@@ -806,6 +824,13 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime updateTime;
 
         private LocalDateTime effectiveTime;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
+        private String platformParentSpuNo;
     }
 
 
@@ -937,6 +962,13 @@ public class SkuMappingDTO implements Serializable {
          * 失效时间
          */
         private LocalDateTime expireTime;
+
+        /**
+         * 平台状态
+         */
+        private String platformStatus;
+        private String platformStatusName;
+        private String platformParentSpuNo;
     }
 
 

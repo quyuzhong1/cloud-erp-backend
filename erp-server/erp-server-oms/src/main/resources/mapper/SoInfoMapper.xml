@@ -55,6 +55,7 @@
         sod.all_amount_local_currency AS allAmountLocalCurrency,
         sod.frozen_qty as frozenQty,
         sod.is_close,
+        sod.pick_remark as pickRemark,
         sod.to_country as toCountry,
         fdp.id as partitionId,
         fdp.code as partitionCode,

@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -18,7 +19,7 @@ import java.util.List;
  * @author Jim
  * @since 2023-11-08
  */
-@FeignClient(value = "erp-dmp", path = "feign/mongodb", contextId = "DmpMongodbFeign")
+@FeignClient(value = "erp-dmp", path = "feign/mongodb", contextId = "DmpMongodbFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpMongoDbFeign {
 
     /**

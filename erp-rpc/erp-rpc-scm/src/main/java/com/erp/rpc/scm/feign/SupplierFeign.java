@@ -21,7 +21,7 @@ import java.util.Map;
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */
-@FeignClient(name = "erp-scm", contextId = "supplier",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-scm", contextId = "supplierFeign",configuration = {FeignErrorDecoder.class})
 public interface SupplierFeign {
 
 

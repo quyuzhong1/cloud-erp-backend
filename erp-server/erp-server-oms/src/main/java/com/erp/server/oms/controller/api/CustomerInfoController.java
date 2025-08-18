@@ -288,7 +288,7 @@ public class CustomerInfoController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CANCEL, desc = "删除客户信息")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除客户信息")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
@@ -297,8 +297,8 @@ public class CustomerInfoController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<Object> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerInfoService.deleteByIds(dto.getIds());
-        return Boolean.TRUE.equals(result) ? success() : failure();
+        List<BatchResultDTO> resultDTOList = customerInfoService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

@@ -17,4 +17,17 @@ public class ScmExecutorPoolConfig {
         service.setRejectedExecutionHandler(handler);
         return service;
     }
+
+    @Bean(name = "tabExecutorPool")
+    public ExecutorService tabExecutorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 30,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+
 }

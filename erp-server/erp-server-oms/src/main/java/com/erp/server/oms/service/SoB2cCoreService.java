@@ -2,7 +2,11 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.oms.dto.SoB2cCoreDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import java.util.List;
@@ -57,4 +61,8 @@ public interface SoB2cCoreService {
      * @return void
      */
     void checkPayMent(SoB2cEntity entity);
+
+    void generateDeliveryAndOutStock(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, SoB2cReceiverEntity soB2cReceiverEntity);
+
+    Boolean handleSoOutStock(String soId);
 }

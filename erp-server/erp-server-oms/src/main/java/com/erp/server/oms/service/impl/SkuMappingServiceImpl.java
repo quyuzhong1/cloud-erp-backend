@@ -477,6 +477,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listing.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         listing.setRemark("");
         listing.setPlatformSpuNo(dto.getPlatformSpuNo());
+        if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+            listing.setPlatformStatus(dto.getPlatformStatus());
+        }
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
@@ -626,7 +629,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         ListingInfoEntity existEntity = listingInfoService.getByPlatformSkuNo("",warehouseSkuNo, "");
         String listingId;
         if(null == existEntity){
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName,thirdBarcode, dto.getAuthId(), platform);
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName,thirdBarcode, dto.getAuthId(), platform,"");
         }else{
             listingId = existEntity.getId();
         }
@@ -737,12 +740,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 listingInfo.setPlatform(platform);
             }
             listingInfo.setAuthId(dto.getAuthId());
+            if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+                listingInfo.setPlatformStatus(dto.getPlatformStatus());
+            }
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
         } else {
             String warehouseProductName = dto.getWarehouseProductName();
-            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName, thirdBarcode, dto.getAuthId(), platform);
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName, thirdBarcode, dto.getAuthId(), platform,dto.getPlatformStatus());
         }
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
@@ -1117,6 +1123,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             item.setProductName(skuName);
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
 
     }
@@ -1143,6 +1152,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     item.setLabelUrlStr(FastDFSClientUtil.publicUrl + "/" + item.getLabelUrl());
                 }
             }
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
 
     }
@@ -1236,6 +1248,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             //原产地名称
             item.setDictOriginName(originMap.get(item.getDictOrigin()));
+
+            //平台状态
+            item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
         }
     }
 
@@ -1333,22 +1348,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 客户sku
         if (RuleTypeEnum.CUSTOMER == entity.getType()) {
             this.deleteCustomer(entity, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 无平台
         if (StringUtils.isBlank(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 销售平台
         if (RuleTypeEnum.PLATFORM == entity.getType() && !PlatformDictEnum.hasConnectionPlatform().contains(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(), listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
         // 仓库平台
         if (RuleTypeEnum.WAREHOUSE == entity.getType() && null == OmsPlatformEnum.getByCode(entity.getDictPlatform())) {
             this.deleteAll(id, listingInfoEntity);
-            return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
+            return BatchResultDTO.success(entity.getId(),listingInfoEntity.getPlatformSpuNo(), OperationTypeEnum.DELETE);
         }
 
         // 有平台
@@ -2059,6 +2074,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             existsEntity.setLabelSourceType(LabelSourceTypeEnum.CUSTOMER.getCode());
             String msg1 =  CharSequenceUtil.format("用户【{}】编辑【{}】为【{}】产品标签【{}】链接【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo(),dto.getLabelFileName(),dto.getLabelUrl());
             operateLogService.addModuleOperateLog(msg1, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "编辑操作");
+        }
+        if(StringUtils.isNotBlank(dto.getPlatformStatus())){
+            existsEntity.setPlatformStatus(dto.getPlatformStatus());
         }
         listingInfoService.updateById(existsEntity);
 

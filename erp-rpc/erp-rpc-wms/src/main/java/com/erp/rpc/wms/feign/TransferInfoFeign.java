@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +17,7 @@ import java.util.List;
  * @author Jim
  * @date 2023/11/29
  */
-@FeignClient(name = "erp-wms", contextId = "transferInfo")
+@FeignClient(name = "erp-wms", contextId = "transferInfo",configuration = {FeignErrorDecoder.class})
 public interface TransferInfoFeign {
 
     /**

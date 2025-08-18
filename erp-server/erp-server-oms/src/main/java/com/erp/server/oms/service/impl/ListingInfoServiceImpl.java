@@ -105,7 +105,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addWarehouseSku(String skuNo, String productName, String thirdBarcode, String authId, String platform) {
+    public String addWarehouseSku(String skuNo, String productName, String thirdBarcode, String authId, String platform,String platformStatus) {
         String id = IdWorker.getIdStr();
         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
         listingInfoEntity.setId(id);
@@ -114,6 +114,9 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         listingInfoEntity.setThirdBarcode(thirdBarcode);
         listingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
         listingInfoEntity.setPlatform(platform);
+        if(StringUtils.isNotBlank(platformStatus)){
+            listingInfoEntity.setPlatformStatus(platformStatus);
+        }
         if(StringUtils.isNotBlank(authId)){
             listingInfoEntity.setAuthId(authId);
         }

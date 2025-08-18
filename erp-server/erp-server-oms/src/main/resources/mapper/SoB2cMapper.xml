@@ -264,6 +264,7 @@
         sb2cr.receiver_tel_number as receiverTelNumber,
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
+        sb2cr.ie_no as ieNo,
         si.country_name as countryName,
         sbd.create_time as createDeliveryTime,
 		sbd.finish_print_time as finishPrintTime,

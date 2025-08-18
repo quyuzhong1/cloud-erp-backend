@@ -27,6 +27,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.dto.excel.B2CCustomerImportExcelDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -37,6 +38,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.listener.B2CCustomerImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -335,6 +337,14 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         }
     }
 
+    @Override
+    public void updateInvoiceAddress(String soId, String invoiceAddress) {
+        if (CharSequenceUtil.isNotBlank(soId)){
+            this.lambdaUpdate().eq(SoB2cReceiverEntity::getMainId,soId).set(SoB2cReceiverEntity::getInvoiceAddress,invoiceAddress).update();
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单开票地址为：{}", invoiceAddress), ModuleTypeEnum.SO_B2C.getCode(), soId,"更新开票地址");
+        }
+    }
+
     private void handleImportSuccessList(List<B2CCustomerImportExcelDTO> successList, List<B2CCustomerImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -487,5 +497,23 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         dto.setApproveStatus(ApproveStatusEnum.APPROVE);
         customerB2cService.save(dto);
         return customerId;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void checkAndUpdateCountry(String mainId, String country) {
+        if (StringUtils.isBlank(country)){
+            return;
+        }
+        SoB2cReceiverEntity receiverEntity = getByMainId(mainId);
+        if (null == receiverEntity) {
+            return;
+        }
+        if (StringUtils.isNotBlank(receiverEntity.getCountry())) {
+            return;
+        }
+        receiverEntity.setCountry(country);
+        updateById(receiverEntity);
     }
 }

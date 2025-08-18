@@ -57,7 +57,7 @@ public class TransferApplicationController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
@@ -77,7 +77,7 @@ public class TransferApplicationController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
@@ -97,7 +97,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新增调拨申请单")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:add",
             serviceClass = TransferApplicationService.class,
             keyIdName = "id")
@@ -116,7 +116,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交调拨申请单")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:add",
             serviceClass = TransferApplicationService.class,
             keyIdName = "id")
@@ -135,7 +135,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改调拨申请单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:update",
             serviceClass = TransferApplicationService.class,
             keyIdName = "id")
@@ -154,7 +154,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交调拨申请单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:update",
             serviceClass = TransferApplicationService.class,
             keyIdName = "id")
@@ -173,7 +173,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交调拨申请单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:submit",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -206,7 +206,7 @@ public class TransferApplicationController extends BaseController {
     @LogViewService
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:view",
             serviceClass = TransferApplicationService.class,
             keyIdName = "id")
@@ -223,16 +223,16 @@ public class TransferApplicationController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除调拨申请单")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:delete",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferApplicationService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = transferApplicationService.deleteByIds(dto.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -245,7 +245,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废调拨申请单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:invalid",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -264,7 +264,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核调拨申请单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:approve",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -297,7 +297,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "单审核调拨申请单")
     @PostMapping("/singleApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:approve",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -316,7 +316,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核调拨申请单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:disApprove",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -349,7 +349,7 @@ public class TransferApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销调拨申请单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:cancelProcess",
             serviceClass = TransferApplicationService.class,
             keyIdName = "ids")
@@ -381,7 +381,7 @@ public class TransferApplicationController extends BaseController {
      */
     @PostMapping(value = "/viewGenerateTransferInfo")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:viewGenerateTransferInfo",
             tableAlias = "ta"
     )
@@ -413,7 +413,7 @@ public class TransferApplicationController extends BaseController {
      */
     @PostMapping(value = "/viewGenerateTransferOut")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "wms:transferApplication:viewGenerateTransferOut",
             tableAlias = "ta"
     )

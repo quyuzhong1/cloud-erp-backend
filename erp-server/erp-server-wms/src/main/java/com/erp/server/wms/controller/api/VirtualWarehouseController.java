@@ -171,6 +171,7 @@ public class VirtualWarehouseController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟仓库设置导出")
     public ApiResult exportExcel(@RequestBody VirtualWarehouseDTO.PagingParamDTO dto) {
         Boolean flag = virtualWarehouseService.exportExcel(dto);
         return Boolean.TRUE.equals(flag) ? success() : failure();

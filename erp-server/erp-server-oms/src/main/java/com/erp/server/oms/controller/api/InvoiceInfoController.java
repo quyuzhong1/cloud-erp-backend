@@ -124,7 +124,7 @@ public class InvoiceInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id,Boolean.FALSE);
+                resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id,Boolean.TRUE);
             }catch (Exception e){
                 log.error("生成Nfe发票失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -137,7 +137,7 @@ public class InvoiceInfoController extends BaseController {
             }
             resultDTOS.add(resultDTO);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success("执行异步生成发票,请稍后查看发票生成状态",resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -148,8 +148,8 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<List<ViewDTO>>
      */
     @PostMapping("/checkGenerateInvoice")
-    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds());
+    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated InvoiceTaxDTO.IdsDTO dto) {
+        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds(),dto.getIsCheckInvoiceTax());
         return  success(list);
     }
 
@@ -157,6 +157,7 @@ public class InvoiceInfoController extends BaseController {
      * 上传发票
      */
     @PostMapping("/uploadInvoice")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "上传发票")
     public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -258,6 +259,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<Object>
      */
     @PostMapping("/updateCce")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "开具Cce")
     public ApiResult<BatchResultDTO> updateCce(@RequestBody @Valid InvoiceInfoDTO.UpdateCceDTO dto) {
         return success(invoiceInfoService.updateCce(dto));
     }
@@ -270,6 +272,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/cancelInvoice")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消发票")
     public ApiResult<BatchResultDTO> cancelInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
         return success(invoiceInfoService.cancelInvoice(dto.getId(),dto.getRemark()));
     }
@@ -313,5 +316,15 @@ public class InvoiceInfoController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 初始化处理nfe发票密钥数据
+     * @return
+     */
+    @PostMapping("/initNfeInvoiceKey")
+    public ApiResult  initNfeInvoiceKey() {
+        invoiceInfoService.initNfeInvoiceKey();
+        return success();
     }
 }

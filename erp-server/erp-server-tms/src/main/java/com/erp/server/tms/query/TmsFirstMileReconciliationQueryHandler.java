@@ -21,6 +21,9 @@ public class TmsFirstMileReconciliationQueryHandler extends AbstractQueryHandler
         if("tfmrd.transport_no".equals(field)){
             return " EXISTS (SELECT 1 from tms_first_mile_reconciliation_detail as detail where detail.is_deleted = false and detail.main_id = tfmr.id and detail.transport_no "+ compareCodeSplicingValueSql +" ) ";
         }
+        if("tfmrd.business_code".equals(field)){
+            return " EXISTS (SELECT 1 from tms_first_mile_reconciliation_detail as detail where detail.is_deleted = false and detail.main_id = tfmr.id and detail.business_code "+ compareCodeSplicingValueSql +" ) ";
+        }
         return null;
     }
 

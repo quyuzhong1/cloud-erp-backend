@@ -130,4 +130,5 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
 
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
 
+    PagingVO<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsSupplierDTO.SelectDTO> dto);
 }

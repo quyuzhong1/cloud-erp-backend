@@ -25,7 +25,7 @@ public class KingdeeDepartmentQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
 
         if("parentDeptName".equals(field)){
-            return this.getQueryEmptySql();
+        	return " EXISTS (SELECT 1 from kingdee_department pkd where pkd.is_deleted = false and pkd.id = kd.parent_id and pkd.kingdee_dept_name "+ compareCodeSplicingValueSql +" ) ";
         }
 
         return null;

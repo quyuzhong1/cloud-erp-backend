@@ -5,7 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.CfgRulePickingStagingDTO;
 import com.erp.model.wms.entity.CfgRulePickingStagingEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -36,6 +39,7 @@ import java.util.stream.Stream;
  */
 @RestController
 @RequestMapping("/pickingStaging")
+@LogSystemModule("拣货暂存规则")
 public class CfgRulePickingStagingController extends BaseController {
 
     @Resource
@@ -48,6 +52,7 @@ public class CfgRulePickingStagingController extends BaseController {
      * 保存默认暂存库位
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存默认暂存库位")
     public ApiResult<String> add(@RequestBody List<CfgRulePickingStagingEntity> entity){
         cfgRulePickingStagingService.saveOrUpdateBatch(entity);
         return success();
@@ -57,6 +62,7 @@ public class CfgRulePickingStagingController extends BaseController {
      * 保存默认暂存库位
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除默认暂存库位")
     public ApiResult<String> delete(@RequestBody List<String> ids){
         cfgRulePickingStagingService.removeByIds(ids);
         return success();
@@ -75,6 +81,7 @@ public class CfgRulePickingStagingController extends BaseController {
      * 保存暂存仓位配置
      */
     @PostMapping("/saveStaging")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存暂存仓位配置")
     public ApiResult<List<BatchResultDTO>> saveStaging(@RequestBody ValidList<CfgRulePickingStagingDTO.StagingDTO> dtoList){
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         List<String> warehouseIds = dtoList.stream().map(CfgRulePickingStagingDTO.StagingDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());

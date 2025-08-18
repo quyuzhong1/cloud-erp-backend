@@ -385,6 +385,8 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
                 .secondAddress(soReceiverEntity.getSecondStreet())
                 .fullAddress(soReceiverEntity.getFullAddress())
                 .receiverTaxNo(soReceiverEntity.getReceiverTaxNo())
+                .ieNo(soReceiverEntity.getIeNo())
+                .taxidType(soReceiverEntity.getTaxidType())
                 .build();
     }
 

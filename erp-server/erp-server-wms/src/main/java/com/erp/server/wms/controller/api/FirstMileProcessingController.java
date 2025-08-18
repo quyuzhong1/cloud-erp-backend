@@ -6,9 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.server.wms.query.FirstMileProcessingQueryHandler;
 import com.erp.server.wms.service.FirstMileProcessingService;
@@ -61,6 +63,7 @@ public class FirstMileProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程虚拟仓列表信息导出")
     public ApiResult exportExcel(@RequestBody FirstMileProcessingDTO.PagingParamDTO dto) {
         Boolean flag = firstMileProcessingService.exportExcel(dto);
         return flag == true ? success() : failure();
@@ -74,6 +77,7 @@ public class FirstMileProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/deleteFirstMileProcessing")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除订单跟踪数据")
     public ApiResult deleteFirstMileProcessing(@RequestBody FirstMileProcessingDTO.DeleteDTO dto) {
         Boolean flag = firstMileProcessingService.deleteFirstMileProcessing(dto);
         return flag == true ? success() : failure();

@@ -1,5 +1,6 @@
 package com.erp.rpc.dmp.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -19,7 +20,7 @@ import java.util.List;
  * @author tanmujin
  * @date 2024-05-27
  */
-@FeignClient(value = "erp-dmp", path = "/feign/dmp/thirdMapping", contextId = "dmpThirdMappingFeign")
+@FeignClient(value = "erp-dmp", path = "/feign/dmp/thirdMapping", contextId = "dmpThirdMappingFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpThirdMappingFeign {
 
     @GetMapping("/getBySysId")
