@@ -41,10 +41,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.DictBasicEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.model.scm.enums.SupplierTabEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -1334,7 +1331,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             return dataList.stream().map(data -> {
                 BaseIdDTO baseIdDTO = new BaseIdDTO();
@@ -1373,7 +1380,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             // 未审核通过的设置为禁用
             dataList.stream().forEach(data -> {
@@ -1517,11 +1534,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
-        Page<SupplierDTO.PagingExportDTO> page = baseMapper.getExportSupplier(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<SupplierDTO.PagingExportDTO> page = baseMapper.getExportSupplier(query,dto.getParams());
+        List<SupplierExportExcelDTO> resultList = handleExportData(page.getRecords());
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+    
+    /**
+     * 导出数据处理
+     * @author will 
+     * @date 2025/8/18 14:04
+     * @param list 
+     * @return List<SupplierExportExcelDTO>
+     */
+    private List<SupplierExportExcelDTO> handleExportData (List<SupplierDTO.PagingExportDTO> list) {
         List<SupplierExportExcelDTO> resultList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+        if (CollUtil.isEmpty(list)) {
+            return resultList;
         }
+
         List<String> keyList = new ArrayList<>(3);
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
@@ -1539,7 +1570,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() : userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
 
         //供应商id 集合
-        List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
 
@@ -1551,6 +1582,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //应用分类
         List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
 
+        //币别
+        List<String> currencyCodeList =list.stream().map(SupplierDTO.PagingExportDTO::getPayCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        Map<String, String> currencyMap = CollUtil.isEmpty(currencyList) ? new HashMap<>() : currencyList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getName));
+
         //获取供应商默认联系人信息
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
 
@@ -1559,7 +1595,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        page.getRecords().forEach(obj -> {
+        list.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
@@ -1570,16 +1606,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(ApiError.ERROR_500);
             }
         }
-        List<String> credentialIdList = page.getRecords().stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
+        List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(credentialIdList);
 
-        for (SupplierDTO.PagingExportDTO item : page.getRecords()) {
+        for (SupplierDTO.PagingExportDTO item : list) {
             String id = item.getId();
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
             BeanUtil.copyProperties(item,exportExcel);
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
-            exportExcel.setVoucherNo(item.getVoucherNo());
             //禁用状态 true 禁用
             boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
             exportExcel.setEnableStatus(disabled ? "停用" : "启用");
@@ -1595,6 +1630,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //阶段
             SupplierPhaseEnum phaseEnum = item.getPhase();
             exportExcel.setPhaseName(phaseEnum.getName());
+
+            //币别名称
+            String currencyName = currencyMap.get(item.getPayCurrency());
+            item.setPayCurrencyName(currencyName);
+
+            //税率
+            item.setTaxRate(MathUtil.multiplyWithTwo(item.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros());
+
             //等级id
             String gradeId = item.getGradeId();
             String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
@@ -1679,7 +1722,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             resultList.add(exportExcel);
 
         }
-        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+        return resultList;
     }
 
     @Override
@@ -1737,7 +1780,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
-        PagingVO<SupplierExportExcelDTO> excelList = this.exportSupplier(dto);
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<SupplierDTO.PagingExportDTO> paging = baseMapper.getExportSupplier(query,dto.getParams());
+
+        List<SupplierExportExcelDTO> resultList = handleExportData(paging.getRecords());
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
 
         List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
@@ -1746,8 +1792,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         dynamicExcelDTO.setHeaders(fieldMap);
 
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();
-        List<SupplierExportExcelDTO> list = excelList.getList();
-        for (SupplierExportExcelDTO exportExcelDTO : list) {
+        for (SupplierExportExcelDTO exportExcelDTO : resultList) {
             LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
             //添加值
             LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
@@ -1759,7 +1804,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         dynamicExcelDTO.setData(data);
         dynamicExcelDTO.setSheetName("供应商数据");
-        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**
