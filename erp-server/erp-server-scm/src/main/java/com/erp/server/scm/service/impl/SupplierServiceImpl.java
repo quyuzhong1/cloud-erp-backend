@@ -615,7 +615,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setGradeName(gradeName);
             //分类id
-            item.setCategoryName(getCategoryName(dictMap,item.getCategoryId()));
+            item.setCategoryName(getCategoryName(dictMap,item.getCategoryId(),Boolean.TRUE));
             //结算方式
             String payMethodId = item.getPayMethodId();
             String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
@@ -636,7 +636,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
             item.setCertificateNames(certificateJson);
             //产品分类名称名称
-            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getCategoryName(productCategoryList,obj)).collect(Collectors.joining(","));
+            String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,Boolean.TRUE)).collect(Collectors.joining(","));
             item.setProductCategoryNames(productCategoryNames);
             //应用分类名称
             String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
@@ -681,7 +681,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param categoryId
      * @return String
      */
-    private String getCategoryName (Map<String, DictBasicEntity> dictMap,String categoryId) {
+    private String getCategoryName (Map<String, DictBasicEntity> dictMap,String categoryId,Boolean isDynamic) {
+        //非动态只需要返回子级品类名称
+        if (Boolean.FALSE.equals(isDynamic)) {
+            return ObjectUtil.isEmpty(dictMap.get(categoryId)) ? "" : dictMap.get(categoryId).getName();
+        }
         StringBuilder str = new StringBuilder();
         DictBasicEntity childEntity = dictMap.get(categoryId);
         if (ObjectUtil.isEmpty(childEntity)) {
@@ -702,11 +706,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @param value
      * @return String
      */
-    private String getCategoryName(List<BasicCategoryEntity> productCategoryList,Object value) {
+    private String getProductCategoryName(List<BasicCategoryEntity> productCategoryList,Object value,Boolean isDynamic) {
+        //非动态只需要返回子级品类名称
+        if (Boolean.FALSE.equals(isDynamic)) {
+            BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+            return ObjectUtil.isEmpty(childCategory) ? "" : childCategory.getName();
+        }
         StringBuilder str = new StringBuilder();
         //子级品类
-        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString())).findFirst().orElse(null);
-        if (ObjUtil.isEmpty(childCategory)) {
+        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+        if (ObjectUtil.isEmpty(childCategory)) {
             return str.toString();
         }
         BasicCategoryEntity parentCategoryEntity = productCategoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), childCategory.getPid())).findFirst().orElse(null);
@@ -1548,11 +1557,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
-        Page<SupplierDTO.PagingExportDTO> page = baseMapper.getExportSupplier(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<SupplierDTO.PagingExportDTO> page = baseMapper.getExportSupplier(query,dto.getParams());
+        List<SupplierExportExcelDTO> resultList = handleExportData(page.getRecords(),Boolean.FALSE);
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 导出数据处理
+     * @author will
+     * @date 2025/8/18 14:04
+     * @param list
+     * @return List<SupplierExportExcelDTO>
+     */
+    private List<SupplierExportExcelDTO> handleExportData (List<SupplierDTO.PagingExportDTO> list,Boolean isDynamic) {
         List<SupplierExportExcelDTO> resultList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+        if (CollUtil.isEmpty(list)) {
+            return resultList;
         }
+
         List<String> keyList = new ArrayList<>(3);
         keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
         keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
@@ -1570,7 +1593,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Map<String, String> userMap = CollUtil.isEmpty(userList) ? new HashMap<>() : userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
 
         //供应商id 集合
-        List<String> supplierIdList = page.getRecords().stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
 
@@ -1582,6 +1605,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //应用分类
         List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
 
+        //币别
+        List<String> currencyCodeList =list.stream().map(SupplierDTO.PagingExportDTO::getPayCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        Map<String, String> currencyMap = CollUtil.isEmpty(currencyList) ? new HashMap<>() : currencyList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getName));
+
         //获取供应商默认联系人信息
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
 
@@ -1590,7 +1618,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Map<String, SupplierConfigVO> configVOMap = supplierConfigVOS.stream().collect(Collectors.toMap(SupplierConfigVO::getSupplierId, Function.identity()));
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        page.getRecords().forEach(obj -> {
+        list.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
@@ -1601,16 +1629,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(ApiError.ERROR_500);
             }
         }
-        List<String> credentialIdList = page.getRecords().stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
+        List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(credentialIdList);
 
-        for (SupplierDTO.PagingExportDTO item : page.getRecords()) {
+        for (SupplierDTO.PagingExportDTO item : list) {
             String id = item.getId();
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
             BeanUtil.copyProperties(item,exportExcel);
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
-            exportExcel.setVoucherNo(item.getVoucherNo());
             //禁用状态 true 禁用
             boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
             exportExcel.setEnableStatus(disabled ? "停用" : "启用");
@@ -1626,13 +1653,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //阶段
             SupplierPhaseEnum phaseEnum = item.getPhase();
             exportExcel.setPhaseName(phaseEnum.getName());
+
+            //币别名称
+            String currencyName = currencyMap.get(item.getPayCurrency());
+            exportExcel.setPayCurrencyName(currencyName);
+
+            //税率
+            exportExcel.setTaxRate(MathUtil.multiplyWithTwo(item.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros());
+
             //等级id
             String gradeId = item.getGradeId();
             String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             exportExcel.setGradeName(gradeName);
             //分类
-            exportExcel.setCategoryName(getCategoryName(dictMap,item.getCategoryId()));
+            exportExcel.setCategoryName(getCategoryName(dictMap,item.getCategoryId(),isDynamic));
             //结算方式
             String payMethodId = item.getPayMethodId();
             String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
@@ -1660,7 +1695,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             }
             //产品分类名称名称
             if (ObjectUtil.isNotEmpty(item.getProductCategoryJson())) {
-                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getCategoryName(productCategoryList,obj)).collect(Collectors.joining(","));
+                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,isDynamic)).collect(Collectors.joining(","));
                 exportExcel.setProductCategoryNames(productCategoryNames);
             }
             //应用分类名称
@@ -1710,7 +1745,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             resultList.add(exportExcel);
 
         }
-        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+        return resultList;
     }
 
     @Override
@@ -1768,7 +1803,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
-        PagingVO<SupplierExportExcelDTO> excelList = this.exportSupplier(dto);
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<SupplierDTO.PagingExportDTO> paging = baseMapper.getExportSupplier(query,dto.getParams());
+
+        List<SupplierExportExcelDTO> resultList = handleExportData(paging.getRecords(),Boolean.TRUE);
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
 
         List<SupplierDTO.ExportField> fieldList = dto.getParams().getFieldList();
@@ -1777,8 +1815,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         dynamicExcelDTO.setHeaders(fieldMap);
 
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();
-        List<SupplierExportExcelDTO> list = excelList.getList();
-        for (SupplierExportExcelDTO exportExcelDTO : list) {
+        for (SupplierExportExcelDTO exportExcelDTO : resultList) {
             LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>)BeanUtil.beanToMap(exportExcelDTO);
             //添加值
             LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
@@ -1790,7 +1827,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         dynamicExcelDTO.setData(data);
         dynamicExcelDTO.setSheetName("供应商数据");
-        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), excelList.getTotalCount(), excelList.getPageSize(), excelList.getCurrPage());
+        return new PagingVO<>(Collections.singletonList(dynamicExcelDTO), (int) paging.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**
