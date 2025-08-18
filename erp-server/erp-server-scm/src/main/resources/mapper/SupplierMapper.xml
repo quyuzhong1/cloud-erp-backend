@@ -89,6 +89,7 @@
         sup.disabled AS disabled,
         sup.srm_disabled AS srmDisabled,
         sup.pay_method_id AS payMethodId,
+        sup.pay_currency as payCurrency,
         sup.payment_condition as paymentCondition,
         sup.purchase_user_id AS purchaseUserId,
         sup.purchase_user_name AS purchaseUserName,
