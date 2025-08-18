@@ -100,6 +100,7 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
 //            return false;
 //        }
 //
+
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soId);
         if (soB2cLogisticsEntity == null || StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
             log.warn("销售订单物流信息为空，soId: {}", soId);
