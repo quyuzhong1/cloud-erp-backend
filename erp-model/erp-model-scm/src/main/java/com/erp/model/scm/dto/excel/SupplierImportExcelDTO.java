@@ -159,7 +159,7 @@ public class SupplierImportExcelDTO implements Serializable {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 16)
+    @ExcelProperty(value = "税率（%）", index = 16)
     @FieldValid(fieldName = "税率" , formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String taxRateStr;
 
@@ -227,11 +227,11 @@ public class SupplierImportExcelDTO implements Serializable {
 
 
     /**
-     * 联系备注
+     * 联系人备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "联系备注", index = 24)
-    @FieldValid(fieldName = "联系备注",maxLength = 255)
+    @ExcelProperty(value = "联系人备注", index = 24)
+    @FieldValid(fieldName = "联系人备注",maxLength = 255)
     private String contactRemark;
 
 

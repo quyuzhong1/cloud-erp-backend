@@ -864,11 +864,19 @@ public class SupplierDTO implements Serializable {
          * 付款条件名称
          */
         private String paymentConditionName;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
 
         /**
          * 结算付款币种
          */
         private String payCurrency;
+        /**
+         *  结算付款币种名称
+         */
+        private String payCurrencyName;
 
         /**
          * 采购跟单员id
@@ -990,6 +998,16 @@ public class SupplierDTO implements Serializable {
          * 工厂所在地名称
          */
         private String plantAddrNames;
+
+        /**
+         * 公司地址
+         */
+        private String companyAddress;
+
+        /**
+         * 公司网址
+         */
+        private String companyWebsite;
     }
 
 

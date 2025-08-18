@@ -331,6 +331,20 @@ public class PoReconciliationDTO implements Serializable {
         private String poFollowerTelNumber;
 
         /**
+         * 出货小计(数量)
+         */
+        private Integer totalDeliveryQty;
+        /**
+         * 退货小计(数量)
+         */
+        private Integer totalReceiveQty;
+
+        /**
+         * 合计(数量)
+         */
+        private Integer totalQty;
+
+        /**
          * 出货小计
          */
         private BigDecimal totalDeliveryAmount;

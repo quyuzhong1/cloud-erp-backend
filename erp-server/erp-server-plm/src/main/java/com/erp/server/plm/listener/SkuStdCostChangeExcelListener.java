@@ -7,6 +7,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -51,7 +52,7 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
     /**
      * 成功信息
      */
-    private List<SkuStdCostDetailEntity> successList = new ArrayList<>();
+    private List<SkuStdCostChangeExcelDTO> successList = new ArrayList<>();
 
     /**
      * 已导入的sku列表
@@ -145,15 +146,13 @@ public class SkuStdCostChangeExcelListener extends AnalysisEventListener<SkuStdC
                     excelDTO.getCurrency(),
                     LocalDateUtil.parseStrToLocalDate(excelDTO.getEffectiveDateStr()));
             try {
-                skuStdCostDetailService.validateChangeParams(changeCommonDTO, listDTO, listDTO);
+                skuStdCostDetailService.changeAdd(changeCommonDTO, listDTO, listDTO);
+                successList.add(excelDTO);
             } catch (Exception e) {
                 excelDTO.setErrorMsg(e.getMessage());
                 errorList.add(excelDTO);
-                continue;
             }
-            SkuStdCostDetailEntity skuStdCostDetailEntity = skuStdCostDetailService.buildChangeEntity(changeCommonDTO, listDTO.getMainId());
-            successList.add(skuStdCostDetailEntity);
         }
-        skuStdCostDetailService.saveBatch(successList);
+
     }
 }

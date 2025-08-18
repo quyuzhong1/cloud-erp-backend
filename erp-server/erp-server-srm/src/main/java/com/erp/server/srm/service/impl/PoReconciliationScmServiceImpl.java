@@ -538,13 +538,24 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             List<PoReconciliationDetailDTO.ListDTO> detailDTOList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ListDTO.class, detailList);
             poReconciliationDetailScmService.fillList(detailDTOList,Boolean.FALSE);
 
+            //出货小计(数量)
+            Integer totalDeliveryQty = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_INSTOCK.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            exportDTO.setTotalDeliveryQty(totalDeliveryQty);
+            //退料小计(数量)
+            Integer totalReceiveQty = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType()))
+                    .map(PoReconciliationDetailDTO.ListDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            exportDTO.setTotalReceiveQty(totalReceiveQty);
+            //合计(数量)
+            exportDTO.setTotalQty(MathUtil.add(totalDeliveryQty, totalReceiveQty));
+
             //出货小计
             BigDecimal totalDeliveryAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_INSTOCK.getCode().equals(obj.getSourceType()))
-                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .map(PoReconciliationDetailDTO.ListDTO::getDiscountTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
             exportDTO.setTotalDeliveryAmount(totalDeliveryAmount);
             //退料小计
             BigDecimal totalReceiveAmount = detailDTOList.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType()))
-                    .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .map(PoReconciliationDetailDTO.ListDTO::getDiscountTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
             exportDTO.setTotalReceiveAmount(totalReceiveAmount);
             //合计
             exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount, totalReceiveAmount));
