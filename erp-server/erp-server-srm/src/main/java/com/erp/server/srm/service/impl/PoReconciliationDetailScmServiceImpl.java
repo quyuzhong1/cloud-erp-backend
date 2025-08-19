@@ -324,23 +324,23 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //srm仅展示退货单号来源的单号
             if (!SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getPoSourceType()) && isSrm) {
                 listDTO.setPoSourceCode("");
-            }
-
-            // 采购申请单号
-            if (CollUtil.isNotEmpty(refList) && CharSequenceUtil.isBlank(listDTO.getPoSourceType())) {
-                // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
-                List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r -> {
-                    if (Objects.equals(listDTO.getPoId(), r.getPurchaseOrderId())) {
-                        return true;
+            } else {
+                // 采购申请单号
+                if (CollUtil.isNotEmpty(refList) && CharSequenceUtil.isBlank(listDTO.getPoSourceType())) {
+                    // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
+                    List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r -> {
+                        if (Objects.equals(listDTO.getPoId(), r.getPurchaseOrderId())) {
+                            return true;
+                        }
+                        return false;
+                    }).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(filterRefList)) {
+                        List<String> applicationIds = filterRefList.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+                        purchaseApplicationIds.addAll(applicationIds);
+                        listDTO.setPurchaseApplicationIds(applicationIds);
                     }
-                    return false;
-                }).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(filterRefList)) {
-                    List<String> applicationIds = filterRefList.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
-                    purchaseApplicationIds.addAll(applicationIds);
-                    listDTO.setPurchaseApplicationIds(applicationIds);
-                }
 
+                }
             }
 
             //币种符号
