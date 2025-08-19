@@ -360,6 +360,8 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private String platformDetailId;
 
+        private String platformSoDetailId;
+
         private String warehouseId;
 
         private String warehouseName;
