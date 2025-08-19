@@ -144,7 +144,12 @@
             and approve_status = #{approveStatus}
         </if>
         AND category_id IN
-        (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
+        (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type}
+        AND value in
+        <foreach collection="categoryTypeList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        )
         ORDER BY  create_time DESC
     </select>
     <select id="pagingSelect" resultType="com.common.business.dto.base.BaseDropDownDTO$RemarkDTO">
