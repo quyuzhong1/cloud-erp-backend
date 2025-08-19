@@ -563,11 +563,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                 		DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
                         request.setCfgOutputId(s);
                         List<QueryParam> queryParams = new ArrayList<>();
-                        QueryParam queryParam = new QueryParam();
-                        queryParam.setType(QueryTypeEnum.IN);
-                        queryParam.setName("id");
-                        queryParam.setValue(filterMainIds);
-                        queryParams.add(queryParam);
+                        queryParams.add(new QueryParam(QueryTypeEnum.IN, "id", filterMainIds));
                         request.setQueryParams(queryParams);
                         dmpOutputCreateFactory.doHotfixOutputTask(request);
                 	});

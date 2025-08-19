@@ -780,7 +780,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     	LocalDate reconciliationMonth = LocalDate.now();
     	if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
-    		reconciliationMonth = Objects.isNull(tmsFirstMileReconciliationEntity)? estimatedListDTO.getReceiveDate() : tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
     	}else {
     		reconciliationMonth = estimatedListDTO.getReceiveDate();
     	}
@@ -2693,22 +2693,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             throw new ServiceException("开始时间或结束时间为空");
         }
         // 查询周期内已签收未对账的物流单
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
-        //根据物流单进行分组
-        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = detailList
-                .stream().filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId));
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
         //过滤非物流类型对账
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = new ArrayList<>();
-        for(Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : sourceMap.entrySet()){
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = entry.getValue();
-            TmsFirstMileReconciliationDetailDTO.ListDTO dto = sourceList.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).findFirst().orElse(null);
-            if (Objects.nonNull(dto)){
-                list.add(dto);
-            }else {
-                list.add(sourceList.get(0));
-            }
-        }
+        list = list.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) {
             return;
         }

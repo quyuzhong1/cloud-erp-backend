@@ -96,11 +96,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         	DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
             request.setCfgOutputId("1861317267527064372");
             List<QueryParam> queryParams = new ArrayList<>();
-            QueryParam queryParam = new QueryParam();
-            queryParam.setType(QueryTypeEnum.IN);
-            queryParam.setName("platform_code");
-            queryParam.setValue(platformCodeList);
-            queryParams.add(queryParam);
+            queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", platformCodeList));
             request.setQueryParams(queryParams);
             dmpOutputCreateFactory.doHotfixOutputTask(request);
         }
