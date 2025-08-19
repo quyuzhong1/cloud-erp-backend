@@ -394,6 +394,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
         list.forEach(e -> {
             Integer purchaseQty = MathUtil.ZERO;
+            // 采购员、供应商
+            SkuPurchaseDTO.PurchaseInfo skuPurchase = skuPurchaseMap.getOrDefault(e.getSkuId(), new SkuPurchaseDTO.PurchaseInfo());
             //查询已采购数量
             if (CollectionUtils.isNotEmpty(refList)) {
                 purchaseQty = refList.stream().filter(obj -> e.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
@@ -403,7 +405,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                             .purchaseOrgId(e.getPurchaseOrgId())
                             .qty(applyQty - purchaseQty)
                             .skuId(e.getSkuId())
-                            .supplierId(e.getSupplierId())
+                            .supplierId(skuPurchase.getSupplierId())
                     .build());
         });
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
@@ -449,7 +451,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //采购单价赋值
             PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                             obj.getSkuId().equals(entity.getSkuId())
-                            && obj.getSupplierId().equals(entity.getSupplierId())
+                            && obj.getSupplierId().equals(dto.getSupplierId())
                             && CharSequenceUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId()))
                     .findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
