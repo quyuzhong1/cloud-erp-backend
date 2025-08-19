@@ -260,6 +260,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //生成供应商代码
         addEntity.setIdentificationCode(getIdentificationCode());
 
+        //税率
+        if (ObjectUtil.isNotEmpty(addEntity.getTaxRate())) {
+            addEntity.setTaxRate(MathUtil.divide(addEntity.getTaxRate(),MathUtil.BigDecimal_100));
+        }
+
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
@@ -505,6 +510,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //如果付款公司是空，那就是自己公司付款
         if (CharSequenceUtil.isBlank(supplier.getPaymentCompanyName())) {
             supplier.setPaymentCompanyName(supplier.getName());
+        }
+        //税率
+        if (ObjectUtil.isNotEmpty(supplier.getTaxRate())) {
+            supplier.setTaxRate(MathUtil.divide(supplier.getTaxRate(),MathUtil.BigDecimal_100));
         }
 
         Boolean result = this.updateById(supplier);
