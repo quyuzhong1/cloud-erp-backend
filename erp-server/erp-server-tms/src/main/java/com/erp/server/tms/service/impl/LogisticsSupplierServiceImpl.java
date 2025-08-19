@@ -525,10 +525,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             if (Objects.nonNull(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 item.setLogisticsPlatform(logisticsPlatform);
-                String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
-                if ("N".equals(printDelivery)) {
-                    item.setIsPrintPlatform(Boolean.FALSE);
-                } else {
+                if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
+                    String printDelivery = Objects.requireNonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform)).getPrintDelivery();
+                    if ("N".equals(printDelivery)) {
+                        item.setIsPrintPlatform(Boolean.FALSE);
+                    } else {
+                        item.setIsPrintPlatform(Boolean.TRUE);
+                    }
+                }else{
                     item.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {

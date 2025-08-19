@@ -374,4 +374,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return Map<String, SoReturnInstockEntity>
      */
     Map<String, SoReturnInstockEntity> mapByIds(List<String> ids);
+
+    SoReturnInstockEntity getByThirdCodeAndPlatformSkuNo(String platformReturnOrderNo, String thirdId);
 }

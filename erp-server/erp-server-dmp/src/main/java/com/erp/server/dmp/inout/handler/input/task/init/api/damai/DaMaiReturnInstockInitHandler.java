@@ -86,7 +86,7 @@ public class DaMaiReturnInstockInitHandler extends DmpInputInitHandler {
         if (CollUtil.isEmpty(daMaiInventoryTransResps)) {
             return Collections.emptyList();
         }
-
+        daMaiInventoryTransResps.forEach(v->v.setAuthId(authId));
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(daMaiInventoryTransResps));
         return Collections.singletonList(dmpInputTaskInitDTO);

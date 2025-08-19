@@ -39,4 +39,5 @@ public class DaMaiInventoryTransResp {
     private String remark;
     @JsonProperty("operationTime")
     private String operationTime;
+    private String authId;
 }
