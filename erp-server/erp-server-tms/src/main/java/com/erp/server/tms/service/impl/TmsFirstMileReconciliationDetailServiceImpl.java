@@ -1016,7 +1016,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getSourceId));
 
         // 查询对应物流单信息
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listReconciliationByMainIds(new ArrayList<>(sourceDetailMap.keySet()), supplierType);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listReconciliationByMainIds(new ArrayList<>(sourceDetailMap.keySet()), null);
         //兼容二次下推对账单场景
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = sourceList
                 .stream().filter(Objects::nonNull)

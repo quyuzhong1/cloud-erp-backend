@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,13 +14,16 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.SupplierCategoryEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -583,15 +587,26 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      * 新增修改处理数据
      */
     private void handleData(LogisticsSupplierEntity logisticsSupplierEntity) {
-        String logisticsSupplier = "物流供应商";
         String supplierId = logisticsSupplierEntity.getSupplierId();
         SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException("供应商不存在");
         }
-        //供应商分类名
-        String supplierCategoryName = supplier.getCategoryName();
-        if (!logisticsSupplier.equals(supplierCategoryName)) {
+        //供应商分类
+        List<String> supplierCategoryList = Arrays.asList(
+                SupplierCategoryEnum.LOGISTICS.getCode(),
+                SupplierCategoryEnum.SELF_LOGISTICS.getCode(),
+                SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode(),
+                SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode(),
+                SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode(),
+                SupplierCategoryEnum.OTHER_LOGISTICS.getCode()
+        );
+        List<DictBasicEntity> list = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getStatus,Boolean.TRUE).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType()).in(DictBasicEntity::getValue, supplierCategoryList).list();
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("供应商分类不存在物流供应商");
+        }
+        List<String> categoryIdList = list.stream().map(DictBasicEntity::getId).distinct().collect(Collectors.toList());
+        if (!categoryIdList.contains(supplier.getCategoryId())) {
             throw new ServiceException("供应商分类不为物流供应商");
         }
         logisticsSupplierEntity.setSupplierName(supplier.getName());

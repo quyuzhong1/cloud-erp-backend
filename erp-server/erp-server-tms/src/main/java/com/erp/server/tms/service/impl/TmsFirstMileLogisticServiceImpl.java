@@ -1406,7 +1406,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap, String reconciliationType, String supplierType, String supplierId, String supplierName) {
         // 校验物理商是否一致
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id), supplierType);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id), null);
         if (CollectionUtils.isEmpty(sourceDetailList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
         }
