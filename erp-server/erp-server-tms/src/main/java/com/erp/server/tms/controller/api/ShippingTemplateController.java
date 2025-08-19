@@ -225,7 +225,7 @@ public class ShippingTemplateController extends BaseController {
      * @param dto 
      * @return ApiResult<List<BatchResultDTO>> 
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:ids={ids},状态值={disabled}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

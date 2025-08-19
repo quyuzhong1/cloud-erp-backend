@@ -1,7 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.CfgProductOwnerRuleDTO;
 import com.erp.server.plm.service.CfgProductOwnerRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/cfgProductOwnerRule")
+@LogSystemModule("产品归属规则配置")
 public class CfgProductOwnerRuleController extends BaseController {
 
     @Autowired
@@ -31,6 +35,7 @@ public class CfgProductOwnerRuleController extends BaseController {
 
 
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加规则")
     public ApiResult<Object> add(@RequestBody @Validated CfgProductOwnerRuleDTO.AddDTO dto) {
         Boolean flag = this.cfgProductOwnerRuleService.add(dto);
         return flag  ? success() : failure();

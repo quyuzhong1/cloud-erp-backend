@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-oms", contextId = "skuMapping")
+@FeignClient(name = "erp-oms", contextId = "skuMappingFeign",configuration = {FeignErrorDecoder.class})
 public interface SkuMappingFeign {
 
     /**

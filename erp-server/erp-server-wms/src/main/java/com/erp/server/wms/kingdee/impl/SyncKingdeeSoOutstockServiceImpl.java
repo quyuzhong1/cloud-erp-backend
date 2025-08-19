@@ -1219,11 +1219,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             // 国家名称
             shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
             // 区域编码
-            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getRegionCode());
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getRegionName());
             }
         }
 
@@ -1469,7 +1469,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountry)).findFirst().orElse(null);
     	if (null != dictCountryEntity){
     		// 区域编码
-    		viewDto.setProvince(dictCountryEntity.getSubregionCode());
+    		viewDto.setProvince(dictCountryEntity.getRegionCode());
     	}
     	
     	String finalPartitionId = partitionId;

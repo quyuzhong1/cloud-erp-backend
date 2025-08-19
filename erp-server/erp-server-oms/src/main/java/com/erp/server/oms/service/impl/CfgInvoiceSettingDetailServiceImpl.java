@@ -13,7 +13,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
-import com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO;
+import com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.*;
@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -64,7 +63,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     @Resource
     private InvoiceInfoService invoiceInfoService;
     @Resource
-    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
+    private CfgRuleInvoiceAmountService cfgRuleInvoiceAmountService;
     @Resource
     private RuleConditionService ruleConditionService;
 
@@ -79,11 +78,11 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             return viewDTOS;
         }
         //填充规则列表
-        List<CfgRuleInvoiceProductAmountDTO.ViewDTO> productAmountDTOList = cfgRuleInvoiceProductAmountService.listByCfgId(dto.getId());
+        List<CfgRuleInvoiceAmountDTO.ViewDTO> productAmountDTOList = cfgRuleInvoiceAmountService.listByCfgId(dto.getId());
         if (CollUtil.isEmpty(productAmountDTOList)){
             return viewDTOS;
         }
-        List<String> ruleIds = productAmountDTOList.stream().map(CfgRuleInvoiceProductAmountDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+        List<String> ruleIds = productAmountDTOList.stream().map(CfgRuleInvoiceAmountDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleIds(ruleIds, DictBasicTypeEnum.FIELD.getType());
         productAmountDTOList.forEach(e -> {
             e.setDictInvoiceRuleName(InvoiceRuleEnum.getName(e.getDictInvoiceRule()));
@@ -117,7 +116,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         // 处理更新中的删除逻辑
         List<CfgInvoiceSettingDetailEntity> relatedToAddAndUpdateList= handleInvoiceSettingDetails(dto.getDetailDTOList(), mainId);
         //处理产品总价计算规则
-        cfgRuleInvoiceProductAmountService.batchAddOrUpdate(dto.getProductAmountDTOList(), mainId);
+        cfgRuleInvoiceAmountService.batchAddOrUpdate(dto.getProductAmountDTOList(), mainId);
         // 操作日志
         if (ObjectUtil.isNotEmpty(relatedToAddAndUpdateList)) {
             List<Pair<String, String>> pairList = relatedToAddAndUpdateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());

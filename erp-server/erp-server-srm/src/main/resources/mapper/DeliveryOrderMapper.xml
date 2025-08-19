@@ -32,9 +32,11 @@
             doe.confirm_receive_date as confirmReceiveDate,
             do2.create_user_name as createUserName,
             do2.create_time as createTime,
-            do2.supplier_id as supplierId
+            do2.supplier_id as supplierId,
+            po.type
         from delivery_order do2
         inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        left join foreign_purchase_order po on do2.source_id = po.id and po.is_deleted = false
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
@@ -153,6 +155,8 @@
             doe.receipt_status as detailReceiptStatus,
             do2.code,
             do2.supplier_id,
+            do2.to_warehouse_id as warehouseId,
+            do2.to_warehouse_name as warehouseName,
             doe.sku_id,
             doe.sku_no,
             doe.product_name,
@@ -177,6 +181,7 @@
             do2.source_id as purchaseId
         from delivery_order do2
         inner join delivery_order_detail doe on do2.id = doe.main_id and doe.is_deleted = false
+        left join foreign_purchase_order po on do2.source_id = po.id and po.is_deleted = false
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false

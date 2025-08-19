@@ -50,6 +50,7 @@
             opw.warehouse_code,
             opw.disabled,
             op.code AS providerCode,
+            op.name AS providerName,
             op.owner_code as ownerCode
         FROM overseas_provider_warehouse opw
         INNER JOIN overseas_provider op

@@ -3,7 +3,6 @@ package com.erp.model.scm.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -78,11 +77,18 @@ public class PurchasePriceDetailImportExcelDTO  {
 //    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String effectiveDateStr;
 
+    /**
+     * 税率
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "失效时间", index = 7)
+//    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    private String expireDateStr;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 7)
+    @ExcelProperty(value = "错误数据", index = 8)
     private String  errorMsg;
 
 

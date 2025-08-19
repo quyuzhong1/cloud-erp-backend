@@ -30,6 +30,7 @@ import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPostService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -240,6 +241,8 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
     public BatchResultDTO delete(String id) {
         KingdeePostEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -258,7 +261,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
                 }
             });
         }
-        return BatchResultDTO.success(entity.getId(), entity.getKingdeeDeptCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
 

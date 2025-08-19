@@ -97,6 +97,10 @@ public class SoOutstockDTO implements Serializable {
         private String code;
 
         /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
          * 第三方单据编号
          */
         private String thirdCode;

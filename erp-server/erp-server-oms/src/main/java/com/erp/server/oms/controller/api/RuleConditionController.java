@@ -3,8 +3,11 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.server.oms.service.RuleConditionService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,7 @@ import javax.annotation.Resource;
 @Slf4j
 @RestController
 @RequestMapping("/ruleCondition")
+@LogSystemModule("规则条件表")
 public class RuleConditionController extends BaseController {
 
     @Resource
@@ -38,6 +42,7 @@ public class RuleConditionController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
     public ApiResult<String> add(@RequestBody @Validated RuleConditionDTO.AddDTO dto) {
         return success(ruleConditionService.add(dto));
     }
@@ -55,6 +60,7 @@ public class RuleConditionController extends BaseController {
         menuCode = "oms:ruleCondition:update",
         serviceClass = RuleConditionService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.INSERT, desc = "修改")
     public ApiResult<Object> update(@RequestBody @Validated RuleConditionDTO.UpdateDTO dto) {
         ruleConditionService.update(dto);
         return success();

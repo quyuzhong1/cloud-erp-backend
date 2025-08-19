@@ -1,5 +1,6 @@
 package com.erp.rpc.scm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -17,7 +18,7 @@ import java.util.List;
  * @date 2024-09-06
  * @author tanmujin
  */
-@FeignClient(name = "erp-scm", contextId = "purchasePrice")
+@FeignClient(name = "erp-scm", contextId = "purchasePrice",configuration = {FeignErrorDecoder.class})
 public interface PurchasePriceFeign {
 
     @PostMapping ("/feign/purchasePrice/listByCodes")

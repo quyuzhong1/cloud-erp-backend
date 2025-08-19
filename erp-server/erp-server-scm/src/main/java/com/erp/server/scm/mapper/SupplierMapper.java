@@ -24,10 +24,9 @@ public interface SupplierMapper extends BaseMapper<SupplierEntity> {
 
     IPage<SupplierDTO.PagingViewDTO> paging(Page query, @Param("params") SupplierDTO.PagingParamDTO params);
 
-    List<SupplierDTO.PagingViewDTO> getExportSupplier(@Param("params") SupplierDTO.PagingParamDTO dto);
-    Page<SupplierDTO.PagingViewDTO> getExportSupplier(@Param("page") Page<SupplierDTO.PagingViewDTO> page, @Param("params") SupplierDTO.PagingParamDTO dto);
+    Page<SupplierDTO.PagingExportDTO> getExportSupplier(@Param("page") Page<SupplierDTO.PagingViewDTO> page, @Param("params") SupplierDTO.PagingParamDTO dto);
 
-    List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("value")String categoryType,
+    List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("categoryTypeList")List<String> categoryTypeList,
                                                @Param("approveStatus")String approveStatus);
 
     IPage<BaseDropDownDTO.RemarkDTO> pagingSelect(Page query, @Param("params")BaseDropDownDTO.SelectDTO params);

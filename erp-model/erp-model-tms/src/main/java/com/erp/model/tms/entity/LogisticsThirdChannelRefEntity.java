@@ -54,7 +54,7 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     @TableField("logistics_channel_code")
     private String logisticsChannelCode;
     /**
-    * 第三方渠道编码
+    * 第三方物流商编码
     */
     @TableField("third_supplier_code")
     private String thirdSupplierCode;
@@ -63,18 +63,37 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     */
     @TableField("third_supplier_name")
     private String thirdSupplierName;
-
     /**
-     * 平台类型 TRACK123
-     */
+    * 平台类型(TRACK123)
+     * TrackPlatformTypeEnum
+    */
     @TableField("platform_type")
     private String platformType;
-
     /**
-     * 手机号
-     */
-    @TableField("mobile")
-    private String mobile;
+    * 物流商id
+    */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
+    /**
+    * 物流商名称
+    */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+    /**
+    * 第三方渠道编码
+    */
+    @TableField("third_channel_code")
+    private String thirdChannelCode;
+    /**
+    * 第三方渠道名称
+    */
+    @TableField("third_channel_name")
+    private String thirdChannelName;
+    /**
+    * 推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人-店铺,platformSender=发件人-平台  枚举：LogisticsThirdChannelRefPushTypeEnum
+    */
+    @TableField("push_type")
+    private String pushType;
 
 
     public static final String REMARK = "remark";
@@ -92,6 +111,18 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     public static final String THIRD_SUPPLIER_CODE = "third_supplier_code";
 
     public static final String THIRD_SUPPLIER_NAME = "third_supplier_name";
+
+    public static final String PLATFORM_TYPE = "platform_type";
+
+    public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
+
+    public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
+
+    public static final String THIRD_CHANNEL_CODE = "third_channel_code";
+
+    public static final String THIRD_CHANNEL_NAME = "third_channel_name";
+
+    public static final String PUSH_TYPE = "push_type";
 
     @Override
     public Serializable pkVal() {

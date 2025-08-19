@@ -60,6 +60,7 @@ public class DmpDateDimensionController extends BaseController {
         menuCode = "dmp:dmpDateDimension:update",
         serviceClass = DmpDateDimensionService.class,
         keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "时间维度表修改")
     public ApiResult update(@RequestBody @Validated DmpDateDimensionDTO.UpdateDTO dto) {
         dmpDateDimensionService.update(dto);
         return success();

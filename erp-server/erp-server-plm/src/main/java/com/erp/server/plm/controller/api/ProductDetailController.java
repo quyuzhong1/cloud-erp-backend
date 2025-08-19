@@ -1378,6 +1378,7 @@ public class ProductDetailController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/batchUpdateProductPack")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修改产品包装尺寸")
     public ApiResult<List<BatchResultDTO>> batchUpdateProductPack(@RequestBody @Validated BatchParamsDTO<ProductPackViewDTO> dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (ProductPackViewDTO viewDTO : dto.getParams()) {
@@ -1420,7 +1421,7 @@ public class ProductDetailController extends BaseController {
             serviceClass = ProductDetailService.class,
             keyIdName = "id"
     )
-    public ApiResult<Object> importZip(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
+    public ApiResult<Object> importZip(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean flag = productDetailImagesService.importZip(dto);
         return flag == true ? success() : failure();
     }

@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -337,6 +336,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源类型【可排序】
          */
         private String sourceType;
+
+        /**
+         * 退货方式 退货扣款 退货补货
+         */
+        private String returnMode;
 
         /**
          * 交货周期
@@ -1921,4 +1925,169 @@ public class PurchaseOrderDTO implements Serializable {
         private String skuNo;
     }
 
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchAdjustParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         * tabFlag,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+        /**
+         * 调价
+         */
+        @NotBlank(message = "采购调价表id不能为空")
+        private String purchasePriceChangeDetailId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class AdjustListDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 采购单号
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 供应商Id
+         */
+        private String supplierId;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 执行状态，ExecutionStatusEnum枚举
+         */
+        private String executionStatus;
+
+        /**
+         * 执行状态，ExecutionStatusEnum枚举
+         */
+        private String executionStatusName;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate purchaseDate;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 税率，带百分比
+         */
+        private String taxRateStr;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 待调整单价
+         */
+        private BigDecimal adjustTaxPrice;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
+         * 单价是否一致，一致/不一致
+         */
+        private Boolean isSame;
+
+        /**
+         * 单价是否一致，一致/不一致
+         */
+        private String isSameName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AdjustPriceDTO {
+
+        /**
+         * 采购调价表明细id
+         */
+        @NotBlank(message = "采购调价表明细id不能为空")
+        private String purchasePriceChangeDetailId;
+
+        /**
+         * 主键明细id
+         */
+        @NotEmpty(message = "主键明细id不能为空")
+        private List<String> detailIdList;
+    }
 }

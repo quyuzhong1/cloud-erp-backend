@@ -70,6 +70,7 @@ public class FirstMileWeightAllocationController extends BaseController {
     /**
      * 导出Excel
      */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "头程重量分摊导出")
     @PostMapping("/exportExcel")
     public ApiResult<Object> exportExcel(@RequestBody FirstMileWeightAllocationDTO.ExportParamDTO dto){
         firstMileWeightAllocationService.exportExcel(dto);
@@ -111,6 +112,7 @@ public class FirstMileWeightAllocationController extends BaseController {
      * 批量删除
      */
     @PostMapping("/deleteBatch")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除")
     public ApiResult<List<BatchResultDTO>> deleteBatch(@RequestBody BaseIdsDTO.IdsDTO dto){
         List<FirstMileWeightAllocationEntity> entityList = firstMileWeightAllocationService.listByIds(dto.getIds());
         List<String> logisticsBillIds = entityList.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
@@ -138,6 +140,7 @@ public class FirstMileWeightAllocationController extends BaseController {
      * @return
      */
     @PostMapping("/changeProductWeight")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改单产品重量保存")
     public ApiResult<List<BatchResultDTO>> changeProductWeight(@RequestBody @Valid ValidList<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList){
         //批量校验是否存在相同维度的sku修改数据
         List<BatchResultDTO> batchResultDTOS = firstMileChangeRecordService.checkSameDimension(dtoValidList);
@@ -161,6 +164,7 @@ public class FirstMileWeightAllocationController extends BaseController {
      * @return
      */
     @PostMapping("/changePackageWeight")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改出库重量/尺寸")
     public ApiResult<List<BatchResultDTO>> changePackageWeight(@RequestBody @Valid ValidList<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList){
         //批量校验是否存在相同维度的sku修改数据
         List<BatchResultDTO> batchResultDTOS = firstMileChangeRecordService.checkPackageSameDimension(dtoValidList);

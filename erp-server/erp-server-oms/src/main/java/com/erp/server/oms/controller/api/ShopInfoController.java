@@ -248,6 +248,7 @@ public class ShopInfoController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用或者禁用店铺 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult updateStatus(@RequestBody @Validated ShopBatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -297,6 +298,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/batchSetCost")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "店铺批量费用设置")
     public ApiResult batchSetCost(@RequestBody @Validated ShopDTO.BatchSetCostDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -327,6 +329,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/setCost")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "单个店铺费用设置")
     public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
         Boolean result = shopCostService.setCost(dto);
         return result ? success() : failure();
@@ -373,6 +376,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/shopAuthorize")
+    @LogAction(value = LogActionEnum.GRANT, desc = "店铺授权")
     public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto, HttpServletResponse response) {
         Boolean result = shopInfoService.shopAuthorize(dto, response);
         return result ? success() : failure();
@@ -396,6 +400,7 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/cancelAuthorize")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消店铺授权")
     public ApiResult cancelAuthorize(@RequestBody @Validated CancelAuthorizeDTO dto) {
         Boolean result = shopInfoService.cancelAuthorize(dto);
         return result ? success() : failure();

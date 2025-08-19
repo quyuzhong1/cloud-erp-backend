@@ -143,7 +143,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
      * @date 2025-07-25
      */
     @Override
-    public Boolean importZip(ProductDetailDTO.ProductImagesZipDTO dto) {
+    public Boolean importZip(BaseDTO.ImportDTO dto) {
         downloadTaskFeign.saveImportTask("SKU图片导入", IMPORT_PLM_SKU_IMAGES.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -247,7 +247,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
      * @param dto 包含文件URL和任务ID的导入参数对象，不能为空
      */
     @Override
-    public void importProductDetailImages(ProductDetailDTO.ProductImagesZipDTO dto) {
+    public void importProductDetailImages(BaseDTO.ImportDTO dto) {
         List<MultipartFile> multipartFiles = null;
         try {
             // 解析压缩包获取图片文件列表

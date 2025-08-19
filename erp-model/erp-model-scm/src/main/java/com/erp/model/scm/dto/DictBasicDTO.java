@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -41,4 +42,13 @@ public class DictBasicDTO implements Serializable {
      * 名称
      */
     private String name;
+    /**
+     * 备注
+     */
+    private String remark;
+
+    /**
+     * 子级，级联的时候使用
+     */
+    private List<DictBasicDTO> childList;
 }

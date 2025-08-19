@@ -1,10 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchStateDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -106,8 +103,8 @@ public class SysAccountingCompanyController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除公司")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody @Validated List<String> ids) {
-        sysAccountingCompanyService.removeByIds(ids);
-        return success();
+        List<BatchResultDTO> resultDTOList=sysAccountingCompanyService.delete(ids);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
