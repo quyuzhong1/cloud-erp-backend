@@ -619,21 +619,24 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 shudiyunB2cOrderDTO.setSpec_no("");
                 shudiyunB2cOrderDTO.setSpec_name("");
                 
+                String orderCountryCode = "";
+                if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
+                	DmpSoReceiverEntity dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
+                	orderCountryCode = dmpSoReceiverEntity.getCountry();
+                }
                 // 国家编码
                 String countryCode = shopInfo.getDictCountryCode();
                 if(StringUtils.isBlank(countryCode) || "ALL".equals(countryCode)) {
                 	countryCode = customerInfo.getCountryId();
                 	if(StringUtils.isBlank(countryCode) || "ALL".equals(countryCode)) {
-                		if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
-                        	DmpSoReceiverEntity dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
-                        	countryCode = dmpSoReceiverEntity.getCountry();
-                        }
+                		countryCode = orderCountryCode;
                 	}
                 }
                 
+                orderCountryCode = DmpHandlerUtils.convertCountry(orderCountryCode);
                 countryCode = DmpHandlerUtils.convertCountry(countryCode);
 
-                DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+                DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, orderCountryCode);
 
                 // 国家名称
                 String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
@@ -666,7 +669,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
 
                 // 国家编码
-                shudiyunB2cOrderDTO.setCountry_code(countryCode);
+                shudiyunB2cOrderDTO.setCountry_code(orderCountryCode);
                 // 国家名称
                 shudiyunB2cOrderDTO.setCountry(countryName);
                 // 区域编码
