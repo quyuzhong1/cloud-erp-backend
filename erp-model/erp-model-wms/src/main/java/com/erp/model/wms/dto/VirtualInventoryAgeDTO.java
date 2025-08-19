@@ -26,6 +26,72 @@ import java.util.Map;
 public class VirtualInventoryAgeDTO implements Serializable {
 
     /**
+     * 虚拟仓新增对象
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库存
+         */
+        private Integer virtualQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+        /**
+         * 平均库存（反推）
+         */
+        private BigDecimal backAvgInventoryAge;
+        /**
+         * 平均库龄（正推）
+         */
+        private BigDecimal avgInventoryAge;
+
+        /**
+         * 库龄计算差异
+         */
+        private String isDiff;
+        /**
+         * 单据冻结数
+         */
+        private Integer frozenQty;
+        /**
+         * 冻结差异
+         */
+        private String frozenIsDiff;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+    }
+
+
+    /**
+     * 虚拟仓新增对象
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+    }
+    /**
      * 分页显示数据
      */
     @Data
@@ -151,6 +217,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 日期
          */
+        @NotNull(message = "统计日期不能为空")
         private LocalDate date;
     }
 
