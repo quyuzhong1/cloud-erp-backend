@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -55,7 +56,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 10:00
      */
-    SupplierDTO.SupplierViewDTO view(String supplierId);
+    SupplierDTO.SupplierViewDTO view(String supplierId,Boolean isViewTel);
 
 
     /**
@@ -88,7 +89,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-20 18:38
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
 
     /**
@@ -204,7 +205,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author yl
      * @date 2023-03-30 9:44
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile,String type, HttpServletResponse response);
 
     /**
      * 获取供应商的一些信息
@@ -220,12 +221,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 批量保存 导入的供应商
      *
-     * @param addList
+     * @param addDTO
      * @return void
      * @author yl
      * @date 2023-03-30 20:01
      */
-    void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList);
+    void batchImportSupplier(SupplierDTO.ImportAddDTO addDTO,String type);
 
     /**
      * 查询是否 有供应商占用 要删除的id 如果有就不能删除
@@ -343,4 +344,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     SupplierEntity add(SupplierDTO.InsertDTO addDTO);
 
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+    /**
+     * 动态导出供应商
+     * @author will
+     * @date 2025/7/28 09:26
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> exportDynamicSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 }

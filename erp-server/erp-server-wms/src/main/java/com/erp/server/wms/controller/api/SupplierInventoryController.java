@@ -4,9 +4,11 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SupplierInventoryDTO;
 import com.erp.server.wms.query.SupplierInventoryQueryHandler;
 import com.erp.server.wms.service.SupplierInventoryService;
@@ -58,6 +60,7 @@ public class SupplierInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery
+    @LogAction(value = LogActionEnum.EXPORT, desc = "即时库存导出")
     public ApiResult exportExcel(@RequestBody SupplierInventoryDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = supplierInventoryService.exportExcel(dto,response);
         return flag ? success() : failure();

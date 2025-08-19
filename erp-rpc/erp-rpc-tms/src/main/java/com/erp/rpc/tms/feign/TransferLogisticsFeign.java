@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * 中转报关服务商
  */
-@FeignClient(name = "erp-tms", contextId = "transferLogistics")
+@FeignClient(name = "erp-tms", contextId = "transferLogistics" ,configuration = {FeignErrorDecoder.class})
 public interface TransferLogisticsFeign {
 
     /**

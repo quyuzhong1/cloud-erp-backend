@@ -4,7 +4,10 @@ package com.erp.server.mrp.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
 import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
 import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
@@ -30,6 +33,7 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/overseas-history-inventory")
+@LogSystemModule("海外仓库存")
 public class OverseasHistoryInventoryController extends BaseController {
 
 
@@ -53,6 +57,7 @@ public class OverseasHistoryInventoryController extends BaseController {
      * @param dto 入参
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "海外仓每日库存导出")
     public ApiResult<Boolean> exportList(@RequestBody @Validated OverseasHistoryInventoryDTO.ExportDTO dto) {
         overseasHistoryInventoryService.exportList(dto);
         return success(true);

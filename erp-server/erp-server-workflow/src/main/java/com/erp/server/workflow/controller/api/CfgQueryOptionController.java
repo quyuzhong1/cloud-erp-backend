@@ -74,12 +74,4 @@ public class CfgQueryOptionController extends BaseController {
         List<CfgQueryOptionDTO.TreeDTO> result = cfgQueryOptionService.tree(bussinessKey,useType);
         return success(result);
     }
-    /**
-     *
-     *
-     */
-    @PostMapping("/genBySql")
-    public void genBySql(@RequestBody List<CfgQueryOptionDTO.GenListDTO>list ) {
-        cfgQueryOptionService.genBySql(list);
-    }
 }

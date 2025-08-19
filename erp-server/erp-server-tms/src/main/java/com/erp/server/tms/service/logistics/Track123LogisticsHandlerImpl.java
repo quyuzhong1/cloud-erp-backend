@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
@@ -257,7 +258,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         logisticsRegisterVOS.forEach(e ->{
             RegisterRequest registerRequest = new RegisterRequest();
             BeanMapperUtils.copy(e, registerRequest);
-            if (Objects.isNull(e.getIsPushMobile()) || !e.getIsPushMobile()){
+            if (CharSequenceUtil.isBlank(e.getPhoneSuffix())){
                 registerRequest.setExtendFieldMap(null);
             }else {
                 ExtendField extendFieldMap = new ExtendField();

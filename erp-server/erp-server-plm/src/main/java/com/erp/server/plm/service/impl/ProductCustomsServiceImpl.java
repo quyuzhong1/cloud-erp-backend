@@ -331,14 +331,6 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             log.error("导入目的国清关错误！", e);
             return Boolean.FALSE;
         }
-
-        List<ProductCustomsExcelDTO> errorList = excelListenerUtil.getErrorList();
-        if (errorList.size() > 0) {
-            String fileName = "目的国清关错误信息";
-            ExcelUtil.export(fileName, "error", errorList, ProductCustomsExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
-
         List<ProductCustomsEntity> successList = excelListenerUtil.getSuccessList();
         if(CollUtil.isNotEmpty(successList)){
             List<String> skuIds = successList.stream().map(ProductCustomsEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -361,6 +353,12 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
             }
             //新增sku国家默认的记录，如果有则不新增
             self.addDefaultCustoms(skuIds);
+        }
+        List<ProductCustomsExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "目的国清关错误信息";
+            ExcelUtil.export(fileName, "error", errorList, ProductCustomsExcelDTO.class, response);
+            return Boolean.FALSE;
         }
         return Boolean.TRUE;
     }

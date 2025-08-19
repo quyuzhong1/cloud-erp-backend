@@ -402,6 +402,10 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          */
         private LocalDateTime collectEndTime;
         /**
+         * 柜型
+         */
+        private String containerType;
+        /**
          * 单据编号
          */
         private String code;
@@ -900,6 +904,11 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 揽收时间止
          */
         private LocalDateTime collectEndTime;
+
+        /**
+         * 柜型
+         */
+        private String containerType;
         /**
          * 所有ID
          */

@@ -202,9 +202,9 @@ public class SalesDemandController extends BaseController {
             menuCode = "scm:salesDemand:delete",
             serviceClass = SalesDemandService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = salesDemandService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = salesDemandService.delete(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 

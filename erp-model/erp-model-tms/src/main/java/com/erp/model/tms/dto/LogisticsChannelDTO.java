@@ -983,6 +983,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String searchKeyword;
         /**
+         * 物流商id
+         */
+        private String supplierId;
+        /**
          * 禁用状态
          */
         private Boolean disabled;

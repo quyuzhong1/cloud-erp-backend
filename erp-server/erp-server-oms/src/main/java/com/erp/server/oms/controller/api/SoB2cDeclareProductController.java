@@ -98,7 +98,7 @@ public class SoB2cDeclareProductController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2C销售订单申报产品信息表批量修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "B2C销售订单申报产品信息表批量修改 id={id}")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:soB2cDeclareProduct:batchUpdate",

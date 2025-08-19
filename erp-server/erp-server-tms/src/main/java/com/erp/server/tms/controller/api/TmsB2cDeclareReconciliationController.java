@@ -105,6 +105,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = tmsB2cDeclareReconciliationService.addAndSubmit(dto);
         return success(result);
@@ -123,6 +124,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
             menuCode = "tms:tmsB2cDeclareReconciliation:updateAndSubmit",
             serviceClass = TmsB2cDeclareReconciliationService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.UpdateDTO dto) {
         tmsB2cDeclareReconciliationService.updateAndSubmit(dto);
         return success();

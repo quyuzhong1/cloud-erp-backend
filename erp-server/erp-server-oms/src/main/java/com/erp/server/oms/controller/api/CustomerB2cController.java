@@ -6,8 +6,11 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
@@ -38,6 +41,7 @@ import java.util.Objects;
  */
 @RestController
 @RequestMapping("/customerB2c")
+@LogSystemModule("B2C销售管理-B2C客户管理")
 @Slf4j
 public class CustomerB2cController extends BaseController {
 
@@ -89,6 +93,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加客户信息")
     public ApiResult<Object> add(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
         String id = customerB2cService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -107,6 +112,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交审核")
     public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerB2cService.submit(dto.getIds());
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -119,6 +125,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交审核")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
         String id = customerB2cService.addAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -156,6 +163,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改客户信息")
     public ApiResult<Object> update(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         String id = customerB2cService.updateCustomer(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -174,6 +182,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交")
     public ApiResult<Object> updateAndSubmit(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         Boolean result = customerB2cService.updateAndSubmit(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -192,6 +201,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -222,6 +232,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核")
     public ApiResult<Object> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -255,6 +266,7 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:cancelProcess",
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerB2cService.cancelProcess(dto.getIds());
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -274,9 +286,10 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
-    public ApiResult<Object> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerB2cService.deleteByIds(dto.getIds());
-        return Boolean.TRUE.equals(result) ? success() : failure();
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除客户")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList =customerB2cService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
@@ -284,6 +297,7 @@ public class CustomerB2cController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = CustomerB2cQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "客户列表导出")
     public ApiResult<Object> exportCustomerB2c(@RequestBody @Valid CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerB2cService.exportExcel(dto, response);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -337,6 +351,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用或者停用客户 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         Boolean result = customerB2cService.updateStatus(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
@@ -400,6 +415,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping(value = "importCustomer")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入客户")
     public ApiResult<Void> importCustomer(@RequestParam(value = "file") MultipartFile file) throws IOException {
         customerB2cService.importCustomer(file);
         return success();

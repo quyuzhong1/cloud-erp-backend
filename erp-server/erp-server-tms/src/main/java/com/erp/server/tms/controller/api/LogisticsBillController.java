@@ -1,10 +1,12 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -20,13 +22,12 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.server.tms.query.LogisticsBillQueryHandler;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsBillService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -45,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 物流单
@@ -70,6 +72,8 @@ public class LogisticsBillController extends BaseController {
     @Resource
     private LogisticsChannelService logisticsChannelService;
 
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
     /**
      * tab 列表
      *
@@ -118,6 +122,7 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "自发货物流单列表导出")
     public ApiResult<Object>exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
         Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
@@ -160,6 +165,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @PostMapping("/batchUpdateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={trackStatus}")
     public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Valid LogisticsBillDTO.BatchUpdateStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         String trackStatus = dto.getTrackStatus();
@@ -189,6 +195,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @PostMapping("/initLogisticsBillBusinessCode")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "初始化头程发货单业务单号")
     public ApiResult<Object>initLogisticsBillBusinessCode(){
         logisticsBillService.initLogisticsBillBusinessCode();
         return success();
@@ -199,6 +206,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/deleteLogisticsBillNoOutstock")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除没有销售出库单/发货单的物流单")
     public ApiResult<Object> deleteLogisticsBillNoOutstock(@RequestParam(value = "orderType") String orderType){
         logisticsBillService.deleteLogisticsBillNoOutstock(orderType);
         return success();
@@ -208,6 +216,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @GetMapping("/addNoLogisticsBillDetailByBill")
+    @LogAction(value = LogActionEnum.INSERT, desc = "添加物流单明细并补充物流费用")
     public ApiResult<Object> addNoLogisticsBillDetailByBill(){
         logisticsBillService.addNoLogisticsBillDetailByBill();
         return success();
@@ -246,5 +255,44 @@ public class LogisticsBillController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "小包物流单导入")
     public ApiResult<Boolean> importTrack(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) throws Exception {
         return success(logisticsBillService.importTrack(excelFile,response));
+    }
+
+    /**
+     * 生成自发货费用/尾程费用
+     */
+    @PostMapping("/generateBillCost")
+    @LogAction(value = LogActionEnum.INSERT, desc = "生成自发货费用/尾程费用")
+    public ApiResult<List<BatchResultDTO>> generateBillCost(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(ids);
+        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(ids);
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(ids);
+        for (String id : dto.getIds()) {
+            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "该物流单不存在"));
+                continue;
+            }
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.stream().filter(e -> e.getLogisticsBillId().equals(id)).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsBillCostEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getTransportNo(), "该物流单已生成费用"));
+                continue;
+            }
+            List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            if (CollUtil.isEmpty(detailEntityList)){
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getTransportNo(), "该物流单无明细"));
+                continue;
+            }
+            try {
+                logisticsBillService.addLogisticsBillCost(entity, detailEntityList);
+                resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getTransportNo()));
+            } catch (Exception e) {
+                log.error("生成自发货费用/尾程费用失败{}", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getTransportNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
     }
 }

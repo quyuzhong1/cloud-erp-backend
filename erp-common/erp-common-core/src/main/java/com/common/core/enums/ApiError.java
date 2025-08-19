@@ -127,6 +127,7 @@ public enum ApiError implements Serializable {
     ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
     ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{}未找到"),
+    ERROR_HAS_EXIST(1068,"{}已存在"),
 
 
 
@@ -846,6 +847,11 @@ public enum ApiError implements Serializable {
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
+    ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
+    ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
+    ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
+    ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{}】未找到数量【{}】的供应商报价信息"),
+
 
     /**
      * WMS 错误
@@ -1179,7 +1185,7 @@ public enum ApiError implements Serializable {
     ERROR_92257(92257,"来源单号未找到"),
     ERROR_92258(92258,"请选择拣货单"),
     ERROR_92259(92259,"当前周期【{}】单号【{}】已存在对账单记录"),
-    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
+    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】同一个对账类型【{}】同一个物流商【{}】仅可生成一次对账单"),
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
@@ -1537,6 +1543,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_NOT_EXIST(92146,"申报信息SKU【{}】目的国申报价币种不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_TO_DECLARE_CUY_SYM_NOT_EXIST(92147,"申报信息SKU【{}】目的国申报价币种符号不存在"),
     ERROR_SO_B2C_ORDER_DECLARE_WEIGHT_NOT_EXIST(92148,"申报信息SKU【{}】重量不能为0"),
+    ERROR_SO_B2C_ORDER_DECLARE_CUSTOMS_NOT_EXIST(92148,"申报信息SKU【{}】目的国申报信息不存在"),
     EXIST_THIRD_SHOP_MAPPING(99140,"店铺【{}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
 
     ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
@@ -1791,7 +1798,9 @@ public enum ApiError implements Serializable {
         } else {
             ServiceException serviceException = (ServiceException) e;
             return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
-                    serviceException.getMsg().contains("Read timed out");
+                    serviceException.getMsg().contains("Read timed out") ||
+                    serviceException.getMsg().contains("获取锁失败,请求超时")
+                    ;
         }
     }
 }

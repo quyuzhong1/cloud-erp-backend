@@ -113,6 +113,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .appointmentPickingEndTime(createInboundReq.getCollectEndTime() == null?"":createInboundReq.getCollectEndTime().format(DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT)))
                 .deliveryVoucherBase64(createInboundReq.getFileBase64())
                 .inboundBoxList(boxList)
+                .transportSize(createInboundReq.getContainerType())
                 .build();
         return request;
     }

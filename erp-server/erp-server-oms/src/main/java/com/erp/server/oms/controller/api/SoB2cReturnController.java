@@ -10,9 +10,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
@@ -69,6 +71,7 @@ public class SoB2cReturnController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
+    @LogAction(value = LogActionEnum.EXPORT, desc = "退款订单导出")
     public ApiResult export(@RequestBody @Validated SoB2cReturnDTO.PagingParamDTO dto) {
         soB2cReturnService.exportExcel(dto);
         return success();
@@ -135,6 +138,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(soB2cReturnService.delete(idsDTO.getIds()));
     }
@@ -177,6 +181,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/updateLogisticsCode")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新物流单号保存")
     public ApiResult<List<BatchResultDTO>> updateLogisticsCode(@RequestBody @Valid ValidList<SoB2cReturnDTO.ReturnLogisticsDTO> dtos) {
         if (dtos.isEmpty()) {
             return success();

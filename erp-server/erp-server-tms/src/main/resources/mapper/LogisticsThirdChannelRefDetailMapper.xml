@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.oms.mapper.CfgRuleInvoiceProductAmountMapper">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsThirdChannelRefDetailMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgRuleInvoiceProductAmountEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsThirdChannelRefDetailEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -12,13 +12,13 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="name" property="name" />
-       <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
-       <result column="priority" property="priority" />
-       <result column="cfg_id" property="cfgId" />
-       <result column="dict_invoice_rule" property="dictInvoiceRule" />
-       <result column="ratio" property="ratio" />
+       <result column="disabled" property="disabled" />
+       <result column="main_id" property="mainId" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="mobile" property="mobile" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,14 +32,8 @@
         update_time,
         version,
         is_deleted,
-        name, disabled, remark, priority, cfg_id, dict_invoice_rule, ratio
+        remark, disabled, main_id, shop_id, shop_name, dict_platform, mobile
     </sql>
-    <select id="listByCfgId" resultType="com.erp.model.oms.dto.CfgRuleInvoiceProductAmountDTO$ViewDTO">
-        select <include refid="Base_Column_List"/>
-        from cfg_rule_invoice_product_amount
-        where cfg_id = #{cfgId} and is_deleted = false
-        order by priority asc
-    </select>
 
 
 </mapper>

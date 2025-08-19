@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "erp-tms", contextId = "productRegistration")
+@FeignClient(name = "erp-tms", contextId = "productRegistration" ,configuration = {FeignErrorDecoder.class})
 public interface TmsProductRegistrationFeign {
 
     /**

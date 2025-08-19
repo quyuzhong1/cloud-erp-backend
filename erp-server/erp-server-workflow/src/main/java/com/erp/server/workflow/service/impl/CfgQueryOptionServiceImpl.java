@@ -213,64 +213,72 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @Transactional(rollbackFor =Exception.class)
     @Override
-    public void genBySql(List<CfgQueryOptionDTO.GenListDTO>list) {
-        if(CollUtil.isNotEmpty(list)){
-            for (CfgQueryOptionDTO.GenListDTO dto : list) {
-                String model = dto.getModel();
-                String tableName = dto.getTableName();
-                String fieldBelongsType = dto.getFieldBelongsType();
-                String bussinessKey = dto.getBussinessKey();
-                String useType = dto.getUseType();
+    public void genBySql(CfgQueryOptionDTO.GenDTO dto) {
+        if(Objects.nonNull(dto)){
+            String model = dto.getModel();
+            String tableName = dto.getTableName();
+            String fieldBelongsType = dto.getFieldBelongsType();
+            String bussinessKey = dto.getBussinessKey();
+            String useType = dto.getUseType();
+
+            //校验以上字段是否为空
+            if(StrUtil.isBlank(model) || StrUtil.isBlank(tableName) || StrUtil.isBlank(fieldBelongsType) || StrUtil.isBlank(bussinessKey) || StrUtil.isBlank(useType)){
+                System.out.println("参数不能为空");
+                return;
+            }
+            String[] tableNames = tableName.split(",");
+            String[] fieldBelongsTypes = fieldBelongsType.split(",");
+            for (int i = 0; i < tableNames.length; i++) {
                 //判断同一个单据下的fieldBelongsType 是否已存在。 不存在才新增，存在则跳过
                 Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey)
-                        .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsType)
+                        .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsTypes[i])
+                        .eq(CfgQueryOptionEntity::getTableName,tableNames[i])
+                        .eq(CfgQueryOptionEntity::getUseType,useType)
                         .count();
                 if(count > 0){
                     continue;
                 }
-                saveFromSql(bussinessKey, model,tableName,fieldBelongsType,useType);
+                saveFromSql(dto,tableNames[i]);
             }
         }
     }
 
 
-    private void saveFromSql(String businessKey, String model , String tableName, String fieldBelongsType, String useType) {
-//        //不允许重复添加
-//        Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, businessKey).eq(CfgQueryOptionEntity::getTableName, tableName).count();
-//        if(count > 0){
-//            return ;
-//        }
-//
-//        String sql = "SELECT obj_description(cls.oid) AS table_comment,cls.relname, col.attnum AS ordinal_position, col.attname AS COLUMN_NAME, format_type(col.atttypid, col.atttypmod) AS data_type, NOT col.attnotnull AS is_nullable, des.description AS column_comment FROM pg_attribute col JOIN pg_class cls ON col.attrelid = cls.OID JOIN pg_namespace ns ON cls.relnamespace = ns.OID LEFT JOIN pg_description des ON des.objoid = col.attrelid AND des.objsubid = col.attnum WHERE cls.relname = '{}' AND col.attnum > 0 and col.attname not in ('create_user_id','create_user_name','create_time','update_user_id','update_user_name','update_time','version','is_deleted') AND NOT col.attisdropped ORDER BY col.attnum;";
-//
-//        String url = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format("erp-{}", model) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
-//        try {
-//            List<CfgQueryOptionEntity> results = new ArrayList<>();
-//            Connection conn = DriverManager.getConnection(url, "", "");
-//            String format = StrUtil.format(sql, tableName);
-//            PreparedStatement stmt = conn.prepareStatement(format);
-//            ResultSet rs = stmt.executeQuery();
-//            while (rs.next()) {
-//                String name = rs.getString("column_name");
-//                String comment = rs.getString("column_comment");
-//                String tableComment = rs.getString("table_comment");
-//                CfgQueryOptionEntity cfgQueryOption = new CfgQueryOptionEntity();
-//                cfgQueryOption.setConditionField(underlineToCamel(name));
-//                cfgQueryOption.setConditionFieldName(Objects.isNull(comment) ? "" : comment);
-//                cfgQueryOption.setBussinessKey(businessKey);
-//                cfgQueryOption.setFieldBelongsType(fieldBelongsType);
-//                cfgQueryOption.setValueType("String");
-//                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToPascal(tableName)+"Entity");
-//                cfgQueryOption.setTableName(tableName);
-//                cfgQueryOption.setSysClassify(model);
-//                cfgQueryOption.setTableCnName(Objects.isNull(tableComment) ? "" : tableComment);
-//                cfgQueryOption.setUseType(useType);
-//                results.add(cfgQueryOption);
-//            }
-//            saveBatch(results);
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
+    private void saveFromSql(CfgQueryOptionDTO.GenDTO dto,String tableName) {
+        String model = dto.getModel();
+        String fieldBelongsType = dto.getFieldBelongsType();
+        String businessKey = dto.getBussinessKey();
+        String useType = dto.getUseType();
+
+        String sql = dto.getSql();
+        String url = StrUtil.format(dto.getUrl(), model);
+        try {
+            List<CfgQueryOptionEntity> results = new ArrayList<>();
+            Connection conn = DriverManager.getConnection(url, dto.getAccount(), dto.getPassword());
+            String format = StrUtil.format(sql, tableName);
+            PreparedStatement stmt = conn.prepareStatement(format);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("column_name");
+                String comment = rs.getString("column_comment");
+                String tableComment = rs.getString("table_comment");
+                CfgQueryOptionEntity cfgQueryOption = new CfgQueryOptionEntity();
+                cfgQueryOption.setConditionField(underlineToCamel(name));
+                cfgQueryOption.setConditionFieldName(Objects.isNull(comment) ? "" : comment);
+                cfgQueryOption.setBussinessKey(businessKey);
+                cfgQueryOption.setFieldBelongsType(fieldBelongsType);
+                cfgQueryOption.setValueType("String");
+                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToPascal(tableName)+"Entity");
+                cfgQueryOption.setTableName(tableName);
+                cfgQueryOption.setSysClassify(model);
+                cfgQueryOption.setTableCnName(Objects.isNull(tableComment) ? "" : tableComment);
+                cfgQueryOption.setUseType(useType);
+                results.add(cfgQueryOption);
+            }
+            saveBatch(results);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

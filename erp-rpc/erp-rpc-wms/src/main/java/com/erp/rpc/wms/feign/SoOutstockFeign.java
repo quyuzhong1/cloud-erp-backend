@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "soOutstock")
+@FeignClient(name = "erp-wms", contextId = "soOutstock" ,configuration = {FeignErrorDecoder.class})
 public interface SoOutstockFeign {
 
     /**

@@ -118,6 +118,7 @@ public class CfgVatInvoiceController extends BaseController {
      * @return
      */
     @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 ids={ids},状态值={disabled}(true=禁用,false=启用)")
     public ApiResult<List<BatchResultDTO>> updateState(@RequestBody @Validated CfgVatInvoiceDTO.InvoiceBatchUpdateDTO updateDTO) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<String> ids = updateDTO.getIds().stream().distinct().collect(Collectors.toList());
@@ -154,7 +155,8 @@ public class CfgVatInvoiceController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
-        return success(cfgVatInvoiceService.delete(idsDTO.getIds()));
+    @LogAction(value = LogActionEnum.DELETE, desc = "VAT发票设置删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
+        return success(cfgVatInvoiceService.delete(idsDTO.getIds(),true));
     }
 }

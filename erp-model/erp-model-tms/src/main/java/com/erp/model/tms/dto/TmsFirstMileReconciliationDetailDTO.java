@@ -533,6 +533,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 账单类型： actual=实际， initPeriod=期初
          */
         private String reconciliationType;
+        /**
+         * 供应商类型
+         * LogisticsSupplierTypeEnum
+         */
+        private String supplierType;
 
         /**
          * 费用明细详情(导入时传递)
@@ -1091,5 +1096,13 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @NotEmpty( message = "来源ID数组不能为空")
         private List<@NotBlank(message = "来源ID不能为空") String> sourceIdList;
+
+        /**
+         * 对账单类型
+         */
+        @NotBlank(message = "对账单类型不能为空")
+        private String supplierType;
+        @NotBlank(message = "物流供应商ID不能为空")
+        private String logisticsSupplierId;
     }
 }
