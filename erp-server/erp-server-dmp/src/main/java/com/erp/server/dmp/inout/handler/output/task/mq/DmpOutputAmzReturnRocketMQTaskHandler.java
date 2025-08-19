@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -101,13 +102,15 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
         }
         PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
         BeanUtils.copyProperties(dmpEntity, dto);
-        dto.setUniqueId(dmpEntity.getThirdCode());
+        dto.setUniqueId(CharSequenceUtil.format("{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
         dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
         dto.setReason(dmpEntity.getRemark());
         dto.setDictPlatform(dmpEntity.getSourceSystem());
         dto.setPlatform(dmpEntity.getSourceSystem());
         dto.setDmpSyncTaskId(cfgOutputId);
+        dto.setShopId(dmpEntity.getShopId());
+        dto.setBatchNo(dmpEntity.getBatchNo());
         // 明细
         List<PlatformReturnOrderDTO.Detail> detailList = parseReturnDetailList(dmpDetailList);
         dto.setDetailList(detailList);
@@ -133,36 +136,6 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
     @Override
     protected List<String> getSourceCodeKeys() {
         return Collections.singletonList("uniqueId");
-    }
-
-    @Override
-    public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList,
-                                       DmpOutputTaskRequest dmpOutputTaskRequest) {
-        DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
-        List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<String> returnInboundIds = null;
-        for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
-            DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-            String storageName = childDmpCfgInputConvertEntity.getStorageName();
-            ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
-            QueryWrapper<?> wrapper = new QueryWrapper<>();
-            if("dmp_third_return_inbound".equals(storageName)) {
-                wrapper.in("source_id", mainIds);
-            }else if("dmp_third_return_inbound_detail".equals(storageName)){
-                if(CollectionUtils.isEmpty(returnInboundIds)) {
-                    continue;
-                }
-                wrapper.in("main_id", returnInboundIds);
-            } else {
-                wrapper.in("main_id", mainIds);
-            }
-            List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
-            if("dmp_third_return_inbound".equals(storageName)) {
-                returnInboundIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-            }
-            dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-            dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
-        }
     }
 }
 
