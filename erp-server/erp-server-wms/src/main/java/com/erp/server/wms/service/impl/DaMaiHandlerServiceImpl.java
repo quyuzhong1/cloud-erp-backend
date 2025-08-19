@@ -165,6 +165,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         DaMaiCalculateFeeRequest daMaiCalculateFeeRequest = DaMaiCalculateFeeRequest.builder()
+                .packageQty("1")
+                .residentialFlag("1")
+                .podFlag("0")
                 .consigneeCountryCode(calculateFeeReq.getCountryCode())
                 .consigneePostalCode(calculateFeeReq.getPostCode())
                 .whCode(calculateFeeReq.getWarehouseCode())
@@ -181,7 +184,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(CollectionUtils.isEmpty(daMaiCalculateFeeResps)){
             return success(Collections.emptyList());
         }
-        daMaiCalculateFeeResps = daMaiCalculateFeeResps.stream().filter(v->StringUtils.isNotBlank(v.getErrMsg())).collect(Collectors.toList());
+        daMaiCalculateFeeResps = daMaiCalculateFeeResps.stream().filter(v->StringUtils.isBlank(v.getErrMsg())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(daMaiCalculateFeeResps)){
             return success(Collections.emptyList());
         }

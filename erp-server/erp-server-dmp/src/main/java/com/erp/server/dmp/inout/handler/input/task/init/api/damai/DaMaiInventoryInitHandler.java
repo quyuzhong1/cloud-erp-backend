@@ -95,6 +95,6 @@ public class DaMaiInventoryInitHandler extends DmpInputInitHandler {
 	}
 
 	public  DmpBasicSystemCodeEnum getDmpBasicSystemCodeEnum(){
-		return DmpBasicSystemCodeEnum.JIFENG;
+		return DmpBasicSystemCodeEnum.DA_MAI;
 	}
 }

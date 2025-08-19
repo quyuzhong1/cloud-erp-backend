@@ -138,6 +138,13 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			if (count > 0) {
 				return;
 			}
+		}else if (PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
+			//根据明细判断
+			String sku = dto.getProductDetailList().get(0).getProductSku();
+			SoReturnInstockEntity exist = soReturnInstockService.getByThirdCodeAndPlatformSkuNo(dto.getPlatformReturnOrderNo(),sku);
+			if(Objects.nonNull(exist)){
+				return;
+			}
 		} else {
 			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
 			if(Objects.nonNull(existEntity)){
@@ -251,6 +258,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
 			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
 			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
 		return detailEntityList;

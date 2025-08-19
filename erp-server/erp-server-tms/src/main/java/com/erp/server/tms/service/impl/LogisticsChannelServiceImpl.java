@@ -211,10 +211,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             if (ObjectUtil.isNotEmpty(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 base.setLogisticsPlatform(logisticsPlatform);
-                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
-                if ("N".equals(printDelivery)) {
-                    base.setIsPrintPlatform(Boolean.FALSE);
-                } else {
+                if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
+                    String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                    if ("N".equals(printDelivery)) {
+                        base.setIsPrintPlatform(Boolean.FALSE);
+                    } else {
+                        base.setIsPrintPlatform(Boolean.TRUE);
+                    }
+                }else{
                     base.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {
@@ -645,6 +649,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         BigDecimal maxCustomsAmount = logisticsChannelEntity.getMaxCustomsAmount();
         if (Objects.isNull(maxCustomsAmount)) {
             maxCustomsAmount = zero;
+        }
+        if(StringUtils.isBlank(logisticsChannelEntity.getLastMileCarrier())){
+            logisticsChannelEntity.setLastMileCarrier("");
         }
         logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
         BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();

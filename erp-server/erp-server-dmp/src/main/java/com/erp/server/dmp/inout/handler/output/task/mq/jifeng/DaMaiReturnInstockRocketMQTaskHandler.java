@@ -119,7 +119,9 @@ public class DaMaiReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTask
      * 明细转换
      */
     private PlatformReturnInstockDTO.Detail convertDetail(DmpThirdReturnInboundDetailEntity detailEntity) {
-        return BeanUtil.copyProperties(detailEntity, PlatformReturnInstockDTO.Detail.class);
+        PlatformReturnInstockDTO.Detail detail = BeanUtil.copyProperties(detailEntity, PlatformReturnInstockDTO.Detail.class);
+        detail.setThirdId(detailEntity.getThirdDetailId());
+        return detail;
     }
 
     @Override
