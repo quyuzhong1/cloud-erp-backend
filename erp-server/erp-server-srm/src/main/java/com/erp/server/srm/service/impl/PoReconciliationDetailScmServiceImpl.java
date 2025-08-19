@@ -304,7 +304,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setDiscountAmount(discountAmount);
             listDTO.setDiscountRate(MathUtil.multiplyWithTwo(listDTO.getDiscountRate(),MathUtil.BigDecimal_100));
             listDTO.setDiscountRateStr(CharSequenceUtil.format("{}%",listDTO.getDiscountRate().stripTrailingZeros().toPlainString()));
-            listDTO.setDiscountTaxAmount(MathUtil.subtract(listDTO.getTaxAmount(),discountAmount));
+            listDTO.setDiscountTaxAmount(MathUtil.subtract(listDTO.getTaxAmount(),discountAmount).subtract(listDTO.getPrepayAmount()));
 
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
