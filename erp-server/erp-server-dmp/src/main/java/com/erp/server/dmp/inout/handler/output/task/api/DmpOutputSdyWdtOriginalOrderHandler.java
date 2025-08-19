@@ -303,11 +303,11 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
                         // 国家名称
                         String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
                         // 区域编码
-                        String regionCode = null == countryEntity ? "" : countryEntity.getSubregionCode();
+                        String regionCode = null == countryEntity ? "" : countryEntity.getRegionCode();
 
                         DictGlobalAreaEntity dictGlobalAreaEntity = queryAndCacheDictGlobalAreaEntity(cacheMap, regionCode);
                         // 区域名称
-                        String regionName = null == dictGlobalAreaEntity ? "" : dictGlobalAreaEntity.getSubregionName();
+                        String regionName = null == dictGlobalAreaEntity ? "" : dictGlobalAreaEntity.getRegionName();
 
                         CfgCountryPartitionEntity cfgCountryPartitionEntity = queryAndCacheCfgCountryPartition(cacheMap, countryCode);
                         // 军区编码
