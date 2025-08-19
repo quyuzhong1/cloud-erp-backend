@@ -3,6 +3,7 @@ package com.erp.model.srm.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.utils.MathUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -281,6 +282,12 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 税价合计（折扣）
          */
         private BigDecimal discountTaxAmount;
+
+        /**
+         * 采购申请单id集合
+         */
+        @JsonIgnore
+        private List<String> purchaseApplicationIds;
     }
 
 
