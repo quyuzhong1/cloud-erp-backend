@@ -6592,13 +6592,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
                 dto.setInvalidRemark("平台取消或退款");
+            }else if (dto.getInvalidStatus()){
+                dto.setInvalidType(oldEntity.getInvalidType());
             }
             // 保留历史作废状态
             if (oldEntity.getInvalidStatus()) {
                 dto.setInvalidStatus(true);
                 dto.setInvalidRemark(oldEntity.getInvalidRemark());
-                dto.setInvalidType(oldEntity.getInvalidType());
             }
+
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {

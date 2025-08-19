@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -229,6 +230,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 mainEntity.setRemark("三方仓出库单废弃,拦截成功");
                 if(mainEntity.getIsCancel()){
                     mainEntity.setInvalidStatus(Boolean.TRUE);
+                    mainEntity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
                     mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
                 }
                 soB2cFeign.updateStatus(mainEntity);
