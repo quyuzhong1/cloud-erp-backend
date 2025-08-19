@@ -780,7 +780,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     	LocalDate reconciliationMonth = LocalDate.now();
     	if(StringUtils.isNotBlank(mainId)) {
     		TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationService.getById(mainId);
-    		reconciliationMonth = tmsFirstMileReconciliationEntity.getReconciliationMonth();
+    		reconciliationMonth = Objects.isNull(tmsFirstMileReconciliationEntity)? estimatedListDTO.getReceiveDate() : tmsFirstMileReconciliationEntity.getReconciliationMonth();
     	}else {
     		reconciliationMonth = estimatedListDTO.getReceiveDate();
     	}
