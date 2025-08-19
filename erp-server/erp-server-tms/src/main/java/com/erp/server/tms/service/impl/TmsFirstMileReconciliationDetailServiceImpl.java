@@ -1016,7 +1016,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getSourceId));
 
         // 查询对应物流单信息
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listReconciliationByMainIds(new ArrayList<>(sourceDetailMap.keySet()), supplierType);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = tmsFirstMileLogisticService.listReconciliationByMainIds(new ArrayList<>(sourceDetailMap.keySet()), null);
         //兼容二次下推对账单场景
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = sourceList
                 .stream().filter(Objects::nonNull)
@@ -2693,9 +2693,22 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             throw new ServiceException("开始时间或结束时间为空");
         }
         // 查询周期内已签收未对账的物流单
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
+        //根据物流单进行分组
+        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = detailList
+                .stream().filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId));
         //过滤非物流类型对账
-        list = list.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).collect(Collectors.toList());
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = new ArrayList<>();
+        for(Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : sourceMap.entrySet()){
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = entry.getValue();
+            TmsFirstMileReconciliationDetailDTO.ListDTO dto = sourceList.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).findFirst().orElse(null);
+            if (Objects.nonNull(dto)){
+                list.add(dto);
+            }else {
+                list.add(sourceList.get(0));
+            }
+        }
         if (CollectionUtils.isEmpty(list)) {
             return;
         }

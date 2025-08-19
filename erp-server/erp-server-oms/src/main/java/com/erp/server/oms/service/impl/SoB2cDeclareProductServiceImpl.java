@@ -207,7 +207,9 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
                 .skuIds(Collections.singletonList(soB2cDeclareProductEntity.getSkuId())).country(country).build());
 
         ProductCustomsEntity customs = soB2cService.getCustomsByCountry(country,soB2cDeclareProductEntity.getSkuId(),productCustomsList);
-
+        if (Objects.isNull(customs)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_DECLARE_CUSTOMS_NOT_EXIST, soB2cDeclareProductEntity.getSkuNo());
+        }
         //申报标签
         BigDecimal toDeclarePrice = customs.getToDeclarePrice();
         int compare = MathUtil.compareTo(soB2cDeclareProductEntity.getToDeclarePrice(), toDeclarePrice );
