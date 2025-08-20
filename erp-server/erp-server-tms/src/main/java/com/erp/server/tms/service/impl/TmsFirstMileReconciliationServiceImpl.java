@@ -112,7 +112,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         BeanMapperUtils.copy(addDTO, tmsFirstMileReconciliationEntity);
 
         // 数据处理
-        handleData(tmsFirstMileReconciliationEntity);
+//        handleData(tmsFirstMileReconciliationEntity);
 
         log.info("开始新增头程对账单");
         // 生成单号
@@ -148,7 +148,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
 
         // 数据处理
-        handleData(tmsFirstMileReconciliationEntity);
+//        handleData(tmsFirstMileReconciliationEntity);
         log.info("编辑 开始修改头程对账单数据，单号：【{}】", old.getCode());
 //        boolean save = super.updateById(tmsFirstMileReconciliationEntity);
 //        if (!save) {
@@ -717,12 +717,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
     }
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity) {
-        // 验证数据 & 数据赋值
-    }
+//    /**
+//     * 新增修改处理数据
+//     */
+//    private void handleData(TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity) {
+//        // 验证数据 & 数据赋值
+//    }
 
     @Override
     public List<TmsFirstMileLogisticDTO.WaitSubmitListDTO> listByApproveStatus(String status, @NotBlank String supplierType) {

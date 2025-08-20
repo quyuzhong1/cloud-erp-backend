@@ -762,14 +762,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
-            if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
-				if(selfAdd) {
+            if(selfAdd) {
+            	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setBiz_uni_key(shudiyunB2cOrderDTO.getBiz_uni_key() + "_1");
-            	}else {
+            		result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
+            	}
+            }else {
+            	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setTransaction_type("配货单");
             	}
+            	result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
             }
-            result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
         return result;
