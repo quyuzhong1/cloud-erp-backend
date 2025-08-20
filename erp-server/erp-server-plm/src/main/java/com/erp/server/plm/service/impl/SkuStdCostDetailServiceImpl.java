@@ -545,6 +545,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         SkuStdCostDetailEntity lastEntity = lambdaQuery()
                 .eq(SkuStdCostDetailEntity::getMainId, entity.getMainId())
                 .eq(SkuStdCostDetailEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .ne(SkuStdCostDetailEntity::getId, entity.getId())
                 .isNull(SkuStdCostDetailEntity::getExpireDate)
                 .last(" limit 1")
                 .one();
@@ -715,15 +716,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         return lastList.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getSkuId, e -> e));
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO comboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO) {
-        validateComboRecalculate(listDTO);
-
-        // TODO 重算组合品单据并更新
-
-        return BatchResultDTO.success(listDTO.getId(), listDTO.getSkuNo(), OperationTypeEnum.UPDATE);
-    }
 
     private void validateComboRecalculate(SkuStdCostDetailDTO.ListDTO listDTO) {
         if (!listDTO.getIsComb()){
