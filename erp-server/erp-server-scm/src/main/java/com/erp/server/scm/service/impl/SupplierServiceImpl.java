@@ -41,10 +41,7 @@ import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.DictBasicEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.model.scm.enums.SupplierTabEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -262,6 +259,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         addEntity.setCode(code);
         //生成供应商代码
         addEntity.setIdentificationCode(getIdentificationCode());
+
+        //税率
+        if (ObjectUtil.isNotEmpty(addEntity.getTaxRate())) {
+            addEntity.setTaxRate(MathUtil.divide(addEntity.getTaxRate(),MathUtil.BigDecimal_100));
+        }
 
         String purchaseUserId = dto.getPurchaseUserId();
         if (StringUtils.isNotBlank(purchaseUserId)) {
@@ -508,6 +510,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //如果付款公司是空，那就是自己公司付款
         if (CharSequenceUtil.isBlank(supplier.getPaymentCompanyName())) {
             supplier.setPaymentCompanyName(supplier.getName());
+        }
+        //税率
+        if (ObjectUtil.isNotEmpty(supplier.getTaxRate())) {
+            supplier.setTaxRate(MathUtil.divide(supplier.getTaxRate(),MathUtil.BigDecimal_100));
         }
 
         Boolean result = this.updateById(supplier);
@@ -1334,7 +1340,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             return dataList.stream().map(data -> {
                 BaseIdDTO baseIdDTO = new BaseIdDTO();
@@ -1373,7 +1389,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        List<String> categoryTypeList = new ArrayList<>();
+        categoryTypeList.add(categoryType);
+        //物流供应商需要传二级物流供应商分类
+        if (SupplierCategoryEnum.LOGISTICS.getCode().equals(categoryType)) {
+            categoryTypeList.add(SupplierCategoryEnum.SELF_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode());
+            categoryTypeList.add(SupplierCategoryEnum.OTHER_LOGISTICS.getCode());
+        }
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryTypeList, null);
         if (CollUtil.isNotEmpty(dataList)) {
             // 未审核通过的设置为禁用
             dataList.stream().forEach(data -> {
