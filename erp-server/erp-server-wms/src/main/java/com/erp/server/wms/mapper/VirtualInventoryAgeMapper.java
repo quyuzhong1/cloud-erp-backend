@@ -66,4 +66,12 @@ public interface VirtualInventoryAgeMapper extends BaseMapper<VirtualInventoryAg
      * @return List<HisInventoryAgeDTO>
      */
     List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getHisInventoryAgeChart(@Param("params")VirtualInventoryAgeDTO.HisInventoryAgeParamDTO params);
+    /**
+     * 查询批次库存流水
+     * @author will
+     * @date 2025/8/19 17:51
+     * @param dto
+     * @return InventoryAgeFlowDTO
+     */
+    IPage<VirtualInventoryAgeDTO.InventoryAgeFlowDTO> batchInventoryAgeFlowPaging(Page page,@Param("params")VirtualInventoryAgeDTO.InventoryAgeFlowParamDTO dto);
 }

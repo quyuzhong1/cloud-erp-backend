@@ -158,9 +158,11 @@ public interface VirtualInventoryAgeService extends SuperService<VirtualInventor
     Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto);
 
     /**
-     * 差异导出
+     * 列表弹框分页下查询批次流水
+     * @author will
+     * @date 2025/8/19 17:47
      * @param dto
-     * @return
+     * @return InventoryAgeFlowDTO
      */
-    Boolean diffExportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto);
+    PagingVO<VirtualInventoryAgeDTO.InventoryAgeFlowDTO> batchInventoryAgeFlowPaging(PagingDTO<VirtualInventoryAgeDTO.InventoryAgeFlowParamDTO> dto);
 }

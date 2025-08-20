@@ -100,22 +100,6 @@ public class VirtualInventoryAgeController extends BaseController {
     }
 
     /**
-     * 库龄分析差异导出excel
-     * @author will
-     * @date 2024/12/3 18:02
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/diffExportExcel")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "库龄分析差异导出excel")
-    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
-    public ApiResult diffExportExcel(@RequestBody VirtualInventoryAgeDTO.SearchParamDTO dto) {
-        Boolean flag = virtualInventoryAgeService.diffExportExcel(dto);
-        return flag == true ? success() : failure();
-    }
-
-
-    /**
      * 列表弹框分页
      * @author will
      * @date 2024/12/5 9:49
@@ -125,6 +109,19 @@ public class VirtualInventoryAgeController extends BaseController {
     @PostMapping("/framePaging")
     public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> framePaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto) {
         return success(virtualInventoryAgeService.framePaging(dto));
+    }
+
+    /**
+     * 列表弹框分页下查询批次流水
+     * @author will
+     * @date 2025/8/19 17:47
+     * @param dto
+     * @return ApiResult<InventoryAgeFlowDTO>
+     */
+    @PostMapping("/batchInventoryAgeFlowPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.InventoryAgeFlowDTO>> batchInventoryAgeFlowPaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.InventoryAgeFlowParamDTO> dto) {
+        return success(virtualInventoryAgeService.batchInventoryAgeFlowPaging(dto));
     }
 
     /**

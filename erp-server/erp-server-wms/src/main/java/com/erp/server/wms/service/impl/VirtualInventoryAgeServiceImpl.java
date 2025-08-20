@@ -10,6 +10,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -28,12 +29,16 @@ import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.dto.excel.VirtualInventoryAgeExcelDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.CfgSettingVirtualEnum;
+import com.erp.model.wms.entity.CfgInventoryAgeEntity;
+import com.erp.model.wms.entity.VirtualInventoryAgeEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryAgeAuthTitleEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryAgeTitleEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualInventoryAgeMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -49,7 +54,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE_DETAIL;
 
 /**
  * <p>
@@ -64,9 +68,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS
 public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInventoryAgeMapper, VirtualInventoryAgeEntity> implements VirtualInventoryAgeService {
 
     @Resource
-    private CfgSettingService cfgSettingService;
-
-    @Resource
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
     @Resource
@@ -77,6 +78,12 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
 
     @Autowired
     private VirtualWarehouseService virtualWarehouseService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CfgInventoryAgeService cfgInventoryAgeService;
 
 
     @Override
@@ -165,11 +172,11 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
     public List<String> getCfgHead() {
         List<String> headList = new ArrayList<>();
         //查询库龄分析配置
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
-        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+        CfgInventoryAgeEntity cfgInventoryAgeEntity = cfgInventoryAgeService.getByUserIdOrDefault();
+        if (ObjectUtil.isEmpty(cfgInventoryAgeEntity) || ObjectUtil.isEmpty(cfgInventoryAgeEntity.getDataJson())) {
             return Collections.EMPTY_LIST;
         }
-        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgInventoryAgeEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
         List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
         for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
             String ageDateInterval = "";
@@ -188,11 +195,11 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
     public List<Pair<String,String>> getCfgHeadExport() {
         List<Pair<String,String>> headList = new ArrayList<>();
         //查询库龄分析配置
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
-        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+        CfgInventoryAgeEntity cfgInventoryAgeEntity = cfgInventoryAgeService.getByUserIdOrDefault();
+        if (ObjectUtil.isEmpty(cfgInventoryAgeEntity) || ObjectUtil.isEmpty(cfgInventoryAgeEntity.getDataJson())) {
             return Collections.emptyList();
         }
-        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgInventoryAgeEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
         List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
 
         //数量
@@ -288,11 +295,11 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
             return Collections.EMPTY_LIST;
         }
         //查询库龄分析配置
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
-        if (ObjUtil.isEmpty(cfgSettingEntity)) {
+        CfgInventoryAgeEntity cfgInventoryAgeEntity = cfgInventoryAgeService.getByUserIdOrDefault();
+        if (ObjUtil.isEmpty(cfgInventoryAgeEntity)) {
             return Collections.EMPTY_LIST;
         }
-        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgInventoryAgeEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
         List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
         //区间时间
         List<Integer> daysList = new ArrayList<>();
@@ -325,8 +332,38 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
     }
 
     @Override
-    public Boolean diffExportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto) {
-        return null;
+    public PagingVO<VirtualInventoryAgeDTO.InventoryAgeFlowDTO> batchInventoryAgeFlowPaging(PagingDTO<VirtualInventoryAgeDTO.InventoryAgeFlowParamDTO> dto) {
+        IPage<VirtualInventoryAgeDTO.InventoryAgeFlowDTO> pageData = baseMapper.batchInventoryAgeFlowPaging(dto.page(),dto.getParams());
+        handleBatchInventoryAgeFlow(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/8/19 18:20
+     * @param inventoryAgeFlowList
+     * @return void
+     */
+    private void handleBatchInventoryAgeFlow (List<VirtualInventoryAgeDTO.InventoryAgeFlowDTO> inventoryAgeFlowList) {
+        if (CollUtil.isEmpty(inventoryAgeFlowList)) {
+            return;
+        }
+        //组织信息
+        List<String> orgIdList = inventoryAgeFlowList.stream().map(VirtualInventoryAgeDTO.InventoryAgeFlowDTO::getOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        Map<String, String> orgMap = CollUtil.isEmpty(accountingCompanyList) ? new HashMap<>() : accountingCompanyList.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getName));
+
+        for (VirtualInventoryAgeDTO.InventoryAgeFlowDTO inventoryAgeFlowDTO : inventoryAgeFlowList) {
+            //组织名称
+            inventoryAgeFlowDTO.setOrgName(orgMap.get(inventoryAgeFlowDTO.getOrgId()));
+            //来源类型名称
+            inventoryAgeFlowDTO.setSourceTypeName(SourceTypeEnum.getName(inventoryAgeFlowDTO.getSourceType()));
+            //操作类型名称
+            inventoryAgeFlowDTO.setOperationModeName(InventoryOperationModeEnum.getByCode(inventoryAgeFlowDTO.getOperationMode()).getName());
+            //库存状态名称
+            inventoryAgeFlowDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(inventoryAgeFlowDTO.getDictInventoryStatus()));
+        }
     }
 
 
@@ -405,11 +442,11 @@ public class VirtualInventoryAgeServiceImpl extends SuperServiceImpl<VirtualInve
             return;
         }
         //查询库龄分析配置
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
-        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+        CfgInventoryAgeEntity cfgInventoryAgeEntity = cfgInventoryAgeService.getByUserIdOrDefault();
+        if (ObjectUtil.isEmpty(cfgInventoryAgeEntity) || ObjectUtil.isEmpty(cfgInventoryAgeEntity.getDataJson())) {
             return;
         }
-        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgInventoryAgeEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
         List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
 
         //SKU

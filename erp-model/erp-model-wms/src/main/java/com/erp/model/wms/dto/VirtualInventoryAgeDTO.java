@@ -619,4 +619,113 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private BigDecimal avgInventoryAge;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeFlowParamDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 批次号
+         */
+        @NotBlank(message = "批次号不能为空")
+        private String batchNo;
+    }
+
+    /**
+     * 批次库龄流水DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeFlowDTO {
+        /**
+         * 出入库时间
+         */
+        private String billDate;
+        /**
+         * 单据类型
+         */
+        private String sourceType;
+        /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+        /**
+         * 单据单号
+         */
+        private String sourceCode;
+        /**
+         * 批次号
+         */
+        private String batchNo;
+        /**
+         * 操作
+         */
+        private String operationMode;
+        /**
+         * 操作名称
+         */
+        private String operationModeName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+        /**
+         * 库存状态名称
+         */
+        private String dictInventoryStatusName;
+        /**
+         * 出入库数量
+         */
+        private Integer qty;
+        /**
+         * 操作后库存数量
+         */
+        private Integer curInventoryQty;
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 组织名称
+         */
+        private String orgName;
+    }
 }

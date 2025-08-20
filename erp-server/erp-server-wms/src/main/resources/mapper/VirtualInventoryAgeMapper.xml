@@ -54,8 +54,7 @@
                 sum(vidh.qty * vidh.inventory_age_days) as inventoryAgeQty
             from virtual_inventory_detail_his vidh
             left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-                and vidh.date = #{date}
-            where vidh.is_deleted = false
+            where vidh.is_deleted = false and vidh.date = #{date}
             group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
         ),VirtualInventoryHis AS (
             SELECT
@@ -69,9 +68,8 @@
             FROM
             virtual_inventory_his vih
             left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
-                and vih.date = #{date}
             WHERE
-            vih.is_deleted = false
+            vih.is_deleted = false and vih.date = #{date}
             GROUP BY
             vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
         ),CombinedProcessing AS (
@@ -302,6 +300,40 @@
         from virtualInventoryDetailHis vidh
         left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id and vidh.date = vih.date
         order by vidh.date asc
+    </select>
+
+    <!-- 列表弹框分页下查询批次流水 -->
+    <select id="batchInventoryAgeFlowPaging"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$InventoryAgeFlowDTO">
+            select
+                vtfd.bill_date as billDate,
+                vtf.source_type as sourceType,
+                vtf.source_code as sourceCode,
+                vtfd.batch_no as batchNo,
+                vtf.operation_mode as operationMode,
+                vtf.sku_id as skuId,
+                pd.sku_no as skuNo,
+                pd.name as productName,
+                vtf.dict_inventory_status as dictInventoryStatus,
+                vtfd.qty,
+                vtfd.cur_inventory_qty as curInventoryQty,
+                vtf.org_id
+            from virtual_trans_flow_detail vtfd
+            inner join virtual_inventory_detail vhd on vtfd.virtual_inventory_detail_id = vhd.id and vhd.is_deleted = false
+            inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
+            left join product_detail pd on vhd.sku_id = pd.id and pd.is_deleted = false
+            <where>
+                ${params.sqlMap.default}
+                and vtfd.is_deleted = false and vhd.sku_id = #{params.skuId} and vhd.warehouse_id = #{params.warehouseId}
+                and vhd.virtual_warehouse_id = #{params.virtualWarehouseId} and vhd.batch_no = #{params.batchNo}
+                order by
+                <if test="params.sortList != null and params.sortList.size > 0">
+                    <foreach collection="params.sortList" item="item" separator="," close=",">
+                        ${item.field} ${item.sort}
+                    </foreach>
+                </if>
+                vtfd.batch_no desc
+            </where>
     </select>
 
 </mapper>
