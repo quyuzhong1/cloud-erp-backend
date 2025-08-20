@@ -155,7 +155,7 @@
                      SELECT
                          sku_id,
                          frozen_qty,
-                         DATE_PART('day', COALESCE(outstock_order_time, NOW()) - frozen_time) AS days_diff
+                         DATE_PART('day', COALESCE(outstock_order_time, NOW()) - frozen_time) + 1 AS days_diff
                      FROM so_b2c_processing
                      WHERE frozen_time IS NOT NULL
                  ) AS subquery

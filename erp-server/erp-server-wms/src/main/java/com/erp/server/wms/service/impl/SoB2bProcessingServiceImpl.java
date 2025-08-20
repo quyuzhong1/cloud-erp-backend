@@ -180,7 +180,9 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
     @Override
     public PagingVO<ReportProcessingDTO.ListDTO> b2bTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
-        return null;
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.b2bTotalPaging(dto.page(), dto.getParams());
+        return new PagingVO<>(pageData);
     }
 
     /**

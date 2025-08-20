@@ -622,7 +622,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class InventoryAgeFlowParamDTO {
+    public static class InventoryAgeFlowParamDTO extends SortDTO{
 
         /**
          * 页面高级查询
@@ -666,7 +666,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 出入库时间
          */
-        private String billDate;
+        private LocalDate billDate;
         /**
          * 单据类型
          */

@@ -306,7 +306,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
 
     @Override
     public PagingVO<ReportProcessingDTO.ListDTO> firstMileTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
-        return null;
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.firstMileTotalPaging(dto.page(), dto.getParams());
+        return new PagingVO<>(pageData);
     }
 
     /**
