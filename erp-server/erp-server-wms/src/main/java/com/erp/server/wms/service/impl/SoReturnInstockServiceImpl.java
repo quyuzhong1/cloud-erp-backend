@@ -2334,6 +2334,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public SoReturnInstockEntity getByThirdCodeAndPlatformSkuNo(String platformReturnOrderNo, String thirdId) {
+    if (CharSequenceUtil.isBlank(platformReturnOrderNo) || CharSequenceUtil.isBlank(thirdId)) {
+            return null;
+        }
+        return baseMapper.getByThirdCodeAndPlatformSkuNo(platformReturnOrderNo,thirdId);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
