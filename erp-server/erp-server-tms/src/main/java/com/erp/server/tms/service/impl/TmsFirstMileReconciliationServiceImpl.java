@@ -146,9 +146,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             throw new ServiceException(ApiError.ERROR_1029);
         }
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = BeanMapperUtils.map(TmsFirstMileReconciliationEntity.class, updateDTO);
-        if (Objects.isNull(updateDTO.getReconciliationMonth())) {
-            updateDTO.setReconciliationMonth(old.getReconciliationMonth());
-        }
+
         // 数据处理
 //        handleData(tmsFirstMileReconciliationEntity);
         log.info("编辑 开始修改头程对账单数据，单号：【{}】", old.getCode());

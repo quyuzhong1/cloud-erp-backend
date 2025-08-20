@@ -96,11 +96,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         	DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
             request.setCfgOutputId("1861317267527064372");
             List<QueryParam> queryParams = new ArrayList<>();
-            QueryParam queryParam = new QueryParam();
-            queryParam.setType(QueryTypeEnum.IN);
-            queryParam.setName("platform_code");
-            queryParam.setValue(platformCodeList);
-            queryParams.add(queryParam);
+            queryParams.add(new QueryParam(QueryTypeEnum.IN, "platform_code", platformCodeList));
             request.setQueryParams(queryParams);
             dmpOutputCreateFactory.doHotfixOutputTask(request);
         }
@@ -623,21 +619,24 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 shudiyunB2cOrderDTO.setSpec_no("");
                 shudiyunB2cOrderDTO.setSpec_name("");
                 
+                String orderCountryCode = "";
+                if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
+                	DmpSoReceiverEntity dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
+                	orderCountryCode = dmpSoReceiverEntity.getCountry();
+                }
                 // 国家编码
                 String countryCode = shopInfo.getDictCountryCode();
                 if(StringUtils.isBlank(countryCode) || "ALL".equals(countryCode)) {
                 	countryCode = customerInfo.getCountryId();
                 	if(StringUtils.isBlank(countryCode) || "ALL".equals(countryCode)) {
-                		if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
-                        	DmpSoReceiverEntity dmpSoReceiverEntity = dmpSoReceiverEntityList.get(0);
-                        	countryCode = dmpSoReceiverEntity.getCountry();
-                        }
+                		countryCode = orderCountryCode;
                 	}
                 }
                 
+                orderCountryCode = DmpHandlerUtils.convertCountry(orderCountryCode);
                 countryCode = DmpHandlerUtils.convertCountry(countryCode);
 
-                DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+                DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, orderCountryCode);
 
                 // 国家名称
                 String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
@@ -670,7 +669,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
 
                 // 国家编码
-                shudiyunB2cOrderDTO.setCountry_code(countryCode);
+                shudiyunB2cOrderDTO.setCountry_code(orderCountryCode);
                 // 国家名称
                 shudiyunB2cOrderDTO.setCountry(countryName);
                 // 区域编码
@@ -763,14 +762,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
-            if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
-				if(selfAdd) {
+            if(selfAdd) {
+            	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setBiz_uni_key(shudiyunB2cOrderDTO.getBiz_uni_key() + "_1");
-            	}else {
+            		result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
+            	}
+            }else {
+            	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setTransaction_type("配货单");
             	}
+            	result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
             }
-            result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
         return result;
