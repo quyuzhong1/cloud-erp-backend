@@ -16,6 +16,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
@@ -169,6 +170,14 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList,startDate);
         log.warn("数据更新成功!");
     }
+
+    @Override
+    public PagingVO<ReportProcessingDTO.ListDTO> b2cTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.b2cTotalPaging(dto.page(), dto.getParams());
+        return new PagingVO<>(pageData);
+    }
+
     /**
      * 添加bom数据
      * @author will

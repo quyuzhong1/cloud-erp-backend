@@ -138,5 +138,25 @@
         </if>
     </select>
 
+    <!-- 汇总分页查询 -->
+    <select id="b2cTotalPaging" resultType="com.erp.model.wms.dto.ReportProcessingDTO$ListDTO">
+            select
+                'b2c' as type,
+                pd.sku_no as skuNo,
+                pd.name as productName,
+                sum(sbp.frozen_qty) as totalFrozenQty,
+                case when sbp.outstock_order_id != '' then ''
+                    when 'outstock' then '出库'
+                    when 'frozen' then '冻结'
+                    else '未知'
+                end as fetchType,
+            from so_b2c_processing sbp
+            left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
+            <where>
+                sbp.is_deleted = false
+                group by pd,id,pd.sku_no,pd.name
+            </where>
+    </select>
+
 
 </mapper>

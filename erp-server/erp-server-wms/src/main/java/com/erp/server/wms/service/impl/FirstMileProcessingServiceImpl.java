@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.model.wms.dto.FirstMileProcessingDetailDTO;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingDetailEntity;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
@@ -301,6 +302,11 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     @Override
     public Boolean deleteFirstMileProcessing(FirstMileProcessingDTO.DeleteDTO dto) {
         return baseMapper.deleteFirstMileProcessing(dto);
+    }
+
+    @Override
+    public PagingVO<ReportProcessingDTO.ListDTO> firstMileTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return null;
     }
 
     /**

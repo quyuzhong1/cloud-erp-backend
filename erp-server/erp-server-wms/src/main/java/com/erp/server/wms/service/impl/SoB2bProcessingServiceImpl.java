@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
@@ -175,6 +176,11 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     @Override
     public Boolean deleteB2bProcessing(SoB2bProcessingDTO.DeleteDTO dto) {
         return baseMapper.deleteB2bProcessing(dto);
+    }
+
+    @Override
+    public PagingVO<ReportProcessingDTO.ListDTO> b2bTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return null;
     }
 
     /**
