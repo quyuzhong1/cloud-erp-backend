@@ -108,7 +108,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity);
+    Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity, Boolean isUpdate);
 
     /**
      * 补充明细信息
@@ -165,7 +165,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     /**
      * 自动生成对账单
      */
-    void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
+    void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo);
 
     void addOrUpdateCost(List<TmsFirstMileReconciliationDetailEntity> list);
 

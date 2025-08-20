@@ -354,7 +354,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
-    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity) {
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity,List<SoOutstockDetailDTO.AddDTO> addDTOList) {
         SoB2cEntity entity = soB2cFeign.getById(soOutstockEntity.getSoId());
 
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
@@ -366,18 +366,24 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setCode(code);
         addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
-//        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-//        for (SoOutstockDetailEntity addDTO : detailList) {
-//            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-//            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
-//            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
-//            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
-//            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
-//            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-//            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
-//            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
-//        }
-//        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+        for (SoOutstockDetailDTO.AddDTO addDTO : addDTOList) {
+            if(StringUtils.isBlank(addDTO.getPlatformSoDetailId()) && StringUtils.isNotBlank(addDTO.getSourceDetailId())){
+                addDTO.setPlatformSoDetailId(addDTO.getSourceDetailId());
+            }
+            String id = IdWorker.getIdStr();
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setId(id);
+            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
+            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+            addDTO.setSourceDetailId(id);
+        }
+        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
         return service.add(addThirdWarehouseDeliveryEntity);
 
     }
@@ -396,7 +402,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 .collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(ids);
-
+        List<SoOutstockDetailEntity> updateDetailList = new ArrayList<>();
         List<ThirdWarehouseDeliveryEntity> addList = new ArrayList<>();
         for (SoOutstockEntity soOutstock : soOutstockEntityList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream()
@@ -420,7 +426,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             addThirdWarehouseDeliveryEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
             for (SoOutstockDetailEntity addDTO : soOutstockDetailEntities) {
+                String id = IdWorker.getIdStr();
                 ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+                thirdWarehouseDeliveryDetailEntity.setId(id);
                 thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
                 thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
                 thirdWarehouseDeliveryDetailEntity.setSourceSkuId(addDTO.getSkuId());
@@ -430,7 +438,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
                 thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
                 thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+                addDTO.setSourceDetailId(id);
             }
+            updateDetailList.addAll(soOutstockDetailEntities);
             soOutstock.setSourceId(idStr);
             soOutstock.setSourceCode(code);
             addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
@@ -438,6 +448,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         }
         service.batchAdd(addList);
         soOutstockService.updateBatchById(soOutstockEntityList);
+        soOutstockDetailService.updateBatchById(updateDetailList);
         return addList;
     }
 

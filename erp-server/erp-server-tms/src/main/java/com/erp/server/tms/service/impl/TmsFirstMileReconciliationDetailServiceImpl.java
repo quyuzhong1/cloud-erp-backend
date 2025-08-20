@@ -321,57 +321,64 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     public List<TmsFirstMileReconciliationDetailEntity> listByMainIds(List<String> mainIds) {
-        return lambdaQuery()
+        List<TmsFirstMileReconciliationDetailEntity> list =  lambdaQuery()
                 .in(TmsFirstMileReconciliationDetailEntity::getMainId, mainIds)
                 .list();
+        List<String> billIds = list.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(billIds);
+        list.forEach(e -> {
+            logisticsBillCostEntities.stream().filter(f -> f.getReconciliationId().equals(e.getMainId()) && f.getLogisticsBillId().equals(e.getSourceId())).findFirst().ifPresent(h ->{
+                e.setCostId(h.getId());
+            });
+        });
+        return list;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity) {
+    public Boolean update(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity mainEntity, Boolean isUpdate) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("明细不能为空");
         }
         String mainId = mainEntity.getId();
         List<TmsFirstMileReconciliationDetailEntity> list = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailEntity.class, detailList);
-
-        //原明细数据被删除的需要清除mainId
-        List<TmsFirstMileReconciliationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
-
-        Map<String, TmsFirstMileReconciliationDetailEntity> actualMap = handleUpdateData(list, mainId, oldList, mainEntity.getSupplierType());
-
-        List<String> deleteIds = getDeleteIds(list, oldList);
-
-        if (!CollectionUtils.isEmpty(deleteIds)) {
-            List<TmsFirstMileReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            //操作日志
-            List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getTransportNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个头程对账明细【%s】", ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), pairList, "编辑操作");
-            //更新主表id
-            if (!CollectionUtils.isEmpty(deleteList)) {
-                deleteList.forEach(obj -> {
-                    //更新其他对账单对账次数
-                    updateReconciliationDetailCount(obj.getId(),obj.getSourceId(),obj.getReconciliationCount(),mainEntity.getSupplierType());
-                    //这里不移除物流费用单中的对账单id是为了不让对账单中的数据影响 物流单关联其他对账单时重新创建物流单费用记录
-                    this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, obj.getId()).remove();
-                    if (1== obj.getReconciliationCount()){
-                        //首次对账单 修改费用状态
-                        logisticsBillCostService.updateStatusByLogisticsBillIdsAndReconciliationId(Collections.singletonList(obj.getSourceId()), mainEntity.getId(),ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
-                    }else {
-                        //删除费用明细记录
-                        logisticsBillCostService.removeByReconciliationIds(mainEntity.getId(), Collections.singletonList(obj.getSourceId()));
-                    }
-                });
+        Map<String, TmsFirstMileReconciliationDetailEntity> actualMap = new HashMap<>();
+        if (isUpdate){
+            //原明细数据被删除的需要清除mainId
+            List<TmsFirstMileReconciliationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
+            actualMap = handleUpdateData(list, mainId, oldList, mainEntity.getSupplierType());
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (!CollectionUtils.isEmpty(deleteIds)) {
+                List<TmsFirstMileReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+                //操作日志
+                List<Pair<String, String>> pairList = deleteList.stream().map(obj -> new Pair<>(mainId, obj.getTransportNo())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除了一个头程对账明细【%s】", ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), pairList, "编辑操作");
+                //更新主表id
+                if (!CollectionUtils.isEmpty(deleteList)) {
+                    deleteList.forEach(obj -> {
+                        //更新其他对账单对账次数
+                        updateReconciliationDetailCount(obj.getId(),obj.getSourceId(),obj.getReconciliationCount(),mainEntity.getSupplierType());
+                        //这里不移除物流费用单中的对账单id是为了不让对账单中的数据影响 物流单关联其他对账单时重新创建物流单费用记录
+                        this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, obj.getId()).remove();
+                        if (1== obj.getReconciliationCount()){
+                            //首次对账单 修改费用状态
+                            logisticsBillCostService.updateStatusByLogisticsBillIdsAndReconciliationId(Collections.singletonList(obj.getSourceId()), mainEntity.getId(),ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
+                        }else {
+                            //删除费用明细记录
+                            logisticsBillCostService.removeByReconciliationIds(mainEntity.getId(), Collections.singletonList(obj.getSourceId()));
+                        }
+                    });
+                }
             }
+        }else {
+            actualMap = handleUpdateData(list, mainId, new ArrayList<>(), mainEntity.getSupplierType());
         }
-
         // 更新总数
         BigDecimal totalCost = list.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equalsIgnoreCase(e.getType()))
                 .map(TmsFirstMileReconciliationDetailEntity::getTotalLogisticsCost)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         mainEntity.setTotalCost(totalCost);
-
 
         tmsFirstMileReconciliationService.updateById(mainEntity);
         log.info("编辑 开始修改头程对账单数据，id：【{}】", mainId);
@@ -385,12 +392,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
                 .distinct()
                 .collect(Collectors.toList());
-        List<LogisticsBillCostEntity> billEntityList = logisticsBillCostService.listByLogisticsBillIdList(billIds);
-        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(billIds);
+        List<String> costIds = detailList.stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getCostId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> billEntityList = logisticsBillCostService.listByIds(costIds);
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
         //过滤首次对账时账单/已存在对账单账单
         //不存在费用表记录，新增一个费用列表
-        List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list);
+        List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list, isUpdate);
         // 批量更新物流单状态
         if (!CollectionUtils.isEmpty(updateBillList)) {
             // 更新费用信息
@@ -422,7 +429,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return Boolean.TRUE;
     }
 
-    private List<LogisticsBillCostEntity> getBillCostList(TmsFirstMileReconciliationEntity mainEntity, List<String> billIds, List<LogisticsBillEntity> logisticsBillEntityList, List<LogisticsBillCostEntity> billEntityList, String mainId, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap, List<TmsFirstMileReconciliationDetailEntity> list) {
+    private List<LogisticsBillCostEntity> getBillCostList(TmsFirstMileReconciliationEntity mainEntity, List<String> billIds, List<LogisticsBillEntity> logisticsBillEntityList, List<LogisticsBillCostEntity> billEntityList, String mainId, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap, List<TmsFirstMileReconciliationDetailEntity> list, Boolean isUpdate) {
         if (CollUtil.isEmpty(billIds)) {
             return Collections.emptyList();
         }
@@ -446,7 +453,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .filter(e -> Objects.nonNull(e) && Objects.equals(billId, e.getLogisticsBillId())
                             && (CharSequenceUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
             //非物流单下推重新创建费用项
-            if (!mainEntity.getSupplierType().equals(SupplierTypeEnum.LOGISTICS.getCode())){
+            if (!mainEntity.getSupplierType().equals(SupplierTypeEnum.LOGISTICS.getCode()) && !isUpdate){
                 entity.setId(null);
             }
             entity.setLogisticsBillId(billId);
@@ -471,7 +478,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 entity.setUpdateList(updateList);
             }
 
-            entity.setReconciliationStatus(actualDetailEntity.getStatus());
+//            entity.setReconciliationStatus(actualDetailEntity.getStatus());
             //填充下推对账单id
             entity.setReconciliationId(mainId);
             //获取对应明细数据
@@ -489,6 +496,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
             }
             entity.setType(DictCostAttributionEnum.FIRST_MILE.getCode());
+            entity.setReconciliationId(mainEntity.getId());
+            entity.setReconciliationStatus(actualDetailEntity.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())||CharSequenceUtil.isBlank(actualDetailEntity.getStatus()) ? ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() : actualDetailEntity.getStatus());
             updateBillList.add(entity);
         }
         return updateBillList;
@@ -1127,6 +1136,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .collect(Collectors.groupingBy(TmsCfgCostEntity::getDictCostCategory));
         for (TmsFirstMileReconciliationDetailDTO.ListDTO record : records) {
+            record.setReconciliationId(CharSequenceUtil.isNotBlank(mainId) ? mainId : null);
             record.setSourceType(SourceTypeEnum.LOGISTICS_BILL.getCode());
             // 出库单号=发货单号
             // 待对账类型都是预估
@@ -2688,27 +2698,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate) {
+    public void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo) {
         if (null == startDate || null == endDate) {
             throw new ServiceException("开始时间或结束时间为空");
         }
         // 查询周期内已签收未对账的物流单
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate);
-        //根据物流单进行分组
-        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceMap = detailList
-                .stream().filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId));
-        //过滤非物流类型对账
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = new ArrayList<>();
-        for(Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : sourceMap.entrySet()){
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceList = entry.getValue();
-            TmsFirstMileReconciliationDetailDTO.ListDTO dto = sourceList.stream().filter(e -> Objects.isNull(e.getSupplierType()) || SupplierTypeEnum.LOGISTICS.getCode().equalsIgnoreCase(e.getSupplierType())).findFirst().orElse(null);
-            if (Objects.nonNull(dto)){
-                list.add(dto);
-            }else {
-                list.add(sourceList.get(0));
-            }
-        }
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate,transportNo);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -2756,6 +2752,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> allDetailDTOList = new LinkedList<>();
             updateDTO.setId(reconciliationEntity.getId());
             for (TmsFirstMileReconciliationDetailDTO.ListDTO listDTO : sourceDetailList) {
+                listDTO.setReconciliationId(reconciliationEntity.getId());
+                listDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
                 //当前明细对账单次数
                 int reconciliationCount = 1;
                 TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(listDTO.getSourceId(),f.getSourceId()))
@@ -2769,14 +2767,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 allDetailDTOList.addAll(detailDTOList);
             }
             updateDTO.setDetailList(allDetailDTOList);
-            tmsFirstMileReconciliationService.update(updateDTO);
+            tmsFirstMileReconciliationService.update(updateDTO, Boolean.FALSE);
 
             // 更新已成功对账单
-            List<String> sourceIds = sourceDetailList.stream()
-                    .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)
-                    .distinct()
-                    .collect(Collectors.toList());
-            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),reconciliationEntity.getId());
+//            List<String> sourceIds = sourceDetailList.stream()
+//                    .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)
+//                    .distinct()
+//                    .collect(Collectors.toList());
+//            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),reconciliationEntity.getId());
         }
     }
 
