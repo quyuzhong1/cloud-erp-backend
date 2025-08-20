@@ -140,22 +140,55 @@
 
     <!-- 汇总分页查询 -->
     <select id="b2cTotalPaging" resultType="com.erp.model.wms.dto.ReportProcessingDTO$ListDTO">
-            select
-                'b2c' as type,
-                pd.sku_no as skuNo,
-                pd.name as productName,
-                sum(sbp.frozen_qty) as totalFrozenQty,
-                case when sbp.outstock_order_id != '' then ''
-                    when 'outstock' then '出库'
-                    when 'frozen' then '冻结'
-                    else '未知'
-                end as fetchType,
-            from so_b2c_processing sbp
-            left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
-            <where>
-                sbp.is_deleted = false
-                group by pd,id,pd.sku_no,pd.name
-            </where>
+        WITH qtyStatistics as (
+            SELECT
+                sku_id,
+                -- 统计每个区间的数量合计
+                SUM(CASE WHEN days_diff BETWEEN 0 AND 10 THEN frozen_qty ELSE 0 END) AS tenDaysQty,
+                SUM(CASE WHEN days_diff BETWEEN 11 AND 20 THEN frozen_qty ELSE 0 END) AS twentyDaysQty,
+                SUM(CASE WHEN days_diff BETWEEN 21 AND 30 THEN frozen_qty ELSE 0 END) AS thirtyDaysQty,
+                SUM(CASE WHEN days_diff BETWEEN 31 AND 60 THEN frozen_qty ELSE 0 END) AS sixtyDaysQty,
+                SUM(CASE WHEN days_diff BETWEEN 61 AND 90 THEN frozen_qty ELSE 0 END) AS ninetyDaysQty,
+                SUM(CASE WHEN days_diff > 90 THEN frozen_qty ELSE 0 END) AS aboveNinetyDaysQty,
+                SUM(frozen_qty) AS totalFrozenQty
+            FROM (
+                     SELECT
+                         sku_id,
+                         frozen_qty,
+                         DATE_PART('day', COALESCE(outstock_order_time, NOW()) - frozen_time) AS days_diff
+                     FROM so_b2c_processing
+                     WHERE frozen_time IS NOT NULL
+                 ) AS subquery
+            GROUP BY sku_id
+        )
+        select
+            'b2c' as type,
+            pd.sku_no as skuNo,
+            pd.name as productName,
+            qs.totalFrozenQty,
+            qs.tenDaysQty,
+            qs.twentyDaysQty,
+            qs.thirtyDaysQty,
+            qs.sixtyDaysQty,
+            qs.ninetyDaysQty,
+            qs.aboveNinetyDaysQty
+        from qtyStatistics qs
+                 left join product_detail pd on qs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and qs.totalFrozenQty > 0
+            <!--权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            qs.totalFrozenQty desc
+        </where>
     </select>
 
 

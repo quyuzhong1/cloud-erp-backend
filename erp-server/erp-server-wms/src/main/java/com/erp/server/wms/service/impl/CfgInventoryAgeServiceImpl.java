@@ -43,7 +43,7 @@ public class CfgInventoryAgeServiceImpl extends SuperServiceImpl<CfgInventoryAge
         CfgInventoryAgeEntity cfgInventoryAgeEntity = handleData(addDTO);
 
         log.info("开始新增库龄配置单");
-        boolean save = super.save(cfgInventoryAgeEntity);
+        boolean save = super.saveOrUpdate(cfgInventoryAgeEntity);
         if(!save) {
             throw new ServiceException("库龄配置单保存失败");
         }
@@ -66,7 +66,7 @@ public class CfgInventoryAgeServiceImpl extends SuperServiceImpl<CfgInventoryAge
     @Override
     public CfgInventoryAgeDTO.ViewDTO viewVirtual() {
         CfgInventoryAgeEntity cfgInventoryAgeEntity = this.getByUserIdOrDefault();
-        if (ObjectUtil.isNotEmpty(cfgInventoryAgeEntity)) {
+        if (ObjectUtil.isEmpty(cfgInventoryAgeEntity)) {
             return new CfgInventoryAgeDTO.ViewDTO();
         }
         //转换json
@@ -96,6 +96,7 @@ public class CfgInventoryAgeServiceImpl extends SuperServiceImpl<CfgInventoryAge
         JSONObject jsonObject =JSONUtil.parseObj(addDTO);
         //查询是否是修改
         entity.setDataJson(jsonObject);
+        entity.setUserId(userInfo.getUid());
         return entity;
     }
 
