@@ -45,12 +45,11 @@
             sbdi.handle_user_name,
             sbdi.create_time,
             sbdi.handle_time,
-            sbd.shop_id,
-            sbd.shop_name,
-            sbd.platform_code as platformOrderCode
+        sb.shop_id,
+        sb.platform_code as platformOrderCode
         FROM so_b2c_delivery_intercept_detail sbdid
         LEFT JOIN so_b2c_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
-        LEFT JOIN so_b2c_delivery sbd ON sbd.id = sbdi.delivery_id AND sbd.is_deleted = FALSE
+        LEFT JOIN so_b2c sb on sb.id = sbdi.so_id and sb.is_deleted  =false
         WHERE sbdid.is_deleted = FALSE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
             and ${params.sqlMap.default}
