@@ -106,7 +106,7 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
         dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
         // 固定退货退款
         dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
-        dto.setUniqueId(CharSequenceUtil.format("{}_{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId(), dmpMainEntity.getBatchNo()));
+        dto.setUniqueId(CharSequenceUtil.format("return_instock_{}_{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId(), dmpMainEntity.getBatchNo()));
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);
