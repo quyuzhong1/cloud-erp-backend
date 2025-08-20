@@ -47,9 +47,11 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -82,6 +84,16 @@ public class ReportsApiTest {
     private AmzReportScheduleService amzReportScheduleService;
     @Resource
     private CfgAmzReportTypeService cfgAmzReportTypeService;
+    @Resource
+    private DiscoveryClient discoveryClient;
+
+    @BeforeEach
+    void waitNacos() throws InterruptedException {
+        while (discoveryClient.getInstances("erp-oms").isEmpty()) {
+            System.out.println("等待 Nacos 注册实例");
+            Thread.sleep(100);
+        }
+    }
 
 
     /**
@@ -385,7 +397,8 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
-        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+//        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+        List<String> reportTypes = Arrays.asList("GET_LEDGER_DETAIL_VIEW_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
