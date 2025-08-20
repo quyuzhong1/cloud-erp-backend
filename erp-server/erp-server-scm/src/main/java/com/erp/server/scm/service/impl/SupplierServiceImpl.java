@@ -718,12 +718,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private String getProductCategoryName(List<BasicCategoryEntity> productCategoryList,Object value,Boolean isDynamic) {
         //非动态只需要返回子级品类名称
         if (Boolean.FALSE.equals(isDynamic)) {
-            BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+            BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString())).findFirst().orElse(new BasicCategoryEntity());
             return ObjectUtil.isEmpty(childCategory) ? "" : childCategory.getName();
         }
         StringBuilder str = new StringBuilder();
         //子级品类
-        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString()) && !CharSequenceUtil.equals(e.getPid(), "0")).findFirst().orElse(new BasicCategoryEntity());
+        BasicCategoryEntity childCategory = productCategoryList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), value.toString())).findFirst().orElse(new BasicCategoryEntity());
         if (ObjectUtil.isEmpty(childCategory)) {
             return str.toString();
         }
@@ -1689,7 +1689,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             //供应商工厂地
             if(CollUtil.isNotEmpty(supplierPlantAddrList)) {
-                String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(),StrUtil.blankToDefault(obj.getRegionName(),"") , StrUtil.blankToDefault(obj.getCityName(),""))).collect(Collectors.joining(","));
+                String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> getSupplierPlantAddr(obj,isDynamic)).collect(Collectors.joining(","));
                 exportExcel.setPlantAddrNames(plantAddrsNames);
             }
             //供应商属性名称
@@ -1756,6 +1756,28 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         return resultList;
     }
+
+    /**
+     * 动态（按列表）导出需要全部导出，按模板导出只需要导出最后一级数据
+     * @author will
+     * @date 2025/8/20 18:19
+     * @param viewDTO
+     * @param isDynamic
+     * @return String
+     */
+    private String getSupplierPlantAddr (SupplierPlantAddrDTO.ViewDTO viewDTO ,Boolean isDynamic) {
+        if (!isDynamic) {
+            if (CharSequenceUtil.isNotBlank(viewDTO.getCityName())) {
+                return viewDTO.getCityName();
+            } else if (CharSequenceUtil.isNotBlank(viewDTO.getRegionName())) {
+                return viewDTO.getRegionName();
+            }
+            return viewDTO.getCountryName();
+        }
+        return CharSequenceUtil.format("{}{}{}", viewDTO.getCountryName(), StrUtil.blankToDefault(viewDTO.getRegionName(), ""), StrUtil.blankToDefault(viewDTO.getCityName(), ""));
+
+    }
+
 
     @Override
     public Boolean updateVoucherNo(List<String> ids, String voucherNo) {
