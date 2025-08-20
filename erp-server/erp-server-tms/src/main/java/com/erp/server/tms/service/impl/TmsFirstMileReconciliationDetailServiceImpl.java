@@ -378,8 +378,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .map(TmsFirstMileReconciliationDetailEntity::getTotalLogisticsCost)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
-        mainEntity.setTotalCost(totalCost);
-
+        if (isUpdate){
+            mainEntity.setTotalCost(totalCost);
+        }else {
+            mainEntity.setTotalCost(MathUtil.add(mainEntity.getTotalCost(),totalCost));
+        }
+        mainEntity.setReconciliationMonth(Objects.nonNull(mainEntity.getReconciliationMonth())?mainEntity.getReconciliationMonth():mainEntity.getEndDate().withDayOfMonth(1));
         tmsFirstMileReconciliationService.updateById(mainEntity);
         log.info("编辑 开始修改头程对账单数据，id：【{}】", mainId);
         boolean save = super.saveOrUpdateBatch(list);
@@ -395,7 +399,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<String> costIds = detailList.stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getCostId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> billEntityList = logisticsBillCostService.listByIds(costIds);
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
-        //过滤首次对账时账单/已存在对账单账单
         //不存在费用表记录，新增一个费用列表
         List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list, isUpdate);
         // 批量更新物流单状态
@@ -421,8 +424,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 tmsCostDetailService.updateActual0ByMainId(delActualCostIds);
             }
         }
-        // 修改或添加实际费用
-
         //更新费用信息
         this.addOrUpdateCost(list);
 
@@ -2744,6 +2745,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 reconciliationEntity = new TmsFirstMileReconciliationEntity(code, startDate, endDate, logisticsSupplierId,  SupplierTypeEnum.LOGISTICS.getCode(),curListDTO.getCurrency());
             }
             reconciliationEntity.setLogisticsSupplierName(supplierMap.getOrDefault(reconciliationEntity.getLogisticsSupplierId(),""));
+            reconciliationEntity.setReconciliationMonth(Objects.nonNull(reconciliationEntity.getReconciliationMonth())?reconciliationEntity.getReconciliationMonth():reconciliationEntity.getEndDate().withDayOfMonth(1));
             // 保存头程对账单
             tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
 
