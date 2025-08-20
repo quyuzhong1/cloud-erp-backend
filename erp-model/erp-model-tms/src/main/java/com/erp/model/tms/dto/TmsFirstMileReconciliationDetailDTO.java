@@ -240,6 +240,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+        /**
+         * 费用id
+         */
+        private String costId;
 
         /**
          * 来源类型
@@ -593,6 +597,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 主键id
          */
         private String id;
+        private String costId;
 
 
         /**
