@@ -100,6 +100,12 @@ public class SoB2cReturnEntity extends BaseEntity<SoB2cReturnEntity> {
     @TableField("return_logistic_code")
     private String returnLogisticCode;
 
+    /**
+     * 批次号
+     */
+    @TableField("batch_no")
+    private String batchNo = "";
+
     public static final String CODE = "code";
 
     public static final String PLATFORM_ORDER_NO = "platform_order_no";
