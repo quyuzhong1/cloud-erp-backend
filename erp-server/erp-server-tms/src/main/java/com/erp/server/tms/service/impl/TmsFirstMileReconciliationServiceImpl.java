@@ -100,6 +100,9 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Lazy
     @Resource
     private LogisticsLargeService logisticsLargeService;
+    @Lazy
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -135,7 +138,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(TmsFirstMileReconciliationDTO.UpdateDTO updateDTO) {
+    public Boolean update(TmsFirstMileReconciliationDTO.UpdateDTO updateDTO, Boolean isUpdate) {
         TmsFirstMileReconciliationEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "头程对账单"));
         // 待提交和审核不通过允许修改
@@ -171,7 +174,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), old.getId(), "修改对账单");
         }
         // 修改明细数据（包含增删改）
-        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old);
+        tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old, isUpdate);
 
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", old.getCode());
@@ -260,7 +263,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Override
     public void updateAndSubmit(TmsFirstMileReconciliationDTO.UpdateDTO dto) {
         // 修改
-        this.update(dto);
+        this.update(dto, Boolean.TRUE);
         // 提交
         this.submit(dto.getId());
     }
@@ -501,6 +504,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencyView);
         List<String> sourceIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         data.setDetailCount(sourceIds.size());
+        List<String> billIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(billIds);
+        viewDTOList.forEach(e -> {
+            logisticsBillCostEntities.stream().filter(f -> f.getReconciliationId().equals(e.getMainId()) && e.getSourceId().equals(f.getLogisticsBillId())).findFirst().ifPresent(h ->{
+                    e.setCostId(h.getId());
+            });
+        });
         data.setDetailList(viewDTOList);
 
     }
