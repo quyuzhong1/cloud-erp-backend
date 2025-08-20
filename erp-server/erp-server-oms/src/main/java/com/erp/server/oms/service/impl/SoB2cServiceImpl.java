@@ -5621,6 +5621,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             b2cCustomer.setTransportNo(soB2cLogisticsEntity.getCode());
             b2cCustomer.setTrackNo(soB2cLogisticsEntity.getTrackNo());
             b2cCustomer.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+            b2cCustomer.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         }
         return b2cCustomer;
     }

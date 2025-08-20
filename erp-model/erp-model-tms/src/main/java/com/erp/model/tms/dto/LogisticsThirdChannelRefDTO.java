@@ -175,14 +175,14 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 物流渠道id
         */
-        @NotBlank(message = "物流渠道id不能为空")
+//        @NotBlank(message = "物流渠道id不能为空")
         @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
         /**
         * 渠道名称
         */
-//        @NotBlank(message = "渠道名称不能为空")
+        @NotBlank(message = "渠道名称不能为空")
         @Size(max = 100,message = "渠道名称最大长度不能超过100位")
         private String logisticsChannelName;
 

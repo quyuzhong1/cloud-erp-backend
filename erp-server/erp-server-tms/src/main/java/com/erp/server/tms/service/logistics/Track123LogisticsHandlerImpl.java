@@ -337,8 +337,8 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         ValidatorUtil.validateEntity(registerRequests);
         try {
             log.warn("更新运单号请求：token:{},request:{}", token, JSONUtil.toJsonStr(registerRequests));
-//            RegisterResult result = trackShipperService.updateTrack(token, registerRequests);
-            log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(null));
+            RegisterResult result = trackShipperService.updateTrack(token, registerRequests);
+            log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(result));
             return success();
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(null,

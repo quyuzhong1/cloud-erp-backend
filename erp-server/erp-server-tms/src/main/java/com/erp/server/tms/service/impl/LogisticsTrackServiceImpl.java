@@ -321,11 +321,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
                     .build());
         });
         RegisterTrackVO registerTrackVO = RegisterTrackVO.builder().authMap(mapList.get(0)).logisticsRegisterVOS(logisticsRegisterVOS).build();
-        ApiResult<List<RegisterResponseVO>> listApiResult = service.updateTrack(registerTrackVO);
-        if (Objects.isNull(listApiResult) || CollectionUtils.isEmpty(listApiResult.getData())){
-            return;
-        }
-
+        service.updateTrack(registerTrackVO);
     }
 
     /**

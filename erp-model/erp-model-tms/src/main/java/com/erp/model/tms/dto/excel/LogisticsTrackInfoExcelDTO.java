@@ -36,7 +36,7 @@ public class LogisticsTrackInfoExcelDTO implements Serializable {
      * 发货时间
      */
     @ExcelProperty(value = "发货时间", index = 2)
-    @FieldValid(fieldName = "发货时间",formatPattern = FieldFormatPatternTypeEnum.DATETIME_)
+    @FieldValid(fieldName = "发货时间")
     private String  deliveryTimeStr;
     @ExcelIgnore
     private LocalDateTime deliveryTime;
