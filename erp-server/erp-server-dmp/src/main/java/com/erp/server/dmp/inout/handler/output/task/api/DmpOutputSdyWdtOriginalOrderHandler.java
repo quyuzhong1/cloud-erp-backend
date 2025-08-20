@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -19,14 +20,22 @@ import com.erp.model.dmp.enums.WdtSourcePlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
+import com.erp.model.sys.entity.CfgCountryPartitionEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoOutstockDetailService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import io.seata.common.util.CollectionUtils;
@@ -58,9 +67,13 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
     @Resource
     private DmpSoDetailService dmpSoDetailService;
     @Resource
+    private DmpSoInfoService dmpSoInfoService;
+    @Resource
     private SysUserFeign sysUserFeign;
     @Resource
     private ThirdShopService thirdShopService;
+    @Resource
+    private DmpSoOutstockDetailService dmpSoOutstockDetailService;
 
     /**
      * 解析订单数据
@@ -76,15 +89,12 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        List<String> detailIds = dmpSoDetailEntityList.stream().map(req -> req.getThirdDetailId()).distinct().collect(Collectors.toList());
-        List<DmpSoDetailEntity> wdtSoDetailEntities = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getThirdDetailId, detailIds).list();
-
+        Map<String, Object> wdtSoDetailMap = cacheMap.get("wdtSoDetail");
         //总售价 = 明细的单价 * 数量 汇总
         BigDecimal allAmount = dmpSoDetailEntityList.stream().map(req -> req.getPrice().multiply(MathUtil.valueOf(req.getNum()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         //订单详情
         for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
             DmpSoOriginalDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
-            DmpSoDetailEntity wdtDetailEntity = wdtSoDetailEntities.stream().filter(req -> req.getThirdDetailId().equalsIgnoreCase(dmpSoDetailEntity.getThirdDetailId())).findFirst().orElse(null);
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
@@ -116,9 +126,20 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             //取消金额、数量
             shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getRefundAmount());
 
+            boolean haveSoOutstock = false;
+            Object wdtSoDetail = wdtSoDetailMap.get(dmpSoDetailEntity.getPlatformDetailId());
             // 取消商品数量（合计）
-            if (ObjectUtil.isNotEmpty(wdtDetailEntity)) {
-                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(wdtDetailEntity.getRefundNum().intValue());
+            if (wdtSoDetail != null) {
+            	Pair<Boolean, BigDecimal> p = (Pair<Boolean, BigDecimal>)wdtSoDetail;
+            	Boolean key = p.getKey();
+            	if(key != null) {
+            		haveSoOutstock = key.booleanValue();
+            	}
+            	BigDecimal value = p.getValue();
+            	if(value == null) {
+            		value = BigDecimal.ZERO;
+            	}
+                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(value.intValue());
             } else {
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(0);
             }
@@ -273,6 +294,58 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
                                 shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                             }
                         }
+                        
+                        // 国家编码
+                        String countryCode = "CN";
+
+                        DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+
+                        // 国家名称
+                        String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
+                        // 区域编码
+                        String regionCode = null == countryEntity ? "" : countryEntity.getRegionCode();
+
+                        DictGlobalAreaEntity dictGlobalAreaEntity = queryAndCacheDictGlobalAreaEntity(cacheMap, regionCode);
+                        // 区域名称
+                        String regionName = null == dictGlobalAreaEntity ? "" : dictGlobalAreaEntity.getRegionName();
+
+                        CfgCountryPartitionEntity cfgCountryPartitionEntity = queryAndCacheCfgCountryPartition(cacheMap, countryCode);
+                        // 军区编码
+                        String militaryRegionCode = null == cfgCountryPartitionEntity ? "" : cfgCountryPartitionEntity.getPartitionCode();
+                        // 军区名称
+                        String militaryRegionName = null == cfgCountryPartitionEntity ? "" : cfgCountryPartitionEntity.getPartitionName();
+                        // 部门编码
+                        String departmentCode = "";
+                        // 部门名称
+                        String departmentName= "";
+
+                        if (null != cfgCountryPartitionEntity){
+                            SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, militaryRegionCode, subPlatformType);
+                            if (null != departmentDTO){
+                            	KingdeeDepartmentEntity kingdeeDepartment = queryAndCacheKingdeeDepartment(cacheMap, departmentDTO.getId(), customerInfo.getUseOrgId());
+                                // 部门编码
+                                departmentCode = kingdeeDepartment.getKingdeeDeptCode();
+                                // 部门名称
+                                departmentName = kingdeeDepartment.getKingdeeDeptName();
+                            }
+                        }
+
+                        // 国家编码
+                        shudiyunB2cOrderDTO.setCountry_code(countryCode);
+                        // 国家名称
+                        shudiyunB2cOrderDTO.setCountry(countryName);
+                        // 区域编码
+                        shudiyunB2cOrderDTO.setRegion_code(regionCode);
+                        // 区域名称
+                        shudiyunB2cOrderDTO.setRegion_name(regionName);
+                        // 军区编码
+                        shudiyunB2cOrderDTO.setMilitary_region_code(militaryRegionCode);
+                        // 军区名称
+                        shudiyunB2cOrderDTO.setMilitary_region_name(militaryRegionName);
+                        // 部门编码
+                        shudiyunB2cOrderDTO.setDepartment_code(departmentCode);
+                        // 部门名称
+                        shudiyunB2cOrderDTO.setDepartment_name(departmentName);
                     }
                     
                     Map<String, Object> dictCurrencyMap = cacheMap.get("dictCurrency");
@@ -308,7 +381,11 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
 
             shudiyunB2cOrderDTO.setRemark("");
 
-            shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getStatus()));
+            if(haveSoOutstock) {
+            	shudiyunB2cOrderDTO.setGoods_status("已发货");
+            }else {
+            	shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getStatus()));
+            }
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getNum().intValue());
             shudiyunB2cOrderDTO.setUnit("PCS");
@@ -385,6 +462,23 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
 
         Map<String, String> map = new HashMap<>();
         Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+        Map<String, Object> wdtSoDetail = new HashMap<>();
+        
+        List<String> platformCodeList = dmpSoOriginalInfoEntityMap.values().stream().filter(d -> StringUtils.isNotBlank(d.getPlatformCode())).map(DmpSoOriginalInfoEntity::getPlatformCode).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(platformCodeList)) {
+        	List<DmpSoInfoEntity> dmpSoInfoEntityList = dmpSoInfoService.lambdaQuery().eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
+            		.in(DmpSoInfoEntity::getPlatformCode, platformCodeList).list();
+            if(CollUtil.isNotEmpty(dmpSoInfoEntityList)) {
+            	List<DmpSoDetailEntity> dmpSoDetailEntityList = dmpSoDetailService.lambdaQuery()
+                		.in(DmpSoDetailEntity::getMainId, dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList())).list();
+                Set<String> srcOrderDetailIdSet = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, dmpSoInfoEntityList.stream().filter(d -> StringUtils.isNotBlank(d.getThirdCode())).map(DmpSoInfoEntity::getThirdCode).collect(Collectors.toList()))
+            			.list().stream().filter(d -> StringUtils.isNotBlank(d.getSrcOrderDetailId())).map(DmpSoOutstockDetailEntity::getSrcOrderDetailId).collect(Collectors.toSet());
+                for(DmpSoDetailEntity d : dmpSoDetailEntityList) {
+                	wdtSoDetail.put(d.getPlatformDetailId(), Pair.of(Boolean.valueOf(srcOrderDetailIdSet.contains(d.getThirdDetailId())), d.getRefundNum()));
+                }
+            }
+            cacheMap.put("wdtSoDetail", wdtSoDetail);
+        }
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId) , cacheMap);
         	if(!result.isEmpty()) {
@@ -438,4 +532,132 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             return "已完成";
         }
     }
+    
+    private static DictCountryEntity queryAndCacheDictCountryEntity(Map<String, Map<String, Object>> cacheMap, String countryCode) {
+        Map<String, Object> countryInfoMap = cacheMap.get("countryInfo");
+        if(null == countryInfoMap) {
+            countryInfoMap = new HashMap<>();
+        }
+        DictCountryEntity countryEntity = null;
+        Object countryObj = countryInfoMap.get(countryCode);
+        if(null == countryObj) {
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).eq(DictCountryEntity::getId, countryCode).list();
+            if(CollUtil.isNotEmpty(countryEntityList)) {
+                countryEntity = countryEntityList.get(0);
+            }
+        }else {
+            countryEntity = (DictCountryEntity) countryObj;
+        }
+        countryInfoMap.put(countryCode, countryEntity);
+        cacheMap.put("countryInfo", countryInfoMap);
+        return countryEntity;
+    }
+
+
+    private static DictGlobalAreaEntity queryAndCacheDictGlobalAreaEntity(Map<String, Map<String, Object>> cacheMap, String regionCode) {
+        Map<String, Object> dictGlobalAreaMap = cacheMap.get("dictGlobalArea");
+        if(null == dictGlobalAreaMap) {
+            dictGlobalAreaMap = new HashMap<>();
+        }
+        DictGlobalAreaEntity entity = null;
+        Object countryObj = dictGlobalAreaMap.get(regionCode);
+        if(null == countryObj) {
+            List<DictGlobalAreaEntity> countryEntityList = FeignQuery.create(DictGlobalAreaEntity.class).eq(DictGlobalAreaEntity::getId, regionCode).list();
+            if(CollUtil.isNotEmpty(countryEntityList)) {
+                entity = countryEntityList.get(0);
+            }
+        }else {
+            entity = (DictGlobalAreaEntity) countryObj;
+        }
+        dictGlobalAreaMap.put(regionCode, entity);
+        cacheMap.put("dictGlobalArea", dictGlobalAreaMap);
+        return entity;
+    }
+
+    private static CfgCountryPartitionEntity queryAndCacheCfgCountryPartition(Map<String, Map<String, Object>> cacheMap, String countryCode) {
+    	if(StringUtils.isBlank(countryCode)) {
+    		return null;
+    	}
+        Map<String, Object> cfgCountryPartitionMap = cacheMap.get("cfgCountryPartition");
+        if(null == cfgCountryPartitionMap) {
+            List<CfgCountryPartitionEntity> countryEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).list();
+            cfgCountryPartitionMap = countryEntityList.stream().collect(Collectors.toMap(CfgCountryPartitionEntity::getCountry, c -> c , (c1 , c2) -> c1));
+            cacheMap.put("cfgCountryPartition", cfgCountryPartitionMap);
+        }
+        Object object = cfgCountryPartitionMap.get(countryCode);
+        if(object != null) {
+        	return (CfgCountryPartitionEntity)object;
+        }
+		return null;
+    }
+
+
+    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String partitionCode, String dictPlatform) {
+        if (StringUtils.isBlank(partitionCode) || StringUtils.isBlank(dictPlatform)){
+            return null;
+        }
+        Map<String, Object> dictBasicMap = cacheMap.getOrDefault("omsDictBasic", new HashMap<>());
+        List<DictBasicEntity> sdyPartitionDeptList = new ArrayList<>();
+        List<DictBasicEntity> sdyPlatformDeptList = new ArrayList<>();
+        List<SysDepartmentEntity> deptList = new LinkedList<>();
+
+        Object level1ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+        Object level2ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+        Object deptListObj = dictBasicMap.get("deptList");
+        if (null == level2ListObj || null == level1ListObj || null == deptListObj) {
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
+            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+                Map<String, List<DictBasicEntity>> groupMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+                sdyPartitionDeptList = groupMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+                sdyPlatformDeptList = groupMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+                dictBasicMap.putAll(groupMap);
+            }
+            // 部门信息
+            deptList = sysUserFeign.getDeptEntityList();
+            if (CollectionUtils.isNotEmpty(deptList)){
+                dictBasicMap.put("deptList", deptList);
+            }
+            cacheMap.put("omsDictBasic", dictBasicMap);
+        } else {
+            sdyPartitionDeptList = (List<DictBasicEntity>) level1ListObj;
+            sdyPlatformDeptList = (List<DictBasicEntity>) level2ListObj;
+            deptList = (List<SysDepartmentEntity>) deptListObj;
+        }
+
+        // 军区一级部门映射
+        DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(partitionCode)).findFirst().orElse(null);
+        // 销售平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
+            List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+            return deptList.stream().filter(e -> e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                    && deptLevel2Ids.contains(e.getId())
+                    )
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
+    }
+    
+    private KingdeeDepartmentEntity queryAndCacheKingdeeDepartment(Map<String, Map<String, Object>> cacheMap , String erpDeptId , String useOrgId) {
+    	if(StringUtils.isNotBlank(erpDeptId) && StringUtils.isNotBlank(useOrgId)) {
+    		Map<String, Object> kingdeeDepartment = cacheMap.get("kingdeeDepartment");
+        	if(kingdeeDepartment == null) {
+        		List<KingdeeDepartmentEntity> list = FeignQuery.create(KingdeeDepartmentEntity.class).list();
+        		kingdeeDepartment = list.stream().collect(Collectors.toMap(k -> k.getErpDeptId() + "_" + k.getUseOrgId(), k -> k , (k1 , k2) -> k1));
+        		cacheMap.put("kingdeeDepartment", kingdeeDepartment);
+        	}
+        	Object object = kingdeeDepartment.get(erpDeptId + "_" + useOrgId);
+        	if(object != null) {
+        		return (KingdeeDepartmentEntity)object;
+        	}
+    	}
+		return new KingdeeDepartmentEntity();
+    }
+
 }

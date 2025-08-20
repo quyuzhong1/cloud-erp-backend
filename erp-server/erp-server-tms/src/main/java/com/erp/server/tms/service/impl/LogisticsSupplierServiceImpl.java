@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,13 +14,16 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.SupplierCategoryEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -172,9 +176,44 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public BatchResultDTO delete(String id) {
         LogisticsSupplierEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流商"));
+        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+        List<String> supplierIds =Collections.singletonList(id);
+        //渠道列表
+        LogisticsSupplierDTO.PagingParamDTO params = new LogisticsSupplierDTO.PagingParamDTO();
+        params.setSqlMap(new HashMap<>());
+        List<LogisticsChannelDTO.BaseDTO> allChannelList = logisticsChannelService.listBaseByMainIdList(supplierIds,params);
+        //获取服务商编号
+        //包装仓库/渠道信息
+        List<LogisticsChannelDTO.BaseDTO>returnChannelList=new ArrayList<>();
+        List<LogisticsWarehouseEntity> warehouseEntityList = logisticsWarehouseList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getMainId()) && e.getMainId().equals(entity.getId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(warehouseEntityList)){
+            //封装仓库下的渠道
+            List<String> hasWarehouseChannelId = new ArrayList<>();
+            for(LogisticsWarehouseEntity logisticsWarehouseEntity: warehouseEntityList){
+                List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
+                                && c.getSourceId().equals(logisticsWarehouseEntity.getId()) && c.getMainId().equals(entity.getId()))
+                        .collect(Collectors.toList());
+                hasWarehouseChannelId.addAll(channelList.stream().map(v->v.getId()).collect(Collectors.toList()));
+                returnChannelList.addAll(channelList);
+            }
+            //封装没有仓库的渠道
+            List<LogisticsChannelDTO.BaseDTO> otherChannel = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                            && c.getMainId().equals(entity.getId()) && !hasWarehouseChannelId.contains(c.getId()))
+                    .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(otherChannel)){
+                returnChannelList.addAll(otherChannel);
+            }
+        }else {
+            List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                            && c.getMainId().equals(entity.getId()))
+                    .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+            returnChannelList.addAll(channelList);
+        }
         //TODO 检查订单是否引用
         this.removeById(id);
-        List<LogisticsWarehouseEntity> logisticsWarehouseList = logisticsWarehouseService.listByLogisticsSupplierId(id);
+
         List<String> mainIdList = new ArrayList<>(10);
         mainIdList.add(id);
         if (CollectionUtils.isNotEmpty(logisticsWarehouseList)) {
@@ -183,7 +222,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         //删除渠道根据来源id
         logisticsChannelService.removeByMainIdList(mainIdList);
-        return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
+
+        return BatchResultDTO.success(entity.getId(), CollectionUtils.isNotEmpty(returnChannelList)?returnChannelList.stream().map(LogisticsChannelDTO.BaseDTO::getName).collect(Collectors.joining(",")):entity.getSupplierName(), OperationTypeEnum.DELETE);
 
     }
 
@@ -451,6 +491,13 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         return new PagingVO<>(page);
     }
 
+    @Override
+    public PagingVO<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsSupplierDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LogisticsSupplierDTO.SelectDTO params = dto.getParams();
+        IPage<LogisticsSupplierDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
+        return new PagingVO<>(pagResult);
+    }
 
 
     /**
@@ -540,15 +587,26 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
      * 新增修改处理数据
      */
     private void handleData(LogisticsSupplierEntity logisticsSupplierEntity) {
-        String logisticsSupplier = "物流供应商";
         String supplierId = logisticsSupplierEntity.getSupplierId();
         SupplierEntity supplier = scmTaskFeign.getSupplierById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException("供应商不存在");
         }
-        //供应商分类名
-        String supplierCategoryName = supplier.getCategoryName();
-        if (!logisticsSupplier.equals(supplierCategoryName)) {
+        //供应商分类
+        List<String> supplierCategoryList = Arrays.asList(
+                SupplierCategoryEnum.LOGISTICS.getCode(),
+                SupplierCategoryEnum.SELF_LOGISTICS.getCode(),
+                SupplierCategoryEnum.PLATFORM_LOGISTICS.getCode(),
+                SupplierCategoryEnum.CUSTOMER_LOGISTICS.getCode(),
+                SupplierCategoryEnum.WAREHOUSE_LOGISTICS.getCode(),
+                SupplierCategoryEnum.OTHER_LOGISTICS.getCode()
+        );
+        List<DictBasicEntity> list = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getStatus,Boolean.TRUE).eq(DictBasicEntity::getType, com.erp.model.scm.enums.DictBasicEnum.SUPPLIER_CATEGORY.getType()).in(DictBasicEntity::getValue, supplierCategoryList).list();
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("供应商分类不存在物流供应商");
+        }
+        List<String> categoryIdList = list.stream().map(DictBasicEntity::getId).distinct().collect(Collectors.toList());
+        if (!categoryIdList.contains(supplier.getCategoryId())) {
             throw new ServiceException("供应商分类不为物流供应商");
         }
         logisticsSupplierEntity.setSupplierName(supplier.getName());

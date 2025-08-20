@@ -529,6 +529,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         BigDecimal exchangeRate = Objects.isNull(details.get(0).getExchangeRate()) || details.get(0).getExchangeRate().compareTo(BigDecimal.ZERO) == 0 ? MathUtil.BigDecimal_1 : details.get(0).getExchangeRate();
         //汇率
         resultMap.put("exchangeRate", exchangeRate);
+        //备注
+        resultMap.put("remark", entity.getRemark());
         //要货日期
         LocalDate requireDate = entity.getRequireDate();
         List<JSONObject> list = new ArrayList<>(details.size());
@@ -553,9 +555,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("stockBaseQty", item.getQty());
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
-            jsonObject.set("remark", item.getRemark());
             jsonObject.set("detailDiscountAmount", discountAmount);
             jsonObject.set("customerPO", item.getCustomerPO());
+            jsonObject.set("detailRemark", item.getRemark());
             list.add(jsonObject);
         }
 
@@ -837,11 +839,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 // 国家名称
                 countryName = dictCountryEntity.getShortNameCn();
                 // 区域编码
-                regionCode = dictCountryEntity.getSubregionCode();
+                regionCode = dictCountryEntity.getRegionCode();
                 // 区域名称
                 DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
                 if (null != dictGlobalAreaEntity){
-                    regionName = dictGlobalAreaEntity.getSubregionName();
+                    regionName = dictGlobalAreaEntity.getRegionName();
                 }
             }
         }

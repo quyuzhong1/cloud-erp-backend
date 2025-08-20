@@ -56,6 +56,14 @@ public interface RuleConditionService extends SuperService<RuleConditionEntity> 
     List<RuleConditionDTO.ViewDTO> listByRuleId(String ruleId,String type);
 
     /**
+     * 根据规则id集合 获取详情
+     * @param ruleId
+     * @param type
+     * @return
+     */
+    List<RuleConditionDTO.ViewDTO> listByRuleIds(List<String> ruleId,String type);
+
+    /**
      * 修改规则条件
      * @author yl
      * @date 2023-08-31 17:10
@@ -72,4 +80,9 @@ public interface RuleConditionService extends SuperService<RuleConditionEntity> 
      * @return
      */
     List<RuleConditionEntity> listDbRuleIds(List<String> ruleIdList);
+    /**
+     * 根据规则id删除
+     * @param ruleId
+     */
+    void removeByRuleId(String ruleId);
 }

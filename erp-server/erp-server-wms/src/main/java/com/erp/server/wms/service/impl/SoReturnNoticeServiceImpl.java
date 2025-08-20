@@ -200,9 +200,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //构造店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
-            permissionSql = permissionSql + " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B'))";
+            permissionSql = permissionSql + " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B') OR (srn.type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
-            permissionSql = " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B'))";
+            permissionSql = " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B') OR (srn.type = 'AfterSale'))";
         }
         return permissionSql;
     }
@@ -980,29 +980,42 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //待提交支持删除
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+//        ).count();
+//        if (count != entityList.size()) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+
+        List<SoReturnNoticeEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoReturnNoticeEntity entity : entityList) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoReturnNoticeEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
         //删除详情表
-        soReturnNoticeDetailService.delete(ids);
-        boolean result = this.removeByIds(ids);
+        soReturnNoticeDetailService.delete(removeIdList);
+        boolean result = this.removeByIds(removeIdList);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
         
         // 添加批量操作日志
-        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货通知单", UserContext.getDefaultLoginUser().getUserName(),entityList.stream().map(SoReturnNoticeEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = entityList.stream()
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货通知单", UserContext.getDefaultLoginUser().getUserName(),removeList.stream().map(SoReturnNoticeEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream()
                 .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
                 .collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "删除操作");
         
         // 返回成功结果
-        return entityList.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
-                .collect(Collectors.toList());
+        return resultDTOList;
     }
 }

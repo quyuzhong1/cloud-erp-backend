@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author will
  * @date 2024/10/18 10:22
  */
-@FeignClient(name = "erp-wms", contextId = "deliveryPlan")
+@FeignClient(name = "erp-wms", contextId = "deliveryPlan" ,configuration = {FeignErrorDecoder.class})
 public interface DeliveryPlanFeign {
 
     @PostMapping("feign/deliveryPlan/addDeliveryPlan")

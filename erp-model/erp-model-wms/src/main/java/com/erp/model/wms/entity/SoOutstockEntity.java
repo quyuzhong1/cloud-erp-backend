@@ -308,6 +308,16 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("shop_id")
     private String shopId;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    /**
+     * 客户备注
+     */
+    @TableField("customer_remark")
+    private String customerRemark;
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

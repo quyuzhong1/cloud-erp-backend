@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
@@ -288,7 +289,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
-    public void delete(String id) {
+    public List<BatchResultDTO> delete(String id) {
         OverseasProviderEntity entity = this.getById(id);
         if(Objects.isNull(entity)){
             throw new ServiceException("海外仓为空");
@@ -299,6 +300,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         this.removeById(id);
         String msg = CharSequenceUtil.format("用户【{}】删除海外仓信息 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), entity.getId(), "删除");
+        return Collections.singletonList(BatchResultDTO.success(entity.getId(), entity.getName(),"删除成功"));
     }
 
     @Override

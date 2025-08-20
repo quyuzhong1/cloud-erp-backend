@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "erp-srm", contextId = "exportsrmFeign", configuration = ExportFeignConfig.class)
+@FeignClient(name = "erp-srm", contextId = "exportSrmFeign", configuration = ExportFeignConfig.class)
 public interface ExportSrmFeign {
 
 

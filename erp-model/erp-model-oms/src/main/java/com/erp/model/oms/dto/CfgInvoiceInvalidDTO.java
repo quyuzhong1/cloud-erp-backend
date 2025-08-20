@@ -53,7 +53,14 @@ public class CfgInvoiceInvalidDTO implements Serializable {
         * 序列号
         */
         private String no;
-
+        /**
+         * 起始发票号
+         */
+        private String startInvoiceNo;
+        /**
+         * 截止发票号
+         */
+        private String endInvoiceNo;
         /**
         * 作废发票号
         */

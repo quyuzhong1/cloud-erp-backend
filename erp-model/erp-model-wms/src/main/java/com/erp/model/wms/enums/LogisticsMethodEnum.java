@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum LogisticsMethodEnum implements EnumMessage {
+    LOCAL_DELIVERY("localDelivery", "本地发运"),
     AIRFREIGHT("airfreight", "空运"),
     EXPRESS("express", "快递"),
     OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装"),

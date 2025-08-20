@@ -32,6 +32,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.dto.AuthUserWarehouseDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
@@ -54,6 +56,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
@@ -103,7 +106,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private DictBasicService dictBasicService;
-
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -483,7 +485,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getShippingOrganization).collect(Collectors.toList()));
             orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-            
+
+            List<DictCountryDTO.ListDTO> dictCountryEntityList = sysUserFeign.countryList();
             List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
             		.in(com.erp.model.oms.entity.DictBasicEntity::getValue, page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()))
             		.in(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
@@ -535,6 +538,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         map(DictBasicEntity::getName).findFirst().orElse("");
                 excelDTO.setGeographyLocationName(geographyLocationName);
 
+                //国家
+                DictCountryDTO.ListDTO countryDto = dictCountryEntityList.stream().filter(v->v.getId().equals(item.getCountry())).findFirst().orElse(new DictCountryDTO.ListDTO());
+                excelDTO.setCountryName(countryDto.getNameCn());
                 
                 excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> o.getValue().equals(item.getChannelAffiliation())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
@@ -734,6 +740,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         if(dto.getChannelAffiliation() == null) {
         	warehouse.setChannelAffiliation("");
+        }
+        if(StringUtils.isBlank(dto.getCountry())) {
+        	warehouse.setCountry("");
         }
         Boolean result = this.updateById(warehouse);
         if (result) {
@@ -957,21 +966,36 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO> deleteByIds(List<String> ids) {
         // 删除缓存
         removeCache(ids);
 
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
+//        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+//        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+        List<WarehouseEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (WarehouseEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getKingdeeWarehouseCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getKingdeeWarehouseCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(WarehouseEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
 
         //删除发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
-        return this.removeByIds(ids);
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+        this.removeByIds(removeList);
+        return resultDTOList;
     }
 
 
@@ -1031,7 +1055,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        List<DictCountryDTO.ListDTO> dictCountryEntityList = sysUserFeign.countryList();
         for (WarehouseDTO.PagingViewDTO item : list) {
             //类型id
             String typeId = item.getTypeId();
@@ -1063,6 +1087,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
                     map(DictBasicEntity::getName).findFirst().orElse("");
             item.setGeographyLocationName(geographyLocationName);
+
+            //国家
+            DictCountryDTO.ListDTO countryDto = dictCountryEntityList.stream().filter(v->v.getId().equals(item.getCountry())).findFirst().orElse(new DictCountryDTO.ListDTO());
+            item.setCountryName(countryDto.getNameCn());
         }
         return new PagingVO<>(pageData);
     }
@@ -1092,7 +1120,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/warehouse.xlsx";
+        String path = "excel/warehouse.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1135,10 +1163,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
-
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList, warehouseMappingService,countryList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {

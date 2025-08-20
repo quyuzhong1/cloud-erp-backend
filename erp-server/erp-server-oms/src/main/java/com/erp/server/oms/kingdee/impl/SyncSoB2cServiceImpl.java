@@ -434,11 +434,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     // 国家名称
                     countryName = dictCountryEntity.getShortNameCn();
                     // 区域编码
-                    regionCode = dictCountryEntity.getSubregionCode();
+                    regionCode = dictCountryEntity.getRegionCode();
                     // 区域名称
                     DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
                     if (null != dictGlobalAreaEntity){
-                        regionName = dictGlobalAreaEntity.getSubregionName();
+                        regionName = dictGlobalAreaEntity.getRegionName();
                     }
                 }
             }

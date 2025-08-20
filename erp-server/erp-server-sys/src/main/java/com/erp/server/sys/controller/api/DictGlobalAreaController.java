@@ -161,7 +161,7 @@ public class DictGlobalAreaController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getKingdeeCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getRegionName(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

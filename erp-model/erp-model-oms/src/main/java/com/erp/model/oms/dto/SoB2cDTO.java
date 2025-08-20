@@ -150,21 +150,40 @@ public class SoB2cDTO implements Serializable {
     public static class DeliveryWithNotOutboundDTO {
 
         /**
-         * 表 ids
+         * 表 id
          */
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
+        private String id;
         /**
          * 实际发货仓库
          */
         @NotEmpty(message = "实际发货仓库不能为空")
         private String warehouseId;
-
+        /**
+         * 物流渠道
+         */
+        @NotEmpty(message = "物流渠道不能为空")
+        private String logisticsChannelId;
+        /**
+         * 实际发货时间
+         */
+        @NotNull(message = "实际发货时间不能为空")
+        private LocalDateTime deliveryTime;
+        /**
+         * 物流跟踪号
+         */
+        @NotEmpty(message = "物流跟踪号不能为空")
+        private String trackNo;
+        /**
+         * 实际发货单号
+         */
+        private String actualDeliveryCode;
         /**
          * 平台是否标发
          */
         @NotNull(message = "平台是否标发标识不能为空")
         private Boolean platformShipFlag;
+
+        private String logisticsChannelCode;
     }
     @Data
     @NoArgsConstructor
@@ -2670,6 +2689,10 @@ public class SoB2cDTO implements Serializable {
          * 是否冻结
          */
         private Boolean isFrozen;
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
 
         /**
          * 审核状态
@@ -3301,6 +3324,10 @@ public class SoB2cDTO implements Serializable {
          * 收件人税号
          */
         private String receiverTaxNo;
+        /**
+         * IE号
+         */
+        private String ieNo;
 
         /**
          * 销售出库时间

@@ -57,16 +57,16 @@ public class CatalogApi {
      * 初始化Api
      */
     public static CatalogApi init(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO, boolean isSandbox, RateLimitConfiguration rateLimitConfig) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+        // AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
 
         LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
 
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
+        // AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), UUID.randomUUID().toString());
 
         CatalogApi catalogApi = new CatalogApi.Builder()
-                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                // .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                // .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
                 //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
@@ -474,9 +474,9 @@ public class CatalogApi {
 
 
         public CatalogApi build() {
-            if (awsAuthenticationCredentials == null) {
-                throw new RuntimeException("AWSAuthenticationCredentials not set");
-            }
+//            if (awsAuthenticationCredentials == null) {
+//                throw new RuntimeException("AWSAuthenticationCredentials not set");
+//            }
 
             if (lwaAuthorizationCredentials == null) {
                 throw new RuntimeException("LWAAuthorizationCredentials not set");
@@ -486,12 +486,12 @@ public class CatalogApi {
                 throw new RuntimeException("Endpoint not set");
             }
 
-            AWSSigV4Signer awsSigV4Signer;
-            if (awsAuthenticationCredentialsProvider == null) {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
-            } else {
-                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
-            }
+//            AWSSigV4Signer awsSigV4Signer;
+//            if (awsAuthenticationCredentialsProvider == null) {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials);
+//            } else {
+//                awsSigV4Signer = new AWSSigV4Signer(awsAuthenticationCredentials, awsAuthenticationCredentialsProvider);
+//            }
 
             LWAAuthorizationSigner lwaAuthorizationSigner = null;
             if (disableAccessTokenCache) {
@@ -504,7 +504,7 @@ public class CatalogApi {
             }
 
             return new CatalogApi(new ApiClient()
-                    .setAWSSigV4Signer(awsSigV4Signer)
+                    // .setAWSSigV4Signer(awsSigV4Signer)
                     .setLWAAuthorizationSigner(lwaAuthorizationSigner)
                     .setBasePath(endpoint)
                     .setRateLimiter(rateLimitConfiguration));

@@ -258,9 +258,9 @@ public class SupplierPhaseController extends BaseController {
             menuCode = "scm:supplier:phase:delete",
             serviceClass = SupplierPhaseService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierPhaseService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = supplierPhaseService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

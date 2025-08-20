@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
@@ -17,7 +18,7 @@ import java.util.Map;
  * @date 2025-05-29
  * @author jack
  */
-@FeignClient(name = "erp-workflow", contextId = "cfgQueryOption")
+@FeignClient(name = "erp-workflow", contextId = "cfgQueryOption",configuration = {FeignErrorDecoder.class})
 public interface CfgQueryOptionFeign {
 
     /**

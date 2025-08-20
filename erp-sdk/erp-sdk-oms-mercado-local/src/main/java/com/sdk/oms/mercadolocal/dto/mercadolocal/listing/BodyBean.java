@@ -149,5 +149,7 @@ public class BodyBean {
     private List<String> tags;
     @JsonProperty("deal_ids")
     private List<Object> dealIds;
+    @JsonProperty("item_relations")
+    private List<Object> itemRelations;
 
 }

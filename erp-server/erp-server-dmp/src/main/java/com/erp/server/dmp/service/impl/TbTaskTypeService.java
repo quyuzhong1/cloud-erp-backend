@@ -381,7 +381,7 @@ public class TbTaskTypeService {
             addHistoryDTO.setExecTimeout(1200);
             addHistoryDTO.setDealyTime(86400);
             addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
-            dmpCfgInputDetailService.add(addDTO);
+            dmpCfgInputDetailService.add(addHistoryDTO);
         }
     }
 

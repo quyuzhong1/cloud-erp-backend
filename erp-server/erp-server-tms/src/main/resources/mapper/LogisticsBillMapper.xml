@@ -62,6 +62,7 @@
         lb.delivery_time AS deliveryTime,
         lb.transport_no AS transportNo,
         lb.to_country AS toCountry,
+        lb.logistics_supplier_id AS logisticsSupplierId,
         lbd.track_status AS trackStatus ,
         lbd.track_no AS trackNo,
         lbd.sign_time AS signTime,
@@ -124,6 +125,8 @@
             lb.outstock_id,
             lb.outstock_code,
             lb.transport_no,
+            lb.channel_id,
+            lb.order_time,
             lbd.id as detailId,
             lbd.track_status,
             lbd.track_no
@@ -475,6 +478,7 @@
                lb.channel_id as logisticsChannelId,
                lb.logistics_supplier_id as logisticsSupplierId,
                lb.to_country as toCountry,
+               lbc.id as costId,
                lbc.logistics_bill_id as logisticBillId,
                lbc.actual_weight as actualWeight,
                lbc.volume_weight as volumeWeight,
@@ -541,6 +545,7 @@
             lb.channel_id as logisticsChannelId,
             lb.logistics_supplier_id as logisticsSupplierId,
             lb.to_country as toCountry,
+            lbc.id as costId,
             lbc.logistics_bill_id as logisticBillId,
             lbc.actual_weight as actualWeight,
             lbc.volume_weight as volumeWeight,
@@ -554,12 +559,14 @@
             lbc.reconciliation_id as reconciliationId,
             lb.order_time as orderTime,
             lbd.track_no as trackNo,
-            lbd.sign_time as receiveDate
+            lbd.sign_time as receiveDate,
+            tfmr.supplier_type as supplierType
         from
         logistics_bill lb
         left join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id AND lbc.is_deleted = FALSE
         left join logistics_bill_detail lbd on lbd.main_id = lb.id AND lbd.is_deleted = FALSE
         left join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        left JOIN tms_first_mile_reconciliation tfmr on lbc.reconciliation_id = tfmr.id and tfmr.is_deleted = FALSE
         <where>
             and lb.is_deleted =false
             <if test="orderType!=null and orderType!=''">
@@ -592,6 +599,15 @@
                 <foreach collection="logisticsSupplierIdList" item="logisticsSupplierId" open="(" separator="," close=")">
                     #{logisticsSupplierId}
                 </foreach>
+            </if>
+            <if test="reconciliationIds != null and reconciliationIds.size() > 0 ">
+                and lbc.reconciliation_id in
+                <foreach collection="reconciliationIds" item="reconciliationId" open="(" separator="," close=")">
+                    #{reconciliationId}
+                </foreach>
+            </if>
+            <if test="supplierType!=null and supplierType!=''">
+                and tfmr.supplier_type = #{supplierType}
             </if>
         </where>
     </select>

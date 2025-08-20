@@ -176,6 +176,12 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "mainId", source = "mainId"),
+            @Mapping(target = "customerCountry", ignore = true),
+            @Mapping(target = "invoiceAddress", ignore = true),
+            @Mapping(target = "partitionCode", ignore = true),
+            @Mapping(target = "partitionId", ignore = true),
+            @Mapping(target = "partitionName", ignore = true),
+            @Mapping(target = "shopCountry", ignore = true)
     })
     SoB2cReceiverEntity convertNewReceiver(PlatformOrderReceiverDTO dto, String mainId);
 

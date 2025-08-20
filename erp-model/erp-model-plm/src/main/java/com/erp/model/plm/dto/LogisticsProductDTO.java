@@ -54,6 +54,31 @@ public class LogisticsProductDTO implements Serializable {
          */
         private String categoryName;
 
+        /**
+         * sku图片
+         */
+        private String imagesUrl;
+
+        /**
+         * 材质
+         */
+        private String materials;
+
+        /**
+         * 用途
+         */
+        private String usageDesc;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 报关信息状态
+         */
+        private String customsStatus;
+        private String customsStatusName;
+
 
         /**
          * sku no
@@ -452,11 +477,6 @@ public class LogisticsProductDTO implements Serializable {
 
 
         /**
-         * 目的国海关编码
-         */
-        private List<ProductCustomsDTO.ViewDTO> customsList;
-
-        /**
          * 报关信息-汇率
          */
         private BigDecimal exchangeRate;
@@ -472,14 +492,6 @@ public class LogisticsProductDTO implements Serializable {
          */
         @Valid
         private DeclareInfoDTO declareInfo;
-
-
-        /**
-         * 目的国海关编码
-         */
-        private List<ProductCustomsDTO.ViewDTO> customsList;
-
-
     }
 
 

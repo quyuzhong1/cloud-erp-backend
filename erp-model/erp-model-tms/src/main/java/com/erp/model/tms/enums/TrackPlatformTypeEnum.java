@@ -54,4 +54,15 @@ public enum TrackPlatformTypeEnum implements EnumMessage {
         }
         return "";
     }
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (TrackPlatformTypeEnum typeEnums : TrackPlatformTypeEnum.values()) {
+            if (name.equals(typeEnums.getName())) {
+                return typeEnums.getCode();
+            }
+        }
+        return "";
+    }
 }

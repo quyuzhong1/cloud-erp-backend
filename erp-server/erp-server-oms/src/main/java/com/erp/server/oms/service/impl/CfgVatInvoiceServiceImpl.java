@@ -222,9 +222,17 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         // 返回成功结果
         List<CfgVatInvoiceEntity> list = this.listByIds(ids);
         boolean remove = this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
-        return list.stream()
-                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getId(), "删除成功"))
-                .collect(Collectors.toList());
+
+        List<BatchResultDTO>resultDTOList=new ArrayList<>();
+        for (CfgVatInvoiceEntity entity : list) {
+            ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, entity.getShopId());
+            if (!Objects.isNull(shopInfo)){
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), shopInfo.getName(), "删除成功"));
+            }else {
+                resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getShopId(), "删除成功"));
+            }
+        }
+        return resultDTOList;
     }
 
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {

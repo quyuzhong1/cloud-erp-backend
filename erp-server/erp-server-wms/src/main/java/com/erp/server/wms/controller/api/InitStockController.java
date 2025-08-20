@@ -275,8 +275,8 @@ public class InitStockController extends BaseController {
             serviceClass = InitStockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        initStockService.delete(dto.getIds());
-        return success();
+        List<BatchResultDTO> resultDTOList =initStockService.delete(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

@@ -43,7 +43,7 @@ public class DmpInputAmzReportFbaReturnInstockDetailDmpHandler extends DmpInputD
 			if ("sku".equals(stringObjectEntry.getKey()) && null != stringObjectEntry.getValue()){
 				String newSkuValue = stringObjectEntry.getValue()
 						.toString()
-						.replaceAll("&#8208;", "-");
+						.replaceAll("&#8208;", "‐");
 				dmpInputMongoEntity.put(stringObjectEntry.getKey(), newSkuValue);
 			}
 		}

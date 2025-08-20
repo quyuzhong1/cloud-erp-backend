@@ -969,7 +969,7 @@ public class ApiClient {
         if (!defaultHeaderMap.containsKey("x-amz-access-token")) {
             request = lwaAuthorizationSigner.sign(request);
         }
-        request = awsSigV4Signer.sign(request);
+//        request = awsSigV4Signer.sign(request);
 
         return request;
     }

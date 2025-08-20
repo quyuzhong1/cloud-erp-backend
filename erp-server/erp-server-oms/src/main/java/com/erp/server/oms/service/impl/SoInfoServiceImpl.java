@@ -576,6 +576,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             variablesMap.put("receiveAddress", customerAddressEntity.getAddress());
         }
 
+        //sku数量
+        long skuCount = detailList.stream().map(SoDetailEntity::getSkuId).distinct().count();
+        variablesMap.put("skuCount", skuCount);
+
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty()).subtract(obj.getDiscountAmount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
@@ -1743,28 +1747,42 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
+    public List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
         List<String> statusList = new ArrayList<>(2);
         statusList.add(waitSubmitStatus);
         statusList.add(draftStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_92017);
+//        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_92017);
+//        }
+        List<SoInfoEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoInfoEntity entity : list) {
+            if (!statusList.contains(entity.getApproveStatus().getStatus())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_92017.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
         }
         //检查能否删除
-        checkRemove(ids);
+        checkRemove(removeIdList);
         //需要同步的数据
-        List<SoInfoEntity> syncList = list.stream().filter(obj -> !BillApproveStatusEnum.DRAFT.equals(obj.getApproveStatus())).collect(Collectors.toList());
+        List<SoInfoEntity> syncList = removeList.stream().filter(obj -> !BillApproveStatusEnum.DRAFT.equals(obj.getApproveStatus())).collect(Collectors.toList());
 
         //删除释放冻结库存
-        ids.stream().forEach(obj -> unLockVirtualInventory(obj));
+        removeIdList.stream().forEach(obj -> unLockVirtualInventory(obj));
 
         //获取需要同步数帝云的数据
         List<Map<String, Object>> sdyList = new ArrayList<>();
-        for (SoInfoEntity soInfoEntity : list) {
+        for (SoInfoEntity soInfoEntity : removeList) {
             Map<String, Object> sdyMap = new HashMap<>();
             SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
             List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
@@ -1773,16 +1791,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             sdyList.add(sdyMap);
         }
 
-        Boolean result = this.removeByIds(ids);
+        Boolean result = this.removeByIds(removeIdList);
 
         if (result) {
             //添加日志
             String content = "删除销售订单[%s]";
-            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
 
             //删除明细
-            soDetailService.removeByMainIdList(ids);
+            soDetailService.removeByMainIdList(removeIdList);
 
             //推送金蝶
             if (CollectionUtils.isNotEmpty(syncList)) {
@@ -1791,7 +1809,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 //                syncList.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
                 //发送金蝶
-                sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+                sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
             // 同步数帝云
@@ -1800,8 +1818,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 List<SoDetailEntity> soDetailEntities = (List<SoDetailEntity>) map.get("detail");
                 syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
+        }else {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
         }
-        return result;
+        return resultDTOList;
     }
 
 
@@ -1957,6 +1977,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
             customer.setCustomerSellerId(customerInfo.getSellerId());
+            customer.setCustomerRemark(customerInfo.getRemark());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息
@@ -3693,7 +3714,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             String finalSalesOrgId1 = salesOrgId;
             KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
-                    k.getOrgId().equals(finalSalesOrgId1) &&
+                    k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
                     xsyCode.equals(k.getTypeCode())
             ).findFirst().orElse(null);
             if (Objects.isNull(businessOperator)) {

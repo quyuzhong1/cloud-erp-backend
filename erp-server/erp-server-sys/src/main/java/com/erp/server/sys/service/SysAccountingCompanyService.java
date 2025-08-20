@@ -2,10 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchStateDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
@@ -80,4 +77,9 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * 公司详情
      */
     SysAccountingCompanyEntity view(String id);
+
+    /**
+     * 删除公司
+     */
+    List<BatchResultDTO> delete(List<String> ids);
 }

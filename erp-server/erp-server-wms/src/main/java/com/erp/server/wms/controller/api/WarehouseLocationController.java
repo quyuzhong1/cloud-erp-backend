@@ -1015,9 +1015,9 @@ public class WarehouseLocationController extends BaseController {
      */
     @PostMapping("/deleteBatch")
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位")
-    public ApiResult<List<String>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
-        List<String> errorList = warehouseLocationService.deleteBatch(idsDto);
-        return errorList.isEmpty() ? ApiResult.success() : new ApiResult(500, "部分数据删除失败", errorList);
+    public ApiResult<List<BatchResultDTO>> deleteBatch(@RequestBody WarehouseLocationDTO.IdsDto idsDto){
+        List<BatchResultDTO> resultDTOList = warehouseLocationService.deleteBatch(idsDto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

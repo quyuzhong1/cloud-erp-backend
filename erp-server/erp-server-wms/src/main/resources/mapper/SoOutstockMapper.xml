@@ -12,6 +12,7 @@
         SELECT
         so.id,
         so.code,
+        sod.platform_code as platformCode,
         so.third_code as thirdCode,
         so.so_id AS soId,
         so.so_code AS soCode,
@@ -44,6 +45,8 @@
         sod.id as detailId,
         so.sales_dept_id AS salesDeptId,
         so.shop_id AS shopId,
+        so.remark AS remark,
+        so.customer_remark AS customerRemark,
         sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
@@ -60,6 +63,7 @@
         sod.source_detail_id AS sourceDetailId,
         sod.warehouse_location AS warehouseLocation,
         sod.virtual_warehouse_id as virtualWarehouseId,
+        sod.remark as detailRemark,
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name
@@ -85,6 +89,7 @@
        SELECT
            so.id,
            so.code,
+           sod.platform_code as platformCode,
            so.third_code as thirdCode,
            so.so_id AS soId,
            so.so_code AS soCode,
@@ -115,6 +120,8 @@
            so.sales_org_name AS salesOrgName,
            so.customer_name AS customerName,
            so.country AS countryId,
+           so.remark AS remark,
+           so.customer_remark AS customerRemark,
            sod.id as detailId,
            sod.sku_id AS skuId,
            sod.sku_no AS skuNo,
@@ -130,7 +137,8 @@
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
         sod.virtual_warehouse_id as virtualWarehouseId,
-           sod.warehouse_location AS warehouseLocation
+           sod.warehouse_location AS warehouseLocation,
+           sod.remark AS detailRemark
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         WHERE

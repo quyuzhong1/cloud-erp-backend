@@ -155,6 +155,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private SyncLogisticsBillService syncLogisticsBillService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -739,6 +741,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if(CollectionUtils.isNotEmpty(salesPlatformList)){
             salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
         }
+        //供应商
+        List<String> supplierIds = list.stream().map(LogisticsBillDTO.PagingVO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        Map<String,String> supplierMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(supplierIds)){
+            List<LogisticsSupplierEntity> supplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+            supplierMap = supplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
+        }
+
         for (LogisticsBillDTO.PagingVO item : list) {
             //是否签收
             boolean isSign = signCode.equals(item.getTrackStatus());
@@ -770,6 +780,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             item.setOrderTypeName(orderTypeName);
             //发货类型名称
             item.setShipmentTypeName(ShipmentTypeEnum.getName(item.getShipmentType()));
+            item.setLogisticsSupplierName(supplierMap.getOrDefault(item.getLogisticsSupplierId(),""));
         }
     }
 
@@ -1422,7 +1433,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         if(CollectionUtils.isNotEmpty(addTrackList)){
-            logisticsTrackService.saveBatch(addTrackList);
+            List<String> trackNoList = addTrackList.stream().map(LogisticsTrackEntity::getTrackNo).distinct().collect(Collectors.toList());
+            List<LogisticsTrackEntity> logisticsTrackEntities = logisticsTrackService.listByTrackNoList(trackNoList);
+            addTrackList.forEach(e -> {
+                logisticsTrackEntities.stream().filter(entity -> entity.getTrackNo().equals(e.getTrackNo()) && entity.getMd5().equals(e.getMd5())).findFirst().ifPresent(entity -> {
+                    e.setId(entity.getId());
+                });
+            });
+            logisticsTrackService.saveOrUpdateBatch(addTrackList);
         }
     }
 }

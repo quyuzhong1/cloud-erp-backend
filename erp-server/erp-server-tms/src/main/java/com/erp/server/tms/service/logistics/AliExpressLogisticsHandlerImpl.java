@@ -1,5 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -9,6 +11,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -54,6 +57,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -121,6 +125,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             map.put("url", finalCfgAppClient.getUrl());
             map.put("token", shopAuthEntity.getToken());
             map.put("shopId", shopAuthEntity.getShopId());
+            map.put("shopName", shopAuthEntity.getShopName());
             map.put(ORDER_ID, orderId);
             map.put(CHILD_ORDER_ID,childOrderId);
             mapList.add(map);
@@ -225,6 +230,18 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         String orderType = logisticsOrderVO.getOrderType();
         //申报产品信息
         List<DeclareProduct> declareProducts = LogisticsOrderConverter.INSTANCE.orderRequestProductByAliExpress(logisticsOrderVO.getLogisticsProductVOList());
+        //对集合根据商品id进行合并，累加申报价，其他取值取其中一个集合值
+        if(CollUtil.isNotEmpty(declareProducts)) {
+            declareProducts = new ArrayList<>(declareProducts.stream().collect(Collectors.toMap(DeclareProduct::getProduct_id, p -> p, (oldValue, newValue) -> {
+                BigDecimal oldAmount = CharSequenceUtil.isNotBlank(oldValue.getProduct_declare_amount()) ? new BigDecimal(oldValue.getProduct_declare_amount()) : BigDecimal.ZERO;
+                BigDecimal newAmount = CharSequenceUtil.isNotBlank(newValue.getProduct_declare_amount()) ? new BigDecimal(newValue.getProduct_declare_amount()) : BigDecimal.ZERO;
+                oldValue.setProduct_declare_amount(MathUtil.add(oldAmount, newAmount).toString());
+                BigDecimal oldWeight = CharSequenceUtil.isNotBlank(oldValue.getProduct_weight()) ? new BigDecimal(oldValue.getProduct_weight()) : BigDecimal.ZERO;
+                BigDecimal newWeight = CharSequenceUtil.isNotBlank(newValue.getProduct_weight()) ? new BigDecimal(newValue.getProduct_weight()) : BigDecimal.ZERO;
+                oldValue.setProduct_weight(MathUtil.add(oldWeight,newWeight).toString());
+                return oldValue;
+            })).values());
+        }
         //收寄信息
         AddressDTO addressDTO = new AddressDTO();
         if (Objects.nonNull(logisticsOrderVO.getSenderInfo())){

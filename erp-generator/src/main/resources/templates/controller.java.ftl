@@ -193,7 +193,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.SUBMIT, desc = "${table.comment!}提交审核")
-    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
 		// TODO 数据查询放入外层，处理结果统一更新或单条更新
@@ -234,7 +234,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.APPROVE, desc = "${table.comment!}审核")
-    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
 		// TODO 数据查询放入外层，处理结果统一更新或单条更新
@@ -275,7 +275,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "${table.comment!}反审核")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
 		// TODO 数据查询放入外层，处理结果统一更新或单条更新
@@ -317,7 +317,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.DELETE, desc = "${table.comment!}删除")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
 		// TODO 数据查询放入外层，处理结果统一更新或单条更新
@@ -358,7 +358,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.INVALID, desc = "${table.comment!}作废")
-    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
 		// TODO 数据查询放入外层，处理结果统一更新或单条更新
@@ -400,7 +400,7 @@ public class ${table.controllerName} {
             keyIdName = "ids")
     </#if>
     @LogAction(value = LogActionEnum.CANCEL, desc = "${table.comment!}撤销")
-    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // TODO 数据查询放入外层，处理结果统一更新或单条更新

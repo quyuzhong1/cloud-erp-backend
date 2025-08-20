@@ -41,7 +41,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @author yl
      * @date 2023-05-19 10:18
      */
-    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity);
+    List<SoOutstockDetailEntity> add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity);
 
     
     /**

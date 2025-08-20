@@ -33,7 +33,7 @@ public enum JiFengEnums {
         TO_BE_SHIPPED("6","待发货", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
         SHIPPED("7","已发货", SoB2cBillStatusEnum.ENUM_SHIPPED),
         ABNORMAL("8","异常", SoB2cBillStatusEnum.ENUM_EXCEPTION),
-        CANCELED("9","已取消", SoB2cBillStatusEnum.ENUM_EXCEPTION),
+        CANCELED("9","已取消", SoB2cBillStatusEnum.ENUM_DISUSE),
         GETTING_IT("10","获取中",SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED),
         FAILED_TO_GET("11","获取失败",SoB2cBillStatusEnum.ENUM_EXCEPTION),
         ;

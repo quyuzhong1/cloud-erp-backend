@@ -392,7 +392,19 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 详情id
          */
         private String detailId;
+        /**
+         * 揽收时间起
+         */
+        private LocalDateTime collectStartTime;
 
+        /**
+         * 揽收时间止
+         */
+        private LocalDateTime collectEndTime;
+        /**
+         * 柜型
+         */
+        private String containerType;
         /**
          * 单据编号
          */
@@ -884,6 +896,20 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String zipcode;
 
         /**
+         * 揽收时间起
+         */
+        private LocalDateTime collectStartTime;
+
+        /**
+         * 揽收时间止
+         */
+        private LocalDateTime collectEndTime;
+
+        /**
+         * 柜型
+         */
+        private String containerType;
+        /**
          * 所有ID
          */
         public List<String> getAllDictCityId() {
@@ -901,7 +927,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         public void setBlankOtherByTransferAgentAndSelfDelivery() {
             this.setLogisticsMethod(null);
-            this.setTrackingNo("");
             setBankWithoutCollectAtHome();
         }
 
@@ -918,7 +943,6 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         public void setBlankOtherByTransferAgentAndCollectAtHome() {
             this.setLogisticsMethod(null);
-            this.setTrackingNo("");
             this.setExpressNo("");
         }
     }

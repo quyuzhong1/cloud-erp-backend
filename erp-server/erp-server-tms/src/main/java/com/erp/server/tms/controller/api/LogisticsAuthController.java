@@ -132,6 +132,7 @@ public class LogisticsAuthController extends BaseController {
                 authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
             }
             //先进行授权是否成功鉴权
+            authMap.put("id",id);
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);

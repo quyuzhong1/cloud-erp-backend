@@ -87,7 +87,7 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    List<BatchResultDTO> deleteByIds(List<String> ids);
 
     /**
      * 取消流程

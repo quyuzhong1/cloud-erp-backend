@@ -35,6 +35,9 @@
         is_deleted,
         listing_id, invoice_hs_code, unit, diff_state_tax_code, same_state_tax_code, dict_origin, invoice_product_name, type
     </sql>
+    <select id="invoiceAddressView" resultType="com.erp.model.oms.dto.InvoiceTaxDTO$UpdateDTO">
+
+    </select>
 
 
 </mapper>

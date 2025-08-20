@@ -341,10 +341,10 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         dto.setSkuNo(value.get(0).getSkuNo());
         List<BomCombinationDTO.CheckBomChildSkuDTO> childSkuList = updateList.stream().map(obj -> new BomCombinationDTO.CheckBomChildSkuDTO(obj.getSkuId(), obj.getQty())).collect(Collectors.toList());
         dto.setChildSkuList(childSkuList);
-        String parentSkuNos = checkBomChildSku(dto);
-        if (CharSequenceUtil.isNotBlank(parentSkuNos)) {
-            throw new ServiceException(CharSequenceUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，如需继续创建，请手动单个创建",parentSkuNos));
-        }
+//        String parentSkuNos = checkBomChildSku(dto);
+//        if (CharSequenceUtil.isNotBlank(parentSkuNos)) {
+//            throw new ServiceException(CharSequenceUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，如需继续创建，请手动单个创建",parentSkuNos));
+//        }
         return updateList;
     }
 

@@ -287,9 +287,9 @@ public class CustomerB2cController extends BaseController {
             keyIdName = "ids"
     )
     @LogAction(value = LogActionEnum.DELETE, desc = "删除客户")
-    public ApiResult<Object> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerB2cService.deleteByIds(dto.getIds());
-        return Boolean.TRUE.equals(result) ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList =customerB2cService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**
