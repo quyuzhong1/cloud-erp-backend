@@ -207,14 +207,4 @@
         AND sod.is_deleted = FALSE
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
-    <select id="getByThirdCodeAndPlatformSkuNo" resultType="com.erp.model.wms.entity.SoReturnInstockEntity">
-        SELECT DISTINCT so.* FROM so_return_instock so
-                                      LEFT JOIN so_return_instock_detail sod ON so.id = sod.main_id
-        WHERE
-           so.third_code = #{platformReturnOrderNo}
-          and sod.platform_sku_no = #{platformSkuNo}
-          AND so.is_deleted = FALSE
-          AND sod.is_deleted = FALSE
-        limit 1
-    </select>
 </mapper>

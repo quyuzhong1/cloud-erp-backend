@@ -64,6 +64,7 @@ public class DaMaiInboundInitHandler extends DmpInputInitHandler {
 			throw new ServiceException("大卖仓对应授权ID信息不存在");
 		}
 
+		String authId = overseasProviderEntity.getId();
 		DaMaiInventoryTransRequest daMaiInventoryTransRequest = new DaMaiInventoryTransRequest();
 		daMaiInventoryTransRequest.setStartOperationTime(dmpInputTaskEntity.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 		daMaiInventoryTransRequest.setEndOperationTime(dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -82,6 +83,10 @@ public class DaMaiInboundInitHandler extends DmpInputInitHandler {
 		if (CollUtil.isEmpty(daMaiInventoryTransResps)) {
 			return Collections.emptyList();
 		}
+		daMaiInventoryTransResps.forEach(v->{
+			v.setAuthId(authId);
+			v.setUniqueKey(v.getUniqueKey());
+		});
 
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(daMaiInventoryTransResps));

@@ -102,6 +102,7 @@ public class DaMaiReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTask
         String sourcePlatform = dmpMainEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
         dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
+        dto.setSourceId(dmpMainEntity.getBatchNo());
         List<DmpThirdReturnInboundDetailEntity> filterDmpDetaiList = dmpDetailList.stream()
                 .filter(e -> null != e.getRealQty() && e.getRealQty() > 0)
                 .collect(Collectors.toList());
@@ -119,9 +120,7 @@ public class DaMaiReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTask
      * 明细转换
      */
     private PlatformReturnInstockDTO.Detail convertDetail(DmpThirdReturnInboundDetailEntity detailEntity) {
-        PlatformReturnInstockDTO.Detail detail = BeanUtil.copyProperties(detailEntity, PlatformReturnInstockDTO.Detail.class);
-        detail.setThirdId(detailEntity.getThirdDetailId());
-        return detail;
+        return BeanUtil.copyProperties(detailEntity, PlatformReturnInstockDTO.Detail.class);
     }
 
     @Override

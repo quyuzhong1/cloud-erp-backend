@@ -57,6 +57,9 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private DaMaiCreateInboundRequest buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq) {
+        if(StringUtils.isBlank(createInboundReq.getTrackingNumber())){
+            throw new ServiceException("大卖仓入库单创建失败，物流单号不能为空");
+        }
         List<DaMaiCreateInboundRequest.AsnAnSkuListDTO> asnAnSkuList = new ArrayList<>();
         //相同sku相同数量的sku 的箱子合并
         List<ThirdWarehouseCreateInboundReq.Item> items = createInboundReq.getItems();
@@ -142,6 +145,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return DaMaiCreateInboundRequest.builder()
                 .whCode(createInboundReq.getWarehouseCode())
                 .custReferenceNo(createInboundReq.getReferenceNo())
+                .transportType("OTHER")
                 .arrivalTime(createInboundReq.getEtaDate().format(formatter))
                 .logisticsTrackingNo(createInboundReq.getTrackingNumber())
                 .asnAnSkuList(asnAnSkuList)
