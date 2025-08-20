@@ -332,7 +332,7 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
         //同一个查询服务商下我司物流商+渠道，查询物流商+渠道仅可创建一条
         Integer count = this.lambdaQuery().eq(LogisticsThirdChannelRefEntity::getPlatformType, logisticsThirdChannelRefEntity.getPlatformType())
                 .eq(LogisticsThirdChannelRefEntity::getLogisticsSupplierId, logisticsThirdChannelRefEntity.getLogisticsSupplierId())
-                .eq(LogisticsThirdChannelRefEntity::getLogisticsChannelId, logisticsThirdChannelRefEntity.getLogisticsChannelId())
+                .eq(LogisticsThirdChannelRefEntity::getLogisticsChannelName, logisticsThirdChannelRefEntity.getLogisticsChannelName())
                 .ne(CharSequenceUtil.isNotBlank(logisticsThirdChannelRefEntity.getId()), LogisticsThirdChannelRefEntity::getId, logisticsThirdChannelRefEntity.getId())
                 .count();
         if (count > 0){
@@ -349,14 +349,12 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
                 logisticsThirdChannelRefEntity.setLogisticsSupplierName(supplierEntity.getSupplierName());
             }
         }
-        if (CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsChannelName())){
-            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsThirdChannelRefEntity.getLogisticsChannelId());
-            if (Objects.isNull(channelEntity)){
-                throw new ServiceException("渠道不存在");
-            }else {
-                logisticsThirdChannelRefEntity.setLogisticsChannelName(channelEntity.getName());
-                logisticsThirdChannelRefEntity.setLogisticsChannelCode(channelEntity.getCode());
-            }
+        if (CharSequenceUtil.isBlank(logisticsThirdChannelRefEntity.getLogisticsChannelId())){
+            List<LogisticsChannelEntity> channelList = logisticsChannelService.getChannelByName(logisticsThirdChannelRefEntity.getLogisticsChannelName());
+            channelList.stream().filter(e -> e.getMainId().equals(logisticsThirdChannelRefEntity.getLogisticsSupplierId()) && e.getName().equals(logisticsThirdChannelRefEntity.getLogisticsChannelName())).findFirst().ifPresent(f -> {
+                logisticsThirdChannelRefEntity.setLogisticsChannelId(f.getId());
+                logisticsThirdChannelRefEntity.setLogisticsChannelCode(f.getCode());
+            });
         }
     }
 }

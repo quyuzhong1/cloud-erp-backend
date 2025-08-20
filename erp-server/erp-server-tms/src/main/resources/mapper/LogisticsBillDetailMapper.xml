@@ -87,6 +87,7 @@
         lb.carrier_id as carrierId,
         lb.tel_number as telNumber,
         lb.channel_id as channelId,
+        lb.channel_name as channelName,
         lb.transport_no as transportNo,
         lb.sales_platform as salesPlatform,
         lb.shop_id as shopId,

@@ -1100,6 +1100,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     }
                     addDTO.setCurrency(soInfo.getCurrency());
                     addDTO.setChannelId(entity.getLogisticsChannelId());
+                    addDTO.setChannelName(entity.getLogisticsChannelName());
                     addDTO.setTransportNo(entity.getTrackNo());
                     addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
                 }
@@ -1130,6 +1131,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
                         addDTO.setToCountry(countryName);
                         addDTO.setChannelId(customer.getLogisticsChannelId());
+                        addDTO.setChannelName(customer.getLogisticsChannelName());
                         addDTO.setTransportNo(customer.getTransportNo());
 
                         String shipmentType = ShipmentTypeEnum.SELF_DELIVER.getCode();
@@ -1154,6 +1156,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                             addDTO.setToCountry(countryList.get(0).getNameCn());
                         }
                     }
+                    addDTO.setChannelId(entity.getLogisticsChannelId());
+                    addDTO.setChannelName(entity.getLogisticsChannelName());
                     addDTO.setTransportNo(entity.getTrackNo());
                     CustomerInfoEntity customer = customerFeign.getCustomerById(entity.getCustomerId());
                     addDTO.setSalesPlatform(Objects.nonNull(customer) ? customer.getPlatformType() : CharSequenceUtil.EMPTY);

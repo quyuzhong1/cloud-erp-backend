@@ -443,6 +443,7 @@ public class LogisticsBillDTO implements Serializable {
          * 渠道id
          */
         private String channelId;
+        private String channelName;
 
 
         /**

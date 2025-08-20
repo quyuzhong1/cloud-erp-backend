@@ -2605,6 +2605,7 @@ public class SoB2cDTO implements Serializable {
          * 渠道id
          */
         private String logisticsChannelId;
+        private String logisticsChannelName;
 
         /**
          * 运输单号

@@ -5676,6 +5676,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             b2cCustomer.setTransportNo(soB2cLogisticsEntity.getCode());
             b2cCustomer.setTrackNo(soB2cLogisticsEntity.getTrackNo());
             b2cCustomer.setLogisticsChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+            b2cCustomer.setLogisticsChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
         }
         return b2cCustomer;
     }
@@ -8593,7 +8594,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
-        soB2cEntityList = soB2cEntityList.stream().filter(v -> TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus()) &&
+        soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             return new ArrayList<>();
