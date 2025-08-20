@@ -220,12 +220,12 @@
         SELECT
             sku_id,
             -- 统计每个区间的数量合计
-            SUM(CASE WHEN days_diff BETWEEN 0 AND 10 THEN frozen_qty ELSE 0 END) AS tenDaysQty,
-            SUM(CASE WHEN days_diff BETWEEN 11 AND 20 THEN frozen_qty ELSE 0 END) AS twentyDaysQty,
-            SUM(CASE WHEN days_diff BETWEEN 21 AND 30 THEN frozen_qty ELSE 0 END) AS thirtyDaysQty,
-            SUM(CASE WHEN days_diff BETWEEN 31 AND 60 THEN frozen_qty ELSE 0 END) AS sixtyDaysQty,
-            SUM(CASE WHEN days_diff BETWEEN 61 AND 90 THEN frozen_qty ELSE 0 END) AS ninetyDaysQty,
-            SUM(CASE WHEN days_diff > 90 THEN frozen_qty ELSE 0 END) AS aboveNinetyDaysQty,
+            SUM(CASE WHEN days_diff BETWEEN 0 AND 10 THEN frozen_qty ELSE 0 END) AS tenDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 11 AND 20 THEN frozen_qty ELSE 0 END) AS twentyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 21 AND 30 THEN frozen_qty ELSE 0 END) AS thirtyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 31 AND 60 THEN frozen_qty ELSE 0 END) AS sixtyDaysCount,
+            SUM(CASE WHEN days_diff BETWEEN 61 AND 90 THEN frozen_qty ELSE 0 END) AS ninetyDaysCount,
+            SUM(CASE WHEN days_diff > 90 THEN frozen_qty ELSE 0 END) AS aboveNinetyDaysCount,
             SUM(frozen_qty) AS totalFrozenQty
         FROM (
             SELECT
@@ -239,15 +239,16 @@
         )
         select
             'b2b' as type,
+            qs.sku_id as skuId,
             pd.sku_no as skuNo,
             pd.name as productName,
             qs.totalFrozenQty,
-            qs.tenDaysQty,
-            qs.twentyDaysQty,
-            qs.thirtyDaysQty,
-            qs.sixtyDaysQty,
-            qs.ninetyDaysQty,
-            qs.aboveNinetyDaysQty
+            qs.tenDaysCount,
+            qs.twentyDaysCount,
+            qs.thirtyDaysCount,
+            qs.sixtyDaysCount,
+            qs.ninetyDaysCount,
+            qs.aboveNinetyDaysCount
         from qtyStatistics qs
         left join product_detail pd on qs.sku_id = pd.id and pd.is_deleted = false
         <where>
