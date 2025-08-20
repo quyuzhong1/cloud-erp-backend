@@ -332,6 +332,7 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
 
     SoReturnInstockEntity getByThirdCode(String thirdCode);
+    SoReturnInstockEntity getBySourceId(String sourceId);
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
 
@@ -375,5 +376,4 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      */
     Map<String, SoReturnInstockEntity> mapByIds(List<String> ids);
 
-    SoReturnInstockEntity getByThirdCodeAndPlatformSkuNo(String platformReturnOrderNo, String thirdId);
 }

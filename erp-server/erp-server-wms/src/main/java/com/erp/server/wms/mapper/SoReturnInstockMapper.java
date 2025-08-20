@@ -66,5 +66,4 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
 
     List<SoReturnInstockEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate")LocalDate endDate, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
 
-    SoReturnInstockEntity getByThirdCodeAndPlatformSkuNo(@Param("platformReturnOrderNo") String platformReturnOrderNo,@Param("platformSkuNo") String platformSkuNo);
 }

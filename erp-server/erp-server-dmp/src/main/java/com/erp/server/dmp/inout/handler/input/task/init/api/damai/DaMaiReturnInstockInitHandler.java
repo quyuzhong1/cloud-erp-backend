@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -82,11 +83,15 @@ public class DaMaiReturnInstockInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
         List<DaMaiInventoryTransResp> daMaiInventoryTransResps = resp.getData();
-        daMaiInventoryTransResps = daMaiInventoryTransResps.stream().filter(v -> v.getOperationTypeName().equals("退货上架")).collect(Collectors.toList());
+        daMaiInventoryTransResps = daMaiInventoryTransResps.stream().filter(v -> Objects.nonNull(v.getOperationTypeName()) &&v.getOperationTypeName().equals("退货上架")).collect(Collectors.toList());
         if (CollUtil.isEmpty(daMaiInventoryTransResps)) {
             return Collections.emptyList();
         }
-        daMaiInventoryTransResps.forEach(v->v.setAuthId(authId));
+        daMaiInventoryTransResps.forEach(v->{
+            v.setAuthId(authId);
+            v.setUniqueKey(v.getUniqueKey());
+        });
+
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(daMaiInventoryTransResps));
         return Collections.singletonList(dmpInputTaskInitDTO);
