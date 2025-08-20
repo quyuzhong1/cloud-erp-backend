@@ -262,6 +262,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(HandleResultEnum.SUCCESS.getCode().equals(entity.getHandleResult())){
             throw new ServiceException("发货单已成功拦截，无法重复操作");
         }
+        if(entity.getSourceType().equals(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode())){
+            throw new ServiceException("发货拦截单来源类型为三方仓，不支持发起物流拦截");
+        }
         if(CancelStatusEnum.SUCCESS.getCode().equals(entity.getCancelStatus()) || InterceptStatusEnum.SUCCESS.getCode().equals(entity.getInterceptStatus())){
             throw new ServiceException("订单取消状态：取消成功或物流拦截状态：拦截成功，不支持再次发起物流拦截");
         }
