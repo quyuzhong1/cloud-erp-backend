@@ -211,12 +211,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
         List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-//        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//        Map<String, String> shopNameMap = new HashMap<>();
-//        if (CollUtil.isNotEmpty(shopIdList)){
-//            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-//            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
-//        }
+        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> shopNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(shopIdList)){
+            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        }
         for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
             //取消状态名称
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
@@ -236,7 +236,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 record.setProductName(productDetailEntity.getName());
             }
             //店铺名称
-//            record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
+            record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
         }
     }
 
