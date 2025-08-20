@@ -2,25 +2,22 @@ package com.erp.server.tms.schedule;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.common.core.controller.BaseController;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.service.CfgSettingService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TmsFirstMileReconciliationDetailService;
-import com.erp.server.tms.service.TmsFirstMileReconciliationService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
@@ -53,11 +50,15 @@ public class TmsFirstMileReconciliationJob {
         XxlJobHelper.log("[生成头程对账单任务] autoGenFirstMileReconciliation 任务开始: 任务参数={}", JSONUtil.toJsonStr(jobParam));
         LocalDate startDate = null;
         LocalDate endDate = null;
+        String transportNo = null;
 
         if (StringUtils.isNotBlank(jobParam)) {
             JSONObject jsonObject = new JSONObject(jobParam);
-            startDate = LocalDate.parse(jsonObject.getStr("startDate"));
-            endDate = LocalDate.parse(jsonObject.getStr("endDate"));
+            String startDate1 = jsonObject.getStr("startDate");
+            startDate = CharSequenceUtil.isNotBlank(startDate1) ? LocalDate.parse(startDate1) : null;
+            String endDate1 = jsonObject.getStr("endDate");
+            endDate = CharSequenceUtil.isNotBlank(endDate1) ? LocalDate.parse(endDate1) : null;
+            transportNo = CharSequenceUtil.isNotBlank(jsonObject.getStr("transportNo")) ? jsonObject.getStr("transportNo") : null;
         }
 
         if (null == startDate && null == endDate) {
@@ -88,8 +89,8 @@ public class TmsFirstMileReconciliationJob {
                 startDate = LocalDate.now().minusMonths(1);
             }
         }
-        tmsFirstMileReconciliationDetailService.autoGenFirstMileReconciliation(startDate, endDate);
-        XxlJobHelper.log("[生成头程对账单任务] autoGenFirstMileReconciliation 任务结束");
+        tmsFirstMileReconciliationDetailService.autoGenFirstMileReconciliation(startDate, endDate, transportNo);
+        XxlJobHelper.log("[生成头程对账单任务] autoGenFirstMileReconciliation 任务结束: 任务参数={}", JSONUtil.toJsonStr(jobParam));
         return ReturnT.SUCCESS;
     }
 
