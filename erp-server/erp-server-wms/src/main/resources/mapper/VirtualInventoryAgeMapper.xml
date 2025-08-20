@@ -309,7 +309,7 @@
                 vtfd.bill_date as billDate,
                 vtf.source_type as sourceType,
                 vtf.source_code as sourceCode,
-                vtfd.batch_no as batchNo,
+                vhd.batch_no as batchNo,
                 vtf.operation_mode as operationMode,
                 vtf.sku_id as skuId,
                 pd.sku_no as skuNo,
@@ -332,7 +332,7 @@
                         ${item.field} ${item.sort}
                     </foreach>
                 </if>
-                vtfd.batch_no desc
+                vhd.batch_no desc
             </where>
     </select>
 
