@@ -477,50 +477,6 @@ public class SkuStdCostDetailController extends BaseController {
         return success(skuStdCostDetailService.historyPaging(dto));
     }
 
-    /**
-     * 组合SKU重算标准成本
-     *
-     * @param dto
-     * @return ApiResult<List < BatchResultDTO>>
-     * @author Jim
-     * @date: 2025-08-11
-     */
-    @PostMapping("/comboRecalculate")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:skuStdCost:update",
-            serviceClass = SkuStdCostService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "组合SKU重算标准成本")
-    public ApiResult<List<BatchResultDTO>> comboRecalculate(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SkuStdCostDetailDTO.ListDTO> listDTOS = skuStdCostDetailService.listDTOByParams(new SkuStdCostDetailDTO.ParamsDTO(ids, null, null));
-        Map<String, SkuStdCostDetailDTO.ListDTO> idEntityMap = listDTOS.stream().collect(Collectors.toMap(SkuStdCostDetailDTO.ListDTO::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO comboRecalculateResult;
-            try {
-                SkuStdCostDetailDTO.ListDTO listDTO = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(listDTO)) {
-                    comboRecalculateResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 组合SKU重算标准成本失败");
-                    resultDTOS.add(comboRecalculateResult);
-                    continue;
-                }
-                comboRecalculateResult = skuStdCostDetailService.comboRecalculate(listDTO);
-            } catch (Exception e) {
-                log.error("组合SKU重算标准成本失败", e);
-                SkuStdCostDetailDTO.ListDTO listDTO = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(listDTO)) {
-                    comboRecalculateResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 组合SKU重算标准成本失败");
-                    resultDTOS.add(comboRecalculateResult);
-                    continue;
-                }
-                comboRecalculateResult = BatchResultDTO.fail(listDTO.getId(), listDTO.getSkuNo(), e.getMessage());
-            }
-            resultDTOS.add(comboRecalculateResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 首次添加sku标准成本表价格
@@ -529,9 +485,9 @@ public class SkuStdCostDetailController extends BaseController {
      * @author Jim
      * @date: 2025-08-08
      */
-    @PostMapping("/firsAdd")
+    @PostMapping("/firstAdd")
     @LogAction(value = LogActionEnum.INSERT, desc = "首次添加sku标准成本表价格")
-    public ApiResult<List<BatchResultDTO>> firsAdd(@RequestBody @Validated List<String> skuNos) {
+    public ApiResult<List<BatchResultDTO>> firstAdd(@RequestBody @Validated List<String> skuNos) {
         List<ProductDetailEntity> detailEntityList = new LinkedList<>();
         if (CollectionUtils.isEmpty(skuNos)) {
             detailEntityList = productDetailService.lambdaQuery()
