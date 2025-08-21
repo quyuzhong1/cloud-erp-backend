@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
 
@@ -51,4 +52,12 @@ public interface SoB2cProcessingService extends SuperService<SoB2cProcessingEnti
      * @param startDate
      */
     void autoUpdateSoB2cProcessing(LocalDate startDate);
+    /**
+     * b2c汇总分页查询
+     * @author will
+     * @date 2025/8/20 11:40
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ReportProcessingDTO.ListDTO> b2cTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
 }

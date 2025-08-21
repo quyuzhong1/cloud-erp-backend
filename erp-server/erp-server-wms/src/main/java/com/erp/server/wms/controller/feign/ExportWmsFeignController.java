@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -25,7 +24,6 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -182,6 +180,10 @@ public class ExportWmsFeignController {
 
     @Resource
     private SupplierInventoryService supplierInventoryService;
+
+    @Resource
+    private VirtualInventoryAgeService virtualInventoryAgeService;
+
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -945,7 +947,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
-        return virtualInventoryDetailService.exportWmsVirtualInventoryAge(dto);
+        return virtualInventoryAgeService.exportWmsVirtualInventoryAge(dto);
     }
 
     /**
@@ -953,7 +955,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/hisInventoryAgePaging")
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
-        return virtualInventoryDetailService.hisInventoryAgePaging(dto);
+        return virtualInventoryAgeService.hisInventoryAgePaging(dto);
     }
 
     /**
@@ -961,7 +963,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/hisInventoryAgeDetailPaging")
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
-        return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
+        return virtualInventoryAgeService.exportHisInventoryAgeDetailPaging(dto);
     }
 
 
@@ -984,7 +986,7 @@ public class ExportWmsFeignController {
     @PostMapping("/framePaging")
     @WebAdvanceQuery
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
-        return virtualInventoryDetailService.framePaging(dto);
+        return virtualInventoryAgeService.framePaging(dto);
     }
 
     /**

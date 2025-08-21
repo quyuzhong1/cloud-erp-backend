@@ -317,10 +317,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @return String
      */
     private String getIdentificationCode () {
-        String identificationCode = docNoGenHelper.generateSeqCode(BusinessNoTypeEnum.CODE_GYSDM);
+        String identificationCode = docNoGenHelper.generateIndexCode(BusinessNoTypeEnum.CODE_GYSDM);
         SupplierEntity entity = getByIdentificationCode(identificationCode);
         if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_HAS_EXIST, CharSequenceUtil.format("供应商代码{}",identificationCode));
+            identificationCode = getIdentificationCode();
         }
         return identificationCode;
     }
