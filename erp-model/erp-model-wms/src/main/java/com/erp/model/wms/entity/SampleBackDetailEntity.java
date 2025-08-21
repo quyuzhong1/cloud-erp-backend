@@ -1,13 +1,14 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
 
 /**
  * <p>
@@ -16,46 +17,41 @@ import java.io.Serializable;
  *
  * @author wuhaotian
  * @since 2025-08-21
- */
-@Getter
-@Setter
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_back_detail")
 public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
 
     /**
-     * 主表ID（关联样品退回单）
-     */
+    * 主表ID（关联样品退回单）
+    */
     @TableField("main_id")
     private String mainId;
-
     /**
-     * SKU编码
-     */
+    * SKU编码
+    */
     @TableField("sku_no")
     private String skuNo;
-
     /**
-     * SKU ID
-     */
+    * SKU ID
+    */
     @TableField("sku_id")
     private String skuId;
-
     /**
-     * 产品名称
-     */
+    * 产品名称
+    */
     @TableField("product_name")
     private String productName;
-
     /**
-     * 退回数量
-     */
+    * 退回数量
+    */
     @TableField("qty")
     private Integer qty;
-
     /**
-     * 备注
-     */
+    * 备注
+    */
     @TableField("remark")
     private String remark;
 

@@ -1,15 +1,14 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
 
 /**
  * <p>
@@ -18,58 +17,51 @@ import java.io.Serializable;
  *
  * @author wuhaotian
  * @since 2025-08-21
- */
-@Getter
-@Setter
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_recipient_detail")
 public class SampleRecipientDetailEntity extends BaseEntity<SampleRecipientDetailEntity> {
 
     /**
-     * 主表ID
-     */
+    * 主表ID
+    */
     @TableField("main_id")
     private String mainId;
-
     /**
-     * 执行状态 待出库/部分出库/已出库
-     */
+    * 执行状态 待出库/部分出库/已出库
+    */
     @TableField("exec_status")
     private String execStatus;
-
     /**
-     * SKU编号
-     */
+    * SKU编号
+    */
     @TableField("sku_no")
     private String skuNo;
-
     /**
-     * SKU ID
-     */
+    * SKU ID
+    */
     @TableField("sku_id")
     private String skuId;
-
     /**
-     * 产品名称
-     */
+    * 产品名称
+    */
     @TableField("product_name")
     private String productName;
-
     /**
-     * 领用数量
-     */
+    * 领用数量
+    */
     @TableField("recipient_qty")
     private Integer recipientQty;
-
     /**
-     * 已出库数量
-     */
+    * 已出库数量
+    */
     @TableField("delivery_qty")
     private Integer deliveryQty;
-
     /**
-     * 备注
-     */
+    * 备注
+    */
     @TableField("remark")
     private String remark;
 

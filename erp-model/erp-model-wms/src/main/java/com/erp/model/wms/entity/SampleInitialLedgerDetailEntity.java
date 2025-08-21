@@ -1,15 +1,14 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
 
 /**
  * <p>
@@ -18,46 +17,41 @@ import java.io.Serializable;
  *
  * @author wuhaotian
  * @since 2025-08-21
- */
-@Getter
-@Setter
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_initial_ledger_detail")
 public class SampleInitialLedgerDetailEntity extends BaseEntity<SampleInitialLedgerDetailEntity> {
 
     /**
-     * 主表ID（关联期初台账）
-     */
+    * 主表ID（关联期初台账）
+    */
     @TableField("main_id")
     private String mainId;
-
     /**
-     * SKU编码
-     */
+    * SKU编码
+    */
     @TableField("sku_no")
     private String skuNo;
-
     /**
-     * SKU ID
-     */
+    * SKU ID
+    */
     @TableField("sku_id")
     private String skuId;
-
     /**
-     * 产品名称
-     */
+    * 产品名称
+    */
     @TableField("product_name")
     private String productName;
-
     /**
-     * 数量
-     */
+    * 数量
+    */
     @TableField("qty")
     private Integer qty;
-
     /**
-     * 备注
-     */
+    * 备注
+    */
     @TableField("remark")
     private String remark;
 

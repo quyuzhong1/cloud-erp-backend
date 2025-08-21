@@ -1,17 +1,17 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
 
 /**
  * <p>
@@ -20,184 +20,156 @@ import lombok.experimental.Accessors;
  *
  * @author wuhaotian
  * @since 2025-08-21
- */
-@Getter
-@Setter
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_recipient")
 public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
 
     /**
-     * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回)
-     */
+    * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回)
+    */
     @TableField("approve_status")
-    private String approveStatus;
-
+    private ApproveStatusEnum approveStatus;
     /**
-     * 审批人ID
-     */
+    * 审批人ID
+    */
     @TableField("approve_user_id")
     private String approveUserId;
-
     /**
-     * 审批人姓名
-     */
+    * 审批人姓名
+    */
     @TableField("approve_user_name")
     private String approveUserName;
-
     /**
-     * 审批时间
-     */
+    * 审批时间
+    */
     @TableField("approve_time")
-    private Date approveTime;
-
+    private LocalDateTime approveTime;
     /**
-     * 作废状态(false:有效,true:已作废)
-     */
+    * 作废状态(false:有效,true:已作废)
+    */
     @TableField("invalid_status")
     private Boolean invalidStatus;
-
     /**
-     * 作废原因
-     */
+    * 作废原因
+    */
     @TableField("invalid_remark")
     private String invalidRemark;
-
     /**
-     * 作废时间
-     */
+    * 作废时间
+    */
     @TableField("invalid_time")
-    private Date invalidTime;
-
+    private LocalDateTime invalidTime;
     /**
-     * 样品领用单号
-     */
+    * 样品领用单号
+    */
     @TableField("code")
     private String code;
-
     /**
-     * 领用日期
-     */
+    * 领用日期
+    */
     @TableField("recipient_date")
-    private Date recipientDate;
-
+    private LocalDate recipientDate;
     /**
-     * 用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他
-     */
+    * 用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他
+    */
     @TableField("usage")
     private String usage;
-
     /**
-     * 发货仓库ID
-     */
+    * 发货仓库ID
+    */
     @TableField("warehouse_id")
     private String warehouseId;
-
     /**
-     * 单据状态
-     */
+    * 单据状态
+    */
     @TableField("status")
     private String status;
-
     /**
-     * 领用人ID
-     */
+    * 领用人ID
+    */
     @TableField("user_id")
     private String userId;
-
     /**
-     * 领用人姓名
-     */
+    * 领用人姓名
+    */
     @TableField("user_name")
     private String userName;
-
     /**
-     * 领用部门ID
-     */
+    * 领用部门ID
+    */
     @TableField("dept_id")
     private String deptId;
-
     /**
-     * 领料组织ID
-     */
+    * 领料组织ID
+    */
     @TableField("pick_org_id")
     private String pickOrgId;
-
     /**
-     * 领料组织名称
-     */
+    * 领料组织名称
+    */
     @TableField("pick_org_name")
     private String pickOrgName;
-
     /**
-     * 使用方式 公司内部使用/公司外部使用
-     */
+    * 使用方式 公司内部使用/公司外部使用
+    */
     @TableField("usage_scope")
     private String usageScope;
-
     /**
-     * 使用方id
-     */
+    * 使用方id
+    */
     @TableField("use_user_id")
     private String useUserId;
-
     /**
-     * 使用方名称
-     */
+    * 使用方名称
+    */
     @TableField("use_user_name")
     private String useUserName;
-
     /**
-     * 备注
-     */
+    * 备注
+    */
     @TableField("remark")
     private String remark;
-
     /**
-     * 是否邮寄
-     */
+    * 是否邮寄
+    */
     @TableField("is_delivery")
     private Boolean isDelivery;
-
     /**
-     * 收货地址
-     */
+    * 收货地址
+    */
     @TableField("receive_address")
     private String receiveAddress;
-
     /**
-     * 收货人
-     */
+    * 收货人
+    */
     @TableField("receiver_name")
     private String receiverName;
-
     /**
-     * 联系电话
-     */
+    * 联系电话
+    */
     @TableField("receive_phone")
     private String receivePhone;
-
     /**
-     * 来源ID（预留字段）
-     */
+    * 来源ID（预留字段）
+    */
     @TableField("source_id")
     private String sourceId;
-
     /**
-     * 来源单号（预留字段）
-     */
+    * 来源单号（预留字段）
+    */
     @TableField("source_code")
     private String sourceCode;
-
     /**
-     * 来源类型（预留字段）
-     */
+    * 来源类型（预留字段）
+    */
     @TableField("source_type")
     private String sourceType;
-
     /**
-     * SKU成本合计
-     */
+    * SKU成本合计
+    */
     @TableField("sku_total_cost")
     private BigDecimal skuTotalCost;
 

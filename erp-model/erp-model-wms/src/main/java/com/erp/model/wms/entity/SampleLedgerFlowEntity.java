@@ -1,124 +1,108 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
 
 /**
  * <p>
- * 样品台账
+ * 样品库存
  * </p>
  *
  * @author wuhaotian
  * @since 2025-08-21
- */
-@Getter
-@Setter
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("sample_ledger_flow")
 public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
 
     @TableField("sample_leder_id")
     private String sampleLederId;
-
     /**
-     * 操作时间
-     */
+    * 操作时间
+    */
     @TableField("operate_time")
-    private Date operateTime;
-
+    private LocalDateTime operateTime;
     /**
-     * 业务时间
-     */
+    * 业务时间
+    */
     @TableField("bill_date")
-    private Date billDate;
-
+    private LocalDate billDate;
     /**
-     * 归属用户ID
-     */
+    * 归属用户ID
+    */
     @TableField("user_id")
     private String userId;
-
     /**
-     * 归属用户姓名
-     */
+    * 归属用户姓名
+    */
     @TableField("user_name")
     private String userName;
-
     /**
-     * 归属部门ID
-     */
+    * 归属部门ID
+    */
     @TableField("dept_id")
     private String deptId;
-
     /**
-     * 单据编号
-     */
+    * 单据编号
+    */
     @TableField("source_code")
     private String sourceCode;
-
     /**
-     * 单据类型
-     */
+    * 单据类型
+    */
     @TableField("source_type")
     private String sourceType;
-
     /**
-     * 单据ID
-     */
+    * 单据ID
+    */
     @TableField("source_id")
     private String sourceId;
-
     @TableField("source_detail_id")
     private String sourceDetailId;
-
     /**
-     * 操作类型
-     */
+    * 操作类型
+    */
     @TableField("dict_biz_type")
     private String dictBizType;
-
     /**
-     * SKU编号
-     */
+    * SKU编号
+    */
     @TableField("sku_no")
     private String skuNo;
-
     /**
-     * SKU ID
-     */
+    * SKU ID
+    */
     @TableField("sku_id")
     private String skuId;
-
     /**
-     * 产品名称
-     */
+    * 产品名称
+    */
     @TableField("product_name")
     private String productName;
-
     /**
-     * 使用方id
-     */
+    * 使用方id
+    */
     @TableField("use_user_id")
     private String useUserId;
-
     /**
-     * 使用方名称
-     */
+    * 使用方名称
+    */
     @TableField("use_user_name")
     private String useUserName;
-
     /**
-     * 数量
-     */
+    * 数量
+    */
     @TableField("qty")
     private Integer qty;
 
