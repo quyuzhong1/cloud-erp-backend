@@ -160,6 +160,11 @@ public enum ModuleTypeEnum {
     SAMPLE_BORROW_INFO("", "样品借用单"),
     SAMPLE_SCRAP_INFO("", "样品报废单"),
     EXHIBITION_ORDER("", "展会订单"),
+
+    SAMPLE_RECIPIENT("134", "样品领用单"),
+    SAMPLE_RETURN("135", "样品退回单"),
+    SAMPLE_LEDGER("136", "样品台账"),
+    SAMPLE_LEDGER_INIT("137", "样品期初台账"),
     ;
 
 
