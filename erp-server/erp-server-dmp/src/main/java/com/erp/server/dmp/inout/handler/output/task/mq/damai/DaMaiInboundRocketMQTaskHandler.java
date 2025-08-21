@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,7 +91,7 @@ public class DaMaiInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 		List<Receiving> receivingDataList = new ArrayList<>();
 		Receiving receiving = new Receiving();
 		// 解析为 LocalDateTime
-		LocalDateTime localDateTime = LocalDateTime.parse(respDto.getOperationTime());
+		LocalDateTime localDateTime = LocalDateTime.parse(respDto.getOperationTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 		// 假设原时间为 UTC，绑定时区
 		ZonedDateTime utcZoned = localDateTime.atZone(ZoneId.of("UTC"));
 		// 转换为系统默认时区
