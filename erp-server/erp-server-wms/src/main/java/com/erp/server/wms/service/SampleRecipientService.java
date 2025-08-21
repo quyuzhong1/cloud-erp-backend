@@ -152,4 +152,58 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleRecipientEntity entity);
 
+    /**
+    * 结束领用
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param id
+    * @return
+    */
+    BatchResultDTO finishRecipient(String id);
+
+        /**
+     * 查询SKU成本
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    List<SampleRecipientDTO.SkuDTO> querySkuCost(SampleRecipientDTO.SkuCostQueryDTO dto);
+
+    /**
+     * 下推其他出库单查询
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param ids
+     * @return
+     */
+    List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> viewGenerateOutboundOrder(List<String> ids);
+
+    /**
+     * 下推其他出库单保存
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> generateOutboundOrder(SampleRecipientDTO.ListGenerateOutboundOrderDTO dto);
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param response
+     * @return
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 异步导入
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    Boolean importExcel(BaseDTO.ImportDTO dto);
+
 }

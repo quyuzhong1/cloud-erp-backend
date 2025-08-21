@@ -14,9 +14,12 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Min;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 import javax.validation.constraints.Digits;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
@@ -136,6 +139,11 @@ public class SampleRecipientDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 发货仓库名称
+         */
+        private String warehouseName;
+
+        /**
         * 单据状态
         */
         private String status;
@@ -221,12 +229,6 @@ public class SampleRecipientDTO implements Serializable {
         private String sourceType;
 
         /**
-        * SKU成本合计
-        */
-        private BigDecimal skuTotalCost;
-
-
-        /**
         * 审核状态名称
         */
         private String approveStatusName;
@@ -245,6 +247,22 @@ public class SampleRecipientDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+        /**
+         * 领用数量
+         */
+        @NotNull(message = "领用数量不能为空")
+        private Integer recipientQty;
+
+        /**
+         * 已出库数量
+         */
+        @NotNull(message = "已出库数量不能为空")
+        private Integer deliveryQty;
+        /**
+         * 待出库数量
+         */
+        private Integer reservedQty;
+
     }
 
     /**
@@ -276,35 +294,6 @@ public class SampleRecipientDTO implements Serializable {
         */
         private String approveStatus;
 
-        /**
-        * 审批人ID
-        */
-        private String approveUserId;
-
-        /**
-        * 审批人姓名
-        */
-        private String approveUserName;
-
-        /**
-        * 审批时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 作废状态(false:有效,true:已作废)
-        */
-        private Boolean invalidStatus;
-
-        /**
-        * 作废原因
-        */
-        private String invalidRemark;
-
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
 
         /**
         * 样品领用单号
@@ -322,7 +311,7 @@ public class SampleRecipientDTO implements Serializable {
         private String usage;
 
         /**
-        * 发货仓库ID
+        * 发货仓库ID 接口：warehouse/list
         */
         private String warehouseId;
 
@@ -397,24 +386,23 @@ public class SampleRecipientDTO implements Serializable {
         private String receivePhone;
 
         /**
-        * 来源ID（预留字段）
-        */
-        private String sourceId;
-
-        /**
-        * 来源单号（预留字段）
-        */
-        private String sourceCode;
-
-        /**
-        * 来源类型（预留字段）
-        */
-        private String sourceType;
-
-        /**
         * SKU成本合计
         */
         private BigDecimal skuTotalCost;
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
+
+        /**
+         * 产品列表
+         */
+        private List<ProductDTO>detailList;
 
 
     }
@@ -426,6 +414,56 @@ public class SampleRecipientDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 主键id
+         */
+        private List<ProductDTO> detailList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductDTO {
+
+        /**
+         * id 新增这个字段为空
+         */
+        private String id;
+        
+        /**
+         * SKU编码
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuNo;
+
+        /**
+         * SKU ID
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * 领用数量
+         */
+        @NotNull(message = "领用数量不能为空")
+        @Min(value = 1, message = "领用数量必须大于0")
+        private Integer quantity;
+
+        /**
+         * 可领用库存
+         */
+        private Integer usableQty;
+        
+        /**
+         * 备注
+         */
+        @Size(max = 200, message = "备注最大长度不能超过200位")
+        private String remark;
 
     }
 
@@ -442,6 +480,11 @@ public class SampleRecipientDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 主键id
+         */
+        private List<ProductDTO> productList;
+
     }
 
     @Data
@@ -449,156 +492,286 @@ public class SampleRecipientDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 作废时间
-        */
+         * 作废时间
+         */
         private LocalDateTime invalidTime;
 
         /**
-        * 领用日期
-        */
+         * 领用日期
+         */
+        @NotNull(message = "领用日期不允许为空")
         private LocalDate recipientDate;
 
         /**
-        * 用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他
-        */
-        @NotBlank(message = "用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他不能为空")
-        @Size(max = 200,message = "用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他最大长度不能超过200位")
+         * 用途
+         */
+        @NotBlank(message = "用途 不能为空")
         private String usage;
 
         /**
-        * 发货仓库ID
-        */
+         * 发货仓库ID  接口： warehouse/list
+         */
         @NotBlank(message = "发货仓库ID不能为空")
-        @Size(max = 19,message = "发货仓库ID最大长度不能超过19位")
+        @Size(max = 19, message = "发货仓库ID最大长度不能超过19位")
         private String warehouseId;
 
         /**
-        * 单据状态
-        */
-        @NotBlank(message = "单据状态不能为空")
-        @Size(max = 50,message = "单据状态最大长度不能超过50位")
+         * 单据状态
+         */
+        @Size(max = 50, message = "单据状态最大长度不能超过50位")
         private String status;
 
         /**
-        * 领用人ID
-        */
+         * 领用人ID
+         */
         @NotBlank(message = "领用人ID不能为空")
-        @Size(max = 19,message = "领用人ID最大长度不能超过19位")
+        @Size(max = 19, message = "领用人ID最大长度不能超过19位")
         private String userId;
 
         /**
-        * 领用人姓名
-        */
-        @NotBlank(message = "领用人姓名不能为空")
-        @Size(max = 50,message = "领用人姓名最大长度不能超过50位")
-        private String userName;
-
-        /**
-        * 领用部门ID
-        */
+         * 领用部门ID
+         */
         @NotBlank(message = "领用部门ID不能为空")
-        @Size(max = 19,message = "领用部门ID最大长度不能超过19位")
+        @Size(max = 19, message = "领用部门ID最大长度不能超过19位")
         private String deptId;
 
         /**
-        * 领料组织ID
-        */
+         * 领料组织ID
+         */
         @NotBlank(message = "领料组织ID不能为空")
-        @Size(max = 19,message = "领料组织ID最大长度不能超过19位")
+        @Size(max = 19, message = "领料组织ID最大长度不能超过19位")
         private String pickOrgId;
 
-        /**
-        * 领料组织名称
-        */
-        @NotBlank(message = "领料组织名称不能为空")
-        @Size(max = 50,message = "领料组织名称最大长度不能超过50位")
-        private String pickOrgName;
 
         /**
-        * 使用方式 公司内部使用/公司外部使用
-        */
+         * 使用方式 公司内部使用/公司外部使用
+         */
         @NotBlank(message = "使用方式 公司内部使用/公司外部使用不能为空")
-        @Size(max = 200,message = "使用方式 公司内部使用/公司外部使用最大长度不能超过200位")
         private String usageScope;
 
         /**
-        * 使用方id
-        */
+         * 使用方id
+         */
         @NotBlank(message = "使用方id不能为空")
-        @Size(max = 50,message = "使用方id最大长度不能超过50位")
+        @Size(max = 50, message = "使用方id最大长度不能超过50位")
         private String useUserId;
 
         /**
-        * 使用方名称
-        */
-        @NotBlank(message = "使用方名称不能为空")
-        @Size(max = 50,message = "使用方名称最大长度不能超过50位")
-        private String useUserName;
-
-        /**
-        * 备注
-        */
+         * 备注
+         */
         @NotBlank(message = "备注不能为空")
-        @Size(max = 200,message = "备注最大长度不能超过200位")
+        @Size(max = 200, message = "备注最大长度不能超过200位")
         private String remark;
 
         /**
-        * 是否邮寄
-        */
+         * 是否邮寄
+         */
         @NotNull(message = "是否邮寄不能为空")
         private Boolean isDelivery;
 
         /**
-        * 收货地址
-        */
-        @NotBlank(message = "收货地址不能为空")
-        @Size(max = 200,message = "收货地址最大长度不能超过200位")
+         * 收货地址
+         */
+        @Size(max = 200, message = "收货地址最大长度不能超过200位")
         private String receiveAddress;
 
         /**
-        * 收货人
-        */
-        @NotBlank(message = "收货人不能为空")
-        @Size(max = 50,message = "收货人最大长度不能超过50位")
+         * 收货人
+         */
+        @Size(max = 50, message = "收货人最大长度不能超过50位")
         private String receiverName;
 
         /**
-        * 联系电话
-        */
-        @NotBlank(message = "联系电话不能为空")
-        @Size(max = 20,message = "联系电话最大长度不能超过20位")
+         * 联系电话
+         */
+        @Size(max = 20, message = "联系电话最大长度不能超过20位")
         private String receivePhone;
 
         /**
-        * 来源ID（预留字段）
-        */
-        @NotBlank(message = "来源ID（预留字段）不能为空")
-        @Size(max = 19,message = "来源ID（预留字段）最大长度不能超过19位")
-        private String sourceId;
-
-        /**
-        * 来源单号（预留字段）
-        */
-        @NotBlank(message = "来源单号（预留字段）不能为空")
-        @Size(max = 32,message = "来源单号（预留字段）最大长度不能超过32位")
-        private String sourceCode;
-
-        /**
-        * 来源类型（预留字段）
-        */
-        @NotBlank(message = "来源类型（预留字段）不能为空")
-        @Size(max = 50,message = "来源类型（预留字段）最大长度不能超过50位")
-        private String sourceType;
-
-        /**
-        * SKU成本合计
-        */
-        @NotNull(message = "SKU成本合计不能为空")
+         * SKU成本合计
+         */
         @Digits(integer = 13, fraction = 2, message = "SKU成本合计整数位不能超过13位，小数位不能超过2位")
         private BigDecimal skuTotalCost;
 
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
+
+        /**
+         * 验证：当选择邮寄时，收货地址必填
+         */
+        @AssertTrue(message = "选择邮寄时，收货地址不能为空")
+        public boolean isReceiveAddressValid() {
+            // 如果不邮寄，则收货地址可以为空
+            if (isDelivery == null || !isDelivery) {
+                return true;
+            }
+            // 如果邮寄，则收货地址不能为空
+            return StringUtils.isNotBlank(receiveAddress);
+        }
+
+        /**
+         * 验证：当选择邮寄时，收货人必填
+         */
+        @AssertTrue(message = "选择邮寄时，收货人不能为空")
+        public boolean isReceiverNameValid() {
+            // 如果不邮寄，则收货人可以为空
+            if (isDelivery == null || !isDelivery) {
+                return true;
+            }
+            // 如果邮寄，则收货人不能为空
+            return StringUtils.isNotBlank(receiverName);
+        }
+
+        /**
+         * 验证：当选择邮寄时，联系电话必填
+         */
+        @AssertTrue(message = "选择邮寄时，联系电话不能为空")
+        public boolean isReceivePhoneValid() {
+            // 如果不邮寄，则联系电话可以为空
+            if (isDelivery == null || !isDelivery) {
+                return true;
+            }
+            // 如果邮寄，则联系电话不能为空
+            return StringUtils.isNotBlank(receivePhone);
+        }
+
 
     }
+    /**
+     * SKU成本查询请求参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostQueryDTO {
+        /**
+         * SKU编号列表
+         */
+        @NotEmpty(message = "SKU编号列表不能为空")
+        private List<String> skuNoList;
+    }
 
+    /**
+     * SKU成本信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU成本
+         */
+        private BigDecimal skuCost;
+    }
+
+    /**
+     * 下推其他出库单查询响应
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateOutboundOrderDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * 发货仓库
+         */
+        private String warehouseName;
+        
+        /**
+         * 领用人
+         */
+        private String userName;
+        
+        /**
+         * 待出库数量
+         */
+        private Integer reservedQty;
+        
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        
+        /**
+         * 出库数量
+         */
+        private Integer outQty;
+        
+        /**
+         * 出库日期
+         */
+        private LocalDate billDate;
+        
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
+        
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
+     * 下推其他出库单保存请求
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateOutboundOrderDTO {
+        /**
+         * 下推其他出库单列表
+         */
+        @NotEmpty(message = "下推其他出库单列表不能为空")
+        private List<ViewGenerateOutboundOrderDTO> list;
+    }
 
 }

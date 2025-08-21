@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
@@ -8,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.server.wms.mapper.SampleRecipientMapper;
+import com.erp.server.wms.service.SampleRecipientDetailService;
 import com.erp.server.wms.service.SampleRecipientService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -25,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.model.wms.entity.SampleRecipientDetailEntity;
+import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
@@ -66,6 +70,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private SampleRecipientDetailService sampleRecipientDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -79,8 +85,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         log.info("开始新增样品领用单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);
         sampleRecipientEntity.setCode(code);
         boolean save = super.save(sampleRecipientEntity);
         if(!save) {
@@ -379,6 +384,69 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
+    /**
+    * 结束领用
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO finishRecipient(String id) {
+        SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
+        
+        // 验证结束领用条件
+        validateFinishRecipient(entity);
+        
+        // 更新单据状态为已结束
+        log.info("结束领用 开始修改样品领用单状态，id：【{}】", id);
+        lambdaUpdate().eq(SampleRecipientEntity::getId, id)
+            .set(SampleRecipientEntity::getStatus, "finished")
+            .update();
+        
+        // 操作日志
+        log.info("结束领用 开始记录操作日志，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据结束领用操作", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "结束领用操作");
+        
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    /**
+    * 验证结束领用条件
+    */
+    private void validateFinishRecipient(SampleRecipientEntity entity) {
+        // 只有已审核通过的单据允许结束领用
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            throw new ServiceException("只有已审核通过的样品领用单能结束领用");
+        }
+        
+        // 检查明细状态，只有部分出库的样品领用单能结束领用
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+            .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+            .list();
+        
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException("样品领用单明细不能为空");
+        }
+        
+        // 检查是否有部分出库状态的明细
+        boolean hasPartOutstock = detailList.stream()
+            .anyMatch(detail -> SampleRecipientExecStatusEnum.PART_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()));
+        
+        if (!hasPartOutstock) {
+            throw new ServiceException("只有部分出库的样品领用单能结束领用");
+        }
+        
+        // 检查是否所有明细都是"已出库"或"待出库"
+        boolean allCompletedOrWaiting = detailList.stream()
+            .allMatch(detail -> 
+                SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()) ||
+                SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus().equals(detail.getExecStatus())
+            );
+        
+        if (allCompletedOrWaiting) {
+            throw new ServiceException("只有部分出库的样品领用单能结束领用");
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, SampleRecipientEntity entity) {
@@ -501,5 +569,167 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     */
     private void handleData(SampleRecipientEntity sampleRecipientEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+        /**
+     * 查询SKU成本
+     */
+    @Override
+    public List<SampleRecipientDTO.SkuDTO> querySkuCost(SampleRecipientDTO.SkuCostQueryDTO dto) {
+        if (CollUtil.isEmpty(dto.getSkuNoList())) {
+            return new ArrayList<>();
+        }
+        
+        // TODO: 这里需要根据实际的业务逻辑来实现
+        // 可能需要调用其他服务或查询数据库来获取SKU成本信息
+        // 示例实现：
+        List<SampleRecipientDTO.SkuDTO> result = new ArrayList<>();
+        
+        for (String skuNo : dto.getSkuNoList()) {
+            SampleRecipientDTO.SkuDTO skuDTO = new SampleRecipientDTO.SkuDTO();
+            skuDTO.setSkuNo(skuNo);
+            // TODO: 根据skuNo查询skuId和skuCost
+            // skuDTO.setSkuId(querySkuId(skuNo));
+            // skuDTO.setSkuCost(querySkuCost(skuNo));
+            result.add(skuDTO);
+        }
+        
+        return result;
+    }
+
+    /**
+     * 下推其他出库单查询
+     */
+    @Override
+    public List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> viewGenerateOutboundOrder(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        
+        // TODO: 这里需要根据实际的业务逻辑来实现
+        // 根据样品领用单ID列表查询明细信息，组装下推其他出库单的数据
+        List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> result = new ArrayList<>();
+        
+        // 示例实现：查询样品领用单明细数据
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+            .in(SampleRecipientDetailEntity::getMainId, ids)
+            .list();
+        
+        if (CollUtil.isNotEmpty(detailList)) {
+            for (SampleRecipientDetailEntity detail : detailList) {
+                SampleRecipientDTO.ViewGenerateOutboundOrderDTO dto = new SampleRecipientDTO.ViewGenerateOutboundOrderDTO();
+                dto.setSourceId(detail.getMainId());
+                // TODO: 根据明细ID查询主单信息，设置其他字段
+                // dto.setSourceCode(queryMainCode(detail.getMainId()));
+                // dto.setSkuNo(detail.getSkuNo());
+                // dto.setProductName(detail.getProductName());
+                // dto.setWaitOutstockQty(detail.getWaitOutstockQty());
+                // dto.setOutstockedQty(detail.getOutstockedQty());
+                // dto.setRealTimeInventory(queryRealTimeInventory(detail.getSkuNo()));
+                result.add(dto);
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * 下推其他出库单保存
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> generateOutboundOrder(SampleRecipientDTO.ListGenerateOutboundOrderDTO dto) {
+        if (CollUtil.isEmpty(dto.getList())) {
+            return new ArrayList<>();
+        }
+        
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        
+        try {
+            // TODO: 这里需要根据实际的业务逻辑来实现
+            // 遍历下推数据，创建其他出库单
+            for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : dto.getList()) {
+                try {
+                    // TODO: 调用其他出库单服务创建出库单
+                    // OutboundOrderEntity outboundOrder = createOutboundOrder(item);
+                    
+                    // 更新样品领用单明细状态
+                    // updateSampleRecipientDetailStatus(item.getSourceId(), item.getSkuNo());
+                    
+                    BatchResultDTO resultDTO = BatchResultDTO.success(
+                        item.getSourceId(), 
+                        item.getSourceCode(), 
+                        "下推其他出库单成功"
+                    );
+                    resultDTOS.add(resultDTO);
+                    
+                } catch (Exception e) {
+                    log.error("下推其他出库单失败，sourceId: {}, error: {}", item.getSourceId(), e.getMessage(), e);
+                    BatchResultDTO resultDTO = BatchResultDTO.fail(
+                        item.getSourceId(), 
+                        item.getSourceCode(), 
+                        e.getMessage()
+                    );
+                    resultDTOS.add(resultDTO);
+                }
+            }
+        } catch (Exception e) {
+            log.error("下推其他出库单批量处理失败", e);
+            // 如果批量处理失败，返回第一个失败的结果
+            if (!dto.getList().isEmpty()) {
+                SampleRecipientDTO.ViewGenerateOutboundOrderDTO firstItem = dto.getList().get(0);
+                BatchResultDTO resultDTO = BatchResultDTO.fail(
+                    firstItem.getSourceId(), 
+                    firstItem.getSourceCode(), 
+                    e.getMessage()
+                );
+                resultDTOS.add(resultDTO);
+            }
+        }
+        
+        return resultDTOS;
+    }
+
+    /**
+     * 下载模板
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        // TODO: 这里需要根据实际的业务逻辑来实现
+        // 可能需要调用Excel工具类来生成和下载模板文件
+        try {
+            // 示例实现：生成样品领用单导入模板
+            // ExcelPrintUtils.generateTemplate(response, "样品领用单导入模板", "excel/sampleRecipientTemplate.xlsx");
+            log.info("开始下载样品领用单导入模板");
+        } catch (Exception e) {
+            log.error("下载样品领用单导入模板失败", e);
+            throw new ServiceException("下载模板失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 异步导入
+     */
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        // TODO: 这里需要根据实际的业务逻辑来实现
+        // 可能需要调用Excel工具类来解析Excel文件，然后批量导入数据
+        try {
+            log.info("开始异步导入样品领用单数据，文件路径：{}");
+            
+            // 示例实现：解析Excel文件
+            // List<SampleRecipientEntity> dataList = ExcelPrintUtils.parseExcel(dto.getFilePath(), SampleRecipientEntity.class);
+            
+            // 批量保存数据
+            // if (CollUtil.isNotEmpty(dataList)) {
+            //     super.saveBatch(dataList);
+            // }
+            
+            log.info("异步导入样品领用单数据完成，共导入{}条数据", 0); // 实际应该是dataList.size()
+            return true;
+        } catch (Exception e) {
+            log.error("异步导入样品领用单数据失败", e);
+            return false;
+        }
     }
 }

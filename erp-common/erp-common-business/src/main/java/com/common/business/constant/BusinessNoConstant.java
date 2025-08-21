@@ -200,4 +200,7 @@ public interface BusinessNoConstant {
     //样品作废单
     String YPZF = "YPZF";
 
+    //样品领用
+    String YPLY="YPLY";
+
 }
