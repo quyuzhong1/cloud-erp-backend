@@ -148,6 +148,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Resource
     private WaveListService waveListService;
 
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cDeliveryInterceptDTO.AddDTO addDTO) {
@@ -964,6 +967,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryService.listBySourceIds(Collections.singletonList(soB2cDeliveryInterceptEntity.getSourceId()));
         if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDeliveryEntities.get(MathUtil.ZERO).getCode());
+        }else{
+            ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(soB2cDeliveryInterceptEntity.getSourceId());
+            if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
+                soB2cDeliveryInterceptEntity.setSoDeliveryCode(thirdWarehouseDeliveryEntity.getCode());
+                soB2cDeliveryInterceptEntity.setDeliveryId(thirdWarehouseDeliveryEntity.getId());
+            }
         }
 
         SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSourceId());

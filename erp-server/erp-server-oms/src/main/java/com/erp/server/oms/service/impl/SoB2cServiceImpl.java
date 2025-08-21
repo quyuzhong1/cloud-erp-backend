@@ -3117,9 +3117,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, overseasWarehouseList.get(0), remark);
             if (resultDTO.getSuccess()){
                 addDTO.setHandleStatus(HandleResultEnum.SUCCESS.getCode());
+                addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
                 resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity),Collections.singletonList(logisticsEntity), false);
             }else{
                 addDTO.setHandleStatus(HandleResultEnum.FAILURE.getCode());
+                addDTO.setHandleResult(HandleResultEnum.FAILURE.getCode());
             }
             BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
             return resultDTO;
