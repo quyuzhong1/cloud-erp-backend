@@ -43,7 +43,7 @@ public interface SampleScrapInfoMapper extends BaseMapper<SampleScrapInfoEntity>
     * @param params
     * @return
     */
-    List<SampleScrapInfoDTO.ListDTO> listExport(@Param("params") SampleScrapInfoDTO.ExportDTO params);
+    List<SampleScrapInfoDTO.ListDTO> listExport(@Param("params") SampleScrapInfoDTO.PagingParamDTO params);
 
 
     /**
