@@ -45,6 +45,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zdy
@@ -320,26 +321,32 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
             return failure("注册数据不能为空");
         }
-        logisticsRegisterVOS.forEach(e ->{
+        for (LogisticsRegisterVO logisticsRegisterVO : logisticsRegisterVOS) {
             RegisterRequest registerRequest = new RegisterRequest();
-            BeanMapperUtils.copy(e, registerRequest);
-            if (CharSequenceUtil.isBlank(e.getPhoneSuffix())){
+            BeanMapperUtils.copy(logisticsRegisterVO, registerRequest);
+            if (CharSequenceUtil.isBlank(logisticsRegisterVO.getPhoneSuffix())){
                 registerRequest.setExtendFieldMap(null);
             }else {
                 ExtendField extendFieldMap = new ExtendField();
-                extendFieldMap.setPhoneSuffix(getPhoneSuffix4(e.getPhoneSuffix()));
+                extendFieldMap.setPhoneSuffix(getPhoneSuffix4(logisticsRegisterVO.getPhoneSuffix()));
                 registerRequest.setExtendFieldMap(extendFieldMap);
             }
             try {
                 log.warn("更新运单号请求：token:{},request:{}", token, JSONUtil.toJsonStr(registerRequest));
-                RegisterResult result = trackShipperService.updateTrack(token, registerRequest);
+                String result = trackShipperService.updateTrack(token, registerRequest);
                 log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(result));
             }catch (Exception exception){
                 logisticsOperateService.pushOperateLog(null,
                         null, BusinessTypeEnum.UPDATE_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), exception.getMessage(),true);
             }
-        });
+            try {
+                TimeUnit.SECONDS.sleep(1); // 等待1s防止限流
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("线程被中断");
+            }
+        }
         return success();
     }
 
