@@ -2766,7 +2766,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     if (CollUtil.isNotEmpty(childList)) {
                         errorMsgList.add("产品分类【" + productCategoryStr + "】存在子分类，请添加末级分类");
                     } else {
-                        productCategoryList.add(productCategoryStr);
+                        productCategoryList.add(basicCategoryEntity.getId());
                     }
                 }
             }
