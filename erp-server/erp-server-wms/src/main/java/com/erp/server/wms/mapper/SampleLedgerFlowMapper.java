@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 样品库存 Mapper 接口
+ * 样品台账 Mapper 接口
  * </p>
  *
  * @author wuhaotian

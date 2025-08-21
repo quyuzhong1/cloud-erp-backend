@@ -5,7 +5,7 @@ import com.common.business.service.SuperService;
 
 /**
  * <p>
- * 样品库存 服务类
+ * 样品台账 服务类
  * </p>
  *
  * @author wuhaotian

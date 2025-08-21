@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 样品库存
+ * 样品台账
  * </p>
  *
  * @author wuhaotian

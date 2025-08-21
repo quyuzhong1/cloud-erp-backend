@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * <p>
- * 样品库存 服务实现类
+ * 样品台账 服务实现类
  * </p>
  *
  * @author wuhaotian
