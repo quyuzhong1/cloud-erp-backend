@@ -318,4 +318,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportThirdWarehouseDelivery")
     PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品报废单
+     */
+    @PostMapping("/feign/export/exportSampleScrapInfo")
+    PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
 }

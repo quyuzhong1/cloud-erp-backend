@@ -49,8 +49,8 @@ public class SampleScrapDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品报废单导入模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String standardPath = "classpath:excel/qcNoticeDetailTemplate.xlsx";
-        String standardExcelName = "qcNoticeDetailTemplate.xlsx";
+        String standardPath = "classpath:excel/sampleScrapDetailTemplate.xlsx";
+        String standardExcelName = "sampleScrapDetailTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
     }
