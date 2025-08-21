@@ -270,6 +270,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 拦截状态
          */
         private String interceptStatus;
+        /**
+         * 处理人名称
+         */
+        private String handleUserName;
+        /**
+         * 处理时间
+         */
+        private LocalDateTime handleTime;
     }
 
     /**

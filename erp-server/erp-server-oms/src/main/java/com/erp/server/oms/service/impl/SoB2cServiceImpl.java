@@ -3083,12 +3083,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
                 addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
                 addDTO.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+                addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+                addDTO.setHandleTime(LocalDateTime.now());
                 resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity),Collections.singletonList(logisticsEntity), false);
             }else{
                 addDTO.setHandleStatus(HandleResultEnum.FAILURE.getCode());
                 addDTO.setHandleResult(HandleResultEnum.FAILURE.getCode());
                 addDTO.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
                 addDTO.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+                addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+                addDTO.setHandleTime(LocalDateTime.now());
             }
             BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
             return resultDTO;
