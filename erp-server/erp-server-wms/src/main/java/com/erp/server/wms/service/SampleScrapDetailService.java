@@ -20,24 +20,6 @@ import java.util.List;
 public interface SampleScrapDetailService extends SuperService<SampleScrapDetailEntity> {
 
     /**
-    * 新增
-    * @author jack
-    * @date: 2025-08-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SampleScrapDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-08-20
-    * @param dto
-    * @return
-    */
-    Boolean update(SampleScrapDetailDTO.UpdateDTO dto);
-
-    /**
      * 导入Excel
      * @author jack
      * @date: 2025-08-20

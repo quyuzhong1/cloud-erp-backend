@@ -3,11 +3,8 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.wms.dto.QcNoticeDTO;
-import com.erp.server.wms.query.QcNoticeQueryHandler;
 import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +19,10 @@ import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleScrapInfoService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
-
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
