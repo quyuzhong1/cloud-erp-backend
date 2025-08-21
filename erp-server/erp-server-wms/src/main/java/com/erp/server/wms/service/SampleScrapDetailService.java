@@ -1,0 +1,48 @@
+package com.erp.server.wms.service;
+import com.erp.model.wms.dto.SampleScrapInfoDTO;
+import com.erp.model.wms.entity.SampleScrapDetailEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.wms.dto.SampleScrapDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * <p>
+ * 样品报废单明细表 服务类
+ * </p>
+ *
+ * @author jack
+ * @since 2025-08-20
+ */
+public interface SampleScrapDetailService extends SuperService<SampleScrapDetailEntity> {
+
+    /**
+    * 新增
+    * @author jack
+    * @date: 2025-08-20
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(SampleScrapDetailDTO.AddDTO dto);
+
+    /**
+    * 修改
+    * @author jack
+    * @date: 2025-08-20
+    * @param dto
+    * @return
+    */
+    Boolean update(SampleScrapDetailDTO.UpdateDTO dto);
+
+    /**
+     * 导入Excel
+     * @author jack
+     * @date: 2025-08-20
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+}

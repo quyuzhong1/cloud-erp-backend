@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ExhibitionOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ExhibitionOrderEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="code" property="code" />
+       <result column="exhibition_title" property="exhibitionTitle" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="sales_org_id" property="salesOrgId" />
+       <result column="sales_dept_id" property="salesDeptId" />
+       <result column="seller_id" property="sellerId" />
+       <result column="seller_name" property="sellerName" />
+       <result column="recipient_user_id" property="recipientUserId" />
+       <result column="recipient_user_name" property="recipientUserName" />
+       <result column="is_collect_shipping_fee" property="isCollectShippingFee" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_org_id" property="warehouseOrgId" />
+       <result column="bank_service_fee" property="bankServiceFee" />
+       <result column="shipping_fee" property="shippingFee" />
+       <result column="customer_id" property="customerId" />
+       <result column="receiver_name" property="receiverName" />
+       <result column="tel_number" property="telNumber" />
+       <result column="receive_address" property="receiveAddress" />
+       <result column="delivery_mode" property="deliveryMode" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="is_tax" property="isTax" />
+       <result column="address_type" property="addressType" />
+       <result column="sales_org_name" property="salesOrgName" />
+       <result column="warehouse_org_name" property="warehouseOrgName" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_type" property="sourceType" />
+       <result column="receive_address_id" property="receiveAddressId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="receive_condition" property="receiveCondition" />
+       <result column="receive_account" property="receiveAccount" />
+       <result column="receive_amount" property="receiveAmount" />
+       <result column="receive_date" property="receiveDate" />
+       <result column="receive_method" property="receiveMethod" />
+       <result column="remark" property="remark" />
+       <result column="bill_date" property="billDate" />
+       <result column="trade_term" property="tradeTerm" />
+       <result column="approve_time" property="approveTime" />
+       <result column="discount_amount" property="discountAmount" />
+       <result column="all_amount_lc" property="allAmountLc" />
+       <result column="country_id" property="countryId" />
+       <result column="country_name" property="countryName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        invalid_status, code, exhibition_title, approve_status, sales_org_id, sales_dept_id, seller_id, seller_name, recipient_user_id, recipient_user_name, is_collect_shipping_fee, warehouse_id, warehouse_org_id, bank_service_fee, shipping_fee, customer_id, receiver_name, tel_number, receive_address, delivery_mode, currency, currency_symbol, is_tax, address_type, sales_org_name, warehouse_org_name, source_id, source_type, receive_address_id, approve_user_name, receive_condition, receive_account, receive_amount, receive_date, receive_method, remark, bill_date, trade_term, approve_time, discount_amount, all_amount_lc, country_id, country_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from exhibition_order where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  exhibition_order
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>
