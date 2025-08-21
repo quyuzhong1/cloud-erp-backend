@@ -62,6 +62,8 @@ public class PlatformReturnInstockDTO extends UniqueDto {
     //备注
     private String reason;
 
+    private String sourceId;
+
     //明细
     private List<PlatformReturnInstockDTO.Detail> productDetailList;
 
