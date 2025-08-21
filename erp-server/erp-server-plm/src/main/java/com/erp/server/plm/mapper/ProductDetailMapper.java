@@ -353,6 +353,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * 根据skuIds获取产品包装尺寸明细
      */
     List<ProductPackViewDTO> listProductPackBySkuIds(@Param("skuIds") List<String> skuIds);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:36
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    List<SkuVO> listSkuPackAndPurchaseByIds(@Param("skuIds")List<String> skuIds);
 }
 
 
