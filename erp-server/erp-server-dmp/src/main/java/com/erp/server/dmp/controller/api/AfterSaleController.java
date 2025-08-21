@@ -68,11 +68,6 @@ public class AfterSaleController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "售后申请表修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "dmp:afterSale:update",
-//        serviceClass = AfterSaleService.class,
-//        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated AfterSaleDTO.UpdateDTO dto) {
         afterSaleService.update(dto);
         return success();
@@ -83,11 +78,6 @@ public class AfterSaleController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:paging",
-//            tableAlias = "afs"
-//    )
     public ApiResult<List<AfterSaleDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(afterSaleService.tabList(dto));
     }
@@ -100,11 +90,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<PagingVO<AfterSaleDTO.ListDTO>>
     */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:paging",
-//            tableAlias = "afs"
-//    )
     @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
     public ApiResult<PagingVO<AfterSaleDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
         return success(afterSaleService.paging(dto));
@@ -132,11 +117,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:updateAndSubmit",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "售后申请表修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AfterSaleDTO.UpdateDTO dto) {
         afterSaleService.updateAndSubmit(dto);
@@ -151,11 +131,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/submit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:submit",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "售后申请表提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -190,11 +165,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/approve")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:approve",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "售后申请表审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
@@ -228,11 +198,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/disApprove")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:disApprove",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "售后申请表反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -267,11 +232,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/delete")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:delete",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "售后申请表删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -304,11 +264,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/invalid")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:invalid",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "售后申请表作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
@@ -342,11 +297,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/cancelProcess")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:cancelProcess",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "售后申请表撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -380,11 +330,6 @@ public class AfterSaleController extends BaseController {
     * @return ApiResult<AfterSaleDTO.ViewDTO>>
     */
     @GetMapping("/view")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:view",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "id")
     @LogViewService
     public ApiResult<AfterSaleDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(afterSaleService.view(id));
@@ -399,11 +344,6 @@ public class AfterSaleController extends BaseController {
     * @return
     */
     @PostMapping("/export")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:export",
-//            tableAlias = "afs"
-//    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "售后申请表导出Excel数据")
     @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated AfterSaleDTO.ExportDTO dto, HttpServletResponse response) {
@@ -419,11 +359,6 @@ public class AfterSaleController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/changeStatus")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:changeStatus",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "售后申请状态变更")
     public ApiResult<List<BatchResultDTO>> changeStatus(@RequestBody @Validated AfterSaleDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = afterSaleService.changeStatus(dto);
