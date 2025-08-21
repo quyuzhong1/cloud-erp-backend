@@ -1736,7 +1736,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             //联系人信息
             exportExcel.setContactIsDefaultName(Boolean.TRUE.equals(item.getContactIsDefault()) ? "是" : "否");
-            exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "禁用" : "启用");
+            exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "停用" : "启用");
 
             //查询是否存在电话查看权限
             Boolean existAuth = isExistAuth(Collections.singletonList(item.getId()), "supplier:telNumber:view", "purchase_user_id");
