@@ -3,6 +3,7 @@ package com.common.business.config;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.LuaScript;
+import com.common.business.enums.BusinessNoEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.LocalDateUtil;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,7 @@ public class DocNoGenHelper implements InitializingBean {
 
     private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
+    private static final String DYNAMIC_NO = "dynamicNo";
     /**
      * 单位秒
      */
@@ -133,13 +136,66 @@ public class DocNoGenHelper implements InitializingBean {
      * @param businessNoTypeEnum
      * @return
      */
-    public String generateSeqCode(BusinessNoTypeEnum businessNoTypeEnum){
+    public String  generateIndexCode(BusinessNoTypeEnum businessNoTypeEnum){
         //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
         String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + businessNoTypeEnum.getName();
-        Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
-        // 单据前缀+6位日期+5位顺序位
-        String docNo = CharSequenceUtil.format("{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentIndex);
+        // 执行脚本
+        Long currentIndex = redisTemplate.execute(
+                redisScript,
+                stringRedisSerializer,
+                stringRedisSerializer,
+                Lists.newArrayList(docNoKey),
+                String.valueOf(1)
+        );
+        String businessNoPrefix = getBusinessNoPrefix(currentIndex);
+
+        if (currentIndex.equals(1000L)) {
+            redisTemplate.delete(docNoKey);
+
+            String script = "local key = KEYS[1] " +
+                    "local increment = tonumber(ARGV[1]) " +
+                    "local maxValue = 1000 " +
+                    "local current = redis.call('INCRBY', key, increment) " +
+                    "if current >= maxValue then " +
+                    "    redis.call('SET', key, 1) " +
+                    "    return 1 " +
+                    "end " +
+                    "return current";
+            RedisScript<Long> resertRedisScript = new DefaultRedisScript<>(script, Long.class);
+            //重新生成编码
+            currentIndex = redisTemplate.execute(
+                    resertRedisScript,
+                    stringRedisSerializer,
+                    stringRedisSerializer,
+                    Lists.newArrayList(docNoKey),
+                    String.valueOf(1)
+            );
+        }
+        // 单据前缀+顺序位
+        String docNo = CharSequenceUtil.format("{}{}",businessNoPrefix, currentIndex);
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
+    }
+
+    /**
+     * 获取业务前缀
+     * @author will
+     * @date 2025/8/21 10:00
+     * @param currentIndex
+     * @return String
+     */
+    private String getBusinessNoPrefix(Long currentIndex) {
+        String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + DYNAMIC_NO;
+       //前缀
+        String businessNoPrefix = BusinessNoEnum.A.getCode();
+        if (currentIndex.equals(1000L)) {
+            Object redisNo = redisTemplate.opsForValue().get(docNoKey);
+            businessNoPrefix = BusinessNoEnum.getNextCode(StrUtils.null2EmptyWithTrim(redisNo));
+        }
+        // 如果当前索引为999，重置为0并获取下一个前缀
+        redisTemplate.delete(docNoKey);
+        redisTemplate.opsForValue().set(docNoKey,businessNoPrefix);
+
+        return businessNoPrefix;
     }
 }
