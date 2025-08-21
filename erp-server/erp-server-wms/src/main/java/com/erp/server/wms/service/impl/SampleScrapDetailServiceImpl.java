@@ -12,6 +12,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,8 +85,8 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录样品报废单明细单日志数据，id：【{}】", sampleScrapDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleScrapDetailEntity.getId(), "样品报废单明细单");
+        log.info("编辑 开始记录样品报废单明细单日志数据，id：【{}】", sampleScrapDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleScrapDetailEntity.getId(), "样品报废单明细单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, sampleScrapDetailEntity, null, sampleScrapDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -94,6 +95,14 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
     @Override
     public SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
         return null;
+    }
+
+    @Override
+    public List<SampleScrapDetailEntity> listByMainId(String id) {
+        if(StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(SampleScrapDetailEntity::getMainId, id).list();
     }
 
 

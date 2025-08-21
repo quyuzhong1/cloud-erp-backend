@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -45,4 +46,6 @@ public interface SampleScrapDetailService extends SuperService<SampleScrapDetail
      * @return
      */
     SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    List<SampleScrapDetailEntity> listByMainId(String id);
 }

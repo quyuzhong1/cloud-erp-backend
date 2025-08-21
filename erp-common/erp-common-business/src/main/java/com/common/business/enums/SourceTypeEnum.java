@@ -91,6 +91,9 @@ public enum SourceTypeEnum {
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
     WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
     VIRTUAL_ADJUST("virtualAdjust", "虚拟库存调整","virtual_adjust"),
+    SAMPLE_RETURN_INFO("sampleReturnInfo", "样品归还单","sample_return_info"),
+    SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单","sample_borrow_info"),
+    SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单","sample_scrap_info"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -116,7 +119,7 @@ public enum SourceTypeEnum {
 
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
     CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
-
+    EXHIBITION_ORDER("exhibitionOrder", "展会订单","exhibition_order"),
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),

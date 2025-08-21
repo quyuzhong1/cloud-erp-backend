@@ -160,7 +160,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
 		Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -199,7 +198,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
 		Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : ids) {
@@ -238,7 +236,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
 		Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -278,7 +275,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
 		Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -317,7 +313,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
         Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -356,7 +351,6 @@ public class SampleScrapInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
         Map<String, SampleScrapInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleScrapInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {

@@ -122,6 +122,9 @@ public enum BusinessNoTypeEnum {
     CODE_SFSC(90, "SFSC","三方审批生成配置",BusinessNoConstant.SFSC),
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
 
+
+    CODE_YPZF(92, "YPZF","样品作废单", BusinessNoConstant.YPZF),
+
     ;
 
 
