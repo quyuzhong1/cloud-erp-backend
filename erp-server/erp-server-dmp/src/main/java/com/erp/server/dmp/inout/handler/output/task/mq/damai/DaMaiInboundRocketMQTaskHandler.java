@@ -105,10 +105,20 @@ public class DaMaiInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 		receivingDataList.add(receiving);
 		platformInboundDTO.setReceivingStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
 		platformInboundDTO.setReceivingDataList(receivingDataList);
-    	
+
+		this.groupBySku(platformInboundDTO);
         return platformInboundDTO;
     }
-    
+	private void groupBySku(PlatformInboundDTO dto) {
+		Map<String, Integer> receivedQuantityMap = dto.getReceivingDataList().stream()
+				.collect(Collectors.groupingBy(Receiving::getProductSku, Collectors.summingInt(Receiving::getReceiveQty)));
+
+		List<PlatformInboundDTO.Item> items = receivedQuantityMap.entrySet().stream()
+				.map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
+				.collect(Collectors.toList());
+
+		dto.setItems(items);
+	}
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("receivingCode");
