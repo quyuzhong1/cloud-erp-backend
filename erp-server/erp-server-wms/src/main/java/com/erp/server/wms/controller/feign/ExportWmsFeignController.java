@@ -183,6 +183,9 @@ public class ExportWmsFeignController {
     @Resource
     private SupplierInventoryService supplierInventoryService;
 
+    @Resource
+    private SampleScrapInfoService sampleScrapInfoService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1054,6 +1057,19 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         return thirdWarehouseDeliveryService.paging(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleScrapInfo")
+    @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
+    public PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto) {
+        return sampleScrapInfoService.paging(dto);
     }
 
 }

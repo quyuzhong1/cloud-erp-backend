@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.server.wms.query.QcNoticeQueryHandler;
+import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -108,6 +109,7 @@ public class SampleScrapInfoController extends BaseController {
             menuCode = "wms:sampleScrapInfo:paging",
             tableAlias = "ssi"
     )
+    @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
     public ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto) {
         return success(sampleScrapInfoService.paging(dto));
     }
@@ -400,8 +402,10 @@ public class SampleScrapInfoController extends BaseController {
             tableAlias = "ssi"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleScrapInfoDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated SampleScrapInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         sampleScrapInfoService.exportList(dto, response);
+        return success();
     }
 
     /**
@@ -416,7 +420,7 @@ public class SampleScrapInfoController extends BaseController {
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = sampleScrapInfoService.importFile(excelFile, response);
-        return result == true ? success() : failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -429,8 +433,8 @@ public class SampleScrapInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单下载模板察")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/qcNoticeDetailTemplate.xlsx";
-        String standardExcelName = "qcNoticeDetailTemplate.xlsx";
+        String standardPath = "classpath:excel/sampleScrapInfoTemplate.xlsx";
+        String standardExcelName = "sampleScrapInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
     }

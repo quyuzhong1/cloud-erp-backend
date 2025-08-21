@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.mapper.SampleScrapInfoMapper;
 import com.erp.server.wms.service.SampleScrapDetailService;
@@ -43,8 +44,6 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -53,6 +52,7 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT;
 
 /**
  * <p>
@@ -77,6 +77,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private WmsAttachmentService attachmentService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -315,25 +318,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     }
 
     @Override
-    public void exportList(SampleScrapInfoDTO.ExportDTO param, HttpServletResponse response) {
-        List<SampleScrapInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/sampleScrapInfo.xlsx";
-        String name = "样品报废单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(SampleScrapInfoDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("样品报废单导出", EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -136,7 +136,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
     * @param response
     * @return
     */
-    void exportList(SampleScrapInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SampleScrapInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
