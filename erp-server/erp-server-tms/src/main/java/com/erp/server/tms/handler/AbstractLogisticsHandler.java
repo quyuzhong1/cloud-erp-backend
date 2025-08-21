@@ -225,7 +225,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @param registerTrackVO
      * @return
      */
-    public ApiResult<List<RegisterResponseVO>> updateTrack(RegisterTrackVO registerTrackVO) {
+    public ApiResult<List<RegisterResponseVO>> updateTrack(LogisticsRegisterVO registerTrackVO) {
         return ApiResult.error(-1, MSG);
     }
 

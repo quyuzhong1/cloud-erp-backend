@@ -24,7 +24,7 @@ import java.util.Objects;
  * 更新物流轨迹配置信息
  */
 public class LogisticsTrackInfoExcelListener extends AnalysisEventListener<LogisticsTrackInfoExcelDTO> {
-    private static final int BATCH_COUNT = 100;
+    private static final int BATCH_COUNT = 1000;
 
     private final String taskId;
     private final String importType;
