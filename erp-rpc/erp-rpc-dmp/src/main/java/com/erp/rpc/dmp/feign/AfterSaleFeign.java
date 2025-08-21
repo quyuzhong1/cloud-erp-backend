@@ -43,7 +43,7 @@ public interface AfterSaleFeign {
      * @return ApiResult<String>
      */
     @PostMapping("/add")
-    ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto);
+    ApiResult<BaseResultDTO.AddDTO> add(@RequestBody AfterSaleDTO.AddDTO dto);
     /**
      *
      * 获取寄修进度
