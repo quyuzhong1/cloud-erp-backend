@@ -17,6 +17,10 @@ import org.apache.commons.io.LineIterator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.*;
 
 /**
@@ -118,7 +122,8 @@ public class Generator {
         generateByTables(tableNames);
         
         System.out.println("==========================准备处理枚举...================================");
-        dealEnum(tableNames);
+//        dealEnum(tableNames);
+        dealDictEnum();
         System.out.println("\u001B[32m" + "==========================枚举生成完成！！！==========================" + "\u001B[0m");
     }
 
@@ -424,6 +429,91 @@ public class Generator {
         return name.substring(0, 1).toUpperCase() + name.substring(1, name.length());
     }
     
+    private static void dealDictEnum() throws Exception{
+    	Connection dmpConnection = DriverManager.getConnection("jdbc:postgresql://172.16.100.60:32590/erp-dmp?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false", DB_USER_NAME, DB_PASSWORD);
+    	Statement dmpStatement = dmpConnection.createStatement();
+		ResultSet dmpExecuteQuery = dmpStatement.executeQuery("select id,value,remark from cfg_setting where type = 'dict_auto_gen_enum_class' and key = '" + MODEL + "';");
+		String cfgId = "";
+		String dictTableName = "";
+		String lastGenTime = "";
+		if(dmpExecuteQuery.next()) {
+			cfgId = dmpExecuteQuery.getString("id");
+			dictTableName = dmpExecuteQuery.getString("value");
+			lastGenTime = dmpExecuteQuery.getString("remark");
+		}else {
+			System.out.println("========================枚举信息未配置...================================");
+			return;
+		}
+		String now = DateUtil.now();
+		Connection connection = DriverManager.getConnection(DB_URL, DB_USER_NAME, DB_PASSWORD);
+    	Statement statement = connection.createStatement();
+    	ResultSet executeQuery = statement.executeQuery("select type from " + dictTableName + " where update_time > '" + lastGenTime + "' and update_time <= '" + now + "' group by type ;");
+		List<String> typeList = new ArrayList<>();
+    	while(executeQuery.next()) {
+    		typeList.add(executeQuery.getString("type"));
+		}
+    	if(CollUtil.isEmpty(typeList)) {
+    		System.out.println("========================没有需要处理的枚举...================================");
+    		return;
+    	}
+    	for(String type : typeList) {
+    		executeQuery = statement.executeQuery("select value,name,type_name from " + dictTableName + " where type = '" + type + "' and is_deleted = false order by sort;");
+    		EnumDto e = new EnumDto();
+    		e.setClassName(upperCaseFirst(MODEL) + upperCaseFirst(type) + "Enum");
+    		String description = type;
+    		Map<String, String> enumNameMap = new LinkedHashMap<>();
+    		while(executeQuery.next()) {
+    			String type_name = executeQuery.getString("type_name");
+    			if(StringUtils.isNotEmpty(type_name)) {
+    				description = type_name;
+    			}
+    			enumNameMap.put(executeQuery.getString("value"), executeQuery.getString("name"));
+    		}
+    		e.setDescription(description);
+    		e.setEnumNameMap(enumNameMap);
+    		createDictEnum(e);
+    	}
+		dmpStatement.executeUpdate("update cfg_setting set remark = '" + now + "' where id = '" + cfgId + "';");
+    }
+    
+    
+    private static void createDictEnum(EnumDto e) throws Exception{
+    	Map<String, String> enumNameMaps = e.getEnumNameMap();
+    	if(CollUtil.isEmpty(enumNameMaps)) {
+    		return;
+    	}
+		String date = DateUtil.now();
+    	String path = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/";
+		
+		FileOutputStream fs = null;
+
+		File dirFile = new File(path + "enums/");
+		if(!dirFile.exists()) {
+			dirFile.mkdir();
+		}
+		String className = e.getClassName();
+		fs = new FileOutputStream(new File(path + "enums/"+ className + ".java"));
+		LineIterator lineIterator = FileUtils.lineIterator(new File(PROJECT_PATH + "/erp-generator/src/main/resources/templates/Enum.ftl"));
+		fs.write("package com.erp.model.".getBytes());
+		fs.write(MODEL.getBytes());
+		fs.write(".enums".getBytes());
+		fs.write(";".getBytes());
+		String next = "";
+		while (lineIterator.hasNext()) {
+			next = lineIterator.next();
+			fs.write(replaceKeyWord(next , className , e.getDescription(), date).getBytes());
+			fs.write("\n".getBytes());
+			if(next.contains("public enum ${name} implements EnumMessage {")) {
+				for(Map.Entry<String, String> enumNameMap : enumNameMaps.entrySet()) {
+					fs.write(("	" + enumNameMap.getKey().toUpperCase() + "(\"" + enumNameMap.getKey() +"\", \"" + enumNameMap.getValue() +"\"),").getBytes());
+					fs.write("\n".getBytes());
+				}
+			}
+		}
+		fs.close();
+		lineIterator.close();
+    }
+    
     @Data
     static class EnumDto{
     	private String filed;
@@ -431,6 +521,7 @@ public class Generator {
     	private Map<String, String> enumNameMap;
     	private String className;
     	private String filedCode;
+    	private String description;
     	
     	public static EnumDto getEnumDto(String line) {
     		if(org.apache.commons.lang.StringUtils.isBlank(line)) {
