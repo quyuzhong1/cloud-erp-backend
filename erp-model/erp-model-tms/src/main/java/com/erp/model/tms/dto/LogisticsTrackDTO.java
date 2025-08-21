@@ -153,6 +153,10 @@ public class LogisticsTrackDTO implements Serializable {
          */
         private String channelId;
         /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
          * 平台订单号
          */
         private String platformOrderNo;

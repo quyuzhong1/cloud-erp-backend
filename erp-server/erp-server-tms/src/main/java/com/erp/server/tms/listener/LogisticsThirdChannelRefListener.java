@@ -126,15 +126,15 @@ public class LogisticsThirdChannelRefListener extends AnalysisEventListener<Impo
                 supplierEntityList.stream().filter(supplierEntity -> supplierEntity.getSupplierName().equals(e.getLogisticsSupplierName())).findFirst().ifPresent(supplierEntity -> {
                     e.setLogisticsSupplierId(supplierEntity.getId());
                 });
-                if (CharSequenceUtil.isBlank(e.getLogisticsSupplierId())){
-                    errorMsgList.add(CharSequenceUtil.format("供应商【{}】未匹配到", e.getLogisticsSupplierName()));
-                }
+//                if (CharSequenceUtil.isBlank(e.getLogisticsSupplierId())){
+//                    errorMsgList.add(CharSequenceUtil.format("供应商【{}】未匹配到", e.getLogisticsSupplierName()));
+//                }
                 channelEntityList.stream().filter(channelEntity -> channelEntity.getName().equals(e.getLogisticsChannelName()) && channelEntity.getMainId().equals(e.getLogisticsSupplierId())).findFirst().ifPresent(channelEntity -> {
                     e.setLogisticsChannelId(channelEntity.getId());
                 });
-                if (CharSequenceUtil.isBlank(e.getLogisticsChannelId())){
-                    errorMsgList.add(CharSequenceUtil.format("渠道【{}】未匹配到", e.getLogisticsChannelName()));
-                }
+//                if (CharSequenceUtil.isBlank(e.getLogisticsChannelId())){
+//                    errorMsgList.add(CharSequenceUtil.format("渠道【{}】未匹配到", e.getLogisticsChannelName()));
+//                }
                 if (LogisticsThirdChannelRefPushTypeEnum.SHOP_SENDER.getCode().equals(e.getPushType()) && e.getIsPushMobile()){
                     shopInfoEntityList.stream().filter(shopInfoEntity -> shopInfoEntity.getName().equals(e.getShopName())).findFirst().ifPresent(shopInfoEntity -> {
                         e.setShopId(shopInfoEntity.getId());
