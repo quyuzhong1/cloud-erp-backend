@@ -1,10 +1,8 @@
 package com.erp.model.wms.dto;
 
 
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -47,8 +45,12 @@ public class ReportProcessingDTO implements Serializable {
         /**
          * 业务类型
          */
-        @Dict(enumClass = CfgSettingOrderTypeEnum.class)
         private String type;
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
         /**
          * skuId
          */

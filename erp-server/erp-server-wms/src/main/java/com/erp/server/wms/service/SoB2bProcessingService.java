@@ -69,4 +69,12 @@ public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEnti
      * @return PagingVO<ListDTO>
      */
     PagingVO<ReportProcessingDTO.ListDTO> b2bTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+    /**
+     * b2c汇总导出
+     * @author will
+     * @date 2025/8/21 14:24
+     * @param dto
+     * @return Boolean
+     */
+    Boolean b2bTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto);
 }
