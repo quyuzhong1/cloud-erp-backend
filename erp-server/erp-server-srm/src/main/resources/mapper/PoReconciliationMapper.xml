@@ -127,4 +127,52 @@
             ORDER BY pr.id desc
         </where>
     </select>
+
+    <!-- 查询所有的对账单明细 -->
+    <select id="exportAllPoReconciliationDetail"
+            resultType="com.erp.model.srm.dto.PoReconciliationDTO$ExportDetailDTO">
+            select
+                pr.code,
+                pr.status,
+                pr.start_date as startDate,
+                pr.end_date as endDate,
+                pr.settle_org_id as settleOrgId,
+                pr.settle_org_Name as settleOrgName,
+                pr.supplier_id as supplierId,
+                pr.supplier_name as supplierName,
+                prd.source_type as sourceType,
+                prd.return_source_type as returnSourceType,
+                prd.source_code as sourceCode,
+                prd.po_code as poCode,
+                po.source_code as poSourceCode,
+                prd.delivery_code as deliveryCode,
+                prd.date,
+                prd.sku_id as skuId,
+                prd.sku_no as skuNo,
+                prd.qty,
+                prd.tax_rate as taxRate,
+                prd.tax_price as taxPrice,
+                prd.discount_rate as discountRate,
+                prd.discount_tax_amount as discountTaxAmount,
+                prd.prepay_amount as prepayAmount,
+                prd.tax_amount as taxAmount,
+                prd.settle_dict as settleDict,
+                prd.payment_condition as paymentCondition,
+                prd.business_status as businessStatus,
+                prd.remark,
+                prd.supplier_remark as supplierRemark,
+                prd.purchase_remark as purchaseRemark
+            from po_reconciliation pr
+            left join po_reconciliation_detail prd on pr.id = prd.main_id and prd.is_deleted = false
+            left join foreign_purchase_order po on prd.po_id = po.id and po.is_deleted = false
+            <where>
+                ${params.sqlMap.default}
+                and pr.is_deleted = false
+                <!--权限-->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+                ORDER BY pr.id desc,prd.id desc
+            </where>
+    </select>
 </mapper>

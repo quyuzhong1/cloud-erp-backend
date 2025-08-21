@@ -28,10 +28,8 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
@@ -56,6 +54,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
 import com.erp.server.srm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -243,7 +242,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             return new PagingVO(pageData);
         }
         // 数据处理
-        fillList(pageData.getRecords());
+        fillList(pageData.getRecords(), pagingParamDTO.getParams().getIsSrm());
         return new PagingVO(pageData);
     }
 
@@ -260,7 +259,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             return Collections.emptyList();
         }
         //数据处理
-        fillList(list);
+        fillList(list, dto.getIsSrm());
         List<PoReconciliationDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PoReconciliationDetailDTO.ViewDTO.class, list);
         return resultList;
     }
@@ -272,7 +271,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
      * 分页查询、 数据处理
      */
     @Override
-    public void fillList(List<PoReconciliationDetailDTO.ListDTO> list) {
+    public void fillList(List<PoReconciliationDetailDTO.ListDTO> list,Boolean isSrm) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -286,6 +285,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         //付款条件
         List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
 
+        //关联信息
+        // 采购申请单id集合
+        List<String> purchaseApplicationIds = Lists.newArrayList();
+        List<String> purchaseOrderIds = list.stream().map(PoReconciliationDetailDTO.ListDTO::getPoId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationRefPoEntity> refList = FeignQuery.create(PurchaseApplicationRefPoEntity.class).in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).list();
+
         //币种信息
         List<String> currencyIdList = list.stream().map(PoReconciliationDetailDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -295,7 +300,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRate(MathUtil.multiplyWithTwo(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
             listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            BigDecimal discountAmount = MathUtil.multiplyWithFour(listDTO.getTaxAmount(), listDTO.getDiscountRate());
+            listDTO.setDiscountAmount(discountAmount);
             listDTO.setDiscountRate(MathUtil.multiplyWithTwo(listDTO.getDiscountRate(),MathUtil.BigDecimal_100));
+            listDTO.setDiscountRateStr(CharSequenceUtil.format("{}%",listDTO.getDiscountRate().stripTrailingZeros().toPlainString()));
+            listDTO.setDiscountTaxAmount(MathUtil.subtract(listDTO.getTaxAmount(),discountAmount).subtract(listDTO.getPrepayAmount()));
+
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -311,6 +321,28 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     .flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
             listDTO.setPaymentConditionName(paymentConditionName);
 
+            //srm仅展示退货单号来源的单号
+            if (!SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getPoSourceType()) && isSrm) {
+                listDTO.setPoSourceCode("");
+            } else {
+                // 采购申请单号
+                if (CollUtil.isNotEmpty(refList) && CharSequenceUtil.isBlank(listDTO.getPoSourceType())) {
+                    // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
+                    List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r -> {
+                        if (Objects.equals(listDTO.getPoId(), r.getPurchaseOrderId())) {
+                            return true;
+                        }
+                        return false;
+                    }).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(filterRefList)) {
+                        List<String> applicationIds = filterRefList.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+                        purchaseApplicationIds.addAll(applicationIds);
+                        listDTO.setPurchaseApplicationIds(applicationIds);
+                    }
+
+                }
+            }
+
             //币种符号
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
@@ -320,6 +352,27 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //备注
             listDTO.setIndex(index);
             index++;
+        }
+        if (CollUtil.isNotEmpty(purchaseApplicationIds)) {
+            List<PurchaseApplicationEntity> purchaseApplicationList = FeignQuery.getByIds(PurchaseApplicationEntity.class,purchaseApplicationIds);
+            // 采购申请单id和采购申请单对应map
+            Map<String, PurchaseApplicationEntity> refMap = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
+
+            list.forEach(obj -> {
+                if (CollUtil.isNotEmpty(obj.getPurchaseApplicationIds())) {
+                    StringBuffer applicationCodes = new StringBuffer("");
+                    obj.getPurchaseApplicationIds().stream().forEach(applicationId -> {
+                        PurchaseApplicationEntity refEntity = refMap.get(applicationId);
+                        if (Objects.nonNull(refEntity)) {
+                            applicationCodes.append(refEntity.getCode()).append(",");
+                        }
+                    });
+                    if (applicationCodes.toString().endsWith(",")) {
+                        applicationCodes.deleteCharAt(applicationCodes.length() - 1);
+                    }
+                    obj.setPoSourceCode(applicationCodes.toString());
+                }
+            });
         }
     }
 
@@ -435,7 +488,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
-            fillList(page.getRecords());
+            fillList(page.getRecords(),dto.getParams().getIsSrm());
         }
         return new PagingVO<>(page);
     }
