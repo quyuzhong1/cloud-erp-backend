@@ -848,7 +848,10 @@ public class SupplierDTO implements Serializable {
          * 结算付款方式
          */
         private String payMethodId;
-
+        /**
+         * 物流付款公司名称
+         */
+        private String paymentCompanyName;
 
         /**
          * 结算付款方式
