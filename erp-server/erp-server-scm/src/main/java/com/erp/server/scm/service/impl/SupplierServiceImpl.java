@@ -2279,7 +2279,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (errorMsgList.size() > 0) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
-                return;
+                continue;
             }
             addDTO.setPlantAddrList(plantAddrList);
             if (ObjectUtil.isNotEmpty(contactAddDTO)) {
