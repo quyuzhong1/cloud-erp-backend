@@ -2244,7 +2244,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierDTO.ImportAddDTO addDTO = new SupplierDTO.ImportAddDTO();
             addDTO.setName(excelDTO.getName());
             SupplierEntity supplierEntity = supplierMap.get(excelDTO.getName());
-            if (!CharSequenceUtil.equals(supplierEntity.getApproveStatus().getStatus(),ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+            if (ObjectUtil.isNotEmpty(supplierEntity) && !CharSequenceUtil.equals(supplierEntity.getApproveStatus().getStatus(),ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 && !CharSequenceUtil.equals(supplierEntity.getApproveStatus().getStatus(),ApproveStatusEnum.REJECT.getStatus())) {
                 errorMsgList.add("供应商不是待提交或审核不通过状态，不支持更新");
             }
