@@ -831,4 +831,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return SkuVO
      */
     List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:35
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds);
 }
