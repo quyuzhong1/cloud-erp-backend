@@ -1,25 +1,45 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
+import com.erp.model.tms.dto.excel.LogisticsTrackInfoExcelDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.model.tms.vo.request.LogisticsRegisterVO;
+import com.erp.model.tms.vo.request.RegisterTrackVO;
+import com.erp.model.tms.vo.response.RegisterResponseVO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
+import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
+import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
+import com.erp.server.tms.listener.LogisticsTrackInfoExcelListener;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.erp.server.tms.service.LogisticsService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.erp.server.tms.service.OperateLogService;
 import com.google.common.collect.Lists;
@@ -33,9 +53,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_TRACK_INFO;
 
 /**
  * <p>
@@ -52,6 +77,12 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private OperateLogService operateLogService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
+    @Resource
+    private LogisticsRegistry logisticsRegistry;
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -237,6 +268,62 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
         }
     }
+
+    @Override
+    public Boolean importExcel(BaseDTO.ImportDTO dto) {
+        downloadTaskFeign.saveImportTask("导入物流单信息", IMPORT_TMS_LOGISTICS_TRACK_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void importLogisticsTrackInfo(BaseDTO.ImportDTO dto) {
+        LogisticsTrackInfoExcelListener excelListenerUtil = new LogisticsTrackInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), LogisticsTrackInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        //导出错误数据
+        List<LogisticsTrackInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "物流轨迹错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, LogisticsTrackInfoExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<LogisticsTrackInfoExcelDTO> successList, List<LogisticsTrackInfoExcelDTO> errorList, String importType) {
+        if (CollectionUtils.isEmpty(successList)){
+            return;
+        }
+        LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.TRACK123.getCode());
+        List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.TRACK123.getCode());
+        List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
+        successList.forEach(e -> {
+            logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                    .trackNo(e.getTrackNo())
+                    .phoneSuffix(e.getMobile())
+                    .courierCode(e.getChannelName())
+                    .build());
+        });
+        RegisterTrackVO registerTrackVO = RegisterTrackVO.builder().authMap(mapList.get(0)).logisticsRegisterVOS(logisticsRegisterVOS).build();
+        service.updateTrack(registerTrackVO);
+    }
+
     /**
      * 获取唯一值
      * @param trackingDetail
