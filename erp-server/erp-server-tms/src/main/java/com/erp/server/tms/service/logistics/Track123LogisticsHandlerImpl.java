@@ -319,9 +319,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         String token = authMap.get("clientSecret");
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
             return failure("注册数据不能为空");
-
         }
-        List<RegisterRequest> registerRequests = new ArrayList<>();
         logisticsRegisterVOS.forEach(e ->{
             RegisterRequest registerRequest = new RegisterRequest();
             BeanMapperUtils.copy(e, registerRequest);
@@ -332,20 +330,17 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 extendFieldMap.setPhoneSuffix(getPhoneSuffix4(e.getPhoneSuffix()));
                 registerRequest.setExtendFieldMap(extendFieldMap);
             }
-            registerRequests.add(registerRequest);
+            try {
+                log.warn("更新运单号请求：token:{},request:{}", token, JSONUtil.toJsonStr(registerRequest));
+                RegisterResult result = trackShipperService.updateTrack(token, registerRequest);
+                log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(result));
+            }catch (Exception exception){
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.UPDATE_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
+            }
         });
-        ValidatorUtil.validateEntity(registerRequests);
-        try {
-            log.warn("更新运单号请求：token:{},request:{}", token, JSONUtil.toJsonStr(registerRequests));
-            RegisterResult result = trackShipperService.updateTrack(token, registerRequests);
-            log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(result));
-            return success();
-        }catch (Exception e){
-            logisticsOperateService.pushOperateLog(null,
-                    null, BusinessTypeEnum.UPDATE_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
-        }
+        return success();
     }
 
 
