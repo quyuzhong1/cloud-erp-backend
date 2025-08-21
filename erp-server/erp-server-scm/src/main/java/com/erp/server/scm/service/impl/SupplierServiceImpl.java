@@ -2751,7 +2751,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //供应商产品分类
         if (StringUtils.isNotBlank(excelDTO.getProductCategoryStr())) {
             List<String> productCategoryStrList = Arrays.stream(excelDTO.getProductCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
-            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName()) && !CharSequenceUtil.equals(d.getPid(),"0")).map(BasicCategoryEntity::getId).collect(Collectors.toList());
+
+            List<String> productCategoryList = new ArrayList<>();
+            for (String productCategoryStr : productCategoryStrList) {
+                BasicCategoryEntity basicCategoryEntity = dictProductCategoryList.stream().filter(obj -> CharSequenceUtil.equals(productCategoryStr, obj.getName()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(basicCategoryEntity)) {
+                    errorMsgList.add("产品分类【" + productCategoryStr + "】不存在，请先在系统中添加");
+                } else {
+                    //如果不是叶子节点，则查询所有子节点
+                    List<BasicCategoryEntity> childList = dictProductCategoryList.stream()
+                            .filter(obj -> CharSequenceUtil.equals(obj.getPid(), basicCategoryEntity.getId()))
+                            .collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(childList)) {
+                        errorMsgList.add("产品分类【" + productCategoryStr + "】存在子分类，请添加末级分类");
+                    } else {
+                        productCategoryList.add(productCategoryStr);
+                    }
+                }
+            }
             if (CollUtil.isNotEmpty(productCategoryList)) {
                 addDTO.setProductCategoryJson(new JSONArray(productCategoryList));
             } else {
