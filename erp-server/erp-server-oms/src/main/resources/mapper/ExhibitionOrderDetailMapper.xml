@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.ExhibitionOrderDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.ExhibitionOrderDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="qty" property="qty" />
+       <result column="price" property="price" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="amount" property="amount" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="is_gift" property="isGift" />
+       <result column="remark" property="remark" />
+       <result column="purchase_price" property="purchasePrice" />
+       <result column="sale_cost" property="saleCost" />
+       <result column="sale_profit" property="saleProfit" />
+       <result column="sale_profit_rate" property="saleProfitRate" />
+       <result column="tax_amount" property="taxAmount" />
+       <result column="amount_local_currency" property="amountLocalCurrency" />
+       <result column="all_amount_local_currency" property="allAmountLocalCurrency" />
+       <result column="discount_amount" property="discountAmount" />
+       <result column="tax_amount_before" property="taxAmountBefore" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="tax" property="tax" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="cost_source" property="costSource" />
+       <result column="tax_price" property="taxPrice" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, sku_id, sku_no, qty, price, tax_rate, amount, currency, currency_symbol, is_gift, remark, purchase_price, sale_cost, sale_profit, sale_profit_rate, tax_amount, amount_local_currency, all_amount_local_currency, discount_amount, tax_amount_before, exchange_rate, tax, bom_version, cost_source, tax_price
+    </sql>
+
+
+</mapper>
