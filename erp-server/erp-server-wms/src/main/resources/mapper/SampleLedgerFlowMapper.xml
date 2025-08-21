@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleLedgerFlowMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleLedgerFlowEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="sample_leder_id" property="sampleLederId" />
+        <result column="operate_time" property="operateTime" />
+        <result column="bill_date" property="billDate" />
+        <result column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="dept_id" property="deptId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="source_type" property="sourceType" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_detail_id" property="sourceDetailId" />
+        <result column="dict_biz_type" property="dictBizType" />
+        <result column="sku_no" property="skuNo" />
+        <result column="sku_id" property="skuId" />
+        <result column="product_name" property="productName" />
+        <result column="use_user_id" property="useUserId" />
+        <result column="use_user_name" property="useUserName" />
+        <result column="qty" property="qty" />
+    </resultMap>
+
+</mapper>
