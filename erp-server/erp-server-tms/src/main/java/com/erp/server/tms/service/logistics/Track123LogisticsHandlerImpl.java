@@ -312,6 +312,38 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
     }
 
+    @Override
+    public ApiResult<List<RegisterResponseVO>> updateTrack(RegisterTrackVO registerTrackVO) {
+        List<LogisticsRegisterVO> logisticsRegisterVOS = registerTrackVO.getLogisticsRegisterVOS();
+        Map<String, String> authMap = registerTrackVO.getAuthMap();
+        String token = authMap.get("clientSecret");
+        if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
+            return failure("注册数据不能为空");
+        }
+        logisticsRegisterVOS.forEach(e ->{
+            RegisterRequest registerRequest = new RegisterRequest();
+            BeanMapperUtils.copy(e, registerRequest);
+            if (CharSequenceUtil.isBlank(e.getPhoneSuffix())){
+                registerRequest.setExtendFieldMap(null);
+            }else {
+                ExtendField extendFieldMap = new ExtendField();
+                extendFieldMap.setPhoneSuffix(getPhoneSuffix4(e.getPhoneSuffix()));
+                registerRequest.setExtendFieldMap(extendFieldMap);
+            }
+            try {
+                log.warn("更新运单号请求：token:{},request:{}", token, JSONUtil.toJsonStr(registerRequest));
+                RegisterResult result = trackShipperService.updateTrack(token, registerRequest);
+                log.warn("更新运单号结果：{}",JSONUtil.toJsonStr(result));
+            }catch (Exception exception){
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.UPDATE_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
+            }
+        });
+        return success();
+    }
+
+
     private String getPhoneSuffix4(String phoneSuffix){
         if (StringUtils.isEmpty(phoneSuffix)){
             return "";

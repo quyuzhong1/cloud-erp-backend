@@ -2244,6 +2244,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierDTO.ImportAddDTO addDTO = new SupplierDTO.ImportAddDTO();
             addDTO.setName(excelDTO.getName());
             SupplierEntity supplierEntity = supplierMap.get(excelDTO.getName());
+            if (ObjectUtil.isNotEmpty(supplierEntity) && !CharSequenceUtil.equals(supplierEntity.getApproveStatus().getStatus(),ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                && !CharSequenceUtil.equals(supplierEntity.getApproveStatus().getStatus(),ApproveStatusEnum.REJECT.getStatus())) {
+                errorMsgList.add("供应商不是待提交或审核不通过状态，不支持更新");
+            }
             //部分更新
             boolean isUpdatePart = ImportCommonTypeEnum.UPDATE_PART.getCode().equals(type);
             if (ObjectUtil.isEmpty(supplierEntity) && isUpdatePart) {
@@ -2275,7 +2279,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             if (errorMsgList.size() > 0) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
-                return;
+                continue;
             }
             addDTO.setPlantAddrList(plantAddrList);
             if (ObjectUtil.isNotEmpty(contactAddDTO)) {
@@ -2751,7 +2755,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //供应商产品分类
         if (StringUtils.isNotBlank(excelDTO.getProductCategoryStr())) {
             List<String> productCategoryStrList = Arrays.stream(excelDTO.getProductCategoryStr().split(",")).map(String::trim).collect(Collectors.toList());
-            List<String> productCategoryList = dictProductCategoryList.stream().filter(d -> productCategoryStrList.contains(d.getName()) && !CharSequenceUtil.equals(d.getPid(),"0")).map(BasicCategoryEntity::getId).collect(Collectors.toList());
+
+            List<String> productCategoryList = new ArrayList<>();
+            for (String productCategoryStr : productCategoryStrList) {
+                BasicCategoryEntity basicCategoryEntity = dictProductCategoryList.stream().filter(obj -> CharSequenceUtil.equals(productCategoryStr, obj.getName()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(basicCategoryEntity)) {
+                    errorMsgList.add("产品分类【" + productCategoryStr + "】不存在，请先在系统中添加");
+                } else {
+                    //如果不是叶子节点，则查询所有子节点
+                    List<BasicCategoryEntity> childList = dictProductCategoryList.stream()
+                            .filter(obj -> CharSequenceUtil.equals(obj.getPid(), basicCategoryEntity.getId()))
+                            .collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(childList)) {
+                        errorMsgList.add("产品分类【" + productCategoryStr + "】存在子分类，请添加末级分类");
+                    } else {
+                        productCategoryList.add(basicCategoryEntity.getId());
+                    }
+                }
+            }
             if (CollUtil.isNotEmpty(productCategoryList)) {
                 addDTO.setProductCategoryJson(new JSONArray(productCategoryList));
             } else {
