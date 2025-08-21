@@ -1,12 +1,9 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +14,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +29,30 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class LogisticsBillCostDTO implements Serializable {
+
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO extends PermissionsDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 更新状态标识
+         */
+        @NotNull(message = "更新状态标识不能为空")
+        private Boolean isUpdatePayStatus;
+    }
 
     /**
      * 列表参数
