@@ -97,6 +97,7 @@ public class DaMaiProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     	product.setPlatformType("warehouse");
     	String skuNo = dmpSkuInfoEntity.getSkuNo();
 		product.setPlatformProductNo(dmpSkuInfoEntity.getSpuId());
+		product.setPlatformSkuId(dmpSkuInfoEntity.getSpuId());
 		product.setPlatformSkuNo(skuNo);
     	product.setPlatformSkuName(dmpSkuInfoEntity.getName());
     	product.setProductImageUrl(dmpSkuInfoEntity.getImageUrls());
