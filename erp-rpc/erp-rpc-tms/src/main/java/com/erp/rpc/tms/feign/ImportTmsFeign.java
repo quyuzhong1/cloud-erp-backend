@@ -20,4 +20,6 @@ public interface ImportTmsFeign {
 
     @PostMapping("/feign/import/logisticsLastMileCost")
     void importLogisticsLastMileCost(@RequestBody BaseDTO.ImportDTO dto);
+    @PostMapping("/feign/import/importLogisticsTrackInfo")
+    void importLogisticsTrackInfo(@RequestBody BaseDTO.ImportDTO dto);
 }

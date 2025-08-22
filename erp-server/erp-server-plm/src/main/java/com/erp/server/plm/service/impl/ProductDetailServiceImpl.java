@@ -6557,6 +6557,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    public List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackAndPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
     public ProductDetailEntity getBySkuNoOrEan(String skuCode) {
 
         ProductDetailEntity entity = getOne(Wrappers.<ProductDetailEntity>lambdaQuery().eq(ProductDetailEntity::getSkuNo, skuCode));

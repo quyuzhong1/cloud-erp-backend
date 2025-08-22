@@ -138,6 +138,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .eq(OverseasProviderWarehouseEntity::getDisabled,false)
                 .orderByAsc(OverseasProviderWarehouseEntity::getId)
                 .last("LIMIT 1")
                 .one();
@@ -280,17 +281,19 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
         //获取系统仓库获取绑定的第三方仓
-        OverseasProviderWarehouseEntity providerWarehouseEntity = this.getByWarehouseId(feignDTO.getWarehouseId());
-        if (Objects.nonNull(providerWarehouseEntity)) {
-            //有效数据直接删除关联
-            if (!providerWarehouseEntity.getDisabled() && !Objects.equals(providerWarehouseEntity.getId(), feignDTO.getOverseasProviderWarehouseId())) {
-                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = new OverseasProviderWarehouseEntity();
-                overseasProviderWarehouseEntity.setWarehouseId("");
-                overseasProviderWarehouseEntity.setWarehouseName("");
-                overseasProviderWarehouseEntity.setId(providerWarehouseEntity.getId());
-                overseasProviderWarehouseEntity.setWarehouseCode("");
-                overseasProviderWarehouseEntity.setDisabled(true);
-                baseMapper.updateById(overseasProviderWarehouseEntity);
+        List<OverseasProviderWarehouseEntity> providerWarehouseEntityList = this.listByWarehouseIds(Arrays.asList(feignDTO.getWarehouseId()));
+        if (CollectionUtils.isNotEmpty(providerWarehouseEntityList)) {
+            List<OverseasProviderWarehouseEntity> needDisabledList = providerWarehouseEntityList.stream()
+                    .filter(providerWarehouseEntity -> !providerWarehouseEntity.getDisabled() && !Objects.equals(providerWarehouseEntity.getId(), feignDTO.getOverseasProviderWarehouseId()))
+                    .collect(Collectors.toList());
+            if( CollectionUtils.isNotEmpty(needDisabledList)) {
+                needDisabledList.forEach(v->{
+                    v.setWarehouseId("");
+                    v.setWarehouseName("");
+                    v.setWarehouseCode("");
+                    v.setDisabled(true);
+                });
+                this.updateBatchById(needDisabledList);
             }
 
         }

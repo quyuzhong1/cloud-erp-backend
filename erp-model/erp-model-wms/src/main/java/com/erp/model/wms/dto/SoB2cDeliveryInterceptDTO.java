@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -257,6 +258,26 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        private String handleStatus;
+
+        private String handleResult;
+        /**
+         * 取消状态
+         */
+        private String cancelStatus;
+        /**
+         * 拦截状态
+         */
+        private String interceptStatus;
+        /**
+         * 处理人名称
+         */
+        private String handleUserName;
+        /**
+         * 处理时间
+         */
+        private LocalDateTime handleTime;
     }
 
     /**
@@ -331,6 +352,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 产品编号
          */
         private String skuNo;
+
+        private String sourceType;
+
+        private String sourceTypeName;
         /**
          * 产品名称
          */

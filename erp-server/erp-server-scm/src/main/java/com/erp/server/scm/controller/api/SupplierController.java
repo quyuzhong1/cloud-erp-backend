@@ -520,22 +520,37 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 批量修改供应商分类
-     *
+     * 批量修改字段
+     * @author will
+     * @date 2025/8/12 10:50
      * @param dto
-     * @return
+     * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改供应商分类")
-    @PostMapping("/updateCategory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改字段")
+    @PostMapping("/updateField")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:update",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
-    public ApiResult updateCategory(@RequestBody @Validated SupplierDTO.BatchUpdateCategoryDTO dto) {
-        supplierService.updateCategory(dto);
-        return success();
+    public ApiResult updateField(@RequestBody @Validated SupplierDTO.BatchUpdateFieldDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.updateField(id,dto));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -560,4 +575,5 @@ public class SupplierController extends BaseController {
     public ApiResult<String> getTelNumber(@RequestParam("contractId") String contactId) {
         return success(supplierContactService.getTelNumber(contactId));
     }
+
 }

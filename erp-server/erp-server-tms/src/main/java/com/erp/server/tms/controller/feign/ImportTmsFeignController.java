@@ -5,6 +5,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
+import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +24,8 @@ public class ImportTmsFeignController {
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private LogisticsLastMileCostService logisticsLastMileCostService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
 
     @PostMapping("/logisticsBillCost")
     public void importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto) {
@@ -43,6 +46,19 @@ public class ImportTmsFeignController {
             logisticsLastMileCostService.importLogisticsLastMileCost(dto);
         } catch (Exception e) {
             log.error("导入尾程费用失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+    @PostMapping("/importLogisticsTrackInfo")
+    public void importLogisticsTrackInfo(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            logisticsTrackService.importLogisticsTrackInfo(dto);
+        } catch (Exception e) {
+            log.error("导入物流轨迹失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

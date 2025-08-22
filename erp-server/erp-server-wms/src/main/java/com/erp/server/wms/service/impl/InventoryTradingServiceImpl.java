@@ -110,7 +110,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         } finally {
             stopwatch.stop();
             // 计时器-结束
-            log.info("单据编号：{}，库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            if(stopwatch.elapsed(TimeUnit.SECONDS) > 30) {
+                log.warn("单据编号：{}，库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
         }
     }
 

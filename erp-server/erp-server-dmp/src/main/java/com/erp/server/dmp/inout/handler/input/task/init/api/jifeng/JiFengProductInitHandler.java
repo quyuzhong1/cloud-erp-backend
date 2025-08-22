@@ -50,7 +50,7 @@ public class JiFengProductInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.JIFENG.getCode())
                 .list();
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
-            return Collections.emptyList();
+            throw new ServiceException("极风授权信息不存在");
         }
         // 取对应授权ID授权
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
