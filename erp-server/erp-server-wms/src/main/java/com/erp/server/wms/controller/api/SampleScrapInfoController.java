@@ -163,10 +163,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 submit = sampleScrapInfoService.submit(id);
             }catch (Exception e){
-                log.error("样品报废单主单 提交审核失败",e);
+                log.error("样品报废单 提交审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "样品报废单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -201,10 +201,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 approveResult = sampleScrapInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("样品报废单主单审核失败",e);
+                log.error("样品报废单审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "样品报废单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -239,10 +239,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 disApproveResult = sampleScrapInfoService.disApprove(id);
             }catch (Exception e){
-                log.error("样品报废单主单反审核失败",e);
+                log.error("样品报废单反审核失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "样品报废单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -278,10 +278,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 deleteResult = sampleScrapInfoService.delete(id);
             }catch (Exception e){
-                log.error("样品报废单主单删除失败",e);
+                log.error("样品报废单删除失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品报废单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -316,10 +316,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 deleteResult = sampleScrapInfoService.invalid(id);
             }catch (Exception e){
-                log.error("样品报废单主单删除失败",e);
+                log.error("样品报废单作废失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品报废单不存在, 作废失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -354,10 +354,10 @@ public class SampleScrapInfoController extends BaseController {
             try {
                 cancelResult = sampleScrapInfoService.cancelProcess(id);
             }catch (Exception e){
-                log.error("样品报废单主单撤回流程失败",e);
+                log.error("样品报废单撤回流程失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "样品报废单主单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "样品报废单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -424,7 +424,7 @@ public class SampleScrapInfoController extends BaseController {
      * @param response
      * @return
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单下载模板察")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         String standardPath = "classpath:excel/sampleScrapInfoTemplate.xlsx";

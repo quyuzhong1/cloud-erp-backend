@@ -1,24 +1,23 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.wms.dto.SampleBorrowDetailDTO;
+import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleBorrowDetailService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.SampleBorrowDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 借用变更单明细表
@@ -36,36 +35,30 @@ public class SampleBorrowDetailController extends BaseController {
     private SampleBorrowDetailService sampleBorrowDetailService;
 
     /**
-    * 新增
-    * @author jack
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "借用变更单明细表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleBorrowDetailDTO.AddDTO dto) {
-        return success(sampleBorrowDetailService.add(dto));
+     * 下载模板
+     * @author jack
+     * @date:  2025-04-21
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品报废单导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String standardPath = "classpath:excel/sampleBorrowDetailTemplate.xlsx";
+        String standardExcelName = "sampleBorrowDetailTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
     }
 
     /**
-    * 修改
-    * @author jack
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "借用变更单明细表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:sampleBorrowDetail:update",
-        serviceClass = SampleBorrowDetailService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SampleBorrowDetailDTO.UpdateDTO dto) {
-        sampleBorrowDetailService.update(dto);
-        return success();
+     * 导入
+     * @author jack
+     * @date:  2025-04-21
+     */
+    @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单明细导入")
+    public ApiResult<SampleBorrowDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success(sampleBorrowDetailService.importFile(excelFile, response));
     }
+
 
 
 

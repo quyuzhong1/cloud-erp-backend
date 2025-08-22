@@ -6,6 +6,7 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import com.erp.server.wms.mapper.SampleBorrowInfoMapper;
 import com.erp.server.wms.service.SampleBorrowInfoService;
@@ -49,6 +50,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * <p>
  * 借用变更单 服务实现类
@@ -151,17 +154,25 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(SampleBorrowInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SampleBorrowInfoDTO.TabListDTO(status, 0));
-        }
+            if (!existStatusList.contains(status)) {
+                list.add(new SampleBorrowInfoDTO.TabListDTO(status, "", 0));
+            }
         });
-        list.add(new SampleBorrowInfoDTO.TabListDTO("all", list.stream().mapToInt(SampleBorrowInfoDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+
+        list.stream().forEach(e ->{
+            if(Objects.equals(ApproveStatusEnum.APPROVE.getCode(), e.getTabFlag())){
+                e.setTabFlagName("待归还");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
+        });
+        list.sort(Comparator.comparing(SampleBorrowInfoDTO.TabListDTO::getTabFlag));
+        list.add(0,new SampleBorrowInfoDTO.TabListDTO("all","全部", list.stream().mapToInt(SampleBorrowInfoDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
     @Override
-    public void exportList(SampleBorrowInfoDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(SampleBorrowInfoDTO.PagingParamDTO param, HttpServletResponse response) {
         List<SampleBorrowInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
@@ -370,6 +381,16 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     }
 
     @Override
+    public BatchResultDTO invalid(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
     public SampleBorrowInfoDTO.ViewDTO view(String id) {
         SampleBorrowInfoEntity sampleBorrowInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到借用变更单数据"));
         SampleBorrowInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleBorrowInfoDTO.ViewDTO.class, sampleBorrowInfoEntity);
@@ -459,7 +480,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         for(SampleBorrowInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
         }
     }
     /**

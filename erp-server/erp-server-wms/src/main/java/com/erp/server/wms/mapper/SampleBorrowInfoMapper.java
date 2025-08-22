@@ -43,7 +43,7 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
     * @param params
     * @return
     */
-    List<SampleBorrowInfoDTO.ListDTO> listExport(@Param("params") SampleBorrowInfoDTO.ExportDTO params);
+    List<SampleBorrowInfoDTO.ListDTO> listExport(@Param("params") SampleBorrowInfoDTO.PagingParamDTO params);
 
 
     /**

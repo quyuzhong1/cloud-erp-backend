@@ -155,7 +155,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
-     * 删除
+     * 作废
      * @author jack
      * @date: 2025-08-20
      * @param id

@@ -1,6 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.wms.entity.SampleScrapInfoEntity;
+import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
+import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
+import com.erp.server.wms.service.SampleScrapInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -26,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 借用变更单
@@ -82,7 +89,7 @@ public class SampleBorrowInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleBorrowInfo:paging",
-            tableAlias = ""
+            tableAlias = "sbi"
     )
     public ApiResult<List<SampleBorrowInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleBorrowInfoService.tabList(dto));
@@ -99,13 +106,14 @@ public class SampleBorrowInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleBorrowInfo:paging",
-            tableAlias = ""
+            tableAlias = "sbi"
     )
+    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
     public ApiResult<PagingVO<SampleBorrowInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
         return success(sampleBorrowInfoService.paging(dto));
     }
 
-    /**
+    /**z
     * 新增并提交审核
     * @author jack
     * @date:  2025-08-20
@@ -153,7 +161,6 @@ public class SampleBorrowInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
 		Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -192,7 +199,6 @@ public class SampleBorrowInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
 		Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
         for (String id : ids) {
@@ -231,7 +237,6 @@ public class SampleBorrowInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
 		Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -271,7 +276,6 @@ public class SampleBorrowInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
 		Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -283,6 +287,44 @@ public class SampleBorrowInfoController extends BaseController {
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "借用变更单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 作废
+     * @author jack
+     * @date:  2025-08-20
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBorrowInfo:invalid",
+            serviceClass = SampleScrapInfoService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "样品借用单作废")
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
+        Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = sampleBorrowInfoService.invalid(id);
+            }catch (Exception e){
+                log.error("样品借用单作废失败",e);
+                SampleBorrowInfoEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 作废失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -310,7 +352,6 @@ public class SampleBorrowInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
         Map<String, SampleBorrowInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleBorrowInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -340,11 +381,6 @@ public class SampleBorrowInfoController extends BaseController {
     * @return ApiResult<SampleBorrowInfoDTO.ViewDTO>>
     */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:sampleBorrowInfo:view",
-            serviceClass = SampleBorrowInfoService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<SampleBorrowInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(sampleBorrowInfoService.view(id));
@@ -362,11 +398,44 @@ public class SampleBorrowInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleBorrowInfo:export",
-            tableAlias = ""
+            tableAlias = "sbi"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "借用变更单导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleBorrowInfoDTO.ExportDTO dto, HttpServletResponse response) {
+    public  ApiResult<Object> exportList(@RequestBody @Validated SampleBorrowInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         sampleBorrowInfoService.exportList(dto, response);
+        return success();
+    }
+
+
+    /**
+     * 导入Excel数据
+     * @author jack
+     * @date:  2025-08-20
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品借用单")
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = sampleBorrowInfoService.importFile(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-08-20
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品借用单下载模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/sampleBorrowInfoTemplate.xlsx";
+        String standardExcelName = "sampleBorrowInfoTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
     }
 
 

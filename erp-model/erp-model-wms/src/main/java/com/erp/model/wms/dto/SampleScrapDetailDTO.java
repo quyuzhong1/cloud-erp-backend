@@ -64,6 +64,11 @@ public class SampleScrapDetailDTO implements Serializable {
         private Integer scrapQty;
 
         /**
+         * 可报废数量
+         */
+        private Integer availableScrapQty;
+
+        /**
         * 备注
         */
         private String remark;
@@ -122,6 +127,7 @@ public class SampleScrapDetailDTO implements Serializable {
         @NotNull(message = "报废数量不能为空")
         @Min(value = 1,message = "报废数量不能小于1" )
         private Integer scrapQty;
+
 
         /**
         * 备注

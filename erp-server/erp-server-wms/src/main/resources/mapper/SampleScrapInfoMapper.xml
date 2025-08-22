@@ -111,14 +111,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleScrapInfoDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        ssi.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  sample_scrap_info
-        WHERE is_deleted=FALSE
+        FROM  sample_scrap_info ssi
+        WHERE ssi.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY ssi.approve_status
     </select>
 
 </mapper>

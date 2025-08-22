@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -62,9 +63,9 @@ public class SampleBorrowDetailDTO implements Serializable {
         private Integer borrowQty;
 
         /**
-        * 待归还数量
+        * 可借数量
         */
-        private Integer waitReturnQty;
+        private Integer availableBorrowQty;
 
         /**
         * 备注
@@ -94,7 +95,6 @@ public class SampleBorrowDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -106,22 +106,17 @@ public class SampleBorrowDetailDTO implements Serializable {
         /**
         * 关联主表ID
         */
-        @NotBlank(message = "关联主表ID不能为空")
-        @Size(max = 19,message = "关联主表ID最大长度不能超过19位")
         private String mainId;
 
         /**
         * SKU ID
         */
-        @NotBlank(message = "SKU ID不能为空")
-        @Size(max = 19,message = "SKU ID最大长度不能超过19位")
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 500,message = "产品名称最大长度不能超过500位")
         private String productName;
 
         /**
@@ -133,17 +128,30 @@ public class SampleBorrowDetailDTO implements Serializable {
         /**
         * 待归还数量
         */
-        @NotNull(message = "待归还数量不能为空")
         private Integer waitReturnQty;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<SampleScrapDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 
 

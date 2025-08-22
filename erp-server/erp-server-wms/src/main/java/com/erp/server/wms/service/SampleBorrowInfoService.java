@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -133,7 +135,7 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
     * @param response
     * @return
     */
-    void exportList(SampleBorrowInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SampleBorrowInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -142,5 +144,21 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleBorrowInfoEntity entity);
-
+    /**
+     * 作废
+     * @author jack
+     * @date: 2025-08-22
+     * @param id
+     * @return
+     */
+    BatchResultDTO invalid(String id);
+    /**
+     * 导入Excel
+     * @author jack
+     * @date: 2025-08-20
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

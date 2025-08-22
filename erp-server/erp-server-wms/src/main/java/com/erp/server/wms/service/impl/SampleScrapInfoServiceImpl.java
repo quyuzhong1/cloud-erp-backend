@@ -313,7 +313,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         });
         list.sort(Comparator.comparing(SampleScrapInfoDTO.TabListDTO::getTabFlag));
         list.add(0,new SampleScrapInfoDTO.TabListDTO("all","全部", 0));
-        // 计算合计数量
         return list;
     }
 
