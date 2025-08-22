@@ -37,4 +37,11 @@ public interface SoMultiChannelDetailService extends SuperService<SoMultiChannel
 
 
     List<SoMultiChannelDetailEntity> addDetail(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailDTO.AddDTO> detailList);
+
+    /**
+     * 根据主单id查询明细
+     * @param ids
+     * @return
+     */
+    List<SoMultiChannelDetailEntity> listByMainIds(List<String> ids);
 }

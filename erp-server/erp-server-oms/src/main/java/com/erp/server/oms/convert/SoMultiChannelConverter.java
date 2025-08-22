@@ -20,11 +20,12 @@ public interface SoMultiChannelConverter {
     SoMultiChannelConverter INSTANCE = Mappers.getMapper(SoMultiChannelConverter.class);
 
     @Mappings({
-            @Mapping(target = "abnormalType", ignore = true),
             @Mapping(target = "billStatus", ignore = true),
             @Mapping(target = "deliveryCode", ignore = true),
-            @Mapping(target = "shopId", source = "shopInfoEntity.id"),
-            @Mapping(target = "shopName", source = "shopInfoEntity.name"),
+            @Mapping(target = "deliveryShopId", source = "shopInfoEntity.id"),
+            @Mapping(target = "deliveryShopName", source = "shopInfoEntity.name"),
+            @Mapping(target = "shopId", source = "soB2cEntity.shopId"),
+            @Mapping(target = "shopName", source = "soB2cEntity.shopName"),
             @Mapping(target = "deliveryStatus", ignore = true),
             @Mapping(target = "deliveryTime", ignore = true),
             @Mapping(target = "hasOutstock", constant = "false"),

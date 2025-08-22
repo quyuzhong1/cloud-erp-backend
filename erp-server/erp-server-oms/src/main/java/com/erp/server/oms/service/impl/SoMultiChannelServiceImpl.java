@@ -2,8 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -19,6 +18,7 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FbaInventoryDTO;
@@ -26,6 +26,7 @@ import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
@@ -52,8 +53,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -121,7 +120,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("多渠道订单主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单" , soMultiChannelEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】卖家订单编号【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单" , soMultiChannelEntity.getCode(), soMultiChannelEntity.getDeliveryCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "新增操作");
         //新增明细（如果有明细的话）
         List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = soMultiChannelDetailService.addDetail(soMultiChannelEntity, addDTO.getDetailList());
@@ -278,13 +277,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         log.info("提交 开始修改多渠道订单主单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
+        //启动流程（如果需要的话）
         log.info("提交 开始启动多渠道订单主单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录多渠道订单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -522,7 +520,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelDTO.ViewDTO data = BeanMapperUtils.map(SoMultiChannelDTO.ViewDTO.class, soMultiChannelEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        // 查询明细数据（如果有的话）
+        List<SoMultiChannelDetailEntity> detailList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(id));
+        List<SoMultiChannelDetailDTO.ViewDTO> detailList1 = BeanMapperUtils.copyList(SoMultiChannelDetailDTO.ViewDTO.class, detailList);
+        data.setDetailList(detailList1);
         return data;
     }
     /**
@@ -537,11 +538,14 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = BeanUtil.beanToMap(entity);
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getDeliveryShopId());
+        map.put("shopChargeId", shopInfoEntity.getChargeId());
+        map.put("shopChargeName", shopInfoEntity.getChargeName());
+        startDTO.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -551,6 +555,21 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        //平台信息
+        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        // 属性赋值
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+        data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryStatus()));
+        data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
+        //平台类型名称
+        String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        data.setDictPlatformName(dictPlatformName);
+        String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        data.setDictPlatformName(deliveryPlatformName);
     }
 
     /**
@@ -601,11 +620,22 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        //平台信息
+        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         // 属性赋值
         for(SoMultiChannelDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+            data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryStatus()));
+            data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
+            //平台类型名称
+            String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setDictPlatformName(dictPlatformName);
+            String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setDictPlatformName(deliveryPlatformName);
         }
     }
     /**
@@ -648,6 +678,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             soMultiChannelEntity.setDictPlatform(entity.getDictPlatform());
             soMultiChannelEntity.setSoCode(entity.getCode());
             soMultiChannelEntity.setPlatformCode(entity.getPlatformCode());
+        }
+        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getCreateStatus())){
+            soMultiChannelEntity.setCreateStatus(CreateStatusEnum.WAIT.getCode());
+        }
+        if (Objects.isNull(soMultiChannelEntity.getApproveStatus())){
+            soMultiChannelEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        }
+        if (Objects.isNull(soMultiChannelEntity.getInvalidStatus())){
+            soMultiChannelEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
         }
         if (CharSequenceUtil.isBlank(soMultiChannelEntity.getCreateStatus())){
             soMultiChannelEntity.setCreateStatus(CreateStatusEnum.WAIT.getCode());

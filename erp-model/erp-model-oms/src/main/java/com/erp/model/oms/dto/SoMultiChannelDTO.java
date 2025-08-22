@@ -79,139 +79,140 @@ public class SoMultiChannelDTO implements Serializable {
         private String  id;
 
         /**
-        * 单据编码
+        * 单据编码【可排序】
         */
         private String code;
 
         /**
-        * 卖家订单编号/发货单号
+        * 卖家订单编号/发货单号【可排序】
         */
         private String deliveryCode;
 
         /**
-        * 发货平台
+        * 发货平台【可排序】
         */
         private String deliveryPlatform;
+        private String deliveryPlatformName;
 
         /**
-        * 销售平台
+        * 销售平台【可排序】
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
-        * 平台订单号
+        * 平台订单号【可排序】
         */
         private String platformCode;
 
         /**
-        * 店铺id
+        * 店铺id【可排序】
         */
         private String shopId;
 
         /**
-        * 店铺名称
+        * 店铺名称【可排序】
         */
         private String shopName;
 
         /**
-        * 货件编号
+        * 货件编号【可排序】
         */
         private String shipmentCode;
 
         /**
-        * 审核状态
+        * 审核状态【可排序】
         */
         private String approveStatus;
 
         /**
-        * 销售订单id
+        * 销售订单id【可排序】
         */
         private String soId;
 
         /**
-        * 销售单据编码
+        * 销售单据编码【可排序】
         */
         private String soCode;
 
         /**
-        * 物流跟踪号
+        * 物流跟踪号【可排序】
         */
         private String trackNo;
 
         /**
-        * 订单状态
+        * 订单状态【可排序】
         */
         private String billStatus;
+        private String billStatusName;
 
         /**
-        * 发货状态
+        * 发货状态【可排序】
         */
         private String deliveryStatus;
+        private String deliveryStatusName;
 
         /**
-        * 物流渠道id
+        * 物流渠道id【可排序】
         */
         private String logisticsChannelId;
 
         /**
-        * 物流渠道名
+        * 物流渠道名【可排序】
         */
         private String logisticsChannelName;
 
         /**
-        * 发货仓库id
+        * 发货仓库id【可排序】
         */
         private String deliveryWarehouseId;
 
         /**
-        * 发货仓库名称
+        * 发货仓库名称【可排序】
         */
         private String deliveryWarehouseName;
 
         /**
-        * 配送条件
+        * 配送条件【可排序】
         */
         private String shippingMethod;
 
         /**
-        * 发货时间
+        * 发货时间【可排序】
         */
         private LocalDateTime deliveryTime;
 
         /**
-        * 审核时间
+        * 审核时间【可排序】
         */
         private LocalDateTime approveTime;
 
         /**
-        * 审核人id
+        * 审核人id【可排序】
         */
         private String approveUserId;
 
         /**
-        * 审核人姓名
+        * 审核人姓名【可排序】
         */
         private String approveUserName;
 
-        /**
-        * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-        */
-        private String abnormalType;
 
         /**
-        * 订单异常标示
+        * 订单异常标示【可排序】
         */
         private String signOrderError;
 
         /**
-        * 订单备注
+        * 订单备注【可排序】
         */
         private String remark;
 
         /**
-        * 系统是否已出库
+        * 系统是否已出库【可排序】
         */
         private Boolean hasOutstock;
+        private String hasOutstockName;
 
 
         /**
@@ -220,12 +221,23 @@ public class SoMultiChannelDTO implements Serializable {
         private String approveStatusName;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
-
         /**
-        * 创建人名称
+         * 创建状态【可排序】
+         */
+        private String createStatus;
+        private String createStatusName;
+        /**
+         * 作废状态 【可排序】
+         * true 作废
+         * false 未作废
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
+        /**
+        * 创建人名称【可排序】
         */
         private String createUserName;
     }
@@ -268,11 +280,13 @@ public class SoMultiChannelDTO implements Serializable {
         * 发货平台
         */
         private String deliveryPlatform;
+        private String deliveryPlatformName;
 
         /**
         * 销售平台
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
         * 平台订单号
@@ -290,6 +304,16 @@ public class SoMultiChannelDTO implements Serializable {
         private String shopName;
 
         /**
+         * 店铺id
+         */
+        private String deliveryShopId;
+
+        /**
+         * 店铺名称
+         */
+        private String deliveryShopName;
+
+        /**
         * 货件编号
         */
         private String shipmentCode;
@@ -298,6 +322,18 @@ public class SoMultiChannelDTO implements Serializable {
         * 审核状态
         */
         private String approveStatus;
+        private String approveStatusName;
+
+        /**
+         * 创建状态
+         */
+        private String createStatus;
+        private String createStatusName;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * 销售订单id
@@ -318,11 +354,13 @@ public class SoMultiChannelDTO implements Serializable {
         * 订单状态
         */
         private String billStatus;
+        private String billStatusName;
 
         /**
         * 发货状态
         */
         private String deliveryStatus;
+        private String deliveryStatusName;
 
         /**
         * 物流渠道id
@@ -369,10 +407,6 @@ public class SoMultiChannelDTO implements Serializable {
         */
         private String approveUserName;
 
-        /**
-        * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-        */
-        private String abnormalType;
 
         /**
         * 订单异常标示
@@ -388,8 +422,11 @@ public class SoMultiChannelDTO implements Serializable {
         * 系统是否已出库
         */
         private Boolean hasOutstock;
-
-
+        private String hasOutstockName;
+        /**
+         * 明细列表
+         */
+        private List<SoMultiChannelDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -427,49 +464,63 @@ public class SoMultiChannelDTO implements Serializable {
         /**
         * 卖家订单编号/发货单号
         */
-        @NotBlank(message = "卖家订单编号/发货单号不能为空")
+//        @NotBlank(message = "卖家订单编号/发货单号不能为空")
         @Size(max = 32,message = "卖家订单编号/发货单号最大长度不能超过32位")
         private String deliveryCode;
 
         /**
         * 发货平台
         */
-        @NotBlank(message = "发货平台不能为空")
+//        @NotBlank(message = "发货平台不能为空")
         @Size(max = 32,message = "发货平台最大长度不能超过32位")
         private String deliveryPlatform;
 
         /**
         * 销售平台
         */
-        @NotBlank(message = "销售平台不能为空")
+//        @NotBlank(message = "销售平台不能为空")
         @Size(max = 32,message = "销售平台最大长度不能超过32位")
         private String dictPlatform;
 
         /**
         * 平台订单号
         */
-        @NotBlank(message = "平台订单号不能为空")
+//        @NotBlank(message = "平台订单号不能为空")
         @Size(max = 100,message = "平台订单号最大长度不能超过100位")
         private String platformCode;
 
         /**
         * 店铺id
         */
-        @NotBlank(message = "店铺id不能为空")
+//        @NotBlank(message = "店铺id不能为空")
         @Size(max = 19,message = "店铺id最大长度不能超过19位")
         private String shopId;
 
         /**
         * 店铺名称
         */
-        @NotBlank(message = "店铺名称不能为空")
+//        @NotBlank(message = "店铺名称不能为空")
         @Size(max = 100,message = "店铺名称最大长度不能超过100位")
         private String shopName;
 
         /**
+         * 发货店铺id
+         */
+        @NotBlank(message = "发货店铺id不能为空")
+        @Size(max = 19,message = "发货店铺id最大长度不能超过19位")
+        private String deliveryShopId;
+
+        /**
+         * 发货店铺名称
+         */
+//        @NotBlank(message = "发货店铺名称不能为空")
+        @Size(max = 100,message = "发货店铺名称最大长度不能超过100位")
+        private String deliveryShopName;
+
+        /**
         * 货件编号
         */
-        @NotBlank(message = "货件编号不能为空")
+//        @NotBlank(message = "货件编号不能为空")
         @Size(max = 32,message = "货件编号最大长度不能超过32位")
         private String shipmentCode;
 
@@ -483,28 +534,28 @@ public class SoMultiChannelDTO implements Serializable {
         /**
         * 销售单据编码
         */
-        @NotBlank(message = "销售单据编码不能为空")
+//        @NotBlank(message = "销售单据编码不能为空")
         @Size(max = 32,message = "销售单据编码最大长度不能超过32位")
         private String soCode;
 
         /**
         * 物流跟踪号
         */
-        @NotBlank(message = "物流跟踪号不能为空")
+//        @NotBlank(message = "物流跟踪号不能为空")
         @Size(max = 100,message = "物流跟踪号最大长度不能超过100位")
         private String trackNo;
 
         /**
         * 订单状态
         */
-        @NotBlank(message = "订单状态不能为空")
+//        @NotBlank(message = "订单状态不能为空")
         @Size(max = 32,message = "订单状态最大长度不能超过32位")
         private String billStatus;
 
         /**
         * 发货状态
         */
-        @NotBlank(message = "发货状态不能为空")
+//        @NotBlank(message = "发货状态不能为空")
         @Size(max = 32,message = "发货状态最大长度不能超过32位")
         private String deliveryStatus;
 
@@ -518,7 +569,7 @@ public class SoMultiChannelDTO implements Serializable {
         /**
         * 物流渠道名
         */
-        @NotBlank(message = "物流渠道名不能为空")
+//        @NotBlank(message = "物流渠道名不能为空")
         @Size(max = 100,message = "物流渠道名最大长度不能超过100位")
         private String logisticsChannelName;
 
@@ -532,7 +583,7 @@ public class SoMultiChannelDTO implements Serializable {
         /**
         * 发货仓库名称
         */
-        @NotBlank(message = "发货仓库名称不能为空")
+//        @NotBlank(message = "发货仓库名称不能为空")
         @Size(max = 100,message = "发货仓库名称最大长度不能超过100位")
         private String deliveryWarehouseName;
 
@@ -549,29 +600,22 @@ public class SoMultiChannelDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
-        * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-        */
-        @NotBlank(message = "异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）不能为空")
-        @Size(max = 32,message = "异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）最大长度不能超过32位")
-        private String abnormalType;
-
-        /**
         * 订单异常标示
         */
-        @NotBlank(message = "订单异常标示不能为空")
+//        @NotBlank(message = "订单异常标示不能为空")
         @Size(max = 30,message = "订单异常标示最大长度不能超过30位")
         private String signOrderError;
 
         /**
         * 订单备注
         */
-        @NotBlank(message = "订单备注不能为空")
+//        @NotBlank(message = "订单备注不能为空")
         private String remark;
 
         /**
         * 系统是否已出库
         */
-        @NotNull(message = "系统是否已出库不能为空")
+//        @NotNull(message = "系统是否已出库不能为空")
         private Boolean hasOutstock;
 
 

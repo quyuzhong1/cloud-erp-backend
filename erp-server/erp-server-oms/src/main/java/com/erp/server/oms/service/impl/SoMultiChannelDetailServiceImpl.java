@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -125,6 +126,14 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         checkData(soMultiChannelEntity,soMultiChannelDetailEntities);
         super.saveBatch(soMultiChannelDetailEntities);
         return soMultiChannelDetailEntities;
+    }
+
+    @Override
+    public List<SoMultiChannelDetailEntity> listByMainIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return null;
+        }
+        return baseMapper.selectList(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().in(SoMultiChannelDetailEntity::getMainId, ids));
     }
 
     private void checkData(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities) {

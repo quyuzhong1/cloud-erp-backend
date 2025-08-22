@@ -35,11 +35,14 @@
        <result column="approve_time" property="approveTime" />
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
-       <result column="abnormal_type" property="abnormalType" />
        <result column="sign_order_error" property="signOrderError" />
        <result column="remark" property="remark" />
        <result column="has_outstock" property="hasOutstock" />
-       <result column="create_status" property="createStatus" />
+        <result column="create_status" property="createStatus" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="delivery_shop_id" property="deliveryShopId" />
+       <result column="delivery_shop_name" property="deliveryShopName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -53,11 +56,63 @@
         update_time,
         version,
         is_deleted,
-        code, delivery_code, delivery_platform, dict_platform, platform_code, shop_id, shop_name, shipment_code, approve_status, so_id, so_code, track_no, bill_status, delivery_status, logistics_channel_id, logistics_channel_name, delivery_warehouse_id, delivery_warehouse_name, shipping_method, delivery_time, approve_time, approve_user_id, approve_user_name, abnormal_type, sign_order_error, remark, has_outstock,create_status
+        code, delivery_code, delivery_platform, dict_platform, platform_code, shop_id, shop_name, shipment_code, approve_status, so_id, so_code, track_no,
+        bill_status, delivery_status, logistics_channel_id, logistics_channel_name, delivery_warehouse_id, delivery_warehouse_name, shipping_method,
+        delivery_time, approve_time, approve_user_id, approve_user_name, sign_order_error, remark, has_outstock,create_status,invalid_status,invalid_remark,
+        delivery_shop_id,delivery_shop_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
-
+        SELECT
+            smc.id,
+            smc.code,
+            smc.delivery_code as deliveryCode,
+            smc.delivery_platform as deliveryPlatform,
+            smc.delivery_shop_id as deliveryShopId,
+            smc.delivery_shop_name as deliveryShopName,
+            smc.shipment_code as shipmentCode,
+            smc.approve_status as approveStatus,
+            smc.create_status as createStatus,
+            smc.invalid_status as invalidStatus,
+            smc.dict_platform as dictPlatform,
+            smc.shop_id as shopId,
+            smc.shop_name as shopName,
+            smc.so_id as soId,
+            smc.so_code as soCode,
+            smc.platform_code as platformCode,
+            smc.track_no as trackNo,
+            smc.bill_status as billStatus,
+            smc.delivery_status as deliveryStatus,
+            smc.logistics_channel_id as logisticsChannelId,
+            smc.logistics_channel_name as logisticsChannelName,
+            smsd.platform_spu_no as platformSpuNo,
+            smsd.platform_sku_no as platformSkuNo,
+            smsd.qty,
+            smsd.delivery_qty as deliveryQty,
+            smc.create_time as createTime,
+            smc.approve_time as approveTime,
+            smc.delivery_time as deliveryTime,
+            smc.create_user_name as createUserName,
+            smc.approve_user_name as approveUserName,
+            smc.remark,
+            smc.sign_order_error as signOrderError,
+            smc.has_outstock as hasOutstock
+        FROM so_multi_channel smc
+        LEFT JOIN so_multi_channel_detail smsd on smsc.main_id=smc.id and smsc.is_deleted=false
+        WHERE
+            ${params.sqlMap.default}
+          and smc.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        smc.create_time DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

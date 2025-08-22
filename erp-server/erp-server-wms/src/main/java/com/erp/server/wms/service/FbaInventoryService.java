@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -125,4 +126,11 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * @Date 2025-08-20
      **/
     List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO);
+
+    /**
+     * 库存树状结构
+     * @param queryDTO
+     * @return
+     */
+    HashMap<String, List<FbaInventoryDTO.InventoryDTO>> fbaInventoryTree(FbaInventoryDTO.QueryDTO queryDTO);
 }

@@ -279,6 +279,7 @@
                 #{skuNo}
             </foreach>
         </if>
+        order by sku_no,fulfillable_qty desc
     </select>
 
 </mapper>

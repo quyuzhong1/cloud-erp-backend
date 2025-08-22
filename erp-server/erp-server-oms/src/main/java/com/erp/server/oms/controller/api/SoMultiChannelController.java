@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -54,37 +55,37 @@ public class SoMultiChannelController extends BaseController {
     private SoB2cService soB2cService;
     @Resource
     private ShopInfoService shopInfoService;
-    /**
-    * 新增
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "多渠道订单主表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-        return success(soMultiChannelService.add(dto));
-    }
+//    /**
+//    * 新增
+//    * @author zdy
+//    * @date:  2025-08-20
+//    * @param dto
+//    * @return ApiResult<String>
+//    */
+//    @PostMapping("/add")
+//    @LogAction(value = LogActionEnum.INSERT, desc = "多渠道订单主表新增")
+//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
+//        return success(soMultiChannelService.add(dto));
+//    }
 
-    /**
-    * 修改
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单主表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:soMultiChannel:update",
-        serviceClass = SoMultiChannelService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-        soMultiChannelService.update(dto);
-        return success();
-    }
+//    /**
+//    * 修改
+//    * @author zdy
+//    * @date:  2025-08-20
+//    * @param dto
+//    * @return ApiResult
+//    */
+//    @PostMapping("/update")
+//    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单主表修改")
+//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//        tableField = "create_user_id",
+//        menuCode = "oms:soMultiChannel:update",
+//        serviceClass = SoMultiChannelService.class,
+//        keyIdName = "id")
+//    public ApiResult<?> update(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
+//        soMultiChannelService.update(dto);
+//        return success();
+//    }
 
     /**
     * 获取状态统计
@@ -111,42 +112,43 @@ public class SoMultiChannelController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soMultiChannel:paging",
-            tableAlias = ""
+            tableAlias = "smc"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SoMultiChannelDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return success(soMultiChannelService.paging(dto));
     }
 
-    /**
-    * 新增并提交审核
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO result = soMultiChannelService.addAndSubmit(dto);
-        return success(result);
-    }
+//    /**
+//    * 新增并提交审核
+//    * @author zdy
+//    * @date:  2025-08-20
+//    * @param dto
+//    * @return ApiResult<Void>
+//    */
+//    @PostMapping("/addAndSubmit")
+//    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoMultiChannelDTO.AddDTO dto) {
+//        BaseResultDTO.AddDTO result = soMultiChannelService.addAndSubmit(dto);
+//        return success(result);
+//    }
 
-    /**
-    * 修改并提交审核
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/updateAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soMultiChannel:updateAndSubmit",
-            serviceClass = SoMultiChannelService.class,
-            keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
-        soMultiChannelService.updateAndSubmit(dto);
-        return success();
-    }
+//    /**
+//    * 修改并提交审核
+//    * @author zdy
+//    * @date:  2025-08-20
+//    * @param dto
+//    * @return ApiResult<Void>
+//    */
+//    @PostMapping("/updateAndSubmit")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "oms:soMultiChannel:updateAndSubmit",
+//            serviceClass = SoMultiChannelService.class,
+//            keyIdName = "id")
+//    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoMultiChannelDTO.UpdateDTO dto) {
+//        soMultiChannelService.updateAndSubmit(dto);
+//        return success();
+//    }
 
     /**
     * 提交审核
@@ -165,7 +167,6 @@ public class SoMultiChannelController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
 		Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -410,6 +411,10 @@ public class SoMultiChannelController extends BaseController {
                 submit = BatchResultDTO.fail(id, id, "订单不存在, 提交失败");
                 resultDTOS.add(submit);
                 continue;
+            }
+            ShopInfoEntity shopInfoEntity1 = shopInfoService.getById(soB2cEntity.getShopId());
+            if (Objects.nonNull(shopInfoEntity1)){
+                soB2cEntity.setShopName(shopInfoEntity1.getName());
             }
             try {
                 SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity,soB2cEntity,channelEntity);

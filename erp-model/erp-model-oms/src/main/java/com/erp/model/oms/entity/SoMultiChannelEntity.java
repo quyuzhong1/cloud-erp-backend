@@ -141,11 +141,6 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     @TableField("approve_user_name")
     private String approveUserName;
     /**
-    * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
-    */
-    @TableField("abnormal_type")
-    private String abnormalType;
-    /**
     * 订单异常标示
     */
     @TableField("sign_order_error")
@@ -165,6 +160,26 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
      */
     @TableField("create_status")
     private String createStatus;
+    /**
+     * 作废状态（false未作废，true已作废）
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+    /**
+     * 发货店铺id
+     */
+    @TableField("delivery_shop_id")
+    private String deliveryShopId;
+    /**
+     * 发货店铺名称
+     */
+    @TableField("delivery_shop_name")
+    private String deliveryShopName;
 
     public static final String CODE = "code";
 
