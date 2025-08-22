@@ -4179,7 +4179,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> skuIdList = resultList.stream().map(m -> m.get("skuId").toString()).collect(Collectors.toList());
             if (skuIdList.contains(entity.getId())) {
                 //如果缓存中存在该SKU则清除
-                redisUtil.hdel(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+                redisUtil.del(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
                 return;
             }
         }
@@ -4187,7 +4187,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_SERVICE) ||
                 productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_COST)) {
             //清除redis中费用、服务类SKU缓存
-            redisUtil.hdel(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+            redisUtil.del(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
         }
     }
 
