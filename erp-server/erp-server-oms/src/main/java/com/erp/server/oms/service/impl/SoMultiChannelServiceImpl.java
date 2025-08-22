@@ -325,7 +325,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        //此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -341,11 +341,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -448,6 +448,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
 
+
         return Boolean.TRUE;
     }
 
@@ -542,16 +543,21 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         startDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        Map<String, Object> map = BeanUtil.beanToMap(entity);
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getDeliveryShopId());
-        map.put("shopChargeId", shopInfoEntity.getChargeId());
-        map.put("shopChargeName", shopInfoEntity.getChargeName());
-        startDTO.setVariablesMap(map);
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+
+    private Map<String, Object> getVariablesMap(SoMultiChannelEntity entity) {
+        Map<String, Object> map = BeanUtil.beanToMap(entity);
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getDeliveryShopId());
+        map.put("shopChargeId", shopInfoEntity.getChargeId());
+        map.put("shopChargeName", shopInfoEntity.getChargeName());
+        return map;
+    }
+
     private void fillOne(SoMultiChannelDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;

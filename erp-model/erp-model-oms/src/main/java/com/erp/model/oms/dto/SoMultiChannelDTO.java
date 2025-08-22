@@ -694,10 +694,6 @@ public class SoMultiChannelDTO implements Serializable {
          */
         private String fnSku;
         /**
-         * 平台sku
-         */
-        private String asin;
-        /**
          * 平台商品名称
          */
         private String platformProductName;
