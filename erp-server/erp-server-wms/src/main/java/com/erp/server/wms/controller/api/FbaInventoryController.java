@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * FBA库存
@@ -99,5 +100,18 @@ public class FbaInventoryController extends BaseController {
     public ApiResult<FbaInventoryDTO.InventoryReservedView> listInventoryReserved(@RequestParam(value = "id") String id) {
         FbaInventoryDTO.InventoryReservedView result = fbaInventoryService.listInventoryReserved(id);
         return success(result);
+    }
+
+    /**
+     * 获取FBA库存信息
+     * @Author zdy
+     * @Date 2025/08/21 11:42
+     * @param queryDTO
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.FbaInventoryDTO.SummaryNumber>
+     **/
+    @PostMapping("/listFbaInventory")
+    public ApiResult<List<FbaInventoryDTO.InventoryDTO>> summaryNumber(@RequestBody @Validated FbaInventoryDTO.QueryDTO queryDTO) {
+        List<FbaInventoryDTO.InventoryDTO> list = fbaInventoryService.listFbaInventory(queryDTO);
+        return success(list);
     }
 }

@@ -155,6 +155,7 @@ public enum ModuleTypeEnum {
     DICT_HS_CODE("133", "出口申报要素"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
+    SO_MULTI_CHANNEL("134", "多渠道订单"),
 
 
     ;

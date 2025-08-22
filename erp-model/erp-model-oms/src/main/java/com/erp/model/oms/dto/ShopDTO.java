@@ -296,7 +296,7 @@ public class ShopDTO implements Serializable {
         /**
          * 是否多渠道发货
          */
-        private Boolean isMultiChannelDelivery;
+        private Boolean isMultiChannel;
 
         /**
          * 数据下载时间
@@ -458,7 +458,7 @@ public class ShopDTO implements Serializable {
         /**
          * 是否多渠道发货
          */
-        private Boolean isMultiChannelDelivery;
+        private Boolean isMultiChannel;
         /**
          * ioss税号
          */
@@ -685,7 +685,7 @@ public class ShopDTO implements Serializable {
         /**
          * 是否多渠道发货
          */
-        private Boolean isMultiChannelDelivery;
+        private Boolean isMultiChannel;
         /**
          * 数据下载时间
          */
@@ -1079,6 +1079,10 @@ public class ShopDTO implements Serializable {
          */
         private Boolean showByAuth;
         /**
+         * 是否多渠道
+         */
+        private Boolean isMultiChannel;
+        /**
          * 平台
          */
         private List<String> shopIdList;
@@ -1115,6 +1119,14 @@ public class ShopDTO implements Serializable {
          * 授权状态
          */
         private String authStatus;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
 
         /**
          * 是否可选

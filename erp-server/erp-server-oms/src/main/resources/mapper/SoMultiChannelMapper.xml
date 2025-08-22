@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoMultiChannelMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoMultiChannelEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="delivery_code" property="deliveryCode" />
+       <result column="delivery_platform" property="deliveryPlatform" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="platform_code" property="platformCode" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="shipment_code" property="shipmentCode" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="track_no" property="trackNo" />
+       <result column="bill_status" property="billStatus" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
+       <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="abnormal_type" property="abnormalType" />
+       <result column="sign_order_error" property="signOrderError" />
+       <result column="remark" property="remark" />
+       <result column="has_outstock" property="hasOutstock" />
+       <result column="create_status" property="createStatus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, delivery_code, delivery_platform, dict_platform, platform_code, shop_id, shop_name, shipment_code, approve_status, so_id, so_code, track_no, bill_status, delivery_status, logistics_channel_id, logistics_channel_name, delivery_warehouse_id, delivery_warehouse_name, shipping_method, delivery_time, approve_time, approve_user_id, approve_user_name, abnormal_type, sign_order_error, remark, has_outstock,create_status
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from so_multi_channel where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  so_multi_channel
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="listSoMultiChannelBySoId" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$SoViewDTO">
+        SELECT
+            sb2c.id as soId,
+            sb2c.code as soCode,
+            sb2c.approve_status as approveStatus,
+            sb2c.bill_status as billStatus,
+            sb2c.dict_platform as dictPlatform,
+            sb2c.platform_code as platformCode,
+            sbd.id as soDetailId,
+            sbd.sku_id as skuId,
+            sbd.sku_no as skuNo,
+            sbd.qty as qty
+        FROM so_b2c sb2c
+        LEFT JOIN so_b2c_detail sbd on sbd.main_id = sb2c.id and sb2c.is_deleted = FALSE
+        WHERE sb2c.is_deleted = FALSE
+        AND sb2c.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

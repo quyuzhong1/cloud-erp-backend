@@ -159,8 +159,8 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     /**
      * 是否多渠道发货
      */
-    @TableField("is_multi_channel_delivery")
-    private Boolean isMultiChannelDelivery;
+    @TableField("is_multi_channel")
+    private Boolean isMultiChannel;
 
     /**
      * 平台店铺编码/卖家编码

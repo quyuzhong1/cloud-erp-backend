@@ -75,10 +75,10 @@
         isAuth DESC,si.update_time DESC
     </sql>
     <select id="pagingSelect" resultType="com.erp.model.oms.dto.ShopDTO$ListDTO">
-        select id,account,name,auth_status,disabled,dict_platform
+        select id,account,name,auth_status,disabled,dict_platform,warehouse_id,warehouse_name
         from
         (
-            SELECT id,account,name,auth_status,disabled,dict_platform
+            SELECT id,account,name,auth_status,disabled,dict_platform,warehouse_id,warehouse_name
             FROM shop_info si
             WHERE si.is_deleted=FALSE
             <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -98,6 +98,9 @@
                 <foreach collection="params.shopIdList" item="item" open="(" close=")" separator=",">
                     (#{item})
                 </foreach>
+            </if>
+            <if test="params.isMultiChannel != null">
+                and si.is_multi_channel = #{params.isMultiChannel}
             </if>
             order by
             <if test="params.searchKeyword != null and params.searchKeyword != ''">

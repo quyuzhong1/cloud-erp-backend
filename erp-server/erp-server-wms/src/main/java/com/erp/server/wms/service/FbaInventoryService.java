@@ -117,4 +117,12 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * 检查和更新添加的FNSKU
      */
     void checkAndUpdateFnsku(RequisitionApplicationDTO.UpdateDTO dto);
+
+    /**
+     * 获取FBA库存信息
+     *
+     * @Author zdy
+     * @Date 2025-08-20
+     **/
+    List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO);
 }

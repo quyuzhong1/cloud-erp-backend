@@ -1122,4 +1122,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateAmount(String id, BigDecimal amount);
 
     void clearOutDateBySoIds(List<String> clearOutDateSoIds);
+
+    /**
+     * 更新销售订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
 }
