@@ -1,27 +1,16 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.server.wms.mapper.SampleScrapDetailMapper;
 import com.erp.server.wms.service.SampleScrapDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -51,5 +40,11 @@ public class SampleScrapDetailServiceImpl extends SuperServiceImpl<SampleScrapDe
         }
         return lambdaQuery().eq(SampleScrapDetailEntity::getMainId, id).list();
     }
+
+    @Override
+    public Map<String,Integer> listBySku(String id,List<String> skuNos){
+        return this.baseMapper.listBySku(id,skuNos);
+    }
+
 
 }

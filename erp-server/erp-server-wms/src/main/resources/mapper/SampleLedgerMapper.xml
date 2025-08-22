@@ -37,5 +37,27 @@
         user_id, user_name, dept_id, dept_name, sku_no, product_name, use_user_id, use_user_name, qty
     </sql>
 
+    <select id="listSkuAvailableQtyByUserId" resultType="java.util.Map">
+        select
+        sl.sku_no as skuNo,
+        sum(qty) as qty
+        from
+        sample_ledger sl
+        where
+        sl.is_deleted = false
+        and sl.user_id = #{dto.userId}
+        <if test="dto.skuNos != null and dto.skuNos.size() > 0">
+            and sl.sku_no in
+            <foreach collection="dto.skuNos" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="dto.skuNo != null and dto.skuNo != ''">
+            and sl.sku_no = #{dto.skuNo}
+        </if>
+        GROUP BY
+        sl.sku_no
+    </select>
+
 
 </mapper>

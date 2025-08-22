@@ -66,7 +66,7 @@ public class SampleScrapDetailDTO implements Serializable {
         /**
          * 可报废数量
          */
-        private Integer availableScrapQty;
+        private Integer availableScrapQty = 0;
 
         /**
         * 备注

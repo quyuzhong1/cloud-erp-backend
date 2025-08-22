@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
@@ -9,8 +11,8 @@ import com.erp.server.wms.service.SampleLedgerService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,4 +95,22 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     private void handleData(SampleLedgerEntity sampleLedgerEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+
+    /**
+     * 根据用户ID查询台账列表
+     * @param dto 查询条件对象，包含用户ID、SKU编号等查询参数
+     * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
+     */
+    @Override
+    public Map<String, Integer> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto){
+        if(Objects.isNull(dto)){
+            return Collections.emptyMap();
+        }
+        if(StringUtils.isBlank(dto.getUserId())){
+            return Collections.emptyMap();
+        }
+        return this.baseMapper.listSkuAvailableQtyByUserId(dto);
+    }
+
 }

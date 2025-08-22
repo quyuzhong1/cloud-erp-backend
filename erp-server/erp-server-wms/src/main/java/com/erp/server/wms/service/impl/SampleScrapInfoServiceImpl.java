@@ -7,8 +7,10 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -17,16 +19,13 @@ import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.mapper.SampleScrapInfoMapper;
-import com.erp.server.wms.service.SampleScrapDetailService;
-import com.erp.server.wms.service.SampleScrapInfoService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -79,6 +78,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SampleLedgerService sampleLedgerService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -105,11 +106,45 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<SampleScrapDetailDTO.AddDTO> detailList = addDTO.getDetailList();
         detailList.forEach(detail -> detail.setMainId(sampleScrapInfoEntity.getId()));
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
+
+        // 提取所有SKU编号，用于后续查询可用数量
+        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+
+        String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
+        //校验可用数量是否足够
+        checkDetailQty("" , scrapUserId, skuNos, sampleScrapDetailEntities);
+
         sampleScrapDetailService.saveBatch(sampleScrapDetailEntities);
 
         //附件
         addAttachment(addDTO, sampleScrapInfoEntity);
         return new BaseResultDTO.AddDTO(sampleScrapInfoEntity.getId(), code);
+    }
+
+    private void checkDetailQty(String id , String scrapUserId, List<String> skuNos, List<SampleScrapDetailEntity> sampleScrapDetailEntities) {
+        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+        dto.setUserId(scrapUserId);
+        dto.setSkuNos(skuNos);
+        Map<String, Integer> sampleLedgerMap  = sampleLedgerService.listLedgerByUserId(dto);
+
+        // 查询这些SKU已经被报废的数量
+        Map<String, Integer> sampleScrapMap = sampleScrapDetailService.listBySku(id,skuNos);
+
+        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
+        sampleScrapDetailEntities.forEach(detailDTO -> {
+            String skuNo = detailDTO.getSkuNo();
+            Integer ledgerQty = sampleLedgerMap.getOrDefault(skuNo, 0);  // 样品台账中的可用数量
+            Integer scrapQty = sampleScrapMap.getOrDefault(skuNo, 0);    // 已经报废的数量
+            int availableScrapQty = ledgerQty - scrapQty;               // 相减后得到实际可报废数量
+
+            if(detailDTO.getScrapQty().compareTo(availableScrapQty) > 0){
+                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,skuNo,"报废");
+            }
+
+            //防止明细里还有重复SKU
+            sampleLedgerMap.put(skuNo,ledgerQty - detailDTO.getScrapQty());
+        });
     }
 
     /**
@@ -167,7 +202,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         operateLogService.addModuleOperateLogByObj(old, sampleScrapInfoEntity, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), sampleScrapInfoEntity.getId(), msg);
 
         //明细
-        updateDetail(addOrUpdateDTO, old, sampleScrapInfoEntity);
+        updateDetail(addOrUpdateDTO, sampleScrapInfoEntity);
         //附件
         updateAttachment(addOrUpdateDTO, old);
         return Boolean.TRUE;
@@ -184,12 +219,20 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
      * 同时为上述操作添加对应的操作日志。
      *
      * @param addOrUpdateDTO        包含待更新明细数据的DTO对象
-     * @param old                   原始的样品报废主表实体对象
      * @param sampleScrapInfoEntity 当前更新后的样品报废主表实体对象
      */
-    private void updateDetail(SampleScrapInfoDTO.UpdateDTO addOrUpdateDTO, SampleScrapInfoEntity old, SampleScrapInfoEntity sampleScrapInfoEntity) {
+    private void updateDetail(SampleScrapInfoDTO.UpdateDTO addOrUpdateDTO,  SampleScrapInfoEntity sampleScrapInfoEntity) {
         List<SampleScrapDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
-        List<SampleScrapDetailEntity> oldList = sampleScrapDetailService.listByMainId(old.getId());
+        List<SampleScrapDetailEntity> oldList = sampleScrapDetailService.listByMainId(sampleScrapInfoEntity.getId());
+        detailList.forEach(detail -> detail.setMainId(sampleScrapInfoEntity.getId()));
+        List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
+
+        // 提取所有SKU编号，用于后续查询可用数量
+        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
+        //校验可用数量是否足够
+        checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuNos, sampleScrapDetailEntities);
+
         if(CollUtil.isNotEmpty(oldList)){
             // 处理删除的数据
             List<SampleScrapDetailEntity> remove = oldList.stream()
@@ -202,9 +245,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), removePairList, "编辑操作");
             }
         }
-
-        detailList.forEach(detail -> detail.setMainId(sampleScrapInfoEntity.getId()));
-        List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
         //处理需要新增的数据
         List<SampleScrapDetailEntity> addList = sampleScrapDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(addList)){
@@ -531,25 +571,62 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
 
 
+    /**
+     * 根据样品报废单ID查询详细信息，包括主表信息、明细列表、附件信息，并计算每个SKU的可报废数量。
+     *
+     * @param id 样品报废单ID，用于查询主表和关联数据
+     * @return SampleScrapInfoDTO.ViewDTO 包含完整报废单视图数据的数据传输对象
+     * @throws ServiceException 当未找到对应ID的样品报废单时抛出异常
+     */
     @Override
     public SampleScrapInfoDTO.ViewDTO view(String id) {
+        // 查询主表信息，若不存在则抛出异常
         SampleScrapInfoEntity sampleScrapInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品报废单数据"));
+
+        // 将实体映射为ViewDTO对象
         SampleScrapInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleScrapInfoDTO.ViewDTO.class, sampleScrapInfoEntity);
-        // 数据填充处理
+
+        // 填充额外展示所需的数据
         fillOne(data);
-        //查询明细
+
+        // 查询报废明细列表并转换为DTO
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = sampleScrapDetailService.listByMainId(id);
         List<SampleScrapDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(SampleScrapDetailDTO.ViewDTO.class,sampleScrapDetailEntities);
+
+        // 提取所有SKU编号，用于后续查询可用数量
+        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+
+        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+        dto.setUserId(sampleScrapInfoEntity.getScrapUserId());
+        dto.setSkuNos(skuNos);
+        Map<String, Integer> sampleLedgerMap  = sampleLedgerService.listLedgerByUserId(dto);
+
+        // 查询这些SKU已经被报废的数量
+        Map<String, Integer> sampleScrapMap = sampleScrapDetailService.listBySku("",skuNos);
+
+        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
+        detailDTOList.forEach(detailDTO -> {
+            String skuNo = detailDTO.getSkuNo();
+            Integer ledgerQty = sampleLedgerMap.getOrDefault(skuNo, 0);  // 样品台账中的可用数量
+            Integer scrapQty = sampleScrapMap.getOrDefault(skuNo, 0);    // 已经报废的数量
+            int availableScrapQty = ledgerQty - scrapQty;               // 相减后得到实际可报废数量
+            detailDTO.setAvailableScrapQty(availableScrapQty);
+        });
+
+        // 设置明细列表到主数据对象中
         data.setDetailList(detailDTOList);
-        //查询附件
+
+        // 查询与该报废单相关的附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
         if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
             data.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
-
             data.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
         return data;
     }
+
     /**
     * 启动流程
     *

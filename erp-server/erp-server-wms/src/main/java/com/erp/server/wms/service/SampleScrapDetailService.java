@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -30,4 +31,6 @@ public interface SampleScrapDetailService extends SuperService<SampleScrapDetail
     SampleScrapDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
     List<SampleScrapDetailEntity> listByMainId(String id);
+
+    Map<String,Integer> listBySku(String id,List<String> skuNos);
 }

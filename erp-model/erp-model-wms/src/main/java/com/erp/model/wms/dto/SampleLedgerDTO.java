@@ -2,9 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -169,6 +169,32 @@ public class SampleLedgerDTO implements Serializable {
         private Integer qty;
 
 
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+
+        private String skuNo;
+
+        private List<String> skuNos;
+
+        private String userId;
+
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuAvailableQtyDTO {
+
+        private String skuNo;
+
+        private Integer qty = 0;
     }
 
 

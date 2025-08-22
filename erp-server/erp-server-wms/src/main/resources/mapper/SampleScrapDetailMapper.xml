@@ -39,5 +39,28 @@ ssid.scrap_qty as scrapQty,
 ssid.remark as remark
     </sql>
 
+    <select id="listBySku" resultType="java.util.Map">
+        select
+        ssd.sku_no as skuNo,
+        sum(ssd.scrap_qty) as qty
+        from
+        sample_scrap_detail ssd
+        inner join sample_scrap_info ssi on ssd.main_id = ssi. id and ssi.is_deleted = false
+        where
+        ssd.is_deleted = false
+        and ssi.approve_status != 'approve'
+        <if test="skuNos != null and skuNos.size() > 0">
+            and ssd.sku_no in
+            <foreach collection="skuNos" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="id != null and id != '' ">
+            and ssd.main_id != #{id}
+        </if>
+        GROUP BY
+        ssd.sku_no
+    </select>
+
 
 </mapper>

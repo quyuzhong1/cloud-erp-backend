@@ -4,6 +4,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 样品库存统计 服务类
@@ -32,5 +35,10 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     */
     Boolean update(SampleLedgerDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据用户ID查询台账列表
+     * @param dto 查询条件对象，包含用户ID、SKU编号等查询参数
+     * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
+     */
+    Map<String, Integer> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto);
 }

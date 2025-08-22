@@ -1116,6 +1116,14 @@ public enum ApiError implements Serializable {
     B2C_SO_DELIVERY_NOT_EXISTS(99152,"b2c发货单不存在"),
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
+
+    ERROR_SAMPLE_AVAILABLE_QTY(99153,"【{}】当前可【{}】数量不足"),
+
+
+
+
+
+
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
     ERROR_PDF_MERGE_SKU_BARCODE(92115,"打印SKU条码失败，合并PDF时出错"),
     ERROR_PDF_SO_MERGE(92115,"打印面单失败，合并PDF时出错"),
@@ -1322,6 +1330,12 @@ public enum ApiError implements Serializable {
 
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+
+
+
+
+
+
 
     /**
      * OMS 错误
