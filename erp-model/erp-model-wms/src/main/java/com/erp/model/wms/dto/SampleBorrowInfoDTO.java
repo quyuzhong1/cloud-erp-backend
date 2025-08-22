@@ -16,7 +16,7 @@ import java.util.Map;
 
 /**
  * <p>
- * 借用变更单请求响应实体
+ * 样品借用单请求响应实体
  * </p>
  *
  * @author jack

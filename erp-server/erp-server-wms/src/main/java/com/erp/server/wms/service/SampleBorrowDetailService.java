@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
- * 借用变更单明细表 服务类
+ * 样品借用单明细表 服务类
  * </p>
  *
  * @author jack

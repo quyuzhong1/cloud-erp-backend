@@ -12,7 +12,7 @@ import javax.validation.constraints.Size;
 
 /**
  * <p>
- * 借用变更单明细表请求响应实体
+ * 样品借用单明细表请求响应实体
  * </p>
  *
  * @author jack

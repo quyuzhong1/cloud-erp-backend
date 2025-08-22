@@ -14,7 +14,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 借用变更单
+ * 样品借用单
  * </p>
  *
  * @author jack

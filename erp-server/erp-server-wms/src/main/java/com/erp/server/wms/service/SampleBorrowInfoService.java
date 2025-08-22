@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * <p>
- * 借用变更单 服务类
+ * 样品借用单 服务类
  * </p>
  *
  * @author jack

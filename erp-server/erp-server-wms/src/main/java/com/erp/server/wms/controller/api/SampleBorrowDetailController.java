@@ -20,14 +20,14 @@ import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 借用变更单明细表
+ * 样品借用单明细表
  *
  * @author jack
  * @since 2025-08-20
  */
 @Slf4j
 @RestController
-@LogSystemModule("借用变更单明细表")
+@LogSystemModule("样品借用单明细表")
 @RequestMapping("/sampleBorrowDetail")
 public class SampleBorrowDetailController extends BaseController {
 

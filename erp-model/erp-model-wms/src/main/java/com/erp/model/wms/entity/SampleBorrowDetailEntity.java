@@ -12,7 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 借用变更单明细表
+ * 样品借用单明细表
  * </p>
  *
  * @author jack

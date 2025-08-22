@@ -35,14 +35,14 @@ import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 借用变更单
+ * 样品借用单
  *
  * @author jack
  * @since 2025-08-20
  */
 @Slf4j
 @RestController
-@LogSystemModule("借用变更单")
+@LogSystemModule("样品借用单")
 @RequestMapping("/sampleBorrowInfo")
 public class SampleBorrowInfoController extends BaseController {
 
@@ -57,7 +57,7 @@ public class SampleBorrowInfoController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "借用变更单新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "样品借用单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleBorrowInfoDTO.AddDTO dto) {
         return success(sampleBorrowInfoService.add(dto));
     }
@@ -70,7 +70,7 @@ public class SampleBorrowInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "借用变更单修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "样品借用单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:sampleBorrowInfo:update",
@@ -157,7 +157,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:submit",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "借用变更单提交审核")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "样品借用单提交审核")
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -168,10 +168,10 @@ public class SampleBorrowInfoController extends BaseController {
             try {
                 submit = sampleBorrowInfoService.submit(id);
             }catch (Exception e){
-                log.error("借用变更单 提交审核失败",e);
+                log.error("样品借用单 提交审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "借用变更单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "样品借用单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -195,7 +195,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:approve",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "借用变更单审核")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "样品借用单审核")
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -206,10 +206,10 @@ public class SampleBorrowInfoController extends BaseController {
             try {
                 approveResult = sampleBorrowInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("借用变更单审核失败",e);
+                log.error("样品借用单审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "借用变更单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -233,7 +233,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:disApprove",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "借用变更单反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品借用单反审核")
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -244,10 +244,10 @@ public class SampleBorrowInfoController extends BaseController {
             try {
                 disApproveResult = sampleBorrowInfoService.disApprove(id);
             }catch (Exception e){
-                log.error("借用变更单反审核失败",e);
+                log.error("样品借用单反审核失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "借用变更单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -272,7 +272,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:delete",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "借用变更单删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "样品借用单删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -283,10 +283,10 @@ public class SampleBorrowInfoController extends BaseController {
             try {
                 deleteResult = sampleBorrowInfoService.delete(id);
             }catch (Exception e){
-                log.error("借用变更单删除失败",e);
+                log.error("样品借用单删除失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "借用变更单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -348,7 +348,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:cancelProcess",
             serviceClass = SampleBorrowInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "借用变更单撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "样品借用单撤销")
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -359,10 +359,10 @@ public class SampleBorrowInfoController extends BaseController {
             try {
                 cancelResult = sampleBorrowInfoService.cancelProcess(id);
             }catch (Exception e){
-                log.error("借用变更单撤回流程失败",e);
+                log.error("样品借用单撤回流程失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "借用变更单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "样品借用单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -400,7 +400,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:export",
             tableAlias = "sbi"
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "借用变更单导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品借用单导出Excel数据")
     public  ApiResult<Object> exportList(@RequestBody @Validated SampleBorrowInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         sampleBorrowInfoService.exportList(dto, response);
         return success();

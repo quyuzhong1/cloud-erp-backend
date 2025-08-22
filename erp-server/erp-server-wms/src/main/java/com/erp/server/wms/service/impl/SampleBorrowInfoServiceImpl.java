@@ -54,7 +54,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * <p>
- * 借用变更单 服务实现类
+ * 样品借用单 服务实现类
  * </p>
  *
  * @author jack
@@ -80,18 +80,18 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 数据处理
         handleData(sampleBorrowInfoEntity);
 
-        log.info("开始新增借用变更单");
+        log.info("开始新增样品借用单");
         // 生成单号
         // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
         String code = docNoGenHelper.generateCode(null);
         sampleBorrowInfoEntity.setCode(code);
         boolean save = super.save(sampleBorrowInfoEntity);
         if(!save) {
-            throw new ServiceException("借用变更单保存失败");
+            throw new ServiceException("样品借用单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "借用变更单" , sampleBorrowInfoEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品借用单" , sampleBorrowInfoEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, sampleBorrowInfoEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -106,7 +106,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Override
     public Boolean update(SampleBorrowInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleBorrowInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "借用变更单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品借用单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -115,16 +115,16 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         // 数据处理
         handleData(sampleBorrowInfoEntity);
-        log.info("编辑 开始修改借用变更单数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改样品借用单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(sampleBorrowInfoEntity);
         if(!save) {
-            throw new ServiceException("借用变更单保存失败");
+            throw new ServiceException("样品借用单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录借用变更单日志数据，单号：【{}】", sampleBorrowInfoEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleBorrowInfoEntity.getCode(), "借用变更单");
+            log.info("编辑 开始记录样品借用单日志数据，单号：【{}】", sampleBorrowInfoEntity.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleBorrowInfoEntity.getCode(), "样品借用单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, sampleBorrowInfoEntity, null, sampleBorrowInfoEntity.getId(), msg);
         return Boolean.TRUE;
@@ -183,7 +183,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/sampleBorrowInfo.xlsx";
-        String name = "借用变更单导出";
+        String name = "样品借用单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date).append(name);
         try {
@@ -198,19 +198,19 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     public BatchResultDTO submit(String id) {
         SampleBorrowInfoEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到借用变更单数据");
+            throw new ServiceException("未找到样品借用单数据");
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改借用变更单状态数据，id：【{}】", id);
+        log.info("提交 开始修改样品借用单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
         // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动借用变更单流程，id=：【{}】", entity.getId());
+        log.info("提交 开始启动样品借用单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录借用变更单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "借用变更单");
+        log.info("提交 开始记录样品借用单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
@@ -253,7 +253,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "借用变更单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单", approveType.getName(), dto.getComment());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -291,7 +291,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
-        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到借用变更单单数据"));
+        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
@@ -300,7 +300,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "借用变更单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
@@ -318,7 +318,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到借用变更单数据"));
+        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -326,12 +326,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除借用变更单主单数据，id：【{}】", id);
+        log.info("删除 开始删除样品借用单主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除借用变更单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "借用变更单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除借用变更单数据");
+        log.info("删除 开始删除样品借用单日志数据，id：【{}】", id);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
+        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除样品借用单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -342,7 +342,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
-        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到借用变更单数据"));
+        SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -350,12 +350,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
-        log.info("撤销 开始修改借用变更单状态，id：【{}】", id);
+        log.info("撤销 开始修改样品借用单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "借用变更单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -392,7 +392,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Override
     public SampleBorrowInfoDTO.ViewDTO view(String id) {
-        SampleBorrowInfoEntity sampleBorrowInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到借用变更单数据"));
+        SampleBorrowInfoEntity sampleBorrowInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品借用单数据"));
         SampleBorrowInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleBorrowInfoDTO.ViewDTO.class, sampleBorrowInfoEntity);
         // 数据填充处理
         fillOne(data);

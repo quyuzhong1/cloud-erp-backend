@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 借用变更单明细表 Mapper 接口
+ * 样品借用单明细表 Mapper 接口
  * </p>
  *
  * @author jack

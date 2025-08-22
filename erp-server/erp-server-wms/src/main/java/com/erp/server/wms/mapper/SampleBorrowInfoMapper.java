@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * 借用变更单 Mapper 接口
+ * 样品借用单 Mapper 接口
  * </p>
  *
  * @author jack
