@@ -95,7 +95,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sscd.update_time desc
+        sscd.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
