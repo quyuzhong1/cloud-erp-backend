@@ -66,8 +66,6 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-    @Resource
-    private DictBasicService dictBasicService;
     private final static String HAS_BEEN_IMPORTED = "The order number has been imported";
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**
@@ -184,16 +182,6 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                         logisticsTrackList.add(logisticsTrackEntity);
                                     });
                                 }
-//                                else{
-//                                    LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-//                                    logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-//                                    logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());//转换类型
-//                                    LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-//                                    logisticsTrackEntity.setTrackTime(eventTime);
-//                                    logisticsTrackEntity.setContent("暂无信息");
-//                                    logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
-//                                    logisticsTrackList.add(logisticsTrackEntity);
-//                                }
                             });
                         }
                     });
