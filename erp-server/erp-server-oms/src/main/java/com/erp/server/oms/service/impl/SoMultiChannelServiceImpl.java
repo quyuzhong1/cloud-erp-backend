@@ -509,6 +509,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                         soViewDTO.setPlatformSpuNo(f.getAsin());
                         soViewDTO.setPlatformProductName(f.getPlatformProductName());
                         soViewDTO.setPlatformSkuNo(f.getMsku());
+                        soViewDTO.setFbaInventoryId(f.getId());
                     });
         });
 

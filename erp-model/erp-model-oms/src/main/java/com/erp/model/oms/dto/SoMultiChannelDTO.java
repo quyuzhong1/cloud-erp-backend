@@ -682,6 +682,10 @@ public class SoMultiChannelDTO implements Serializable {
         @NotBlank(message = "平台SKU不能为空")
         private String platformSkuNo;
         /**
+         * FBA库存ID
+         */
+        private String fbaInventoryId;
+        /**
          * 平台产品id
          */
         private String platformSpuNo;
