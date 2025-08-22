@@ -458,9 +458,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        if (CharSequenceUtil.isBlank(deliveryWarehouseId)){
-            throw new ServiceException("发货仓库不能为空");
-        }
         List<SoMultiChannelDTO.SoViewDTO> soViewDTOS = baseMapper.listSoMultiChannelBySoId(ids);
         //已审核 且 待配货或配货中可以下推多渠道订单
         List<String> soCodeList = soViewDTOS.stream().filter(e -> !ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) || !(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(e.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(e.getBillStatus()))).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
