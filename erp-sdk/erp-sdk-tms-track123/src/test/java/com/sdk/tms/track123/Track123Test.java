@@ -52,7 +52,7 @@ public class Track123Test {
 		ExtendField extendFieldMap = new ExtendField();
 		extendFieldMap.setPhoneSuffix("8341");
 		registerRequest.setExtendFieldMap(extendFieldMap);
-		RegisterResult result = trackShipperService.updateTrack(token, registerRequest);
+		String result = trackShipperService.updateTrack(token, registerRequest);
 		System.out.println(result);
 	}
 }
