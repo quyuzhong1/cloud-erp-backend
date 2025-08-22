@@ -1086,6 +1086,10 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private List<String> shopIdList;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
 
     }
     @Data

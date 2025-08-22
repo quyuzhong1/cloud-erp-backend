@@ -102,6 +102,9 @@
             <if test="params.isMultiChannel != null">
                 and si.is_multi_channel = #{params.isMultiChannel}
             </if>
+            <if test="params.authStatus != null and params.authStatus != ''">
+                and si.auth_status = #{params.authStatus}
+            </if>
             order by
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 case when si.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
