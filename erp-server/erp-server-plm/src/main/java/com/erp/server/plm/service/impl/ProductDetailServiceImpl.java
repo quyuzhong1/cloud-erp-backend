@@ -8,8 +8,9 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -23,8 +24,14 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
-import com.common.business.enums.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -44,8 +51,6 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.enums.ImportTypeEnum;
-import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -60,7 +65,6 @@ import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -104,7 +108,6 @@ import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,7 +118,10 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -134,7 +140,6 @@ import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_SKU_IMAGES;
 
 /**
  * @Description: 产品明细信息服务类
@@ -704,9 +709,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY,keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
-        return this.baseMapper.getNoInventorySku();
+        //存在则直接取缓存
+        if (redisUtil.hasKey(RedisKeyConstant.CACHE_SKU_NO_INVENTORY)) {
+            Object object = redisUtil.get(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+            return JSON.parseObject(object.toString(),new TypeReference<List<SkuVO>>(){});
+        }
+        List<SkuVO> noInventorySku = this.baseMapper.getNoInventorySku();
+        if (ObjectUtil.isEmpty(noInventorySku)) {
+            return Collections.emptyList();
+        }
+        redisUtil.set(RedisKeyConstant.CACHE_SKU_NO_INVENTORY,noInventorySku,0);
+        return noInventorySku;
     }
 
     @Override
@@ -4132,6 +4146,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 syncWangDianProductDetailService.syncDataToWangDian(entity);
             }
             syncLingXingProductDetailService.syncDataToLingxing(entity);
+            //清楚redis标识
+            cleanRedisNoInventorySku(entity);
         } else {
             //新增审核不通过意见
             ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
@@ -4141,6 +4157,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return Boolean.TRUE;
     }
+    
+    /**
+     * 清除服务、费用类sku的redis缓存
+     * @author will 
+     * @date 2025/8/22 15:12
+     * @param entity 
+     * @return void
+     */
+    private void cleanRedisNoInventorySku (ProductDetailEntity entity) {
+        //如果审核的数据再缓存中存在或者是费用、服务类型则需要清空费用、服务类SKU的缓存
+        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+        if (ObjectUtil.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Object object = redisUtil.get(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+        if (object != null) {
+            // 将Object转换为String，然后解析为List<Map>
+            String jsonString = object.toString();
+            List<Map> resultList = JSON.parseObject(jsonString, new TypeReference<List<Map>>(){});
+            List<String> skuIdList = resultList.stream().map(m -> m.get("skuId").toString()).collect(Collectors.toList());
+            if (skuIdList.contains(entity.getId())) {
+                //如果缓存中存在该SKU则清除
+                redisUtil.hdel(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+                return;
+            }
+        }
+        // 如果是费用、服务类产品则清除缓存
+        if (productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_SERVICE) ||
+                productInfoEntity.getProperty().equals(ProductConstant.PRODUCT_PROPERTY_COST)) {
+            //清除redis中费用、服务类SKU缓存
+            redisUtil.hdel(RedisKeyConstant.CACHE_SKU_NO_INVENTORY);
+        }
+    }
+
 
     /**
      * 更新审核状态
@@ -4176,6 +4226,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .eq(ProductDetailEntity::getId, entity.getId())
                 .update();
+        //清除服务、费用类sku的redis标识
+        cleanRedisNoInventorySku(entity);
         //发送金蝶
         sendSinglePushTask(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");

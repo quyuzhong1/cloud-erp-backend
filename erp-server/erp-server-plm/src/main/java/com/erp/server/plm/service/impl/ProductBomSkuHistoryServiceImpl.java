@@ -1,7 +1,12 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.utils.RedisUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
@@ -11,9 +16,9 @@ import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * bom历史表与sku关系表(ProductBomSkuHistory)表服务实现类
@@ -24,6 +29,8 @@ import java.util.List;
 @Service
 public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHistoryMapper, ProductBomSkuHistoryEntity> implements ProductBomSkuHistoryService {
 
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 方法说明
@@ -51,10 +58,17 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
                 saveBatchList.add(entity);
             }
         }
-        if (CollectionUtils.isNotEmpty(saveBatchList)) {
-            this.saveBatch(saveBatchList);
+        if (CollUtil.isEmpty(saveBatchList)) {
+            return;
         }
+        this.saveBatch(saveBatchList);
 
+        //删除redis
+        List<String> parentSkuIdList = saveBatchList.stream().map(ProductBomSkuHistoryEntity::getParentSkuId).distinct().collect(Collectors.toList());
+        //删除redis缓存
+        for (String parentSkuId : parentSkuIdList) {
+            redisUtil.del(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY, parentSkuId));
+        }
     }
 
     @Override
@@ -74,11 +88,46 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
         queryWrapper.eq(ProductBomSkuHistoryEntity::getSkuId,bomSkuEntity.getSkuId());
         queryWrapper.eq(ProductBomSkuHistoryEntity::getProductId,bomSkuEntity.getProductId());
         this.remove(queryWrapper);
+        //删除redis缓存
+        redisUtil.del(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY, bomSkuEntity.getParentSkuId()));
     }
 
     @Override
     public List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(List<String> skuIds) {
-        return baseMapper.listHistoryBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> resultList = new ArrayList<>();
+        if (CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        //未添加缓存的sku
+        List<String>unSkuIdList = new ArrayList<>();
+        
+        for (String skuId : skuIds) {
+            //查询redis,没有则添加缓存，有则直接查询
+            if (redisUtil.hasKey(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY,skuId))) {
+                Object json = redisUtil.get(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY,skuId));
+                List<BomChildrenSkuDTO> bomChildrenSkuList = JSON.parseArray((String) json, BomChildrenSkuDTO.class);
+                if (CollUtil.isEmpty(bomChildrenSkuList)) {
+                    continue;
+                }
+                resultList.addAll(bomChildrenSkuList);
+                continue;
+            }
+            unSkuIdList.add(skuId);
+        }
+        if (CollUtil.isNotEmpty(unSkuIdList)) {
+            List<BomChildrenSkuDTO> list = baseMapper.listHistoryBomChildBySkuIds(unSkuIdList);
+            if (CollUtil.isEmpty(list)) {
+                return resultList;
+            }
+            Map<String, List<BomChildrenSkuDTO>> unSkuMap = list.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+
+            for (String unSkuId : unSkuIdList) {
+                List<BomChildrenSkuDTO> bomChildrenSkuList = unSkuMap.get(unSkuId);
+                redisUtil.set(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY,unSkuId), JSON.toJSONString(bomChildrenSkuList), 0);
+                resultList.addAll(bomChildrenSkuList);
+            }
+        }
+        return resultList;
     }
 
     @Override
@@ -86,10 +135,20 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
         if (CollectionUtils.isEmpty(historyBomIdList)) {
             return;
         }
+        List<ProductBomSkuHistoryEntity> bomSkuHistoryList = this.getSkuByHistoryIds(historyBomIdList);
+        if (CollUtil.isEmpty(bomSkuHistoryList)) {
+            return;
+        }
         lambdaUpdate()
                 .in(ProductBomSkuHistoryEntity::getBomHistoryId,historyBomIdList)
                 .remove();
+        //删除redis缓存
+        List<String> parentSkuIdList = bomSkuHistoryList.stream().map(ProductBomSkuHistoryEntity::getParentSkuId).distinct().collect(Collectors.toList());
+        for (String parentSkuId : parentSkuIdList) {
+            redisUtil.del(CharSequenceUtil.format(RedisKeyConstant.CACHE_BOM_SKU_HISTORY, parentSkuId));
+        }
     }
+
 
 
 }

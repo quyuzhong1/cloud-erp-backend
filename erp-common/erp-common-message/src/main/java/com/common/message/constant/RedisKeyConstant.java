@@ -14,6 +14,11 @@ public class RedisKeyConstant {
      */
     public static final String CACHE_SKU_NO_INVENTORY = "cache:plm:getNoInventorySku";
 
+    /**
+     * 根据skuNo获取历史bom信息
+     */
+    public static final String CACHE_BOM_SKU_HISTORY = "cache:plm:bomSkuHistory:{}";
+
     //催办
     public static String PRESS="_PRESS";
 
