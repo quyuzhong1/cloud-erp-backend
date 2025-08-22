@@ -214,8 +214,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         // 验证数据 & 数据赋值
         newEntity.setStdCostPrice(addOrUpdateDTO.getStdCostPrice());
         newEntity.setCurrency(addOrUpdateDTO.getCurrency());
-        if (!ApproveStatusEnum.WAIT_SUBMIT.equals(old.getApproveStatus())) {
-            ServiceException.runError("非【待提交】状态不能修改");
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+            ServiceException.runError("非【待提交】【审核不通过】状态不能修改");
         }
         // 校验日期
         if (old.getEffectiveDate() == null && addOrUpdateDTO.getEffectiveDate() == null) {

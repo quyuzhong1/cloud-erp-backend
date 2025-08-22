@@ -254,7 +254,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
         //同步第三方渠道
-        logisticsBaseService.syncSingleChannel(logisticsPlatform);
+        logisticsBaseService.syncLogisticsChannel(logisticsPlatform);
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
