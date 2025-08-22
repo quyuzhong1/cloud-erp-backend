@@ -128,7 +128,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sscd.update_time desc
+        sscd.create_time desc
     </select>
 
     <select id="allNewCount" resultType="java.lang.Long">
@@ -233,7 +233,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sscd.update_time desc
+        sscd.create_time desc
     </select>
 
 
