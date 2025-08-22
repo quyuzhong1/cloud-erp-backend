@@ -54,6 +54,11 @@ public class BaseDTO implements Serializable {
          * 数据总条数
          */
         private Integer importCount;
+        /**
+         * 导入人员记录
+         * 用于业务权限
+         */
+        private String userId;
     }
 
     @EqualsAndHashCode(callSuper = true)

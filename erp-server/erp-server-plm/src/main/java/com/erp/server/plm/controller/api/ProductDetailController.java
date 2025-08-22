@@ -7,6 +7,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -1422,6 +1423,7 @@ public class ProductDetailController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult<Object> importZip(@RequestBody BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getLoginUser().getUid());
         Boolean flag = productDetailImagesService.importZip(dto);
         return flag == true ? success() : failure();
     }
