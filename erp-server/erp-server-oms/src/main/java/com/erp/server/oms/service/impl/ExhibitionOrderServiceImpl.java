@@ -412,6 +412,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     * @param approveStatus
     */
     public void updateForApprove(String id, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(ExhibitionOrderEntity::getId, id)
             .set(ExhibitionOrderEntity::getApproveUserName, userInfo.getUserName())
             .set(ExhibitionOrderEntity::getApproveStatus, approveStatus)
