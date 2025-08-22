@@ -551,6 +551,19 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:35
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    @PostMapping("/listSkuPackAndPurchaseByIds")
+    public List<SkuVO> listSkuPackAndPurchaseByIds(@RequestBody List<String> skuIds){
+        List<SkuVO> skuList = productDetailService.listSkuPackAndPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    /**
      * 根据sku查询sku信息
      */
     @GetMapping("/listSkuPurchaseByIds")

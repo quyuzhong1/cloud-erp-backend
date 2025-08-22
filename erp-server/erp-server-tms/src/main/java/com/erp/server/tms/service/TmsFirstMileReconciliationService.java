@@ -39,7 +39,7 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * @author Jim
      * @date: 2024-03-25
      */
-    Boolean update(TmsFirstMileReconciliationDTO.UpdateDTO dto);
+    Boolean update(TmsFirstMileReconciliationDTO.UpdateDTO dto, Boolean isUpdate);
 
     /**
      * 分页列表查询

@@ -1877,6 +1877,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public SoReturnInstockEntity getBySourceId(String sourceId) {
+        if(CharSequenceUtil.isBlank(sourceId)){
+            return null;
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getSourceId,sourceId).last("limit 1").one();
+    }
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
@@ -2332,6 +2339,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnInstockEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity()));
     }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

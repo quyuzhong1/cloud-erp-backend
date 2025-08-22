@@ -108,6 +108,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SCM_SUPPLIER_PHASE("EXPORT_SCM_SUPPLIER_PHASE","供应商阶段数据","","",""),
     EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE("EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE","供应商阶段数据","","",""),
     EXPORT_SCM_PURCHASE_ORDER_ADJUST("EXPORT_SCM_PURCHASE_ORDER_ADJUST","历史未完结订单","","",""),
+    EXPORT_SCM_PO_RECONCILIATION_DETAIL("EXPORT_SCM_PO_RECONCILIATION_DETAIL","采购对账单-明细数据导出","","",""),
 
     //srm
     EXPORT_SRM_SALES_SHARING_REPORT("EXPORT_SRM_SALES_SHARING_REPORT","销量共享导出","","",""),
@@ -245,6 +246,8 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入自发货费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
+    IMPORT_TMS_LOGISTICS_TRACK_INFO("IMPORT_TMS_LOGISTICS_TRACK_INFO", "导入物流单信息","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsTrackInfo",""),
+
     //mrp
     EXPORT_MRP_REPLENISHMENT_RULE("EXPORT_MRP_REPLENISHMENT_RULE", "补货规则","","",""),
     EXPORT_MRP_HISTORY_SALES_QTY("EXPORT_MRP_HISTORY_SALES_QTY", "历史销量","","",""),

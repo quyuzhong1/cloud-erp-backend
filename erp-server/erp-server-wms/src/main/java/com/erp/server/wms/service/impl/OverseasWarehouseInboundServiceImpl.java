@@ -1178,7 +1178,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtil.isBlank(detailId)) {
                     continue;
                 }
-                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
+                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())
+                 ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 按流水ID判断已存在
                     if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId()))){
                         continue;

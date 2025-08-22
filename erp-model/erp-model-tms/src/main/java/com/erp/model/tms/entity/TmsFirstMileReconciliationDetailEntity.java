@@ -259,6 +259,11 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField(exist = false)
     private String supplierType;
+    /**
+     * 费用项id
+     */
+    @TableField(exist = false)
+    private String costId;
 
     /**
      * 费用编辑（导入数据返回）

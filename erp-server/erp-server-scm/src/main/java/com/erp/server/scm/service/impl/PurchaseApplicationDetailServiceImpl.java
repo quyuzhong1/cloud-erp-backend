@@ -149,7 +149,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
         //产品信息
         List<String> skuIds = newList.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIds);
+        List<SkuVO> skuList = plmTaskFeign.listSkuPackAndPurchaseByIds(skuIds);
 
         //添加操作日志
         List<PurchaseApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
