@@ -283,7 +283,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO) {
-        if (CollUtil.isEmpty(queryDTO.getSkuNos()) && CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
             return Collections.emptyList();
         }
         return baseMapper.listFbaInventory(queryDTO);
@@ -291,7 +291,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public HashMap<String, List<FbaInventoryDTO.InventoryDTO>> fbaInventoryTree(FbaInventoryDTO.QueryDTO queryDTO) {
-        if (CollUtil.isEmpty(queryDTO.getSkuNos()) && CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
             return new HashMap<>();
         }
         List<FbaInventoryDTO.InventoryDTO> list = baseMapper.listFbaInventory(queryDTO);
