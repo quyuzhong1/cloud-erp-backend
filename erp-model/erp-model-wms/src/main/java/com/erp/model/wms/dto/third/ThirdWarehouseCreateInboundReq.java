@@ -81,7 +81,10 @@ public class ThirdWarehouseCreateInboundReq {
      * 物流产品代码
      */
     private String smCode;
-
+    /**
+     * 柜型
+     */
+    private String containerType;
     /**
      * 物流方式
      * {@link com.erp.model.wms.enums.LogisticsMethodEnum}
@@ -267,6 +270,7 @@ public class ThirdWarehouseCreateInboundReq {
     @Builder
     public static class Item {
 
+        private String batchNo;
         /**
          * 海外仓产品SKU
          */

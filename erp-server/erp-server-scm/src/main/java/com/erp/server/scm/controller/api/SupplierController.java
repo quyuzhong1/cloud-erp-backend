@@ -19,13 +19,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.SupplierCountDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -63,6 +63,8 @@ public class SupplierController extends BaseController {
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    @Resource
+    private SupplierContactService supplierContactService;
 
     /**
      * 供应商分页列表
@@ -272,8 +274,8 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
-    public ApiResult<SupplierDTO.SupplierViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        SupplierDTO.SupplierViewDTO view = supplierService.view(dto.getId());
+    public ApiResult<SupplierDTO.SupplierViewDTO> view(@RequestBody @Validated SupplierDTO.ViewParamDTO dto) {
+        SupplierDTO.SupplierViewDTO view = supplierService.view(dto.getId(),dto.getIsViewTel());
         return success(view);
     }
 
@@ -292,9 +294,9 @@ public class SupplierController extends BaseController {
             serviceClass = SupplierService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOList = supplierService.deleteByIds(dto.getIds());
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
 
@@ -431,12 +433,18 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 供应商导入
+     *
+     * @author will
+     * @date 2025/7/22 20:09
+     * @param excelFile
+     * @param type allUpdate,partUpdate
+     * @param response
+     * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入供应商")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierService.importFile(excelFile, response);
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "type") String type, HttpServletResponse response) {
+        Boolean result = supplierService.importFile(excelFile,type, response);
         return result == true ? success() : failure();
     }
 
@@ -512,22 +520,37 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 批量修改供应商分类
-     *
+     * 批量修改字段
+     * @author will
+     * @date 2025/8/12 10:50
      * @param dto
-     * @return
+     * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改供应商分类")
-    @PostMapping("/updateCategory")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量修改字段")
+    @PostMapping("/updateField")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:update",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
-    public ApiResult updateCategory(@RequestBody @Validated SupplierDTO.BatchUpdateCategoryDTO dto) {
-        supplierService.updateCategory(dto);
-        return success();
+    public ApiResult updateField(@RequestBody @Validated SupplierDTO.BatchUpdateFieldDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.updateField(id,dto));
+            }catch (Exception e){
+                log.error("产品sku审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -539,6 +562,18 @@ public class SupplierController extends BaseController {
     public ApiResult updateVoucherNo(@RequestBody @Valid SupplierDTO.VoucherNoDTO dto) {
         Boolean result = supplierService.updateVoucherNo(dto.getIds(),dto.getVoucherNo());
         return result ? success() : failure();
+    }
+
+    /**
+     * 获取电话号码
+     * @author will
+     * @date 2025/7/22 15:58
+     * @param contactId
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getTelNumber")
+    public ApiResult<String> getTelNumber(@RequestParam("contractId") String contactId) {
+        return success(supplierContactService.getTelNumber(contactId));
     }
 
 }

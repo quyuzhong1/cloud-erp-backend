@@ -112,6 +112,11 @@ public class RocketMqNewTag {
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_tag";
 
     /**
+     * 新中台金蝶收款银行
+     */
+    public static final String DMP_KINGDEE_BANK_TO_SYS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_bank_to_sys_tag";
+
+    /**
      * 新中台旺店通预入库
      */
     public static final String DMP_WDT_PRE_STOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_pre_stock_to_wms_tag";

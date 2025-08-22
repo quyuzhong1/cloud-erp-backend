@@ -2,7 +2,6 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.BaseDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface ImportPlmFeign {
 
     @PostMapping("/feign/import/productDetailImages")
-    void productDetailImages(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto);
+    void productDetailImages(@RequestBody BaseDTO.ImportDTO dto);
 
 
     @PostMapping("/feign/import/skuStdCostDetail")

@@ -16,6 +16,8 @@ public enum DictBasicEnum {
     PURCHASE_ORDER_TYPE("purchaseOrderType","采购订单单据类型"),
     CONTRACT_TYPE("contractType","采购合同管理"),
     CREDENTIAL_TYPE("credentialType","证照字典"),
+    PROPERTY("property","供应商属性"),
+    CERTIFICATE("certificate","体系认证"),
 
     ;
 

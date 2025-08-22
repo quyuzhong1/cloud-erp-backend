@@ -44,6 +44,7 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.enums.ImportTypeEnum;
 import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -6558,6 +6559,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         List<SkuVO> skuList = baseMapper.listSkuPurchaseByIds(skuIds);
+        return skuList;
+    }
+
+    @Override
+    public List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.listSkuPackAndPurchaseByIds(skuIds);
         return skuList;
     }
 

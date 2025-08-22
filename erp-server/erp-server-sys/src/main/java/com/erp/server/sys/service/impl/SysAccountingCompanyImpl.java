@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchStateDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -17,12 +14,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -244,6 +243,16 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         SysAccountingCompanyEntity entity = this.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("公司信息" + id));
         return entity;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> delete(List<String> ids) {
+        List<SysAccountingCompanyEntity> list = this.listByIds(ids);
+        this.removeByIds(ids);
+        return list.stream()
+                .map(entity->BatchResultDTO.success(entity.getId(), entity.getCompanyName(),"删除成功"))
+                .collect(Collectors.toList());
     }
 
 

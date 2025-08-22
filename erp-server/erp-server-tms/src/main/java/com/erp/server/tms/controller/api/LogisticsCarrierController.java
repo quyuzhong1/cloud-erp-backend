@@ -84,6 +84,7 @@ public class LogisticsCarrierController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入配置")
     public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "logisticsType") String logisticsType, HttpServletResponse response) {
         Boolean flag = logisticsCarrierService.importFile(excelFile,logisticsType,response);
         return flag == true ? success() : failure();

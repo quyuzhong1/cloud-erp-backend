@@ -211,10 +211,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             if (ObjectUtil.isNotEmpty(authEntity)) {
                 String logisticsPlatform = authEntity.getLogisticsPlatform();
                 base.setLogisticsPlatform(logisticsPlatform);
-                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
-                if ("N".equals(printDelivery)) {
-                    base.setIsPrintPlatform(Boolean.FALSE);
-                } else {
+                if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
+                    String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                    if ("N".equals(printDelivery)) {
+                        base.setIsPrintPlatform(Boolean.FALSE);
+                    } else {
+                        base.setIsPrintPlatform(Boolean.TRUE);
+                    }
+                }else{
                     base.setIsPrintPlatform(Boolean.TRUE);
                 }
             } else {
@@ -646,6 +650,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (Objects.isNull(maxCustomsAmount)) {
             maxCustomsAmount = zero;
         }
+        if(StringUtils.isBlank(logisticsChannelEntity.getLastMileCarrier())){
+            logisticsChannelEntity.setLastMileCarrier("");
+        }
         logisticsChannelEntity.setMaxCustomsAmount(maxCustomsAmount);
         BigDecimal minCustomsAmount = logisticsChannelEntity.getMinCustomsAmount();
         if (Objects.isNull(minCustomsAmount)) {
@@ -753,10 +760,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         LogisticsChannelDTO.SelectDTO params = dto.getParams();
         IPage<LogisticsChannelDTO.PagingSelectDTO> pagResult = baseMapper.pagingSelect(query, params);
-//        List<LogisticsChannelDTO.PagingSelectDTO> records = pagResult.getRecords();
-        //排序
-//        List<LogisticsChannelDTO.PagingSelectDTO> list = records.stream().sorted(Comparator.comparing(LogisticsChannelDTO.PagingSelectDTO::getDisabled)).collect(Collectors.toList());
-//        pagResult.setRecords(list);
         return new PagingVO<>(pagResult);
     }
     /**

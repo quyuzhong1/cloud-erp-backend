@@ -399,6 +399,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
                 resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),"仅支持备案不通过的状态："));
                 continue;
             }
+            resultDTOList.add(BatchResultDTO.success(entity.getId(),entity.getSkuNo(),"删除成功"));
             removeList.add(entity.getId());
         }
         if(CollectionUtils.isNotEmpty(removeList)){

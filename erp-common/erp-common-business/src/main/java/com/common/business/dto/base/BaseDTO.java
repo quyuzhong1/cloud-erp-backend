@@ -45,6 +45,15 @@ public class BaseDTO implements Serializable {
          * 任务id[后端使用]
          */
         private String taskId;
+        /**
+         * 处理方式 add 新增 update 更新  addOrUpdate 新增或更新
+         * ImportTypeEnum
+         */
+        private String importType;
+        /**
+         * 数据总条数
+         */
+        private Integer importCount;
     }
 
     @EqualsAndHashCode(callSuper = true)

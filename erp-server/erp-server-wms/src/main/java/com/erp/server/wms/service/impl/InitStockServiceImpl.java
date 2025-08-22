@@ -31,6 +31,7 @@ import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import com.erp.model.wms.entity.InitStockEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -336,28 +337,43 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void delete(List<String> ids) {
+    public List<BatchResultDTO> delete(List<String> ids) {
         List<InitStockEntity> list = super.listByIds(ids);
-        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+//        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许删除
-        ids.stream().forEach(id->{
-            InitStockEntity initStockEntity = initStockEntityMap.get(id);
-            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
-        });
+//        ids.stream().forEach(id->{
+//            InitStockEntity initStockEntity = initStockEntityMap.get(id);
+//            ValidatorUtil.isTrue(Objects.nonNull(initStockEntity),()->new ServiceException("期初库存数据不存在"));
+//            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+//        });
+        List<InitStockEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (InitStockEntity entity : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(InitStockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
         // 删除期初库存日志数据
-        log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), removeList.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "删除操作");
 
         // 删除期初库存明细数据
-        log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        initStockDetailService.removeByMainIds(ids);
+        log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        initStockDetailService.removeByMainIds(removeIdList);
 
         // 删除期初库存主单数据
-        log.info("删除 开始删除期初库存主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        super.removeByIds(ids);
+        log.info("删除 开始删除期初库存主单数据，id集合：【{}】", JSONObject.toJSONString(removeIdList));
+        super.removeByIds(removeIdList);
+        return resultDTOList;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)

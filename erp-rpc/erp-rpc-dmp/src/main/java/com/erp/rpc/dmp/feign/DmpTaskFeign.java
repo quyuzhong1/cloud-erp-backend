@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -26,7 +27,7 @@ import java.util.Map;
  * @description: DMP远程调用接口
  * @date: 2023/1/12 16:54
  */
-@FeignClient("erp-dmp")
+@FeignClient(value = "erp-dmp", contextId = "DmpTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface DmpTaskFeign {
 
     /**

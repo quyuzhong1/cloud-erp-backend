@@ -306,26 +306,6 @@ public class SoReturnController extends BaseController {
     }
 
     /**
-     * 批量删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除销售退货订单")
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soReturn:delete",
-            serviceClass = SoReturnService.class,
-            keyIdName = "ids"
-    )
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = soReturnService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
-    }
-
-    /**
      * 导出
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
@@ -337,6 +317,26 @@ public class SoReturnController extends BaseController {
     public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto) {
         Boolean flag = soReturnService.exportExcel(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量删除
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param idsDTO idsDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soReturn:delete",
+            serviceClass = SoReturnService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<BatchResultDTO> resultDTOList = soReturnService.delete(idsDTO.getIds(), true);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 
     /**

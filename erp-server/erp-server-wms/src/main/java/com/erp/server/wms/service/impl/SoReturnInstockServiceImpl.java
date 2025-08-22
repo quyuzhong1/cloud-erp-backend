@@ -866,8 +866,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
-        //推送数帝云
-        this.syncToSdyHandler(Arrays.asList(entity), SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        if(isPushKingDee) {
+        	//推送数帝云
+            this.syncToSdyHandler(Arrays.asList(entity), SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }
 
         //操作日志
         operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
@@ -906,10 +908,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
-        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        List<SoReturnInstockEntity> approveList = lambdaQuery().in(SoReturnInstockEntity::getId, ids).eq(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
+        if(CollUtil.isNotEmpty(approveList)) {
+        	approveList.forEach(entity -> this.disApprove(entity, false));
+        }
+        
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         //审核不通过 待提交可以作废
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
@@ -967,6 +974,38 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         soReturnInstockDetailService.delete(ids);
         //删除主表
         return this.removeByIds(ids);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(SoReturnInstockEntity entity) {
+        //待提交支持删除
+        if (entity.getInvalidStatus() || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        
+        //获取需要推送数帝云的数据
+        List<SoReturnInstockDetailEntity> detailAllList = new ArrayList<>();
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        detailAllList.addAll(soReturnInstockDetailEntityList);
+
+        //发送金蝶
+        sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //推送数帝云
+        this.syncToSdyHandler(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+        
+        //删除详情表
+        soReturnInstockDetailService.delete(ids);
+        //删除主表
+        boolean result = this.removeByIds(ids);
+        if (result) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败");
+        }
     }
 
     @Override
@@ -1838,6 +1877,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public SoReturnInstockEntity getBySourceId(String sourceId) {
+        if(CharSequenceUtil.isBlank(sourceId)){
+            return null;
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getSourceId,sourceId).last("limit 1").one();
+    }
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
@@ -2283,5 +2329,77 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //操作日志
         operateLogService.addModuleOperateLog(String.format("退货入库【%s】下推物流单",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), id, "下推操作");
         return BatchResultDTO.success(id, entity.getCode(), "操作成功");
+    }
+
+    @Override
+    public Map<String, SoReturnInstockEntity> mapByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<SoReturnInstockEntity> list = this.listByIds(ids);
+        return list.stream().collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity()));
+    }
+
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+//        ).count();
+//        if (count != entityList.size()) {
+//            throw new ServiceException(ApiError.ERROR_98009);
+//        }
+
+        List<SoReturnInstockEntity> removeList=new ArrayList<>();
+        List<BatchResultDTO> resultDTOList=new ArrayList<>();
+        for (SoReturnInstockEntity entity : entityList) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_98009.msg));
+                continue;
+            }
+            removeList.add(entity);
+            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
+        }
+        List<String> removeIdList = removeList.stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(removeIdList)){
+            return resultDTOList;
+        }
+        //获取需要推送数帝云的数据
+        List<SoReturnInstockDetailEntity> detailAllList = new ArrayList<>();
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(removeIdList);
+        detailAllList.addAll(soReturnInstockDetailEntityList);
+
+        //发送金蝶
+        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //推送数帝云
+        this.syncToSdyHandler(removeList, SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //删除详情表
+        soReturnInstockDetailService.delete(removeIdList);
+        //删除主表
+        // 执行批量删除
+        Boolean result = this.removeByIds(removeIdList);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        
+        // 添加批量操作日志
+        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货入库单", UserContext.getDefaultLoginUser().getUserName(),removeList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = removeList.stream()
+                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
+                .collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "删除操作");
+        
+        // 返回成功结果
+        return resultDTOList;
     }
 }

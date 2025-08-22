@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-wms", contextId = "soDeliveryNotice")
+@FeignClient(name = "erp-wms", contextId = "soDeliveryNotice" ,configuration = {FeignErrorDecoder.class})
 public interface SoDeliveryNoticeFeign {
 
     @PostMapping("feign/soDeliveryNotice/listDetailBySourceDetailId")

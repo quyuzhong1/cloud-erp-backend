@@ -243,6 +243,17 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         return this.list(queryWrapper);
     }
 
+    @Override
+    public List<SupplierAccountEntity> listByNameList(List<String> supplierAccountNames,List<String> supplierIdList) {
+        if (CollUtil.isEmpty(supplierAccountNames) && CollUtil.isEmpty(supplierIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(CollUtil.isNotEmpty(supplierAccountNames),SupplierAccountEntity::getPayee,supplierAccountNames)
+                .in(CollUtil.isNotEmpty(supplierIdList),SupplierAccountEntity::getSupplierId,supplierIdList)
+                .list();
+    }
+
 
     /**
      * 获取要删除的id 集合

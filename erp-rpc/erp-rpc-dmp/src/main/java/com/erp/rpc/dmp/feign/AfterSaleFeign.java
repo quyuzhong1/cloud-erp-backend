@@ -1,6 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -22,7 +23,7 @@ import java.util.List;
  * @author jack
  * @since 2025-04-07
  */
-@FeignClient(value = "erp-dmp", path = "feign/afterSale", contextId = "AfterSaleFeign")
+@FeignClient(value = "erp-dmp", path = "feign/afterSale", contextId = "AfterSaleFeign",configuration = {FeignErrorDecoder.class})
 public interface AfterSaleFeign {
 
     /**
@@ -42,7 +43,7 @@ public interface AfterSaleFeign {
      * @return ApiResult<String>
      */
     @PostMapping("/add")
-    ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto);
+    ApiResult<BaseResultDTO.AddDTO> add(@RequestBody AfterSaleDTO.AddDTO dto);
     /**
      *
      * 获取寄修进度

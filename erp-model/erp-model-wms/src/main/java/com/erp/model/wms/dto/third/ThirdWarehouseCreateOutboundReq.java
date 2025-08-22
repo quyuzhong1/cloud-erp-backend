@@ -42,6 +42,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String shopId;
 
     /**
+     * 尾程服务商
+     */
+    private String lastMileCarrier;
+
+    /**
      * 店铺名称
      */
     private String shopName;
@@ -78,12 +83,21 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      */
     private boolean onlineFlag;
 
-    private String fileData;
+    /**
+     * 面单base64数据
+     */
+    private String labelData;
+
+    /**
+     * 发票base64数据
+     */
+    private String invoiceData;
 
     /**
      * 线上订单物流单号
      */
     private String trackingNo;
+
     /**
      * 线上面单url
      */
@@ -104,6 +118,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 买家姓名
          */
         private String buyerName;
+        /**
+         * 买家电话
+         */
+        private String buyerNumber;
         /**
          * 收件人姓名
          */
@@ -240,6 +258,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String sourceSkuId;
 
         private String platformDetailId;
+        private String detailId;
         /**
          * 海关编码
          */

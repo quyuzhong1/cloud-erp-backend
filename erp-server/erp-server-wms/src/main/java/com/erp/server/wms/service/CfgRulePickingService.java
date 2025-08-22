@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
@@ -47,7 +48,7 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      * 批量删除
      * @param ids ids
      **/
-    void delete(List<String> ids);
+    List<BatchResultDTO> delete(List<String> ids);
     /**
      * 启用/禁用
      * @param dto dto

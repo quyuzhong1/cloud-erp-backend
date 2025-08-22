@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.service.impl.RedisService;
@@ -701,7 +702,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-09-22 18:00
      */
     @Override
-    public Boolean removeTask(String taskId) {
+    public List<BatchResultDTO> removeTask(String taskId) {
         ProjectTaskEntity entity = this.getById(taskId);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -713,7 +714,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         if (flag) {
+            resultDTOList.add(BatchResultDTO.success(entity.getId(),entity.getName(),"删除成功"));
             taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE, taskId);
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
@@ -727,8 +730,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
             //添加日志
             sysLogService.addSysLogByOther(sysLogEntity);
+        }else {
+            resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getName(),"删除失败"));
         }
-        return flag;
+        return resultDTOList;
     }
 
 
@@ -4939,13 +4944,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean removeBatch(List<String> ids) {
+    public List<BatchResultDTO> removeBatch(List<String> ids) {
         List<ProjectTaskEntity> entity = this.getByTaskIds(ids);
         if (CollectionUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         for (ProjectTaskEntity req : entity) {
             //如果是删除固定任务，需要数据权限
             getFixedUpdateOrRemovePermission(req.getIsFixed(),PLM_TASK_REMOVETASK_FIXED);
@@ -4954,6 +4959,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
             Boolean flag = this.removeById(req);
             if (flag) {
+                resultDTOList.add(BatchResultDTO.success(req.getId(),req.getName(),"删除成功"));
                 taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE, req.getId());
                 taskDeliveryService.removeByTaskId(req.getId());
                 taskDocsFinishService.removeByTaskId(req.getId());
@@ -4968,10 +4974,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //添加日志
                 sysLogService.addSysLogByOther(sysLogEntity);
             } else {
-                return false;
+                resultDTOList.add(BatchResultDTO.fail(req.getId(),req.getName(),"删除失败"));
             }
         }
-        return true;
+        return resultDTOList;
     }
 
     @Override

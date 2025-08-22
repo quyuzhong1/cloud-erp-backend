@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,7 @@ import java.util.List;
  * @date 2024-09-05
  * @author tanmujin
  */
-@FeignClient(name = "erp-workflow", contextId = "processTaskManagement")
+@FeignClient(name = "erp-workflow", contextId = "processTaskManagement",configuration = {FeignErrorDecoder.class})
 public interface ProcessTaskManagementFeign {
 
     /**

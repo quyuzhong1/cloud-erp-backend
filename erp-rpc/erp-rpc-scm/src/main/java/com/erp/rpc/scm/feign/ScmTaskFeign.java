@@ -23,7 +23,7 @@ import java.util.Map;
  * @Author Luo_WG
  * @Date 2023/4/13 11:41
  **/
-@FeignClient(name = "erp-scm",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-scm",contextId = "scmTaskFeign",configuration = {FeignErrorDecoder.class})
 public interface ScmTaskFeign {
 
     /**

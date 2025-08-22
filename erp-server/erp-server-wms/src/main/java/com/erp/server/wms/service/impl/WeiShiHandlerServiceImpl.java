@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
@@ -13,17 +12,9 @@ import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.wms.aliexpress.util.Constants;
-import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
-import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
-import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
-import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
-import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
-import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
-import com.sdk.wms.jifeng.service.JiFengService;
 import com.sdk.wms.weishi.dto.request.*;
 import com.sdk.wms.weishi.dto.response.WeiShiBaseResp;
 import com.sdk.wms.weishi.dto.response.WeiShiCreateOutboundResp;
-import com.sdk.wms.weishi.dto.response.WeiShiReturnOrderResp;
 import com.sdk.wms.weishi.dto.response.WeiShiTokenResp;
 import com.sdk.wms.weishi.enums.WeiShiEnums;
 import com.sdk.wms.weishi.service.WeiShiService;
@@ -33,11 +24,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,6 +113,7 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .appointmentPickingEndTime(createInboundReq.getCollectEndTime() == null?"":createInboundReq.getCollectEndTime().format(DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT)))
                 .deliveryVoucherBase64(createInboundReq.getFileBase64())
                 .inboundBoxList(boxList)
+                .transportSize(createInboundReq.getContainerType())
                 .build();
         return request;
     }
@@ -187,12 +176,12 @@ public class WeiShiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         WeiShiCreateOutboundRequest weiShiCreateOutboundRequest = WeiShiCreateOutboundRequest.builder()
                 .referNo(createOutboundReq.getReferenceNo())
                 .warehouseCode(createOutboundReq.getWarehouseCode())
-                .platformCode(createOutboundReq.getShippingMethod())
+                .platformCode(createOutboundReq.getPlatformCode())
                 .orderType(createOutboundReq.isOnlineFlag()?2:0)
                 .productCode(createOutboundReq.getShippingMethod())
                 .remark(StringUtils.isNotBlank(createOutboundReq.getPlatformCode())?createOutboundReq.getPlatformCode():createOutboundReq.getSoCode())
                 .useSpecifiedMaterial("false")
-                .labelFile(createOutboundReq.getFileData())
+                .labelFile(createOutboundReq.getLabelData())
                 .skuList(skuListDTOS)
                 .recipient(WeiShiCreateOutboundRequest.RecipientDTO.builder()
                         .name(createOutboundReq.getReceiverInfo().getName())

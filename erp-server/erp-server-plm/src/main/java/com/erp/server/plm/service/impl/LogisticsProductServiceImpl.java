@@ -366,7 +366,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         try {
             read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error("导入物流场频错误！{}", e);
+            log.error("导入物流产品信息错误！{}", e);
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！{}", e);
@@ -885,21 +885,31 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         Map<String, List<LogisticsProductExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(LogisticsProductExcelDTO::getSkuNo));
         for (Map.Entry<String, List<LogisticsProductExcelDTO>> entry : map.entrySet()) {
             String skuNo = entry.getKey();
+            List<LogisticsProductExcelDTO> value = entry.getValue();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().
                     map(SkuVO::getSkuId).orElse("");
-            Boolean isError = Boolean.FALSE;
-            ProductLogisticsEntity oldLogistics = productLogisticsList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
-            ProductLogisticsEntity newLogistics = new ProductLogisticsEntity();
-            BeanMapper.copy(oldLogistics,newLogistics);
-
-            List<LogisticsProductExcelDTO> value = entry.getValue();
-            if (Objects.isNull(newLogistics)){
+            if (StringUtils.isBlank(skuId)){
                 value.forEach(logisticsProductExcelDTO -> {
                     logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
                 });
+                errorList.addAll(value);
                 continue;
             }
+
+            Boolean isError = Boolean.FALSE;
+            ProductLogisticsEntity oldLogistics = productLogisticsList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.isNull(oldLogistics)){
+                value.forEach(logisticsProductExcelDTO -> {
+                    logisticsProductExcelDTO.setErrorMsg("sku不存在或者sku未审核通过");
+                });
+                errorList.addAll(value);
+                continue;
+            }
+
+            ProductLogisticsEntity newLogistics = new ProductLogisticsEntity();
+            BeanMapper.copy(oldLogistics,newLogistics);
+
             for (LogisticsProductExcelDTO item : value) {
                 List<String> errorMsgList = new ArrayList<>();
                 String id = newLogistics.getId();

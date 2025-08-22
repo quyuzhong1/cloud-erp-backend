@@ -201,7 +201,14 @@ public class LogisticsBillDTO implements Serializable {
          * 物流渠道名
          */
         private String channelName;
-
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+        /**
+         * 物流商名
+         */
+        private String logisticsSupplierName;
 
         /**
          * 跟踪号[可排序]
@@ -436,6 +443,7 @@ public class LogisticsBillDTO implements Serializable {
          * 渠道id
          */
         private String channelId;
+        private String channelName;
 
 
         /**
@@ -622,6 +630,14 @@ public class LogisticsBillDTO implements Serializable {
          * 运输单号
          */
         private String transportNo;
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 下单时间
+         */
+        private LocalDateTime orderTime;
         /**
          * 运输状态
          */

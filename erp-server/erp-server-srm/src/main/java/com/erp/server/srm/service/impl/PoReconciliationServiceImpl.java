@@ -124,6 +124,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
 
     @Override
     public List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto) {
+        dto.setIsSrm(Boolean.TRUE);
         return poReconciliationScmService.viewDetail(dto);
     }
 

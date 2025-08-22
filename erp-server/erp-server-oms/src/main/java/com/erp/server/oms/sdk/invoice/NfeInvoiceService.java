@@ -113,7 +113,7 @@ public class NfeInvoiceService {
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
+    private CfgRuleInvoiceAmountService cfgRuleInvoiceAmountService;
 
     @Transactional(rollbackFor = Exception.class)
     public Boolean createInvoice(SoB2cEntity soB2cEntity) {

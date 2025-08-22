@@ -96,7 +96,8 @@
         pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
-        pi.application_category_id
+        pi.application_category_id,
+        pl.product_property as productProperty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -2287,5 +2288,37 @@
         <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
             #{skuId}
         </foreach>
+    </select>
+
+    <!-- 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息） -->
+    <select id="listSkuPackAndPurchaseByIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+            pd.id AS skuId,
+            pd.sku_no,
+            pd.images_url AS skuImagesUrl,
+            pd.name AS skuName,
+            pd.variant_property as variantProperty,
+            pd.unit_name,
+            pd.status,
+            pp.moq,
+            pp.main_supplier as supplierId,
+            pd.warehouse_location as warehouseLocation,
+            ppk.gross_weight,
+            ppk.product_length as productLength,
+            ppk.product_width as productWidth,
+            ppk.product_height as productHeight,
+            ppk.box_qty::integer as boxQty,
+            ppk.box_qty::integer as unitQty,
+            ppk.net_weight as netWeight
+        FROM  product_detail pd
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 </mapper>

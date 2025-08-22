@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -19,7 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "erp-wms", contextId = "soOutstock")
+@FeignClient(name = "erp-wms", contextId = "soOutstock" ,configuration = {FeignErrorDecoder.class})
 public interface SoOutstockFeign {
 
     /**

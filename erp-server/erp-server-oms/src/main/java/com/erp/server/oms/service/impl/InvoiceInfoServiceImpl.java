@@ -148,7 +148,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Lazy
     private CfgInvoiceSettingService cfgInvoiceSettingService;
     @Resource
-    private CfgRuleInvoiceProductAmountService cfgRuleInvoiceProductAmountService;
+    private CfgRuleInvoiceAmountService cfgRuleInvoiceAmountService;
     @Resource
     private RuleConditionService ruleConditionService;
     @Resource
@@ -929,11 +929,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         Map<String, Object> map = handleMatchJson(soB2cEntity);
 
         List<String> cfgIds = detailEntityList.stream().map(CfgInvoiceSettingDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<CfgRuleInvoiceProductAmountEntity> ruleInvoiceProductAmountEntityList = cfgRuleInvoiceProductAmountService.listRuleByPriority(cfgIds);
-        List<String> ruleIdList = ruleInvoiceProductAmountEntityList.stream().map(CfgRuleInvoiceProductAmountEntity::getId).collect(Collectors.toList());
+        List<CfgRuleInvoiceAmountEntity> ruleInvoiceProductAmountEntityList = cfgRuleInvoiceAmountService.listRuleByPriority(cfgIds);
+        List<String> ruleIdList = ruleInvoiceProductAmountEntityList.stream().map(CfgRuleInvoiceAmountEntity::getId).collect(Collectors.toList());
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
-        for (CfgRuleInvoiceProductAmountEntity ruleInvoiceProductAmountEntity : ruleInvoiceProductAmountEntityList) {
+        for (CfgRuleInvoiceAmountEntity ruleInvoiceProductAmountEntity : ruleInvoiceProductAmountEntityList) {
             String ruleId = ruleInvoiceProductAmountEntity.getId();
             List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
                     filter(r -> r.getRuleId().equals(ruleId)).

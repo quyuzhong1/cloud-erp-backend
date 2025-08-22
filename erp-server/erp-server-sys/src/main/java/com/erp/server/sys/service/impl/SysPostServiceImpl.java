@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BasePagingSearchDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SysPostServiceImpl
@@ -116,13 +118,16 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
 
     @Override
     @Transactional
-    public boolean removePostByIds(List<String> ids) {
+    public List<BatchResultDTO> removePostByIds(List<String> ids) {
+        List<SysPostEntity> sysPostEntities = this.listByIds(ids);
         boolean flag = this.removeByIds(ids);
         if (flag) {
             //删除岗位员工 关系
             sysPostUserService.removeByPostId(ids);
+            return sysPostEntities.stream().map(entity->BatchResultDTO.success(entity.getId(),entity.getPostName(),"删除成功")).collect(Collectors.toList());
+        }else {
+            return  sysPostEntities.stream().map(entity->BatchResultDTO.fail(entity.getId(),entity.getPostName(),"删除失败")).collect(Collectors.toList());
         }
-        return flag;
     }
 
     /**

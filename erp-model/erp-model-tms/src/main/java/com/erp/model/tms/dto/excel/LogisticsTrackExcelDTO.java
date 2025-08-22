@@ -17,15 +17,21 @@ public class LogisticsTrackExcelDTO implements Serializable {
     /**
      * 订单号
      */
-    @ExcelProperty(value = "*订单号")
-    @FieldValid(fieldName = "订单号",maxLength = 32,isNotBlank = true)
+    @ExcelProperty(value = "订单号")
+    @FieldValid(fieldName = "订单号",maxLength = 32)
     private String code;
     /**
      * 出库单单号
      */
-    @ExcelProperty(value = "*出库单号")
-    @FieldValid(fieldName = "出库单单号",maxLength = 32,isNotBlank = true)
+    @ExcelProperty(value = "出库单号")
+    @FieldValid(fieldName = "出库单单号",maxLength = 32)
     private String outstockCode;
+    /**
+     * 物流跟踪号
+     */
+    @ExcelProperty(value = "*物流跟踪号")
+    @FieldValid(fieldName = "物流跟踪号",maxLength = 32,isNotBlank = true)
+    private String trackNo;
 
     /**
      * 运输状态

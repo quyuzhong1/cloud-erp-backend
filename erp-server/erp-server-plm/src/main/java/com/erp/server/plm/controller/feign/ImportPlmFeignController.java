@@ -37,7 +37,7 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/productDetailImages")
-    public void productDetailImages(@RequestBody ProductDetailDTO.ProductImagesZipDTO dto) {
+    public void productDetailImages(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             productDetailImagesService.importProductDetailImages(dto);
         } catch (Exception e) {

@@ -277,7 +277,10 @@ public class PoReconciliationDTO implements Serializable {
         */
         private LocalDate receiveDate;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -311,6 +314,35 @@ public class PoReconciliationDTO implements Serializable {
          * 结算方式名称
          */
         private String settleDictName;
+
+        /**
+         * 付款条件明名称
+         */
+        private String paymentConditionName;
+
+        /**
+         * 采购跟单员名称
+         */
+        private String poFollowerName;
+
+        /**
+         * 采购跟单员电话号码
+         */
+        private String poFollowerTelNumber;
+
+        /**
+         * 出货小计(数量)
+         */
+        private Integer totalDeliveryQty;
+        /**
+         * 退货小计(数量)
+         */
+        private Integer totalReceiveQty;
+
+        /**
+         * 合计(数量)
+         */
+        private Integer totalQty;
 
         /**
          * 出货小计
@@ -419,6 +451,12 @@ public class PoReconciliationDTO implements Serializable {
         private String id;
 
         /**
+         * 抬头备注
+         */
+        @NotBlank(message = "抬头备注不能为空")
+        private String remark;
+
+        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -436,6 +474,178 @@ public class PoReconciliationDTO implements Serializable {
     }
 
 
+    /**
+     * 对账单导出明细Excel
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDetailDTO {
+        /**
+         * 对账单号
+         */
+        private String code;
+        /**
+         * 对账状态
+         */
+        private String status;
+        /**
+         * 对账状态名称
+         */
+        private String statusName;
 
+        /**
+         * 对账开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 对账结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 对账周期
+         */
+        private String cycle;
+
+        /**
+         * 结算组织id
+         */
+        private String settleOrgId;
+
+         /**
+          * 结算组织名称
+          */
+        private String settleOrgName;
+         /**
+          * 供应商id
+          */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 退货来源类型
+         */
+        private String returnSourceType;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+        /**
+         * 单据单号
+         */
+        private String sourceCode;
+        /**
+         * 采购单号
+         */
+        private String poCode;
+
+        /**
+         * 采购订单来源单号
+         */
+        private String poSourceCode;
+        /**
+         * 送货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate date;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 数量
+         */
+        private String qty;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 税率%
+         */
+        private String taxRateStr;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 折扣率
+         */
+        private BigDecimal discountRate;
+        /**
+         * 折扣率%
+         */
+        private String discountRateStr;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
+         * 预付金额
+         */
+        private BigDecimal prepayAmount;
+        /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
+        /**
+         * 价税合计（折后）
+         */
+        private BigDecimal discountTaxAmount;
+        /**
+         * 结算方式
+         */
+        private String settleDict;
+        /**
+         * 结算方式名称
+         */
+        private String settleDictName;
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+        /**
+         * 业务状态
+         */
+        private String businessStatus;
+        /**
+         * 业务状态名称
+         */
+        private String businessStatusName;
+        /**
+         * 单据备注
+         */
+        private String remark;
+        /**
+         * 供方备注
+         */
+        private String supplierRemark;
+        /**
+         * 采方备注
+         */
+        private String purchaseRemark;
+    }
 
 }

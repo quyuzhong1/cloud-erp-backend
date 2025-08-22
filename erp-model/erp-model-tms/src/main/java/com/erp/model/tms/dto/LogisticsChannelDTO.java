@@ -379,6 +379,11 @@ public class LogisticsChannelDTO implements Serializable {
         private String mainId;
 
         /**
+         * 尾程服务商
+         */
+        private String lastMileCarrier;
+
+        /**
          * 时效
          */
         private String effectiveTime;
@@ -737,7 +742,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 是否推送海外仓面单
          */
         private Boolean isPushLabel;
-
+        /**
+         * 尾程服务商
+         */
+        private String lastMileCarrier;
 
         /**
          * 运费模板id
@@ -974,6 +982,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 物流商id
+         */
+        private String supplierId;
         /**
          * 禁用状态
          */

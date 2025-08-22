@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,10 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
@@ -122,6 +121,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private PurchasePriceService purchasePriceService;
+
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -204,6 +206,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
            throw new ServiceException(ApiError.ERROR_98025);
         }
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        Map<String, PurchaseOrderDetailEntity> podMap = purchaseOrderDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+
         //采购订单号
         dto.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         //供应商信息
@@ -221,8 +229,31 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             throw new ServiceException(ApiError.ERROR_98043);
         }
         List<PurchaseChangeDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseChangeDetailDTO.UpdateDTO.class, entityDetails);
+        //查最新的采购价目表信息
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+        details.forEach(e ->{
+            PurchaseOrderDetailEntity detailEntity = podMap.get(e.getPurchaseOrderDetailId());
+            if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getIsGift()) && !detailEntity.getIsGift()){
+                priceDTOS.add(new PurchasePriceDTO.PriceDTO(e.getQty(),e.getSkuId(),
+                        entity.getSupplierId(),entity.getPurchaseOrgId()));
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> priceList = purchasePriceService.batchGetPurchasePrice(priceDTOS);
         for (PurchaseChangeDetailDTO.UpdateDTO detail : details) {
             detail.setFirstMassProductName(FirstMassProductTypeEnum.getName(detail.getFirstMassProduct()));
+
+            //获取采购订单明细
+            PurchaseOrderDetailEntity detailEntity = podMap.get(detail.getPurchaseOrderDetailId());
+            if (ObjectUtil.isNotEmpty(detailEntity)) {
+                detail.setOldTaxRate(MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            }
+            //税率
+            PurchasePriceDTO.PriceDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())
+                            && obj.getSupplierId().equals(entity.getSupplierId())
+                            && CharSequenceUtil.equals(obj.getPurchaseOrgId(),purchaseOrderEntity.getPurchaseOrgId()))
+                    .findFirst().orElse(null);
+            BigDecimal taxRate = (org.springframework.util.ObjectUtils.isEmpty(priceDTO) || Objects.isNull(priceDTO.getTaxRate())) ?  BigDecimal.ZERO : priceDTO.getTaxRate();
+            detail.setTaxRate(taxRate);
         }
         dto.setDetails(details);
         return dto;

@@ -194,6 +194,38 @@
         from logistics_supplier ls
         where id = #{id}
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$PagingSelectDTO">
+        select id,authStatus,supplierName,disabled,shortName
+        from
+        (
+            select
+                ls.id,
+                ls.disabled,
+                ls.auth_status as authStatus,
+                ls.supplier_name as supplierName,
+                ls.short_name as shortName
+            from logistics_supplier ls
+            where
+            ls.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and ls.supplier_name ilike concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+            <if test="params.authStatus != null and params.authStatus != ''">
+                and ls.auth_status = #{params.authStatus}
+            </if>
+            <if test="params.disabled != null">
+                and ls.disabled=#{params.disabled}
+            </if>
+            order by ls.disabled asc,
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when ls.supplier_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when ls.supplier_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when ls.supplier_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , ls.supplier_name,
+            </if>
+            ls.supplier_name asc
+        ) wls
+    </select>
 
 
 </mapper>

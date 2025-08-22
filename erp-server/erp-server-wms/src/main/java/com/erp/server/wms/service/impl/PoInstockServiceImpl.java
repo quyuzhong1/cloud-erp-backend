@@ -1180,8 +1180,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setPurchasePriceDetailList(addDetailList);
-            addDTO.setReturnUserId(userInfo.getUid());
-            addDTO.setReturnOrgId(poInstockEntity.getReceiveOrgId());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            addDTO.setReturnOrgId(CharSequenceUtil.isBlank(poInstockEntity.getReceiveOrgId()) ? userInfo.getUid() : poInstockEntity.getReceiveOrgId());
             addDTO.setReturnWarehouseId(poInstockEntity.getDeliveryWarehouseId());
             addList.add(addDTO);
         }
