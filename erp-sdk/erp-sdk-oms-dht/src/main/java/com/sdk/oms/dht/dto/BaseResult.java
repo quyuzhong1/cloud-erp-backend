@@ -1,5 +1,6 @@
 package com.sdk.oms.dht.dto;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,4 +21,16 @@ public class BaseResult {
      * 返回结果信息
      */
     protected String errorMessage;
+
+    private String errorDescription;
+
+    private String traceId;
+
+    public static  BaseResult error(String formatedErrMsg,Object... params) {
+        BaseResult baseResult = new BaseResult();
+        baseResult.setErrorCode(100);
+        String msg = CharSequenceUtil.format(formatedErrMsg,params);
+        baseResult.setErrorMessage(msg);
+        return baseResult;
+    }
 }
