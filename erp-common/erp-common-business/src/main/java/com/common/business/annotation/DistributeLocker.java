@@ -64,4 +64,21 @@ public @interface DistributeLocker {
      * 时间单位,默认为秒
      */
     TimeUnit timeUnit() default TimeUnit.SECONDS;
+
+    /**
+     * 是否在事务提交后解锁
+     * @return  true:在事务提交后解锁
+     */
+    boolean unlockAfterTx() default false;
+    /**
+     * 重试次数
+     * @return  重试次数
+     */
+    int maxRetries() default 3;
+
+    /**
+     * 重试间隔时间(毫秒)
+     * @return  重试间隔时间
+     */
+    long retryIntervalMillis() default 2000;
 }

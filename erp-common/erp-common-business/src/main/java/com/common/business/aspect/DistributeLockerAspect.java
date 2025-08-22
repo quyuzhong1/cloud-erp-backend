@@ -2,6 +2,10 @@ package com.common.business.aspect;
 
 import com.common.business.annotation.DistributeLocker;
 import com.common.core.exception.ServiceException;
+import io.seata.core.context.RootContext;
+import io.seata.tm.api.GlobalTransactionContext;
+import io.seata.tm.api.transaction.TransactionHookAdapter;
+import io.seata.tm.api.transaction.TransactionHookManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.aspectj.lang.JoinPoint;
@@ -11,7 +15,11 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
@@ -19,6 +27,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +60,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Aspect
 @Component
+@Order(1)
 public class DistributeLockerAspect {
     @Resource
     private RedissonClient redissonClient;
@@ -78,44 +88,149 @@ public class DistributeLockerAspect {
         List<String> keys = getLockKeys(annotation, pjp);
 
         // 获取锁
-        List<RLock> rLocks;
-        rLocks = keys.stream()
-                .map(key -> redissonClient.getLock(key))
+        List<RLock> rLocks = keys.stream()
+                .map(redissonClient::getLock)
                 .collect(Collectors.toList());
+
         // 如果没有取到锁Key,直接执行方法,不加锁,但同时打印警告日志
-        if(rLocks.isEmpty()){
-            log.warn("线程{} 未找到需要锁定的键,执行方法不加锁,keys={}", threadName, keys);
-            return pjp.proceed();
+        if (rLocks.isEmpty()) {
+            log.warn("线程{} 未找到需要锁定的键，执行方法不加锁，keys={}", threadName, keys);
+            try {
+                return pjp.proceed();
+            } catch (Exception e) {
+                log.error("线程{} 执行无锁方法时发生异常", threadName, e);
+                throw e;
+            }
         }
 
         long waitTime = getWaitTime(annotation,pjp);
+        if (waitTime < 0) {
+            log.warn("线程{} 获取到非法等待时间: {}, 使用默认值", threadName, waitTime);
+            waitTime = 0;
+        }
 
         RedissonMultiLock multiLock = new RedissonMultiLock(rLocks.toArray(new RLock[0]));
         boolean locked = false;
-        // 尝试加锁
+
+        boolean unlockAfterTx = annotation.unlockAfterTx();
+        // 检查是否处于 Seata 全局事务
+        boolean inSeataTx = (RootContext.inGlobalTransaction());
+        // 检查是否处于 Spring 事务
+        boolean inSpringTx = TransactionSynchronizationManager.isActualTransactionActive();
+        // 是否处于任一事务
+        boolean inAnyTx = inSeataTx || inSpringTx;
+
+        // 最大重试次数和间隔时间
+        int maxRetries = annotation.maxRetries();
+        long retryIntervalMillis = annotation.retryIntervalMillis();
         try {
-            locked = multiLock.tryLock(waitTime, annotation.timeUnit());
-            if(locked){
-                log.info("线程{} 获取锁成功,key={}", threadName, keys);
-                return pjp.proceed();
-            } else {
-                log.warn("线程{} 获取锁失败,key={}", threadName, keys);
-                throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时");
+            // 尝试加锁
+            locked = tryLock(multiLock, threadName, keys, waitTime, annotation.timeUnit(), maxRetries, retryIntervalMillis);
+
+            if (!locked) {
+                log.warn("线程{} 获取锁失败，key={}", threadName, keys);
+                throw new ServiceException("获取锁失败，请求超时");
             }
+
+            // 根据事务上下文选择释放锁的策略
+            if (unlockAfterTx && inSeataTx) {
+                // Seata 全局事务
+                GlobalTransactionContext.getCurrentOrCreate();
+                // 注册事务钩
+                TransactionHookManager.registerHook(
+                    new TransactionHookAdapter() {
+                        @Override
+                        public void afterCommit(){
+                            releaseLock(multiLock, threadName, keys);
+                        }
+                        @Override public void afterRollback() {
+                            releaseLock(multiLock, threadName, keys);
+                        }
+                    }
+                );
+            } else if (unlockAfterTx && inSpringTx) {
+                // Spring 本地事务
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        releaseLock(multiLock, threadName, keys);
+                    }
+
+                    @Override
+                    public void afterCompletion(int status) {
+                        if (status != STATUS_COMMITTED) {
+                            log.warn("事务回滚，释放锁，key={}", keys);
+                            releaseLock(multiLock, threadName, keys);
+                        }
+                    }
+                });
+            }
+
+            //方法执行后立即释放锁
+            return pjp.proceed();
+
         } catch (InterruptedException e) {
             log.error("线程{} 获取锁失败", threadName);
             Thread.currentThread().interrupt();
             throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时",e);
         } finally {
-            if(locked){
-                try {
-                    multiLock.unlock();
-                    log.info("线程{} 释放锁成功,key={}", threadName,keys);
-                }catch (Exception e){
-                    log.error("线程 {} 释放锁失败", threadName, e);
+            // 仅当：未处于 Seata 全局事务 && 未处于 Spring 事务 && 已加锁 才在这里解锁
+            if (locked) {
+                if (!unlockAfterTx || !inAnyTx) {
+                    log.info("线程{} 未处于Seata全局事务 && 未处于Spring事务 && 已加锁，释放锁，key={}", threadName, keys);
+                    releaseLock(multiLock, threadName, keys);
                 }
             }
+        }
+    }
 
+    /**
+     * 尝试加锁，支持重试机制
+     * @param multiLock             多锁对象
+     * @param threadName            线程名
+     * @param keys                  锁的key集合
+     * @param waitTime              等待时间
+     * @param timeUnit              时间单位
+     * @param maxRetries            最大重试次数
+     * @param retryIntervalMillis   重试间隔时间(毫秒)
+     * @throws InterruptedException 中断异常
+     */
+    private boolean tryLock(RedissonMultiLock multiLock, String threadName, List<String> keys, long waitTime, TimeUnit timeUnit, int maxRetries, long retryIntervalMillis) throws InterruptedException {
+        boolean locked = false;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            locked = multiLock.tryLock(waitTime, timeUnit);
+            if (locked) {
+                log.info("线程{} 获取锁成功，key={}", threadName, keys);
+                break; // 成功加锁，退出循环
+            } else {
+                log.warn("线程{} 第{}次尝试获取锁失败，key={}", threadName, attempt, keys);
+                if (attempt < maxRetries) {
+                    log.info("线程{} 等待{}毫秒后重试...", threadName, retryIntervalMillis);
+                    try {
+                        // 休眠指定时间后重试
+                        Thread.sleep(retryIntervalMillis);
+                    }catch (InterruptedException ie) {
+                        log.error("线程{} 休眠被中断: {}", threadName, ie.getMessage());
+                    }
+                }
+            }
+        }
+
+        return locked;
+    }
+
+    /**
+     * 释放锁
+     * @param multiLock    多锁对象
+     * @param threadName   线程名
+     * @param keys         锁的key集合
+     */
+    private void releaseLock(RedissonMultiLock multiLock, String threadName, List<String> keys) {
+        try {
+            multiLock.unlock();
+            log.info("线程{} 释放锁成功, key={}", threadName, keys);
+        } catch (Exception e) {
+            log.error("线程{} 释放锁失败, key={}", threadName, keys, e);
         }
     }
 
@@ -127,8 +242,16 @@ public class DistributeLockerAspect {
      */
     private long getWaitTime(DistributeLocker annotation, ProceedingJoinPoint pjp) {
         List<Object> objList = getValuesByParam(pjp, annotation.waitTimeKey());
+
         if(!CollectionUtils.isEmpty(objList)){
-            return Long.parseLong(objList.get(0).toString());
+            Object obj = objList.get(0);
+            if(obj != null){
+                try {
+                    return Long.parseLong(obj.toString());
+                } catch (NumberFormatException e) {
+                    // 类型转换失败时，返回注解默认值
+                }
+            }
         }
         return annotation.waiteTime();
     }
