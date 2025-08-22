@@ -53,6 +53,8 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.event.OtherOutstockStatusChangeEvent;
+import java.time.LocalDateTime;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -89,6 +91,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.python.google.common.collect.Lists;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -187,6 +190,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -517,6 +523,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他出库单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "审核操作");
+        
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单审核");
     }
 
@@ -601,6 +608,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             }else {
                 syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }
+            
+            // 发布状态变更事件
+            publishStatusChangeEvent(entity, ApproveTypeEnum.PASS.getStatus());
         }
         return Boolean.TRUE;
     }
@@ -642,6 +652,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         //操作日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("反审核了一个其他出库单【{}】",entity.getCode()), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "反审核操作");
+        
+        // 发布状态变更事件
+        publishStatusChangeEvent(entity, ApproveTypeEnum.DIS_APPROVE.getStatus());
+        
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单反审核");
     }
 
@@ -687,6 +701,73 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .eq(OtherOutstockEntity::getId,id)
                 .set(CharSequenceUtil.isNotBlank(syncKingdeeId),OtherOutstockEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
+    }
+
+    /**
+     * 发布状态变更事件
+     * @param entity 其他出库单实体
+     * @param newStatus 新状态
+     */
+    private void publishStatusChangeEvent(OtherOutstockEntity entity, String newStatus) {
+        try {
+            log.info("发布其他出库单状态变更事件，出库单ID：{}，状态：{}", entity.getId(), newStatus);
+            
+            // 获取明细变更信息
+            List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> detailChanges = getDetailChangesForEvent(entity.getId());
+            
+                                    // 创建事件
+                        OtherOutstockStatusChangeEvent event = new OtherOutstockStatusChangeEvent();
+                        event.setOutboundOrderId(entity.getId());
+                        event.setOutboundOrderCode(entity.getCode());
+                        event.setOldStatus(entity.getApproveStatus());
+                        event.setNewStatus(newStatus);
+                        event.setChangeTime(LocalDateTime.now());
+                        event.setSourceType(entity.getSourceType());
+                        event.setDetailChanges(detailChanges);
+            
+            // 发布事件
+            applicationEventPublisher.publishEvent(event);
+            log.info("成功发布其他出库单状态变更事件，出库单ID：{}", entity.getId());
+        } catch (Exception e) {
+            log.error("发布其他出库单状态变更事件失败，出库单ID：{}，错误：{}", entity.getId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 获取明细变更信息用于事件
+     * @param outboundOrderId 其他出库单ID
+     * @return 明细变更列表
+     */
+    private List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> getDetailChangesForEvent(String outboundOrderId) {
+        List<OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent> detailChanges = new ArrayList<>();
+        
+        try {
+            // 查询其他出库单主表信息
+            OtherOutstockEntity outboundOrder = this.getById(outboundOrderId);
+            if (outboundOrder == null) {
+                return detailChanges;
+            }
+            
+            // 查询其他出库单明细
+            List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(outboundOrderId);
+            
+            if (CollUtil.isNotEmpty(detailList)) {
+                for (OtherOutstockDetailEntity detail : detailList) {
+                    OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent detailChange = 
+                        new OtherOutstockStatusChangeEvent.OtherOutstockDetailChangeEvent();
+                    detailChange.setDetailId(detail.getId());
+                    detailChange.setSkuId(detail.getSkuId());
+                    detailChange.setSkuNo(detail.getSkuNo());
+                    detailChange.setActualQty(detail.getActualQty());
+                    detailChange.setSourceDetailId(detail.getSourceDetailId());
+                    detailChanges.add(detailChange);
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取明细变更信息失败，出库单ID：{}，错误：{}", outboundOrderId, e.getMessage(), e);
+        }
+        
+        return detailChanges;
     }
 
     /**

@@ -82,11 +82,7 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     */
     @TableField("warehouse_id")
     private String warehouseId;
-    /**
-    * 单据状态
-    */
-    @TableField("status")
-    private String status;
+
     /**
     * 领用人ID
     */
@@ -196,7 +192,7 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
-    public static final String STATUS = "status";
+
 
     public static final String USER_ID = "user_id";
 

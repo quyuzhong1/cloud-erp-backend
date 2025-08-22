@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -17,6 +20,7 @@ import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -594,5 +598,14 @@ public class ProductSkuFeignController {
     @PostMapping("/listAllStatusSkuBySkuNos")
     public List<SkuVO> listAllStatusSkuBySkuNos(@RequestBody List<String> skuNoList) {
         return productDetailService.listAllStatusSkuBySkuNos(skuNoList);
+    }
+    /**
+     * 根据sku进行模糊搜索
+     * @param pagingDTO
+     * @return
+     */
+    @PostMapping("/listSku" )
+    public PagingVO<ProductDetailDTO.SkuDTO> listSku(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO){
+        return productDetailService.listSku(pagingDTO);
     }
 }

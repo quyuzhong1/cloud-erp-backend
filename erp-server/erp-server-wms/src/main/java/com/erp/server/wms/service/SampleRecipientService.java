@@ -169,6 +169,15 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      * @return
      */
     List<SampleRecipientDTO.SkuDTO> querySkuCost(SampleRecipientDTO.SkuCostQueryDTO dto);
+    
+    /**
+     * 获取SKU列表（支持高级查询和模糊搜索）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    PagingVO<SampleRecipientDTO.SkuListResponseDTO> getSkuList(SampleRecipientDTO.SkuListQueryDTO dto);
 
     /**
      * 下推其他出库单查询
@@ -205,5 +214,25 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      * @return
      */
     Boolean importExcel(BaseDTO.ImportDTO dto);
+
+    /**
+     * 增加已出库数量（其他出库单审核通过时调用）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param detailId 样品领用单明细ID
+     * @param qty 出库数量
+     * @return 是否成功
+     */
+    Boolean increaseDeliveryQty(String detailId, Integer qty);
+
+    /**
+     * 减少已出库数量（其他出库单反审核时调用）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param detailId 样品领用单明细ID
+     * @param qty 出库数量
+     * @return 是否成功
+     */
+    Boolean decreaseDeliveryQty(String detailId, Integer qty);
 
 }

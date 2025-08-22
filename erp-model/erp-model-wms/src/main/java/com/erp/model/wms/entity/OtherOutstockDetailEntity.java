@@ -65,6 +65,14 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源明细ID
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -75,6 +83,10 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     public static final String ACTUAL_QTY = "actual_qty";
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
+
 
     @Override
     public Serializable pkVal() {

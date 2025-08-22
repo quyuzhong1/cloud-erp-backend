@@ -23,7 +23,6 @@
        <result column="recipient_date" property="recipientDate" />
        <result column="usage" property="usage" />
        <result column="warehouse_id" property="warehouseId" />
-       <result column="status" property="status" />
        <result column="user_id" property="userId" />
        <result column="user_name" property="userName" />
        <result column="dept_id" property="deptId" />
@@ -54,19 +53,140 @@
         update_time,
         version,
         is_deleted,
-        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, warehouse_id, status, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, recipient_date, usage, warehouse_id, user_id, user_name, dept_id, pick_org_id, pick_org_name, usage_scope, use_user_id, use_user_name, remark, is_delivery, receive_address, receiver_name, receive_phone, source_id, source_code, source_type, sku_total_cost
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
-
+            <select id="paging" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
+        SELECT
+            sr.id,
+            sr.code,
+            sr.approve_status AS approveStatus,
+            sr.approve_user_id AS approveUserId,
+            sr.approve_user_name AS approveUserName,
+            sr.approve_time AS approveTime,
+            sr.invalid_status AS invalidStatus,
+            sr.invalid_remark AS invalidRemark,
+            sr.invalid_time AS invalidTime,
+            sr.recipient_date AS recipientDate,
+            sr.usage,
+            sr.warehouse_id AS warehouseId,
+            wi.name AS warehouseName,
+            sr.user_id AS userId,
+            sr.user_name AS userName,
+            sr.dept_id AS deptId,
+            sr.pick_org_id AS pickOrgId,
+            sr.pick_org_name AS pickOrgName,
+            sr.usage_scope AS usageScope,
+            sr.use_user_id AS useUserId,
+            sr.use_user_name AS useUserName,
+            sr.remark,
+            sr.is_delivery AS isDelivery,
+            sr.receive_address AS receiveAddress,
+            sr.receiver_name AS receiverName,
+            sr.receive_phone AS receivePhone,
+            sr.source_id AS sourceId,
+            sr.source_code AS sourceCode,
+            sr.source_type AS sourceType,
+            sr.create_time AS createTime,
+            sr.create_user_name AS createUserName,
+            srd.id AS detailId,
+            srd.sku_no AS skuNo,
+            srd.sku_id AS skuId,
+            srd.product_name AS productName,
+            srd.recipient_qty AS recipientQty,
+            srd.delivery_qty AS deliveryQty,
+            CASE 
+                WHEN srd.exec_status = 'completeOutstock' THEN 0
+                ELSE (srd.recipient_qty - srd.delivery_qty)
+            END AS reservedQty,
+            srd.exec_status AS execStatus,
+            srd.remark AS detailRemark
+        FROM sample_recipient sr
+        LEFT JOIN sample_recipient_detail srd
+        ON srd.main_id = sr.id AND sr.is_deleted = false
+        LEFT JOIN warehouse_info wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND srd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sr.create_time DESC, srd.id ASC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from sample_recipient where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
-
+            <select id="listExport" resultType="com.erp.model.wms.dto.SampleRecipientDTO$ListDTO">
+        SELECT
+            sr.id,
+            sr.code,
+            sr.approve_status AS approveStatus,
+            sr.approve_user_id AS approveUserId,
+            sr.approve_user_name AS approveUserName,
+            sr.approve_time AS approveTime,
+            sr.invalid_status AS invalidStatus,
+            sr.invalid_remark AS invalidRemark,
+            sr.invalid_time AS invalidTime,
+            sr.recipient_date AS recipientDate,
+            sr.usage,
+            sr.warehouse_id AS warehouseId,
+            wi.name AS warehouseName,
+            sr.user_id AS userId,
+            sr.user_name AS userName,
+            sr.dept_id AS deptId,
+            sr.pick_org_id AS pickOrgId,
+            sr.pick_org_name AS pickOrgName,
+            sr.usage_scope AS usageScope,
+            sr.use_user_id AS useUserId,
+            sr.use_user_name AS useUserName,
+            sr.remark,
+            sr.is_delivery AS isDelivery,
+            sr.receive_address AS receiveAddress,
+            sr.receiver_name AS receiverName,
+            sr.receive_phone AS receivePhone,
+            sr.source_id AS sourceId,
+            sr.source_code AS sourceCode,
+            sr.source_type AS sourceType,
+            sr.create_time AS createTime,
+            sr.create_user_name AS createUserName,
+            srd.id AS detailId,
+            srd.sku_no AS skuNo,
+            srd.sku_id AS skuId,
+            srd.product_name AS productName,
+            srd.recipient_qty AS recipientQty,
+            srd.delivery_qty AS deliveryQty,
+            CASE 
+                WHEN srd.exec_status = 'completeOutstock' THEN 0
+                ELSE (srd.recipient_qty - srd.delivery_qty)
+            END AS reservedQty,
+            srd.exec_status AS execStatus,
+            srd.remark AS detailRemark
+        FROM sample_recipient sr
+        LEFT JOIN sample_recipient_detail srd
+        ON srd.main_id = sr.id AND sr.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND srd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sr.create_time DESC, srd.id ASC
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SampleRecipientDTO$TabListDTO">
         SELECT
@@ -78,6 +198,73 @@
             ${params.permissionSql}
         </if>
         GROUP BY approve_status
+    </select>
+
+    <!-- 获取所有状态的统计数量（一个SQL查询完成） -->
+    <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleRecipientDTO$TabListDTO">
+        SELECT 
+            'waitSubmit' AS tabFlag,
+        COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE is_deleted = FALSE
+        AND approve_status = 'waitSubmit'
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        
+        UNION ALL
+        
+        SELECT 
+            'approveIng' AS tabFlag,
+        COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE is_deleted = FALSE
+        AND approve_status = 'approveIng'
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        
+        UNION ALL
+        
+        SELECT 
+            'waitOutstock' AS tabFlag,
+            COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE sr.is_deleted = FALSE
+        AND sr.approve_status = 'approve'
+        AND srd.exec_status IN ('waitOutstock', 'partOutstock')
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        
+        UNION ALL
+        
+        SELECT 
+            'completeOutstock' AS tabFlag,
+            COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE sr.is_deleted = FALSE
+        AND srd.exec_status = 'completeOutstock'
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        
+        UNION ALL
+        
+        SELECT 
+            'reject' AS tabFlag,
+        COUNT(DISTINCT srd.id) AS count
+        FROM sample_recipient sr
+        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
+        WHERE is_deleted = FALSE
+        AND approve_status = 'reject'
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
     </select>
 
 </mapper>

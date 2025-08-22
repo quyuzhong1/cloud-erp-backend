@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -101,6 +102,7 @@ public class SampleRecipientController extends BaseController {
             menuCode = "wms:sampleRecipient:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SampleRecipientDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleRecipientDTO.PagingParamDTO> dto) {
         return success(sampleRecipientService.paging(dto));
     }
@@ -450,6 +452,19 @@ public class SampleRecipientController extends BaseController {
     @PostMapping("/querySkuCost")
     public ApiResult<List<SampleRecipientDTO.SkuDTO>> querySkuCost(@RequestBody @Validated SampleRecipientDTO.SkuCostQueryDTO dto) {
         List<SampleRecipientDTO.SkuDTO> result = sampleRecipientService.querySkuCost(dto);
+        return success(result);
+    }
+    
+    /**
+     * 获取SKU列表（支持高级查询和模糊搜索）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return ApiResult<PagingVO<SampleRecipientDTO.SkuListResponseDTO>>
+     */
+    @PostMapping("/getSkuList")
+    public ApiResult<PagingVO<SampleRecipientDTO.SkuListResponseDTO>> getSkuList(@RequestBody @Validated SampleRecipientDTO.SkuListQueryDTO dto) {
+        PagingVO<SampleRecipientDTO.SkuListResponseDTO> result = sampleRecipientService.getSkuList(dto);
         return success(result);
     }
 

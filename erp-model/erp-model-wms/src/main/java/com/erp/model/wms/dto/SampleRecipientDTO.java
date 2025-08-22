@@ -144,11 +144,6 @@ public class SampleRecipientDTO implements Serializable {
         private String warehouseName;
 
         /**
-        * 单据状态
-        */
-        private String status;
-
-        /**
         * 领用人ID
         */
         private String userId;
@@ -263,6 +258,36 @@ public class SampleRecipientDTO implements Serializable {
          */
         private Integer reservedQty;
 
+        /**
+         * 明细ID
+         */
+        private String detailId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 执行状态
+         */
+        private String execStatus;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
     }
 
     /**
@@ -314,11 +339,6 @@ public class SampleRecipientDTO implements Serializable {
         * 发货仓库ID 接口：warehouse/list
         */
         private String warehouseId;
-
-        /**
-        * 单据状态
-        */
-        private String status;
 
         /**
         * 领用人ID
@@ -516,12 +536,6 @@ public class SampleRecipientDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 单据状态
-         */
-        @Size(max = 50, message = "单据状态最大长度不能超过50位")
-        private String status;
-
-        /**
          * 领用人ID
          */
         @NotBlank(message = "领用人ID不能为空")
@@ -651,10 +665,29 @@ public class SampleRecipientDTO implements Serializable {
     @NoArgsConstructor
     public static class SkuCostQueryDTO {
         /**
-         * SKU编号列表
+         * SKU成本查询明细列表
          */
-        @NotEmpty(message = "SKU编号列表不能为空")
-        private List<String> skuNoList;
+        @NotEmpty(message = "SKU成本查询明细列表不能为空")
+        private List<SkuCostQueryDetailDTO> detailList;
+    }
+    
+    /**
+     * SKU成本查询明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostQueryDetailDTO {
+        /**
+         * SKU编号
+         */
+        @NotBlank(message = "SKU编号不能为空")
+        private String skuNo;
+        
+        /**
+         * 仓库ID
+         */
+        @NotBlank(message = "仓库ID不能为空")
+        private String warehouseId;
     }
 
     /**
@@ -719,11 +752,20 @@ public class SampleRecipientDTO implements Serializable {
          * 发货仓库
          */
         private String warehouseName;
+        /**
+         * 发货仓库ID
+         */
+        private String warehouseId;
         
         /**
          * 领用人
          */
         private String userName;
+        
+        /**
+         * 领用人ID
+         */
+        private String userId;
         
         /**
          * 待出库数量
@@ -772,6 +814,85 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotEmpty(message = "下推其他出库单列表不能为空")
         private List<ViewGenerateOutboundOrderDTO> list;
+    }
+    
+    /**
+     * SKU列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuListQueryDTO {
+        /**
+         * 搜索关键词（SKU编号、产品名称等）
+         */
+        private String searchKeyword;
+        
+        /**
+         * 仓库ID（用于查询库存）
+         */
+        private String warehouseId;
+        
+        /**
+         * 高级查询条件
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        
+        /**
+         * 当前页码
+         */
+        private Integer currPage = 1;
+        
+        /**
+         * 每页大小
+         */
+        private Integer pageSize = 20;
+    }
+    
+    /**
+     * SKU列表响应
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuListResponseDTO {
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+        
+        /**
+         * 标准零售价
+         */
+        private BigDecimal retailPrice;
+        
+        /**
+         * 可用库存
+         */
+        private Integer availableQty;
+        
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+        
+        /**
+         * 总库存
+         */
+        private Integer totalQty;
     }
 
 }

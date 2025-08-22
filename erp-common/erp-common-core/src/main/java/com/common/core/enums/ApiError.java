@@ -949,6 +949,7 @@ public enum ApiError implements Serializable {
     ERROR_99087(99087,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
     ERROR_99088(99088,"仓库对应默认暂存库位不存在，请联系管理员添加"),
     ERROR_WAREHOUSE_NO_STAGING(99089,"仓库【{}】对应默认暂存库位不存在"),
+
     ERROR_99100(99100,"暂无可用仓位"),
 
     ERROR_99101(99101,"{}未生成拣货单，不允许下推销售出库单"),

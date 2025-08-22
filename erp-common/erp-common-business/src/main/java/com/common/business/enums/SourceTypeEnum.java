@@ -94,6 +94,10 @@ public enum SourceTypeEnum {
     SAMPLE_RETURN_INFO("sampleReturnInfo", "样品归还单","sample_return_info"),
     SAMPLE_BORROW_INFO("sampleBorrowInfo", "样品借用单","sample_borrow_info"),
     SAMPLE_SCRAP_INFO("sampleScrapInfo", "样品报废单","sample_scrap_info"),
+    SAMPLE_RECIPIENT("sampleRecipient","样品领用单","sample_recipient"),
+    SAMPLE_BACK_INFO("sampleBackInfo","样品退回单","sample_back_info"),
+    SAMPLE_LEDGER_INIT("sampleLedgerInit","样品期初台账","sample_ledger_init"),
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
