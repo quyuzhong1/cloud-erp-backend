@@ -1,0 +1,53 @@
+package com.erp.server.oms.dht;
+
+import cn.hutool.json.JSONUtil;
+import com.erp.server.oms.ErpServerOmsApplication;
+import com.sdk.oms.dht.dto.DhtAuthDTO;
+import com.sdk.oms.dht.dto.DhtBaseResp;
+import com.sdk.oms.dht.dto.req.*;
+import com.sdk.oms.dht.dto.resp.DhtQueryCustomerResp;
+import com.sdk.oms.dht.dto.resp.DhtUserResp;
+import com.sdk.oms.dht.service.DhtCommonService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerOmsApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
+public class DhtCommonServiceTest {
+
+    @Resource
+    private DhtCommonService dhtCommonService;
+
+    @Test
+    public void getCorpAccessToken() {
+        DhtAuthDTO resp = dhtCommonService.getCorpAccessToken();
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+    @Test
+    public void getUserByMobile() {
+        DhtUserResp resp = dhtCommonService.getUserByMobile("15007174733");
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void queryObj() {
+        DhtQueryObjReq req = new DhtQueryObjReq();
+        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
+        req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
+        req.setData(DhtQueryObjReq.DataDTO.builder()
+                .includeDetail(true)
+                .apiName("AccountAddrObj")
+                .build());
+        String resp = dhtCommonService.queryObj(req);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+}

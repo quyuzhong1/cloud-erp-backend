@@ -26,4 +26,5 @@ public class BaseReq {
      * 是否触发工作流
      */
     private Boolean triggerWorkFlow;
+
 }
