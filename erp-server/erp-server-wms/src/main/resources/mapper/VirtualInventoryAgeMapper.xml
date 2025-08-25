@@ -139,6 +139,9 @@
         <where>
             ${params.sqlMap.default}
             and vidh.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+               and vidh.date = #{params.date}
+            </if>
             <!--权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
