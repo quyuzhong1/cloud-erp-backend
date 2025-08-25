@@ -21,6 +21,7 @@
        <result column="use_user_id" property="useUserId" />
        <result column="use_user_name" property="useUserName" />
        <result column="qty" property="qty" />
+       <result column="sku_id" property="skuId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

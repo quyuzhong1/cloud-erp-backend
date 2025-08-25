@@ -69,7 +69,11 @@ public class SampleLedgerEntity extends BaseEntity<SampleLedgerEntity> {
     */
     @TableField("qty")
     private Integer qty;
-
+    /**
+     * SKU ID
+     */
+    @TableField("sku_id")
+    private String skuId;
 
     public static final String USER_ID = "user_id";
 
@@ -88,6 +92,8 @@ public class SampleLedgerEntity extends BaseEntity<SampleLedgerEntity> {
     public static final String USE_USER_NAME = "use_user_name";
 
     public static final String QTY = "qty";
+
+    public static final String SKU_ID = "sku_id";
 
     @Override
     public Serializable pkVal() {
