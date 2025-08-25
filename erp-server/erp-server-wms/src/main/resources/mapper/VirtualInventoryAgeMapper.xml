@@ -90,13 +90,8 @@
         select
             vidh.date as date,
             vidh.sku_id as skuId,
-            pd.sku_no as skuNo,
-            pd.name as productName,
             vidh.warehouse_id as warehouseId,
-            wh."name" as warehouseName,
             vidh.virtual_warehouse_id as virtualWarehouseId,
-            vw.code as virtualWarehouseCode,
-            vw.name as virtualWarehouseName,
             vidh.updateTime,
             vih.virtualQty,
             vih.virtualUsableQty,
