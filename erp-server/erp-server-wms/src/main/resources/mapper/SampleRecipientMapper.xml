@@ -70,7 +70,7 @@
             sr.recipient_date AS recipientDate,
             sr.usage,
             sr.warehouse_id AS warehouseId,
-            wi.name AS warehouseName,
+--             wi.name AS warehouseName,
             sr.user_id AS userId,
             sr.user_name AS userName,
             sr.dept_id AS deptId,
@@ -104,7 +104,7 @@
         FROM sample_recipient sr
         LEFT JOIN sample_recipient_detail srd
         ON srd.main_id = sr.id AND sr.is_deleted = false
-        LEFT JOIN warehouse_info wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
+--         LEFT JOIN warehouse_info wi ON sr.warehouse_id = wi.id AND wi.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND srd.is_deleted = false
@@ -204,7 +204,7 @@
             sr.recipient_date AS recipientDate,
             sr.usage,
             sr.warehouse_id AS warehouseId,
-            wi.name AS warehouseName,
+--             wi.name AS warehouseName,
             sr.user_id AS userId,
             sr.user_name AS userName,
             sr.dept_id AS deptId,
@@ -272,7 +272,7 @@
         COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
-        WHERE is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
         AND approve_status = 'waitSubmit'
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -285,7 +285,7 @@
         COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
-        WHERE is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
         AND approve_status = 'approveIng'
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -325,7 +325,7 @@
         COUNT(DISTINCT srd.id) AS count
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
-        WHERE is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
         AND approve_status = 'reject'
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}

@@ -191,8 +191,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         handleData(sampleRecipientEntity);
         
         // 库存校验
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getProductList())) {
-            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getProductList());
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            validateRecipientQuantity(sampleRecipientEntity.getWarehouseId(), addOrUpdateDTO.getDetailList());
         }
         
         log.info("编辑 开始修改样品领用单数据，单号：【{}】", old.getCode());
@@ -201,7 +201,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("样品领用单保存失败");
         }
         // 修改明细数据（增量更新）
-        if (CollUtil.isNotEmpty(addOrUpdateDTO.getProductList())) {
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
             // 查询已存在的明细数据
             List<SampleRecipientDetailEntity> existingDetails = sampleRecipientDetailService.lambdaQuery()
                 .eq(SampleRecipientDetailEntity::getMainId, addOrUpdateDTO.getId())
@@ -216,7 +216,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             List<String> toDelete = new ArrayList<>();
             Set<String> processedSkuIds = new HashSet<>();
             
-            for (SampleRecipientDTO.ProductDTO productDTO : addOrUpdateDTO.getProductList()) {
+            for (SampleRecipientDTO.ProductDTO productDTO : addOrUpdateDTO.getDetailList()) {
                 String skuId = productDTO.getSkuId();
                 processedSkuIds.add(skuId);
                 

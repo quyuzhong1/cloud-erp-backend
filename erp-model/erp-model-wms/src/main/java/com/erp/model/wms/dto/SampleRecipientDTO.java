@@ -435,7 +435,7 @@ public class SampleRecipientDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
-         * 主键id
+         * 详情
          */
         private List<ProductDTO> detailList;
 
@@ -501,9 +501,9 @@ public class SampleRecipientDTO implements Serializable {
         private String id;
 
         /**
-         * 主键id
+         * 详情
          */
-        private List<ProductDTO> productList;
+        private List<ProductDTO> detailList;
 
     }
 
