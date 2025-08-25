@@ -178,6 +178,8 @@ public class SampleLedgerDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
 
+        private String childId;
+
         private String type;
 
         private String skuNo;
@@ -197,7 +199,7 @@ public class SampleLedgerDTO implements Serializable {
         /**
          * id
          */
-        private String id;
+        private String sampleLedgerId;
 
         /**
          * 归属用户ID

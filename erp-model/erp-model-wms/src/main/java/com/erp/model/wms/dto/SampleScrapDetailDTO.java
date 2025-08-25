@@ -78,7 +78,15 @@ public class SampleScrapDetailDTO implements Serializable {
         */
         private String sampleLedgerId;
 
+        /**
+         * 使用方id
+         */
+        private String useUserId;
 
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
 
     }
 

@@ -40,7 +40,7 @@
 
     <sql id="listSku">
         SELECT
-        sl.id,
+        sl.id as sampleLedgerId,
         sl.user_id AS userId,
         sl.user_name AS userName,
         sl.dept_id AS deptId,
@@ -59,7 +59,16 @@
         FROM
         sample_ledger sl
         <if test="params.type != null and params.type == 'scrap'">
-            left join (select ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false  where ssi.is_deleted = false and ssi.approve_status !='approve' GROUP BY ssd.sku_id ) as dd on dd.sku_id = sl.sku_id
+            left join (
+            select
+                ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi
+            inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+                where ssi.is_deleted = false
+                  and ssi.approve_status !='approve'
+            <if test="params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+                GROUP BY ssd.sku_id                                                                                                                                                                                                                                  ) as dd on dd.sku_id = sl.sku_id
         </if>
         WHERE
         sl.is_deleted = FALSE

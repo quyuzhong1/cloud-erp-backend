@@ -60,6 +60,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -146,22 +147,27 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(scrapUserId);
         dto.setSkuNos(skuNos);
+        dto.setType("scrap");
+        dto.setChildId(id);
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-        Map<String, Integer> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getId, SampleLedgerDTO.SkuAvailableQtyDTO::getQty));
-
-        // 查询这些SKU已经被报废的数量
-        Map<String, Integer> sampleScrapMap = sampleScrapDetailService.listBySku(id,skuNos);
+        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
 
         // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
         sampleScrapDetailEntities.forEach(detailDTO -> {
             String sampleLedgerId = detailDTO.getSampleLedgerId();
-            Integer ledgerQty = sampleLedgerMap.getOrDefault(sampleLedgerId, 0);
-            if(detailDTO.getScrapQty().compareTo(ledgerQty) > 0){
+            SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
+            if(Objects.nonNull(sampleLedger)){
+                Integer ledgerQty = sampleLedger.getQty();
+                if(detailDTO.getScrapQty().compareTo(ledgerQty) > 0){
+                    throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
+                }
+
+                //防止明细里还有重复
+                sampleLedger.setQty(ledgerQty - detailDTO.getScrapQty());
+                sampleLedgerMap.put(sampleLedgerId,sampleLedger);
+            }else {
                 throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
             }
-
-            //防止明细里还有重复SKU
-            sampleLedgerMap.put(sampleLedgerId,ledgerQty - detailDTO.getScrapQty());
         });
     }
 
@@ -623,14 +629,19 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(sampleScrapInfoEntity.getScrapUserId());
         dto.setSkuNos(skuNos);
+        dto.setType("scrap");
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-        Map<String, Integer> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getId, SampleLedgerDTO.SkuAvailableQtyDTO::getQty));
+        Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
 
-        // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
+        // 计算每个明细项中SKU的实际可报废数量
         detailDTOList.forEach(detailDTO -> {
             String sampleLedgerId = detailDTO.getSampleLedgerId();
-            Integer ledgerQty = sampleLedgerMap.getOrDefault(sampleLedgerId, 0);
-            detailDTO.setAvailableScrapQty(ledgerQty);
+            SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
+            if(Objects.nonNull(sampleLedger)){
+                detailDTO.setAvailableScrapQty(sampleLedger.getQty());
+                detailDTO.setUseUserId(sampleLedger.getUseUserId());
+                detailDTO.setUseUserName(sampleLedger.getUseUserName());
+            }
         });
 
         // 设置明细列表到主数据对象中
@@ -799,6 +810,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 for (SampleScrapInfoDTO.ImportDTO importDTO : value) {
                     SampleScrapDetailDTO.AddDTO detailDTO = new SampleScrapDetailDTO.AddDTO();
                     BeanMapperUtils.copy(importDTO, detailDTO);
+
+                    //明细备注
+                    detailDTO.setRemark(importDTO.getDetailRemark());
                     detailList.add(detailDTO);
                 }
                 addDTO.setDetailList(detailList);

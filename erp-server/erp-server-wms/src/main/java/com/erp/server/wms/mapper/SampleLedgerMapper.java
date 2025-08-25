@@ -28,10 +28,10 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
 
     /**
      * 根据用户ID查询台账列表
-     * @param dto
+     * @param params
      * @return
      */
-    List<SampleLedgerDTO.SkuAvailableQtyDTO> listSkuAvailableQtyByUserId(@Param("dto") SampleLedgerDTO.SearchDTO dto);
+    List<SampleLedgerDTO.SkuAvailableQtyDTO> listSkuAvailableQtyByUserId(@Param("params") SampleLedgerDTO.SearchDTO params);
 
 
     IPage<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(Page query, @Param("params") SampleLedgerDTO.SearchDTO params);
