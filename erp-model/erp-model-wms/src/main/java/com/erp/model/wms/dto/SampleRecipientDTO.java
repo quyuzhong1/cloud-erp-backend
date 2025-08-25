@@ -284,6 +284,11 @@ public class SampleRecipientDTO implements Serializable {
         private String execStatus;
 
         /**
+         * 执行状态名称
+         */
+        private String execStatusName;
+
+        /**
          * 明细备注
          */
         private String detailRemark;

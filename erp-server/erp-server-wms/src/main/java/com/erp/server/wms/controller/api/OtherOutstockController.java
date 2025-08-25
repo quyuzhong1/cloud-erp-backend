@@ -404,10 +404,10 @@ public class OtherOutstockController extends BaseController {
      * @return ApiResult<List<ListDTO>>
      */
     @PostMapping("/viewAssociatedDocuments")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id,create_user_id",
-            menuCode = "wms:otherOutstock:paging",
-            tableAlias = "oo")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "warehouse_keeper_id,create_user_id",
+//            menuCode = "wms:otherOutstock:paging",
+//            tableAlias = "oo")
     public ApiResult<List<OtherOutstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
         List<OtherOutstockDTO.ListDTO> resultDTO = otherOutstockService.viewAssociatedDocuments(dto);
         return success(resultDTO);
