@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -72,6 +73,11 @@ public class SampleScrapDetailDTO implements Serializable {
         * 备注
         */
         private String remark;
+        /**
+        * 台账id
+        */
+        private String sampleLedgerId;
+
 
 
     }
@@ -138,6 +144,11 @@ public class SampleScrapDetailDTO implements Serializable {
         * 备注
         */
         private String remark;
+
+        /**
+         * 台账id
+         */
+        private String sampleLedgerId;
 
 
     }
