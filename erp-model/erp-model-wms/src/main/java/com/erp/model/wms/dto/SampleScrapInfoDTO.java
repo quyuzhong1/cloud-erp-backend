@@ -295,7 +295,7 @@ public class SampleScrapInfoDTO implements Serializable {
         /**
          * 明细
          */
-        @Min(value = 1,message = "明细不能为空" )
+        @NotEmpty(message = "明细不能为空" )
         private List<SampleScrapDetailDTO.AddDTO> detailList;
 
     }
@@ -316,7 +316,7 @@ public class SampleScrapInfoDTO implements Serializable {
         /**
          * 明细
          */
-        @Min(value = 1,message = "明细不能为空" )
+        @NotEmpty(message = "明细不能为空" )
         private List<SampleScrapDetailDTO.UpdateDTO> detailList;
 
     }
