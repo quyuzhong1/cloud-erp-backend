@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -41,4 +42,6 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
      * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
      */
     Map<String, Integer> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto);
+
+    PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
 }

@@ -1,24 +1,28 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+
+import java.util.Objects;
 
 /**
  * 样品库存统计
@@ -67,6 +71,18 @@ public class SampleLedgerController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 列表查询
+     * @author jack
+     * @date: 2025-08-20
+     * @param pagingDTO
+     * @return ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>>
+     */
+    @PostMapping("/listSku")
+    public ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO) {
+        if (Objects.isNull(pagingDTO.getParams()) || CollUtil.isEmpty(pagingDTO.getParams().getSkuNos())){
+            return success();
+        }
+        return success(sampleLedgerService.listSku(pagingDTO));
+    }
 }

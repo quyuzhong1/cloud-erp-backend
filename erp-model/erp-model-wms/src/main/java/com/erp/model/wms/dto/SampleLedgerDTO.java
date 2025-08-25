@@ -178,10 +178,13 @@ public class SampleLedgerDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
 
+        private String type;
+
         private String skuNo;
 
         private List<String> skuNos;
 
+        @NotBlank(message = "归属用户不能为空")
         private String userId;
 
     }
@@ -191,10 +194,56 @@ public class SampleLedgerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SkuAvailableQtyDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 归属用户ID
+         */
+        private String userId;
+
+        /**
+         * 归属用户姓名
+         */
+        private String userName;
+
+        /**
+         * 归属部门ID
+         */
+        private String deptId;
+
+        /**
+         * 归属部门名称
+         */
+        private String deptName;
+
+
+        /**
+         * 使用方id
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
+
+        /**
+         * 产品
+         */
+        private String skuId;
 
         private String skuNo;
 
-        private Integer qty = 0;
+        private String productName;
+
+        /**
+         * 库存数量（可为正数或负数）
+         */
+        private Integer qty;
+
     }
 
 
