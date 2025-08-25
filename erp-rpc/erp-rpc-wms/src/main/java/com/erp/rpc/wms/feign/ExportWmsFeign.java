@@ -324,4 +324,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportSampleScrapInfo")
     PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出样品领用单
+     */
+    @PostMapping("/feign/export/getSampleRecipientPageData")
+    PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto);
 }

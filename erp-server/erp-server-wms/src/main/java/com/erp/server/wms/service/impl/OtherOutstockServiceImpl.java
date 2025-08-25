@@ -20,6 +20,7 @@ import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -1658,5 +1659,30 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         return list.stream()
                 .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OtherOutstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto) {
+        List<OtherOutstockDTO.ListDTO> list = baseMapper.viewAssociatedDocuments(dto);
+        // 格式化出库单数据
+        formatOtherOutstock(list);
+        return list;
+    }
+
+    /**
+     * @description: 格式化列表数据
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param records
+     */
+    private void formatOtherOutstock(List<OtherOutstockDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 查询流程id判断是否存在流程
+        records.forEach(obj -> {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
+        });
     }
 }

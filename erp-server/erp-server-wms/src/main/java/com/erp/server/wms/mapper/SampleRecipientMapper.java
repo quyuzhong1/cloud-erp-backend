@@ -37,13 +37,21 @@ public interface SampleRecipientMapper extends BaseMapper<SampleRecipientEntity>
     * @return
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") SampleRecipientDTO.PagingParamDTO params);
+//
+//    /**
+//    * 导出Excel查询
+//    * @param params
+//    * @return
+//    */
+//    List<SampleRecipientDTO.ListDTO> listExport(@Param("params") SampleRecipientDTO.ExportDTO params);
 
     /**
-    * 导出Excel查询
-    * @param params
+    * 分页导出Excel查询
+    * @param query 分页参数
+    * @param params 查询参数
     * @return
     */
-    List<SampleRecipientDTO.ListDTO> listExport(@Param("params") SampleRecipientDTO.ExportDTO params);
+    IPage<SampleRecipientDTO.ListDTO> listExport(Page query, @Param("params") SampleRecipientDTO.ExportDTO params);
 
 
     /**

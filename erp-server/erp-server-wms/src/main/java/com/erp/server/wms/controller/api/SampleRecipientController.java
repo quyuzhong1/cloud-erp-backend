@@ -399,8 +399,9 @@ public class SampleRecipientController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品领用单导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleRecipientDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SampleRecipientDTO.ExportDTO dto, HttpServletResponse response) {
         sampleRecipientService.exportList(dto, response);
+        return success(true);
     }
 
     /**

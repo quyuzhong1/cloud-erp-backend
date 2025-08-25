@@ -77,6 +77,9 @@ import java.io.File;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_RECIPIENT_REPORT;
+
 /**
  * <p>
  * 样品领用单 服务实现类
@@ -309,25 +312,21 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     @Override
-    public void exportList(SampleRecipientDTO.ExportDTO param, HttpServletResponse response) {
-        List<SampleRecipientDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+    public Boolean exportList(SampleRecipientDTO.ExportDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("样品领用单导出", EXPORT_WMS_SAMPLE_RECIPIENT_REPORT.getCode(), param);
+        return true;
+    }
+
+    @Override
+    public PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(PagingDTO<SampleRecipientDTO.ExportDTO> dto) {
+        Page<SampleRecipientDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SampleRecipientDTO.ListDTO> pageData = this.baseMapper.listExport(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO<>(pageData);
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/sampleRecipient.xlsx";
-        String name = "样品领用单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
     @Transactional(rollbackFor = Exception.class)

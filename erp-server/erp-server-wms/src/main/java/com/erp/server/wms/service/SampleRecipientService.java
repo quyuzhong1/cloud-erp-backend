@@ -142,7 +142,7 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     * @param response
     * @return
     */
-    void exportList(SampleRecipientDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(SampleRecipientDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -242,5 +242,14 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      * @return 是否成功
      */
     Boolean decreaseDeliveryQty(String detailId, Integer qty);
+
+    /**
+     * 获取样品领用单分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-25
+     * @param dto 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(PagingDTO<SampleRecipientDTO.ExportDTO> dto);
 
 }
