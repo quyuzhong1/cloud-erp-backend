@@ -138,10 +138,7 @@
         left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and vidh.is_deleted = false
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-               and vidh.date = #{params.date}
-            </if>
+            and vidh.is_deleted = false  and vidh.date = #{params.date}
             <!--权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
