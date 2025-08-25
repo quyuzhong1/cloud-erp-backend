@@ -281,8 +281,8 @@ public class SampleScrapInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
 
@@ -318,6 +318,74 @@ public class SampleScrapInfoDTO implements Serializable {
          */
         @Min(value = 1,message = "明细不能为空" )
         private List<SampleScrapDetailDTO.UpdateDTO> detailList;
+
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 序号
+         */
+        private String no;
+        /**
+         * 报废操作人ID
+         */
+        private String scrapUserId;
+
+        /**
+         * 报废操作人姓名
+         */
+        private String scrapUserName;
+
+        /**
+         * 报废人部门ID
+         */
+        private String scrapDeptId;
+
+        /**
+         * 报废人部门名称
+         */
+        private String scrapDeptName;
+
+        /**
+         * 报废日期
+         */
+        private LocalDate scrapDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 报废数量
+         */
+        private Integer scrapQty;
+
+
+        /**
+         * 备注
+         */
+        private String detailRemark;
 
     }
 
@@ -362,8 +430,8 @@ public class SampleScrapInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
 
