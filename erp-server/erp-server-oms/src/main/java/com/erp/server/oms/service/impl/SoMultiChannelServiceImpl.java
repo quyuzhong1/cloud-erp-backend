@@ -2,12 +2,14 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -28,11 +30,13 @@ import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SoMultiChannelConverter;
+import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.mapper.SoMultiChannelMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -65,6 +69,9 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 /**
  * <p>
  * 多渠道订单主表 服务实现类
@@ -100,6 +107,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+    @Resource
+    private DmpMqFeign dmpMqFeign;
+    @Resource
+    private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -235,11 +247,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<String> existStatusList = list.stream().map(SoMultiChannelDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new SoMultiChannelDTO.TabListDTO(status, 0));
-        }
+                list.add(new SoMultiChannelDTO.TabListDTO(status,null, 0));
+            }
         });
-        list.add(new SoMultiChannelDTO.TabListDTO("all", list.stream().mapToInt(SoMultiChannelDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        list.forEach(e -> e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag())));
         return list;
     }
 
@@ -340,7 +351,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
+        //此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
         approveDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
@@ -446,10 +457,33 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        if (dto.getType().equals(ApproveType.PASS)) {
+            // 创建亚马逊订单
+            sendPusTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_ADD.getCode());
+            //更新订单创建状态
+            this.lambdaUpdate().set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CREATING.getCode()).eq(SoMultiChannelEntity::getId, entity.getId()).update();
+
+        }
+
 
 
         return Boolean.TRUE;
+    }
+
+    private void sendPusTask(List<SoMultiChannelEntity> list, String operate) {
+        //审核通过发送金蝶
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        list.forEach(obj -> {
+            DmpPushTaskEntity pushTaskEntity = syncAmazonSoMultiChannelService.syncDataToKingdee(obj, operate);
+            resultList.add(pushTaskEntity);
+        });
+        //推送亚马逊
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(resultList);
+            }
+        });
     }
 
     @Override

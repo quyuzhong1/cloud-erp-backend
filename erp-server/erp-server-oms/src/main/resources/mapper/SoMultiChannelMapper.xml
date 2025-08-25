@@ -98,7 +98,7 @@
             smc.sign_order_error as signOrderError,
             smc.has_outstock as hasOutstock
         FROM so_multi_channel smc
-        LEFT JOIN so_multi_channel_detail smsd on smsc.main_id=smc.id and smsc.is_deleted=false
+        LEFT JOIN so_multi_channel_detail smsd on smsd.main_id=smc.id and smsd.is_deleted=false
         WHERE
             ${params.sqlMap.default}
           and smc.is_deleted = false

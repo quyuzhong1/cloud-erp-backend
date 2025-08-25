@@ -41,6 +41,7 @@ public class SoMultiChannelDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         private String tabFlagName;
 
          /**
          * 数量
@@ -104,7 +105,15 @@ public class SoMultiChannelDTO implements Serializable {
         * 平台订单号【可排序】
         */
         private String platformCode;
+        /**
+         * 发货店铺id【可排序】
+         */
+        private String deliveryShopId;
 
+        /**
+         * 发货店铺名称【可排序】
+         */
+        private String deliveryShopName;
         /**
         * 店铺id【可排序】
         */
@@ -240,6 +249,22 @@ public class SoMultiChannelDTO implements Serializable {
         * 创建人名称【可排序】
         */
         private String createUserName;
+        /**
+         *平台产品ID
+         */
+        private String platformSpuNo;
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
+        /**
+         * 销售数量
+         */
+        private String qty;
+        /**
+         * 发货数量
+         */
+        private String deliveryQty;
     }
 
     /**
@@ -396,6 +421,10 @@ public class SoMultiChannelDTO implements Serializable {
         * 审核时间
         */
         private LocalDateTime approveTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
         /**
         * 审核人id
