@@ -82,8 +82,7 @@ import java.io.File;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_RECIPIENT_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -1247,8 +1246,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             detailList.add(detailDTO);
             addDTO.setDetailList(detailList);
             
-            // 调用其他出库单服务创建出库单
-            String outboundOrderId = otherOutstockService.add(addDTO);
+            // 调用其他出库单服务创建出库单 并审核通过
+            String outboundOrderId = otherOutstockService.addAndApprove(addDTO);
             
             if (StringUtils.isNotBlank(outboundOrderId)) {
                 // 设置来源字段到其他出库单主表
@@ -1259,28 +1258,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     outboundOrder.setSourceCode(item.getSourceCode());
                     otherOutstockService.updateById(outboundOrder);
                 }
-                
-                // 自动审核通过其他出库单
-                try {
-                    log.info("开始自动审核通过其他出库单，ID：{}", outboundOrderId);
-                    BatchResultDTO approveResult = otherOutstockService.approve(outboundOrderId, ApproveTypeEnum.PASS.getStatus(), "样品领用单【下推】自动审核通过");
-                    if (!approveResult.getSuccess()) {
-                        log.warn("其他出库单自动审核失败，ID：{}，原因：{}", outboundOrderId, approveResult.getMsg());
-                    } else {
-                        log.info("其他出库单自动审核通过成功，ID：{}", outboundOrderId);
-                    }
-                } catch (Exception e) {
-                    log.error("其他出库单自动审核异常，ID：{}，错误：{}", outboundOrderId, e.getMessage(), e);
-                }
-                
-//                // 更新样品领用单明细的已出库数量
-//                Integer outQty = item.getOutQty() != null ? item.getOutQty() : item.getReservedQty();
-//                Integer newDeliveryQty = detail.getDeliveryQty() + outQty;
-//                detail.setDeliveryQty(newDeliveryQty);
-                
-                // 更新样品领用单明细
-//                sampleRecipientDetailService.updateById(detail);
-                
+
                 log.info("成功创建其他出库单，ID：{}，来源：{}",
                     outboundOrderId, item.getSourceCode());
                 return BatchResultDTO.success(item.getSourceId(), item.getSourceCode(), "下推其他出库单成功");
@@ -1348,7 +1326,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        downloadTaskFeign.saveImportTask("样品领用单导入", "IMPORT_WMS_SAMPLE_RECIPIENT", dto);
+        downloadTaskFeign.saveImportTask("样品领用单导入", IMPORT_WMS_SAMPLE_RECIPIENT.getCode(), dto);
         return Boolean.TRUE;
     }
 
