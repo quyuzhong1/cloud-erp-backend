@@ -1273,20 +1273,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     log.error("其他出库单自动审核异常，ID：{}，错误：{}", outboundOrderId, e.getMessage(), e);
                 }
                 
-                // 更新样品领用单明细的已出库数量
-                Integer outQty = item.getOutQty() != null ? item.getOutQty() : item.getReservedQty();
-                Integer newDeliveryQty = detail.getDeliveryQty() + outQty;
-                detail.setDeliveryQty(newDeliveryQty);
-                
-                // 根据已出库数量和领用数量的关系，更新执行状态
-                String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
-                detail.setExecStatus(newExecStatus);
+//                // 更新样品领用单明细的已出库数量
+//                Integer outQty = item.getOutQty() != null ? item.getOutQty() : item.getReservedQty();
+//                Integer newDeliveryQty = detail.getDeliveryQty() + outQty;
+//                detail.setDeliveryQty(newDeliveryQty);
                 
                 // 更新样品领用单明细
-                sampleRecipientDetailService.updateById(detail);
+//                sampleRecipientDetailService.updateById(detail);
                 
-                log.info("成功创建其他出库单，ID：{}，来源：{}，已更新样品领用单明细执行状态为：{}", 
-                    outboundOrderId, item.getSourceCode(), newExecStatus);
+                log.info("成功创建其他出库单，ID：{}，来源：{}",
+                    outboundOrderId, item.getSourceCode());
                 return BatchResultDTO.success(item.getSourceId(), item.getSourceCode(), "下推其他出库单成功");
             } else {
                 return BatchResultDTO.fail(item.getSourceId(), item.getSourceCode(), "创建其他出库单失败");
@@ -1584,14 +1580,29 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         try {
             log.info("开始增加样品领用单明细已出库数量，明细ID：{}，数量：{}", detailId, qty);
             
-            // 直接更新指定明细的已出库数量
-            boolean updated = sampleRecipientDetailService.lambdaUpdate()
-                .eq(SampleRecipientDetailEntity::getId, detailId)
-                .setSql("delivery_qty = delivery_qty + " + qty)
-                .update();
+            // 查询样品领用单明细信息
+            SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(detailId);
+            if (detail == null) {
+                log.warn("样品领用单明细不存在，明细ID：{}", detailId);
+                return false;
+            }
+            
+            // 计算新的已出库数量
+            Integer newDeliveryQty = detail.getDeliveryQty() + qty;
+            
+            // 更新已出库数量
+            detail.setDeliveryQty(newDeliveryQty);
+            
+            // 根据已出库数量和领用数量的关系，更新执行状态
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            detail.setExecStatus(newExecStatus);
+            
+            // 更新样品领用单明细
+            boolean updated = sampleRecipientDetailService.updateById(detail);
             
             if (updated) {
-                log.info("成功更新样品领用单明细已出库数量，明细ID：{}，增加数量：{}", detailId, qty);
+                log.info("成功更新样品领用单明细已出库数量和执行状态，明细ID：{}，增加数量：{}，新执行状态：{}", 
+                    detailId, qty, newExecStatus);
                 return true;
             } else {
                 log.warn("更新样品领用单明细已出库数量失败，明细ID：{}", detailId);
@@ -1616,14 +1627,29 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         try {
             log.info("开始减少样品领用单明细已出库数量，明细ID：{}，数量：{}", detailId, qty);
             
-            // 直接更新指定明细的已出库数量
-            boolean updated = sampleRecipientDetailService.lambdaUpdate()
-                .eq(SampleRecipientDetailEntity::getId, detailId)
-                .setSql("delivery_qty = GREATEST(delivery_qty - " + qty + ", 0)")
-                .update();
+            // 查询样品领用单明细信息
+            SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(detailId);
+            if (detail == null) {
+                log.warn("样品领用单明细不存在，明细ID：{}", detailId);
+                return false;
+            }
+            
+            // 计算新的已出库数量（不能小于0）
+            Integer newDeliveryQty = Math.max(detail.getDeliveryQty() - qty, 0);
+            
+            // 更新已出库数量
+            detail.setDeliveryQty(newDeliveryQty);
+            
+            // 根据已出库数量和领用数量的关系，更新执行状态
+            String newExecStatus = calculateExecStatus(newDeliveryQty, detail.getRecipientQty());
+            detail.setExecStatus(newExecStatus);
+            
+            // 更新样品领用单明细
+            boolean updated = sampleRecipientDetailService.updateById(detail);
             
             if (updated) {
-                log.info("成功减少样品领用单明细已出库数量，明细ID：{}，减少数量：{}", detailId, qty);
+                log.info("成功减少样品领用单明细已出库数量和执行状态，明细ID：{}，减少数量：{}，新执行状态：{}", 
+                    detailId, qty, newExecStatus);
                 return true;
             } else {
                 log.warn("减少样品领用单明细已出库数量失败，明细ID：{}", detailId);
