@@ -54,6 +54,11 @@ public class SampleScrapDetailEntity extends BaseEntity<SampleScrapDetailEntity>
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 台账id
+    */
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
 
 
     public static final String MAIN_ID = "main_id";

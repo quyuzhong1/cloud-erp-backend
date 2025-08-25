@@ -38,28 +38,7 @@
         user_id, user_name, dept_id, dept_name, sku_no, product_name, use_user_id, use_user_name, qty
     </sql>
 
-    <select id="listSkuAvailableQtyByUserId" resultType="java.util.Map">
-        select
-        sl.sku_no as skuNo,
-        sum(qty) as qty
-        from
-        sample_ledger sl
-        where
-        sl.is_deleted = false
-        and sl.user_id = #{dto.userId}
-        <if test="dto.skuNos != null and dto.skuNos.size() > 0">
-            and sl.sku_no in
-            <foreach collection="dto.skuNos" open="(" separator="," close=")" item="item">
-                #{item}
-            </foreach>
-        </if>
-        <if test="dto.skuNo != null and dto.skuNo != ''">
-            and sl.sku_no = #{dto.skuNo}
-        </if>
-        GROUP BY
-        sl.sku_no
-    </select>
-    <select id="listSku" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+    <sql id="listSku">
         SELECT
         sl.id,
         sl.user_id AS userId,
@@ -72,7 +51,7 @@
         sl.use_user_id AS useUserId,
         sl.use_user_name AS useUserName,
         <if test="params.type != null and params.type == 'scrap'">
-            sl.qty - dd.freezeQty  AS qty
+            COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS qty
         </if>
         <if test="params.type == null || params.type == ''">
             sl.qty  AS qty
@@ -80,7 +59,7 @@
         FROM
         sample_ledger sl
         <if test="params.type != null and params.type == 'scrap'">
-            left join (select ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false  where ssi.is_deleted = false and ssi.approve_status !='approve' GROUP BY ssd.sku_id ) as dd on scrap.sku_id = sl.sku_id
+            left join (select ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false  where ssi.is_deleted = false and ssi.approve_status !='approve' GROUP BY ssd.sku_id ) as dd on dd.sku_id = sl.sku_id
         </if>
         WHERE
         sl.is_deleted = FALSE
@@ -92,8 +71,16 @@
             </foreach>
         </if>
         <if test="params.skuNo != null and params.skuNo != ''">
-            and sl.sku_no = #{params.skuNo}
+            and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
         </if>
         order by sl.sku_no desc
+    </sql>
+
+    <select id="listSkuAvailableQtyByUserId" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+        <include refid="listSku"/>
+    </select>
+
+    <select id="listSku" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+        <include refid="listSku"/>
     </select>
 </mapper>

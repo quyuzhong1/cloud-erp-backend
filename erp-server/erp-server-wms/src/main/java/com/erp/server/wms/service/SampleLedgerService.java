@@ -41,7 +41,7 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
      * @param dto 查询条件对象，包含用户ID、SKU编号等查询参数
      * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
      */
-    Map<String, Integer> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto);
+    List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto);
 
     PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
 }

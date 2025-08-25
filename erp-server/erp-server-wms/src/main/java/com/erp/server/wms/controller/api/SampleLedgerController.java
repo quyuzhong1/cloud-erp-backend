@@ -80,7 +80,7 @@ public class SampleLedgerController extends BaseController {
      */
     @PostMapping("/listSku")
     public ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO) {
-        if (Objects.isNull(pagingDTO.getParams()) || CollUtil.isEmpty(pagingDTO.getParams().getSkuNos())){
+        if (Objects.isNull(pagingDTO.getParams())){
             return success();
         }
         return success(sampleLedgerService.listSku(pagingDTO));

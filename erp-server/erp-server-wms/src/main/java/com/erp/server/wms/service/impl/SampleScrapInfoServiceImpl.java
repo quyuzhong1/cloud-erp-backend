@@ -146,24 +146,22 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(scrapUserId);
         dto.setSkuNos(skuNos);
-        Map<String, Integer> sampleLedgerMap  = sampleLedgerService.listLedgerByUserId(dto);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
+        Map<String, Integer> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getId, SampleLedgerDTO.SkuAvailableQtyDTO::getQty));
 
         // 查询这些SKU已经被报废的数量
         Map<String, Integer> sampleScrapMap = sampleScrapDetailService.listBySku(id,skuNos);
 
         // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
         sampleScrapDetailEntities.forEach(detailDTO -> {
-            String skuNo = detailDTO.getSkuNo();
-            Integer ledgerQty = sampleLedgerMap.getOrDefault(skuNo, 0);  // 样品台账中的可用数量
-            Integer scrapQty = sampleScrapMap.getOrDefault(skuNo, 0);    // 已经报废的数量
-            int availableScrapQty = ledgerQty - scrapQty;               // 相减后得到实际可报废数量
-
-            if(detailDTO.getScrapQty().compareTo(availableScrapQty) > 0){
-                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,skuNo,"报废");
+            String sampleLedgerId = detailDTO.getSampleLedgerId();
+            Integer ledgerQty = sampleLedgerMap.getOrDefault(sampleLedgerId, 0);
+            if(detailDTO.getScrapQty().compareTo(ledgerQty) > 0){
+                throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
             }
 
             //防止明细里还有重复SKU
-            sampleLedgerMap.put(skuNo,ledgerQty - detailDTO.getScrapQty());
+            sampleLedgerMap.put(sampleLedgerId,ledgerQty - detailDTO.getScrapQty());
         });
     }
 
@@ -625,18 +623,14 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(sampleScrapInfoEntity.getScrapUserId());
         dto.setSkuNos(skuNos);
-        Map<String, Integer> sampleLedgerMap  = sampleLedgerService.listLedgerByUserId(dto);
-
-        // 查询这些SKU已经被报废的数量
-        Map<String, Integer> sampleScrapMap = sampleScrapDetailService.listBySku("",skuNos);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
+        Map<String, Integer> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getId, SampleLedgerDTO.SkuAvailableQtyDTO::getQty));
 
         // 计算每个明细项中SKU的实际可报废数量（台账数量 - 已报废数量）
         detailDTOList.forEach(detailDTO -> {
-            String skuNo = detailDTO.getSkuNo();
-            Integer ledgerQty = sampleLedgerMap.getOrDefault(skuNo, 0);  // 样品台账中的可用数量
-            Integer scrapQty = sampleScrapMap.getOrDefault(skuNo, 0);    // 已经报废的数量
-            int availableScrapQty = ledgerQty - scrapQty;               // 相减后得到实际可报废数量
-            detailDTO.setAvailableScrapQty(availableScrapQty);
+            String sampleLedgerId = detailDTO.getSampleLedgerId();
+            Integer ledgerQty = sampleLedgerMap.getOrDefault(sampleLedgerId, 0);
+            detailDTO.setAvailableScrapQty(ledgerQty);
         });
 
         // 设置明细列表到主数据对象中
