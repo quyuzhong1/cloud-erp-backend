@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -30,8 +31,7 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
      * @param dto
      * @return
      */
-    @MapKey("skuNo")
-    Map<String, Integer> listSkuAvailableQtyByUserId(@Param("dto") SampleLedgerDTO.SearchDTO dto);
+    List<SampleLedgerDTO.SkuAvailableQtyDTO> listSkuAvailableQtyByUserId(@Param("dto") SampleLedgerDTO.SearchDTO dto);
 
 
     IPage<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(Page query, @Param("params") SampleLedgerDTO.SearchDTO params);

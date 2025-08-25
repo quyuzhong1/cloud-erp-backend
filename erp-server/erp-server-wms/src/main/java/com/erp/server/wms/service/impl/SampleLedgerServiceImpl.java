@@ -106,12 +106,15 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * @return 符合条件的台账实体列表，如果查询条件为空则返回空列表
      */
     @Override
-    public Map<String, Integer> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto){
+    public List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto){
         if(Objects.isNull(dto)){
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
         if(StringUtils.isBlank(dto.getUserId())){
-            return Collections.emptyMap();
+            return Collections.emptyList();
+        }
+        if(CollUtil.isNotEmpty(dto.getSkuNos()) && dto.getSkuNos().size() == 1){
+            dto.setSkuNo(dto.getSkuNos().get(0));
         }
         return this.baseMapper.listSkuAvailableQtyByUserId(dto);
     }
