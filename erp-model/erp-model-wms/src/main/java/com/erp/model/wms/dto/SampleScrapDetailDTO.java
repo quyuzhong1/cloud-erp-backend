@@ -1,11 +1,9 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -67,7 +65,7 @@ public class SampleScrapDetailDTO implements Serializable {
         /**
          * 可报废数量
          */
-        private Integer availableScrapQty = 0;
+        private Integer availableQty = 0;
 
         /**
         * 备注
@@ -146,6 +144,11 @@ public class SampleScrapDetailDTO implements Serializable {
         @NotNull(message = "报废数量不能为空")
         @Min(value = 1,message = "报废数量不能小于1" )
         private Integer scrapQty;
+
+        /**
+         * 可报废数量
+         */
+        private Integer availableQty;
 
 
         /**
