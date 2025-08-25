@@ -109,9 +109,6 @@
         left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
         and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
         left join CombinedProcessing cp on vidh.sku_id = cp.sku_id and vidh.warehouse_id = cp.warehouse_id and vidh.virtual_warehouse_id = cp.virtual_warehouse_id
-        left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
     </select>
 
     <!-- 库龄分析分页查询 -->

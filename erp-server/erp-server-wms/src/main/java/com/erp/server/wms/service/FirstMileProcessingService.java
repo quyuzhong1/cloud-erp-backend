@@ -75,4 +75,12 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
      * @return PagingVO<ListDTO>
      */
     PagingVO<ReportProcessingDTO.ListDTO> firstMileTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 头程汇总导出
+     * @author will
+     * @date 2025/8/21 14:27
+     * @param dto
+     * @return Boolean
+     */
+    Boolean firstMileTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto);
 }

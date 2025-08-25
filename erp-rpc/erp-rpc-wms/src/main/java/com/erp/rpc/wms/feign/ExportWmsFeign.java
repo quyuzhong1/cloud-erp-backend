@@ -20,7 +20,6 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -320,4 +319,22 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportThirdWarehouseDelivery")
     PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出b2b销售订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalB2bProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2bProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出b2c销售订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalB2cProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2cProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出头程订单冻结汇总
+     */
+    @PostMapping("/feign/export/exportTotalFirstMileProcessing")
+    PagingVO<ReportProcessingDTO.ListDTO> exportTotalFirstMileProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
 }
