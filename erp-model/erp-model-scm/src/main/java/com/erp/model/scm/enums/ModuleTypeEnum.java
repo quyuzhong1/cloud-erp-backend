@@ -156,10 +156,10 @@ public enum ModuleTypeEnum {
     DICT_HS_CODE("133", "出口申报要素"),
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
 
-    SAMPLE_RETURN_INFO("", "样品归还单"),
-    SAMPLE_BORROW_INFO("", "样品借用单"),
-    SAMPLE_SCRAP_INFO("", "样品报废单"),
-    EXHIBITION_ORDER("", "展会订单"),
+    SAMPLE_RETURN_INFO("141", "样品归还单"),
+    SAMPLE_BORROW_INFO("142", "样品借用单"),
+    SAMPLE_SCRAP_INFO("143", "样品报废单"),
+    EXHIBITION_ORDER("144", "展会订单"),
 
     SAMPLE_RECIPIENT("134", "样品领用单"),
     SAMPLE_RETURN("135", "样品退回单"),

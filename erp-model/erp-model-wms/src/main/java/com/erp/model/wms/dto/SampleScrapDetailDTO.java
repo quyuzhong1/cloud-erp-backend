@@ -117,6 +117,11 @@ public class SampleScrapDetailDTO implements Serializable {
         private String skuId;
 
         /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
         * 产品名称
         */
         private String productName;
