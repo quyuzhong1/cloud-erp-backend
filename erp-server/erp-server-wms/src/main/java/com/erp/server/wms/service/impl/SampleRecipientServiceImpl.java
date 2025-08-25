@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -51,13 +52,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
+import com.erp.server.wms.listener.SampleRecipientExcelListener;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 
 /**
  * <p>
@@ -89,6 +107,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     
     @Autowired
     private LogisticsFeign logisticsFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -856,52 +879,52 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public PagingVO<SampleRecipientDTO.SkuListResponseDTO> getSkuList(SampleRecipientDTO.SkuListQueryDTO dto) {
         try {
             log.info("开始获取SKU列表，参数：{}", JSONUtil.toJsonStr(dto));
-            
+
             // 参数校验
             if (StrUtil.isBlank(dto.getSearchKeyword())) {
                 throw new ServiceException("搜索关键词不能为空");
             }
-            
+
             // 1. 调用PLM系统获取审核通过的SKU列表
             // 构建查询参数，只查询审核通过的产品
             ProductSkuDTO productSkuDTO = new ProductSkuDTO();
             productSkuDTO.setRemoteSearchSku(dto.getSearchKeyword());
             productSkuDTO.setStatusList(Collections.singletonList(2)); // 2表示审核通过
-            
+
             PagingDTO<ProductSkuDTO> pagingDTO = new PagingDTO<>();
             pagingDTO.setParams(productSkuDTO);
             pagingDTO.setCurrPage(dto.getCurrPage());
             pagingDTO.setPageSize(dto.getPageSize());
-            
+
             // 调用PLM系统的listSku接口
             PagingVO<ProductDetailDTO.SkuDTO> plmResult = plmTaskFeign.listSku(pagingDTO);
-            
+
             if (plmResult == null || CollUtil.isEmpty(plmResult.getList())) {
                 log.info("PLM系统未返回SKU数据");
                 return new PagingVO<>();
             }
-            
-                                // 2. 查询库存信息
-                    List<String> skuIds = plmResult.getList().stream()
-                            .map(ProductDetailDTO.SkuDTO::getSkuId)
-                            .collect(Collectors.toList());
 
-                    Map<String, InventoryDTO.RealQtyDTO> inventoryMap = new HashMap<>();
-                    if (StrUtil.isNotBlank(dto.getWarehouseId()) && CollUtil.isNotEmpty(skuIds)) {
-                        try {
-                            // 查询指定仓库的库存信息，使用现有的getRealQty方法
-                            List<String> warehouseIds = Collections.singletonList(dto.getWarehouseId());
-                            List<String> inventoryStatusList = Collections.singletonList(InventoryStatusEnum.USABLE.getCode()); // 只查询可用库存
-                            List<InventoryDTO.RealQtyDTO> inventoryList = inventoryService.getRealQty(skuIds, warehouseIds, inventoryStatusList);
-                            if (CollUtil.isNotEmpty(inventoryList)) {
-                                inventoryMap = inventoryList.stream()
-                                        .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity()));
-                            }
-                        } catch (Exception e) {
-                            log.warn("查询库存信息失败，错误：{}", e.getMessage());
-                        }
+            // 2. 查询库存信息
+            List<String> skuIds = plmResult.getList().stream()
+                    .map(ProductDetailDTO.SkuDTO::getSkuId)
+                    .collect(Collectors.toList());
+
+            Map<String, InventoryDTO.RealQtyDTO> inventoryMap = new HashMap<>();
+            if (StrUtil.isNotBlank(dto.getWarehouseId()) && CollUtil.isNotEmpty(skuIds)) {
+                try {
+                    // 查询指定仓库的库存信息，使用现有的getRealQty方法
+                    List<String> warehouseIds = Collections.singletonList(dto.getWarehouseId());
+                    List<String> inventoryStatusList = Collections.singletonList(InventoryStatusEnum.USABLE.getCode()); // 只查询可用库存
+                    List<InventoryDTO.RealQtyDTO> inventoryList = inventoryService.getRealQty(skuIds, warehouseIds, inventoryStatusList);
+                    if (CollUtil.isNotEmpty(inventoryList)) {
+                        inventoryMap = inventoryList.stream()
+                                .collect(Collectors.toMap(InventoryDTO.RealQtyDTO::getSkuId, Function.identity()));
                     }
-            
+                } catch (Exception e) {
+                    log.warn("查询库存信息失败，错误：{}", e.getMessage());
+                }
+            }
+
             // 3. 组装返回结果
             List<SampleRecipientDTO.SkuListResponseDTO> resultList = new ArrayList<>();
             for (ProductDetailDTO.SkuDTO plmSku : plmResult.getList()) {
@@ -911,28 +934,28 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 responseDTO.setProductName(plmSku.getProductName());
                 responseDTO.setSpuNo(plmSku.getSpuNo());
                 responseDTO.setRetailPrice(plmSku.getRetailPrice());
-                
-                                        // 设置库存信息
-                        InventoryDTO.RealQtyDTO inventory = inventoryMap.get(plmSku.getSkuId());
-                        if (inventory != null) {
-                            responseDTO.setAvailableQty(inventory.getRealQty());
-                            responseDTO.setFrozenQty(0); // RealQtyDTO没有冻结库存字段，设为0
-                            responseDTO.setTotalQty(inventory.getRealQty());
-                        } else {
-                            responseDTO.setAvailableQty(0);
-                            responseDTO.setFrozenQty(0);
-                            responseDTO.setTotalQty(0);
-                        }
-                
+
+                // 设置库存信息
+                InventoryDTO.RealQtyDTO inventory = inventoryMap.get(plmSku.getSkuId());
+                if (inventory != null) {
+                    responseDTO.setAvailableQty(inventory.getRealQty());
+                    responseDTO.setFrozenQty(0); // RealQtyDTO没有冻结库存字段，设为0
+                    responseDTO.setTotalQty(inventory.getRealQty());
+                } else {
+                    responseDTO.setAvailableQty(0);
+                    responseDTO.setFrozenQty(0);
+                    responseDTO.setTotalQty(0);
+                }
+
                 resultList.add(responseDTO);
             }
-            
+
             // 4. 构建分页结果
             PagingVO<SampleRecipientDTO.SkuListResponseDTO> result = new PagingVO<>(resultList,plmResult.getTotalCount(),plmResult.getPageSize(),plmResult.getCurrPage());
 
             log.info("SKU列表查询完成，共查询到{}条记录", resultList.size());
             return result;
-            
+
         } catch (Exception e) {
             log.error("获取SKU列表失败，参数：{}，错误：{}", JSONUtil.toJsonStr(dto), e.getMessage(), e);
             throw new ServiceException("获取SKU列表失败：" + e.getMessage());
@@ -1209,14 +1232,25 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        // TODO: 这里需要根据实际的业务逻辑来实现
-        // 可能需要调用Excel工具类来生成和下载模板文件
+        // 下载样品领用单导入模板
+        String path = "classpath:excel/sampleRecipientTemplate.xlsx";
+        String excelName = "样品领用单导入模板.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
-            // 示例实现：生成样品领用单导入模板
-            // ExcelPrintUtils.generateTemplate(response, "样品领用单导入模板", "excel/sampleRecipientTemplate.xlsx");
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
             log.info("开始下载样品领用单导入模板");
         } catch (Exception e) {
-            log.error("下载样品领用单导入模板失败", e);
+            log.error("样品领用单导入模板下载失败", e);
             throw new ServiceException("下载模板失败：" + e.getMessage());
         }
     }
@@ -1226,25 +1260,223 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     public Boolean importExcel(BaseDTO.ImportDTO dto) {
-        // TODO: 这里需要根据实际的业务逻辑来实现
-        // 可能需要调用Excel工具类来解析Excel文件，然后批量导入数据
+        downloadTaskFeign.saveImportTask("样品领用单导入", "IMPORT_WMS_SAMPLE_RECIPIENT", dto);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入样品领用单
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSampleRecipient(BaseDTO.ImportDTO dto) {
+        SampleRecipientExcelListener excelListenerUtil = new SampleRecipientExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
         try {
-            log.info("开始异步导入样品领用单数据，文件路径：{}");
-            
-            // 示例实现：解析Excel文件
-            // List<SampleRecipientEntity> dataList = ExcelPrintUtils.parseExcel(dto.getFilePath(), SampleRecipientEntity.class);
-            
-            // 批量保存数据
-            // if (CollUtil.isNotEmpty(dataList)) {
-            //     super.saveBatch(dataList);
-            // }
-            
-            log.info("异步导入样品领用单数据完成，共导入{}条数据", 0); // 实际应该是dataList.size()
-            return true;
-        } catch (Exception e) {
-            log.error("异步导入样品领用单数据失败", e);
-            return false;
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SampleRecipientExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
         }
+        
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        
+        // 导出错误数据
+        List<SampleRecipientExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "样品领用单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleRecipientExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+        
+        // 处理成功的数据
+        List<SampleRecipientExcelDTO> successList = excelListenerUtil.getSuccessList();
+        if (CollUtil.isNotEmpty(successList)) {
+            handleImportSuccessList(successList, errorList, dto.getImportType());
+        }
+    }
+
+    /**
+     * 处理导入成功的数据
+     */
+    private void handleImportSuccessList(List<SampleRecipientExcelDTO> successList, List<SampleRecipientExcelDTO> errorList, String importType) {
+        try {
+            // 按主表信息分组处理
+            Map<String, List<SampleRecipientExcelDTO>> groupedData = successList.stream()
+                .collect(Collectors.groupingBy(data -> 
+                    data.getRecipientDate() + "_" + data.getUsage() + "_" + data.getWarehouseName() + "_" + 
+                    data.getUserName() + "_" + data.getDeptName() + "_" + data.getPickOrgName() + "_" + 
+                    data.getUsageScope() + "_" + data.getRemark()
+                ));
+            
+            for (Map.Entry<String, List<SampleRecipientExcelDTO>> entry : groupedData.entrySet()) {
+                List<SampleRecipientExcelDTO> groupData = entry.getValue();
+                if (CollUtil.isNotEmpty(groupData)) {
+                    try {
+                        // 创建样品领用单
+                        createSampleRecipientFromExcel(groupData);
+                    } catch (Exception e) {
+                        log.error("创建样品领用单失败", e);
+                        // 将失败的数据移到错误列表
+                        for (SampleRecipientExcelDTO data : groupData) {
+                            data.setErrorMsg("创建样品领用单失败：" + e.getMessage());
+                            errorList.add(data);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("处理导入数据失败", e);
+            throw new ServiceException("处理导入数据失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 从Excel数据创建样品领用单
+     */
+    private void createSampleRecipientFromExcel(List<SampleRecipientExcelDTO> groupData) {
+        if (CollUtil.isEmpty(groupData)) {
+            return;
+        }
+        
+        SampleRecipientExcelDTO firstData = groupData.get(0);
+        
+        // 查询仓库ID
+        String warehouseId = getWarehouseIdByName(firstData.getWarehouseName());
+        if (StrUtil.isBlank(warehouseId)) {
+            throw new ServiceException("仓库【" + firstData.getWarehouseName() + "】不存在");
+        }
+        
+        // 查询用户ID
+        String userId = getUserIdByName(firstData.getUserName());
+        if (StrUtil.isBlank(userId)) {
+            throw new ServiceException("用户【" + firstData.getUserName() + "】不存在");
+        }
+        
+        // 查询部门ID
+        String deptId = getDeptIdByName(firstData.getDeptName());
+        if (StrUtil.isBlank(deptId)) {
+            throw new ServiceException("部门【" + firstData.getDeptName() + "】不存在");
+        }
+        
+        // 查询组织ID
+        String pickOrgId = getOrgIdByName(firstData.getPickOrgName());
+        if (StrUtil.isBlank(pickOrgId)) {
+            throw new ServiceException("组织【" + firstData.getPickOrgName() + "】不存在");
+        }
+        
+        // 创建样品领用单主表
+        SampleRecipientEntity sampleRecipientEntity = new SampleRecipientEntity();
+        sampleRecipientEntity.setRecipientDate(firstData.getRecipientDate());
+        sampleRecipientEntity.setUsage(firstData.getUsage());
+        sampleRecipientEntity.setWarehouseId(warehouseId);
+        sampleRecipientEntity.setUserId(userId);
+        sampleRecipientEntity.setDeptId(deptId);
+        sampleRecipientEntity.setPickOrgId(pickOrgId);
+        sampleRecipientEntity.setUsageScope(firstData.getUsageScope());
+        sampleRecipientEntity.setRemark(firstData.getRemark());
+        sampleRecipientEntity.setIsDelivery(false); // 默认不邮寄
+        
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);
+        sampleRecipientEntity.setCode(code);
+        sampleRecipientEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        
+        // 保存主表
+        boolean save = super.save(sampleRecipientEntity);
+        if (!save) {
+            throw new ServiceException("样品领用单保存失败");
+        }
+        
+        // 创建明细数据
+        List<SampleRecipientDetailEntity> detailEntities = new ArrayList<>();
+        for (SampleRecipientExcelDTO data : groupData) {
+            // 查询SKU信息
+            String skuId = getSkuIdBySkuNo(data.getSkuNo());
+            if (StrUtil.isBlank(skuId)) {
+                throw new ServiceException("SKU【" + data.getSkuNo() + "】不存在");
+            }
+            
+            SampleRecipientDetailEntity detailEntity = new SampleRecipientDetailEntity();
+            detailEntity.setMainId(sampleRecipientEntity.getId());
+            detailEntity.setSkuNo(data.getSkuNo());
+            detailEntity.setSkuId(skuId);
+            detailEntity.setProductName(getProductNameBySkuId(skuId));
+            detailEntity.setRecipientQty(data.getRecipientQty());
+            detailEntity.setDeliveryQty(0);
+            detailEntity.setExecStatus(SampleRecipientExecStatusEnum.WAIT_OUTSTOCK.getExecStatus());
+            detailEntity.setRemark(data.getDetailRemark());
+            detailEntities.add(detailEntity);
+        }
+        
+        // 保存明细数据
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            boolean detailSaveResult = sampleRecipientDetailService.saveBatch(detailEntities);
+            if (!detailSaveResult) {
+                throw new ServiceException("样品领用单明细保存失败");
+            }
+        }
+        
+        log.info("成功创建样品领用单，单号：{}，明细数量：{}", code, detailEntities.size());
+    }
+
+    /**
+     * 根据仓库名称查询仓库ID
+     */
+    private String getWarehouseIdByName(String warehouseName) {
+        // TODO: 实现仓库名称查询逻辑
+        return "1"; // 临时返回，需要根据实际业务实现
+    }
+
+    /**
+     * 根据用户名称查询用户ID
+     */
+    private String getUserIdByName(String userName) {
+        // TODO: 实现用户名称查询逻辑
+        return "1"; // 临时返回，需要根据实际业务实现
+    }
+
+    /**
+     * 根据部门名称查询部门ID
+     */
+    private String getDeptIdByName(String deptName) {
+        // TODO: 实现部门名称查询逻辑
+        return "1"; // 临时返回，需要根据实际业务实现
+    }
+
+    /**
+     * 根据组织名称查询组织ID
+     */
+    private String getOrgIdByName(String orgName) {
+        // TODO: 实现组织名称查询逻辑
+        return "1"; // 临时返回，需要根据实际业务实现
+    }
+
+    /**
+     * 根据SKU编号查询SKU ID
+     */
+    private String getSkuIdBySkuNo(String skuNo) {
+        // TODO: 实现SKU编号查询逻辑
+        return "1"; // 临时返回，需要根据实际业务实现
+    }
+
+    /**
+     * 根据SKU ID查询产品名称
+     */
+    private String getProductNameBySkuId(String skuId) {
+        // TODO: 实现产品名称查询逻辑
+        return "产品名称"; // 临时返回，需要根据实际业务实现
     }
 
     /**

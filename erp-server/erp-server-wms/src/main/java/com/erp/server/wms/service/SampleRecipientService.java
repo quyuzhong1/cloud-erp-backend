@@ -216,6 +216,14 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     Boolean importExcel(BaseDTO.ImportDTO dto);
 
     /**
+     * 导入样品领用单
+     * @author wuhaotian
+     * @date: 2025-08-22
+     * @param dto
+     */
+    void importSampleRecipient(BaseDTO.ImportDTO dto);
+
+    /**
      * 增加已出库数量（其他出库单审核通过时调用）
      * @author wuhaotian
      * @date: 2025-08-21

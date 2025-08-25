@@ -195,6 +195,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_SO_B2B_PROCESSING("EXPORT_WMS_SO_B2B_PROCESSING", "b2b虚拟仓订单","","",""),
     EXPORT_WMS_SO_B2C_PROCESSING("EXPORT_WMS_SO_B2C_PROCESSING", "b2c虚拟仓订单","","",""),
     EXPORT_WMS_FIRST_MILE_PROCESSING("EXPORT_WMS_FIRST_MILE_PROCESSING", "头程虚拟仓订单","","",""),
+    EXPORT_WMS_SAMPLE_RECIPIENT("EXPORT_WMS_SAMPLE_RECIPIENT","样品领用单","com.erp.rpc.tms.feign.ImportTmsFeign","",""),
+    IMPORT_WMS_SAMPLE_RECIPIENT("IMPORT_WMS_SAMPLE_RECIPIENT","导入样品领用单","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleRecipient",""),
 
     EXPORT_WMS_VIRTUAL_INVENTORY_AGE("EXPORT_WMS_VIRTUAL_INVENTORY_AGE", "库龄分析","","",""),
     EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE("EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE", "历史库龄","","",""),
