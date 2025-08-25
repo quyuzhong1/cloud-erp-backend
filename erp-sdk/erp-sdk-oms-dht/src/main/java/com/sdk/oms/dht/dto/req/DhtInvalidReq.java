@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class DhtInvalidCustomerReq extends BaseReq {
+public class DhtInvalidReq extends BaseReq {
 
     @Alias("data")
     private DataDTO data;

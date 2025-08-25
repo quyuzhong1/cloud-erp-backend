@@ -34,12 +34,12 @@ public class DhtCustomerService {
      * 更新客户状态为无效
      * @return
      */
-    public DhtBaseResp<String> invalidCustomer(DhtInvalidCustomerReq req) {
+    public DhtBaseResp<String> invalidCustomer(DhtInvalidReq req) {
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
         req.getData().setDataObjectApiName(DhtConstants.CUSTOMER_API_NAME);
-        String api = "/cgi/crm/v2/data/invalid";
+        String api = DhtConstants.CRM_INVALID_URL;
         Map<String, String> headerMap = new HashMap<>();
         log.warn("订货通作废客户请求参数：{}", JSONUtil.toJsonStr(req));
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
@@ -50,7 +50,7 @@ public class DhtCustomerService {
      * 启用客户
      * @return
      */
-    public DhtBaseResp<String> enableCustomer(DhtEnableCustomerReq req) {
+    public DhtBaseResp<String> enableCustomer(DhtRecoverReq req) {
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
@@ -66,12 +66,12 @@ public class DhtCustomerService {
      * 删除客户
      * @return
      */
-    public DhtBaseResp<String> deleteCustomer(DhtDeleteCustomerReq req) {
+    public DhtBaseResp<String> deleteCustomer(DhtDeleteReq req) {
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
         req.getData().setDataObjectApiName(DhtConstants.CUSTOMER_API_NAME);
-        String api = "/cgi/crm/v2/data/delete";
+        String api = DhtConstants.CRM_DELETE_URL;
         Map<String, String> headerMap = new HashMap<>();
         log.warn("订货通删除客户请求参数：{}", JSONUtil.toJsonStr(req));
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
@@ -82,12 +82,12 @@ public class DhtCustomerService {
      * @param req
      * @return
      */
-    public DhtBaseResp<DhtQueryCustomerResp> queryCustomer(DhtQueryCustomerReq req) {
+    public DhtBaseResp<DhtQueryCustomerResp> queryCustomer(DhtCommonQueryReq req) {
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
         req.getData().setDataObjectApiName(DhtConstants.CUSTOMER_API_NAME);
-        String api = "/cgi/crm/v2/data/query";
+        String api = DhtConstants.CRM_QUERY_URL;
         Map<String, String> headerMap = new HashMap<>();
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
         return DhtUtils.parseToJiFengResp(bodyStr, new TypeReference<DhtBaseResp<DhtQueryCustomerResp>>() {});
@@ -119,7 +119,7 @@ public class DhtCustomerService {
         DhtAuthDTO authDTO = dhtCommonService.getCorpAccessToken();
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
-        String api = "/cgi/crm/v2/data/update";
+        String api = DhtConstants.CRM_UPDATE_URL;
         Map<String, String> headerMap = new HashMap<>();
         log.warn("订货通更新客户请求参数：{}", JSONUtil.toJsonStr(req));
         req.getData().getObjectData().setDataObjectApiName(DhtConstants.CUSTOMER_API_NAME);

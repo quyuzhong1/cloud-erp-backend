@@ -18,13 +18,13 @@ public class BaseReq {
     private String currentOpenUserId;
 
     /**
-     * 是否触发审批流
+     * 是否触发审批流,默认false
      */
-    private Boolean triggerApprovalFlow;
+    private Boolean triggerApprovalFlow = false;
 
     /**
-     * 是否触发工作流
+     * 是否触发工作流,默认false
      */
-    private Boolean triggerWorkFlow;
+    private Boolean triggerWorkFlow = false;
 
 }

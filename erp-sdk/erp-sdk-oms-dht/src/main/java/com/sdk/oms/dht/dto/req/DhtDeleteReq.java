@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class DhtEnableCustomerReq extends BaseReq {
+public class DhtDeleteReq extends BaseReq {
 
     @Alias("data")
     private DataDTO data;

@@ -4,9 +4,11 @@ import cn.hutool.json.JSONUtil;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.sdk.oms.dht.dto.DhtBaseResp;
 import com.sdk.oms.dht.dto.req.*;
+import com.sdk.oms.dht.dto.resp.DhtQueryCustomerAddressResp;
 import com.sdk.oms.dht.dto.resp.DhtQueryCustomerResp;
 import com.sdk.oms.dht.dto.resp.DhtUserResp;
 import com.sdk.oms.dht.service.DhtCommonService;
+import com.sdk.oms.dht.service.DhtCustomerAddressService;
 import com.sdk.oms.dht.service.DhtCustomerService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,64 +23,64 @@ import java.util.Arrays;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerOmsApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
-public class DhtCustomerServiceTest {
+public class DhtCustomerAddressServiceTest {
 
     @Resource
     private DhtCommonService dhtCommonService;
 
     @Resource
-    private DhtCustomerService dhtCustomerService;
+    private DhtCustomerAddressService dhtCustomerAddressService;
 
     @Test
-    public void createCustomer() {
-        DhtOperationCustomerReq dhtOperationCustomerReq = new DhtOperationCustomerReq();
+    public void createCustomerAddress() {
+        DhtOperationCustomerAddressReq dhtOperationCustomerReq = new DhtOperationCustomerAddressReq();
         DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         dhtOperationCustomerReq.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
-        DhtOperationCustomerReq.DataDTO dataDTO = new DhtOperationCustomerReq.DataDTO();
-        dataDTO.setObjectData(DhtOperationCustomerReq.DataDTO.ObjectDataDTO.builder()
-                        .dataObjectApiName("AccountObj")
-                        .name("test123456")
-//                        .salesOrganization("ORG01")
-                        .erpCustomerCode("TEST_CUST_20250822")
-                        .currency("CNY")
-                        .country("CN")
-                        .objectDescribeApiName("AccountObj")
-                        .customerStatus("option_access_approval__c")
-                        .recordType("default__c")
-                .build());
-        dhtOperationCustomerReq.setData(dataDTO);
-        DhtBaseResp<String> resp = dhtCustomerService.createCustomer(dhtOperationCustomerReq);
-        System.out.println(JSONUtil.toJsonStr(resp));
-    }
 
-    @Test
-    public void updateCustomer() {
-        DhtOperationCustomerReq dhtOperationCustomerReq = new DhtOperationCustomerReq();
-        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
-        dhtOperationCustomerReq.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
-        dhtOperationCustomerReq.setTriggerWorkFlow(false);
-        dhtOperationCustomerReq.setTriggerApprovalFlow(false);
-        DhtOperationCustomerReq.DataDTO dataDTO = new DhtOperationCustomerReq.DataDTO();
-        dataDTO.setObjectData(DhtOperationCustomerReq.DataDTO.ObjectDataDTO.builder()
-                .dataObjectApiName("AccountObj")
-                .name("wjtest123")
-                        .tel("123456798")
-                                .id("68a6eae8c832c800064d2ac6")
-//                        .salesOrganization("ORG01")
-                .erpCustomerCode("Teset-Cust-001")
-                .currency("CNY")
-                .country("CN")
-                .objectDescribeApiName("AccountObj")
-                .customerStatus("option_access_approval__c")
+        DhtOperationCustomerAddressReq.DataDTO dataDTO = new DhtOperationCustomerAddressReq.DataDTO();
+        DhtOperationCustomerAddressReq.DataDTO.ObjectDataDTO objectDataDTO = DhtOperationCustomerAddressReq.DataDTO.ObjectDataDTO.builder()
+                .addType("other")
                 .recordType("default__c")
-                .build());
+                .accountId("68a81d1efc8aab0007f43cea")
+                .erpCustomerAddressCode("TEST_CUST_ADDR_20250825")
+                .address("test address")
+                .remark("test remark")
+                .isDefaultAddress(true)
+                .phone("12345678901")
+                .build();
+        dataDTO.setObjectData(objectDataDTO);
         dhtOperationCustomerReq.setData(dataDTO);
-        DhtBaseResp<String> resp = dhtCustomerService.updateCustomer(dhtOperationCustomerReq);
+        DhtBaseResp<String> resp = dhtCustomerAddressService.createCustomerAddress(dhtOperationCustomerReq);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+
+    @Test
+    public void updateCustomerAddress() {
+        DhtOperationCustomerAddressReq dhtOperationCustomerReq = new DhtOperationCustomerAddressReq();
+        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
+        dhtOperationCustomerReq.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
+
+        DhtOperationCustomerAddressReq.DataDTO dataDTO = new DhtOperationCustomerAddressReq.DataDTO();
+        DhtOperationCustomerAddressReq.DataDTO.ObjectDataDTO objectDataDTO = DhtOperationCustomerAddressReq.DataDTO.ObjectDataDTO.builder()
+                .addType("other")
+                .id("68abd43e6647f10006146e6a")
+                .recordType("default__c")
+                .accountId("68a81d1efc8aab0007f43cea")
+                .erpCustomerAddressCode("TEST_CUST_ADDR_202508222")
+                .address("test address2")
+                .remark("test remark2")
+                .isDefaultAddress(true)
+                .phone("12345678901")
+                .build();
+        dataDTO.setObjectData(objectDataDTO);
+        dhtOperationCustomerReq.setData(dataDTO);
+        DhtBaseResp<String> resp = dhtCustomerAddressService.updateCustomerAddress(dhtOperationCustomerReq);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
     @Test
-    public void queryCustomer() {
+    public void queryCustomerAddress() {
         DhtCommonQueryReq req = new DhtCommonQueryReq();
         DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
@@ -93,56 +95,57 @@ public class DhtCustomerServiceTest {
                         .orders(null)
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
-                                        .fieldName("erp_number__c")
-                                        .fieldValues(Arrays.asList("TEST_CUST_20250821"))
+                                        .fieldName("erp_customer_address_code__c")
+                                        .fieldValues(Arrays.asList("TEST_CUST_ADDR_202508222"))
                                         .operator("EQ")
                                         .build()
                         ))
-                        .fieldProjection(Arrays.asList("_id","erp_number__c","account_no", "name", "object_describe_api_name", "record_type", "customer_status__c","account_status"))
+                        .fieldProjection(Arrays.asList("_id","erp_customer_address_code__c", "name", "object_describe_api_name", "record_type", "life_status"))
                         .build())
                 .build();
         req.setData(dataDTO);
-        DhtBaseResp<DhtQueryCustomerResp> resp = dhtCustomerService.queryCustomer(req);
+        DhtBaseResp<DhtQueryCustomerAddressResp> resp = dhtCustomerAddressService.queryCustomerAddress(req);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
 
     @Test
-    public void invalidCustomer() {
-        DhtInvalidReq req = new DhtInvalidReq();
-        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
-        req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
-        DhtInvalidReq.DataDTO dataDTO = DhtInvalidReq.DataDTO.builder()
-                .objectDataId("68a6f6cd9ed17d0007831c27")
-                .build();
-        req.setData(dataDTO);
-        DhtBaseResp<String> resp = dhtCustomerService.invalidCustomer(req);
-        System.out.println(JSONUtil.toJsonStr(resp));
-    }
-
-    @Test
-    public void enableCustomer() {
+    public void enableCustomerAddress() {
         DhtRecoverReq req = new DhtRecoverReq();
         DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
         DhtRecoverReq.DataDTO dataDTO = DhtRecoverReq.DataDTO.builder()
-                .idList(Arrays.asList("68a6f6cd9ed17d0007831c27"))
+                .idList(Arrays.asList("68abd43e6647f10006146e6a"))
                 .build();
         req.setData(dataDTO);
-        DhtBaseResp<String> resp = dhtCustomerService.enableCustomer(req);
+        DhtBaseResp<String> resp = dhtCustomerAddressService.enableCustomerAddress(req);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
     @Test
-    public void deleteCustomer() {
+    public void invalidCustomerAddress() {
+        DhtInvalidReq req = new DhtInvalidReq();
+        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
+        req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
+        DhtInvalidReq.DataDTO dataDTO = DhtInvalidReq.DataDTO.builder()
+                .objectDataId("68abd43e6647f10006146e6a")
+                .build();
+        req.setData(dataDTO);
+        DhtBaseResp<String> resp = dhtCustomerAddressService.invalidCustomerAddress(req);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+
+    @Test
+    public void deleteCustomerAddress() {
         DhtDeleteReq req = new DhtDeleteReq();
         DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
         DhtDeleteReq.DataDTO dataDTO = DhtDeleteReq.DataDTO.builder()
-                .idList(Arrays.asList("68a6f6cd9ed17d0007831c27"))
+                .idList(Arrays.asList("68abd43e6647f10006146e6a"))
                 .build();
         req.setData(dataDTO);
-        DhtBaseResp<String> resp = dhtCustomerService.deleteCustomer(req);
+        DhtBaseResp<String> resp = dhtCustomerAddressService.deleteCustomerAddress(req);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 }
