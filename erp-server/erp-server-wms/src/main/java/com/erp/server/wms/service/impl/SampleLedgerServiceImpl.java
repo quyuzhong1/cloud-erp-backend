@@ -3,8 +3,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
 import com.erp.server.wms.service.SampleLedgerService;
@@ -111,6 +114,18 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             return Collections.emptyMap();
         }
         return this.baseMapper.listSkuAvailableQtyByUserId(dto);
+    }
+
+
+    @Override
+    public PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO){
+        Page<SampleLedgerDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        SampleLedgerDTO.SearchDTO params = pagingDTO.getParams();
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
+            params.setSkuNo(params.getSkuNos().get(0));
+        }
+        IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+        return new PagingVO<>(pageData);
     }
 
 }

@@ -59,6 +59,41 @@
         GROUP BY
         sl.sku_no
     </select>
-
-
+    <select id="listSku" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
+        SELECT
+        sl.id,
+        sl.user_id AS userId,
+        sl.user_name AS userName,
+        sl.dept_id AS deptId,
+        sl.dept_name AS deptName,
+        sl.sku_id AS skuId,
+        sl.sku_no AS skuNo,
+        sl.product_name AS productName,
+        sl.use_user_id AS useUserId,
+        sl.use_user_name AS useUserName,
+        <if test="params.type != null and params.type == 'scrap'">
+            sl.qty - dd.freezeQty  AS qty
+        </if>
+        <if test="params.type == null || params.type == ''">
+            sl.qty  AS qty
+        </if>
+        FROM
+        sample_ledger sl
+        <if test="params.type != null and params.type == 'scrap'">
+            left join (select ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false  where ssi.is_deleted = false and ssi.approve_status !='approve' GROUP BY ssd.sku_id ) as dd on scrap.sku_id = sl.sku_id
+        </if>
+        WHERE
+        sl.is_deleted = FALSE
+        AND sl.user_id = #{ params.userId}
+        <if test="params.skuNos != null and params.skuNos.size() > 1">
+            and sl.sku_no in
+            <foreach collection="params.skuNos" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and sl.sku_no = #{params.skuNo}
+        </if>
+        order by sl.sku_no desc
+    </select>
 </mapper>

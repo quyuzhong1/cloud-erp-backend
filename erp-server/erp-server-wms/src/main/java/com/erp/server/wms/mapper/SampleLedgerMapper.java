@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -8,7 +9,6 @@ import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
 import java.util.Map;
 
 
@@ -34,4 +34,5 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
     Map<String, Integer> listSkuAvailableQtyByUserId(@Param("dto") SampleLedgerDTO.SearchDTO dto);
 
 
+    IPage<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(Page query, @Param("params") SampleLedgerDTO.SearchDTO params);
 }
