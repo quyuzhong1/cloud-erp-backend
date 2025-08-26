@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
@@ -9,8 +10,6 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -27,9 +26,11 @@ import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.wms.listener.SampleScrapAsynExcelListener;
 import com.erp.server.wms.listener.SampleScrapExcelListener;
 import com.erp.server.wms.mapper.SampleScrapInfoMapper;
 import com.erp.server.wms.service.*;
@@ -44,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.function.Function;
@@ -65,7 +69,8 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import org.springframework.web.multipart.MultipartFile;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -101,6 +106,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private FileFeign fileFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -134,7 +142,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
             sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
 
-            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
                 sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
@@ -289,7 +297,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
             sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
 
-            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
                 sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
@@ -303,9 +311,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuNos, sampleScrapDetailEntities);
 
         if(CollUtil.isNotEmpty(oldList)){
+            List<String> detailIds = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             // 处理删除的数据
             List<SampleScrapDetailEntity> remove = oldList.stream()
-                    .filter(oldEntity -> !detailList.contains(oldEntity.getId()))
+                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
                     .collect(Collectors.toList());
             if(CollUtil.isNotEmpty(remove)){
                 sampleScrapDetailService.removeByIds(remove.stream().map(SampleScrapDetailEntity::getId).collect(Collectors.toList()));
@@ -427,7 +436,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
     @Override
     public void exportList(SampleScrapInfoDTO.PagingParamDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("样品报废单导出", EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("样品报废单导出", EXPORT_WMS_SAMPLE_SCRAP_INFO.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -594,11 +603,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品报废单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getCode(), "作废样品报废单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
-    }
-
-    @Override
-    public void batchImportVisit(List<SampleScrapInfoDTO.AddDTO> addList) {
-
     }
 
     /**
@@ -880,5 +884,89 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         return Boolean.TRUE;
     }
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSampleScrap(BaseDTO.ImportDTO dto) {
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1,o2)->o1));
+        //用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        SampleScrapAsynExcelListener excelListenerUtil = new SampleScrapAsynExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),deptList, map, userList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SampleScrapImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        //导出错误数据
+        List<SampleScrapImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "样品报废单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleScrapImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<SampleScrapImportExcelDTO> successList,List<String> errorNoList, List<SampleScrapImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+
+            //全部返回到错误列表
+            List<SampleScrapImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        SampleScrapInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleScrapInfoServiceImpl.class);
+
+        //按序号分组
+        Map<String, List<SampleScrapImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(SampleScrapImportExcelDTO::getNo));
+        for (Map.Entry<String, List<SampleScrapImportExcelDTO>> entry : collect.entrySet()) {
+            List<SampleScrapImportExcelDTO> value = entry.getValue();
+            SampleScrapImportExcelDTO importMainDTO = value.get(0);
+            SampleScrapInfoDTO.AddDTO addDTO = new SampleScrapInfoDTO.AddDTO();
+            BeanMapperUtils.copy(importMainDTO, addDTO);
+            List<SampleScrapDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (SampleScrapImportExcelDTO importDTO : value) {
+                SampleScrapDetailDTO.AddDTO detailDTO = new SampleScrapDetailDTO.AddDTO();
+                BeanMapperUtils.copy(importDTO, detailDTO);
+                //明细备注
+                detailDTO.setRemark(importDTO.getDetailRemark());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+
+            if (ImportTypeEnum.ADD.getCode().equals(importType)){
+                bean.add(addDTO);
+            }
+        }
+    }
+
+    @Override
+    public Boolean importAsynExcel(BaseDTO.ImportDTO dto) {
+        downloadTaskFeign.saveImportTask("导入样品报废单", IMPORT_WMS_SAMPLE_SCRAP_INFO.getCode(), dto);
+        return Boolean.TRUE;
+    }
 
 }

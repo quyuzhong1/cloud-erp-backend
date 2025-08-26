@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_SCRAP_INFO;
 
 /**
  * 样品报废导出
@@ -46,6 +46,6 @@ public class ExportWmsSampleScrapInfoHandler extends AbstractPageFileEventHandle
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_WMS_SAMPLE_SCRAP_INFO_REPORT;
+        return EXPORT_WMS_SAMPLE_SCRAP_INFO;
     }
 }

@@ -418,6 +418,19 @@ public class SampleScrapInfoController extends BaseController {
     }
 
     /**
+     *  异步导入
+     * @author jack
+     * @date:  2025-08-20
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/importAsynExcel")
+    public ApiResult<Object> importAsynExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = sampleScrapInfoService.importAsynExcel(dto);
+        return result ? success() : failure();
+    }
+
+    /**
      * 下载模板
      * @author jack
      * @date:  2025-08-20

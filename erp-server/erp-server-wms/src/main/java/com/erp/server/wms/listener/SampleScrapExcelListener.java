@@ -23,8 +23,8 @@ import java.util.*;
 
 /**
  * @author jack
- * @Classname SupplierVisitExcelListener
- * @Date 2025-06-27
+ * @Classname SampleScrapExcelListener
+ * @Date 2025-08-26
  */
 public class SampleScrapExcelListener extends AnalysisEventListener<SampleScrapImportExcelDTO> {
 
@@ -35,7 +35,6 @@ public class SampleScrapExcelListener extends AnalysisEventListener<SampleScrapI
     //部门
     private List<SysDepartmentDTO> deptList ;
 
-    @Resource
     private SampleLedgerService sampleLedgerService;
     /**
      * 错误信息

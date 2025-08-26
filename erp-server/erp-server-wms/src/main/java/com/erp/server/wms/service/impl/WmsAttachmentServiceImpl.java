@@ -14,6 +14,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
@@ -52,6 +53,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -164,6 +168,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
         }
         this.remove(queryWrapper);
+        fileFeign.deleteFile(dto.getAttachUrl());
     }
 
     @Override
