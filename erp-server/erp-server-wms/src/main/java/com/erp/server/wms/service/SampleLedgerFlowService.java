@@ -1,12 +1,17 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.SampleLedgerFlowEntity;
+
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
+import com.common.business.dto.base.PagingDTO;
+import com.erp.model.wms.entity.SampleLedgerFlowEntity;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
- * 样品库存 服务类
+ * 样品台账流水 服务类
  * </p>
  *
  * @author wuhaotian
@@ -15,22 +20,23 @@ import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 public interface SampleLedgerFlowService extends SuperService<SampleLedgerFlowEntity> {
 
     /**
-    * 新增
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SampleLedgerFlowDTO.AddDTO dto);
+     * 获取样品台账流水分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleLedgerFlowDTO.ListDTO> getSampleLedgerFlowPageData(PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto);
 
     /**
-    * 修改
-    * @author wuhaotian
-    * @date: 2025-08-21
-    * @param dto
-    * @return
-    */
-    Boolean update(SampleLedgerFlowDTO.UpdateDTO dto);
+     * 异步导出
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportList(SampleLedgerFlowDTO.ExportDTO dto, HttpServletResponse response);
 
-
+    PagingVO<SampleLedgerFlowDTO.ListDTO> paging(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> dto);
 }

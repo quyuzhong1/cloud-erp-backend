@@ -25,9 +25,15 @@ import com.erp.model.wms.dto.SampleLedgerDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import com.common.business.dto.base.PermissionsDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_REPORT;
+
 /**
  * <p>
- * 样品库存统计 服务实现类
+ * 样品台账统计 服务实现类
  * </p>
  *
  * @author wuhaotian
@@ -39,6 +45,9 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -49,14 +58,14 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         // 数据处理
         handleData(sampleLedgerEntity);
 
-        log.info("开始新增样品库存统计");
+        log.info("开始新增样品台账统计");
         boolean save = super.save(sampleLedgerEntity);
         if(!save) {
-            throw new ServiceException("样品库存统计保存失败");
+            throw new ServiceException("样品台账统计保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品库存统计" , sampleLedgerEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品台账统计" , sampleLedgerEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, sampleLedgerEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -71,21 +80,21 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public Boolean update(SampleLedgerDTO.UpdateDTO addOrUpdateDTO) {
         SampleLedgerEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品库存统计"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品台账统计"));
         SampleLedgerEntity sampleLedgerEntity =  BeanMapperUtils.map(SampleLedgerEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(sampleLedgerEntity);
-        log.info("编辑 开始修改样品库存统计数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改样品台账统计数据，id：【{}】", old.getId());
         boolean save = super.updateById(sampleLedgerEntity);
         if(!save) {
-            throw new ServiceException("样品库存统计保存失败");
+            throw new ServiceException("样品台账统计保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录样品库存统计日志数据，id：【{}】", sampleLedgerEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleLedgerEntity.getId(), "样品库存统计");
+            log.info("编辑 开始记录样品台账统计日志数据，id：【{}】", sampleLedgerEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleLedgerEntity.getId(), "样品台账统计");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, sampleLedgerEntity, null, sampleLedgerEntity.getId(), msg);
         return Boolean.TRUE;
@@ -128,6 +137,82 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             params.setSkuNo(params.getSkuNos().get(0));
         }
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 分页列表查询
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param pagingParamDTO
+     * @return PagingVO<SampleLedgerDTO.ListDTO>>
+     */
+    @Override
+    public PagingVO<SampleLedgerDTO.ListDTO> paging(PagingDTO<SampleLedgerDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleLedgerDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    /**
+     * 状态统计
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return List<SampleLedgerDTO.TabListDTO>>
+     */
+    @Override
+    public List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        // 使用一个SQL查询获取所有状态的统计数量
+        List<SampleLedgerDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+        return list;
+    }
+
+    /**
+     * 填充列表数据
+     * @param records 记录列表
+     */
+    private void fillList(List<SampleLedgerDTO.ListDTO> records) {
+        // TODO: 根据业务需求填充额外的数据
+        // 例如：填充关联的明细信息、计算字段等
+    }
+
+    /**
+     * 异步导出
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @param response
+     * @return
+     */
+    @Override
+    public Boolean exportList(SampleLedgerDTO.ExportDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("样品台账统计导出", EXPORT_WMS_SAMPLE_LEDGER_REPORT.getCode(), dto);
+        return true;
+    }
+
+    /**
+     * 获取样品台账统计分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto 分页参数
+     * @return 分页结果
+     */
+    @Override
+    public PagingVO<SampleLedgerDTO.ListDTO> getSampleLedgerPageData(PagingDTO<SampleLedgerDTO.ExportDTO> dto) {
+        Page<SampleLedgerDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SampleLedgerDTO.ListDTO> pageData = this.baseMapper.listExport(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 

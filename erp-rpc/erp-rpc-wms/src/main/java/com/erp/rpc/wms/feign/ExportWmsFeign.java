@@ -330,4 +330,16 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/getSampleRecipientPageData")
     PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账统计
+     */
+    @PostMapping("/feign/export/exportSampleLedger")
+    PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品台账流水
+     */
+    @PostMapping("/feign/export/exportSampleLedgerFlow")
+    PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto);
 }

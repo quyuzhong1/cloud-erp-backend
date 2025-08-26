@@ -32,6 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import com.erp.server.wms.query.SampleLedgerQueryHandler;
+import com.erp.server.wms.service.SampleLedgerFlowService;
+import com.erp.server.wms.query.SampleLedgerFlowQueryHandler;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -188,6 +191,12 @@ public class ExportWmsFeignController {
 
     @Resource
     private SampleRecipientService sampleRecipientService;
+
+    @Resource
+    private SampleLedgerService sampleLedgerService;
+
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1083,6 +1092,42 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleScrapInfoQueryHandler.class)
     public PagingVO<SampleScrapInfoDTO.ListDTO> exportSampleScrapInfo(@RequestBody PagingDTO<SampleScrapInfoDTO.PagingParamDTO> dto) {
         return sampleScrapInfoService.paging(dto);
+    }
+
+    /**
+     * 导出样品台账统计Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedger")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:export",
+            tableAlias = ""
+    )
+    @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
+    public PagingVO<SampleLedgerDTO.ListDTO> exportSampleLedger(@RequestBody PagingDTO<SampleLedgerDTO.ExportDTO> dto) {
+        return sampleLedgerService.getSampleLedgerPageData(dto);
+    }
+
+    /**
+     * 导出样品台账流水Excel数据
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleLedgerFlow")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedgerFlow:export",
+            tableAlias = ""
+    )
+    @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
+    public PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {
+        return sampleLedgerFlowService.getSampleLedgerFlowPageData(dto);
     }
 
 }

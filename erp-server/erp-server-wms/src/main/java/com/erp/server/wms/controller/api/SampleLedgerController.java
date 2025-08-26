@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
+import com.erp.server.wms.query.SampleLedgerQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 
@@ -12,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,54 +23,64 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import com.common.business.annotation.WebAdvanceQuery;
+import javax.servlet.http.HttpServletResponse;
 
 import java.util.Objects;
+import java.util.List;
 
 /**
- * 样品库存统计
+ * 样品台账统计
  *
  * @author wuhaotian
  * @since 2025-08-21
  */
 @Slf4j
 @RestController
-@LogSystemModule("样品库存统计")
+@LogSystemModule("样品台账统计")
 @RequestMapping("/sampleLedger")
 public class SampleLedgerController extends BaseController {
 
     @Resource
     private SampleLedgerService sampleLedgerService;
 
+
     /**
-    * 新增
-    * @author wuhaotian
-    * @date:  2025-08-21
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "样品库存统计新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleLedgerDTO.AddDTO dto) {
-        return success(sampleLedgerService.add(dto));
+     * 列表查询
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return ApiResult<PagingVO<SampleLedgerDTO.ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:paging",
+            tableAlias = ""
+    )
+    @WebAdvanceQuery(handler = SampleLedgerQueryHandler.class)
+    public ApiResult<PagingVO<SampleLedgerDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleLedgerDTO.PagingParamDTO> dto) {
+        return success(sampleLedgerService.paging(dto));
     }
 
     /**
-    * 修改
-    * @author wuhaotian
-    * @date:  2025-08-21
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "样品库存统计修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:sampleLedger:update",
-        serviceClass = SampleLedgerService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SampleLedgerDTO.UpdateDTO dto) {
-        sampleLedgerService.update(dto);
-        return success();
+     * 异步导出
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @param response
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleLedger:export",
+            tableAlias = ""
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品台账统计导出Excel数据")
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SampleLedgerDTO.ExportDTO dto, HttpServletResponse response) {
+        sampleLedgerService.exportList(dto, response);
+        return success(true);
     }
 
     /**

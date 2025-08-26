@@ -947,7 +947,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 参数校验
             if (StrUtil.isBlank(dto.getSearchKeyword())) {
-                throw new ServiceException("搜索关键词不能为空");
+                return new PagingVO<>();
             }
 
             // 1. 调用PLM系统获取审核通过的SKU列表

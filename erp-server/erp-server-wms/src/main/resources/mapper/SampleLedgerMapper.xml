@@ -92,4 +92,94 @@
     <select id="listSku" resultType="com.erp.model.wms.dto.SampleLedgerDTO$SkuAvailableQtyDTO">
         <include refid="listSku"/>
     </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
+        FROM sample_ledger sl
+        WHERE
+        ${params.sqlMap.default}
+        AND srd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY sl.create_time DESC
+    </select>
+
+    <!-- 获取状态统计 -->
+    <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleLedgerDTO$TabListDTO">
+        SELECT 
+            'all' as status,
+            COUNT(*) as count
+        FROM sample_ledger sl
+        WHERE sl.is_deleted = FALSE
+        <if test="permissionSql != null and permissionSql != ''">
+            AND (${permissionSql})
+        </if>
+    </select>
+
+    <!-- 分页导出Excel查询 -->
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
+        FROM sample_ledger sl
+        WHERE
+        ${params.sqlMap.default}
+        AND sl.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sl.create_time DESC
+    </select>
 </mapper>

@@ -9,12 +9,11 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
  * <p>
- * 样品库存
+ * 样品台账
  * </p>
  *
  * @author wuhaotian
@@ -26,8 +25,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("sample_ledger_flow")
 public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
 
-    @TableField("sample_leder_id")
-    private String sampleLederId;
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
     /**
     * 操作时间
     */
@@ -107,7 +106,7 @@ public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
     private Integer qty;
 
 
-    public static final String SAMPLE_LEDER_ID = "sample_leder_id";
+    public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
 
     public static final String OPERATE_TIME = "operate_time";
 

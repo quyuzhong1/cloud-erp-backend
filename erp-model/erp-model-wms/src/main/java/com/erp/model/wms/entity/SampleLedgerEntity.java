@@ -12,7 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 样品库存统计
+ * 样品台账统计
  * </p>
  *
  * @author wuhaotian

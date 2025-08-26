@@ -4,13 +4,14 @@ import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import javax.servlet.http.HttpServletResponse;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * <p>
- * 样品库存统计 服务类
+ * 样品台账统计 服务类
  * </p>
  *
  * @author wuhaotian
@@ -35,6 +36,43 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     * @return
     */
     Boolean update(SampleLedgerDTO.UpdateDTO dto);
+
+    /**
+     * 分页列表查询
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param pagingParamDTO
+     * @return PagingVO<SampleLedgerDTO.ListDTO>>
+     */
+    PagingVO<SampleLedgerDTO.ListDTO> paging(PagingDTO<SampleLedgerDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 状态统计
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return List<SampleLedgerDTO.TabListDTO>>
+     */
+    List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 异步导出
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @param response
+     * @return
+     */
+    Boolean exportList(SampleLedgerDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 获取样品台账统计分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto 分页参数
+     * @return 分页结果
+     */
+    PagingVO<SampleLedgerDTO.ListDTO> getSampleLedgerPageData(PagingDTO<SampleLedgerDTO.ExportDTO> dto);
 
     /**
      * 根据用户ID查询台账列表
