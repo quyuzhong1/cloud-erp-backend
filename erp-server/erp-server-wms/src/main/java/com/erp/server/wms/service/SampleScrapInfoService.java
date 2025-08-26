@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -163,5 +164,9 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
      */
     BatchResultDTO invalid(String id);
 
-    void batchImportVisit(List<SampleScrapInfoDTO.AddDTO> addList);
+    void importSampleScrap(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<SampleScrapImportExcelDTO> successList,List<String> errorNoList, List<SampleScrapImportExcelDTO> errorList2, String importType);
+
+    Boolean importAsynExcel(BaseDTO.ImportDTO dto);
 }

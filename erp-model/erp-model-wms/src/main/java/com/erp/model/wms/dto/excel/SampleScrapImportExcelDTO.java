@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * @author jack
@@ -33,6 +35,8 @@ public class SampleScrapImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*报废日期", index = 1)
     @FieldValid(fieldName = "报废日期",isNotBlank = true)
     private String scrapDateStr;
+    @ExcelIgnore
+    private LocalDate scrapDate;
 
 
     /**
@@ -42,6 +46,8 @@ public class SampleScrapImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*报废人", index = 2)
     @FieldValid(fieldName = "*报废人",isNotBlank = true)
     private String scrapUserName;
+    @ExcelIgnore
+    private String scrapUserId;
 
     /**
      * 报废部门
@@ -50,6 +56,8 @@ public class SampleScrapImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*报废部门", index = 3)
     @FieldValid(fieldName = "*报废部门",isNotBlank = true)
     private String scrapDeptName;
+    @ExcelIgnore
+    private String scrapDeptId;
 
 
     /**
@@ -68,6 +76,10 @@ public class SampleScrapImportExcelDTO implements Serializable {
     @ExcelProperty(value = "*SKU", index = 5)
     @FieldValid(fieldName = "*SKU",isNotBlank = true)
     private String skuNo;
+    @ExcelIgnore
+    private String skuId;
+    @ExcelIgnore
+    private String productName;
 
 
     /**
@@ -95,6 +107,9 @@ public class SampleScrapImportExcelDTO implements Serializable {
     @ExcelProperty(value = "明细备注", index = 8)
     @FieldValid(fieldName = "明细备注",maxLength =200)
     private String detailRemark;
+
+    @ExcelIgnore
+    private String sampleLedgerId;
 
 
     /**
