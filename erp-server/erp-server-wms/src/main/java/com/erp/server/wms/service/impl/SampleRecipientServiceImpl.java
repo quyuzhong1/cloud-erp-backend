@@ -936,7 +936,58 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException("查询SKU成本失败：" + e.getMessage());
         }
     }
-    
+
+    /**
+     * 获取SKU可领用库存
+     * 
+     * @param dto 查询参数
+     * @return SKU可用库存列表
+     */
+    @Override
+    public List<SampleRecipientDTO.SkuAvailableStockDTO> querySkuAvailableStock(SampleRecipientDTO.SkuAvailableStockQueryDTO dto) {
+        try {
+            log.info("开始查询SKU可用库存，参数：{}", JSONUtil.toJsonStr(dto));
+            
+            List<SampleRecipientDTO.SkuAvailableStockDTO> result = new ArrayList<>();
+            
+            if (dto == null || CollUtil.isEmpty(dto.getDetailList())) {
+                log.warn("查询参数为空，返回空列表");
+                return result;
+            }
+            
+            // 获取当前用户组织ID
+
+            for (SampleRecipientDTO.SkuCostQueryDetailDTO detail : dto.getDetailList()) {
+                String skuNo = detail.getSkuNo();
+                String skuId = detail.getSkuId();
+                String warehouseId = detail.getWarehouseId();
+                
+                if (StringUtils.isBlank(skuNo) || StringUtils.isBlank(warehouseId)) {
+                    log.warn("SKU编号或仓库ID为空，跳过处理，skuNo：{}，warehouseId：{}", skuNo, warehouseId);
+                    continue;
+                }
+                
+                // 查询SKU基本信息（这里需要根据实际情况调用相应的服务）
+                // 暂时使用模拟数据，实际应该调用PLM服务获取SKU信息
+                SampleRecipientDTO.SkuAvailableStockDTO stockDTO = new SampleRecipientDTO.SkuAvailableStockDTO();
+                stockDTO.setSkuNo(skuNo);
+                stockDTO.setSkuId(skuId);
+                stockDTO.setWarehouseId(warehouseId);
+                // 查询可用库存
+                Integer availableQty = inventoryService.getUsableInventoryTotal(warehouseId, skuId);
+                stockDTO.setAvailableQty(availableQty != null ? availableQty : 0);
+                result.add(stockDTO);
+            }
+            
+            log.info("SKU可用库存查询完成，共查询到{}条记录", result.size());
+            return result;
+            
+        } catch (Exception e) {
+            log.error("查询SKU可用库存失败，错误：{}", e.getMessage(), e);
+            throw new ServiceException("查询SKU可用库存失败：" + e.getMessage());
+        }
+    }
+
     /**
      * 获取SKU列表（支持高级查询和模糊搜索）
      */

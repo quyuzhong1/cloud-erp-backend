@@ -687,6 +687,12 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotBlank(message = "SKU编号不能为空")
         private String skuNo;
+
+        /**
+         * SKU ID
+         */
+        @NotBlank(message = "SKU ID不能为空")
+        private String skuId;
         
         /**
          * 仓库ID
@@ -898,6 +904,58 @@ public class SampleRecipientDTO implements Serializable {
          * 总库存
          */
         private Integer totalQty;
+    }
+
+    /**
+     * SKU可用库存查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuAvailableStockQueryDTO {
+        /**
+         * SKU成本查询明细列表
+         */
+        @NotEmpty(message = "SKU成本查询明细列表不能为空")
+        private List<SkuCostQueryDetailDTO> detailList;
+        
+    }
+    
+    /**
+     * SKU可用库存响应
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuAvailableStockDTO {
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        
+        /**
+         * 可用库存
+         */
+        private Integer availableQty;
+        
     }
 
 }

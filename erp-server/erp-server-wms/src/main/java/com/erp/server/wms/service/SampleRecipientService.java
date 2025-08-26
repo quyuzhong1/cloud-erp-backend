@@ -171,6 +171,15 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     List<SampleRecipientDTO.SkuDTO> querySkuCost(SampleRecipientDTO.SkuCostQueryDTO dto);
     
     /**
+     * 获取SKU可领用库存
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    List<SampleRecipientDTO.SkuAvailableStockDTO> querySkuAvailableStock(SampleRecipientDTO.SkuAvailableStockQueryDTO dto);
+    
+    /**
      * 获取SKU列表（支持高级查询和模糊搜索）
      * @author wuhaotian
      * @date: 2025-08-21

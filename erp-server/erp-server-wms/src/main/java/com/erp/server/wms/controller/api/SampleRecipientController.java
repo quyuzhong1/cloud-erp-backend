@@ -455,6 +455,19 @@ public class SampleRecipientController extends BaseController {
         List<SampleRecipientDTO.SkuDTO> result = sampleRecipientService.querySkuCost(dto);
         return success(result);
     }
+
+    /**
+    * 获取SKU可领用库存
+    * @author wuhaotian
+    * @date:  2025-08-21
+    * @param dto
+    * @return ApiResult<List<SampleRecipientDTO.SkuAvailableStockDTO>>
+    */
+    @PostMapping("/querySkuAvailableStock")
+    public ApiResult<List<SampleRecipientDTO.SkuAvailableStockDTO>> querySkuAvailableStock(@RequestBody @Validated SampleRecipientDTO.SkuAvailableStockQueryDTO dto) {
+        List<SampleRecipientDTO.SkuAvailableStockDTO> result = sampleRecipientService.querySkuAvailableStock(dto);
+        return success(result);
+    }
     
     /**
      * 获取SKU列表（支持高级查询和模糊搜索）
