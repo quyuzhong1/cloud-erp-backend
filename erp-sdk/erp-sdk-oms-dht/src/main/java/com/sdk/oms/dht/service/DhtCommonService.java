@@ -49,6 +49,21 @@ public class DhtCommonService {
     }
 
     /**
+     * 简单查询
+     * @param req
+     * @return
+     */
+    public String simpleQuery(DhtSimpleQueryReq req) {
+        DhtAuthDTO authDTO = getCorpAccessToken();
+        req.setCorpAccessToken(authDTO.getCorpAccessToken());
+        req.setCorpId(authDTO.getCorpId());
+        String api = "/cgi/crm/custom/v2/data/findSimple";
+        Map<String, String> headerMap = new HashMap<>();
+        String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
+        return bodyStr;
+    }
+
+    /**
      * 根据手机号查询用户信息
      * @param mobile
      * @return

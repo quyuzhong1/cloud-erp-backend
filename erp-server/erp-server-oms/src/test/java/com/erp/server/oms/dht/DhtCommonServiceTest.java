@@ -31,6 +31,7 @@ public class DhtCommonServiceTest {
         DhtAuthDTO resp = dhtCommonService.getCorpAccessToken();
         System.out.println(JSONUtil.toJsonStr(resp));
     }
+
     @Test
     public void getUserByMobile() {
         DhtUserResp resp = dhtCommonService.getUserByMobile("15007174733");
@@ -44,10 +45,30 @@ public class DhtCommonServiceTest {
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
         req.setData(DhtQueryObjReq.DataDTO.builder()
                 .includeDetail(true)
-                .apiName("AccountAddrObj")
+                .apiName("MtCurrencyObj")
                 .build());
         String resp = dhtCommonService.queryObj(req);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 
+    @Test
+    public void simpleQuery() {
+        DhtUserResp resp1 = dhtCommonService.getUserByMobile("15007174733");
+        DhtSimpleQueryReq dhtSimpleQueryReq = DhtSimpleQueryReq.builder()
+                .currentOpenUserId(resp1.getEmpList().get(0).getOpenUserId())
+                .data(DhtSimpleQueryReq.DataDTO.builder()
+                        .dataObjectApiName("MtCurrencyObj")
+                        .searchQueryInfo(DhtSimpleQueryReq.DataDTO.SearchQueryInfoDTO.builder()
+                                .filters(Arrays.asList(DhtSimpleQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
+                                        .operator("eq")
+                                        .fieldName("currency_code")
+                                        .fieldValues(Arrays.asList("USD"))
+                                        .build()))
+                                .build())
+                        .fieldProjection(Arrays.asList("currency_code","name","symbol"))
+                        .build())
+                .build();
+        String resp = dhtCommonService.simpleQuery(dhtSimpleQueryReq);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
 }

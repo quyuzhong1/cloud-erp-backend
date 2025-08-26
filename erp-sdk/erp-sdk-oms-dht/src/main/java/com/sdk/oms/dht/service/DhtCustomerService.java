@@ -55,7 +55,7 @@ public class DhtCustomerService {
         req.setCorpAccessToken(authDTO.getCorpAccessToken());
         req.setCorpId(authDTO.getCorpId());
         req.getData().setDataObjectApiName(DhtConstants.CUSTOMER_API_NAME);
-        String api = "/cgi/crm/v2/data/recover";
+        String api = DhtConstants.CRM_RECOVER_URL;
         Map<String, String> headerMap = new HashMap<>();
         log.warn("订货通启用客户请求参数：{}", JSONUtil.toJsonStr(req));
         String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
