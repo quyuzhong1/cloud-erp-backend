@@ -303,6 +303,17 @@ public interface SysUserFeign {
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
 
     /**
+     * 根据公司名称查询公司信息
+     *
+     * @param orgName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyByName")
+    SysAccountingCompanyEntity getCompanyByName(@RequestBody String orgName);
+
+    /**
      * 根据主键id查询组织信息
      *
      * @param id id:组织id
@@ -614,4 +625,5 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserByThirdIdList")
     List<SysUserThirdEntity>  getUserByThirdIdList(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdIds") ArrayList<String> thirdIds);
+
 }

@@ -82,4 +82,14 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * 删除公司
      */
     List<BatchResultDTO> delete(List<String> ids);
+
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param companyName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    SysAccountingCompanyEntity getCompanyByName(String companyName);
 }

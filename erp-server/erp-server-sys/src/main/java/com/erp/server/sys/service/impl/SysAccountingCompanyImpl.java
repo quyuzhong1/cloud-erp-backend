@@ -255,5 +255,25 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 根据公司名称查询公司信息
+     *
+     * @param companyName 公司名称
+     * @return SysAccountingCompanyEntity
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     **/
+    @Override
+    public SysAccountingCompanyEntity getCompanyByName(String companyName) {
+        if (StringUtils.isBlank(companyName)) {
+            return new SysAccountingCompanyEntity();
+        } else {
+            LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName, companyName);
+            queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+            queryWrapper.last("LIMIT 1");
+            return this.getOne(queryWrapper);
+        }
+    }
 
 }

@@ -22,11 +22,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
@@ -34,6 +36,8 @@ import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.SampleRecipientDetailEntity;
@@ -54,6 +58,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +71,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -123,6 +129,19 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    // 缓存相关常量
+    private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
+    private static final String CACHE_USER_NAME_TO_ID = "sample_recipient:user_name_to_id:";
+    private static final String CACHE_DEPT_NAME_TO_ID = "sample_recipient:dept_name_to_id:";
+    private static final String CACHE_ORG_NAME_TO_ID = "sample_recipient:org_name_to_id:";
+    private static final String CACHE_SKU_NO_TO_ID = "sample_recipient:sku_no_to_id:";
+    private static final String CACHE_SKU_ID_TO_PRODUCT_NAME = "sample_recipient:sku_id_to_product_name:";
+
+    // 缓存过期时间：1小时
+    private static final long CACHE_EXPIRE_TIME = 3600;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1344,11 +1363,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        
+
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-        
+
         // 导出错误数据
         List<SampleRecipientExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
@@ -1359,16 +1378,19 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        
+
         importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
-        
+
         // 处理成功的数据
         List<SampleRecipientExcelDTO> successList = excelListenerUtil.getSuccessList();
         if (CollUtil.isNotEmpty(successList)) {
+            // 在导入前预加载缓存，提升性能
+            preloadCacheForImport(successList);
+
             handleImportSuccessList(successList, errorList, dto.getImportType());
         }
     }
@@ -1498,51 +1520,443 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
-     * 根据仓库名称查询仓库ID
+     * 根据仓库名称查询仓库ID（带缓存）
      */
     private String getWarehouseIdByName(String warehouseName) {
-        // TODO: 实现仓库名称查询逻辑
-        return "1"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(warehouseName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_WAREHOUSE_NAME_TO_ID + warehouseName;
+        String warehouseId = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(warehouseId)) {
+            return warehouseId;
+        }
+
+        try {
+            // 调用仓库服务根据名称查询仓库信息
+            List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listWarehouseByParams(
+                    WarehouseDTO.ListParamDTO.builder()
+                            .warehouseName(warehouseName)
+                            .showByAuth(false)
+                            .build()
+            );
+
+            if (CollUtil.isNotEmpty(warehouseList)) {
+                // 返回第一个匹配的仓库ID
+                String result = warehouseList.get(0).getId();
+                // 缓存结果
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到仓库名称：{}", warehouseName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询仓库ID失败，仓库名称：{}，错误：{}", warehouseName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
-     * 根据用户名称查询用户ID
+     * 根据用户名称查询用户ID（带缓存）
      */
     private String getUserIdByName(String userName) {
-        // TODO: 实现用户名称查询逻辑
-        return "1"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(userName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_USER_NAME_TO_ID + userName;
+        String userId = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(userId)) {
+            return userId;
+        }
+
+        try {
+            // 调用用户服务根据名称查询用户信息
+            List<FindUserDTO> userList = sysUserFeign.listUserByUserNames(
+                    Collections.singletonList(userName),
+                    "1" // 用户类型：1表示内部用户
+            );
+
+            if (CollUtil.isNotEmpty(userList)) {
+                // 返回第一个匹配的用户ID
+                String result = userList.get(0).getUserId();
+                // 缓存结果
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到用户名称：{}", userName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询用户ID失败，用户名称：{}，错误：{}", userName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
-     * 根据部门名称查询部门ID
+     * 根据部门名称查询部门ID（带缓存）
      */
     private String getDeptIdByName(String deptName) {
-        // TODO: 实现部门名称查询逻辑
-        return "1"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(deptName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_DEPT_NAME_TO_ID + deptName;
+        String deptId = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(deptId)) {
+            return deptId;
+        }
+
+        try {
+            // 调用部门服务根据名称查询部门信息
+            List<String> deptIds = sysUserFeign.getDeptIdsByName(deptName);
+
+            if (CollUtil.isNotEmpty(deptIds)) {
+                // 返回第一个匹配的部门ID
+                String result = deptIds.get(0);
+                // 缓存结果
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到部门名称：{}", deptName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门ID失败，部门名称：{}，错误：{}", deptName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
-     * 根据组织名称查询组织ID
+     * 根据组织名称查询组织ID（带缓存）
      */
     private String getOrgIdByName(String orgName) {
-        // TODO: 实现组织名称查询逻辑
-        return "1"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(orgName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_ORG_NAME_TO_ID + orgName;
+        String orgId = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(orgId)) {
+            return orgId;
+        }
+
+        try {
+            // 调用组织服务根据名称查询组织信息
+            SysAccountingCompanyEntity companyId = sysUserFeign.getCompanyByName(orgName);
+
+            if (!Objects.isNull(companyId)&&StrUtil.isNotBlank(companyId.getId())) {
+                // 缓存结果
+                redisTemplate.opsForValue().set(cacheKey, companyId.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return companyId.getId();
+            }
+
+            log.warn("未找到组织名称：{}", orgName);
+            return null;
+        } catch (Exception e) {
+            log.error("查询组织ID失败，组织名称：{}，错误：{}", orgName, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
-     * 根据SKU编号查询SKU ID
+     * 根据SKU编号查询SKU ID（带缓存）
      */
     private String getSkuIdBySkuNo(String skuNo) {
-        // TODO: 实现SKU编号查询逻辑
-        return "1"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(skuNo)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_SKU_NO_TO_ID + skuNo;
+        String skuId = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(skuId)) {
+            return skuId;
+        }
+
+        try {
+            // 调用PLM系统根据SKU编号查询SKU信息
+            List<ProductDetailEntity> productDetailEntities = plmTaskFeign.listBySkuNos(
+                    Collections.singletonList(skuNo)
+            );
+
+            if (CollUtil.isNotEmpty(productDetailEntities)) {
+                // 返回第一个匹配的SKU ID
+                String result = productDetailEntities.get(0).getName();
+                // 缓存结果
+                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到SKU编号：{}", skuNo);
+            return null;
+        } catch (Exception e) {
+            log.error("查询SKU ID失败，SKU编号：{}，错误：{}", skuNo, e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
-     * 根据SKU ID查询产品名称
+     * 根据SKU ID查询产品名称（带缓存）
      */
     private String getProductNameBySkuId(String skuId) {
-        // TODO: 实现产品名称查询逻辑
-        return "产品名称"; // 临时返回，需要根据实际业务实现
+        if (StrUtil.isBlank(skuId)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_SKU_ID_TO_PRODUCT_NAME + skuId;
+        String productName = (String) redisTemplate.opsForValue().get(cacheKey);
+        if (StrUtil.isNotBlank(productName)) {
+            return productName;
+        }
+
+        try {
+            // 调用PLM系统根据SKU ID查询SKU信息
+            List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(
+                    Collections.singletonList(skuId)
+            );
+
+            if (CollUtil.isNotEmpty(skuList)) {
+                // 返回第一个匹配的产品名称
+                String result = skuList.get(0).getProductId();
+                if (StrUtil.isNotBlank(result)) {
+                    // 缓存结果
+                    redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                    return result;
+                } else {
+                    return "未知产品";
+                }
+            }
+
+            log.warn("未找到SKU ID：{}", skuId);
+            return "未知产品";
+        } catch (Exception e) {
+            log.error("查询产品名称失败，SKU ID：{}，错误：{}", skuId, e.getMessage(), e);
+            return "未知产品";
+        }
+    }
+
+    /**
+     * 批量预加载缓存（导入前调用，提升导入性能）
+     */
+    public void preloadCacheForImport(List<SampleRecipientExcelDTO> excelDataList) {
+        if (CollUtil.isEmpty(excelDataList)) {
+            return;
+        }
+
+        try {
+            log.info("开始预加载缓存，数据量：{}", excelDataList.size());
+
+            // 收集所有需要查询的唯一值
+            Set<String> warehouseNames = new HashSet<>();
+            Set<String> userNames = new HashSet<>();
+            Set<String> deptNames = new HashSet<>();
+            Set<String> orgNames = new HashSet<>();
+            Set<String> skuNos = new HashSet<>();
+
+            for (SampleRecipientExcelDTO data : excelDataList) {
+                if (StrUtil.isNotBlank(data.getWarehouseName())) {
+                    warehouseNames.add(data.getWarehouseName());
+                }
+                if (StrUtil.isNotBlank(data.getUserName())) {
+                    userNames.add(data.getUserName());
+                }
+                if (StrUtil.isNotBlank(data.getDeptName())) {
+                    deptNames.add(data.getDeptName());
+                }
+                if (StrUtil.isNotBlank(data.getPickOrgName())) {
+                    orgNames.add(data.getPickOrgName());
+                }
+                if (StrUtil.isNotBlank(data.getSkuNo())) {
+                    skuNos.add(data.getSkuNo());
+                }
+            }
+
+            // 批量预加载仓库缓存
+            if (CollUtil.isNotEmpty(warehouseNames)) {
+                preloadWarehouseCache(warehouseNames);
+            }
+
+            // 批量预加载用户缓存
+            if (CollUtil.isNotEmpty(userNames)) {
+                preloadUserCache(userNames);
+            }
+
+            // 批量预加载部门缓存
+            if (CollUtil.isNotEmpty(deptNames)) {
+                preloadDeptCache(deptNames);
+            }
+
+            // 批量预加载组织缓存
+            if (CollUtil.isNotEmpty(orgNames)) {
+                preloadOrgCache(orgNames);
+            }
+
+            // 批量预加载SKU缓存
+            if (CollUtil.isNotEmpty(skuNos)) {
+                preloadSkuCache(skuNos);
+            }
+
+            log.info("缓存预加载完成");
+
+        } catch (Exception e) {
+            log.error("预加载缓存失败", e);
+            // 预加载失败不影响正常导入流程
+        }
+    }
+
+    /**
+     * 批量预加载仓库缓存
+     */
+    private void preloadWarehouseCache(Set<String> warehouseNames) {
+        try {
+            for (String warehouseName : warehouseNames) {
+                // 检查缓存中是否已存在
+                String cacheKey = CACHE_WAREHOUSE_NAME_TO_ID + warehouseName;
+                if (redisTemplate.hasKey(cacheKey)) {
+                    continue;
+                }
+
+                // 查询并缓存
+                getWarehouseIdByName(warehouseName);
+            }
+        } catch (Exception e) {
+            log.warn("预加载仓库缓存失败", e);
+        }
+    }
+
+    /**
+     * 批量预加载用户缓存
+     */
+    private void preloadUserCache(Set<String> userNames) {
+        try {
+            for (String userName : userNames) {
+                // 检查缓存中是否已存在
+                String cacheKey = CACHE_USER_NAME_TO_ID + userName;
+                if (redisTemplate.hasKey(cacheKey)) {
+                    continue;
+                }
+
+                // 查询并缓存
+                getUserIdByName(userName);
+            }
+        } catch (Exception e) {
+            log.warn("预加载用户缓存失败", e);
+        }
+    }
+
+    /**
+     * 批量预加载部门缓存
+     */
+    private void preloadDeptCache(Set<String> deptNames) {
+        try {
+            for (String deptName : deptNames) {
+                // 检查缓存中是否已存在
+                String cacheKey = CACHE_DEPT_NAME_TO_ID + deptName;
+                if (redisTemplate.hasKey(cacheKey)) {
+                    continue;
+                }
+
+                // 查询并缓存
+                getDeptIdByName(deptName);
+            }
+        } catch (Exception e) {
+            log.warn("预加载部门缓存失败", e);
+        }
+    }
+
+    /**
+     * 批量预加载组织缓存
+     */
+    private void preloadOrgCache(Set<String> orgNames) {
+        try {
+            for (String orgName : orgNames) {
+                // 检查缓存中是否已存在
+                String cacheKey = CACHE_ORG_NAME_TO_ID + orgName;
+                if (redisTemplate.hasKey(cacheKey)) {
+                    continue;
+                }
+
+                // 查询并缓存
+                getOrgIdByName(orgName);
+            }
+        } catch (Exception e) {
+            log.warn("预加载组织缓存失败", e);
+        }
+    }
+
+    /**
+     * 批量预加载SKU缓存
+     */
+    private void preloadSkuCache(Set<String> skuNos) {
+        try {
+            for (String skuNo : skuNos) {
+                // 检查缓存中是否已存在
+                String cacheKey = CACHE_SKU_NO_TO_ID + skuNo;
+                if (redisTemplate.hasKey(cacheKey)) {
+                    continue;
+                }
+
+                // 查询并缓存
+                getSkuIdBySkuNo(skuNo);
+            }
+        } catch (Exception e) {
+            log.warn("预加载SKU缓存失败", e);
+        }
+    }
+
+    /**
+     * 清除所有相关缓存
+     */
+    public void clearAllCache() {
+        try {
+            // 清除仓库缓存
+            Set<String> warehouseKeys = redisTemplate.keys(CACHE_WAREHOUSE_NAME_TO_ID + "*");
+            if (CollUtil.isNotEmpty(warehouseKeys)) {
+                redisTemplate.delete(warehouseKeys);
+            }
+
+            // 清除用户缓存
+            Set<String> userKeys = redisTemplate.keys(CACHE_USER_NAME_TO_ID + "*");
+            if (CollUtil.isNotEmpty(userKeys)) {
+                redisTemplate.delete(userKeys);
+            }
+
+            // 清除部门缓存
+            Set<String> deptKeys = redisTemplate.keys(CACHE_DEPT_NAME_TO_ID + "*");
+            if (CollUtil.isNotEmpty(deptKeys)) {
+                redisTemplate.delete(deptKeys);
+            }
+
+            // 清除组织缓存
+            Set<String> orgKeys = redisTemplate.keys(CACHE_ORG_NAME_TO_ID + "*");
+            if (CollUtil.isNotEmpty(orgKeys)) {
+                redisTemplate.delete(orgKeys);
+            }
+
+            // 清除SKU缓存
+            Set<String> skuKeys = redisTemplate.keys(CACHE_SKU_NO_TO_ID + "*");
+            if (CollUtil.isNotEmpty(skuKeys)) {
+                redisTemplate.delete(skuKeys);
+            }
+
+            // 清除产品名称缓存
+            Set<String> productKeys = redisTemplate.keys(CACHE_SKU_ID_TO_PRODUCT_NAME + "*");
+            if (CollUtil.isNotEmpty(productKeys)) {
+                redisTemplate.delete(productKeys);
+            }
+
+            log.info("所有缓存清除完成");
+        } catch (Exception e) {
+            log.error("清除缓存失败", e);
+        }
     }
 
     /**
