@@ -123,8 +123,10 @@ public enum BusinessNoTypeEnum {
     CODE_GYSDM(91, "GYSDM","供应商代码", BusinessNoConstant.GYSDM),
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
-    CODE_YPZF(92, "YPZF","样品作废单", BusinessNoConstant.YPZF),
-    CODE_YPJY(94, "YPZF","样品借用单", BusinessNoConstant.YPJY),
+    CODE_YPZF(97, "YPZF","样品作废单", BusinessNoConstant.YPZF),
+    CODE_YPJY(98, "YPJY","样品借用单", BusinessNoConstant.YPJY),
+    CODE_YPGH(99, "YPGH","样品归还单", BusinessNoConstant.YPGH),
+    CODE_ZHDD(100, "ZHDD","展会订单", BusinessNoConstant.ZHDD),
 
     ;
 

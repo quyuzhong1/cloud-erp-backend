@@ -201,6 +201,8 @@ public interface BusinessNoConstant {
     String YPZF = "YPZF";
     //样品借用单
     String YPJY = "YPJY";
+    String YPGH = "YPGH";
+    String ZHDD = "ZHDD";
 
     //样品领用
     String YPLY="YPLY";

@@ -14,11 +14,9 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
-import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -50,8 +48,6 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -64,8 +60,6 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.web.multipart.MultipartFile;
-
 import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
