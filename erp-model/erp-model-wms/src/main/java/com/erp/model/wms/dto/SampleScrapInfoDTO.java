@@ -8,9 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -296,7 +295,7 @@ public class SampleScrapInfoDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "明细不能为空" )
-        private List<SampleScrapDetailDTO.AddDTO> detailList;
+        private List<SampleScrapDetailDTO.@Valid AddDTO> detailList;
 
     }
 
@@ -317,7 +316,7 @@ public class SampleScrapInfoDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "明细不能为空" )
-        private List<SampleScrapDetailDTO.UpdateDTO> detailList;
+        private List<SampleScrapDetailDTO. @Valid UpdateDTO> detailList;
 
     }
 
@@ -376,16 +375,25 @@ public class SampleScrapInfoDTO implements Serializable {
          */
         private String productName;
 
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
+
         /**
          * 报废数量
          */
         private Integer scrapQty;
 
-
         /**
          * 备注
          */
         private String detailRemark;
+        /**
+         * 台账id
+         */
+        private String sampleLedgerId;
 
     }
 

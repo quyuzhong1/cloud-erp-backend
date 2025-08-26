@@ -5,21 +5,22 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.SupplierVisitImportExcelDTO;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.tms.dto.excel.DictHsCodeExcelDTO;
-import com.erp.model.tms.entity.DictHsCodeEntity;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
-import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -38,7 +39,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -57,7 +57,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.function.Function;
@@ -110,6 +109,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         SampleScrapInfoEntity sampleScrapInfoEntity = new SampleScrapInfoEntity();
         BeanMapperUtils.copy(addDTO, sampleScrapInfoEntity);
 
+        handleData(sampleScrapInfoEntity);
+
         log.info("开始新增样品报废单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPZF);
@@ -125,12 +126,23 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 明细
         List<SampleScrapDetailDTO.AddDTO> detailList = addDTO.getDetailList();
-        detailList.forEach(detail -> detail.setMainId(sampleScrapInfoEntity.getId()));
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
+        List<String> skuIds = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+        for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
+            sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
+
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            if(Objects.nonNull(skuVO)){
+                sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
+                sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
+            }
+        }
 
         // 提取所有SKU编号，用于后续查询可用数量
         List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
-
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
         //校验可用数量是否足够
         checkDetailQty("" , scrapUserId, skuNos, sampleScrapDetailEntities);
@@ -140,6 +152,22 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         //附件
         addAttachment(addDTO, sampleScrapInfoEntity);
         return new BaseResultDTO.AddDTO(sampleScrapInfoEntity.getId(), code);
+    }
+
+    private void handleData(SampleScrapInfoEntity sampleScrapInfoEntity) {
+        String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
+        SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(scrapUserId);
+        if(Objects.isNull(sysUserDTO)){
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        sampleScrapInfoEntity.setScrapUserName(sysUserDTO.getUserName());
+
+        String scrapDeptId = sampleScrapInfoEntity.getScrapDeptId();
+        List<SysDepartmentEntity> deptByIds = sysUserFeign.getDeptByIds(Arrays.asList(scrapDeptId));
+        if(CollUtil.isEmpty(deptByIds)){
+            throw new ServiceException(ApiError.ERROR_9029);
+        }
+        sampleScrapInfoEntity.setScrapDeptName(deptByIds.get(0).getName());
     }
 
     private void checkDetailQty(String id , String scrapUserId, List<String> skuNos, List<SampleScrapDetailEntity> sampleScrapDetailEntities) {
@@ -157,13 +185,13 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             String sampleLedgerId = detailDTO.getSampleLedgerId();
             SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
             if(Objects.nonNull(sampleLedger)){
-                Integer ledgerQty = sampleLedger.getQty();
-                if(detailDTO.getScrapQty().compareTo(ledgerQty) > 0){
+                Integer availableQty = sampleLedger.getAvailableQty();
+                if(detailDTO.getScrapQty().compareTo(availableQty) > 0){
                     throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
                 }
 
                 //防止明细里还有重复
-                sampleLedger.setQty(ledgerQty - detailDTO.getScrapQty());
+                sampleLedger.setAvailableQty(availableQty - detailDTO.getScrapQty());
                 sampleLedgerMap.put(sampleLedgerId,sampleLedger);
             }else {
                 throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
@@ -213,7 +241,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        SampleScrapInfoEntity sampleScrapInfoEntity =  BeanMapperUtils.map(SampleScrapInfoEntity.class, addOrUpdateDTO);
+        SampleScrapInfoEntity sampleScrapInfoEntity =  BeanMapperUtils.map(SampleScrapInfoEntity.class, old);
+        BeanMapper.copyNonNull(addOrUpdateDTO,sampleScrapInfoEntity);
+
+        handleData(sampleScrapInfoEntity);
 
         log.info("编辑 开始修改样品报废单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(sampleScrapInfoEntity);
@@ -248,8 +279,22 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     private void updateDetail(SampleScrapInfoDTO.UpdateDTO addOrUpdateDTO,  SampleScrapInfoEntity sampleScrapInfoEntity) {
         List<SampleScrapDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
         List<SampleScrapDetailEntity> oldList = sampleScrapDetailService.listByMainId(sampleScrapInfoEntity.getId());
-        detailList.forEach(detail -> detail.setMainId(sampleScrapInfoEntity.getId()));
+
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
+        // 提取所有SKU编号，用于后续查询可用数量
+        List<String> skuIds = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+        for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
+            sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
+
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            if(Objects.nonNull(skuVO)){
+                sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
+                sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
+            }
+        }
 
         // 提取所有SKU编号，用于后续查询可用数量
         List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
@@ -495,7 +540,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
     private Boolean validateDisApprove(SampleScrapInfoEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         return true;
@@ -506,8 +551,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     public BatchResultDTO delete(String id) {
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有待提交、审核不通过数据允许删除
-        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()))) {
+            throw new ServiceException("只有待提交数据支持删除");
         }
 
         //删除明细
@@ -565,7 +610,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     public BatchResultDTO cancelProcess(String id) {
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -638,7 +683,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             String sampleLedgerId = detailDTO.getSampleLedgerId();
             SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
             if(Objects.nonNull(sampleLedger)){
-                detailDTO.setAvailableScrapQty(sampleLedger.getQty());
+                detailDTO.setAvailableQty(sampleLedger.getAvailableQty());
                 detailDTO.setUseUserId(sampleLedger.getUseUserId());
                 detailDTO.setUseUserName(sampleLedger.getUseUserName());
             }
@@ -778,7 +823,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //部门
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        SampleScrapExcelListener excelListenerUtil = new SampleScrapExcelListener(deptList, map, userList);
+        SampleScrapExcelListener excelListenerUtil = new SampleScrapExcelListener(sampleLedgerService,deptList, map, userList);
+
         try {
             EasyExcel.read(excelFile.getInputStream(), SampleScrapImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -800,22 +846,26 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 errorList.addAll(sampleScrapImportExcelDTOS);
             }
 
+            SampleScrapInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleScrapInfoServiceImpl.class);
+
             //按序号分组
             Map<String, List<SampleScrapInfoDTO.ImportDTO>> collect = successList.stream().collect(Collectors.groupingBy(SampleScrapInfoDTO.ImportDTO::getNo));
             for (Map.Entry<String, List<SampleScrapInfoDTO.ImportDTO>> entry : collect.entrySet()) {
                 List<SampleScrapInfoDTO.ImportDTO> value = entry.getValue();
+                SampleScrapInfoDTO.ImportDTO importMainDTO = value.get(0);
                 SampleScrapInfoDTO.AddDTO addDTO = new SampleScrapInfoDTO.AddDTO();
-                BeanMapperUtils.copy(value.get(0), addDTO);
+                BeanMapperUtils.copy(importMainDTO, addDTO);
                 List<SampleScrapDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (SampleScrapInfoDTO.ImportDTO importDTO : value) {
                     SampleScrapDetailDTO.AddDTO detailDTO = new SampleScrapDetailDTO.AddDTO();
                     BeanMapperUtils.copy(importDTO, detailDTO);
-
                     //明细备注
                     detailDTO.setRemark(importDTO.getDetailRemark());
                     detailList.add(detailDTO);
                 }
                 addDTO.setDetailList(detailList);
+
+                bean.add(addDTO);
             }
         }
 

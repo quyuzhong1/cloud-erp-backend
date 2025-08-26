@@ -51,10 +51,10 @@
         sl.use_user_id AS useUserId,
         sl.use_user_name AS useUserName,
         <if test="params.type != null and params.type == 'scrap'">
-            COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS qty
+            COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
         </if>
         <if test="params.type == null || params.type == ''">
-            sl.qty  AS qty
+            sl.qty  AS availableQty
         </if>
         FROM
         sample_ledger sl

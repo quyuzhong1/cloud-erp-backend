@@ -244,7 +244,7 @@ public class SampleLedgerDTO implements Serializable {
         /**
          * 库存数量（可为正数或负数）
          */
-        private Integer qty;
+        private Integer availableQty;
 
     }
 
