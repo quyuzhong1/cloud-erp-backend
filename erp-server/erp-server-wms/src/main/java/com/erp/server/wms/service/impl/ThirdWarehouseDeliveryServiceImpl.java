@@ -119,7 +119,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity) {
+    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity,Boolean isAddDetail) {
 
         // 生成单号
         boolean save = super.save(entity);
@@ -130,7 +130,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             entity.getDetailEntityList().forEach(v->{
                 v.setMainId(entity.getId());
             });
-            detailService.saveBatch(entity.getDetailEntityList());
+            if(isAddDetail){
+                detailService.saveBatch(entity.getDetailEntityList());
+            }
         }
 
         // 操作日志
@@ -200,7 +202,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity);
+        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity,true);
 
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
@@ -384,7 +386,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             addDTO.setSourceDetailId(id);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        return service.add(addThirdWarehouseDeliveryEntity);
+        return service.add(addThirdWarehouseDeliveryEntity,false);
 
     }
 
