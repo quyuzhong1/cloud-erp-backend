@@ -142,7 +142,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
             sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
 
-            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
                 sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
@@ -297,7 +297,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         for (SampleScrapDetailEntity sampleScrapDetailEntity : sampleScrapDetailEntities) {
             sampleScrapDetailEntity.setMainId(sampleScrapInfoEntity.getId());
 
-            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getId(), null);
+            SkuVO skuVO = skuMap.getOrDefault(sampleScrapDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
                 sampleScrapDetailEntity.setSkuNo(skuVO.getSkuNo());
                 sampleScrapDetailEntity.setProductName(skuVO.getSkuName());
@@ -311,9 +311,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuNos, sampleScrapDetailEntities);
 
         if(CollUtil.isNotEmpty(oldList)){
+            List<String> detailIds = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             // 处理删除的数据
             List<SampleScrapDetailEntity> remove = oldList.stream()
-                    .filter(oldEntity -> !detailList.contains(oldEntity.getId()))
+                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
                     .collect(Collectors.toList());
             if(CollUtil.isNotEmpty(remove)){
                 sampleScrapDetailService.removeByIds(remove.stream().map(SampleScrapDetailEntity::getId).collect(Collectors.toList()));
