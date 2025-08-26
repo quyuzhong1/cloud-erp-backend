@@ -183,18 +183,33 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 throw new ServiceException("无法获取对应的表单处理器，type参数无效: " + type);
             }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
-            viewDTOList.forEach(e -> {
+            List<CfgProcessFieldMapDTO.ViewDTO> resultList = new ArrayList<>();
+            for (CfgProcessFieldMapDTO.ViewDTO e :viewDTOList) {
                 if (ObjectUtil.isNotEmpty(ruleTypeEnum)){
                     e.setCfgType(DictBasicEnum.THIRDCFG.getCode());
                 }
                 e.setCfgType(DictBasicEnum.SYSCFG.getCode());
-                e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
-            });
-            return viewDTOList;
+                CfgQueryOptionFieldTypeEnum enumByCode = CfgQueryOptionFieldTypeEnum.getByCode(e.getThirdFieldType().toUpperCase());
+                if (ObjectUtil.isEmpty(enumByCode)) {
+                    //类型为空的时候跳过本次循环
+                    log.error("飞书审批定义中存在未知字段类型，字段名称：{}，字段类型：{}", e.getThirdField(), e.getThirdFieldType());
+                    continue;
+                }
+                e.setThirdFieldTypeName(enumByCode.getName());
+                resultList.add(e);
+            }
+            return resultList;
         } catch (Exception e) {
             throw new ServiceException("获取指定飞书审批定义失败:{}", e);
         }
     }
+
+    public static void main(String[] args) {
+        String s = "CHECKBOXV2";
+        CfgQueryOptionFieldTypeEnum enumByCode = CfgQueryOptionFieldTypeEnum.getByCode(s.toUpperCase());
+        System.out.println(enumByCode.getName());
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
