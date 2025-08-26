@@ -12,11 +12,11 @@ import com.common.business.enums.ApproveStatusEnum;
 
 /**
  * <p>
- * 样品借用单明细表
+ * 借用变更单明细表
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-26
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -59,6 +59,11 @@ public class SampleBorrowDetailEntity extends BaseEntity<SampleBorrowDetailEntit
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 样品台账id
+    */
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
 
 
     public static final String MAIN_ID = "main_id";
@@ -74,6 +79,8 @@ public class SampleBorrowDetailEntity extends BaseEntity<SampleBorrowDetailEntit
     public static final String WAIT_RETURN_QTY = "wait_return_qty";
 
     public static final String REMARK = "remark";
+
+    public static final String SAMPLE_LEDGER_ID = "sample_ledger_id";
 
     @Override
     public Serializable pkVal() {

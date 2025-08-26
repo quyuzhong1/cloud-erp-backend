@@ -50,7 +50,7 @@
         sl.product_name AS productName,
         sl.use_user_id AS useUserId,
         sl.use_user_name AS useUserName,
-        <if test="params.type != null and params.type == 'scrap'">
+        <if test="params.type != null and params.type != ''">
             COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
         </if>
         <if test="params.type == null || params.type == ''">
@@ -68,7 +68,19 @@
             <if test="params.childId != null and params.childId != ''">
                 and ssi.id != #{params.childId}
             </if>
-                GROUP BY ssd.sku_id                                                                                                                                                                                                                                  ) as dd on dd.sku_id = sl.sku_id
+                GROUP BY ssd.sku_id) as dd on dd.sku_id = sl.sku_id
+        </if>
+        <if test="params.type != null and params.type == 'borrow'">
+            left join (
+            select ssd.sku_id , sum(ssd.borrow_qty) as freezeQty  from  sample_borrow_info ssi
+            inner join sample_borrow_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+            where ssi.is_deleted = false
+            and ssi.approve_status !='approve'
+            <if test="params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+            GROUP BY ssd.sku_id
+            ) as dd on dd.sku_id = sl.sku_id
         </if>
         WHERE
         sl.is_deleted = FALSE

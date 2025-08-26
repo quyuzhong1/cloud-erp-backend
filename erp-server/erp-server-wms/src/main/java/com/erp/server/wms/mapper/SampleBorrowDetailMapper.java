@@ -7,11 +7,11 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 样品借用单明细表 Mapper 接口
+ * 借用变更单明细表 Mapper 接口
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-26
  */
 @Mapper
 public interface SampleBorrowDetailMapper extends BaseMapper<SampleBorrowDetailEntity> {

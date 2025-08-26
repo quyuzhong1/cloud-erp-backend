@@ -10,19 +10,15 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
-import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
+import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.SampleLedgerService;
-import com.erp.server.wms.service.SampleScrapInfoService;
+import com.erp.server.wms.service.SampleBorrowInfoService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,10 +29,10 @@ import java.util.stream.Collectors;
 
 /**
  * @author jack
- * @Classname SampleScrapAsynExcelListener
+ * @Classname SampleBorrowExcelListener
  * @Date 2025-08-26
  */
-public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleScrapImportExcelDTO> {
+public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorrowImportExcelDTO> {
 
     private static final int BATCH_COUNT = 1000;
 
@@ -59,7 +55,7 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
 
     private final SampleLedgerService sampleLedgerService = SpringUtil.getBean(SampleLedgerService.class);
 
-    private final SampleScrapInfoService sampleScrapInfoService = SpringUtil.getBean(SampleScrapInfoService.class);
+    private final SampleBorrowInfoService sampleBorrowInfoService = SpringUtil.getBean(SampleBorrowInfoService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
 
@@ -67,17 +63,17 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
      * 错误信息
      */
     @Getter
-    private List<SampleScrapImportExcelDTO> errorList = new ArrayList<>();
+    private List<SampleBorrowImportExcelDTO> errorList = new ArrayList<>();
 
     @Getter
-    private List<SampleScrapImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
+    private List<SampleBorrowImportExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
 
-    public SampleScrapAsynExcelListener(String taskId,
-                                        String importType,
-                                        Integer importCount,
-                                        List<SysDepartmentDTO> deptList,
-                                        Map<String,SkuVO> skuMap,
-                                        List<FindUserDTO> userList) {
+    public SampleBorrowExcelListener(String taskId,
+                                     String importType,
+                                     Integer importCount,
+                                     List<SysDepartmentDTO> deptList,
+                                     Map<String,SkuVO> skuMap,
+                                     List<FindUserDTO> userList) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
@@ -95,11 +91,11 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
      * @param analysisContext
      * @return void
      * @author jack
-     * @date 2025-06-27
+     * @date 2025-08-26
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(SampleScrapImportExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(SampleBorrowImportExcelDTO excelDTO, AnalysisContext analysisContext) {
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
@@ -112,34 +108,64 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //报废人
-        String scrapUserName = excelDTO.getScrapUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
+        //借入人
+        String borrowUserName = excelDTO.getBorrowUserName();
+        FindUserDTO findUserDTO = userList.stream().filter(e -> borrowUserName.equals(e.getUserName())).findFirst().orElse(null);
         if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("报废人不存在");
+            errorMsgList.add("借入人不存在");
         }else {
-            excelDTO.setScrapUserId(findUserDTO.getUserId());
-            excelDTO.setScrapUserName(findUserDTO.getUserName());
+            excelDTO.setBorrowUserId(findUserDTO.getUserId());
+            excelDTO.setBorrowUserName(findUserDTO.getUserName());
         }
 
-        //报废日期
-        String scrapDateStr = excelDTO.getScrapDateStr();
-        if(StringUtils.isNotBlank(scrapDateStr)){
+        //借出人
+        String lendUserName = excelDTO.getLendUserName();
+        FindUserDTO lendUser = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
+        if(Objects.isNull(lendUser)){
+            errorMsgList.add("借出人不存在");
+        }else {
+            excelDTO.setLendUserId(lendUser.getUserId());
+            excelDTO.setLendUserName(lendUser.getUserName());
+        }
+
+        //借入日期
+        String borrowDateStr = excelDTO.getBorrowDateStr();
+        if(StringUtils.isNotBlank(borrowDateStr)){
             try {
-                LocalDate scrapDate = StringUtils.isBlank(scrapDateStr) ? null : LocalDate.parse(scrapDateStr, dateTimeFormatter);
-                excelDTO.setScrapDate(scrapDate);
+                LocalDate borrowDate = StringUtils.isBlank(borrowDateStr) ? null : LocalDate.parse(borrowDateStr, dateTimeFormatter);
+                excelDTO.setBorrowDate(borrowDate);
             }catch (Exception e){
-                errorMsgList.add("报废时间格式错误、请使用yyyy-MM-dd格式");
+                errorMsgList.add("借入时间格式错误、请使用yyyy-MM-dd格式");
+            }
+        }
+        //预计退回日期
+        String estimatedReturnDateStr = excelDTO.getEstimatedReturnDateStr();
+        if(StringUtils.isNotBlank(estimatedReturnDateStr)){
+            try {
+                LocalDate estimatedReturnDate = StringUtils.isBlank(estimatedReturnDateStr) ? null : LocalDate.parse(estimatedReturnDateStr, dateTimeFormatter);
+                excelDTO.setEstimatedReturnDate(estimatedReturnDate);
+            }catch (Exception e){
+                errorMsgList.add("预计退回日期时间格式错误、请使用yyyy-MM-dd格式");
             }
         }
 
-        String scrapDeptName = excelDTO.getScrapDeptName();
-        SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> scrapDeptName.equals(e.getName())).findFirst().orElse(null);
+        //借入部门
+        String borrowDeptName = excelDTO.getBorrowDeptName();
+        SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> borrowDeptName.equals(e.getName())).findFirst().orElse(null);
         if(Objects.isNull(sysDepartmentDTO)){
-            errorMsgList.add("报废部门不存在");
+            errorMsgList.add("借入部门不存在");
         }else {
-            excelDTO.setScrapDeptId(sysDepartmentDTO.getId());
-            excelDTO.setScrapDeptName(sysDepartmentDTO.getName());
+            excelDTO.setBorrowDeptId(sysDepartmentDTO.getId());
+            excelDTO.setBorrowDeptName(sysDepartmentDTO.getName());
+        }
+        //借出部门
+        String lendDeptName = excelDTO.getLendDeptName();
+        SysDepartmentDTO lendDept = deptList.stream().filter(e -> lendDeptName.equals(e.getName())).findFirst().orElse(null);
+        if(Objects.isNull(lendDept)){
+            errorMsgList.add("借出部门不存在");
+        }else {
+            excelDTO.setLendDeptId(lendDept.getId());
+            excelDTO.setLendDeptName(lendDept.getName());
         }
 
         //sku
@@ -158,9 +184,9 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
         if(Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(excelDTO.getUseUserName())){
             // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-            dto.setUserId(excelDTO.getScrapUserId());
+            dto.setUserId(excelDTO.getBorrowUserId());
             dto.setSkuNo(excelDTO.getSkuNo());
-            dto.setType("scrap");
+            dto.setType("borrow");
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add("样品台账不存在");
@@ -183,9 +209,9 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
         successList.add(excelDTO);
         if (successList.size() >= BATCH_COUNT){
             try {
-                List<String> errorNoList = errorList.stream().map(SampleScrapImportExcelDTO::getNo).distinct().collect(Collectors.toList());
-                List<SampleScrapImportExcelDTO> errorList2 = new ArrayList<>();
-                sampleScrapInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
+                List<String> errorNoList = errorList.stream().map(SampleBorrowImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+                List<SampleBorrowImportExcelDTO> errorList2 = new ArrayList<>();
+                sampleBorrowInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
@@ -205,9 +231,9 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()){
             try {
-                List<String> errorNoList = errorList.stream().map(SampleScrapImportExcelDTO::getNo).distinct().collect(Collectors.toList());
-                List<SampleScrapImportExcelDTO> errorList2 = new ArrayList<>();
-                sampleScrapInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
+                List<String> errorNoList = errorList.stream().map(SampleBorrowImportExcelDTO::getNo).distinct().collect(Collectors.toList());
+                List<SampleBorrowImportExcelDTO> errorList2 = new ArrayList<>();
+                sampleBorrowInfoService.handleImportSuccessList(successList,errorNoList, errorList2,importType);
                 errorList.addAll(errorList2);
             }catch (Exception e){
                 successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));

@@ -193,13 +193,14 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             String sampleLedgerId = detailDTO.getSampleLedgerId();
             SampleLedgerDTO.SkuAvailableQtyDTO sampleLedger = sampleLedgerMap.getOrDefault(sampleLedgerId, null);
             if(Objects.nonNull(sampleLedger)){
-                Integer availableQty = sampleLedger.getAvailableQty();
-                if(detailDTO.getScrapQty().compareTo(availableQty) > 0){
+                Integer availableQty = Objects.isNull(sampleLedger.getAvailableQty()) ? 0 : sampleLedger.getAvailableQty() ;
+                Integer scrapQty  = Objects.isNull(detailDTO.getScrapQty()) ? 0 : detailDTO.getScrapQty() ;
+                if(scrapQty.compareTo(availableQty) > 0){
                     throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
                 }
 
                 //防止明细里还有重复
-                sampleLedger.setAvailableQty(availableQty - detailDTO.getScrapQty());
+                sampleLedger.setAvailableQty(availableQty - scrapQty);
                 sampleLedgerMap.put(sampleLedgerId,sampleLedger);
             }else {
                 throw new ServiceException(ApiError.ERROR_SAMPLE_AVAILABLE_QTY,detailDTO.getSkuNo(),"报废");
@@ -260,7 +261,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             throw new ServiceException("样品报废单保存失败");
         }
         // 记录操作日志
-        log.info("编辑 开始记录样品报废单日志数据，单号：【{}】", sampleScrapInfoEntity.getCode());
+        log.info("编辑 开始记录样品报废单日志数据，单号：【{}】", old.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleScrapInfoEntity.getCode(), "样品报废单");
         operateLogService.addModuleOperateLogByObj(old, sampleScrapInfoEntity, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), sampleScrapInfoEntity.getId(), msg);
 
@@ -430,7 +431,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         }
         });
         list.sort(Comparator.comparing(SampleScrapInfoDTO.TabListDTO::getTabFlag));
-        list.add(0,new SampleScrapInfoDTO.TabListDTO("all","全部", 0));
         return list;
     }
 
@@ -560,7 +560,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     public BatchResultDTO delete(String id) {
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有待提交、审核不通过数据允许删除
-        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()))) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException("只有待提交数据支持删除");
         }
 
@@ -569,6 +569,13 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 .set(SampleScrapDetailEntity::getIsDeleted, Boolean.TRUE)
                 .eq(SampleScrapDetailEntity::getMainId, id)
                 .update();
+        //删除附件
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            attachmentService.deleteByUrlList(urlList);
+        }
+
         // 删除数据
         log.info("删除 开始删除样品报废单数据，id：【{}】", id);
         super.removeById(id);
@@ -591,7 +598,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if(entity.getInvalidStatus()){
             throw new ServiceException(ApiError.ERROR_98012);
         }
-        // 删除数据
         log.info("作废 开始作废样品报废单数据，id：【{}】", id);
         lambdaUpdate()
                 .set(SampleScrapInfoEntity::getInvalidStatus, Boolean.TRUE)
@@ -599,7 +605,6 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 .update();
 
         // 日志
-        log.info("作废 开始作废样品报废单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品报废单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), entity.getCode(), "作废样品报废单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);

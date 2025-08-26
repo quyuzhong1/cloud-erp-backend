@@ -1120,6 +1120,8 @@ public enum ApiError implements Serializable {
 
     ERROR_SAMPLE_AVAILABLE_QTY(99153,"【{}】当前可【{}】数量不足"),
 
+    ERROR_SAMPLE_BORROW_DATA(99154,"预计退回日期不能小于借用日期"),
+
 
 
 

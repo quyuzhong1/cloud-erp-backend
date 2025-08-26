@@ -401,6 +401,7 @@ public class SampleBorrowInfoController extends BaseController {
             tableAlias = "sbi"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品借用单导出Excel数据")
+    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
     public  ApiResult<Object> exportList(@RequestBody @Validated SampleBorrowInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
         sampleBorrowInfoService.exportList(dto, response);
         return success();
@@ -408,17 +409,16 @@ public class SampleBorrowInfoController extends BaseController {
 
 
     /**
-     * 导入Excel数据
+     *  异步导入
      * @author jack
      * @date:  2025-08-20
-     * @param excelFile
-     * @param response
-     * @return
+     * @param dto
+     * @return ApiResult
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品借用单")
     @PostMapping("/importFile")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = sampleBorrowInfoService.importFile(excelFile, response);
+    public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = sampleBorrowInfoService.importFile(dto);
         return result ? success() : failure();
     }
 

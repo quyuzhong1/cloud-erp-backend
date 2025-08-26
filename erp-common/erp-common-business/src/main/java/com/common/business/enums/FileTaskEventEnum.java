@@ -212,10 +212,11 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_VIRTUAL_ADJUST_REPORT("EXPORT_WMS_VIRTUAL_ADJUST_REPORT", "虚拟库存调整导出","","",""),
     EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT("EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT", "三方仓发货单导出","","",""),
 
-    EXPORT_WMS_SAMPLE_BORROW_INFO("EXPORT_WMS_SAMPLE_BORROW_INFO_REPORT", "样品借出单导出","","",""),
-    EXPORT_WMS_SAMPLE_RETURN_INFO("EXPORT_WMS_SAMPLE_RETURN_INFO_REPORT", "样品归还单导出","","",""),
+    EXPORT_WMS_SAMPLE_BORROW_INFO("EXPORT_WMS_SAMPLE_BORROW_INFO", "样品借出单导出","","",""),
+    IMPORT_WMS_SAMPLE_BORROW_INFO("IMPORT_WMS_SAMPLE_BORROW_INFO","样品借出单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleBorrow",""),
+    EXPORT_WMS_SAMPLE_RETURN_INFO("EXPORT_WMS_SAMPLE_RETURN_INFO", "样品归还单导出","","",""),
     EXPORT_WMS_SAMPLE_SCRAP_INFO("EXPORT_WMS_SAMPLE_SCRAP_INFO", "样品报废单导出","","",""),
-    IMPORT_WMS_SAMPLE_SCRAP_INFO("IMPORT_WMS_SAMPLE_SCRAP_INFO","样品报废单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleRecipient",""),
+    IMPORT_WMS_SAMPLE_SCRAP_INFO("IMPORT_WMS_SAMPLE_SCRAP_INFO","样品报废单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSampleScrap",""),
 
     EXPORT_WMS_SAMPLE_RECIPIENT_REPORT("EXPORT_WMS_SAMPLE_RECIPIENT_REPORT", "样品领用单导出","","",""),
     EXPORT_WMS_SAMPLE_LEDGER_REPORT("EXPORT_WMS_SAMPLE_RETURN_INFO_REPORT", "样品台账导出","","",""),

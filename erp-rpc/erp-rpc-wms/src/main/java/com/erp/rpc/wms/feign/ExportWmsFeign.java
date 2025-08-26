@@ -342,4 +342,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportSampleLedgerFlow")
     PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto);
+
+    /**
+     * 导出样品借出单
+     */
+    @PostMapping("/feign/export/exportSampleBorrowInfo")
+    PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
 }

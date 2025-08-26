@@ -198,6 +198,9 @@ public class ExportWmsFeignController {
     @Resource
     private SampleLedgerFlowService sampleLedgerFlowService;
 
+    @Resource
+    private SampleBorrowInfoService sampleBorrowInfoService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1128,6 +1131,19 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleLedgerFlowQueryHandler.class)
     public PagingVO<SampleLedgerFlowDTO.ListDTO> exportSampleLedgerFlow(@RequestBody PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {
         return sampleLedgerFlowService.getSampleLedgerFlowPageData(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleBorrowInfo")
+    @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
+    public PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
+        return sampleBorrowInfoService.paging(dto);
     }
 
 }

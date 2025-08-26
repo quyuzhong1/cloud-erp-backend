@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -156,9 +157,11 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
      * 导入Excel
      * @author jack
      * @date: 2025-08-20
-     * @param excelFile
-     * @param response
      * @return
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importSampleBorrow(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<SampleBorrowImportExcelDTO> successList, List<String> errorNoList, List<SampleBorrowImportExcelDTO> errorList2, String importType);
 }

@@ -124,6 +124,7 @@ public enum BusinessNoTypeEnum {
     CODE_YPLY(93, "YPLY","样品领用", BusinessNoConstant.YPLY),
 
     CODE_YPZF(92, "YPZF","样品作废单", BusinessNoConstant.YPZF),
+    CODE_YPJY(94, "YPZF","样品借用单", BusinessNoConstant.YPJY),
 
     ;
 

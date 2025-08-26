@@ -33,7 +33,7 @@ public class SampleScrapImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*报废日期", index = 1)
-    @FieldValid(fieldName = "报废日期",isNotBlank = true)
+    @FieldValid(fieldName = "*报废日期",isNotBlank = true)
     private String scrapDateStr;
     @ExcelIgnore
     private LocalDate scrapDate;

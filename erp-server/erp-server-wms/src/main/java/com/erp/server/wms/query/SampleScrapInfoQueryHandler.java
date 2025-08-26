@@ -15,7 +15,7 @@ public class SampleScrapInfoQueryHandler extends AbstractQueryHandler {
     }
 
     public String getTabSql(Object value) {
-        if ("all".equals(value)){
+        if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
         super.buildDefaultDTO("ssi.approve_status", value);

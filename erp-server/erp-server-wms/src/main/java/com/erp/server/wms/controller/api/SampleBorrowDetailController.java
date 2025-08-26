@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.api;
 
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleBorrowDetailDTO;
-import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleBorrowDetailService;
@@ -20,14 +18,14 @@ import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 样品借用单明细表
+ * 借用变更单明细表
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-26
  */
 @Slf4j
 @RestController
-@LogSystemModule("样品借用单明细表")
+@LogSystemModule("借用变更单明细表")
 @RequestMapping("/sampleBorrowDetail")
 public class SampleBorrowDetailController extends BaseController {
 
@@ -39,7 +37,7 @@ public class SampleBorrowDetailController extends BaseController {
      * @author jack
      * @date:  2025-04-21
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品报废单导入模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品借用单导入模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response) {
         String standardPath = "classpath:excel/sampleBorrowDetailTemplate.xlsx";
@@ -54,7 +52,7 @@ public class SampleBorrowDetailController extends BaseController {
      * @date:  2025-04-21
      */
     @PostMapping("/importFile")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "样品报废单明细导入")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品借用单明细导入")
     public ApiResult<SampleBorrowDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(sampleBorrowDetailService.importFile(excelFile, response));
     }

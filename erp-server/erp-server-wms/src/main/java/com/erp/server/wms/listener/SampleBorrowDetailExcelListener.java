@@ -6,18 +6,14 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleScrapDetailDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
-import com.erp.model.wms.dto.excel.SampleScrapDetailImportExcelDTO;
+import com.erp.model.wms.dto.SampleBorrowDetailDTO;
+import com.erp.model.wms.dto.excel.SampleBorrowDetailImportExcelDTO;
 import com.erp.server.wms.service.SampleLedgerService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +22,10 @@ import java.util.Objects;
 
 /**
  * @author jack
- * @Classname SampleScrapDetailExcelListener
+ * @Classname SampleBorrowDetailExcelListener
  * @Date 2025-08-26
  */
-public class SampleScrapDetailExcelListener extends AnalysisEventListener<SampleScrapDetailImportExcelDTO> {
+public class SampleBorrowDetailExcelListener extends AnalysisEventListener<SampleBorrowDetailImportExcelDTO> {
 
     //sku信息
     private Map<String,SkuVO> skuMap ;
@@ -40,13 +36,13 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
     /**
      * 错误信息
      */
-    private List<SampleScrapDetailImportExcelDTO> errorList = new ArrayList<>();
+    private List<SampleBorrowDetailImportExcelDTO> errorList = new ArrayList<>();
 
-    private List<SampleScrapDetailDTO.AddDTO> addList = new ArrayList<>();
+    private List<SampleBorrowDetailDTO.AddDTO> addList = new ArrayList<>();
 
-    public SampleScrapDetailExcelListener(SampleLedgerService sampleLedgerService,
-                                          Map<String,SkuVO> skuMap,
-                                          List<FindUserDTO> userList) {
+    public SampleBorrowDetailExcelListener(SampleLedgerService sampleLedgerService,
+                                           Map<String,SkuVO> skuMap,
+                                           List<FindUserDTO> userList) {
         this.sampleLedgerService = sampleLedgerService;
         this.skuMap = skuMap;
         this.userList = userList;
@@ -65,19 +61,19 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(SampleScrapDetailImportExcelDTO excelDTO, AnalysisContext analysisContext) {
+    public void invoke(SampleBorrowDetailImportExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        SampleScrapDetailDTO.AddDTO addDTO = new SampleScrapDetailDTO.AddDTO();
-        //报废人
-        String scrapUserName = excelDTO.getScrapUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
+        SampleBorrowDetailDTO.AddDTO addDTO = new SampleBorrowDetailDTO.AddDTO();
+        //借出人
+        String lendUserName = excelDTO.getLendUserName();
+        FindUserDTO findUserDTO = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
         if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("报废人不存在");
+            errorMsgList.add("借出人不存在");
         }
 
         //备注
@@ -96,10 +92,10 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
             }
         }
 
-        //报废数量
-        String scrapQty = excelDTO.getScrapQty();
-        if(StringUtils.isNotBlank(scrapQty)){
-            addDTO.setScrapQty(Integer.parseInt(scrapQty));
+        //借出数量
+        String borrowQty = excelDTO.getBorrowQty();
+        if(StringUtils.isNotBlank(borrowQty)){
+            addDTO.setBorrowQty(Integer.parseInt(borrowQty));
         }
 
         //使用方
@@ -109,7 +105,7 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
             dto.setUserId(findUserDTO.getUserId());
             dto.setSkuNo(addDTO.getSkuNo());
-            dto.setType("scrap");
+            dto.setType("borrow");
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add("样品台账不存在");
@@ -149,11 +145,11 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
 
     }
 
-    public List<SampleScrapDetailImportExcelDTO> getErrorList() {
+    public List<SampleBorrowDetailImportExcelDTO> getErrorList() {
         return errorList;
     }
 
-    public List<SampleScrapDetailDTO.AddDTO> getSuccessList() {
+    public List<SampleBorrowDetailDTO.AddDTO> getSuccessList() {
         return addList;
     }
 

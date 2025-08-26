@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
@@ -222,6 +223,10 @@ public class SampleBorrowInfoDTO implements Serializable {
          * 待归还数量
          */
         private Integer waitReturnQty;
+        /**
+         * 已归还数量
+         */
+        private Integer returnQty;
 
         /**
          * 明细备注
@@ -335,8 +340,8 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
 
     }
@@ -351,8 +356,8 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
          * 明细
          */
-        @Min(value = 1,message = "明细不能为空" )
-        private List<SampleBorrowDetailDTO.AddDTO> detailList;
+        @NotEmpty(message = "明细不能为空" )
+        private List<SampleBorrowDetailDTO.@Valid AddDTO> detailList;
     }
 
     /**
@@ -371,8 +376,8 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
          * 明细
          */
-        @Min(value = 1,message = "明细不能为空" )
-        private List<SampleBorrowDetailDTO.UpdateDTO> detailList;
+        @NotEmpty(message = "明细不能为空" )
+        private List<SampleBorrowDetailDTO.@Valid UpdateDTO> detailList;
 
     }
 
@@ -443,8 +448,8 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
          * 附件集合
          */
-        private List<String> attachNameList;
-        private List<String> attachUrlList;
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
 

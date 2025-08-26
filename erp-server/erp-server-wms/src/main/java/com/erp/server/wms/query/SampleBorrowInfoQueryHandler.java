@@ -22,7 +22,7 @@ public class SampleBorrowInfoQueryHandler extends AbstractQueryHandler {
     }
 
     public String getTabSql(Object value) {
-        if ("all".equals(value)){
+        if ("all".equals(value)|| "".equals(value)){
             return getQueryAllSql();
         }
 
