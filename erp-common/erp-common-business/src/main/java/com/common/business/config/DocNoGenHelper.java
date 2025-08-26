@@ -173,7 +173,8 @@ public class DocNoGenHelper implements InitializingBean {
             );
         }
         // 单据前缀+顺序位
-        String docNo = CharSequenceUtil.format("{}{}",businessNoPrefix, currentIndex);
+        String formattedNum = String.format("%03d", currentIndex);
+        String docNo = CharSequenceUtil.format("{}{}",businessNoPrefix, formattedNum);
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
     }
