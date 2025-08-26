@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -39,10 +40,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.common.business.dto.FindUserDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.entity.OtherOutstockEntity;
-import com.erp.model.wms.entity.SampleRecipientDetailEntity;
-import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
 import com.erp.model.wms.enums.SampleUsageEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
@@ -115,6 +113,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private WarehouseService warehouseService;
     @Autowired
     private OtherOutstockService otherOutstockService;
+    @Autowired
+    private OtherOutstockDetailService otherOutstockDetailService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
     
@@ -506,7 +506,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public BatchResultDTO invalid(String id, String remark) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改样品领用单状态数据，id：【{}】", id);
@@ -530,7 +530,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public BatchResultDTO cancelProcess(String id) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
@@ -584,7 +584,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     */
     private void validateFinishRecipient(SampleRecipientEntity entity) {
         // 只有已审核通过的单据允许结束领用
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException("只有已审核通过的样品领用单能结束领用");
         }
         
@@ -1175,18 +1175,27 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         
         try {
-            // 遍历下推数据，创建其他出库单
-            for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : dto.getList()) {
+            // 按照 sourceId 进行分组
+            Map<String, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO>> groupedBySourceId = dto.getList().stream()
+                .collect(Collectors.groupingBy(SampleRecipientDTO.ViewGenerateOutboundOrderDTO::getSourceId));
+            
+            // 遍历分组后的数据，为每个领用单创建一个其他出库单
+            for (Map.Entry<String, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO>> entry : groupedBySourceId.entrySet()) {
+                String sourceId = entry.getKey();
+                List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items = entry.getValue();
+                
                 try {
-                    // 创建其他出库单
-                    BatchResultDTO resultDTO = createOtherOutboundOrder(item);
+                    // 为每个领用单创建一个其他出库单，详情数据为列表数据
+                    BatchResultDTO resultDTO = createOtherOutboundOrderBySourceId(sourceId, items);
                     resultDTOS.add(resultDTO);
                     
                 } catch (Exception e) {
-                    log.error("下推其他出库单失败，sourceId: {}, error: {}", item.getSourceId(), e.getMessage(), e);
+                    log.error("下推其他出库单失败，sourceId: {}, error: {}", sourceId, e.getMessage(), e);
+                    // 获取第一个项目的信息用于错误返回
+                    SampleRecipientDTO.ViewGenerateOutboundOrderDTO firstItem = items.get(0);
                     BatchResultDTO resultDTO = BatchResultDTO.fail(
-                        item.getSourceId(), 
-                        item.getSourceCode(), 
+                        sourceId, 
+                        firstItem.getSourceCode(), 
                         e.getMessage()
                     );
                     resultDTOS.add(resultDTO);
@@ -1210,41 +1219,36 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
     
     /**
-     * 创建其他出库单
-     * @param item 下推数据项
+     * 为指定领用单创建其他出库单（包含多个明细）
+     * @param sourceId 领用单ID
+     * @param items 明细列表
      * @return 创建结果
      */
-    private BatchResultDTO createOtherOutboundOrder(SampleRecipientDTO.ViewGenerateOutboundOrderDTO item) {
+    private BatchResultDTO createOtherOutboundOrderBySourceId(String sourceId, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items) {
         try {
             // 查询样品领用单主表信息
-            SampleRecipientEntity sampleRecipient = this.getById(item.getSourceId());
+            SampleRecipientEntity sampleRecipient = this.getById(sourceId);
             if (sampleRecipient == null) {
-                return BatchResultDTO.fail(item.getSourceId(), item.getSourceCode(), "样品领用单不存在");
-            }
-            
-            // 查询样品领用单明细信息
-            SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(item.getSourceDetailId());
-            if (detail == null) {
-                return BatchResultDTO.fail(item.getSourceId(), item.getSourceCode(), "样品领用单明细不存在");
+                return BatchResultDTO.fail(sourceId, items.get(0).getSourceCode(), "样品领用单不存在");
             }
             
             // 构建其他出库单主表数据
             OtherOutstockDTO.AddDTO addDTO = new OtherOutstockDTO.AddDTO();
             
+            // 获取第一个项目的基础信息
+            SampleRecipientDTO.ViewGenerateOutboundOrderDTO firstItem = items.get(0);
+            
             // 基础信息映射
-            addDTO.setBillDate(item.getBillDate() != null ? item.getBillDate() : LocalDate.now()); // 出库日期
-            addDTO.setInventoryDirection("普通"); // 库存方向：固定为"普通"
-            addDTO.setWarehouseId(item.getWarehouseId()); // 发货仓库
-            addDTO.setType("物料领用"); // 业务类型：固定为"物料领用"
+            addDTO.setBillDate(firstItem.getBillDate() != null ? firstItem.getBillDate() : LocalDate.now()); // 出库日期
+            addDTO.setInventoryDirection("ordinary"); // 库存方向：固定为"普通"
+            addDTO.setWarehouseId(firstItem.getWarehouseId()); // 发货仓库
+            addDTO.setType("0"); // 业务类型：固定为"物料领用"
             addDTO.setOutType("样品领用"); // 出库类型：固定为"样品领用"
-            addDTO.setReceiverId(item.getUserId()); // 领料人ID
+            addDTO.setReceiverId(firstItem.getUserId()); // 领料人ID
             addDTO.setReceiveOrgId(sampleRecipient.getPickOrgId()); // 领料组织ID
             addDTO.setDeptId(sampleRecipient.getDeptId()); // 领料部门ID
-            addDTO.setProcessApplyCode(item.getSourceCode()); // 流程申请单号：样品领用单号
+            addDTO.setProcessApplyCode(firstItem.getSourceCode()); // 流程申请单号：样品领用单号
             addDTO.setRemark("样品领用单【下推】其他出库单"); // 备注
-            
-            // 设置来源字段（新增字段）
-            // 这些字段会在OtherOutstockService中设置到实体上
             
             // 构建客户信息
             OtherOutstockCustomerDTO.AddDTO customerDTO = new OtherOutstockCustomerDTO.AddDTO();
@@ -1253,51 +1257,103 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             customerDTO.setTelNumber(sampleRecipient.getReceivePhone()); // 联系电话
             addDTO.setOtherOutstockCustomer(customerDTO);
             
-            // 构建明细信息
+            // 构建明细信息 - 包含所有明细项
             List<OtherOutstockDetailDTO.AddDTO> detailList = new ArrayList<>();
-            OtherOutstockDetailDTO.AddDTO detailDTO = new OtherOutstockDetailDTO.AddDTO();
-            detailDTO.setSkuId(detail.getSkuId()); // SKU ID
-            detailDTO.setSkuNo(item.getSkuNo()); // SKU编号
-            detailDTO.setActualQty(item.getOutQty() != null ? item.getOutQty() : item.getReservedQty()); // 实发数量：出库数量或待出库数量
-            detailDTO.setWarehouseLocation(item.getWarehouseLocation()); // 仓位
-            detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : "样品领用单【下推】其他出库单填写的备注"); // 出库备注
+            for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
+                // 查询样品领用单明细信息
+                SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(item.getSourceDetailId());
+                if (detail == null) {
+                    log.warn("样品领用单明细不存在，sourceDetailId: {}", item.getSourceDetailId());
+                    continue;
+                }
+                
+                OtherOutstockDetailDTO.AddDTO detailDTO = new OtherOutstockDetailDTO.AddDTO();
+                detailDTO.setSkuId(detail.getSkuId()); // SKU ID
+                detailDTO.setSkuNo(item.getSkuNo()); // SKU编号
+                detailDTO.setActualQty(item.getOutQty() != null ? item.getOutQty() : item.getReservedQty()); // 实发数量：出库数量或待出库数量
+                detailDTO.setWarehouseLocation(item.getWarehouseLocation()); // 仓位
+                detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : "样品领用单【下推】其他出库单填写的备注"); // 出库备注
+                
+                detailList.add(detailDTO);
+            }
             
-            detailList.add(detailDTO);
+            if (detailList.isEmpty()) {
+                return BatchResultDTO.fail(sourceId, firstItem.getSourceCode(), "没有有效的明细数据");
+            }
+            
             addDTO.setDetailList(detailList);
             
             // 调用其他出库单服务创建出库单 并审核通过
-            String outboundOrderId = otherOutstockService.addAndApprove(addDTO);
+            String outboundOrderId = otherOutstockService.add(addDTO);
+            if (CharSequenceUtil.isBlank(outboundOrderId)) {
+                throw new ServiceException(ApiError.ERROR_1019);
+            }
             
             if (StringUtils.isNotBlank(outboundOrderId)) {
                 // 设置来源字段到其他出库单主表
                 OtherOutstockEntity outboundOrder = otherOutstockService.getById(outboundOrderId);
                 if (outboundOrder != null) {
                     outboundOrder.setSourceType(SourceTypeEnum.SAMPLE_RECIPIENT.getCode());
-                    outboundOrder.setSourceId(item.getSourceId());
-                    outboundOrder.setSourceCode(item.getSourceCode());
+                    outboundOrder.setSourceId(sourceId);
+                    outboundOrder.setSourceCode(firstItem.getSourceCode());
                     otherOutstockService.updateById(outboundOrder);
                 }
+                // 获取其他出库单明细列表
+                List<OtherOutstockDetailEntity> otherOutstockDetailEntities = otherOutstockDetailService.listByMainId(outboundOrderId);
+                
+                // 构建 skuId 到 sourceDetailId 的映射关系
+                Map<String, String> skuIdToSourceDetailIdMap = new HashMap<>();
+                for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
+                    // 查询样品领用单明细信息
+                    SampleRecipientDetailEntity detail = sampleRecipientDetailService.getById(item.getSourceDetailId());
+                    if (detail != null) {
+                        skuIdToSourceDetailIdMap.put(detail.getSkuId(), item.getSourceDetailId());
+                    }
+                }
+                
+                // 批量更新其他出库单明细的 sourceDetailId 字段
+                List<OtherOutstockDetailEntity> toUpdateDetails = new ArrayList<>();
+                for (OtherOutstockDetailEntity otherOutstockDetailEntity : otherOutstockDetailEntities) {
+                    String sourceDetailId = skuIdToSourceDetailIdMap.get(otherOutstockDetailEntity.getSkuId());
+                    if (sourceDetailId != null) {
+                        otherOutstockDetailEntity.setSourceDetailId(sourceDetailId);
+                        toUpdateDetails.add(otherOutstockDetailEntity);
+                    }
+                }
+                
+                // 批量更新明细
+                if (!toUpdateDetails.isEmpty()) {
+                    otherOutstockDetailService.updateBatchById(toUpdateDetails);
+                    log.info("成功更新其他出库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
+                }
+                // 提交
+                otherOutstockService.submit(outboundOrderId, Boolean.FALSE);
+                // 审核
+                BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+                baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
+                baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+                baseApproveParamDTO.setComment("");
+                otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
 
-                log.info("成功创建其他出库单，ID：{}，来源：{}",
-                    outboundOrderId, item.getSourceCode());
-                return BatchResultDTO.success(item.getSourceId(), item.getSourceCode(), "下推其他出库单成功");
+                log.info("成功创建其他出库单，ID：{}，来源：{}，明细数量：{}",
+                        outboundOrderId, firstItem.getSourceCode(), detailList.size());
+                return BatchResultDTO.success(sourceId, firstItem.getSourceCode(), "下推其他出库单成功");
             } else {
-                return BatchResultDTO.fail(item.getSourceId(), item.getSourceCode(), "创建其他出库单失败");
+                return BatchResultDTO.fail(sourceId, firstItem.getSourceCode(), "创建其他出库单失败");
             }
             
         } catch (Exception e) {
-            log.error("创建其他出库单失败，sourceId: {}, error: {}", item.getSourceId(), e.getMessage(), e);
-            return BatchResultDTO.fail(item.getSourceId(), item.getSourceCode(), "创建其他出库单失败：" + e.getMessage());
+            log.error("创建其他出库单失败，sourceId: {}, error: {}", sourceId, e.getMessage(), e);
+            throw e;
         }
     }
-    
     /**
      * 根据已出库数量和领用数量计算执行状态
      * 根据表格规则：
      * - 已出库数量=0：待出库
-     * - 0 < 已出库数量 < 借用数量：部分出库  
+     * - 0 < 已出库数量 < 借用数量：部分出库
      * - 待出库数量=0：已出库
-     * 
+     *
      * @param deliveryQty 已出库数量
      * @param recipientQty 领用数量
      * @return 执行状态
