@@ -58,7 +58,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -130,7 +130,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private DownloadTaskFeign downloadTaskFeign;
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedissonClient redissonClient;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -1529,7 +1529,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_WAREHOUSE_NAME_TO_ID + warehouseName;
-        String warehouseId = (String) redisTemplate.opsForValue().get(cacheKey);
+        String warehouseId = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(warehouseId)) {
             return warehouseId;
         }
@@ -1547,7 +1547,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 返回第一个匹配的仓库ID
                 String result = warehouseList.get(0).getId();
                 // 缓存结果
-                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return result;
             }
 
@@ -1569,7 +1569,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_USER_NAME_TO_ID + userName;
-        String userId = (String) redisTemplate.opsForValue().get(cacheKey);
+        String userId = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(userId)) {
             return userId;
         }
@@ -1585,7 +1585,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 返回第一个匹配的用户ID
                 String result = userList.get(0).getUserId();
                 // 缓存结果
-                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return result;
             }
 
@@ -1607,7 +1607,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_DEPT_NAME_TO_ID + deptName;
-        String deptId = (String) redisTemplate.opsForValue().get(cacheKey);
+        String deptId = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(deptId)) {
             return deptId;
         }
@@ -1620,7 +1620,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 返回第一个匹配的部门ID
                 String result = deptIds.get(0);
                 // 缓存结果
-                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return result;
             }
 
@@ -1642,7 +1642,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_ORG_NAME_TO_ID + orgName;
-        String orgId = (String) redisTemplate.opsForValue().get(cacheKey);
+        String orgId = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(orgId)) {
             return orgId;
         }
@@ -1653,7 +1653,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             if (!Objects.isNull(companyId)&&StrUtil.isNotBlank(companyId.getId())) {
                 // 缓存结果
-                redisTemplate.opsForValue().set(cacheKey, companyId.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(companyId.getId(), CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return companyId.getId();
             }
 
@@ -1675,7 +1675,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_SKU_NO_TO_ID + skuNo;
-        String skuId = (String) redisTemplate.opsForValue().get(cacheKey);
+        String skuId = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(skuId)) {
             return skuId;
         }
@@ -1690,7 +1690,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 // 返回第一个匹配的SKU ID
                 String result = productDetailEntities.get(0).getName();
                 // 缓存结果
-                redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                 return result;
             }
 
@@ -1712,7 +1712,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 先从缓存获取
         String cacheKey = CACHE_SKU_ID_TO_PRODUCT_NAME + skuId;
-        String productName = (String) redisTemplate.opsForValue().get(cacheKey);
+        String productName = (String) redissonClient.getBucket(cacheKey).get();
         if (StrUtil.isNotBlank(productName)) {
             return productName;
         }
@@ -1728,7 +1728,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 String result = skuList.get(0).getProductId();
                 if (StrUtil.isNotBlank(result)) {
                     // 缓存结果
-                    redisTemplate.opsForValue().set(cacheKey, result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                    redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
                     return result;
                 } else {
                     return "未知产品";
@@ -1820,7 +1820,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String warehouseName : warehouseNames) {
                 // 检查缓存中是否已存在
                 String cacheKey = CACHE_WAREHOUSE_NAME_TO_ID + warehouseName;
-                if (redisTemplate.hasKey(cacheKey)) {
+                if (redissonClient.getBucket(cacheKey).isExists()) {
                     continue;
                 }
 
@@ -1840,7 +1840,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String userName : userNames) {
                 // 检查缓存中是否已存在
                 String cacheKey = CACHE_USER_NAME_TO_ID + userName;
-                if (redisTemplate.hasKey(cacheKey)) {
+                if (redissonClient.getBucket(cacheKey).isExists()) {
                     continue;
                 }
 
@@ -1860,7 +1860,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String deptName : deptNames) {
                 // 检查缓存中是否已存在
                 String cacheKey = CACHE_DEPT_NAME_TO_ID + deptName;
-                if (redisTemplate.hasKey(cacheKey)) {
+                if (redissonClient.getBucket(cacheKey).isExists()) {
                     continue;
                 }
 
@@ -1880,7 +1880,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String orgName : orgNames) {
                 // 检查缓存中是否已存在
                 String cacheKey = CACHE_ORG_NAME_TO_ID + orgName;
-                if (redisTemplate.hasKey(cacheKey)) {
+                if (redissonClient.getBucket(cacheKey).isExists()) {
                     continue;
                 }
 
@@ -1900,7 +1900,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             for (String skuNo : skuNos) {
                 // 检查缓存中是否已存在
                 String cacheKey = CACHE_SKU_NO_TO_ID + skuNo;
-                if (redisTemplate.hasKey(cacheKey)) {
+                if (redissonClient.getBucket(cacheKey).isExists()) {
                     continue;
                 }
 
@@ -1916,47 +1916,47 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      * 清除所有相关缓存
      */
     public void clearAllCache() {
-        try {
-            // 清除仓库缓存
-            Set<String> warehouseKeys = redisTemplate.keys(CACHE_WAREHOUSE_NAME_TO_ID + "*");
-            if (CollUtil.isNotEmpty(warehouseKeys)) {
-                redisTemplate.delete(warehouseKeys);
-            }
-
-            // 清除用户缓存
-            Set<String> userKeys = redisTemplate.keys(CACHE_USER_NAME_TO_ID + "*");
-            if (CollUtil.isNotEmpty(userKeys)) {
-                redisTemplate.delete(userKeys);
-            }
-
-            // 清除部门缓存
-            Set<String> deptKeys = redisTemplate.keys(CACHE_DEPT_NAME_TO_ID + "*");
-            if (CollUtil.isNotEmpty(deptKeys)) {
-                redisTemplate.delete(deptKeys);
-            }
-
-            // 清除组织缓存
-            Set<String> orgKeys = redisTemplate.keys(CACHE_ORG_NAME_TO_ID + "*");
-            if (CollUtil.isNotEmpty(orgKeys)) {
-                redisTemplate.delete(orgKeys);
-            }
-
-            // 清除SKU缓存
-            Set<String> skuKeys = redisTemplate.keys(CACHE_SKU_NO_TO_ID + "*");
-            if (CollUtil.isNotEmpty(skuKeys)) {
-                redisTemplate.delete(skuKeys);
-            }
-
-            // 清除产品名称缓存
-            Set<String> productKeys = redisTemplate.keys(CACHE_SKU_ID_TO_PRODUCT_NAME + "*");
-            if (CollUtil.isNotEmpty(productKeys)) {
-                redisTemplate.delete(productKeys);
-            }
-
-            log.info("所有缓存清除完成");
-        } catch (Exception e) {
-            log.error("清除缓存失败", e);
-        }
+//        try {
+//            // 清除仓库缓存
+//            Set<String> warehouseKeys = redissonClient.getKeys().getKeysByPattern(CACHE_WAREHOUSE_NAME_TO_ID + "*");
+//            if (CollUtil.isNotEmpty(warehouseKeys)) {
+//                redissonClient.getKeys().delete(warehouseKeys);
+//            }
+//
+//            // 清除用户缓存
+//            Set<String> userKeys = redissonClient.getKeys().getKeysByPattern(CACHE_USER_NAME_TO_ID + "*");
+//            if (CollUtil.isNotEmpty(userKeys)) {
+//                redissonClient.getKeys().delete(userKeys);
+//            }
+//
+//            // 清除部门缓存
+//            Set<String> deptKeys = redissonClient.getKeys().getKeysByPattern(CACHE_DEPT_NAME_TO_ID + "*");
+//            if (CollUtil.isNotEmpty(deptKeys)) {
+//                redissonClient.getKeys().delete(deptKeys);
+//            }
+//
+//            // 清除组织缓存
+//            Set<String> orgKeys = redissonClient.getKeys().getKeysByPattern(CACHE_ORG_NAME_TO_ID + "*");
+//            if (CollUtil.isNotEmpty(orgKeys)) {
+//                redissonClient.getKeys().delete(orgKeys);
+//            }
+//
+//            // 清除SKU缓存
+//            Set<String> skuKeys = redissonClient.getKeys().getKeysByPattern(CACHE_SKU_NO_TO_ID + "*");
+//            if (CollUtil.isNotEmpty(skuKeys)) {
+//                redissonClient.getKeys().delete(skuKeys);
+//            }
+//
+//            // 清除产品名称缓存
+//            Set<String> productKeys = redissonClient.getKeys().getKeysByPattern(CACHE_SKU_ID_TO_PRODUCT_NAME + "*");
+//            if (CollUtil.isNotEmpty(productKeys)) {
+//                redissonClient.getKeys().delete(productKeys);
+//            }
+//
+//            log.info("所有缓存清除完成");
+//        } catch (Exception e) {
+//            log.error("清除缓存失败", e);
+//        }
     }
 
     /**
