@@ -9,8 +9,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 @EnableAsync
 @ServletComponentScan
