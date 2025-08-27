@@ -9,9 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
-import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +24,7 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = skuStdCostDetailService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = skuStdCostDetailService.cancelProcess(dto.getId(), entity, mainEntity);
         return resultDTO.getSuccess();
     }
 
@@ -36,7 +34,7 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        BatchResultDTO resultDTO = skuStdCostDetailService.disApprove(entity);
+        BatchResultDTO resultDTO = skuStdCostDetailService.disApprove(entity, mainEntity);
         return resultDTO.getSuccess();
     }
 

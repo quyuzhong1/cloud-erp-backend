@@ -7,14 +7,15 @@ import java.time.LocalDateTime;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
+import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.model.plm.entity.SkuStdCostEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.*;
@@ -539,5 +540,18 @@ public class SkuStdCostDetailDTO implements Serializable {
          */
         private List<String> skuIds;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SkuStdCostContext {
+        private List<SkuStdCostDetailEntity> details;
+        private Map<String, SkuStdCostDetailEntity> entityMap;
+        private Map<String, SkuStdCostEntity> mainEntityMap;
+
+        public static SkuStdCostContext empty() {
+            return new SkuStdCostContext(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
+        }
     }
 }

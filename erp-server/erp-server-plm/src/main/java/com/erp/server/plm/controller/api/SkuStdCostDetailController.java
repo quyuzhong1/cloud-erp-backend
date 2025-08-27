@@ -18,6 +18,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.plm.query.SkuStdCostDetailQueryHandler;
@@ -28,17 +29,13 @@ import com.erp.server.plm.service.SkuStdCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +58,8 @@ public class SkuStdCostDetailController extends BaseController {
     private SoOutstockFeign soOutstockFeign;
     @Resource
     private BomSkuService bomSkuService;
+    @Resource
+    private SkuStdCostService skuStdCostService;
 
     /**
      * 价格变更
@@ -165,25 +164,6 @@ public class SkuStdCostDetailController extends BaseController {
     }
 
     /**
-     * 修改并提交审核
-     *
-     * @param dto
-     * @return ApiResult<Void>
-     * @author Jim
-     * @date: 2025-08-08
-     */
-    @PostMapping("/updateAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:skuStdCost:updateAndSubmit",
-            serviceClass = SkuStdCostService.class,
-            keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SkuStdCostDetailDTO.UpdateDTO dto) {
-        skuStdCostDetailService.updateAndSubmit(dto);
-        return success();
-    }
-
-    /**
      * 提交审核
      *
      * @param dto
@@ -202,23 +182,31 @@ public class SkuStdCostDetailController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         //数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        SkuStdCostDetailDTO.SkuStdCostContext costContext = skuStdCostDetailService.loadByDetailIds(ids);
+        Map<String, SkuStdCostDetailEntity> idEntityMap = costContext.getEntityMap();
+        Map<String, SkuStdCostEntity> mainEntityMap = costContext.getMainEntityMap();
+
         for (String id : dto.getIds()) {
-            BatchResultDTO submit;
+            BatchResultDTO resultItem;
+            SkuStdCostDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem =  BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
             try {
-                submit = skuStdCostDetailService.submit(id);
+                resultItem = skuStdCostDetailService.submitEntity(entity, mainEntityMap.get(entity.getMainId()));
             } catch (Exception e) {
                 log.error("sku标准成本单 提交审核失败", e);
-                SkuStdCostDetailEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                resultItem = BatchResultDTO.fail(entity.getId(), mainEntity.getSkuNo(), e.getMessage());
             }
-            resultDTOS.add(submit);
+            resultDTOS.add(resultItem);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -242,24 +230,33 @@ public class SkuStdCostDetailController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
-        for (String id : ids) {
-            BatchResultDTO approveResult;
+        SkuStdCostDetailDTO.SkuStdCostContext costContext = skuStdCostDetailService.loadByDetailIds(ids);
+        Map<String, SkuStdCostDetailEntity> idEntityMap = costContext.getEntityMap();
+        Map<String, SkuStdCostEntity> mainEntityMap = costContext.getMainEntityMap();
+
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultItem;
+            SkuStdCostDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem =  BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
             try {
-                approveResult = skuStdCostDetailService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                resultItem = skuStdCostDetailService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单审核失败", e);
-                SkuStdCostDetailEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 审核失败");
-                    resultDTOS.add(approveResult);
-                    continue;
-                }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                resultItem = BatchResultDTO.fail(entity.getId(), mainEntity.getSkuNo(), e.getMessage());
             }
-            resultDTOS.add(approveResult);
+            resultDTOS.add(resultItem);
         }
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -282,28 +279,32 @@ public class SkuStdCostDetailController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        SkuStdCostDetailDTO.SkuStdCostContext costContext = skuStdCostDetailService.loadByDetailIds(ids);
+        Map<String, SkuStdCostDetailEntity> idEntityMap = costContext.getEntityMap();
+        Map<String, SkuStdCostEntity> mainEntityMap = costContext.getMainEntityMap();
+
+
         for (String id : dto.getIds()) {
+            BatchResultDTO resultItem;
             SkuStdCostDetailEntity entity = idEntityMap.get(id);
-            BatchResultDTO disApproveResult;
-            if (null == entity) {
-                disApproveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 反审核失败");
-                resultDTOS.add(disApproveResult);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem =  BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+                resultDTOS.add(resultItem);
                 continue;
             }
             try {
-                disApproveResult = skuStdCostDetailService.disApprove(entity);
+                resultItem = skuStdCostDetailService.disApprove(entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单反审核失败", e);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                resultItem = BatchResultDTO.fail(entity.getId(), mainEntity.getSkuNo(), e.getMessage());
             }
-            resultDTOS.add(disApproveResult);
+            resultDTOS.add(resultItem);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -328,23 +329,31 @@ public class SkuStdCostDetailController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        SkuStdCostDetailDTO.SkuStdCostContext costContext = skuStdCostDetailService.loadByDetailIds(ids);
+        Map<String, SkuStdCostDetailEntity> idEntityMap = costContext.getEntityMap();
+        Map<String, SkuStdCostEntity> mainEntityMap = costContext.getMainEntityMap();
+
         for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
+            BatchResultDTO resultItem;
+            SkuStdCostDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem =  BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
             try {
-                deleteResult = skuStdCostDetailService.delete(id);
+                resultItem = skuStdCostDetailService.delete(id, entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单删除失败", e);
-                SkuStdCostDetailEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                resultItem = BatchResultDTO.fail(entity.getId(), mainEntity.getSkuNo(), e.getMessage());
             }
-            resultDTOS.add(deleteResult);
+            resultDTOS.add(resultItem);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -368,23 +377,32 @@ public class SkuStdCostDetailController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // 数据查询放入外层，处理结果统一更新或单条更新
-        List<SkuStdCostDetailEntity> list = skuStdCostDetailService.lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
-        Map<String, SkuStdCostDetailEntity> idEntityMap = list.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, w -> w));
+        SkuStdCostDetailDTO.SkuStdCostContext costContext = skuStdCostDetailService.loadByDetailIds(ids);
+        Map<String, SkuStdCostDetailEntity> idEntityMap = costContext.getEntityMap();
+        Map<String, SkuStdCostEntity> mainEntityMap = costContext.getMainEntityMap();
+
+
         for (String id : dto.getIds()) {
-            BatchResultDTO cancelResult;
+            BatchResultDTO resultItem;
+            SkuStdCostDetailEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem =  BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
             try {
-                cancelResult = skuStdCostDetailService.cancelProcess(id);
+                resultItem = skuStdCostDetailService.cancelProcess(id, entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单撤回流程失败", e);
-                SkuStdCostDetailEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "sku标准成本单不存在, 撤回流程失败");
-                    resultDTOS.add(cancelResult);
-                    continue;
-                }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                resultItem = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
             }
-            resultDTOS.add(cancelResult);
+            resultDTOS.add(resultItem);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -531,5 +549,18 @@ public class SkuStdCostDetailController extends BaseController {
             resultDTOS.add(itemResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    private static BatchResultDTO checkEntity(String id, Map<String, SkuStdCostDetailEntity> idEntityMap, Map<String, SkuStdCostEntity> mainEntityMap) {
+        SkuStdCostDetailEntity entity = idEntityMap.get(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            return  BatchResultDTO.fail(id, id, "sku标准成本单不存在, 提交失败");
+        }
+        SkuStdCostEntity mainEntity = mainEntityMap.get(entity.getMainId());
+        if (ObjectUtil.isEmpty(mainEntity)) {
+           return BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 提交失败");
+        }
+        return null;
     }
 }
