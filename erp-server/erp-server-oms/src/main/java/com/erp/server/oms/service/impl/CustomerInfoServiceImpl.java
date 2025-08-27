@@ -55,6 +55,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -102,6 +103,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private SyncDhtService syncDhtService;
     @Resource
     private SysDictFeign sysDictFeign;
 
@@ -866,6 +869,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerSellerService.batchSellerHistory(list, LocalDate.now());
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_APPROVE.getCode());
             List<String> countryIdList = list.stream().map(CustomerInfoEntity::getCountryId).collect(Collectors.toList());
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
             list.forEach(customer->{
@@ -883,6 +888,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         return Boolean.TRUE;
+    }
+
+    private void sendDhtPushTask(List<CustomerInfoEntity> list, String code) {
+        //查询地址
+        List<String> ids = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = customerAddressService.listByMainIdList(ids);
+        for (CustomerInfoEntity customerInfo : list) {
+            syncDhtService.createSyncCustomerTaskToDht(customerInfo,code);
+        }
+        for (CustomerAddressEntity customerAddressEntity : customerAddressEntities) {
+            syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity,code);
+        }
     }
 
 
@@ -924,6 +941,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            //发送订货通
+            sendDhtPushTask(list, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
