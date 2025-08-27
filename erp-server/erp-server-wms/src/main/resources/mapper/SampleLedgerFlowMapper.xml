@@ -120,4 +120,47 @@
         </if>
         slf.create_time DESC
     </select>
+
+    <!-- 根据四个条件查询数量总和 -->
+    <select id="selectTotalQtyByConditions" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(slf.qty), 0)
+        FROM sample_ledger_flow slf
+        WHERE slf.is_deleted = false
+        AND slf.user_id = #{userId}
+        AND slf.use_user_id = #{useUserId}
+        AND slf.sku_no = #{skuNo}
+        AND slf.sku_id = #{skuId}
+    </select>
+
+    <!-- 根据四个条件查询SampleLedger记录 -->
+    <select id="selectSampleLedgerByConditions" resultType="com.erp.model.wms.entity.SampleLedgerEntity">
+        SELECT
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.sku_id,
+            sl.product_name,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty
+        FROM sample_ledger sl
+        WHERE sl.is_deleted = false
+        AND sl.user_id = #{userId}
+        AND sl.use_user_id = #{useUserId}
+        AND sl.sku_no = #{skuNo}
+        AND sl.sku_id = #{skuId}
+        LIMIT 1
+    </select>
+
 </mapper>

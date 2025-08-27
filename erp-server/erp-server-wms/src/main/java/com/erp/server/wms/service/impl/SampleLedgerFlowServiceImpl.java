@@ -16,6 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.SampleLedgerService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_FLOW_REPORT;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 /**
  * <p>
  * 样品台账 服务实现类
@@ -50,6 +52,9 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -192,6 +197,9 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             if (result) {
                 log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}", 
                     addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size());
+                
+                // 更新SampleLedger主表数量
+                updateSampleLedgerQty(addDTO);
             } else {
                 log.error("新增样品台账流水失败，单据类型：{}，单据编号：{}", 
                     addDTO.getSourceType(), addDTO.getSourceCode());
@@ -203,6 +211,87 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
             log.error("新增样品台账流水异常，单据类型：{}，单据编号：{}，错误：{}", 
                 addDTO.getSourceType(), addDTO.getSourceCode(), e.getMessage(), e);
             throw new ServiceException("新增样品台账流水失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新SampleLedger主表数量
+     * 通过查询明细表，按四个条件分组求和来更新主表数量
+     */
+    private void updateSampleLedgerQty(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+        try {
+            for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
+                // 查询该SKU在明细表中的数量总和
+                Integer totalQty = this.baseMapper.selectTotalQtyByConditions(
+                    addDTO.getUserId(),
+                    addDTO.getUseUserId(),
+                    detail.getSkuNo(),
+                    detail.getSkuId()
+                );
+                
+                if (totalQty != null) {
+                    // 更新或插入SampleLedger主表记录
+                    updateOrInsertSampleLedger(
+                        addDTO.getUserId(),
+                        addDTO.getUserName(),
+                        addDTO.getDeptId(),
+                        addDTO.getDeptName(),
+                        detail.getSkuNo(),
+                        detail.getSkuId(),
+                        detail.getProductName(),
+                        addDTO.getUseUserId(),
+                        addDTO.getUseUserName(),
+                        totalQty
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.error("更新SampleLedger主表数量失败，错误：{}", e.getMessage(), e);
+            // 更新失败不影响主流程，只记录日志
+        }
+    }
+
+    /**
+     * 更新或插入SampleLedger主表记录
+     */
+    private void updateOrInsertSampleLedger(String userId, String userName, String deptId, String deptName,
+                                          String skuNo, String skuId, String productName, String useUserId, 
+                                          String useUserName, Integer totalQty) {
+        try {
+            // 查询是否已存在记录
+            SampleLedgerEntity existingLedger = this.baseMapper.selectSampleLedgerByConditions(
+                userId, useUserId, skuNo, skuId
+            );
+            
+            if (existingLedger != null) {
+                // 更新现有记录
+                existingLedger.setQty(totalQty);
+                existingLedger.setUserName(userName);
+                existingLedger.setDeptName(deptName);
+                existingLedger.setProductName(productName);
+                existingLedger.setUseUserName(useUserName);
+                // 使用SampleLedgerService来更新
+                sampleLedgerService.updateById(existingLedger);
+                log.debug("更新SampleLedger记录成功，ID：{}，数量：{}", existingLedger.getId(), totalQty);
+            } else {
+                // 插入新记录
+                SampleLedgerEntity newLedger = new SampleLedgerEntity();
+                newLedger.setUserId(userId);
+                newLedger.setUserName(userName);
+                newLedger.setDeptId(deptId);
+                newLedger.setDeptName(deptName);
+                newLedger.setSkuNo(skuNo);
+                newLedger.setSkuId(skuId);
+                newLedger.setProductName(productName);
+                newLedger.setUseUserId(useUserId);
+                newLedger.setUseUserName(useUserName);
+                newLedger.setQty(totalQty);
+                // 使用SampleLedgerService来插入
+                sampleLedgerService.save(newLedger);
+                log.debug("插入SampleLedger记录成功，数量：{}", totalQty);
+            }
+        } catch (Exception e) {
+            log.error("更新或插入SampleLedger记录失败，错误：{}", e.getMessage(), e);
         }
     }
 

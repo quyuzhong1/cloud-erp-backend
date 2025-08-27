@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.wms.entity.SampleLedgerFlowEntity;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -36,4 +37,30 @@ public interface SampleLedgerFlowMapper extends BaseMapper<SampleLedgerFlowEntit
      * @return 分页结果
      */
     IPage<SampleLedgerFlowDTO.ListDTO> listExport(Page query, @Param("params") SampleLedgerFlowDTO.ExportDTO params);
+
+    /**
+     * 根据四个条件查询数量总和
+     * @param userId 归属用户ID
+     * @param useUserId 使用方用户ID
+     * @param skuNo SKU编号
+     * @param skuId SKU ID
+     * @return 数量总和
+     */
+    Integer selectTotalQtyByConditions(@Param("userId") String userId, 
+                                     @Param("useUserId") String useUserId,
+                                     @Param("skuNo") String skuNo, 
+                                     @Param("skuId") String skuId);
+
+    /**
+     * 根据四个条件查询SampleLedger记录
+     * @param userId 归属用户ID
+     * @param useUserId 使用方用户ID
+     * @param skuNo SKU编号
+     * @param skuId SKU ID
+     * @return SampleLedger记录
+     */
+    SampleLedgerEntity selectSampleLedgerByConditions(@Param("userId") String userId, 
+                                                    @Param("useUserId") String useUserId,
+                                                    @Param("skuNo") String skuNo, 
+                                                    @Param("skuId") String skuId);
 }
