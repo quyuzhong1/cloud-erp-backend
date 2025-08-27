@@ -1,10 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
@@ -35,28 +35,48 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.dto.SampleReturnInfoDTO;
+import com.erp.model.wms.entity.SampleReturnDetailEntity;
+import com.erp.model.wms.entity.SampleReturnInfoEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.mapper.SampleReturnInfoMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.SampleLedgerFlowBuilder;
+import com.erp.server.wms.service.SampleReturnDetailService;
+import com.erp.server.wms.service.SampleReturnInfoService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 样品归还单主表 服务实现类
@@ -67,13 +87,17 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnInfoMapper, SampleReturnInfoEntity> implements SampleReturnInfoService {
+public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnInfoMapper, SampleReturnInfoEntity> implements SampleReturnInfoService , SampleLedgerFlowBuilder {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
+    @Autowired
+    private SampleReturnDetailService sampleReturnDetailService;
 
     @Resource
     private SampleReturnDetailService sampleReturnDetailService;
@@ -538,4 +562,114 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private void handleData(SampleReturnInfoEntity sampleReturnInfoEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    // ==================== 台账流水构建器实现 ====================
+
+    @Override
+    public String getSupportedSourceType() {
+        return SourceTypeEnum.SAMPLE_RETURN_INFO.getCode();
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.AddFlowDTO buildFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品归还单主表信息
+            SampleReturnInfoEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品归还单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品归还单明细
+            List<SampleReturnDetailEntity> detailList = sampleReturnDetailService.list(new LambdaQueryWrapper<SampleReturnDetailEntity>().eq(SampleReturnDetailEntity::getMainId,sourceId));
+
+            if (detailList.isEmpty()) {
+                log.warn("样品归还单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleReturnDetailEntity detail : detailList) {
+                // 计算数量：审核为-X，反审核为+X
+                Integer qty = calculateQty(detail.getReturnQty(), approveType);
+
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID（如果有的话）
+                // flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getReturnDate());
+            flowDTO.setSourceName("样品归还单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getReturnUserId());
+            flowDTO.setUseUserName(entity.getReturnUserName());
+            flowDTO.setUserId(entity.getReturnUserId());
+            flowDTO.setUserName(entity.getReturnUserName());
+            flowDTO.setDeptId(entity.getReturnDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getReturnDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品归还单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为-X，反审核为+X
+     */
+    @Override
+    public Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return -originalQty; // 审核：-X（减少库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return originalQty; // 反审核：+X（增加库存）
+        }
+
+        return 0;
+    }
+
+    /**
+     * 根据部门ID查询部门名称
+     */
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
+            return null;
+        }
+    }
+
 }

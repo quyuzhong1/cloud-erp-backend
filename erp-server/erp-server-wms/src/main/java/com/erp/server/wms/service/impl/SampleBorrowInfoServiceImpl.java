@@ -1,69 +1,75 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SampleBorrowDetailEntity;
+import com.erp.model.wms.entity.SampleBorrowInfoEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.listener.SampleBorrowExcelListener;
 import com.erp.server.wms.mapper.SampleBorrowInfoMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
 import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import static com.common.business.enums.FileTaskEventEnum.*;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BORROW_INFO;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_BORROW_INFO;
 
 /**
  * <p>
@@ -75,7 +81,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
  */
 @Slf4j
 @Service
-public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowInfoMapper, SampleBorrowInfoEntity> implements SampleBorrowInfoService {
+public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowInfoMapper, SampleBorrowInfoEntity> implements SampleBorrowInfoService,SampleLedgerFlowBuilder {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -101,6 +107,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -662,6 +671,19 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 记录台账流水
 
+        // 记录台账流水
+        try {
+            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品借用单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+            }
+        } catch (Exception e) {
+            log.error("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
         return Boolean.TRUE;
     }
 
@@ -1003,4 +1025,114 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private boolean isApprovedStatus(String status) {
         return ApproveStatusEnum.APPROVE.getStatus().equals(status);
     }
+
+    // ==================== 台账流水构建器实现 ====================
+
+    @Override
+    public String getSupportedSourceType() {
+        return SourceTypeEnum.SAMPLE_BORROW_INFO.getCode();
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.AddFlowDTO buildFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品借用单主表信息
+            SampleBorrowInfoEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品借用单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品借用单明细
+            List<SampleBorrowDetailEntity> detailList = sampleBorrowDetailService.listByMainId(sourceId);
+
+            if (detailList.isEmpty()) {
+                log.warn("样品借用单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleBorrowDetailEntity detail : detailList) {
+                // 计算数量：审核为+X，反审核为-X
+                Integer qty = calculateQty(detail.getBorrowQty(), approveType);
+                
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getBorrowDate());
+            flowDTO.setSourceName("样品借用单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getBorrowUserId());
+            flowDTO.setUseUserName(entity.getBorrowUserName());
+            flowDTO.setUserId(entity.getBorrowUserId());
+            flowDTO.setUserName(entity.getBorrowUserName());
+            flowDTO.setDeptId(entity.getBorrowDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getBorrowDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品借用单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为+X，反审核为-X
+     */
+    @Override
+    public Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return originalQty; // 审核：+X（增加库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return -originalQty; // 反审核：-X（减少库存）
+        }
+        
+        return 0;
+    }
+
+    /**
+     * 根据部门ID查询部门名称
+     */
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
+            return null;
+        }
+    }
+
 }

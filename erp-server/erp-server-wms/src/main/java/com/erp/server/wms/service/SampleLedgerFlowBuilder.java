@@ -24,4 +24,6 @@ public interface SampleLedgerFlowBuilder {
      * @return 单据类型
      */
     String getSupportedSourceType();
+
+    Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType);
 }

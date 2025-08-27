@@ -640,7 +640,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
         } catch (Exception e) {
             log.error("样品领用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            // 台账流水记录失败不影响主流程，只记录日志
+            throw new ServiceException("样品领用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
         }
 
         return Boolean.TRUE;
@@ -2331,7 +2331,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     /**
      * 计算数量：审核为+X，反审核为-X
      */
-    private Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+    @Override
+    public Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
         if (originalQty == null) {
             return 0;
         }

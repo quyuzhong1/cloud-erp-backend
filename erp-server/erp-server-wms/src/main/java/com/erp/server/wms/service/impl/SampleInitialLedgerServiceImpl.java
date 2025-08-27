@@ -2,21 +2,24 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
-import com.erp.server.wms.service.SampleInitialLedgerService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 /**
  * <p>
  * 样品期初台账 服务实现类
@@ -59,13 +64,19 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleInitialLedgerMapper, SampleInitialLedgerEntity> implements SampleInitialLedgerService {
+public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleInitialLedgerMapper, SampleInitialLedgerEntity> implements SampleInitialLedgerService, SampleLedgerFlowBuilder {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private SampleLedgerFlowService sampleLedgerFlowService;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -389,6 +400,19 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
 
+        // 记录台账流水
+        try {
+            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("期初台账单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+            }
+        } catch (Exception e) {
+            log.error("期初台账单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("期初台账单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
         return Boolean.TRUE;
     }
 
@@ -501,5 +525,128 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     */
     private void handleData(SampleInitialLedgerEntity sampleInitialLedgerEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    // ==================== 台账流水构建器实现 ====================
+
+    @Override
+    public String getSupportedSourceType() {
+        return SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode();
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.AddFlowDTO buildFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取期初台账单信息
+            SampleInitialLedgerEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取期初台账单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 期初台账单没有明细，直接构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            
+            // 计算数量：审核为+X（若导入填写的为负数，则为-X）
+            Integer qty = calculateQty(entity.getQty(), approveType);
+            
+            // 通过sku_no查询sku_id
+            String skuId = getSkuIdBySkuNo(entity.getSkuNo());
+            
+            SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+            flowDetail.setSourceDetailId(entity.getId()); // 使用主表ID作为明细ID
+            flowDetail.setSkuNo(entity.getSkuNo());
+            flowDetail.setSkuId(skuId);
+            flowDetail.setProductName(entity.getProductName());
+            flowDetail.setQty(qty);
+            // 设置样品台账ID（如果有的话）
+            // flowDetail.setSampleLedgerId(entity.getSampleLedgerId());
+            flowDetails.add(flowDetail);
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getBillDate());
+            flowDTO.setSourceName("期初台账单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getUserId());
+            flowDTO.setUseUserName(entity.getUserName());
+            flowDTO.setUserId(entity.getUserId());
+            flowDTO.setUserName(entity.getUserName());
+            flowDTO.setDeptId(entity.getDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建期初台账单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为+X（若导入填写的为负数，则为-X）
+     */
+    @Override
+    public Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            // 审核：保持原始数量（若导入填写的为负数，则为-X；若为正数，则为+X）
+            return originalQty;
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            // 反审核：数量取反
+            return -originalQty;
+        }
+        
+        return 0;
+    }
+
+    /**
+     * 根据部门ID查询部门名称
+     */
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 通过sku_no查询sku_id
+     */
+    private String getSkuIdBySkuNo(String skuNo) {
+        try {
+            // 调用商品服务根据sku_no查询sku_id
+            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(Collections.singletonList(skuNo));
+            if (CollectionUtils.isNotEmpty(skuVOS)) {
+                return skuVOS.get(0).getSkuId();
+            }
+            log.warn("未找到sku_no：{} 对应的sku_id", skuNo);
+            return null;
+        } catch (Exception e) {
+            log.error("查询sku_id失败，sku_no：{}，错误：{}", skuNo, e.getMessage(), e);
+            return null;
+        }
     }
 }

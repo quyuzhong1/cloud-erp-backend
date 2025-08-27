@@ -16,9 +16,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleScrapDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
@@ -49,7 +47,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -82,7 +79,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
  */
 @Slf4j
 @Service
-public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfoMapper, SampleScrapInfoEntity> implements SampleScrapInfoService {
+public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfoMapper, SampleScrapInfoEntity> implements SampleScrapInfoService, SampleLedgerFlowBuilder {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -108,7 +105,8 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
     @Resource
     private FileFeign fileFeign;
-
+    @Autowired
+    private SampleLedgerFlowService sampleLedgerFlowService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -654,7 +652,18 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
-        // todo 记录台账流水
+        // 记录台账流水
+        try {
+            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品报废单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+            }
+        } catch (Exception e) {
+            log.error("样品报废单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品报废单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
 
         return Boolean.TRUE;
     }
@@ -980,6 +989,115 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
     public Boolean importAsynExcel(BaseDTO.ImportDTO dto) {
         downloadTaskFeign.saveImportTask("导入样品报废单", IMPORT_WMS_SAMPLE_SCRAP_INFO.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    // ==================== 台账流水构建器实现 ====================
+
+    @Override
+    public String getSupportedSourceType() {
+        return SourceTypeEnum.SAMPLE_SCRAP_INFO.getCode();
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.AddFlowDTO buildFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品报废单主表信息
+            SampleScrapInfoEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品报废单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品报废单明细
+            List<SampleScrapDetailEntity> detailList = sampleScrapDetailService.listByMainId(sourceId);
+
+            if (detailList.isEmpty()) {
+                log.warn("样品报废单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleScrapDetailEntity detail : detailList) {
+                // 计算数量：审核为-X，反审核为+X（与样品领用单相反）
+                Integer qty = calculateQty(detail.getScrapQty(), approveType);
+                
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                // 设置样品台账ID
+                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_SCRAP_INFO.getCode());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getScrapDate());
+            flowDTO.setSourceName("样品报废单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getScrapUserId());
+            flowDTO.setUseUserName(entity.getScrapUserName());
+            flowDTO.setUserId(entity.getScrapUserId());
+            flowDTO.setUserName(entity.getScrapUserName());
+            flowDTO.setDeptId(entity.getScrapDeptId());
+            // 根据部门ID查询部门名称
+            flowDTO.setDeptName(getDeptNameById(entity.getScrapDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品报废单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为-X，反审核为+X（与样品领用单相反）
+     */
+    @Override
+    public Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return -originalQty; // 审核：-X（减少库存）
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return originalQty; // 反审核：+X（恢复库存）
+        }
+        
+        return 0;
+    }
+
+    /**
+     * 根据部门ID查询部门名称（带缓存）
+     */
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                return department.getName();
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
+            return null;
+        }
     }
 
 }
