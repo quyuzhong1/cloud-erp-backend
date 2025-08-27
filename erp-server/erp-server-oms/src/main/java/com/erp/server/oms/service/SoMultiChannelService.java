@@ -137,7 +137,7 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
     * @param response
     * @return
     */
-    void exportList(SoMultiChannelDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -160,4 +160,31 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @return
      */
     SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity);
+
+    /**
+     * 更新多渠道订单创建状态
+     * @param createResultDTO
+     */
+    void updateSoMultiChannel(SoMultiChannelDTO.CreateResultDTO createResultDTO);
+
+    /**
+     * 重新创建
+     * @param entity
+     * @return
+     */
+    BatchResultDTO reCreate(SoMultiChannelEntity entity);
+
+    /**
+     * 发货拦截
+     * @param entity
+     * @return
+     */
+    BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity);
+
+    /**
+     * 根据销售订单获取多渠道订单
+     * @param id
+     * @return
+     */
+    SoMultiChannelEntity getBySoId(String id);
 }

@@ -211,7 +211,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         return variablesMap;
     }
 
-    @Transactional(rollbackFor =Exception.class)
+//    @Transactional(rollbackFor =Exception.class)
     @Override
     public void genBySql(CfgQueryOptionDTO.GenDTO dto) {
         if(Objects.nonNull(dto)){

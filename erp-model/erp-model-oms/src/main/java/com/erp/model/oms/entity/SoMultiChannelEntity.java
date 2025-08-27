@@ -92,6 +92,7 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     private String billStatus;
     /**
     * 发货状态
+     * SoB2cBillStatusEnum
     */
     @TableField("delivery_status")
     private String deliveryStatus;

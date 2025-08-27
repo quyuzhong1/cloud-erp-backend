@@ -1,6 +1,8 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -10,6 +12,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
+import com.erp.model.oms.enums.CreateStatusEnum;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
@@ -19,6 +24,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderRequest;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -45,7 +51,7 @@ import java.util.stream.Collectors;
 public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
-    private KingdeeSoConsumerService kingdeeSoConsumerService;
+    private OmsTaskFeign omsTaskFeign;
 
     @Resource
     private DmpPushTaskService dmpPushTaskService;
@@ -53,23 +59,30 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
     private CfgAppClientService cfgAppClientService;
 
     public static void main(String[] args) {
+        String jsonStr ="{\"marketplaceId\":\"1730162240754708482\",\"sellerFulfillmentOrderId\":\"WFHD250822000010\",\"destinationAddress\":{\"stateOrRegion\":\"APPS\",\"city\":\"Dubai\",\"phone\":\"\",\"countryCode\":\"AE\",\"postalCode\":\"123123\",\"name\":\"Jorge Paniagua\",\"addressLine1\":\"Jumeirah beach street\",\"addressLine2\":\"Building Marina Wharf 1 Floor 27, Flat 2701 / PH2\",\"addressLine3\":\"\",\"districtOrCounty\":\"ss\"},\"displayableOrderDate\":\"2025-08-22T10:25:41.462Z[UTC]\",\"shippingSpeedCategory\":\"Standard\",\"displayableOrderId\":\"408-4194613-9811562\",\"id\":\"1958837975472435201\",\"shopId\":\"1735509194049589249\",\"items\":[{\"sellerFulfillmentOrderItemId\":\"1753302923623796737\",\"quantity\":1,\"fulfillmentNetworkSku\":\"X0012PS2AH\",\"sellerSku\":\"2961-AU2-FBA\"}],\"displayableOrderComment\":\"WFHD250822000010\",\"fulfillmentPolicy\":\"FillOrKill\"}";
+        SoMultiChannelDTO.CreateResultDTO createResultDTO = new SoMultiChannelDTO.CreateResultDTO();
+        JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
 
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(StrUtil.format("FBillNo in ({})", "'XSD24053100007'"));
-        String filterStr = String.join(" and ", queryFilters);
+        CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
 
-        String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
-                "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FSalerId.FNumber,FReceiveAddress,FLinkMan,FLinkPhone," +
-                "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
-                "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +
-                "FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifierId.FName," +
-                "FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1.FNumber,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode," +
-                "FDeliveryDate";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 0);
-        System.out.println(queryList);
+        String id = jsonObject.getStr("id", "");
+        createResultDTO.setId(id);
+        String shopId = jsonObject.getStr("shopId", "");
+        CfgAppClientService cfgAppClientService = SpringUtil.getBean(CfgAppClientService.class);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        try {
+//            CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
+            CreateFulfillmentOrderResponse response = api.createFulfillmentOrder(body);
+            System.out.println(response);
+            //成功后，更新任务状态
+            createResultDTO.setCreateStatus(CreateStatusEnum.SUCCESS.getCode());
+//            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+        } catch (ApiException | LWAException e) {
+            createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
+//            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+            throw new RuntimeException(e);
+        }
 
 
     }
@@ -90,51 +103,26 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     public ApiResult<?> handle(Object ext) {
-        Map<String, Object> map = JSONUtil.parseObj(ext);
-        String shopId = map.getOrDefault("shopId", "").toString();
+        SoMultiChannelDTO.CreateResultDTO createResultDTO = new SoMultiChannelDTO.CreateResultDTO();
+        JSONObject jsonObject = JSONUtil.parseObj(ext);
+        String id = jsonObject.getStr("id", "");
+        createResultDTO.setId(id);
+        String shopId = jsonObject.getStr("shopId", "");
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
         try {
-            CreateFulfillmentOrderResponse response = api.createFulfillmentOrder(null);
-        } catch (ApiException e) {
-            throw new RuntimeException(e);
-        } catch (LWAException e) {
-            throw new RuntimeException(e);
+            CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
+            CreateFulfillmentOrderResponse response = api.createFulfillmentOrder(body);
+            System.out.println(response);
+            //成功后，更新任务状态
+            createResultDTO.setCreateStatus(CreateStatusEnum.SUCCESS.getCode());
+            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+        } catch (ApiException | LWAException e) {
+            createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
+            createResultDTO.setMsg("亚马逊创建订单异常：" + e.getMessage());
+            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+            throw new ServiceException("亚马逊创建订单异常：" + e.getMessage());
         }
-
-//        // 获取店铺信息
-//            String shopId = map.get("shopId").toString();
-//            // 获取店铺授权信息
-//            AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
-//            if (null == shopInfoDTO) {
-//                throw new ServiceException("未找到店铺授权:" + shopId);
-//            }
-//            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-//
-//            try {
-//                FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-//                String queryType = AmazonFbaQueryTypeEnum.DATE_RANGE.getCode();
-//                String marketplaceId = marketPlaceEnum.getMarketplaceId();
-//                List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
-//                List<String> shipmentIdList = null;
-//                String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
-////            String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(LocalDateTime.of(2023, 11, 1, 0, 0, 0)).toString();
-//                String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(data.getNextTime()).toString();
-//                String nextToken = null;
-//                InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, lastUpdatedAfter, lastUpdatedBefore, nextToken);
-//                // 返回下载源数据
-//                responseList.stream()
-//                        .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopInfoDTO.getId(), shopInfoDTO.getName()))
-//                        .collect(Collectors.toList());
-//            } catch (Exception e) {
-//                throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
-//            }
-//
-
-
-
-
-        kingdeeSoConsumerService.executeConsumer(map);
         return ApiResult.success();
     }
 

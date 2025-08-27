@@ -14,6 +14,8 @@ package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
 import java.util.Objects;
 import java.util.Arrays;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -52,7 +54,7 @@ public class CreateFulfillmentOrderRequest {
   private String displayableOrderId = null;
 
   @SerializedName("displayableOrderDate")
-  private OffsetDateTime displayableOrderDate = null;
+  private String displayableOrderDate = null;
 
   @SerializedName("displayableOrderComment")
   private String displayableOrderComment = null;
@@ -147,7 +149,7 @@ public class CreateFulfillmentOrderRequest {
     this.displayableOrderId = displayableOrderId;
   }
 
-  public CreateFulfillmentOrderRequest displayableOrderDate(OffsetDateTime displayableOrderDate) {
+  public CreateFulfillmentOrderRequest displayableOrderDate(String displayableOrderDate) {
     this.displayableOrderDate = displayableOrderDate;
     return this;
   }
@@ -157,11 +159,11 @@ public class CreateFulfillmentOrderRequest {
    * @return displayableOrderDate
   **/
   
-  public OffsetDateTime getDisplayableOrderDate() {
+  public String getDisplayableOrderDate() {
     return displayableOrderDate;
   }
 
-  public void setDisplayableOrderDate(OffsetDateTime displayableOrderDate) {
+  public void setDisplayableOrderDate(String displayableOrderDate) {
     this.displayableOrderDate = displayableOrderDate;
   }
 

@@ -85,10 +85,11 @@
             smc.delivery_status as deliveryStatus,
             smc.logistics_channel_id as logisticsChannelId,
             smc.logistics_channel_name as logisticsChannelName,
-            smsd.platform_spu_no as platformSpuNo,
-            smsd.platform_sku_no as platformSkuNo,
-            smsd.qty,
-            smsd.delivery_qty as deliveryQty,
+            smcd.id as detailId,
+            smcd.platform_spu_no as platformSpuNo,
+            smcd.platform_sku_no as platformSkuNo,
+            smcd.qty,
+            smcd.delivery_qty as deliveryQty,
             smc.create_time as createTime,
             smc.approve_time as approveTime,
             smc.delivery_time as deliveryTime,
@@ -98,7 +99,7 @@
             smc.sign_order_error as signOrderError,
             smc.has_outstock as hasOutstock
         FROM so_multi_channel smc
-        LEFT JOIN so_multi_channel_detail smsd on smsd.main_id=smc.id and smsd.is_deleted=false
+        LEFT JOIN so_multi_channel_detail smcd on smcd.main_id=smc.id and smcd.is_deleted=false
         WHERE
             ${params.sqlMap.default}
           and smc.is_deleted = false

@@ -78,6 +78,10 @@ public class SoMultiChannelDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 子表id
+         */
+        private String  detailId;
 
         /**
         * 单据编码【可排序】
@@ -771,5 +775,16 @@ public class SoMultiChannelDTO implements Serializable {
         @NotEmpty(message = "订单发货明细不能为空")
         @Valid
         private List<SoViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CreateResultDTO {
+        //多渠道订单id
+        private String id;
+
+        private String createStatus;
+        private String msg;
+
     }
 }

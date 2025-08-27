@@ -70,4 +70,7 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/soPrice")
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/soMultiChannel")
+    PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto);
+
 }

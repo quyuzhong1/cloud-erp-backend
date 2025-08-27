@@ -95,7 +95,7 @@ public class SoMultiChannelController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soMultiChannel:paging",
-            tableAlias = ""
+            tableAlias = "smc"
     )
     public ApiResult<List<SoMultiChannelDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soMultiChannelService.tabList(dto));
@@ -306,6 +306,39 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
+     * 重新创建
+     * @author zdy
+     * @date:  2025-08-20
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/reCreate")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单重新创建")
+    public ApiResult<List<BatchResultDTO>> batchCreate(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
+        Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            SoMultiChannelEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                deleteResult = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 重新创建失败");
+                resultDTOS.add(deleteResult);
+                continue;
+            }
+            try {
+                deleteResult = soMultiChannelService.reCreate(entity);
+            }catch (Exception e){
+                log.error("多渠道订单主单重新创建失败",e);
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 撤销
     * @author zdy
     * @date:  2025-08-20
@@ -377,8 +410,9 @@ public class SoMultiChannelController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "多渠道订单主表导出Excel数据")
-    public void exportList(@RequestBody @Validated SoMultiChannelDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean>  exportList(@RequestBody @Validated SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response) {
         soMultiChannelService.exportList(dto, response);
+        return success(true);
     }
 
     /**

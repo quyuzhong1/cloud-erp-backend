@@ -293,9 +293,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
 
     @Resource
-    private ShopSysUserAuthService shopSysUserAuthService;
-
-    @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
 
     @Resource
@@ -360,10 +357,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private AliExpressOrderService aliExpressOrderService;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
-
-    @Resource
-    @Qualifier("soB2cTabExecutorPool")
-    private ExecutorService soB2cTabExecutorPool;
     @Resource
     private CustomerInfoService customerInfoService;
     @Resource
@@ -373,15 +366,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private AuthDataFeign authDataFeign;
 
-    @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
-    @Lazy
-    @Resource
-    private SoPriceService soPriceService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
 
@@ -394,6 +381,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private SoB2cCoreService soB2cCoreService;
+    @Lazy
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -3071,8 +3061,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //检测是否是API 对接的仓库
         List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(soB2cDetailEntityList.get(0).getWarehouseId()));
         Boolean isApi = CollectionUtils.isNotEmpty(overseasWarehouseList);
-        //三方仓直接调接口
-        if (isApi) {
+        //是否多渠道订单
+        boolean isMultiChannelOrder = false;
+        SoMultiChannelEntity soMultiChannelEntity = null;
+        if (CharSequenceUtil.isNotBlank(entity.getMultiChannelType())){
+            soMultiChannelEntity = soMultiChannelService.getBySoId(entity.getId());
+            isMultiChannelOrder = Objects.nonNull(soMultiChannelEntity);
+            addDTO.setLogisticsChannelId(soMultiChannelEntity.getLogisticsChannelId());
+            addDTO.setLogisticsChannelName(soMultiChannelEntity.getLogisticsChannelName());
+            addDTO.setTransportNo(soMultiChannelEntity.getTrackNo());
+        }
+        if (isMultiChannelOrder){
+            //多渠道订单
+            addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
+            addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+            //发货拦截
+            BatchResultDTO resultDTO = soMultiChannelService.deliveryIntercept(soMultiChannelEntity);
+            if (resultDTO.getSuccess()){
+                addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
+                addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+                addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+                addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+                addDTO.setHandleTime(LocalDateTime.now());
+                BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
+            }
+            return resultDTO;
+        }else if (isApi) {
+            //三方仓直接调接口
             addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(overseasWarehouseList.get(0).getProviderCode());
@@ -4168,6 +4183,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
+            data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
             if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
                 List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getLogisticsCode());
                 if (CollectionUtils.isNotEmpty(logisticsBillVos)) {

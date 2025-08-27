@@ -9,6 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -118,7 +119,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         omsPushMsgEntity.setSourceCode(entity.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.AMAZON.getCode());
+        omsPushMsgEntity.setTargetPlatform(PlatformEnum.AMAZON.getName());
         omsPushMsgEntity.setSyncOperate(operate);
         omsPushMsgService.save(omsPushMsgEntity);
         
@@ -142,7 +143,9 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             throw new ServiceException("未找到多渠道订单【{}】明细信息", entity.getCode());
         }
         Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("marketplaceId",entity.getShopId());
+        resultMap.put("id",entity.getId());
+        resultMap.put("shopId",entity.getDeliveryShopId());
+//        resultMap.put("marketplaceId",entity.getDeliveryShopId());
         if (CharSequenceUtil.isBlank(entity.getDeliveryCode())){
             throw new ServiceException("未找到多渠道订单【{}】发货单号", entity.getDeliveryCode());
         }
@@ -153,9 +156,8 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         }
         resultMap.put("displayableOrderId", displayableOrderId);
         LocalDateTime createTime = entity.getCreateTime();
-        ZonedDateTime beijingTime = createTime.atZone(ZoneId.of("Asia/Shanghai"));
         //默认订单的创建时间，统一需要转换成0时区
-        resultMap.put("displayableOrderDate", beijingTime.withZoneSameInstant(ZoneId.of("UTC")));
+        resultMap.put("displayableOrderDate", DateUtil.plus8SameUtcOffset(createTime).toString());
         resultMap.put("displayableOrderComment",CharSequenceUtil.isNotBlank(entity.getRemark())?entity.getRemark():entity.getDeliveryCode());
         String logisticsChannelId = entity.getLogisticsChannelId();
         if (CharSequenceUtil.isBlank(logisticsChannelId)){
