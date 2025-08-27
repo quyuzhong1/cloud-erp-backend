@@ -183,7 +183,10 @@ public class SampleLedgerDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
     }
 
     /**

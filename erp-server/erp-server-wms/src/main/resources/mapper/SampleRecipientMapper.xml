@@ -241,6 +241,13 @@
         WHERE
         ${params.sqlMap.default}
         AND srd.is_deleted = false
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sr.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
