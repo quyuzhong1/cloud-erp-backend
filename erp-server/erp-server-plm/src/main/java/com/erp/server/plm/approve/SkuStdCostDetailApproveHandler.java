@@ -11,15 +11,16 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.server.plm.service.ProductDetailService;
+import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.server.plm.service.SkuStdCostDetailService;
 import com.erp.server.plm.service.SysLogService;
 import lombok.extern.slf4j.Slf4j;
+import com.erp.server.plm.service.SkuStdCostService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,11 +36,21 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
     @Resource
     private SkuStdCostDetailService skuStdCostDetailService;
     @Resource
+    private SkuStdCostService skuStdCostService;
+    @Resource
     private SysLogService sysLogService;
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = skuStdCostDetailService.cancelProcess(dto.getId());
+        SkuStdCostDetailEntity entity = skuStdCostDetailService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到sku标准成本单数据");
+        }
+        SkuStdCostEntity mainEntity = skuStdCostService.getById(entity.getMainId());
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("未找到sku标准成本单主数据");
+        }
+        BatchResultDTO resultDTO = skuStdCostDetailService.cancelProcess(dto.getId(), entity, mainEntity);
         return resultDTO.getSuccess();
     }
 
@@ -47,9 +58,13 @@ public class SkuStdCostDetailApproveHandler extends AbstractApproveHandler {
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         SkuStdCostDetailEntity entity = skuStdCostDetailService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
+            throw new ServiceException("未找到sku标准成本单数据");
         }
-        BatchResultDTO resultDTO = skuStdCostDetailService.disApprove(entity);
+        SkuStdCostEntity mainEntity = skuStdCostService.getById(entity.getMainId());
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("未找到sku标准成本单主数据");
+        }
+        BatchResultDTO resultDTO = skuStdCostDetailService.disApprove(entity, mainEntity);
         return resultDTO.getSuccess();
     }
 

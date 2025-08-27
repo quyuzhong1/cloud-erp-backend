@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
+import com.erp.model.plm.entity.SkuStdCostEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -124,65 +125,62 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     SkuStdCostDetailDTO.ViewDTO view(String id);
 
-    /**
-     * 修改并提交审核
-     *
-     * @param dto
-     * @return
-     * @author Jim
-     * @date: 2025-08-08
-     */
-    void updateAndSubmit(SkuStdCostDetailDTO.UpdateDTO dto);
 
     /**
      * 提交审核
      *
-     * @param id
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submitEntity(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 审核
      *
      * @param dto
+     * @param entity
+     * @param mainEntity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO approve(ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 反审核
      *
      * @param entity
+     * @param mainEntity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO disApprove(SkuStdCostDetailEntity entity);
+    BatchResultDTO disApprove(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 删除
      *
      * @param id
+     * @param entity
+     * @param mainEntity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO delete(String id);
+    BatchResultDTO delete(String id, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 撤销
      *
      * @param id
+     * @param entity
+     * @param mainEntity
      * @return
      * @author Jim
      * @date: 2025-08-08
      */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(String id, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity);
 
     /**
      * 导出Excel
@@ -247,4 +245,11 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * 导入更新处理
      */
     void importUpdateSkuStdCostDetail(BaseDTO.ImportTypeDTO dto);
+
+    /**
+     * 根据明细ID获取明细map，主表map
+     * @param ids
+     * @return
+     */
+    SkuStdCostDetailDTO.SkuStdCostContext loadByDetailIds(List<String> ids);
 }

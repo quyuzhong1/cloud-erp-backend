@@ -49,6 +49,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -59,6 +60,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -174,9 +176,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         return newDetailEntity;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeCommonDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         // 数据校验
         validateChangeParams(addDTO, listDTO, lastListDTO);
@@ -199,7 +201,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         //操作日志
         sysLogService.addSysLogBySave(msg, CLASSPATH, newDetailEntity.getId(), listDTO.getSkuId());
 
-        return BatchResultDTO.success(newDetailEntity.getId(), "");
+        return BatchResultDTO.success(newDetailEntity.getId(), listDTO.getSkuNo());
     }
 
 
@@ -234,7 +236,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     /**
      * 修改
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @Override
     public Boolean update(SkuStdCostDetailDTO.UpdateDTO addOrUpdateDTO) {
         SkuStdCostDetailEntity old = super.getById(addOrUpdateDTO.getId());
@@ -341,11 +343,11 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
-        SkuStdCostDetailEntity entity = getById(id);
+    public BatchResultDTO submitEntity(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到sku标准成本单数据");
         }
+        String id = entity.getId();
         validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改sku标准成本单状态数据，id：【{}】", id);
@@ -355,10 +357,12 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         log.info("提交 开始启动sku标准成本单流程，id=：【{}】", entity.getId());
         startProcess(entity);
 
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku标准成本主单"));
+        if (ObjectUtil.isEmpty(mainEntity)) {
+           throw new ServiceException(ApiError.NOT_EXIST_BILL, "sku标准成本主单");
+        }
 
         //操作日志
-        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
@@ -373,23 +377,11 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(SkuStdCostDetailDTO.UpdateDTO dto) {
-        // 修改
-        this.update(dto);
-        // 提交
-        this.submit(dto.getId());
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        SkuStdCostDetailEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
         // 审核中的数据允许审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -398,7 +390,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         approveProcess(entity, dto);
 
         //操作日志
-        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据审核通过 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据审核通过 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
@@ -440,8 +432,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO disApprove(SkuStdCostDetailEntity entity) {
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
+    public BatchResultDTO disApprove(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
 
         // 反审核条件判断
         validateDisApprove(entity);
@@ -450,7 +441,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         updateForDisApprove(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
-        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据反审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据反审核 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
@@ -471,9 +462,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO delete(String id) {
-        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
+    public BatchResultDTO delete(String id, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -483,7 +472,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         log.info("删除 开始删除sku标准成本单主单数据，id：【{}】", id);
         super.removeById(id);
         //操作日志
-        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据删除 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据删除 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
@@ -499,13 +488,11 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
-        SkuStdCostDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到sku标准成本单数据"));
+    public BatchResultDTO cancelProcess(String id, SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        SkuStdCostEntity mainEntity = skuStdCostService.getByIdOpt(entity.getMainId()).orElseThrow(() -> new ServiceException("未找到sku标准成本单主单数据"));
         //  撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
 
@@ -522,7 +509,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         workflowFeign.revokeProcess(revokeDTO);
 
         //操作日志
-        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据撤销 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), entity.getEffectiveDate());
+        String content = StrUtil.format("用户【{}】SKU为【{}】生效时间【{}】单据撤销 ", UserContext.getDefaultLoginUser().getUserName(), mainEntity.getSkuNo(), null == entity.getEffectiveDate() ? "空":entity.getEffectiveDate());
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(content)
                 .setBusinessId(entity.getId())
                 .setPid(mainEntity.getSkuId())
@@ -813,5 +800,26 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public SkuStdCostDetailDTO.SkuStdCostContext loadByDetailIds(List<String> ids) {
+        // 明细
+        List<SkuStdCostDetailEntity> details = lambdaQuery().in(SkuStdCostDetailEntity::getId, ids).list();
+
+        Map<String, SkuStdCostDetailEntity> idEntityMap = details.stream()
+                .collect(Collectors.toMap(SkuStdCostDetailEntity::getId, Function.identity()));
+
+        // 主表
+        Map<String, SkuStdCostEntity> mainEntityMap = Collections.emptyMap();
+        if (!details.isEmpty()) {
+            List<String> mainIds = details.stream()
+                    .map(SkuStdCostDetailEntity::getMainId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            mainEntityMap = skuStdCostService.mapByIds(mainIds);
+        }
+
+        return new SkuStdCostDetailDTO.SkuStdCostContext(details, idEntityMap, mainEntityMap);
     }
 }

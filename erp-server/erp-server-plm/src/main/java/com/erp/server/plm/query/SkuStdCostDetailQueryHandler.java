@@ -3,6 +3,7 @@ package com.erp.server.plm.query;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.utils.QueryUtils;
@@ -58,10 +59,9 @@ public class SkuStdCostDetailQueryHandler extends AbstractQueryHandler {
         if (SkuStdCostTabEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("sscd.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
-//            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE.getCode());
-            List<String> businessIds = new ArrayList<>();
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SKU_STD_COST_DETAIL.getCode());
             if (CollectionUtils.isNotEmpty(businessIds)) {
-                super.buildDefaultDTO("pp.id", businessIds);
+                super.buildDefaultDTO("sscd.id", businessIds);
             } else {
                 //返回空结果
                 return this.getQueryEmptySql();
