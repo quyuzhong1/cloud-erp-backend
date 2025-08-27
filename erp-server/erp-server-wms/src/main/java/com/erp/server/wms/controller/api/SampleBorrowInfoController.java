@@ -2,14 +2,10 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.validator.ValidList;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
-import com.erp.server.wms.query.SampleScrapInfoQueryHandler;
 import com.erp.server.wms.service.SampleScrapInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +15,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleBorrowInfoService;
 import com.common.core.controller.vo.ApiResult;
@@ -309,7 +304,7 @@ public class SampleBorrowInfoController extends BaseController {
             menuCode = "wms:sampleBorrowInfo:invalid",
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "样品借用单作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "样品借用单作废")
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

@@ -84,11 +84,11 @@ public class SampleLedgerController extends BaseController {
     }
 
     /**
-     * 列表查询
+     * 添加产品
      * @author jack
      * @date: 2025-08-20
      * @param pagingDTO
-     * @return ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>>
+     * @return ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>>
      */
     @PostMapping("/listSku")
     public ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO) {
@@ -97,4 +97,19 @@ public class SampleLedgerController extends BaseController {
         }
         return success(sampleLedgerService.listSku(pagingDTO));
     }
+
+    /**
+     *
+     * @author jack
+     * @date: 2025-08-20
+     * @param dto
+     * @return ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>>
+     */
+    @PostMapping("/generateSampleScrapView")
+    public ApiResult<SampleLedgerDTO.SampleScrapView> generateSampleScrapView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(sampleLedgerService.generateSampleScrapView(dto.getIds()));
+    }
+
+
+
 }

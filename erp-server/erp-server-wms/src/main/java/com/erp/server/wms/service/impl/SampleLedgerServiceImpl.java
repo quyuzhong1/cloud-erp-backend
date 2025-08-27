@@ -140,6 +140,11 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public SampleLedgerDTO.SampleScrapView generateSampleScrapView(List<String> ids) {
+        return null;
+    }
+
     /**
      * 分页列表查询
      * @author wuhaotian

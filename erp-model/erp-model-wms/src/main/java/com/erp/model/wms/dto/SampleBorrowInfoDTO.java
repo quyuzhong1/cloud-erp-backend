@@ -370,7 +370,6 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
@@ -432,11 +431,13 @@ public class SampleBorrowInfoDTO implements Serializable {
         /**
         * 借用日期
         */
+        @NotNull(message = "借用日期不能为空")
         private LocalDate borrowDate;
 
         /**
         * 预计退回日期
         */
+        @NotNull(message = "预计退回日期不能为空")
         private LocalDate estimatedReturnDate;
 
         /**

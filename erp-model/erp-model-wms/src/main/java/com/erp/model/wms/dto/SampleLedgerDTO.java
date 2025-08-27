@@ -7,6 +7,8 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.AdvanceQueryDTO;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -410,6 +412,30 @@ public class SampleLedgerDTO implements Serializable {
          * 库存数量（可为正数或负数）
          */
         private Integer availableQty;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SampleScrapView {
+
+        /**
+         * 报废操作人ID
+         */
+        private String scrapUserId;
+
+        /**
+         * 报废操作人姓名
+         */
+        private String scrapUserName;
+
+        /**
+         * 明细
+         */
+        private List<SampleScrapDetailDTO.ViewDTO> detailList;
 
     }
 

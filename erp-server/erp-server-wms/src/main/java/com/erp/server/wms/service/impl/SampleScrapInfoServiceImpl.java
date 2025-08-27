@@ -250,9 +250,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        SampleScrapInfoEntity sampleScrapInfoEntity =  BeanMapperUtils.map(SampleScrapInfoEntity.class, old);
-        BeanMapper.copyNonNull(addOrUpdateDTO,sampleScrapInfoEntity);
-
+        SampleScrapInfoEntity sampleScrapInfoEntity =  BeanMapperUtils.map(SampleScrapInfoEntity.class, addOrUpdateDTO);
         handleData(sampleScrapInfoEntity);
 
         log.info("编辑 开始修改样品报废单数据，单号：【{}】", old.getCode());
@@ -262,7 +260,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         }
         // 记录操作日志
         log.info("编辑 开始记录样品报废单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleScrapInfoEntity.getCode(), "样品报废单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "样品报废单");
         operateLogService.addModuleOperateLogByObj(old, sampleScrapInfoEntity, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), sampleScrapInfoEntity.getId(), msg);
 
         //明细
