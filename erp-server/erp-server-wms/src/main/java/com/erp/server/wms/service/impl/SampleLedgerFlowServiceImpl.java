@@ -126,16 +126,84 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
      * @return PagingVO<SampleLedgerFlowDTO.ListDTO>>
      */
     @Override
-    public PagingVO<SampleLedgerFlowDTO.ListDTO> paging(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<SampleLedgerFlowDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+    public PagingVO<SampleLedgerFlowDTO.ListDTO> paging(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SampleLedgerFlowDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 新增样品台账流水
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param addDTO 台账流水新增参数
+     * @return 是否成功
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addSampleLedgerFlow(SampleLedgerFlowDTO.AddFlowDTO addDTO) {
+        if (addDTO == null || CollUtil.isEmpty(addDTO.getDetailList())) {
+            log.warn("新增样品台账流水参数为空或明细列表为空");
+            return false;
+        }
+        
+        try {
+            List<SampleLedgerFlowEntity> flowEntities = new ArrayList<>();
+            
+            for (SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO detail : addDTO.getDetailList()) {
+                SampleLedgerFlowEntity flowEntity = new SampleLedgerFlowEntity();
+                
+                // 设置基本信息
+                flowEntity.setSourceType(addDTO.getSourceType());
+                flowEntity.setSourceCode(addDTO.getSourceCode());
+                flowEntity.setSourceId(addDTO.getSourceId());
+                flowEntity.setSourceDetailId(detail.getSourceDetailId());
+                flowEntity.setDictBizType(addDTO.getApproveType());
+                flowEntity.setOperateTime(addDTO.getOperateTime());
+                flowEntity.setBillDate(addDTO.getBillDate());
+                
+                // 设置用户和部门信息
+                flowEntity.setUserId(addDTO.getUserId());
+                flowEntity.setUserName(addDTO.getUserName());
+                flowEntity.setDeptId(addDTO.getDeptId());
+//                flowEntity.setDeptName(addDTO.getDeptName());
+                flowEntity.setUseUserId(addDTO.getUseUserId());
+                flowEntity.setUseUserName(addDTO.getUseUserName());
+                
+                // 设置SKU信息
+                flowEntity.setSkuNo(detail.getSkuNo());
+                flowEntity.setSkuId(detail.getSkuId());
+                flowEntity.setProductName(detail.getProductName());
+                flowEntity.setQty(detail.getQty());
+                flowEntity.setSampleLedgerId(detail.getSampleLedgerId());
+                
+                flowEntities.add(flowEntity);
+            }
+            
+            // 批量保存
+            boolean result = super.saveBatch(flowEntities);
+            if (result) {
+                log.info("新增样品台账流水成功，单据类型：{}，单据编号：{}，明细数量：{}", 
+                    addDTO.getSourceType(), addDTO.getSourceCode(), flowEntities.size());
+            } else {
+                log.error("新增样品台账流水失败，单据类型：{}，单据编号：{}", 
+                    addDTO.getSourceType(), addDTO.getSourceCode());
+            }
+            
+            return result;
+            
+        } catch (Exception e) {
+            log.error("新增样品台账流水异常，单据类型：{}，单据编号：{}，错误：{}", 
+                addDTO.getSourceType(), addDTO.getSourceCode(), e.getMessage(), e);
+            throw new ServiceException("新增样品台账流水失败：" + e.getMessage());
+        }
     }
 
     /**

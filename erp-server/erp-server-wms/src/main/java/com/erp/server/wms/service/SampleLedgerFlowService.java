@@ -39,4 +39,13 @@ public interface SampleLedgerFlowService extends SuperService<SampleLedgerFlowEn
     Boolean exportList(SampleLedgerFlowDTO.ExportDTO dto, HttpServletResponse response);
 
     PagingVO<SampleLedgerFlowDTO.ListDTO> paging(PagingDTO<SampleLedgerFlowDTO.PagingParamDTO> dto);
+
+    /**
+     * 新增样品台账流水
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param addDTO 台账流水新增参数
+     * @return 是否成功
+     */
+    Boolean addSampleLedgerFlow(SampleLedgerFlowDTO.AddFlowDTO addDTO);
 }

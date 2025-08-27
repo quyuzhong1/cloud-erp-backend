@@ -6,23 +6,24 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.server.wms.service.SampleLedgerFlowBuilder;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.plm.dto.ProductSkuDTO;
@@ -31,13 +32,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
-import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDetailDTO;
-import com.erp.model.wms.dto.SampleRecipientDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.common.business.dto.FindUserDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
@@ -60,7 +56,6 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -98,7 +93,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
  */
 @Slf4j
 @Service
-public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipientMapper, SampleRecipientEntity> implements SampleRecipientService {
+public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipientMapper, SampleRecipientEntity> implements SampleRecipientService , SampleLedgerFlowBuilder {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -131,6 +126,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Autowired
     private RedissonClient redissonClient;
+    @Autowired
+    private SampleLedgerFlowService sampleLedgerFlowService;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -140,8 +137,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private static final String CACHE_SKU_NO_TO_ID = "sample_recipient:sku_no_to_id:";
     private static final String CACHE_SKU_ID_TO_PRODUCT_NAME = "sample_recipient:sku_id_to_product_name:";
 
-    // 缓存过期时间：1小时
-    private static final long CACHE_EXPIRE_TIME = 3600;
+    // 缓存过期时间：10分钟
+    private static final long CACHE_EXPIRE_TIME = 600;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -632,6 +629,19 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
+
+        // 记录台账流水
+        try {
+            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品领用单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+            }
+        } catch (Exception e) {
+            log.error("样品领用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            // 台账流水记录失败不影响主流程，只记录日志
+        }
 
         return Boolean.TRUE;
     }
@@ -1795,6 +1805,40 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
+     * 根据部门ID查询部门名称（带缓存）
+     */
+    private String getDeptNameById(String deptId) {
+        if (StrUtil.isBlank(deptId)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_DEPT_NAME_TO_ID + "reverse:" + deptId;
+        String deptName = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(deptName)) {
+            return deptName;
+        }
+
+        try {
+            // 调用部门服务根据ID查询部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
+
+            if (department != null && StrUtil.isNotBlank(department.getName())) {
+                String result = department.getName();
+                // 缓存结果
+                redissonClient.getBucket(cacheKey).set(result, CACHE_EXPIRE_TIME, TimeUnit.SECONDS);
+                return result;
+            }
+
+            log.warn("未找到部门ID：{}", deptId);
+            return null;
+        } catch (Exception e) {
+            log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * 根据组织名称查询组织ID（带缓存）
      */
     private String getOrgIdByName(String orgName) {
@@ -2213,6 +2257,92 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             log.error("减少样品领用单明细已出库数量失败，明细ID：{}，错误：{}", detailId, e.getMessage(), e);
             return false;
         }
+    }
+
+    // ==================== 台账流水构建器实现 ====================
+
+    @Override
+    public String getSupportedSourceType() {
+        return SourceTypeEnum.SAMPLE_RECIPIENT.getCode();
+    }
+
+    @Override
+    public SampleLedgerFlowDTO.AddFlowDTO buildFlow(String sourceId, String sourceCode, ApproveTypeEnum approveType) {
+        try {
+            // 获取样品领用单主表信息
+            SampleRecipientEntity entity = this.getById(sourceId);
+            if (entity == null) {
+                log.error("获取样品领用单失败，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 获取样品领用单明细
+            List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.list(
+                new LambdaQueryWrapper<SampleRecipientDetailEntity>()
+                    .eq(SampleRecipientDetailEntity::getMainId, sourceId)
+            );
+
+            if (detailList.isEmpty()) {
+                log.warn("样品领用单明细为空，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
+            List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
+            for (SampleRecipientDetailEntity detail : detailList) {
+                // 计算数量：审核为+X，反审核为-X
+                Integer qty = calculateQty(detail.getRecipientQty(), approveType);
+                
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+//                flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                flowDetails.add(flowDetail);
+            }
+
+            // 构建流水主表数据
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
+            flowDTO.setSourceType(getSupportedSourceType());
+            flowDTO.setApproveType(approveType.getStatus());
+            flowDTO.setOperateTime(LocalDateTime.now());
+            flowDTO.setBillDate(entity.getRecipientDate());
+            flowDTO.setSourceName("样品领用单");
+            flowDTO.setSourceCode(sourceCode);
+            flowDTO.setSourceId(sourceId);
+            flowDTO.setUseUserId(entity.getUseUserId());
+            flowDTO.setUseUserName(entity.getUseUserName());
+            flowDTO.setUserId(entity.getUserId());
+            flowDTO.setUserName(entity.getUserName());
+            flowDTO.setDeptId(entity.getDeptId());
+            // 根据部门ID查询部门名称
+//            flowDTO.setDeptName(getDeptNameById(entity.getDeptId()));
+            flowDTO.setDetailList(flowDetails);
+
+            return flowDTO;
+        } catch (Exception e) {
+            log.error("构建样品领用单台账流水失败，sourceId：{}，错误：{}", sourceId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 计算数量：审核为+X，反审核为-X
+     */
+    private Integer calculateQty(Integer originalQty, ApproveTypeEnum approveType) {
+        if (originalQty == null) {
+            return 0;
+        }
+        
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            return originalQty; // 审核：+X
+        } else if (ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            return -originalQty; // 反审核：-X
+        }
+        
+        return originalQty;
     }
 
 

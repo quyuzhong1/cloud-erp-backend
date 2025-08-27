@@ -447,5 +447,123 @@ public class SampleLedgerFlowDTO implements Serializable {
 
     }
 
+    /**
+     * 新增台账流水DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddFlowDTO implements Serializable {
+
+        /**
+         * 单据类型
+         */
+        private String sourceType;
+
+        /**
+         * 操作类型
+         */
+        private String approveType;
+
+        /**
+         * 操作时间
+         */
+        private LocalDateTime operateTime;
+
+        /**
+         * 业务日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 单据名称
+         */
+        private String sourceName;
+
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+
+        /**
+         * 单据ID
+         */
+        private String sourceId;
+
+        /**
+         * 使用方ID
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
+
+        /**
+         * 归属人ID
+         */
+        private String userId;
+
+        /**
+         * 归属人姓名
+         */
+        private String userName;
+
+        /**
+         * 归属部门ID
+         */
+        private String deptId;
+
+        /**
+         * 归属部门名称
+         */
+        private String deptName;
+
+        /**
+         * 明细列表
+         */
+        private List<FlowDetailDTO> detailList;
+
+        /**
+         * 流水明细DTO
+         */
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class FlowDetailDTO implements Serializable {
+
+            /**
+             * 明细ID
+             */
+            private String sourceDetailId;
+
+            /**
+             * SKU编号
+             */
+            private String skuNo;
+
+            /**
+             * SKU ID
+             */
+            private String skuId;
+
+            /**
+             * 产品名称
+             */
+            private String productName;
+
+            /**
+             * 数量
+             */
+            private Integer qty;
+
+            /**
+             * 样品台账ID
+             */
+            private String sampleLedgerId;
+        }
+    }
+
 
 }
