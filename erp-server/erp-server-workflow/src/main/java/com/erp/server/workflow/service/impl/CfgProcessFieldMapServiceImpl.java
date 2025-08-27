@@ -189,7 +189,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                     e.setCfgType(DictBasicEnum.THIRDCFG.getCode());
                 }
                 e.setCfgType(DictBasicEnum.SYSCFG.getCode());
-                CfgQueryOptionFieldTypeEnum enumByCode = CfgQueryOptionFieldTypeEnum.getByCode(e.getThirdFieldType().toUpperCase());
+                CfgQueryOptionFieldTypeEnum enumByCode = CfgQueryOptionFieldTypeEnum.getByCode(e.getThirdFieldType());
                 if (ObjectUtil.isEmpty(enumByCode)) {
                     //类型为空的时候跳过本次循环
                     log.error("飞书审批定义中存在未知字段类型，字段名称：{}，字段类型：{}", e.getThirdField(), e.getThirdFieldType());
