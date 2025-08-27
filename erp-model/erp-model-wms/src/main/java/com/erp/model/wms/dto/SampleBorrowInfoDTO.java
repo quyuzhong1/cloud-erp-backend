@@ -454,4 +454,106 @@ public class SampleBorrowInfoDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SampleReturnView {
+
+        private String sourceId;
+
+        private String sourceCode;
+
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU NO
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 借用人ID
+         */
+        private String returnUserId;
+
+        /**
+         * 借用人姓名
+         */
+        private String returnUserName;
+
+        /**
+         * 借用部门ID
+         */
+        private String returnDeptId;
+
+        /**
+         * 借用部门名称
+         */
+        private String returnDeptName;
+
+        /**
+         * 借出人ID
+         */
+        private String receiverUserId;
+
+        /**
+         * 借出人姓名
+         */
+        private String receiverUserName;
+
+        /**
+         * 借出部门ID
+         */
+        private String receiverDeptId;
+
+        /**
+         * 借出部门名称
+         */
+        private String receiverDeptName;
+
+        /**
+         * 待归还数量=借用数量-已归还数量
+         */
+        private Integer waitReturnQty;
+        /**
+         * 已归还数量=关联的已审核样品归还单归还数量
+         */
+        private Integer returnedQty;
+
+        /**
+         * 可归还数量=待归还数量-关联的待提交、审核中、审核不通过样品归还单归还数量
+         */
+        private Integer canReturnQty;
+
+        /**
+         * 归还日期
+         */
+        private LocalDate returnDate;
+
+        /**
+         * 归还数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 审批状态
+         */
+        private String approveStatus;
+    }
 }

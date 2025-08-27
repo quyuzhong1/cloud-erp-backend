@@ -898,7 +898,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private void handleData(SampleBorrowInfoEntity sampleBorrowInfoEntity) {
         //借用日期和预计退回日期比较，预计退回日期不能小于借用日期
         if(sampleBorrowInfoEntity.getBorrowDate().isAfter(sampleBorrowInfoEntity.getEstimatedReturnDate())){
-            throw new ServiceException(ApiError.ERROR_SAMPLE_BORROW_DATA);
+            throw new ServiceException(ApiError.ERROR_SAMPLE_BORROW_DATE);
         }
 
         String borrowUserId = sampleBorrowInfoEntity.getBorrowUserId();
@@ -938,5 +938,38 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         sampleBorrowInfoEntity.setLendUserName(lendUser.getUserName());
         sampleBorrowInfoEntity.setBorrowDeptName(borrowDept.getName());
         sampleBorrowInfoEntity.setLendDeptName(lendDept.getName());
+    }
+
+
+    /**
+     * 生成样品归还视图信息
+     * @author jack
+     * @date:  2025-08-27
+     * @param detailIdList
+     * @return 返回包含样品归还视图信息的API结果对象，数据为SampleReturnView列表
+     */
+    @Override
+    public List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(List<String> detailIdList) {
+        if(CollUtil.isEmpty(detailIdList)){
+            return Collections.emptyList();
+        }
+        List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView(detailIdList);
+        // 查找第一个不符合审批通过状态的记录
+        Optional<SampleBorrowInfoDTO.SampleReturnView> firstNotApproved = list.stream()
+                .filter(e -> !isApprovedStatus(e.getApproveStatus()))
+                .findFirst();
+        if(firstNotApproved.isPresent()){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
+        }
+        return list;
+    }
+
+    /**
+     * 判断是否为审批通过状态
+     * @param status 状态值
+     * @return 是否为审批通过状态
+     */
+    private boolean isApprovedStatus(String status) {
+        return ApproveStatusEnum.APPROVE.getStatus().equals(status);
     }
 }

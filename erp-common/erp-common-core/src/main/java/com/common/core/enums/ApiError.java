@@ -1119,8 +1119,8 @@ public enum ApiError implements Serializable {
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
 
     ERROR_SAMPLE_AVAILABLE_QTY(99153,"【{}】当前可【{}】数量不足"),
-
-    ERROR_SAMPLE_BORROW_DATA(99154,"预计退回日期不能小于借用日期"),
+    ERROR_SAMPLE_BORROW_DATE(99154,"预计退回日期不能小于借用日期"),
+    ERROR_GENERATE_SAMPLE_RETURN_VIEW(99155,"只有已审核的样品借用单支持下推样品归还单"),
 
 
 

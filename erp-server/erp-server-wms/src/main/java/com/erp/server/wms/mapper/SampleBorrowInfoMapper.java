@@ -52,4 +52,6 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
     * @return
     */
     List<SampleBorrowInfoDTO.TabListDTO> tabList(@Param("params") SampleBorrowInfoDTO.PagingParamDTO searchParam);
+
+    List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(@Param("detailIdList") List<String> detailIdList);
 }

@@ -42,7 +42,7 @@ public class ImportWmsFeignController {
         }
     }
 
-    @PostMapping("/importSampleBorrow")
+    @PostMapping("/importSampleScrap")
     public void importSampleScrap(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             sampleScrapInfoService.importSampleScrap(dto);

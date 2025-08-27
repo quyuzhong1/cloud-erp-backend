@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.validator.ValidList;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
@@ -23,7 +24,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.SampleBorrowInfoService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 样品借用单
@@ -436,6 +435,19 @@ public class SampleBorrowInfoController extends BaseController {
         String standardExcelName = "sampleBorrowInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
+    }
+
+
+    /**
+     * 生成样品归还视图信息
+     * @author jack
+     * @date:  2025-08-27
+     * @param dto 包含ID列表的请求参数对象，用于指定需要生成归还视图的样品借阅记录
+     * @return 返回包含样品归还视图信息的API结果对象，数据为SampleReturnView列表
+     */
+    @PostMapping("/generateSampleReturnView")
+    public ApiResult<List<SampleBorrowInfoDTO.SampleReturnView>> generateSampleReturnView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto){
+        return success(sampleBorrowInfoService.generateSampleReturnView(dto.getDetailIdList()));
     }
 
 

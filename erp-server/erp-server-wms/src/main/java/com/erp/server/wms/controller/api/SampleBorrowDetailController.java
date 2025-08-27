@@ -25,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
-@LogSystemModule("借用变更单明细表")
+@LogSystemModule("借用单明细表")
 @RequestMapping("/sampleBorrowDetail")
 public class SampleBorrowDetailController extends BaseController {
 

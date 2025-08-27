@@ -158,4 +158,87 @@ sbi.remark as remark
         sbi.approve_status
     </select>
 
+    <select id="generateSampleReturnView"
+            resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$SampleReturnView">
+        SELECT
+        sbi.ID AS sourceId,
+        sbi.code AS sourceCode,
+        sbi.approve_status AS approveStatus,
+        sbi.borrow_user_id AS returnUserId,
+        sbi.borrow_user_name AS returnUserName,
+        sbi.borrow_dept_id AS returnDeptId,
+        sbi.borrow_dept_name AS returnDeptName,
+        sbi.lend_user_id AS receiverUserId,
+        sbi.lend_user_name AS receiverUserName,
+        sbi.lend_dept_id AS receiverDeptId,
+        sbi.lend_dept_name AS receiverDeptName,
+        sbd.ID AS sourceDetailId,
+        sbd.sku_id AS skuId,
+        sbd.sku_no AS skuNo,
+        sbd.product_name AS productName,
+        COALESCE ( sbd.wait_return_qty, 0 ) AS waitReturnQty,
+        COALESCE ( b.returnedQty, 0 ) AS returnedQty,
+        COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty
+        FROM
+        sample_borrow_info AS sbi
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id
+        AND sbd.is_deleted =
+        FALSE LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status = 'approve'
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND srd.source_detail_id IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS b ON b.source_detail_id = sbd.
+        ID LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status != 'approve'
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND srd.source_detail_id IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS C ON C.source_detail_id = sbd.ID
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.invalid_status = FALSE
+        AND sbd.wait_return_qty > 0
+        <if test="detailIdList != null and detailIdList.size > 0">
+            AND sbd.ID IN
+            <foreach item="item" index="index" collection="detailIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY
+        sbi.code
+    </select>
 </mapper>

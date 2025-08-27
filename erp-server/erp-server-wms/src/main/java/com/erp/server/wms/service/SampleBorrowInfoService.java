@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -164,4 +165,12 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
     void importSampleBorrow(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<SampleBorrowImportExcelDTO> successList, List<String> errorNoList, List<SampleBorrowImportExcelDTO> errorList2, String importType);
+    /**
+     * 生成样品归还视图信息
+     * @author jack
+     * @date:  2025-08-27
+     * @param detailIdList
+     * @return 返回包含样品归还视图信息的API结果对象，数据为SampleReturnView列表
+     */
+    List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView( List<String> detailIdList);
 }
