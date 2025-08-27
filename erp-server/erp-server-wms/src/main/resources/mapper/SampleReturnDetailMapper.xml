@@ -23,16 +23,22 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        main_id, source_detail_id, sku_id, sku_no, product_name, return_qty, remark
+        srd.id as id,
+srd.create_user_id as createUserId,
+srd.create_user_name as createUserName,
+srd.create_time as createTime,
+srd.update_user_id as updateUserId,
+srd.update_user_name as updateUserName,
+srd.update_time as updateTime,
+srd.version as version,
+srd.is_deleted as isDeleted,
+srd.main_id as mainId,
+srd.source_detail_id as sourceDetailId,
+srd.sku_id as skuId,
+srd.sku_no as skuNo,
+srd.product_name as productName,
+srd.return_qty as returnQty,
+srd.remark as remark
     </sql>
 
 

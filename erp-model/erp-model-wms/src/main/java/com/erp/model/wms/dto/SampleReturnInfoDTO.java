@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -41,6 +42,7 @@ public class SampleReturnInfoDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         private String tabFlagName;
 
          /**
          * 数量
@@ -64,6 +66,12 @@ public class SampleReturnInfoDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
 
      }
     /**
@@ -193,6 +201,36 @@ public class SampleReturnInfoDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 归还数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 备注
+         */
+        private String detailRemark;
     }
 
     /**
@@ -243,6 +281,7 @@ public class SampleReturnInfoDTO implements Serializable {
         * 审批状态
         */
         private String approveStatus;
+        private String approveStatusName;
 
         /**
         * 审批完成时间
@@ -263,6 +302,7 @@ public class SampleReturnInfoDTO implements Serializable {
         * 是否作废
         */
         private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * 归还人ID
@@ -314,6 +354,16 @@ public class SampleReturnInfoDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 明细
+         */
+        private List<SampleReturnDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
 
@@ -324,6 +374,11 @@ public class SampleReturnInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "明细不能为空" )
+        private List<SampleReturnDetailDTO.@Valid AddDTO> detailList;
 
     }
 
@@ -337,8 +392,13 @@ public class SampleReturnInfoDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "明细不能为空" )
+        private List<SampleReturnDetailDTO.@Valid UpdateDTO> detailList;
 
     }
 
@@ -349,91 +409,80 @@ public class SampleReturnInfoDTO implements Serializable {
         /**
         * 来源单据ID
         */
-        @NotBlank(message = "来源单据ID不能为空")
-        @Size(max = 19,message = "来源单据ID最大长度不能超过19位")
+        @NotBlank(message = "来源单据不能为空")
         private String sourceId;
 
         /**
         * 来源单据编号
         */
-        @NotBlank(message = "来源单据编号不能为空")
-        @Size(max = 32,message = "来源单据编号最大长度不能超过32位")
         private String sourceCode;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
         /**
         * 归还人ID
         */
-        @NotBlank(message = "归还人ID不能为空")
-        @Size(max = 19,message = "归还人ID最大长度不能超过19位")
+        @NotBlank(message = "归还人不能为空")
         private String returnUserId;
 
         /**
         * 归还人姓名
         */
-        @NotBlank(message = "归还人姓名不能为空")
-        @Size(max = 32,message = "归还人姓名最大长度不能超过32位")
         private String returnUserName;
 
         /**
         * 归还人部门ID
         */
-        @NotBlank(message = "归还人部门ID不能为空")
-        @Size(max = 19,message = "归还人部门ID最大长度不能超过19位")
+        @NotBlank(message = "归还人部门不能为空")
         private String returnDeptId;
 
         /**
         * 归还人部门名称
         */
-        @NotBlank(message = "归还人部门名称不能为空")
-        @Size(max = 32,message = "归还人部门名称最大长度不能超过32位")
         private String returnDeptName;
 
         /**
         * 接收人ID
         */
-        @NotBlank(message = "接收人ID不能为空")
-        @Size(max = 19,message = "接收人ID最大长度不能超过19位")
+        @NotBlank(message = "接收人不能为空")
         private String receiverUserId;
 
         /**
         * 接收人姓名
         */
-        @NotBlank(message = "接收人姓名不能为空")
-        @Size(max = 32,message = "接收人姓名最大长度不能超过32位")
         private String receiverUserName;
 
         /**
         * 接收人部门ID
         */
-        @NotBlank(message = "接收人部门ID不能为空")
-        @Size(max = 19,message = "接收人部门ID最大长度不能超过19位")
+        @NotBlank(message = "接收人部门不能为空")
         private String receiverDeptId;
 
         /**
         * 接收人部门名称
         */
-        @NotBlank(message = "接收人部门名称不能为空")
-        @Size(max = 32,message = "接收人部门名称最大长度不能超过32位")
         private String receiverDeptName;
 
         /**
         * 归还日期
         */
+        @NotNull(message = "归还日期不能为空")
         private LocalDate returnDate;
 
         /**
         * 备注说明
         */
-        @NotBlank(message = "备注说明不能为空")
         @Size(max = 200,message = "备注说明最大长度不能超过200位")
         private String remark;
+
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
 
     }

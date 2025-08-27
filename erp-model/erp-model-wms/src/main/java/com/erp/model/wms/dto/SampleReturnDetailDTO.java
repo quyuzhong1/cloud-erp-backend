@@ -71,6 +71,20 @@ public class SampleReturnDetailDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 待归还数量=借用数量-已归还数量
+         */
+        private Integer waitReturnQty;
+        /**
+         * 已归还数量=关联的已审核样品归还单归还数量
+         */
+        private Integer returnedQty;
+
+        /**
+         * 可归还数量=待归还数量-关联的待提交、审核中、审核不通过样品归还单归还数量
+         */
+        private Integer canReturnQty;
+
 
     }
 
@@ -94,7 +108,6 @@ public class SampleReturnDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -106,29 +119,27 @@ public class SampleReturnDetailDTO implements Serializable {
         /**
         * 关联归还单主表ID
         */
-        @NotBlank(message = "关联归还单主表ID不能为空")
-        @Size(max = 19,message = "关联归还单主表ID最大长度不能超过19位")
         private String mainId;
 
         /**
         * 来源明细ID
         */
-        @NotBlank(message = "来源明细ID不能为空")
-        @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
+        @NotBlank(message = "来源明细不能为空")
         private String sourceDetailId;
 
         /**
         * SKU ID
         */
-        @NotBlank(message = "SKU ID不能为空")
-        @Size(max = 19,message = "SKU ID最大长度不能超过19位")
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
+        /**
+        * SKU
+        */
+        private String skuNo;
 
         /**
         * 产品名称
         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 500,message = "产品名称最大长度不能超过500位")
         private String productName;
 
         /**
@@ -140,7 +151,6 @@ public class SampleReturnDetailDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 

@@ -426,6 +426,7 @@ public class SampleScrapInfoDTO implements Serializable {
         /**
         * 报废日期
         */
+        @NotNull(message = "报废日期不能为空")
         private LocalDate scrapDate;
 
         /**

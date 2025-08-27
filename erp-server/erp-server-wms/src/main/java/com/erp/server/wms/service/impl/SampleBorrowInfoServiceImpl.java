@@ -134,6 +134,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         for (SampleBorrowDetailEntity sampleBorrowDetailEntity : sampleBorrowDetailEntities) {
             sampleBorrowDetailEntity.setMainId(sampleBorrowInfoEntity.getId());
 
+            sampleBorrowDetailEntity.setWaitReturnQty(sampleBorrowDetailEntity.getBorrowQty());
+
             SkuVO skuVO = skuMap.getOrDefault(sampleBorrowDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
                 sampleBorrowDetailEntity.setSkuNo(skuVO.getSkuNo());
@@ -228,7 +230,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             throw new ServiceException(ApiError.ERROR_1029);
         }
         SampleBorrowInfoEntity sampleBorrowInfoEntity =  BeanMapperUtils.map(SampleBorrowInfoEntity.class, addOrUpdateDTO);
-
         // 数据处理
         handleData(sampleBorrowInfoEntity);
         log.info("编辑 开始修改样品借用单数据，单号：【{}】", old.getCode());
@@ -238,7 +239,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         // 记录主单操作日志
         log.info("编辑 开始记录样品借用单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleBorrowInfoEntity.getCode(), "样品借用单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "样品借用单");
         operateLogService.addModuleOperateLogByObj(old, sampleBorrowInfoEntity,  ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), msg);
 
         //明细
@@ -274,6 +275,8 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
         for (SampleBorrowDetailEntity sampleBorrowDetailEntity : sampleBorrowDetailEntities) {
             sampleBorrowDetailEntity.setMainId(sampleBorrowInfoEntity.getId());
+
+            sampleBorrowDetailEntity.setWaitReturnQty(sampleBorrowDetailEntity.getBorrowQty());
 
             SkuVO skuVO = skuMap.getOrDefault(sampleBorrowDetailEntity.getSkuId(), null);
             if(Objects.nonNull(skuVO)){
@@ -574,6 +577,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException("只有待提交数据支持删除");
         }
+        // 删除主单数据
+        log.info("删除 开始删除样品借用单主单数据，id：【{}】", id);
+        super.removeById(id);
         //删除明细
         sampleBorrowDetailService.lambdaUpdate()
                 .set(SampleBorrowDetailEntity::getIsDeleted, Boolean.TRUE)
@@ -585,10 +591,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             attachmentService.deleteByUrlList(urlList);
         }
-
-        // 删除主单数据
-        log.info("删除 开始删除样品借用单主单数据，id：【{}】", id);
-        super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除样品借用单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
@@ -658,7 +660,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        // todo 记录台账流水
 
         return Boolean.TRUE;
     }

@@ -1,6 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
+import com.erp.server.wms.query.SampleReturnInfoQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -28,14 +31,14 @@ import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
 
 /**
- * 样品归还单主表
+ * 样品归还单
  *
  * @author jack
  * @since 2025-08-20
  */
 @Slf4j
 @RestController
-@LogSystemModule("样品归还单主表")
+@LogSystemModule("样品归还单")
 @RequestMapping("/sampleReturnInfo")
 public class SampleReturnInfoController extends BaseController {
 
@@ -50,7 +53,7 @@ public class SampleReturnInfoController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "样品归还单主表新增")
+    @LogAction(value = LogActionEnum.INSERT, desc = "样品归还单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SampleReturnInfoDTO.AddDTO dto) {
         return success(sampleReturnInfoService.add(dto));
     }
@@ -63,7 +66,7 @@ public class SampleReturnInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "样品归还单主表修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "样品归还单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:sampleReturnInfo:update",
@@ -82,7 +85,7 @@ public class SampleReturnInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleReturnInfo:paging",
-            tableAlias = ""
+            tableAlias = "sri"
     )
     public ApiResult<List<SampleReturnInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(sampleReturnInfoService.tabList(dto));
@@ -99,8 +102,9 @@ public class SampleReturnInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:sampleReturnInfo:paging",
-            tableAlias = ""
+            tableAlias = "sri"
     )
+    @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class )
     public ApiResult<PagingVO<SampleReturnInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
         return success(sampleReturnInfoService.paging(dto));
     }
@@ -149,11 +153,10 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:submit",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "样品归还单主表提交审核")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "样品归还单提交审核")
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
 		Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -161,10 +164,10 @@ public class SampleReturnInfoController extends BaseController {
             try {
                 submit = sampleReturnInfoService.submit(id);
             }catch (Exception e){
-                log.error("样品归还单主单 提交审核失败",e);
+                log.error("样品归还单 提交审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "样品归还单主单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "样品归还单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -188,11 +191,10 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:approve",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "样品归还单主表审核")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "样品归还单审核")
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
 		Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
         for (String id : ids) {
@@ -200,10 +202,10 @@ public class SampleReturnInfoController extends BaseController {
             try {
                 approveResult = sampleReturnInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("样品归还单主单审核失败",e);
+                log.error("样品归还单审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "样品归还单主单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "样品归还单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -227,11 +229,10 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:disApprove",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品归还单主表反审核")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品归还单反审核")
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
 		Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -239,10 +240,10 @@ public class SampleReturnInfoController extends BaseController {
             try {
                 disApproveResult = sampleReturnInfoService.disApprove(id);
             }catch (Exception e){
-                log.error("样品归还单主单反审核失败",e);
+                log.error("样品归还单反审核失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "样品归还单主单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "样品归还单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
@@ -267,11 +268,10 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:delete",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "样品归还单主表删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "样品归还单删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
 		Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -279,10 +279,47 @@ public class SampleReturnInfoController extends BaseController {
             try {
                 deleteResult = sampleReturnInfoService.delete(id);
             }catch (Exception e){
-                log.error("样品归还单主单删除失败",e);
+                log.error("样品归还单删除失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "样品归还单主单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "样品归还单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+    * 作废
+    * @author jack
+    * @date:  2025-08-20
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleReturnInfo:invalid",
+            serviceClass = SampleReturnInfoService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "样品归还单作废")
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
+		Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = sampleReturnInfoService.invalid(id);
+            }catch (Exception e){
+                log.error("样品归还单作废失败",e);
+                SampleReturnInfoEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "样品归还单不存在, 作废失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -306,11 +343,10 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:cancelProcess",
             serviceClass = SampleReturnInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "样品归还单主表撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "样品归还单撤销")
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SampleReturnInfoEntity> list = sampleReturnInfoService.lambdaQuery().in(SampleReturnInfoEntity::getId, ids).list();
         Map<String, SampleReturnInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleReturnInfoEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -318,10 +354,10 @@ public class SampleReturnInfoController extends BaseController {
             try {
                 cancelResult = sampleReturnInfoService.cancelProcess(id);
             }catch (Exception e){
-                log.error("样品归还单主单撤回流程失败",e);
+                log.error("样品归还单撤回流程失败",e);
                 SampleReturnInfoEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "样品归还单主单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "样品归还单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
@@ -340,11 +376,6 @@ public class SampleReturnInfoController extends BaseController {
     * @return ApiResult<SampleReturnInfoDTO.ViewDTO>>
     */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:sampleReturnInfo:view",
-            serviceClass = SampleReturnInfoService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<SampleReturnInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(sampleReturnInfoService.view(id));
@@ -364,7 +395,7 @@ public class SampleReturnInfoController extends BaseController {
             menuCode = "wms:sampleReturnInfo:export",
             tableAlias = ""
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "样品归还单主表导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "样品归还单导出Excel数据")
     public void exportList(@RequestBody @Validated SampleReturnInfoDTO.ExportDTO dto, HttpServletResponse response) {
         sampleReturnInfoService.exportList(dto, response);
     }

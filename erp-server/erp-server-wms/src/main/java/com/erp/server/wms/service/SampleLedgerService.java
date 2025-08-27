@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 
 import java.util.List;
 import java.util.Map;
@@ -92,4 +93,6 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     List<SampleLedgerDTO.SkuAvailableQtyDTO> listLedgerByUserId(SampleLedgerDTO.SearchDTO dto);
 
     PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
+
+    SampleLedgerDTO.SampleScrapView generateSampleScrapView( List<String> ids);
 }

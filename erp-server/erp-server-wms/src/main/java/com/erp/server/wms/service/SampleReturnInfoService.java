@@ -142,5 +142,12 @@ public interface SampleReturnInfoService extends SuperService<SampleReturnInfoEn
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleReturnInfoEntity entity);
-
+    /**
+     * 作废
+     * @author jack
+     * @date: 2025-08-20
+     * @param id
+     * @return
+     */
+    BatchResultDTO invalid(String id);
 }

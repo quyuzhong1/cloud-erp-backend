@@ -305,7 +305,7 @@ public class SampleScrapInfoController extends BaseController {
             menuCode = "wms:sampleScrapInfo:invalid",
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "样品报废单作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "样品报废单作废")
     public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
