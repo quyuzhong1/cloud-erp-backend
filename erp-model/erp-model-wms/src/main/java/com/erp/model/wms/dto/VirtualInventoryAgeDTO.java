@@ -297,6 +297,12 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private String virtualWarehouseId;
 
         /**
+         * 日期
+         */
+        @NotNull(message = "统计日期不能为空")
+        private LocalDate date;
+
+        /**
          * 天数间隔区间
          */
         private String daysInterval;
