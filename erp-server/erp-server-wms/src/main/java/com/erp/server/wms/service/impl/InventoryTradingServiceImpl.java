@@ -67,7 +67,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private VirtualInventoryService virtualInventoryService;
 
     @Override
-    @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus")
+    @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus",unlockAfterTx = true)
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
         // 2-移除忽略的sku 先移除避免只存在忽略的sku的单据导致错误
         transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
