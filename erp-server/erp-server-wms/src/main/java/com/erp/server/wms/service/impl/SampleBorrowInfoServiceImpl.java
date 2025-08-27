@@ -753,6 +753,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     public SampleBorrowInfoDTO.ViewDTO view(String id) {
         SampleBorrowInfoEntity sampleBorrowInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品借用单数据"));
         SampleBorrowInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleBorrowInfoDTO.ViewDTO.class, sampleBorrowInfoEntity);
+        data.setApproveStatus(sampleBorrowInfoEntity.getApproveStatus().getStatus());
         // 数据填充处理
         fillOne(data);
 

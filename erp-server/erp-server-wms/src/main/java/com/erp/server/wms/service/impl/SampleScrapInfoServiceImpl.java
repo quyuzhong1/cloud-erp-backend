@@ -677,6 +677,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 将实体映射为ViewDTO对象
         SampleScrapInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleScrapInfoDTO.ViewDTO.class, sampleScrapInfoEntity);
+        data.setApproveStatus(sampleScrapInfoEntity.getApproveStatus().getStatus());
 
         // 填充额外展示所需的数据
         fillOne(data);
