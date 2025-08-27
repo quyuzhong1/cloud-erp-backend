@@ -99,24 +99,18 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     @Autowired
     private SampleReturnDetailService sampleReturnDetailService;
 
-    @Resource
-    private SampleReturnDetailService sampleReturnDetailService;
-    @Resource
+    @Autowired
     private SampleLedgerService sampleLedgerService;
-    @Resource
+    @Autowired
     private WmsAttachmentService attachmentService;
-    @Resource
+    @Autowired
     private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
+    @Autowired
     private FileFeign fileFeign;
-    @Resource
+    @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Resource
+    @Autowired
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
