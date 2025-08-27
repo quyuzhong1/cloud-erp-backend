@@ -63,6 +63,18 @@ public class BaseIdsDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class RemarkDTO extends IdsDTO{
+        private String sourceCode;
+
+        @NotBlank(message = "填写信息不能为空")
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String remark;
+
+    }
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SourceCodeDTO{
+        private List<String> sourceCodeList;
 
         @NotBlank(message = "填写信息不能为空")
         @Size(max = 255,message = "填写信息不能超过255字符")

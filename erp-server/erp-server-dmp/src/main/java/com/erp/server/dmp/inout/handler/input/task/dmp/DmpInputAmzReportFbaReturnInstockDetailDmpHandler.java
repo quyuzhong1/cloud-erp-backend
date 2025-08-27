@@ -63,13 +63,21 @@ public class DmpInputAmzReportFbaReturnInstockDetailDmpHandler extends DmpInputD
 		Map<String, String> dmpReturnIdMap = new HashMap<>();
 		if(CollectionUtils.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				String key = CharSequenceUtil.format("{}_{}", listMap.get("platform_order_no").toString(), listMap.get("auth_id").toString());
+				String key = CharSequenceUtil.format("{}_{}_{}",
+                        listMap.get("platform_order_no").toString(),
+                        listMap.get("auth_id").toString(),
+                        listMap.getOrDefault("batch_no","").toString()
+                );
 				dmpReturnIdMap.put(key, listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {
 			for (TreeMap<String, Object> detailMap : dmpInputMongoList) {
-				String returnOrderId = CharSequenceUtil.format("{}_{}", detailMap.get("orderId").toString(), detailMap.get("platformShopCode").toString());
+				String returnOrderId = CharSequenceUtil.format("{}_{}_{}",
+                        detailMap.get("orderId").toString(),
+                        detailMap.get("platformShopCode").toString(),
+                        detailMap.getOrDefault("thirdDetailId","").toString()
+                );
 				String dmpId = dmpReturnIdMap.get(returnOrderId);
 				detailMap.put("mainId", dmpId);
 			}

@@ -88,7 +88,7 @@ public class DictPartitionController extends BaseController {
      * @return ApiResult<List < DictPartitionDTO.DictDTO>>
      * @author hyj
      */
-    @PostMapping("/")
+    @PostMapping("/drop/down")
     public ApiResult<List<DictPartitionDTO.DictDTO>> dropDown(@RequestBody @Validated DictPartitionDTO.SelectDTO dto) {
         List<DictPartitionDTO.DictDTO> list = dictPartitionService.dropDown(dto);
         return success(list);

@@ -10,28 +10,30 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import java.io.IOException;
-
 /**
- * The shipping method used for the fulfillment order.
+ * The shipping method used for the fulfillment order. When this value is &#x60;ScheduledDelivery&#x60;, choose &#x60;Ship&#x60; for the &#x60;fulfillmentAction&#x60;. &#x60;Hold&#x60; is not a valid &#x60;fulfillmentAction&#x60; value when the &#x60;shippingSpeedCategory&#x60; value is &#x60;ScheduledDelivery&#x60;. Note: Shipping method service level agreements vary by marketplace. Sellers should refer to the [Seller Central](https://developer-docs.amazon.com/sp-api/docs/seller-central-urls) website in their marketplace for shipping method service level agreements and fulfillment fees.
  */
 @JsonAdapter(ShippingSpeedCategory.Adapter.class)
 public enum ShippingSpeedCategory {
-  
+  @SerializedName("Standard")
   STANDARD("Standard"),
-  
+  @SerializedName("Expedited")
   EXPEDITED("Expedited"),
-  
+  @SerializedName("Priority")
   PRIORITY("Priority"),
-  
+  @SerializedName("ScheduledDelivery")
   SCHEDULEDDELIVERY("ScheduledDelivery");
 
   private String value;
@@ -49,9 +51,9 @@ public enum ShippingSpeedCategory {
     return String.valueOf(value);
   }
 
-  public static ShippingSpeedCategory fromValue(String text) {
+  public static ShippingSpeedCategory fromValue(String input) {
     for (ShippingSpeedCategory b : ShippingSpeedCategory.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -61,14 +63,13 @@ public enum ShippingSpeedCategory {
   public static class Adapter extends TypeAdapter<ShippingSpeedCategory> {
     @Override
     public void write(final JsonWriter jsonWriter, final ShippingSpeedCategory enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public ShippingSpeedCategory read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return ShippingSpeedCategory.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return ShippingSpeedCategory.fromValue((String)(value));
     }
   }
 }
-

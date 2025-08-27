@@ -10,37 +10,59 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 
 /**
  * The current delivery status of the package.
  */
 @JsonAdapter(CurrentStatus.Adapter.class)
 public enum CurrentStatus {
-  
+  @SerializedName("IN_TRANSIT")
   IN_TRANSIT("IN_TRANSIT"),
-  
+  @SerializedName("DELIVERED")
   DELIVERED("DELIVERED"),
-  
+  @SerializedName("RETURNING")
   RETURNING("RETURNING"),
-  
+  @SerializedName("RETURNED")
   RETURNED("RETURNED"),
-  
+  @SerializedName("UNDELIVERABLE")
   UNDELIVERABLE("UNDELIVERABLE"),
-  
+  @SerializedName("DELAYED")
   DELAYED("DELAYED"),
-  
+  @SerializedName("AVAILABLE_FOR_PICKUP")
   AVAILABLE_FOR_PICKUP("AVAILABLE_FOR_PICKUP"),
-  
-  CUSTOMER_ACTION("CUSTOMER_ACTION");
+  @SerializedName("CUSTOMER_ACTION")
+  CUSTOMER_ACTION("CUSTOMER_ACTION"),
+  @SerializedName("UNKNOWN")
+  UNKNOWN("UNKNOWN"),
+  @SerializedName("OUT_FOR_DELIVERY")
+  OUT_FOR_DELIVERY("OUT_FOR_DELIVERY"),
+  @SerializedName("DELIVERY_ATTEMPTED")
+  DELIVERY_ATTEMPTED("DELIVERY_ATTEMPTED"),
+  @SerializedName("PICKUP_SUCCESSFUL")
+  PICKUP_SUCCESSFUL("PICKUP_SUCCESSFUL"),
+  @SerializedName("PICKUP_CANCELLED")
+  PICKUP_CANCELLED("PICKUP_CANCELLED"),
+  @SerializedName("PICKUP_ATTEMPTED")
+  PICKUP_ATTEMPTED("PICKUP_ATTEMPTED"),
+  @SerializedName("PICKUP_SCHEDULED")
+  PICKUP_SCHEDULED("PICKUP_SCHEDULED"),
+  @SerializedName("RETURN_REQUEST_ACCEPTED")
+  RETURN_REQUEST_ACCEPTED("RETURN_REQUEST_ACCEPTED"),
+  @SerializedName("REFUND_ISSUED")
+  REFUND_ISSUED("REFUND_ISSUED"),
+  @SerializedName("RETURN_RECEIVED_IN_FC")
+  RETURN_RECEIVED_IN_FC("RETURN_RECEIVED_IN_FC");
 
   private String value;
 
@@ -57,9 +79,9 @@ public enum CurrentStatus {
     return String.valueOf(value);
   }
 
-  public static CurrentStatus fromValue(String text) {
+  public static CurrentStatus fromValue(String input) {
     for (CurrentStatus b : CurrentStatus.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -69,14 +91,13 @@ public enum CurrentStatus {
   public static class Adapter extends TypeAdapter<CurrentStatus> {
     @Override
     public void write(final JsonWriter jsonWriter, final CurrentStatus enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public CurrentStatus read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return CurrentStatus.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return CurrentStatus.fromValue((String)(value));
     }
   }
 }
-

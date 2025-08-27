@@ -1057,4 +1057,29 @@ public class ExportWmsFeignController {
         return thirdWarehouseDeliveryService.paging(dto);
     }
 
+    /**
+     * b2b销售订单冻结汇总导出
+     * @author will
+     * @date 2025/8/21 14:43
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportTotalB2bProcessing")
+    @WebAdvanceQuery
+    public PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2bProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return soB2bProcessingService.b2bTotalPaging(dto);
+    }
+
+    /**
+     * b2c销售订单冻结汇总导出
+     * @author will
+     * @date 2025/8/21 14:43
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportTotalB2cProcessing")
+    @WebAdvanceQuery
+    public PagingVO<ReportProcessingDTO.ListDTO> exportTotalB2cProcessing(@RequestBody PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
+        return soB2cProcessingService.b2cTotalPaging(dto);
+    }
 }

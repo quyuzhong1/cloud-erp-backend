@@ -47,7 +47,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
 
     @PostMapping("/add")
     public ThirdWarehouseDeliveryEntity add(@RequestBody ThirdWarehouseDeliveryEntity entity) {
-        return thirdWarehouseDeliveryService.add(entity);
+        return thirdWarehouseDeliveryService.add(entity,true);
     }
 
     @PostMapping("/getLatestBySoId")

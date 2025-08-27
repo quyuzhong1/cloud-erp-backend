@@ -281,6 +281,27 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
     }
 
+    @Override
+    public List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO) {
+        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listFbaInventory(queryDTO);
+    }
+
+    @Override
+    public HashMap<String, List<FbaInventoryDTO.InventoryDTO>> fbaInventoryTree(FbaInventoryDTO.QueryDTO queryDTO) {
+        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return new HashMap<>();
+        }
+        List<FbaInventoryDTO.InventoryDTO> list = baseMapper.listFbaInventory(queryDTO);
+        HashMap<String, List<FbaInventoryDTO.InventoryDTO>> map = new HashMap<>();
+        for (FbaInventoryDTO.InventoryDTO inventoryDTO : list) {
+            map.computeIfAbsent(inventoryDTO.getSkuNo(), k -> new ArrayList<>()).add(inventoryDTO);
+        }
+        return map;
+    }
+
     private <T extends RequisitionApplicationDetailDTO.CommonDTO> void checkAndUpdateFnskuCommon(List<T> detailList, String channelId) {
         List<String> platformSkuNoList = detailList.stream()
                 .map(RequisitionApplicationDetailDTO.CommonDTO::getPlatformSku)

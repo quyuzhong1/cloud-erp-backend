@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 /**
  * redis单号生成器
@@ -172,7 +173,8 @@ public class DocNoGenHelper implements InitializingBean {
             );
         }
         // 单据前缀+顺序位
-        String docNo = CharSequenceUtil.format("{}{}",businessNoPrefix, currentIndex);
+        String formattedNum = String.format("%03d", currentIndex);
+        String docNo = CharSequenceUtil.format("{}{}",businessNoPrefix, formattedNum);
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
     }
@@ -188,6 +190,9 @@ public class DocNoGenHelper implements InitializingBean {
         String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + DYNAMIC_NO;
        //前缀
         String businessNoPrefix = BusinessNoEnum.A.getCode();
+        if (redisTemplate.hasKey(docNoKey)) {
+            businessNoPrefix = Objects.requireNonNull(redisTemplate.opsForValue().get(docNoKey)).toString();
+        }
         if (currentIndex.equals(1000L)) {
             Object redisNo = redisTemplate.opsForValue().get(docNoKey);
             businessNoPrefix = BusinessNoEnum.getNextCode(StrUtils.null2EmptyWithTrim(redisNo));

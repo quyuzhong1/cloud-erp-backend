@@ -160,6 +160,7 @@ public enum ModuleTypeEnum {
     SKU_STD_COST_DETAIL("140", "SKU标准成本"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
+    SO_MULTI_CHANNEL("134", "多渠道订单"),
 
 
     ;

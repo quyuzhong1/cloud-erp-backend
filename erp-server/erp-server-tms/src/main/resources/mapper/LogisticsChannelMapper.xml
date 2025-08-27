@@ -188,6 +188,7 @@
         ls.short_name as logisticsSupplierName
         from logistics_channel lc
         left join logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = false
+        left join logistics_auth la on ls.id = la.main_id and la.is_deleted = false
         where
         lc.is_deleted = false
           and ls.id is not null
@@ -199,6 +200,9 @@
         </if>
         <if test="params.disabled != null">
             and lc.disabled=#{params.disabled}
+        </if>
+        <if test="params.logisticsPlatform != null and params.logisticsPlatform != ''">
+            and la.logistics_platform = #{params.logisticsPlatform}
         </if>
         order by lc.disabled asc,
         <if test="params.searchKeyword != null and params.searchKeyword != ''">

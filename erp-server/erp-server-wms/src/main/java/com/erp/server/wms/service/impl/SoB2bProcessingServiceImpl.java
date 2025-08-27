@@ -18,6 +18,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
+import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_TOTAL_PROCESSING_EXPORT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2B_PROCESSING;
 
 /**
@@ -182,7 +184,19 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     public PagingVO<ReportProcessingDTO.ListDTO> b2bTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.b2bTotalPaging(dto.page(), dto.getParams());
+        // 填充名称
+        if (CollUtil.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(item -> {
+                item.setTypeName(CfgSettingOrderTypeEnum.getName(item.getType()));
+            });
+        }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean b2bTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("导出b2b汇总数据", EXPORT_WMS_B2B_TOTAL_PROCESSING_EXPORT.getCode(), dto);
+        return  Boolean.TRUE;
     }
 
     /**

@@ -65,6 +65,8 @@ public class ExportOmsFeignController {
     @Resource
     private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -268,4 +270,14 @@ public class ExportOmsFeignController {
         return cfgInvoiceInvalidService.paging(dto);
     }
 
+
+    @PostMapping("/soMultiChannel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:soMultiChannel:paging",
+            tableAlias = "smc")
+    @WebAdvanceQuery
+    public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
+        return soMultiChannelService.paging(dto);
+    }
 }

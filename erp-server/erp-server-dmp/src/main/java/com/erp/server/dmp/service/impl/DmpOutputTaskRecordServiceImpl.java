@@ -773,4 +773,21 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         });
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public Boolean batchNoNeedSyncBySourceCode(List<String> sourceCodeList, String remark) {
+        if (CollectionUtils.isEmpty(sourceCodeList)) {
+            return Boolean.FALSE;
+        }
+
+        //校验是否存在黑名单
+//        checkExistsBlack(ids);
+        remark = "无需同步原因：" + remark + "，推送失败原因：";
+        return this.lambdaUpdate()
+                .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+                .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+                .setSql(" response_data = ('" + remark + "' || response_data) " )
+                .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .update();
+    }
 }

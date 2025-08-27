@@ -19,12 +19,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.wms.dto.FirstMileProcessingDTO;
-import com.erp.model.wms.dto.FirstMileProcessingDetailDTO;
-import com.erp.model.wms.dto.ReportProcessingDTO;
-import com.erp.model.wms.dto.SoB2bProcessingDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileProcessingDetailEntity;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
+import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -44,6 +42,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_TOTAL_PROCESSING_EXPORT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PROCESSING;
 
 /**
@@ -308,7 +307,19 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     public PagingVO<ReportProcessingDTO.ListDTO> firstMileTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<ReportProcessingDTO.ListDTO> pageData = this.baseMapper.firstMileTotalPaging(dto.page(), dto.getParams());
+        // 填充名称
+        if (CollUtil.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(item -> {
+                item.setTypeName(CfgSettingOrderTypeEnum.getName(item.getType()));
+            });
+        }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean firstMileTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("导出b2b汇总数据", EXPORT_WMS_B2B_TOTAL_PROCESSING_EXPORT.getCode(), dto);
+        return  Boolean.TRUE;
     }
 
     /**
