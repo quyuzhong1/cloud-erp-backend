@@ -26,7 +26,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductDetailImageExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -37,15 +36,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.*;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
@@ -149,34 +145,29 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
     }
 
     /**
+     * @param productDetailList 产品明细实体列表
+     * @param menuCode          菜单编码，用于匹配用户的权限配置
+     * @param menuTableField    数据表字段名（下划线格式），用于获取产品实体中的权限控制字段
+     * @param userId
+     * @return List<String> 有权限访问的skuNo列表
      * @description: 判断产品明细列表中是否存在当前用户有权限访问的数据，并返回有权限的产品ID列表。
-     *               权限判断基于用户的角色和数据范围（全部、部门、个人）进行过滤。
+     * 权限判断基于用户的角色和数据范围（全部、部门、个人）进行过滤。
      * @author jack
      * @date: 2025-07-31
-     * @param productDetailList 产品明细实体列表
-     * @param menuCode 菜单编码，用于匹配用户的权限配置
-     * @param menuTableField 数据表字段名（下划线格式），用于获取产品实体中的权限控制字段
-     * @return List<String> 有权限访问的skuNo列表
      */
-    private List<String>  isExistAuth(List<ProductDetailEntity> productDetailList , String menuCode,String menuTableField) {
+    private List<String>  isExistAuth(List<ProductDetailEntity> productDetailList , String menuCode, String menuTableField, String userId) {
         // 参数校验：若产品列表为空或菜单编码、字段名为空，则直接返回空列表
         if (CollectionUtils.isEmpty(productDetailList) || CharSequenceUtil.isBlank(menuCode) || CharSequenceUtil.isBlank(menuTableField)) {
             return Collections.emptyList();
         }
 
-        // 获取当前登录用户信息
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        if (userInfo == null || userInfo.getUid() == null) {
-            return Collections.emptyList();
-        }
-
         // 获取用户请求权限列表
-        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userId);
 
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
 
         // 获取用户角色ID列表，若包含超级管理员角色（ID为"1"）则赋予全部数据权限
-        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         if (roleIdList.contains("1")) {
             userRequestPermissions.setPermissionsCode(menuCode);
             userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
@@ -195,7 +186,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
         }
 
         // 获取用户所在部门的用户列表，用于部门级别权限判断
-        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+        List<String> userList = sysUserFeign.getDepUserList(userId);
 
         Integer dataScope = userRequestPermissions.getDataScope();
 
@@ -226,7 +217,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
             } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(dataScope)) {
                 // 个人数据权限：判断字段中是否包含当前用户ID
                 List<String> users = Arrays.asList(obj.toString().split(","));
-                if (users.contains(userInfo.getUid())) {
+                if (users.contains(userId)) {
                     result.add(productDetailEntity.getSkuNo());
                 }
             }
@@ -291,7 +282,7 @@ public class ProductDetailImagesServiceImpl extends ServiceImpl<ProductDetailMap
             Long size = 0l;
 
             //是否存在权限
-            List<String> skuNoListHaveAuth = isExistAuth(productDetailList, "plm:product:detail:importZip", "charge_id");
+            List<String> skuNoListHaveAuth = isExistAuth(productDetailList, "plm:product:detail:importZip", "charge_id", dto.getUserId());
 
             // 遍历所有图片文件并异步处理
             for (MultipartFile file : multipartFiles) {
