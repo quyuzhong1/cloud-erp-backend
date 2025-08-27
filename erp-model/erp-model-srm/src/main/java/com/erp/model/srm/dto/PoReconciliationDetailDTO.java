@@ -3,6 +3,7 @@ package com.erp.model.srm.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.utils.MathUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,11 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 供应商Id
          */
         private String supplierId;
+
+        /**
+         * 是否是srm
+         */
+        private Boolean isSrm = Boolean.FALSE;
     }
 
     /**
@@ -77,9 +83,23 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 采购单Id【可排序
+         */
+        private String poId;
+
+        /**
          * 采购单号【可排序】
          */
         private String poCode;
+        /**
+         * 采购单来源单号类型
+         */
+        private String poSourceType;
+
+        /**
+         * 采购单来源单号
+         */
+        private String poSourceCode;
 
         /**
          * 单据类型【可排序】
@@ -247,6 +267,14 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         private BigDecimal discountRate;
         /**
+         * 折扣税率,%
+         */
+        private String discountRateStr;
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
          * 预付金额
          */
         private BigDecimal prepayAmount;
@@ -254,6 +282,12 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 税价合计（折扣）
          */
         private BigDecimal discountTaxAmount;
+
+        /**
+         * 采购申请单id集合
+         */
+        @JsonIgnore
+        private List<String> purchaseApplicationIds;
     }
 
 
@@ -319,6 +353,10 @@ public class PoReconciliationDetailDTO implements Serializable {
         * 采购订单id
         */
         private String poId;
+        /**
+         * 采购订单来源单号
+         */
+        private String poSourceCode;
 
         /**
         * 单据日期

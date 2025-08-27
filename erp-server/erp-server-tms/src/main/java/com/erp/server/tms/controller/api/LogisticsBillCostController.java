@@ -91,6 +91,26 @@ public class LogisticsBillCostController extends BaseController {
     }
 
     /**
+     * 根据高级查询查出符合条件的主表id集合
+     * @author will
+     * @date 2025/8/21 16:20
+     * @param dto
+     * @return ApiResult<List<String>>
+     */
+    @PostMapping("/listLogisticsBillCostId")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:logisticsBillCost:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    public ApiResult<List<String>> listLogisticsBillCostId(@RequestBody @Validated LogisticsBillCostDTO.ListParamDTO dto) {
+        List<String> idList = logisticsBillCostService.listLogisticsBillCostId(dto);
+        return success(idList);
+    }
+
+    /**
     * 修改
     * @author Will
     * @date:  2023-11-06

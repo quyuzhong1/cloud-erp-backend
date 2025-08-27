@@ -139,7 +139,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 查询周期内已签收未对账的物流单
      */
 
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo);
 
     BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
 

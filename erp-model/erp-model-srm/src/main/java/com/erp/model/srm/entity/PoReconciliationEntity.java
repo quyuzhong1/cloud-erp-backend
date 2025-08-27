@@ -118,6 +118,12 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     @TableField("purchase_confirm_user_name")
     private String purchaseConfirmUserName;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
 
     /**
      * 同步金蝶id

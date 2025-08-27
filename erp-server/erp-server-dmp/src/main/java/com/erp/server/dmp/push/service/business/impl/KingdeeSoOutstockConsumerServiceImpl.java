@@ -40,6 +40,8 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+    private static KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void executeConsumer(Map<String, Object> map) {
@@ -52,9 +54,7 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-
+        
         //操作项
         String operate = (String) map.get("operate");
         /**
