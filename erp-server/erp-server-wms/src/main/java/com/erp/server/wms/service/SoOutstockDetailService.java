@@ -195,4 +195,6 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return
      */
     Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds);
+
+    void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
 }
