@@ -130,7 +130,11 @@
         FROM sample_ledger sl
         WHERE
         ${params.sqlMap.default}
-        AND srd.is_deleted = false
+        AND sl.is_deleted = false
+        <!--数量为0不显示-->
+        <if test="params.hideZeroQty != null and params.hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -141,16 +145,21 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY sl.create_time DESC
+         sl.create_time DESC
     </select>
 
-    <!-- 获取状态统计 -->
+
+    <!-- 获取状态统计（支持数量为0不显示） -->
     <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleLedgerDTO$TabListDTO">
         SELECT 
             'all' as status,
             COUNT(*) as count
         FROM sample_ledger sl
         WHERE sl.is_deleted = FALSE
+        <!--数量为0不显示-->
+        <if test="hideZeroQty != null and hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
         <if test="permissionSql != null and permissionSql != ''">
             AND (${permissionSql})
         </if>
@@ -182,6 +191,10 @@
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
+        <!--数量为0不显示-->
+        <if test="params.hideZeroQty != null and params.hideZeroQty == true">
+            AND sl.qty != 0
+        </if>
         <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

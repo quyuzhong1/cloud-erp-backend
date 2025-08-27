@@ -49,6 +49,14 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
     List<SampleLedgerDTO.TabListDTO> getAllStatusCounts(@Param("permissionSql") String permissionSql);
 
     /**
+     * 获取状态统计（支持数量为0不显示）
+     * @param permissionSql 权限SQL
+     * @param hideZeroQty 是否隐藏数量为0的记录
+     * @return 状态统计列表
+     */
+    List<SampleLedgerDTO.TabListDTO> getAllStatusCounts(@Param("permissionSql") String permissionSql, @Param("hideZeroQty") Boolean hideZeroQty);
+
+    /**
      * 根据用户ID查询台账列表
      * @param params
      * @return

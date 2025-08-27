@@ -56,6 +56,16 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
+     * 状态统计（支持数量为0不显示）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto 权限参数
+     * @param hideZeroQty 是否隐藏数量为0的记录
+     * @return List<SampleLedgerDTO.TabListDTO>>
+     */
+    List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto, Boolean hideZeroQty);
+
+    /**
      * 异步导出
      * @author wuhaotian
      * @date: 2025-08-21

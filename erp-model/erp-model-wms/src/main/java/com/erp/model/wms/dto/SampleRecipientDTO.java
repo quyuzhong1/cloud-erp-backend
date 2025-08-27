@@ -84,7 +84,7 @@ public class SampleRecipientDTO implements Serializable {
         private String  id;
 
         /**
-        * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回)
+        * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回) /wms/drop/down/approveStatus/list
         */
         private String approveStatus;
 
@@ -129,7 +129,7 @@ public class SampleRecipientDTO implements Serializable {
         private LocalDate recipientDate;
 
         /**
-        * 用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他
+        * 用途 /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
 
@@ -169,12 +169,12 @@ public class SampleRecipientDTO implements Serializable {
         private String pickOrgName;
 
         /**
-        * 使用方式 公司内部使用/公司外部使用
+        * 使用方式 公司内部使用/公司外部使用 /wms/dict/drop/down?type=sampleUsageScope
         */
         private String usageScope;
 
         /**
-        * 使用方id
+        * 使用方id /wms/dict/saveOrUpdateBatch 保存 /wms/dict/drop/down?type=sampleUseUser 查询
         */
         private String useUserId;
 
@@ -279,7 +279,7 @@ public class SampleRecipientDTO implements Serializable {
         private String productName;
 
         /**
-         * 执行状态
+         * 执行状态 /wms/dict/drop/down?type=executionStatus
          */
         private String execStatus;
 
@@ -320,7 +320,7 @@ public class SampleRecipientDTO implements Serializable {
         private String  id;
 
         /**
-        * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回)
+        * 审批状态(waitSubmit=待提交, approved=已批准, rejected=已驳回) /wms/drop/down/approveStatus/list
         */
         private String approveStatus;
 
@@ -336,7 +336,7 @@ public class SampleRecipientDTO implements Serializable {
         private LocalDate recipientDate;
 
         /**
-        * 用途 枚举类型：办公领用/拍摄/研发/抖音直播/客户领用（客户使用指导）/参展/营销样品/认证检测/供应链生产组装/用户新品体验（仓库提供）/不良品分析（从售后仓领样）/星河线下店领用/其他
+        * 用途  /wms/dict/drop/down?type=sampleUsage
         */
         private String usage;
 
@@ -371,12 +371,12 @@ public class SampleRecipientDTO implements Serializable {
         private String pickOrgName;
 
         /**
-        * 使用方式 公司内部使用/公司外部使用
+        * 使用方式 公司内部使用/公司外部使用 /wms/dict/drop/down?type=sampleUsageScope
         */
         private String usageScope;
 
         /**
-        * 使用方id
+        * 使用方id /wms/dict/saveOrUpdateBatch 保存 /wms/dict/drop/down?type=sampleUseUser 查询
         */
         private String useUserId;
 
@@ -528,7 +528,7 @@ public class SampleRecipientDTO implements Serializable {
         private LocalDate recipientDate;
 
         /**
-         * 用途
+         * 用途 /wms/dict/drop/down?type=sampleUsage
          */
         @NotBlank(message = "用途 不能为空")
         private String usage;
@@ -563,13 +563,13 @@ public class SampleRecipientDTO implements Serializable {
 
 
         /**
-         * 使用方式 公司内部使用/公司外部使用
+         * 使用方式 公司内部使用/公司外部使用 /wms/dict/drop/down?type=sampleUsageScope
          */
         @NotBlank(message = "使用方式 公司内部使用/公司外部使用不能为空")
         private String usageScope;
 
         /**
-         * 使用方id
+         * 使用方id /wms/dict/saveOrUpdateBatch 保存 /wms/dict/drop/down?type=sampleUseUser 查询
          */
         @NotBlank(message = "使用方id不能为空")
         @Size(max = 50, message = "使用方id最大长度不能超过50位")

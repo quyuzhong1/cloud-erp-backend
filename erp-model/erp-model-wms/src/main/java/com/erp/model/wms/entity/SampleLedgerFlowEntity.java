@@ -53,6 +53,11 @@ public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
     @TableField("dept_id")
     private String deptId;
     /**
+     * 归属部门名称
+     */
+    @TableField("dept_name")
+    private String deptName;
+    /**
     * 单据编号
     */
     @TableField("source_code")
@@ -117,6 +122,8 @@ public class SampleLedgerFlowEntity extends BaseEntity<SampleLedgerFlowEntity> {
     public static final String USER_NAME = "user_name";
 
     public static final String DEPT_ID = "dept_id";
+
+    public static final String DEPT_NAME = "dept_name";
 
     public static final String SOURCE_CODE = "source_code";
 

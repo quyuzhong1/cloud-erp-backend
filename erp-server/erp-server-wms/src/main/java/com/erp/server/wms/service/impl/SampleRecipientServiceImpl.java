@@ -154,6 +154,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 数据处理
         handleData(sampleRecipientEntity);
 
+        // 使用范围验证
+        validateUsageScope(sampleRecipientEntity);
+
         log.info("开始新增样品领用单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);
@@ -215,6 +218,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         SampleRecipientEntity sampleRecipientEntity =  BeanMapperUtils.map(SampleRecipientEntity.class, addOrUpdateDTO);
         // 数据处理
         handleData(sampleRecipientEntity);
+        
+        // 使用范围验证
+        validateUsageScope(sampleRecipientEntity);
         
         // 库存校验
         if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
@@ -759,7 +765,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setUsage(SampleUsageEnum.getName(data.getUsage()));
-            data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsage()));
+            data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
             data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
@@ -843,7 +849,50 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
 
+
+
 }
+    /**
+     * 使用范围验证
+     * 1、若使用范围选择"公司内部使用"，则置灰，且取值等于领用人
+     * 2、若使用范围选择"公司外部使用"，则允许下拉选择，且允许新建选项，且必填
+     * @param sampleRecipientEntity 样品领用单实体
+     */
+    private void validateUsageScope(SampleRecipientEntity sampleRecipientEntity) {
+        if (sampleRecipientEntity == null || StringUtils.isBlank(sampleRecipientEntity.getUsageScope())) {
+            throw new ServiceException("使用范围不能为空");
+        }
+
+        // 获取使用范围枚举
+        SampleUsageScopeEnum usageScopeEnum = SampleUsageScopeEnum.getByUsageScope(sampleRecipientEntity.getUsageScope());
+        if (usageScopeEnum == null) {
+            throw new ServiceException("无效的使用范围");
+        }
+
+        if (SampleUsageScopeEnum.INTERNAL_USE.equals(usageScopeEnum)) {
+            // 公司内部使用：使用方ID和名称必须等于领用人
+            if (StringUtils.isBlank(sampleRecipientEntity.getUserId())) {
+                throw new ServiceException("领用人ID不能为空");
+            }
+
+            // 设置使用方ID和名称等于领用人
+            sampleRecipientEntity.setUseUserId(sampleRecipientEntity.getUserId());
+            sampleRecipientEntity.setUseUserName(sampleRecipientEntity.getUserName());
+
+            log.info("使用范围为公司内部使用，自动设置使用方为领用人：{}", sampleRecipientEntity.getUserName());
+
+        } else if (SampleUsageScopeEnum.EXTERNAL_USE.equals(usageScopeEnum)) {
+            // 公司外部使用：使用方ID和名称必填
+            if (StringUtils.isBlank(sampleRecipientEntity.getUseUserId())) {
+                throw new ServiceException("使用方ID不能为空");
+            }
+            if (StringUtils.isBlank(sampleRecipientEntity.getUseUserName())) {
+                throw new ServiceException("使用方名称不能为空");
+            }
+
+            log.info("使用范围为公司外部使用，使用方：{}", sampleRecipientEntity.getUseUserName());
+        }
+    }
 
 
         /**
@@ -1582,6 +1631,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         sampleRecipientEntity.setUsageScope(firstData.getUsageScope());
         sampleRecipientEntity.setRemark(firstData.getRemark());
         sampleRecipientEntity.setIsDelivery(false); // 默认不邮寄
+        
+        // 设置用户名称和部门名称
+        sampleRecipientEntity.setUserName(firstData.getUserName());
+
+        // 使用范围验证
+        validateUsageScope(sampleRecipientEntity);
         
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPLY);

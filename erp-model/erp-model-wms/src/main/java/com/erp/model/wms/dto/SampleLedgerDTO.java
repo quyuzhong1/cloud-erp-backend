@@ -66,6 +66,11 @@ public class SampleLedgerDTO implements Serializable {
          * 权限SQL
          */
         private String permissionSql;
+
+        /**
+         * 是否隐藏数量为0的记录
+         */
+        private Boolean hideZeroQty;
     }
 
     /**

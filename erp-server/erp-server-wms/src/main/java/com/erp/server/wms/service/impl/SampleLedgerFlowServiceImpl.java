@@ -23,9 +23,11 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_FLOW_REPORT;
@@ -45,6 +47,9 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -101,7 +106,16 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
     * 新增修改处理数据
     */
     private void handleData(SampleLedgerFlowEntity sampleLedgerFlowEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 如果deptName为空但deptId不为空，则根据deptId获取deptName
+        if (StrUtil.isBlank(sampleLedgerFlowEntity.getDeptName()) && StrUtil.isNotBlank(sampleLedgerFlowEntity.getDeptId())) {
+            try {
+                // 这里需要根据实际的API调用来获取部门名称
+                // 由于没有直接根据ID获取部门名称的接口，暂时留空
+                // TODO: 实现根据deptId获取deptName的逻辑
+            } catch (Exception e) {
+                log.warn("获取部门名称失败，deptId：{}，错误：{}", sampleLedgerFlowEntity.getDeptId(), e.getMessage());
+            }
+        }
     }
 
     /**
@@ -129,8 +143,26 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
      * @param records 记录列表
      */
     private void fillList(List<SampleLedgerFlowDTO.ListDTO> records) {
-        // TODO: 根据业务需求填充额外的数据
-        // 例如：填充关联的明细信息、计算字段等
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        
+        // 如果需要根据deptId填充deptName，可以在这里实现
+        // 收集需要查询的deptId
+        Set<String> deptIds = records.stream()
+                .filter(record -> StrUtil.isNotBlank(record.getDeptId()) && StrUtil.isBlank(record.getDeptName()))
+                .map(SampleLedgerFlowDTO.ListDTO::getDeptId)
+                .collect(Collectors.toSet());
+        
+        if (CollUtil.isNotEmpty(deptIds)) {
+            try {
+                // TODO: 这里可以调用API获取部门名称映射
+                // Map<String, String> deptNameMap = getDeptNameMap(deptIds);
+                // 然后填充到records中
+            } catch (Exception e) {
+                log.warn("批量获取部门名称失败，错误：{}", e.getMessage());
+            }
+        }
     }
 
     /**

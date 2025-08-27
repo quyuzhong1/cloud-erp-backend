@@ -245,6 +245,11 @@ public class SampleLedgerFlowDTO implements Serializable {
         private String deptId;
 
         /**
+        * 归属部门名称
+        */
+        private String deptName;
+
+        /**
         * 单据编号
         */
         private String sourceCode;
@@ -363,6 +368,12 @@ public class SampleLedgerFlowDTO implements Serializable {
         @NotBlank(message = "归属部门ID不能为空")
         @Size(max = 19,message = "归属部门ID最大长度不能超过19位")
         private String deptId;
+
+        /**
+        * 归属部门名称
+        */
+        @Size(max = 100,message = "归属部门名称最大长度不能超过100位")
+        private String deptName;
 
         /**
         * 单据编号

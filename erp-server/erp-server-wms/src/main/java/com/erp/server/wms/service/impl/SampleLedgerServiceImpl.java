@@ -170,7 +170,21 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
     @Override
     public List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto) {
         // 使用一个SQL查询获取所有状态的统计数量
-        List<SampleLedgerDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql());
+        List<SampleLedgerDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql(), false);
+        return list;
+    }
+
+    /**
+     * 状态统计（支持数量为0不显示）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto 权限参数
+     * @param hideZeroQty 是否隐藏数量为0的记录
+     * @return List<SampleLedgerDTO.TabListDTO>>
+     */
+    public List<SampleLedgerDTO.TabListDTO> tabList(PermissionsDTO dto, Boolean hideZeroQty) {
+        // 使用一个SQL查询获取所有状态的统计数量
+        List<SampleLedgerDTO.TabListDTO> list = baseMapper.getAllStatusCounts(dto.getPermissionSql(), hideZeroQty);
         return list;
     }
 
