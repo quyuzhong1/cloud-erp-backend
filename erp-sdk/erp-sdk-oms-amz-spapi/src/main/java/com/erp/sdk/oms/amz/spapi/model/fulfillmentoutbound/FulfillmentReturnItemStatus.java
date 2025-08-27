@@ -10,24 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.google.gson.annotations.SerializedName;
+import java.io.IOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 
 /**
  * Indicates if the return item has been processed by a fulfillment center.
  */
 @JsonAdapter(FulfillmentReturnItemStatus.Adapter.class)
 public enum FulfillmentReturnItemStatus {
-  
+  @SerializedName("New")
   NEW("New"),
-  
+  @SerializedName("Processed")
   PROCESSED("Processed");
 
   private String value;
@@ -45,9 +47,9 @@ public enum FulfillmentReturnItemStatus {
     return String.valueOf(value);
   }
 
-  public static FulfillmentReturnItemStatus fromValue(String text) {
+  public static FulfillmentReturnItemStatus fromValue(String input) {
     for (FulfillmentReturnItemStatus b : FulfillmentReturnItemStatus.values()) {
-      if (String.valueOf(b.value).equals(text)) {
+      if (b.value.equals(input)) {
         return b;
       }
     }
@@ -57,14 +59,13 @@ public enum FulfillmentReturnItemStatus {
   public static class Adapter extends TypeAdapter<FulfillmentReturnItemStatus> {
     @Override
     public void write(final JsonWriter jsonWriter, final FulfillmentReturnItemStatus enumeration) throws IOException {
-      jsonWriter.value(enumeration.getValue());
+      jsonWriter.value(String.valueOf(enumeration.getValue()));
     }
 
     @Override
     public FulfillmentReturnItemStatus read(final JsonReader jsonReader) throws IOException {
-      String value = jsonReader.nextString();
-      return FulfillmentReturnItemStatus.fromValue(String.valueOf(value));
+      Object value = jsonReader.nextString();
+      return FulfillmentReturnItemStatus.fromValue((String)(value));
     }
   }
 }
-

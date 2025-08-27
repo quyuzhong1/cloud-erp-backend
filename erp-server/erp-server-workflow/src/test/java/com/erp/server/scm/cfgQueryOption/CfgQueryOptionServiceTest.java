@@ -57,15 +57,15 @@ public class CfgQueryOptionServiceTest {
         // 准备测试数据
         CfgQueryOptionDTO.GenDTO dto = new CfgQueryOptionDTO.GenDTO();
         //系统
-        dto.setModel("plm");
+        dto.setModel("oms");
         //表名, 多个使用英文逗号隔开
-        dto.setTableName("pilot_application,pilot_application_detail");
+        dto.setTableName("so_multi_channel,so_multi_channel_detail");
         //表归属类型：main（主表）,detailList(明细)，自定义名称（根据实际单据）
         dto.setFieldBelongsType("main,detailList");
         //业务key，跟流程单据key保持一致（menu）
-        dto.setBussinessKey("pilotApplication");
+        dto.setBussinessKey("soMultiChannel");
         //使用类型，CfgQueryOptionUseTypeEnum枚举
-        dto.setUseType("testtttt");
+        dto.setUseType("cfgApproveSync");
 
         dto.setSql(sql);
         dto.setUrl(url);
