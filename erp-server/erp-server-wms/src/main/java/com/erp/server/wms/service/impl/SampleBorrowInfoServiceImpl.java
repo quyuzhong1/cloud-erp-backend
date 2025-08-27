@@ -18,10 +18,13 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.listener.SampleBorrowExcelListener;
 import com.erp.server.wms.mapper.SampleBorrowInfoMapper;
 import com.erp.server.wms.service.*;
@@ -95,6 +98,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     private FileFeign fileFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -476,6 +482,13 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        this.lambdaUpdate().eq(SampleBorrowInfoEntity::getId, dto.getId())
+                .set(SampleBorrowInfoEntity::getApproveUserId, userInfo.getUid())
+                .set(SampleBorrowInfoEntity::getApproveUserName, userInfo.getUserName())
+                .update(new SampleBorrowInfoEntity());
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -498,7 +511,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -509,6 +522,21 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+
+    /**
+     * 根据样品借用信息实体获取变量映射表
+     *
+     * @param entity 样品借用信息实体对象，用于提取业务变量数据
+     * @return 返回根据业务键获取的变量映射表，包含业务相关的配置变量
+     */
+    private Map<String,Object> getVariablesMap(SampleBorrowInfoEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_BORROW_INFO.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
