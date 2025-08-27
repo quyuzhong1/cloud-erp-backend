@@ -837,6 +837,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
             //差异数量
             Integer diffQty = newQty -  changeDetailEntity.getOriginQty();
+            //删除类型数量取last_picking_qty
+            if(StrUtil.equals(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode(),changeDetailEntity.getChangeType())){
+                diffQty = detailEntity.getLastPickingQty();
+            }
             //销售订单释放库存
             handleSubSoParam(soInfoEntity, soDetailEntity,subParamList,diffQty);
             //发货通知单参数
