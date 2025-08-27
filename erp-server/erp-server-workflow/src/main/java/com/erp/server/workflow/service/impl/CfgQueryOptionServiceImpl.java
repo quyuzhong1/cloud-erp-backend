@@ -218,7 +218,6 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         return variablesMap;
     }
 
-    @Transactional(rollbackFor =Exception.class)
     @Override
     public void genBySql(CfgQueryOptionDTO.GenDTO dto) {
         if(Objects.nonNull(dto)){
@@ -245,15 +244,14 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 if(count > 0){
                     continue;
                 }
-                saveFromSql(dto,tableNames[i]);
+                saveFromSql(dto,tableNames[i],fieldBelongsTypes[i]);
             }
         }
     }
 
 
-    private void saveFromSql(CfgQueryOptionDTO.GenDTO dto,String tableName) {
+    private void saveFromSql(CfgQueryOptionDTO.GenDTO dto,String tableName,String fieldBelongsType) {
         String model = dto.getModel();
-        String fieldBelongsType = dto.getFieldBelongsType();
         String businessKey = dto.getBussinessKey();
         String useType = dto.getUseType();
 
@@ -283,8 +281,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 results.add(cfgQueryOption);
             }
             saveBatch(results);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("错误信息=="+e.getMessage());
         }
     }
 

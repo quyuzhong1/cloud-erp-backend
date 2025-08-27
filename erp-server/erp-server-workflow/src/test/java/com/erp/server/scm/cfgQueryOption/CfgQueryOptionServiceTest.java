@@ -49,7 +49,6 @@ public class CfgQueryOptionServiceTest {
      * 测试 genBySql 方法
      */
     @Test
-    @Transactional(rollbackFor =Exception.class)
     public void testGenBySql() {
         String sql = "SELECT obj_description(cls.oid) AS table_comment,cls.relname, col.attnum AS ordinal_position, col.attname AS COLUMN_NAME, format_type(col.atttypid, col.atttypmod) AS data_type, NOT col.attnotnull AS is_nullable, des.description AS column_comment FROM pg_attribute col JOIN pg_class cls ON col.attrelid = cls.OID JOIN pg_namespace ns ON cls.relnamespace = ns.OID LEFT JOIN pg_description des ON des.objoid = col.attrelid AND des.objsubid = col.attnum WHERE cls.relname = '{}' AND col.attnum > 0 and col.attname not in ('create_user_id','create_user_name','create_time','update_user_id','update_user_name','update_time','version','is_deleted') AND NOT col.attisdropped ORDER BY col.attnum;";
 
@@ -60,7 +59,7 @@ public class CfgQueryOptionServiceTest {
         //系统
         dto.setModel("plm");
         //表名, 多个使用英文逗号隔开
-        dto.setTableName("pilot_application,pilot_application_detail11");
+        dto.setTableName("pilot_application,pilot_application_detail");
         //表归属类型：main（主表）,detailList(明细)，自定义名称（根据实际单据）
         dto.setFieldBelongsType("main,detailList");
         //业务key，跟流程单据key保持一致（menu）
