@@ -269,7 +269,6 @@ public class KingdeeApiUtils {
                 throw new RuntimeException("【查看单据】出错:" + responseStatus.get("Errors"));
             }
         } catch (Exception e) {
-        	log.error("{}查看金蝶单据出错" , this.formId , e);
             throw new RuntimeException(e);
         }
         return json;
