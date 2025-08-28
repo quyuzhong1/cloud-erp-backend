@@ -27,6 +27,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMappingRuleService;
@@ -351,56 +352,31 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<BatchResultDTO>> updatePlatformSku(@RequestBody @Valid SkuMappingDTO.UpdatePlatformDTO dto) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         //通账号同平台SKU批量更新
-//        Boolean batchUpdateSamePlatform = dto.getBatchUpdateSamePlatform();
         String id = dto.getId();
+        SkuMappingEntity skuMapping = skuMappingService.getById(id);
+        if (Objects.isNull(skuMapping)) {
+            resultDTOList.add(BatchResultDTO.fail(id,id,ApiError.ERROR_92051.msg));
+            return failure(resultDTOList);
+        }
+        ListingInfoEntity listing = listingInfoService.getById(skuMapping.getListingId());
+        if (Objects.isNull(listing)) {
+            resultDTOList.add(BatchResultDTO.fail(id,skuMapping.getListingId(),"listing记录不存在"));
+            return failure(resultDTOList);
+        }
         String shopId = dto.getShopId();
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfo)) {
+        if (Objects.isNull(shopInfo) && !RuleTypeEnum.B2B_PLATFORM.getCode().equals(listing.getType())) {
             resultDTOList.add(BatchResultDTO.fail(id,id,"店铺信息不存在"));
             return failure(resultDTOList);
         }
-        String name = shopInfo.getName();
+        String name = ObjectUtil.isEmpty(shopInfo) ? "" : shopInfo.getName();
 
-//        if (Objects.nonNull(batchUpdateSamePlatform) && batchUpdateSamePlatform){
-//            String account = shopInfo.getAccount();
-//            String dictPlatform = dto.getDictPlatform();
-//            ListingInfoDTO.QueryPlatformDTO params = ListingInfoDTO.QueryPlatformDTO.builder().account(account).dictPlatform(dictPlatform)
-//                    .platformSkuNo(dto.getPlatformSkuNo()).type(RuleTypeEnum.PLATFORM.code).build();
-//            //同账号同平台SKU批量更新
-//            List<SkuMappingDTO.PagingViewDTO> pagingViewDTOS = skuMappingService.listByAccountAndDictPlatform(params);
-//            List<String> ids = pagingViewDTOS.stream().map(SkuMappingDTO.PagingViewDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//            List<String> listingIds = pagingViewDTOS.stream().map(SkuMappingDTO.PagingViewDTO::getListingId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//            List<SkuMappingEntity> skuMappingEntityList = skuMappingService.listByIds(ids);
-//            List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(listingIds);
-//            for (SkuMappingDTO.PagingViewDTO pagingViewDTO : pagingViewDTOS){
-//                SkuMappingEntity skuMapping = skuMappingEntityList.stream().filter(e -> Objects.equals(pagingViewDTO.getId(),e.getId())).findFirst().orElse(null);
-//                ListingInfoEntity listing = listingInfoEntityList.stream().filter(e -> Objects.equals(pagingViewDTO.getListingId(),e.getId())).findFirst().orElse(null);
-//                try {
-//                    BatchResultDTO resultDTO = skuMappingService.updatePlatformSku(dto,skuMapping,listing,shopId);
-//                    resultDTOList.add(resultDTO);
-//                }catch (Exception e){
-//                    resultDTOList.add(BatchResultDTO.fail(skuMapping.getId(),skuMapping.getId(),CharSequenceUtil.format("店铺【{}】更新异常:{}", name,e.getMessage())));
-//                }
-//            }
-//
-//        }else {
-            SkuMappingEntity skuMapping = skuMappingService.getById(id);
-            if (Objects.isNull(skuMapping)) {
-                resultDTOList.add(BatchResultDTO.fail(id,id,ApiError.ERROR_92051.msg));
-                return failure(resultDTOList);
-            }
-            ListingInfoEntity listing = listingInfoService.getById(skuMapping.getListingId());
-            if (Objects.isNull(listing)) {
-                resultDTOList.add(BatchResultDTO.fail(id,skuMapping.getListingId(),"listing记录不存在"));
-                return failure(resultDTOList);
-            }
-            try {
-                BatchResultDTO resultDTO = skuMappingService.updatePlatformSku(dto,skuMapping,listing,shopId);
-                resultDTOList.add(resultDTO);
-            }catch (Exception e){
-                resultDTOList.add(BatchResultDTO.fail(skuMapping.getId(),skuMapping.getId(),CharSequenceUtil.format("店铺【{}】更新异常:{}", name,e.getMessage())));
-            }
-//        }
+        try {
+            BatchResultDTO resultDTO = skuMappingService.updatePlatformSku(dto,skuMapping,listing,shopId);
+            resultDTOList.add(resultDTO);
+        }catch (Exception e){
+            resultDTOList.add(BatchResultDTO.fail(skuMapping.getId(),skuMapping.getId(),CharSequenceUtil.format("店铺【{}】更新异常:{}", name,e.getMessage())));
+        }
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
  
