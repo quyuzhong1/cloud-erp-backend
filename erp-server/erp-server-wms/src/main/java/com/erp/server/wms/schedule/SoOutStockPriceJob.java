@@ -96,6 +96,7 @@ public class SoOutStockPriceJob {
                 XxlJobHelper.log("没有找到当天的出库单明细单价为0，没有销售订单明细id的数据，日期={}", startDate);
                 continue;
             }
+            XxlJobHelper.log("找到当天的出库单明细单价为0，没有销售订单明细id的数据，数量={}，日期={}", soOutDetailList.size(), startDate);
             List<String> detailSourceIds = soOutDetailList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
             Map<String,List<SoOutstockDetailEntity>> map = soOutDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
