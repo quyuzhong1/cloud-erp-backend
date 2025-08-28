@@ -761,6 +761,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
+            shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setBiz_uni_key(shudiyunB2cOrderDTO.getBiz_uni_key() + "_1");
@@ -772,7 +773,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             	result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
             }
-
         }
         return result;
     }
