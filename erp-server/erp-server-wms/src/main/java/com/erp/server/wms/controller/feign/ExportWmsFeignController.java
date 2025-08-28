@@ -984,7 +984,6 @@ public class ExportWmsFeignController {
      * 列表历史库龄明细数据导出
      */
     @PostMapping("/framePaging")
-    @WebAdvanceQuery
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
         return virtualInventoryAgeService.framePaging(dto);
     }
