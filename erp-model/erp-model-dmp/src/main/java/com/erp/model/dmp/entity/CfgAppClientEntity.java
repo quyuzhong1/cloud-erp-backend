@@ -24,7 +24,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_app_client")
+@TableName(value = "cfg_app_client", autoResultMap = true)
 public class CfgAppClientEntity extends BaseEntity<CfgAppClientEntity> {
 
     /**
