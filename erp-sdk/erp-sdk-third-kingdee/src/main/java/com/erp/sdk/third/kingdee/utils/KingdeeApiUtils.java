@@ -11,6 +11,8 @@ import com.common.business.dto.KingdeeParamDTO;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ public class KingdeeApiUtils {
     public K3CloudApi client;
 
     private String formId;
+    
+    private Date createTime;
 
     private static String APPID;
 
@@ -36,7 +40,7 @@ public class KingdeeApiUtils {
 
     private static String APPSECRET;
 
-    private static String DCID;
+	private static String DCID;
 
     private static Integer REQUEST_TIME_OUT;
 
@@ -83,8 +87,20 @@ public class KingdeeApiUtils {
     public void setStockTimeout(Integer stockTimeout) {
         KingdeeApiUtils.STOCK_TIME_OUT = stockTimeout;
     }
+    
+    public Date getCreateTime() {
+		return createTime;
+	}
 
-    public KingdeeApiUtils() {
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+    public String getFormId() {
+		return formId;
+	}
+
+	public KingdeeApiUtils() {
     }
 
     public KingdeeApiUtils(String formId) {
@@ -253,6 +269,7 @@ public class KingdeeApiUtils {
                 throw new RuntimeException("【查看单据】出错:" + responseStatus.get("Errors"));
             }
         } catch (Exception e) {
+        	log.error("{}查看金蝶单据出错" , this.formId , e);
             throw new RuntimeException(e);
         }
         return json;
@@ -332,6 +349,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}审核金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}审核金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;
@@ -378,6 +400,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}反审核金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}反审核金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;
@@ -443,6 +470,11 @@ public class KingdeeApiUtils {
                 }
             }
         } catch (Exception e) {
+        	if(StringUtils.isNotBlank(param.getIds())) {
+        		log.error("{}提交金蝶单据出错{}" , this.formId , param.getIds() , e);
+        	}else {
+        		log.error("{}提交金蝶单据出错" , this.formId , e);
+        	}
             throw new RuntimeException(e);
         }
         return result;
