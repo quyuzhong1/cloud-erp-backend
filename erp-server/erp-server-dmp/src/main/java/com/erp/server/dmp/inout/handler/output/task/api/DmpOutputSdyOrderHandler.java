@@ -185,12 +185,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
-            if(dmpSoInfoEntity.getInvalidStatus() != null && dmpSoInfoEntity.getInvalidStatus()) {
-            	shudiyunB2cOrderDTO.setStatus("已删除");
-            }else {
-            	shudiyunB2cOrderDTO.setStatus("已创建");
-            }
-
+            
+            shudiyunB2cOrderDTO.setStatus("已创建");
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
@@ -637,6 +633,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 countryCode = DmpHandlerUtils.convertCountry(countryCode);
 
                 DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, orderCountryCode);
+                if(countryEntity == null) {
+                	countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+                }
 
                 // 国家名称
                 String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
