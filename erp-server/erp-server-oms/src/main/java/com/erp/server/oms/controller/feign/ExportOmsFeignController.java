@@ -157,6 +157,19 @@ public class ExportOmsFeignController {
         return skuMappingService.exportPlatformSku(dto);
     }
 
+    /**
+     * b2b平台sku对照表信息导出
+     * @author will
+     * @date 2025/8/27 16:37
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    @PostMapping("/b2bPlatformSku")
+    @WebAdvanceQuery
+    public PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        return skuMappingService.b2bPlatformPaging(dto);
+    }
+
     @PostMapping("/warehouseSku")
     @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {

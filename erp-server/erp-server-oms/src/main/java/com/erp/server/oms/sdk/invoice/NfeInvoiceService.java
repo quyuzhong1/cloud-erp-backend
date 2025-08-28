@@ -551,7 +551,7 @@ public class NfeInvoiceService {
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
         paramDTO.setPlatformList(Collections.singletonList(soB2cEntity.getDictPlatform()));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);

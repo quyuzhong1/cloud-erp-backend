@@ -265,7 +265,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
         paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 
         return omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);

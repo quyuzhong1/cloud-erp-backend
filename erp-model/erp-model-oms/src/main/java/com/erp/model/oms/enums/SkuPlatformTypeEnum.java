@@ -9,23 +9,17 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.stream.Stream;
 
 /**
- * @author Lambda
- * @Classname TypeEnum
- * @Description TODO
- * @Date 2023-08-18 11:00
- * @Created by yl
+ * 平台类型
+ * @author will
+ * @date 2025/8/26 17:04
  */
 @Getter
-public enum RuleTypeEnum implements EnumMessage {
-    B2C_PLATFORM("platform","b2c平台"),
-    B2B_PLATFORM("b2b_platform","b2b平台"),
-    WAREHOUSE("warehouse","仓库"),
-    CUSTOMER("customer","客户"),
-    ASSIGN("assign","指定物流"),
-    MIN_FREIGHT("minFreight","最低运费")
+public enum SkuPlatformTypeEnum implements EnumMessage {
+    B2B("b2b","B2B"),
+    B2C("b2c","B2C")
     ;
 
-    RuleTypeEnum(String code, String name) {
+    SkuPlatformTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -53,8 +47,8 @@ public enum RuleTypeEnum implements EnumMessage {
     /**
      * 通过code查询
      */
-    public static RuleTypeEnum getByCode(String code){
-        return Stream.of(RuleTypeEnum.values())
+    public static SkuPlatformTypeEnum getByCode(String code){
+        return Stream.of(SkuPlatformTypeEnum.values())
                 .filter(typeEnum -> typeEnum.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .orElse(null);
@@ -64,7 +58,7 @@ public enum RuleTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (RuleTypeEnum typeEnum : RuleTypeEnum.values()) {
+        for (SkuPlatformTypeEnum typeEnum : SkuPlatformTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
             }

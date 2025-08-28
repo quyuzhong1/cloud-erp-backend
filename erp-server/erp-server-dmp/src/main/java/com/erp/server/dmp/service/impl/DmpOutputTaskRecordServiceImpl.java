@@ -773,4 +773,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         });
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+        return baseMapper.getLastPullRecord(paramDTO);
+    }
 }

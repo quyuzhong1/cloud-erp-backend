@@ -1,5 +1,4 @@
 package com.erp.server.dmp.service;
-import java.util.List;
 
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,6 +11,8 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -158,4 +159,12 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);
 
     PagingVO<DmpOutputTaskRecordDTO.PagingViewDTO> pagingOutLatest(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto);
+    /**
+     * 获取最后一条拉取记录
+     * @author will
+     * @date 2025/8/27 18:24
+     * @param paramDTO
+     * @return LastPullDTO
+     */
+    DmpPushTaskDTO.LastPullDTO getLastPullRecord(DmpPushTaskDTO.LastPullParamDTO paramDTO);
 }

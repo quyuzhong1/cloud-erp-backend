@@ -1734,4 +1734,24 @@ public class SkuMappingDTO implements Serializable {
          */
         private String labelFileName;
     }
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncSkuDTO {
+        /**
+         * 开始时间
+         */
+        @NotNull(message = "开始时间不能为空")
+        private LocalDateTime startTime;
+
+        /**
+         * 结束时间
+         */
+        @NotNull(message = "结束时间不能为空")
+        private LocalDateTime endTime;
+    }
 }

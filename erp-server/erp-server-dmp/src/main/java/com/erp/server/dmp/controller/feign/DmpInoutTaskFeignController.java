@@ -1,25 +1,19 @@
 package com.erp.server.dmp.controller.feign;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.sdk.oms.amz.spapi.client.JSON;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
-import com.erp.server.dmp.inout.job.DmpInputTaskJob;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
@@ -31,14 +25,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -82,6 +73,18 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/getErrorData")
 	public DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody DmpSyncTaskDTO.OneDTO oneDTO) {
 		return dmpOutputTaskRecordService.getErrorData(oneDTO);
+	}
+
+	/**
+	 * 获取最后一条拉取记录
+	 * @author will
+	 * @date 2025/8/27 18:24
+	 * @param paramDTO
+	 * @return LastPullDTO
+	 */
+	@PostMapping("/getLastPullRecord")
+	public DmpPushTaskDTO.LastPullDTO getLastPullRecord(@RequestBody DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+		return dmpOutputTaskRecordService.getLastPullRecord(paramDTO);
 	}
 
 

@@ -70,4 +70,13 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/soPrice")
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
 
+    /**
+     * b2b平台sku对照表信息导出
+     * @author will
+     * @date 2025/8/27 16:35
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    @PostMapping("/feign/export/b2bPlatformSku")
+    PagingVO<SkuMappingDTO.PagingViewDTO> exportB2bPlatformSku(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 }

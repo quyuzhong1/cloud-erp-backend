@@ -6,7 +6,10 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
@@ -18,7 +21,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.CfgVatInvoiceDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -98,7 +101,7 @@ public class SkuMappingController extends BaseController {
 
 
     /**
-     * 平台分页列表
+     * B2C平台分页列表
      *
      * @param dto
      * @return
@@ -138,6 +141,62 @@ public class SkuMappingController extends BaseController {
         PagingVO<SkuMappingDTO.CustomerPagingViewDTO> pagingVO = skuMappingService.customerPaging(dto);
         return success(pagingVO);
     }
+
+   /**
+    * B2B平台分页列表
+    * @author will
+    * @date 2025/8/26 16:59
+    * @param dto
+    * @return ApiResult<PagingVO<PagingViewDTO>>
+    */
+    @PostMapping("/b2bPlatformPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> b2bPlatformPaging(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.b2bPlatformPaging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 查看b2b平台sku同步
+     * @author will
+     * @date 2025/8/27 10:15
+     * @return ApiResult<PagingVO<PagingViewDTO>>
+     */
+    @GetMapping("/viewB2bPlatformSyncSku")
+    public ApiResult<DmpPushTaskDTO.LastPullDTO> viewB2bPlatformSyncSku() {
+        DmpPushTaskDTO.LastPullDTO viewDTO = skuMappingService.viewB2bPlatformSyncSku();
+        return success(viewDTO);
+    }
+
+    /**
+     * b2b平台sku同步
+     * @author will 
+     * @date 2025/8/27 10:26
+     * @param dto 
+     * @return ApiResult<PagingViewDTO>
+     */
+    @PostMapping("/b2bPlatformSyncSku")
+    public ApiResult<?> b2bPlatformSyncSku(@RequestBody @Validated SkuMappingDTO.SyncSkuDTO dto) {
+        return success(skuMappingService.b2bPlatformSyncSku(dto));
+    }
+
+
+    /**
+     * b2b平台sku列表导出
+     * @author will
+     * @date 2025/8/27 16:06
+     * @param dto 
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出b2b的sku对照表")
+    @PostMapping("/exportB2bPlatformSku")
+    @WebAdvanceQuery
+    public ApiResult exportB2bPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto) {
+        Boolean result = skuMappingService.exportB2bPlatformSku(dto);
+        return result ? success() : failure();
+    }
+
     /**
      * 新增客户SKU
      *

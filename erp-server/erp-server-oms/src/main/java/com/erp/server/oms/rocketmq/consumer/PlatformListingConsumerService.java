@@ -1,13 +1,11 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -21,15 +19,11 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -114,7 +108,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-                paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+                paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
