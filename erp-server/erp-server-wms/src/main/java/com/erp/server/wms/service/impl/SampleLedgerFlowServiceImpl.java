@@ -7,7 +7,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.SampleLedgerFlowEntity;
 import com.erp.server.wms.mapper.SampleLedgerFlowMapper;
 import com.erp.server.wms.service.SampleLedgerFlowService;
@@ -306,16 +310,19 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
         
         // 如果需要根据deptId填充deptName，可以在这里实现
         // 收集需要查询的deptId
-        Set<String> deptIds = records.stream()
+        List<String> deptIds = records.stream()
                 .filter(record -> StrUtil.isNotBlank(record.getDeptId()) && StrUtil.isBlank(record.getDeptName()))
                 .map(SampleLedgerFlowDTO.ListDTO::getDeptId)
-                .collect(Collectors.toSet());
-        
+                .collect(Collectors.toList());
+        List<SysDepartmentEntity> deptByIds = sysUserFeign.getDeptByIds(deptIds);
+        Map<String, String> collect = deptByIds.stream().collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
         if (CollUtil.isNotEmpty(deptIds)) {
             try {
-                // TODO: 这里可以调用API获取部门名称映射
-                // Map<String, String> deptNameMap = getDeptNameMap(deptIds);
-                // 然后填充到records中
+                for (SampleLedgerFlowDTO.ListDTO record : records) {
+                    record.setDeptName(collect.get(record.getDeptId()));
+                    record.setDictBizType(ApproveTypeEnum.getName(record.getDictBizType()));
+                    record.setSourceType(SourceTypeEnum.getName(record.getSourceType()));
+                }
             } catch (Exception e) {
                 log.warn("批量获取部门名称失败，错误：{}", e.getMessage());
             }
