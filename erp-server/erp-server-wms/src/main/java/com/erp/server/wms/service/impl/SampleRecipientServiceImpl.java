@@ -586,6 +586,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (!detailDeleteResult) {
             log.warn("删除样品领用单明细数据失败，id：{}", id);
         }
+        //删除附件
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            List<String> urlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            attachmentService.deleteByUrlList(urlList);
+        }
 
         // 删除主单数据
         log.info("删除 开始删除样品领用单主单数据，id：【{}】", id);
