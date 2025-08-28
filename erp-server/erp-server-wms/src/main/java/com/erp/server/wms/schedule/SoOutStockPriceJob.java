@@ -59,8 +59,8 @@ public class SoOutStockPriceJob {
     @Resource
     private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
-    @XxlJob("RetryThirdWarehouseDeliveryJob")
-    public void RetryThirdWarehouseDeliveryJob() {
+    @XxlJob("SoOutStockPriceJob")
+    public void SoOutStockPriceJob() {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", jobParam);
         if(StringUtils.isBlank(jobParam)){
