@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 虚拟仓设置
@@ -66,10 +65,6 @@ public class CfgSettingVirtualDTO implements Serializable {
         @Valid
         private CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO;
 
-        /**
-         * 库龄分析配置
-         */
-        private CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO;
     }
 
 

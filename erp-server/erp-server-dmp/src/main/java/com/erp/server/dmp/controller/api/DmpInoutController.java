@@ -646,7 +646,6 @@ public class DmpInoutController extends BaseController {
 				queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
 			}else {
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "invalid_status", false));
 			}
 			queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
 			queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
@@ -658,7 +657,6 @@ public class DmpInoutController extends BaseController {
 				queryParams = new ArrayList<>();
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "invalid_status", false));
 				queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
 				queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
 				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));

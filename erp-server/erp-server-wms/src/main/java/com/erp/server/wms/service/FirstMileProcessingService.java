@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.dto.ReportProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 
 import java.time.LocalDate;
@@ -66,4 +67,20 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
      * @return java.lang.Boolean
      */
     Boolean deleteFirstMileProcessing(FirstMileProcessingDTO.DeleteDTO dto);
+    /**
+     * 头程合计分页查询
+     * @author will
+     * @date 2025/8/20 14:10
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ReportProcessingDTO.ListDTO> firstMileTotalPaging(PagingDTO<ReportProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 头程汇总导出
+     * @author will
+     * @date 2025/8/21 14:27
+     * @param dto
+     * @return Boolean
+     */
+    Boolean firstMileTotalExportExcel(ReportProcessingDTO.PagingParamDTO dto);
 }
