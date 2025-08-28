@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 样品退回详情 服务类
@@ -32,5 +34,11 @@ public interface SampleBackDetailService extends SuperService<SampleBackDetailEn
     */
     Boolean update(SampleBackDetailDTO.UpdateDTO dto);
 
+    /**
+     * 根据主表ID查询明细
+     * @param mainId 主表ID
+     * @return List<SampleBackDetailEntity>
+     */
+    List<SampleBackDetailEntity> listByMainId(String mainId);
 
 }

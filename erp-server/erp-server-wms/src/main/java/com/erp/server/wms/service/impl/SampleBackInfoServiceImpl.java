@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,11 +25,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.SampleBackDetailDTO;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.entity.SampleBackDetailEntity;
-import com.erp.model.wms.entity.SampleBackInfoEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InstockTypeEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -37,6 +37,7 @@ import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,12 +47,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import org.apache.commons.collections4.CollectionUtils;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.util.ArrayList;
 
 /**
  * <p>
@@ -83,6 +78,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Autowired
     private WmsAttachmentService attachmentService;
+
+    @Autowired
+    private OtherInstockService otherInstockService;
+
+    @Autowired
+    private OtherInstockDetailService otherInstockDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -510,6 +511,15 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
+        // 同步反审核并删除关联的其他入库单
+        try {
+            handleAssociatedOtherInboundOrder(entity);
+            log.info("样品退回单反审核，同步处理关联其他入库单成功，单据编号：{}", entity.getCode());
+        } catch (Exception e) {
+            log.error("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品退回单反审核，同步处理关联其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
@@ -613,6 +623,18 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        
+        // 审核通过后自动生成其他入库单
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
+            try {
+                generateOtherInboundOrder(entity);
+                log.info("样品退回单审核通过，自动生成其他入库单成功，单据编号：{}", entity.getCode());
+            } catch (Exception e) {
+                log.error("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品退回单审核通过，自动生成其他入库单失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+            }
+        }
+        
         // todo 明细数据处理 上下游数据处理
 
         // 记录台账流水
@@ -814,6 +836,137 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         } catch (Exception e) {
             log.error("查询部门名称失败，部门ID：{}，错误：{}", deptId, e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * 根据样品退回单生成其他入库单
+     * @param sampleBackInfo 样品退回单
+     */
+    private void generateOtherInboundOrder(SampleBackInfoEntity sampleBackInfo) {
+        // 查询样品退回单明细
+        List<SampleBackDetailEntity> detailList = sampleBackDetailService.listByMainId(sampleBackInfo.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            log.warn("样品退回单明细为空，无法生成其他入库单，单据编号：{}", sampleBackInfo.getCode());
+            return;
+        }
+
+        // 创建其他入库单主表
+        OtherInstockEntity otherInstock = new OtherInstockEntity();
+        otherInstock.setCode(generateOtherInboundOrderCode());
+        otherInstock.setBillDate(sampleBackInfo.getBackDate());
+        otherInstock.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode()); // 入库方向
+        otherInstock.setWarehouseId(sampleBackInfo.getWarehouseId());
+        otherInstock.setWarehouseName(sampleBackInfo.getWarehouseName());
+        otherInstock.setOrgId(sampleBackInfo.getOrgId());
+        otherInstock.setDeptId(sampleBackInfo.getDeptId());
+        otherInstock.setType(InstockTypeEnum.SAMPLE_BACK.getCode()); // 样品退回类型
+        otherInstock.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus()); // 设置为已审核状态
+        otherInstock.setApproveUserId(sampleBackInfo.getApproveUserId());
+        otherInstock.setApproveUserName(sampleBackInfo.getApproveUserName());
+        otherInstock.setApproveTime(sampleBackInfo.getApproveTime());
+        otherInstock.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
+        otherInstock.setInvalidStatus(false);
+        
+        // 设置来源信息
+        otherInstock.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        otherInstock.setSourceId(sampleBackInfo.getId());
+        otherInstock.setSourceCode(sampleBackInfo.getCode());
+
+        // 保存其他入库单主表
+        otherInstockService.save(otherInstock);
+
+        // 创建其他入库单明细
+        List<OtherInstockDetailEntity> otherInstockDetails = new ArrayList<>();
+        for (SampleBackDetailEntity detail : detailList) {
+            OtherInstockDetailEntity otherDetail = new OtherInstockDetailEntity();
+            otherDetail.setMainId(otherInstock.getId());
+            otherDetail.setSkuId(detail.getSkuId());
+            otherDetail.setSkuNo(detail.getSkuNo());
+            otherDetail.setActualQty(detail.getQty());
+            otherDetail.setUnit("PCS"); // 默认单位
+            otherDetail.setRemark(detail.getRemark());
+            otherDetail.setSourceDetailId(detail.getId()); // 设置来源明细ID
+            otherInstockDetails.add(otherDetail);
+        }
+
+        // 保存其他入库单明细
+        if (CollUtil.isNotEmpty(otherInstockDetails)) {
+            otherInstockDetailService.saveBatch(otherInstockDetails);
+        }
+
+        log.info("样品退回单生成其他入库单成功，样品退回单号：{}，其他入库单号：{}", 
+                sampleBackInfo.getCode(), otherInstock.getCode());
+    }
+
+    /**
+     * 生成其他入库单号
+     * @return 其他入库单号
+     */
+    private String generateOtherInboundOrderCode() {
+        // 这里可以根据业务规则生成单号，暂时使用时间戳
+        return "QTRK" + System.currentTimeMillis();
+    }
+
+    /**
+     * 同步反审核并删除关联的其他入库单
+     * @param entity 样品退回单实体
+     */
+    private void handleAssociatedOtherInboundOrder(SampleBackInfoEntity entity) {
+        // 查询关联的其他入库单（通过来源字段匹配）
+        List<OtherInstockEntity> otherInstocks = otherInstockService.list(new LambdaQueryWrapper<OtherInstockEntity>()
+                .eq(OtherInstockEntity::getSourceType, SourceTypeEnum.SAMPLE_BACK_INFO.getCode())
+                .eq(OtherInstockEntity::getSourceId, entity.getId())
+                .eq(OtherInstockEntity::getSourceCode, entity.getCode())
+                .eq(OtherInstockEntity::getInvalidStatus, false));
+
+        if (CollUtil.isNotEmpty(otherInstocks)) {
+            log.info("找到关联的其他入库单，数量：{}，样品退回单号：{}", otherInstocks.size(), entity.getCode());
+            
+            // 先同步反审核其他入库单
+            for (OtherInstockEntity otherInstock : otherInstocks) {
+                try {
+                    // 如果其他入库单是已审核状态，需要先反审核
+                    if (ApproveStatusEnum.APPROVE.getStatus().equals(otherInstock.getApproveStatus())) {
+                        log.info("开始反审核其他入库单，单号：{}，样品退回单号：{}", otherInstock.getCode(), entity.getCode());
+                        
+                        // 调用其他入库单的反审核方法
+                        otherInstockService.disApprove(otherInstock.getId(),false);
+                        
+                        log.info("其他入库单反审核成功，单号：{}，样品退回单号：{}", otherInstock.getCode(), entity.getCode());
+                    } else {
+                        log.info("其他入库单状态为：{}，无需反审核，单号：{}，样品退回单号：{}", 
+                                otherInstock.getApproveStatus(), otherInstock.getCode(), entity.getCode());
+                    }
+                } catch (Exception e) {
+                    log.error("其他入库单反审核失败，单号：{}，样品退回单号：{}，错误：{}", 
+                            otherInstock.getCode(), entity.getCode(), e.getMessage(), e);
+                    throw new ServiceException("其他入库单反审核失败，单号：{}，样品退回单号：{}，错误：{}", 
+                            otherInstock.getCode(), entity.getCode(), e.getMessage());
+                }
+            }
+            
+            // 反审核完成后，删除其他入库单主表
+            List<String> otherInstockIds = otherInstocks.stream()
+                    .map(OtherInstockEntity::getId)
+                    .collect(Collectors.toList());
+            otherInstockService.removeByIds(otherInstockIds);
+
+            // 删除其他入库单明细
+            List<String> otherInstockDetailIds = otherInstocks.stream()
+                    .flatMap(otherInstock -> otherInstockDetailService.list(new LambdaQueryWrapper<OtherInstockDetailEntity>()
+                            .eq(OtherInstockDetailEntity::getMainId, otherInstock.getId())).stream()
+                            .map(OtherInstockDetailEntity::getId))
+                    .collect(Collectors.toList());
+            
+            if (CollUtil.isNotEmpty(otherInstockDetailIds)) {
+                otherInstockDetailService.removeByIds(otherInstockDetailIds);
+            }
+            
+            log.info("成功删除关联的其他入库单，主表ID：{}，明细ID：{}，样品退回单号：{}", 
+                    otherInstockIds, otherInstockDetailIds, entity.getCode());
+        } else {
+            log.info("未找到关联的其他入库单，样品退回单号：{}", entity.getCode());
         }
     }
 

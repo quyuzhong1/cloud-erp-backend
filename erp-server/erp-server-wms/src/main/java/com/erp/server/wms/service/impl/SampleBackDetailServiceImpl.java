@@ -93,4 +93,9 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
     private void handleData(SampleBackDetailEntity sampleBackDetailEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public List<SampleBackDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(SampleBackDetailEntity::getMainId, mainId).list();
+    }
 }
