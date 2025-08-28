@@ -48,6 +48,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SampleRecipientMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -80,6 +81,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.baomidou.mybatisplus.annotation.TableName;
+import java.util.Arrays;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -128,6 +134,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private RedissonClient redissonClient;
     @Autowired
     private SampleLedgerFlowService sampleLedgerFlowService;
+
+    @Autowired
+    private WmsAttachmentService attachmentService;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -197,7 +206,40 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品领用单" , sampleRecipientEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), sampleRecipientEntity.getId(), "新增操作");
 
+        // 添加附件信息
+        addAttachment(addDTO, sampleRecipientEntity);
+
         return new BaseResultDTO.AddDTO(sampleRecipientEntity.getId(), code);
+    }
+
+    /**
+     * 添加附件信息
+     * @param addDTO 包含附件URL和名称列表的数据传输对象
+     * @param sampleRecipientEntity
+     */
+    private void addAttachment(SampleRecipientDTO.AddDTO addDTO, SampleRecipientEntity sampleRecipientEntity) {
+        //附件集合
+        List<String> attachmentUrlList = addDTO.getAttachUrlList();
+        //附件名
+        List<String> attachmentNameList = addDTO.getAttachNameList();
+        List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<SampleRecipientEntity> credentialClass = SampleRecipientEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                WmsAttachmentEntity attachment = new WmsAttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(sampleRecipientEntity.getId());
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
     }
 
     /**
@@ -308,9 +350,62 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             log.info("编辑 开始记录样品领用单日志数据，单号：【{}】", sampleRecipientEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleRecipientEntity.getCode(), "样品领用单");
         operateLogService.addModuleOperateLogByObj(old, sampleRecipientEntity, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), sampleRecipientEntity.getId(), msg);
+
+        // 更新附件信息
+        updateAttachment(addOrUpdateDTO, old);
+
         return Boolean.TRUE;
     }
 
+    /**
+     * 更新附件信息
+     * @param addOrUpdateDTO 包含附件URL和名称列表的更新数据传输对象
+     * @param old 旧的样品领用信息实体，用于获取业务ID
+     */
+    private void updateAttachment(SampleRecipientDTO.UpdateDTO addOrUpdateDTO, SampleRecipientEntity old) {
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            List<WmsAttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 处理删除的数据
+                List<WmsAttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(remove)){
+                    attachmentService.deleteByUrlList(remove.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                }
+            }
+
+            //处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> add = attachmentUrlList.stream()
+                    .filter(url -> !oldUrlList.contains(url))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(add)){
+                Class<SampleRecipientEntity> credentialClass = SampleRecipientEntity.class;
+                TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+                //获取到表名
+                String type = tableName.value();
+                List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if(!add.contains(attachmentUrlList.get(i))){
+                        continue;
+                    }
+                    WmsAttachmentEntity addAttachment = new WmsAttachmentEntity();
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    addAttachment.setAttachName(attachmentNameList.get(i));
+                    addAttachment.setBusinessId(old.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
+
+                if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                    attachmentService.saveBatch(batchAttachmentList);
+                }
+            }
+        }
+    }
 
     @Override
     public PagingVO<SampleRecipientDTO.ListDTO> paging(PagingDTO<SampleRecipientDTO.PagingParamDTO> pagingParamDTO) {

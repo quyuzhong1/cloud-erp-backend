@@ -444,6 +444,16 @@ public class SampleRecipientDTO implements Serializable {
          */
         private List<ProductDTO> detailList;
 
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
+
     }
 
     @Data

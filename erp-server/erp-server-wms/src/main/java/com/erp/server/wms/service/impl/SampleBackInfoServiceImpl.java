@@ -46,6 +46,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.baomidou.mybatisplus.annotation.TableName;
+import java.util.ArrayList;
 
 /**
  * <p>
@@ -74,6 +79,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     private SampleBackDetailService sampleBackDetailService;
     @Autowired
     private SampleLedgerService sampleLedgerService;
+
+    @Autowired
+    private WmsAttachmentService attachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -116,7 +124,40 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品退回单" , sampleBackInfoEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), sampleBackInfoEntity.getId(), "新增操作");
 
+        // 处理附件
+        addAttachment(addDTO, sampleBackInfoEntity);
+
         return new BaseResultDTO.AddDTO(sampleBackInfoEntity.getId(), code);
+    }
+
+    /**
+     * 添加附件信息
+     * @param addDTO 包含附件URL和名称列表的数据传输对象
+     * @param sampleBackInfoEntity
+     */
+    private void addAttachment(SampleBackInfoDTO.AddDTO addDTO, SampleBackInfoEntity sampleBackInfoEntity) {
+        //附件集合
+        List<String> attachmentUrlList = addDTO.getAttachUrlList();
+        //附件名
+        List<String> attachmentNameList = addDTO.getAttachNameList();
+        List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<SampleBackInfoEntity> credentialClass = SampleBackInfoEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                WmsAttachmentEntity attachment = new WmsAttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(sampleBackInfoEntity.getId());
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
     }
 
     /**
@@ -196,9 +237,62 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             log.info("编辑 开始记录样品退回单日志数据，单号：【{}】", sampleBackInfoEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleBackInfoEntity.getCode(), "样品退回单");
         operateLogService.addModuleOperateLogByObj(old, sampleBackInfoEntity, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), sampleBackInfoEntity.getId(), msg);
+
+        // 处理附件
+        updateAttachment(addOrUpdateDTO, old);
+
         return Boolean.TRUE;
     }
 
+    /**
+     * 更新附件信息
+     * @param addOrUpdateDTO 包含附件URL和名称列表的更新数据传输对象
+     * @param old 旧的样品退回信息实体，用于获取业务ID
+     */
+    private void updateAttachment(SampleBackInfoDTO.UpdateDTO addOrUpdateDTO, SampleBackInfoEntity old) {
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            List<WmsAttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 处理删除的数据
+                List<WmsAttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(remove)){
+                    attachmentService.deleteByUrlList(remove.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                }
+            }
+
+            //处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> add = attachmentUrlList.stream()
+                    .filter(url -> !oldUrlList.contains(url))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(add)){
+                Class<SampleBackInfoEntity> credentialClass = SampleBackInfoEntity.class;
+                TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+                //获取到表名
+                String type = tableName.value();
+                List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if(!add.contains(attachmentUrlList.get(i))){
+                        continue;
+                    }
+                    WmsAttachmentEntity addAttachment = new WmsAttachmentEntity();
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    addAttachment.setAttachName(attachmentNameList.get(i));
+                    addAttachment.setBusinessId(old.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
+
+                if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                    attachmentService.saveBatch(batchAttachmentList);
+                }
+            }
+        }
+    }
 
     @Override
     public PagingVO<SampleBackInfoDTO.ListDTO> paging(PagingDTO<SampleBackInfoDTO.PagingParamDTO> pagingParamDTO) {

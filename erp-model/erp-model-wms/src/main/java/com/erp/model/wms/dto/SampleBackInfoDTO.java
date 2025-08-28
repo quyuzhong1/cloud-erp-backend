@@ -372,86 +372,75 @@ public class SampleBackInfoDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 作废时间
+        * 退回日期
         */
-        private LocalDateTime invalidTime;
-
-        /**
-        * 执行状态
-        */
-        @NotBlank(message = "执行状态不能为空")
-        @Size(max = 50,message = "执行状态最大长度不能超过50位")
-        private String execStatus;
-
+        @NotNull(message = "退回日期不能为空")
         private LocalDate backDate;
 
         /**
         * 来源ID（关联样品领用单）
         */
-        @NotBlank(message = "来源ID（关联样品领用单）不能为空")
-        @Size(max = 19,message = "来源ID（关联样品领用单）最大长度不能超过19位")
+        @NotBlank(message = "来源ID不能为空")
         private String sourceId;
 
         /**
         * 来源单号（样品领用单号）
         */
-        @NotBlank(message = "来源单号（样品领用单号）不能为空")
-        @Size(max = 32,message = "来源单号（样品领用单号）最大长度不能超过32位")
+        @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
 
         /**
         * 来源类型
         */
         @NotBlank(message = "来源类型不能为空")
-        @Size(max = 50,message = "来源类型最大长度不能超过50位")
         private String sourceType;
 
         /**
         * 退回人ID
         */
         @NotBlank(message = "退回人ID不能为空")
-        @Size(max = 19,message = "退回人ID最大长度不能超过19位")
         private String userId;
 
         /**
         * 退回人姓名
         */
-        @NotBlank(message = "退回人姓名不能为空")
-        @Size(max = 50,message = "退回人姓名最大长度不能超过50位")
         private String userName;
 
         /**
         * 退回部门ID
         */
         @NotBlank(message = "退回部门ID不能为空")
-        @Size(max = 19,message = "退回部门ID最大长度不能超过19位")
         private String deptId;
 
         /**
         * 收货仓库ID
         */
         @NotBlank(message = "收货仓库ID不能为空")
-        @Size(max = 19,message = "收货仓库ID最大长度不能超过19位")
         private String warehouseId;
 
-        @NotBlank(message = "warehouseName不能为空")
-        @Size(max = 100,message = "warehouseName最大长度不能超过100位")
         private String warehouseName;
 
         /**
         * 退回组织ID
         */
         @NotBlank(message = "退回组织ID不能为空")
-        @Size(max = 19,message = "退回组织ID最大长度不能超过19位")
         private String orgId;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
 
     }
 
