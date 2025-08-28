@@ -18,14 +18,14 @@ import java.util.List;
 
 /**
  * <p>
- * 示例用户 字典表 前端控制器
+ * 样品公司外部使用人 字典表 前端控制器
  * </p>
  *
  * @author Lambda
  * @since 2025-01-27
  */
 @RestController
-@LogSystemModule("系统管理通用")
+@LogSystemModule("样品公司外部使用人")
 @RequestMapping("sampleUseUser")
 public class DictSampleUseUserController extends BaseController {
 
