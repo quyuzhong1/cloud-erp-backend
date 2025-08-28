@@ -585,6 +585,10 @@ public class FbaInventoryDTO implements Serializable {
          */
         private List<String> warehouseIds;
         /**
+         * 店铺ids
+         */
+        private List<String> shopIds;
+        /**
          * sku列表
          */
         private List<String> skuNos;
