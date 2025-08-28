@@ -851,61 +851,49 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             return;
         }
 
-        // 创建其他入库单主表
-        OtherInstockEntity otherInstock = new OtherInstockEntity();
-        otherInstock.setCode(generateOtherInboundOrderCode());
-        otherInstock.setBillDate(sampleBackInfo.getBackDate());
-        otherInstock.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode()); // 入库方向
-        otherInstock.setWarehouseId(sampleBackInfo.getWarehouseId());
-        otherInstock.setWarehouseName(sampleBackInfo.getWarehouseName());
-        otherInstock.setOrgId(sampleBackInfo.getOrgId());
-        otherInstock.setDeptId(sampleBackInfo.getDeptId());
-        otherInstock.setType(InstockTypeEnum.SAMPLE_BACK.getCode()); // 样品退回类型
-        otherInstock.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus()); // 设置为已审核状态
-        otherInstock.setApproveUserId(sampleBackInfo.getApproveUserId());
-        otherInstock.setApproveUserName(sampleBackInfo.getApproveUserName());
-        otherInstock.setApproveTime(sampleBackInfo.getApproveTime());
-        otherInstock.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
-        otherInstock.setInvalidStatus(false);
-        
-        // 设置来源信息
-        otherInstock.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
-        otherInstock.setSourceId(sampleBackInfo.getId());
-        otherInstock.setSourceCode(sampleBackInfo.getCode());
-
-        // 保存其他入库单主表
-        otherInstockService.save(otherInstock);
-
-        // 创建其他入库单明细
-        List<OtherInstockDetailEntity> otherInstockDetails = new ArrayList<>();
+        // 构建其他入库单明细列表
+        List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (SampleBackDetailEntity detail : detailList) {
-            OtherInstockDetailEntity otherDetail = new OtherInstockDetailEntity();
-            otherDetail.setMainId(otherInstock.getId());
-            otherDetail.setSkuId(detail.getSkuId());
-            otherDetail.setSkuNo(detail.getSkuNo());
-            otherDetail.setActualQty(detail.getQty());
-            otherDetail.setUnit("PCS"); // 默认单位
-            otherDetail.setRemark(detail.getRemark());
-            otherDetail.setSourceDetailId(detail.getId()); // 设置来源明细ID
-            otherInstockDetails.add(otherDetail);
+            OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(detail.getSkuId());
+            detailAddDTO.setSkuNo(detail.getSkuNo());
+            detailAddDTO.setActualQty(detail.getQty());
+            detailAddDTO.setRemark(detail.getRemark());
+            detailAddDTOList.add(detailAddDTO);
         }
 
-        // 保存其他入库单明细
-        if (CollUtil.isNotEmpty(otherInstockDetails)) {
-            otherInstockDetailService.saveBatch(otherInstockDetails);
+        // 构建其他入库单主表DTO
+        OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
+        addDTO.setBillDate(sampleBackInfo.getBackDate());
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        addDTO.setWarehouseId(sampleBackInfo.getWarehouseId());
+        addDTO.setDeptId(sampleBackInfo.getDeptId());
+        addDTO.setType(InstockTypeEnum.SAMPLE_BACK.getCode());
+        addDTO.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
+        addDTO.setDetailList(detailAddDTOList);
+
+        // 调用其他入库单服务的新增方法
+        String otherInstockId = otherInstockService.add(addDTO);
+        
+        if (StrUtil.isNotBlank(otherInstockId)) {
+            // 获取生成的其他入库单实体，用于设置来源信息
+            OtherInstockEntity otherInstock = otherInstockService.getById(otherInstockId);
+            if (otherInstock != null) {
+                // 设置来源信息
+                otherInstock.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+                otherInstock.setSourceId(sampleBackInfo.getId());
+                otherInstock.setSourceCode(sampleBackInfo.getCode());
+                
+                // 更新来源信息
+                otherInstockService.updateById(otherInstock);
+                
+                log.info("样品退回单生成其他入库单成功，样品退回单号：{}，其他入库单号：{}", 
+                        sampleBackInfo.getCode(), otherInstock.getCode());
+            }
+        } else {
+            log.error("样品退回单生成其他入库单失败，样品退回单号：{}", sampleBackInfo.getCode());
+            throw new ServiceException("样品退回单生成其他入库单失败");
         }
-
-        log.info("样品退回单生成其他入库单成功，样品退回单号：{}，其他入库单号：{}", 
-                sampleBackInfo.getCode(), otherInstock.getCode());
-    }
-
-    /**
-     * 生成其他入库单号
-     * @return 其他入库单号
-     */
-    private String generateOtherInboundOrderCode() {
-        // 这里可以根据业务规则生成单号，暂时使用时间戳
-        return "QTRK" + System.currentTimeMillis();
     }
 
     /**
