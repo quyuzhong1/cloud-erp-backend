@@ -611,6 +611,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String matchResultStr;
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
          * 更新人名称

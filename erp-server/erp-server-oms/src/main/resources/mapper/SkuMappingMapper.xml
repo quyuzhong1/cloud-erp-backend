@@ -835,6 +835,7 @@
             li.platform_status as platformStatus,
             li.platform_parent_spu_no as platformParentSpuNo,
             sm.update_user_name,
+            sm.create_user_name,
             sm.effective_time,
             sm.expire_time,
             sm.update_time,
