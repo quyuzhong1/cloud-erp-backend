@@ -565,7 +565,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
             // 构建流水主表数据
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
-            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
+            flowDTO.setSourceType(getSupportedSourceType());
             flowDTO.setApproveType(approveType.getStatus());
             flowDTO.setOperateTime(LocalDateTime.now());
             flowDTO.setBillDate(entity.getBillDate());

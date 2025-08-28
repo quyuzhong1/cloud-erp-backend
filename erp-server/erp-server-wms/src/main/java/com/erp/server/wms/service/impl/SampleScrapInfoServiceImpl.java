@@ -1035,7 +1035,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
             // 构建流水主表数据
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
-            flowDTO.setSourceType(SourceTypeEnum.SAMPLE_SCRAP_INFO.getCode());
+            flowDTO.setSourceType(getSupportedSourceType());
             flowDTO.setApproveType(approveType.getStatus());
             flowDTO.setOperateTime(LocalDateTime.now());
             flowDTO.setBillDate(entity.getScrapDate());
