@@ -9,11 +9,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtilsPool;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoOutstockConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -40,8 +42,6 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
-    private static KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void executeConsumer(Map<String, Object> map) {
@@ -57,32 +57,41 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         
         //操作项
         String operate = (String) map.get("operate");
-        /**
-         * 作废
-         */
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils,platformEntity,map,type,operate);
-        }
-        /**
-         * 反审核
-         */
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            operateDisapprove(apiUtils,platformEntity, map,type);
-        }
-        /**
-         * 审核
-         */
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils,platformEntity, map,type);
-        }
+        
+        KingdeeApiUtils apiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+        
+        try {
+			/**
+			 * 作废
+			 */
+			if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+			    operateInvalid(apiUtils,platformEntity,map,type,operate);
+			}
+			/**
+			 * 反审核
+			 */
+			if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+			    operateDisapprove(apiUtils,platformEntity, map,type);
+			}
+			/**
+			 * 审核
+			 */
+			if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+			    operateApprove(apiUtils,platformEntity, map,type);
+			}
 
-        /**
-         * 删除
-         */
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            operateDelete(apiUtils,platformEntity,map,operate);
-        }
-
+			/**
+			 * 删除
+			 */
+			if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			    operateDelete(apiUtils,platformEntity,map,operate);
+			}
+		} catch (Exception e) {
+			log.error("同步金蝶销售出库单失败{}" , code , e);
+			throw e;
+		}finally {
+			KingdeeApiUtilsPool.returnKingdeeApiUtils(apiUtils);
+		}
     }
 
     /**
