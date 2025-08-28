@@ -89,7 +89,7 @@ public class DhtCommonService {
         //查询redis数据
         //如果没有数据，则调用接口获取
         String api = "/cgi/corpAccessToken/get/V2";
-        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.DHT.getCode());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.DHT.getCode(),"token");
         Object token = redisUtil.get(tokenKey);
         if(token != null){
             return JSON.parseObject(token.toString(), new TypeReference<DhtAuthDTO>() {});
