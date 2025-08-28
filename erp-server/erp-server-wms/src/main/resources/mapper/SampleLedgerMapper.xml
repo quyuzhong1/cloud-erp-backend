@@ -85,6 +85,12 @@
         WHERE
         sl.is_deleted = FALSE
         AND sl.user_id = #{ params.userId}
+        <if test="params.ids != null and params.ids.size() > 1">
+            and sl.id in
+            <foreach collection="params.ids" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.skuNos != null and params.skuNos.size() > 1">
             and sl.sku_no in
             <foreach collection="params.skuNos" open="(" separator="," close=")" item="item">
@@ -213,5 +219,8 @@
             </foreach>
         </if>
         sl.create_time DESC
+    </select>
+    <select id="generateSampleScrapView" resultType="com.erp.model.wms.dto.SampleScrapDetailDTO$ViewDTO">
+        <include refid="listSku"/>
     </select>
 </mapper>

@@ -345,6 +345,8 @@ public class SampleLedgerDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchDTO {
 
+        private List<String> ids;
+
         private String childId;
 
         private String type;

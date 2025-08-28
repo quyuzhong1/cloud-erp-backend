@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.common.business.dto.base.PermissionsDTO;
@@ -65,4 +66,6 @@ public interface SampleLedgerMapper extends BaseMapper<SampleLedgerEntity> {
 
 
     IPage<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(Page query, @Param("params") SampleLedgerDTO.SearchDTO params);
+
+    List<SampleScrapDetailDTO.ViewDTO> generateSampleScrapView(@Param("params") SampleLedgerDTO.SearchDTO params);
 }

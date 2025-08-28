@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
 import com.erp.server.wms.service.SampleLedgerService;
@@ -142,7 +143,35 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     @Override
     public SampleLedgerDTO.SampleScrapView generateSampleScrapView(List<String> ids) {
-        return null;
+        if(CollUtil.isEmpty(ids)){
+            throw new ServiceException(ApiError.ERROR_92271);
+        }
+
+        List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
+        if(CollUtil.isEmpty(sampleLedgerEntities)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_VIEW);
+        }
+        //校验是否存在多个报废人
+        long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
+        if(count > 1){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_IDS);
+        }
+
+
+        SampleLedgerDTO.SampleScrapView viewDTO = new SampleLedgerDTO.SampleScrapView();
+        SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
+        params.setIds(ids);
+        params.setUserId(sampleLedgerEntities.get(0).getUserId());
+        List<SampleScrapDetailDTO.ViewDTO> detailList = this.baseMapper.generateSampleScrapView(params);
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_VIEW);
+        }
+
+        SampleScrapDetailDTO.ViewDTO detailView = detailList.get(0);
+        viewDTO.setScrapUserId(detailView.getUserId());
+        viewDTO.setScrapUserName(detailView.getUserName());
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
     }
 
     /**
