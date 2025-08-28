@@ -17,9 +17,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * <p>
- * 样品公司外部使用人 字典表 前端控制器
- * </p>
+ * 样品公司外部使用人-字典表
  *
  * @author Lambda
  * @since 2025-01-27
