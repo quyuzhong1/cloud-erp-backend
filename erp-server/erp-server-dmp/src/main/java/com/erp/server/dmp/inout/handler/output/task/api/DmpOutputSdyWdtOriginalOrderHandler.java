@@ -405,6 +405,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
 
+            shudiyunB2cOrderDTO.setDefaultValue();
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }

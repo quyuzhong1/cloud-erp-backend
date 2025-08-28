@@ -185,12 +185,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
-            if(dmpSoInfoEntity.getInvalidStatus() != null && dmpSoInfoEntity.getInvalidStatus()) {
-            	shudiyunB2cOrderDTO.setStatus("已删除");
-            }else {
-            	shudiyunB2cOrderDTO.setStatus("已创建");
-            }
-
+            
+            shudiyunB2cOrderDTO.setStatus("已创建");
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
@@ -637,6 +633,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 countryCode = DmpHandlerUtils.convertCountry(countryCode);
 
                 DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, orderCountryCode);
+                if(countryEntity == null) {
+                	countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+                }
 
                 // 国家名称
                 String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
@@ -762,6 +761,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
+            shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
             		shudiyunB2cOrderDTO.setBiz_uni_key(shudiyunB2cOrderDTO.getBiz_uni_key() + "_1");
@@ -773,7 +773,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             	}
             	result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
             }
-
         }
         return result;
     }
