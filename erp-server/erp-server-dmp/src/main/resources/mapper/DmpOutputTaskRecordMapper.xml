@@ -446,7 +446,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
             SELECT
                 dit.start_time,
                 dit.end_time,
-                dit.create_time,
+                dit.create_time as lastSyncTime,
                 dit.status,
                 dci.bill_type,
                 dbs.code as platform,
