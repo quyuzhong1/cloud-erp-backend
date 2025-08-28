@@ -59,8 +59,8 @@ public class SoOutStockPriceJob {
     @Resource
     private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
-    @XxlJob("RetryThirdWarehouseDeliveryJob")
-    public void RetryThirdWarehouseDeliveryJob() {
+    @XxlJob("SoOutStockPriceJob")
+    public void SoOutStockPriceJob() {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", jobParam);
         if(StringUtils.isBlank(jobParam)){
@@ -96,6 +96,7 @@ public class SoOutStockPriceJob {
                 XxlJobHelper.log("没有找到当天的出库单明细单价为0，没有销售订单明细id的数据，日期={}", startDate);
                 continue;
             }
+            XxlJobHelper.log("找到当天的出库单明细单价为0，没有销售订单明细id的数据，数量={}，日期={}", soOutDetailList.size(), startDate);
             List<String> detailSourceIds = soOutDetailList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
             Map<String,List<SoOutstockDetailEntity>> map = soOutDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
@@ -123,9 +124,11 @@ public class SoOutStockPriceJob {
                 }
             });
             if(CollectionUtils.isNotEmpty(updateList)){
+                XxlJobHelper.log("开始更新出库单明细数据，数量={}", updateList.size());
                 soOutstockDetailService.updateBatchById(updateList);
             }
             if(CollectionUtils.isNotEmpty(updateThirdWarehouseDetailList)){
+                XxlJobHelper.log("开始更新三方仓发货单明细数据，数量={}", updateThirdWarehouseDetailList.size());
                 thirdWarehouseDeliveryDetailService.updateBatchById(updateThirdWarehouseDetailList);
             }
         }
