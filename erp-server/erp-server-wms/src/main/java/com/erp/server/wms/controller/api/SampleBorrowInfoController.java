@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
 import com.erp.server.wms.service.SampleScrapInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -443,6 +444,29 @@ public class SampleBorrowInfoController extends BaseController {
     @PostMapping("/generateSampleReturnView")
     public ApiResult<List<SampleBorrowInfoDTO.SampleReturnView>> generateSampleReturnView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto){
         return success(sampleBorrowInfoService.generateSampleReturnView(dto.getDetailIdList()));
+    }
+
+    /**
+     * 归还单添加产品
+     * @author jack
+     * @date: 2025-08-20
+     * @param dto
+     * @return ApiResult<List<SampleBorrowInfoDTO.SkuAvailableQtyDTO>>
+     */
+    @PostMapping("/listSku")
+    public ApiResult<List<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated SampleBorrowInfoDTO.SearchDTO dto) {
+        return success(sampleBorrowInfoService.listSku(dto));
+    }
+
+    /**
+     * 借用单编号下拉
+     * @author jack
+     * @date: 2025-08-20
+     * @return ApiResult<PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO>>
+     */
+    @PostMapping("/drop/down")
+    public ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> dropDown(@RequestBody SampleBorrowInfoDTO.SelectDTO dto) {
+        return success(sampleBorrowInfoService.dropDown(dto));
     }
 
 

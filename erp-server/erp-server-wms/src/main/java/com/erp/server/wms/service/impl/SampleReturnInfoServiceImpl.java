@@ -14,11 +14,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.wms.mapper.SampleBorrowDetailMapper;
 import com.erp.server.wms.mapper.SampleReturnInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -72,10 +75,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BORROW_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_RETURN_INFO;
 
 /**
  * <p>
@@ -113,6 +121,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
     @Autowired
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Autowired
+    private SampleBorrowDetailService sampleBorrowDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -152,7 +162,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 sampleReturnDetailEntity.setProductName(skuVO.getSkuName());
             }
         }
-        checkDetailQty(sampleReturnDetailEntities);
+        checkDetailQty("",sampleReturnDetailEntities);
 
         sampleReturnDetailService.saveBatch(sampleReturnDetailEntities);
 
@@ -162,9 +172,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         return new BaseResultDTO.AddDTO(sampleReturnInfoEntity.getId(), code);
     }
 
-    private void checkDetailQty(List<SampleReturnDetailEntity> sampleReturnDetailEntities) {
+    private void checkDetailQty(String id,List<SampleReturnDetailEntity> sampleReturnDetailEntities) {
         List<String> sourceDetailIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView(sourceDetailIds);
+        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView(id,sourceDetailIds);
         Map<String, SampleBorrowInfoDTO.SampleReturnView> viewMap = sampleReturnViews.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SampleReturnView::getSourceDetailId, Function.identity(), (o1, o2) -> o1));
         for (SampleReturnDetailEntity sampleReturnDetailEntity : sampleReturnDetailEntities) {
             String sourceDetailId = sampleReturnDetailEntity.getSourceDetailId();
@@ -176,7 +186,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             Integer returnQty = Objects.isNull(sampleReturnDetailEntity.getReturnQty()) ? 0 :sampleReturnDetailEntity.getReturnQty();
             Integer canReturnQty =Objects.isNull(sampleReturnView.getCanReturnQty()) ? 0 :sampleReturnView.getCanReturnQty();
             if(canReturnQty < returnQty){
-                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH,sampleReturnDetailEntity.getSkuNo(),canReturnQty,returnQty);
+                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH,sampleReturnDetailEntity.getSkuNo(),returnQty,canReturnQty);
             }
         }
     }
@@ -234,10 +244,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
 
         // 记录操作日志
-        log.info("编辑 开始记录样品归还单日志数据，单号：【{}】", sampleReturnInfoEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleReturnInfoEntity.getCode(), "样品归还单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEum枚举类
-        operateLogService.addModuleOperateLogByObj(old, sampleReturnInfoEntity, null, sampleReturnInfoEntity.getId(), msg);
+        log.info("编辑 开始记录样品归还单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "样品归还单");
+        operateLogService.addModuleOperateLogByObj(old, sampleReturnInfoEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
 
         //明细
         updateDetail(addOrUpdateDTO, sampleReturnInfoEntity);
@@ -270,7 +279,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             }
         }
 
-        checkDetailQty(sampleReturnDetailEntities);
+        checkDetailQty(sampleReturnInfoEntity.getId(),sampleReturnDetailEntities);
 
         if(CollUtil.isNotEmpty(oldList)){
             List<String> detailIds = detailList.stream().map(SampleReturnDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -282,7 +291,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 sampleReturnDetailService.removeByIds(remove.stream().map(SampleReturnDetailEntity::getId).collect(Collectors.toList()));
                 //添加日志
                 List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), removePairList, "编辑操作");
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), removePairList, "编辑操作");
             }
         }
         //处理需要新增的数据
@@ -292,7 +301,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
             //添加日志
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), addPairList, "编辑操作");
         }
         //处理需要更新的数据
         List<SampleReturnDetailEntity> updateList = sampleReturnDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
@@ -303,7 +312,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             for (SampleReturnDetailEntity sampleReturnDetailEntity : updateList) {
                 SampleReturnDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleReturnDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
                 }
             }
         }
@@ -387,25 +396,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     }
 
     @Override
-    public void exportList(SampleReturnInfoDTO.ExportDTO param, HttpServletResponse response) {
-        List<SampleReturnInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/sampleReturnInfo.xlsx";
-        String name = "样品归还单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(SampleReturnInfoDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("样品归还单导出", EXPORT_WMS_SAMPLE_RETURN_INFO.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -420,14 +412,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         log.info("提交 开始修改样品归还单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动样品归还单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录样品归还单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -469,8 +458,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -484,12 +472,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -509,15 +496,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         SampleReturnInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品归还单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -526,7 +511,6 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -555,7 +539,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除样品归还单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getCode(), "删除样品归还单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -578,7 +562,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 .update();
         // 日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "作废样品归还单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getCode(), "作废样品归还单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -603,12 +587,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品归还单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -622,7 +604,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+
+        if(Objects.equals(approveStatus,ApproveStatusEnum.APPROVE)){
+            //回写借用单sku明细的待归还数量
+            writeBackSampleBorrowInfo(entity.getId());
+        }
+
         // 记录台账流水
         try {
             ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
@@ -638,6 +625,26 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         return Boolean.TRUE;
     }
 
+    private void writeBackSampleBorrowInfo(String id) {
+        List<SampleReturnDetailEntity> sampleReturnDetailEntities = sampleReturnDetailService.listByMainId(id);
+        Map<String, Integer> returnQtySumBySourceDetailId = sampleReturnDetailEntities.stream()
+                .collect(Collectors.groupingBy(
+                        SampleReturnDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(detail -> Optional.ofNullable(detail.getReturnQty()).orElse(0))
+                ));
+
+        List<String> sourceDetailIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        List<SampleBorrowDetailEntity> sampleBorrowDetailEntities = sampleBorrowDetailService.lambdaQuery().in(SampleBorrowDetailEntity::getId, sourceDetailIds).list();
+
+        for (SampleBorrowDetailEntity sampleBorrowDetailEntity : sampleBorrowDetailEntities) {
+            Integer returnQty = returnQtySumBySourceDetailId.getOrDefault(sampleBorrowDetailEntity.getId(), 0);
+            int waitReturnQty = Objects.isNull(sampleBorrowDetailEntity.getWaitReturnQty()) ? 0 : sampleBorrowDetailEntity.getWaitReturnQty();
+            sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty - returnQty);
+        }
+        sampleBorrowDetailService.updateBatchById(sampleBorrowDetailEntities);
+    }
+
     @Override
     public SampleReturnInfoDTO.ViewDTO view(String id) {
         SampleReturnInfoEntity sampleReturnInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品归还单数据"));
@@ -648,7 +655,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         // 获取归还单明细列表，并查询对应的借用信息
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = sampleReturnDetailService.listByMainId(id);
         List<String> sourceDetailIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView(sourceDetailIds);
+        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView("",sourceDetailIds);
         Map<String, SampleBorrowInfoDTO.SampleReturnView> viewMap = sampleReturnViews.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SampleReturnView::getSourceDetailId, Function.identity(), (o1, o2) -> o1));
         // 转换明细数据并填充借用相关信息
         List<SampleReturnDetailDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(SampleReturnDetailDTO.ViewDTO.class, sampleReturnDetailEntities);
@@ -675,16 +682,29 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_RETURN_INFO.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+    /**
+     * 根据样品归还信息实体获取变量映射表
+     *
+     * @param entity 样品借用信息实体对象，用于提取业务变量数据
+     * @return 返回根据业务键获取的变量映射表，包含业务相关的配置变量
+     */
+    private Map<String,Object> getVariablesMap(SampleReturnInfoEntity entity){
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SAMPLE_RETURN_INFO.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        return map;
+    }
+
     private void fillOne(SampleReturnInfoDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
@@ -763,6 +783,9 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     * 新增修改处理数据
     */
     private void handleData(SampleReturnInfoEntity sampleReturnInfoEntity) {
+        //来源借用单
+        sampleReturnInfoEntity.setSourceType("borrow");
+
         String returnUserId = sampleReturnInfoEntity.getReturnUserId();
         String receiverUserId = sampleReturnInfoEntity.getReceiverUserId();
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));

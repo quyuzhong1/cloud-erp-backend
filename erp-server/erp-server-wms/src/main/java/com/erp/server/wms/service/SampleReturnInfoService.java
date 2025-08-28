@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -133,7 +135,7 @@ public interface SampleReturnInfoService extends SuperService<SampleReturnInfoEn
     * @param response
     * @return
     */
-    void exportList(SampleReturnInfoDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SampleReturnInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

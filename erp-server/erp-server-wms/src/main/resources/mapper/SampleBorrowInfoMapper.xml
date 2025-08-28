@@ -224,6 +224,9 @@ sbi.remark as remark
                 #{item}
             </foreach>
         </if>
+        <if test="notId != null and notId!=''">
+            AND sri.id != #{notId}
+        </if>
         GROUP BY
         srd.source_detail_id
         ) AS C ON C.source_detail_id = sbd.ID
@@ -237,6 +240,74 @@ sbi.remark as remark
                      open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        ORDER BY
+        sbi.code
+    </select>
+
+    <select id="listSku" resultType="com.erp.model.wms.dto.SampleBorrowInfoDTO$SkuAvailableQtyDTO">
+        SELECT
+        sbi.ID AS sourceId,
+        sbi.code AS sourceCode,
+        sbd.ID AS sourceDetailId,
+        sbd.sku_id AS skuId,
+        sbd.sku_no AS skuNo,
+        sbd.product_name AS productName,
+        COALESCE ( sbd.wait_return_qty, 0 ) AS waitReturnQty,
+        COALESCE ( b.returnedQty, 0 ) AS returnedQty,
+        COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty,
+        sbd.remark
+        FROM
+        sample_borrow_info AS sbi
+        LEFT JOIN sample_borrow_detail AS sbd ON sbi.ID = sbd.main_id
+        AND sbd.is_deleted =
+        FALSE LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status = 'approve'
+        GROUP BY
+        srd.source_detail_id
+        ) AS b ON b.source_detail_id = sbd.
+        ID LEFT JOIN (
+        SELECT
+        srd.source_detail_id,
+        SUM ( srd.return_qty ) AS returnedQty
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        AND sri.approve_status != 'approve'
+        <if test="notId != null and notId!=''">
+            AND sri .id != #{notId}
+        </if>
+        GROUP BY
+        srd.source_detail_id
+        ) AS C ON C.source_detail_id = sbd.ID
+        WHERE
+        sbi.is_deleted = FALSE
+        AND sbi.invalid_status = FALSE
+        AND sbi.approve_status = 'approve'
+        AND sbd.wait_return_qty > 0
+        AND sri.code = #{params.sourceCode}
+        <if test="params.skuNos != null and params.skuNos.size > 1">
+            AND sbd.sku_no IN
+            <foreach item="item" index="index" collection="params.skuNos" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            and sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
         </if>
         ORDER BY
         sbi.code

@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -45,7 +46,6 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
     */
     List<SampleBorrowInfoDTO.ListDTO> listExport(@Param("params") SampleBorrowInfoDTO.PagingParamDTO params);
 
-
     /**
     * 获取状态统计
     * @param searchParam
@@ -53,5 +53,7 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
     */
     List<SampleBorrowInfoDTO.TabListDTO> tabList(@Param("params") SampleBorrowInfoDTO.PagingParamDTO searchParam);
 
-    List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(@Param("detailIdList") List<String> detailIdList);
+    List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(@Param("notId")String notId, @Param("detailIdList") List<String> detailIdList);
+
+    List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(@Param("params") SampleBorrowInfoDTO.SearchDTO dto);
 }

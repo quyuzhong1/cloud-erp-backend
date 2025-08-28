@@ -348,4 +348,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportSampleBorrowInfo")
     PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto);
+    /**
+     * 导出样品归还单
+     */
+    @PostMapping("/feign/export/exportSampleReturnInfo")
+    PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto);
 }

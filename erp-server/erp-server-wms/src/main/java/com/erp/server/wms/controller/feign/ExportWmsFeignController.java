@@ -200,6 +200,8 @@ public class ExportWmsFeignController {
 
     @Resource
     private SampleBorrowInfoService sampleBorrowInfoService;
+    @Resource
+    private SampleReturnInfoService sampleReturnInfoService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1144,6 +1146,18 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SampleBorrowInfoQueryHandler.class)
     public PagingVO<SampleBorrowInfoDTO.ListDTO> exportSampleBorrowInfo(@RequestBody PagingDTO<SampleBorrowInfoDTO.PagingParamDTO> dto) {
         return sampleBorrowInfoService.paging(dto);
+    }
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-08-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportSampleReturnInfo")
+    @WebAdvanceQuery(handler = SampleReturnInfoQueryHandler.class)
+    public PagingVO<SampleReturnInfoDTO.ListDTO> exportSampleReturnInfo(@RequestBody PagingDTO<SampleReturnInfoDTO.PagingParamDTO> dto) {
+        return sampleReturnInfoService.paging(dto);
     }
 
 }
