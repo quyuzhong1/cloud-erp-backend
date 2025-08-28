@@ -557,4 +557,137 @@ public class SampleBorrowInfoDTO implements Serializable {
          */
         private String approveStatus;
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+
+        private String notId;
+
+        private String skuNo;
+
+        private List<String> skuNos;
+
+        /**
+         * 样品借用单编号
+         */
+        @NotBlank(message = "样品借用单编号不能为空")
+        private String sourceCode;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuAvailableQtyDTO {
+        private String sourceId;
+
+        private String sourceCode;
+
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU NO
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 待归还数量=借用数量-已归还数量
+         */
+        private Integer waitReturnQty;
+        /**
+         * 已归还数量=关联的已审核样品归还单归还数量
+         */
+        private Integer returnedQty;
+
+        /**
+         * 可归还数量=待归还数量-关联的待提交、审核中、审核不通过样品归还单归还数量
+         */
+        private Integer canReturnQty;
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 归还人 ID
+         */
+        private String borrowUserId;
+
+        /**
+         * 归还人姓名
+         */
+        private String borrowUserName;
+
+        /**
+         * 归还部门ID
+         */
+        private String borrowDeptId;
+
+        /**
+         * 归还部门名称
+         */
+        private String borrowDeptName;
+
+        /**
+         * 接收人ID
+         */
+        private String lendUserId;
+
+        /**
+         * 接收人姓名
+         */
+        private String lendUserName;
+
+        /**
+         * 接收部门ID
+         */
+        private String lendDeptId;
+
+        /**
+         * 接收部门名称
+         */
+        private String lendDeptName;
+    }
 }

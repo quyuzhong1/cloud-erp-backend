@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -557,7 +558,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -573,7 +573,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -642,7 +641,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改样品借用单状态，id：【{}】", id);
@@ -668,8 +666,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 记录台账流水
-
         // 记录台账流水
         try {
             ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
@@ -831,7 +827,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BORROW_INFO.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -1005,7 +1001,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(CollUtil.isEmpty(detailIdList)){
             return Collections.emptyList();
         }
-        List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView(detailIdList);
+        List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView("",detailIdList);
         // 查找第一个不符合审批通过状态的记录
         Optional<SampleBorrowInfoDTO.SampleReturnView> firstNotApproved = list.stream()
                 .filter(e -> !isApprovedStatus(e.getApproveStatus()))
@@ -1017,11 +1013,44 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     }
 
     @Override
-    public List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(List<String> detailIdList) {
+    public List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(String notId,List<String> detailIdList) {
         if(CollUtil.isEmpty(detailIdList)){
             return Collections.emptyList();
         }
-        return this.baseMapper.generateSampleReturnView(detailIdList);
+        return this.baseMapper.generateSampleReturnView("",detailIdList);
+    }
+
+    @Override
+    public List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(SampleBorrowInfoDTO.SearchDTO dto) {
+        if (Objects.isNull(dto)){
+            return Collections.emptyList();
+        }
+        if(CollUtil.isNotEmpty(dto.getSkuNos()) && dto.getSkuNos().size() == 1){
+            dto.setSkuNo(dto.getSkuNos().get(0));
+        }
+        return this.baseMapper.listSku(dto);
+    }
+    /**
+     * 获取下拉列表数据
+     *
+     * @param dto 查询条件参数对象，包含搜索关键字等条件
+     * @return 返回符合条件的SampleBorrowInfo下拉列表数据，如果参数为空则返回空列表
+     */
+    @Override
+    public List<SampleBorrowInfoDTO.DropDownDTO> dropDown(SampleBorrowInfoDTO.SelectDTO dto) {
+        if(Objects.isNull(dto)){
+            return Collections.emptyList();
+        }
+        //构建查询条件：根据搜索关键字模糊查询code字段，并过滤掉无效、已删除和未审批通过的数据
+        LambdaQueryWrapper<SampleBorrowInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if(StringUtils.isNotBlank(dto.getSearchKeyword())){
+            queryWrapper.like(SampleBorrowInfoEntity::getCode, dto.getSearchKeyword());
+        }
+        queryWrapper.eq(SampleBorrowInfoEntity::getInvalidStatus, false);
+        queryWrapper.eq(SampleBorrowInfoEntity::getIsDeleted, false);
+        queryWrapper.eq(SampleBorrowInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+        List<SampleBorrowInfoEntity> list = this.list(queryWrapper);
+        return BeanMapperUtils.copyList(SampleBorrowInfoDTO.DropDownDTO.class, list);
     }
 
     /**

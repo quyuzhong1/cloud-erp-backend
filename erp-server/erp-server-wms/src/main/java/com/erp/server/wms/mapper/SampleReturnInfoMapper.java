@@ -43,7 +43,7 @@ public interface SampleReturnInfoMapper extends BaseMapper<SampleReturnInfoEntit
     * @param params
     * @return
     */
-    List<SampleReturnInfoDTO.ListDTO> listExport(@Param("params") SampleReturnInfoDTO.ExportDTO params);
+    List<SampleReturnInfoDTO.ListDTO> listExport(@Param("params") SampleReturnInfoDTO.PagingParamDTO params);
 
 
     /**

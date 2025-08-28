@@ -174,5 +174,9 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
      */
     List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView( List<String> detailIdList);
 
-    List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(List<String> detailIdList);
+    List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(String notId,List<String> detailIdList);
+
+    List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(SampleBorrowInfoDTO.SearchDTO dto);
+
+    List<SampleBorrowInfoDTO.DropDownDTO> dropDown(SampleBorrowInfoDTO.SelectDTO dto);
 }
