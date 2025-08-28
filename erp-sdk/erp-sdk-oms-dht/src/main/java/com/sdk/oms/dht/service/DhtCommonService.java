@@ -92,7 +92,7 @@ public class DhtCommonService {
         String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.DHT.getCode(),"token");
         Object token = redisUtil.get(tokenKey);
         if(token != null){
-            return JSON.parseObject(token.toString(), new TypeReference<DhtAuthDTO>() {});
+            return (DhtAuthDTO) token;
         }else{
             Map<String, String> headerMap = new HashMap<>();
             Map<String, Object> bodyMap = new HashMap<>();
@@ -110,7 +110,7 @@ public class DhtCommonService {
                 throw new RuntimeException("订货通获取accessToken失败，错误码：" + dto.getErrorCode() + "，错误信息：" + dto.getErrorMessage());
             }
             //缓存6900s 6600-7200s会获取新token  必须保证过期时间在这个范围内
-            redisUtil.set(tokenKey, JSONUtil.toJsonStr(dto), 6900);
+            redisUtil.set(tokenKey, dto, 6900);
             return dto;
         }
     }
