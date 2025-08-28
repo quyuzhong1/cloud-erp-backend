@@ -422,7 +422,7 @@ public class SoMultiChannelController extends BaseController {
     @PostMapping("/listSoMultiChannel")
     public ApiResult<List<SoMultiChannelDTO.SoViewDTO>> listSoMultiChannel(@RequestBody @Validated SoMultiChannelDTO.IdsDTO idDTO) {
         List<String> ids = idDTO.getSoIds().stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        return success(soMultiChannelService.listSoMultiChannel(ids, idDTO.getDeliveryWarehouseId()));
+        return success(soMultiChannelService.listSoMultiChannel(ids, idDTO.getDeliveryWarehouseId(),idDTO.getShopId()));
     }
 
     /**

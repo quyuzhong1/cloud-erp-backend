@@ -23,9 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.SoMultiChannelDTO;
-import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
@@ -114,8 +112,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
-    @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
     private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
@@ -127,6 +123,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private DmpAmazonFeign dmpAmazonFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SkuMappingService skuMappingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -506,7 +504,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     @Override
-    public List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannel(List<String> ids, String deliveryWarehouseId) {
+    public List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannel(List<String> ids, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
@@ -517,7 +515,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("订单【" + soCodeList + "】非已审核且待配货或配货中，不能下推多渠道订单");
         }
         // 数据填充处理
-        fillData(soViewDTOS, deliveryWarehouseId);
+        fillData(soViewDTOS, deliveryWarehouseId,shopId);
         return soViewDTOS;
     }
 
@@ -630,7 +628,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         return this.lambdaQuery().eq(SoMultiChannelEntity::getSoId,soId).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
     }
 
-    private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId) {
+    private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(soViewDTOS)) {
             return;
         }
@@ -642,9 +640,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         //获取FBA可售库存
         List<FbaInventoryDTO.InventoryDTO> inventoryDTOList = new ArrayList<>();
-        if (CharSequenceUtil.isNotBlank(deliveryWarehouseId)){
+        if (CharSequenceUtil.isNotBlank(deliveryWarehouseId) && CharSequenceUtil.isNotBlank(shopId)){
             FbaInventoryDTO.QueryDTO queryDTO = new FbaInventoryDTO.QueryDTO();
             queryDTO.setWarehouseIds(Collections.singletonList(deliveryWarehouseId));
+            queryDTO.setShopIds(Collections.singletonList(shopId));
             queryDTO.setSkuNos(skuNos);
             inventoryDTOList = wmsFbaInventoryFeign.listFbaInventory(queryDTO);
         }

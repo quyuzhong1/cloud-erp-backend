@@ -123,7 +123,7 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         });
         List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = BeanMapperUtils.copyList(SoMultiChannelDetailEntity.class, detailList);
         //平台SKU校验
-        checkData(soMultiChannelEntity,soMultiChannelDetailEntities);
+//        checkData(soMultiChannelEntity,soMultiChannelDetailEntities);
         super.saveBatch(soMultiChannelDetailEntities);
         return soMultiChannelDetailEntities;
     }
