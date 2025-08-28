@@ -676,11 +676,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     Map<String,String> handlerValueMap = new HashMap<>();
                     Map<String,String> remoteValues = new HashMap<>();
                     for (CfgApproveSyncFieldMapEntity entity : fieldList) {
-                        //获取CfgApproveSyncFieldMap对应该的配置记录
-                        CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
-                        if(Objects.isNull(queryOptionEntity)){
-                            continue;
-                        }
                         //设置原始值
                         Object fieldValue = variablesMap.getOrDefault(entity.getFieldSource(), "");
                         if(Objects.isNull(fieldValue)){
@@ -688,7 +683,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }else {
                             handlerValueMap.put(entity.getFieldId(),String.valueOf(fieldValue));
                         }
-
+                        //获取CfgApproveSyncFieldMap对应该的配置记录
+                        CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
+                        if(Objects.isNull(queryOptionEntity)){
+                            continue;
+                        }
                         //判断是类型是common、主表还是明细
                         if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
                                 || queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){

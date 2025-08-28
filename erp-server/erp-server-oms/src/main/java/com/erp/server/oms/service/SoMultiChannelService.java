@@ -147,7 +147,7 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
     */
     Boolean approveEnd(ApproveOneDTO dto, SoMultiChannelEntity entity);
 
-    List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannel(List<String> ids, String deliveryWarehouseId);
+    List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannel(List<String> ids, String deliveryWarehouseId, String shopId);
 
     /**
      * 构建新增DTO

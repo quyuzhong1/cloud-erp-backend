@@ -26,6 +26,7 @@ import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
@@ -63,6 +64,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
 
     @Override
@@ -283,10 +286,46 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public List<FbaInventoryDTO.InventoryDTO> listFbaInventory(FbaInventoryDTO.QueryDTO queryDTO) {
-        if (CollUtil.isEmpty(queryDTO.getSkuNos()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+        if (CollUtil.isNotEmpty(queryDTO.getSkuNos()) && CollUtil.isEmpty(queryDTO.getWarehouseIds())){
+            return baseMapper.listFbaInventory(queryDTO);
+        }
+        if (CollUtil.isEmpty(queryDTO.getShopIds()) || CollUtil.isEmpty(queryDTO.getWarehouseIds())){
             return Collections.emptyList();
         }
-        return baseMapper.listFbaInventory(queryDTO);
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setShopIdList(queryDTO.getShopIds());
+        paramDTO.setType(RuleTypeEnum.PLATFORM.code);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        paramDTO.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if (CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOS)){
+            return Collections.emptyList();
+        }
+        List<String> skuNoList = listingInfoWithSkuMappingDTOS.stream()
+                .map(ListingInfoWithSkuMappingDTO::getProductSkuNo)
+                .collect(Collectors.toList());
+        queryDTO.setSkuNos(skuNoList);
+        List<FbaInventoryDTO.InventoryDTO> inventoryDTOS = baseMapper.listFbaInventory(queryDTO);
+        //转换下拉列表
+        List<FbaInventoryDTO.InventoryDTO> list = new ArrayList<>();
+        listingInfoWithSkuMappingDTOS.forEach(e -> {
+            FbaInventoryDTO.InventoryDTO inventoryDTO = new FbaInventoryDTO.InventoryDTO();
+            inventoryDTO.setId(e.getTableId());
+            inventoryDTO.setSkuNo(e.getProductSkuNo());
+            inventoryDTO.setWarehouseId(e.getWarehouseId());
+            inventoryDTO.setPlatformProductName(e.getPlatformSkuName());
+            inventoryDTO.setAsin(e.getPlatformSpuNo());
+            inventoryDTO.setFnSku(e.getPlatformFnSku());
+            inventoryDTO.setMsku(e.getPlatformSkuNo());
+            FbaInventoryDTO.InventoryDTO inventoryDTO1 = inventoryDTOS.stream()
+                    .filter(d -> d.getSkuNo().equals(e.getProductSkuNo()) && d.getWarehouseId().equals(e.getWarehouseId()) && d.getAsin().equals(e.getPlatformSpuNo()))
+                    .max(Comparator.comparing(FbaInventoryDTO.InventoryDTO::getFulfillableQty)).orElse(null);
+            inventoryDTO.setFbmFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFbmFulfillableQty() : 0);
+            inventoryDTO.setFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFulfillableQty() : 0);
+            list.add(inventoryDTO);
+        });
+        return list;
     }
 
     @Override
