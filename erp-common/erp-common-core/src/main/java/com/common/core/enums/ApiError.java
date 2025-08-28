@@ -1123,6 +1123,8 @@ public enum ApiError implements Serializable {
     ERROR_GENERATE_SAMPLE_RETURN_VIEW(99155,"只有已审核的样品借用单支持下推样品归还单"),
     ERROR_GENERATE_SAMPLE_SCRAP_VIEW(99156,"台账数量为0，无法下推样品报废单"),
     ERROR_GENERATE_SAMPLE_SCRAP_IDS(99157,"请勿选择多个报废人"),
+    ERROR_SAMPLE_RETURN_QTY_NOT_EXIST(99158,"【{}】不存在可归还数量"),
+    ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH(99159,"【{}】可归还数量【{}】少于归还数量【{}】"),
 
 
 

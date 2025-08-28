@@ -173,4 +173,6 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
      * @return 返回包含样品归还视图信息的API结果对象，数据为SampleReturnView列表
      */
     List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView( List<String> detailIdList);
+
+    List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(List<String> detailIdList);
 }

@@ -158,7 +158,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         //校验可用数量是否足够
         checkDetailQty("" , lendUserId, skuNos, sampleBorrowDetailEntities);
 
-
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
         sampleBorrowDetailService.saveBatch(sampleBorrowDetailEntities);
         //附件
@@ -208,7 +207,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<String> attachmentNameList = addDTO.getAttachmentNameList();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
-            Class<SampleBorrowDetailEntity> credentialClass = SampleBorrowDetailEntity.class;
+            Class<SampleBorrowInfoEntity> credentialClass = SampleBorrowInfoEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
@@ -1015,6 +1014,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
         }
         return list;
+    }
+
+    @Override
+    public List<SampleBorrowInfoDTO.SampleReturnView> listSampleReturnView(List<String> detailIdList) {
+        if(CollUtil.isEmpty(detailIdList)){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.generateSampleReturnView(detailIdList);
     }
 
     /**

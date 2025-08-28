@@ -74,16 +74,16 @@ public class SampleReturnDetailDTO implements Serializable {
         /**
          * 待归还数量=借用数量-已归还数量
          */
-        private Integer waitReturnQty;
+        private Integer waitReturnQty = 0;
         /**
          * 已归还数量=关联的已审核样品归还单归还数量
          */
-        private Integer returnedQty;
+        private Integer returnedQty = 0;
 
         /**
          * 可归还数量=待归还数量-关联的待提交、审核中、审核不通过样品归还单归还数量
          */
-        private Integer canReturnQty;
+        private Integer canReturnQty = 0;
 
 
     }

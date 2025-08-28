@@ -218,7 +218,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<String> attachmentNameList = addDTO.getAttachmentNameList();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
-            Class<SampleScrapDetailEntity> credentialClass = SampleScrapDetailEntity.class;
+            Class<SampleScrapInfoEntity> credentialClass = SampleScrapInfoEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();

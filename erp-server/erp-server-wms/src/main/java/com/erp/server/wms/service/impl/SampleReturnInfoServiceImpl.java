@@ -4,13 +4,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.dto.SampleScrapInfoDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
-import com.erp.model.wms.entity.SampleReturnDetailEntity;
-import com.erp.model.wms.entity.SampleReturnInfoEntity;
+import com.common.business.enums.*;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -24,23 +27,20 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -54,7 +54,6 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.wms.entity.SampleReturnDetailEntity;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
@@ -75,6 +74,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -98,7 +98,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private SysUserFeign sysUserFeign;
     @Autowired
     private SampleReturnDetailService sampleReturnDetailService;
-
+    @Autowired
+    private SampleBorrowInfoService sampleBorrowInfoService;
     @Autowired
     private SampleLedgerFlowService sampleLedgerFlowService;
     @Autowired
@@ -125,8 +126,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         log.info("开始新增样品归还单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPGH);
         sampleReturnInfoEntity.setCode(code);
         boolean save = super.save(sampleReturnInfoEntity);
         if(!save) {
@@ -135,11 +135,80 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品归还单" , sampleReturnInfoEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, sampleReturnInfoEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), "新增操作");
+        //明细
+        List<SampleReturnDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        List<SampleReturnDetailEntity> sampleReturnDetailEntities = BeanMapperUtils.copyList(SampleReturnDetailEntity.class, detailList);
+        List<String> skuIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+        for (SampleReturnDetailEntity sampleReturnDetailEntity : sampleReturnDetailEntities) {
+            sampleReturnDetailEntity.setMainId(sampleReturnInfoEntity.getId());
+
+            SkuVO skuVO = skuMap.getOrDefault(sampleReturnDetailEntity.getSkuId(), null);
+            if(Objects.nonNull(skuVO)){
+                sampleReturnDetailEntity.setSkuNo(skuVO.getSkuNo());
+                sampleReturnDetailEntity.setProductName(skuVO.getSkuName());
+            }
+        }
+        checkDetailQty(sampleReturnDetailEntities);
+
+        sampleReturnDetailService.saveBatch(sampleReturnDetailEntities);
+
+        //附件
+        addAttachment(addDTO, sampleReturnInfoEntity);
 
         return new BaseResultDTO.AddDTO(sampleReturnInfoEntity.getId(), code);
+    }
+
+    private void checkDetailQty(List<SampleReturnDetailEntity> sampleReturnDetailEntities) {
+        List<String> sourceDetailIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView(sourceDetailIds);
+        Map<String, SampleBorrowInfoDTO.SampleReturnView> viewMap = sampleReturnViews.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SampleReturnView::getSourceDetailId, Function.identity(), (o1, o2) -> o1));
+        for (SampleReturnDetailEntity sampleReturnDetailEntity : sampleReturnDetailEntities) {
+            String sourceDetailId = sampleReturnDetailEntity.getSourceDetailId();
+            SampleBorrowInfoDTO.SampleReturnView sampleReturnView = viewMap.getOrDefault(sourceDetailId, null);
+            if(Objects.isNull(sampleReturnView)){
+                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_EXIST,sampleReturnDetailEntity.getSkuNo());
+            }
+
+            Integer returnQty = Objects.isNull(sampleReturnDetailEntity.getReturnQty()) ? 0 :sampleReturnDetailEntity.getReturnQty();
+            Integer canReturnQty =Objects.isNull(sampleReturnView.getCanReturnQty()) ? 0 :sampleReturnView.getCanReturnQty();
+            if(canReturnQty < returnQty){
+                throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_QTY_NOT_ENOUGH,sampleReturnDetailEntity.getSkuNo(),canReturnQty,returnQty);
+            }
+        }
+    }
+
+    /**
+     * 添加附件信息
+     * @param addDTO 包含附件URL和名称列表的数据传输对象
+     * @param sampleReturnInfoEntity
+     */
+    private void addAttachment(SampleReturnInfoDTO.AddDTO addDTO, SampleReturnInfoEntity sampleReturnInfoEntity) {
+        //附件集合
+        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
+        //附件名
+        List<String> attachmentNameList = addDTO.getAttachmentNameList();
+        List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+            Class<SampleReturnInfoEntity> credentialClass = SampleReturnInfoEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
+                WmsAttachmentEntity attachment = new WmsAttachmentEntity();
+                attachment.setAttachUrl(attachmentUrlList.get(i));
+                attachment.setAttachName(attachmentNameList.get(i));
+                attachment.setBusinessId(sampleReturnInfoEntity.getId());
+                attachment.setType(type);
+                batchAttachmentList.add(attachment);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                attachmentService.saveBatch(batchAttachmentList);
+            }
+        }
     }
 
     /**
@@ -163,14 +232,126 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if(!save) {
             throw new ServiceException("样品归还单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录操作日志
-            log.info("编辑 开始记录样品归还单日志数据，单号：【{}】", sampleReturnInfoEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleReturnInfoEntity.getCode(), "样品归还单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录样品归还单日志数据，单号：【{}】", sampleReturnInfoEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleReturnInfoEntity.getCode(), "样品归还单");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEum枚举类
         operateLogService.addModuleOperateLogByObj(old, sampleReturnInfoEntity, null, sampleReturnInfoEntity.getId(), msg);
+
+        //明细
+        updateDetail(addOrUpdateDTO, sampleReturnInfoEntity);
+
+        //附件
+        updateAttachment(addOrUpdateDTO, old);
+
         return Boolean.TRUE;
+    }
+
+
+
+    private void updateDetail(SampleReturnInfoDTO.UpdateDTO addOrUpdateDTO, SampleReturnInfoEntity sampleReturnInfoEntity) {
+        List<SampleReturnDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+        List<SampleReturnDetailEntity> oldList = sampleReturnDetailService.listByMainId(sampleReturnInfoEntity.getId());
+
+        List<SampleReturnDetailEntity> sampleReturnDetailEntities = BeanMapperUtils.copyList(SampleReturnDetailEntity.class, detailList);
+        // 提取所有SKU编号，用于后续查询可用数量
+        List<String> skuIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+        for (SampleReturnDetailEntity sampleReturnDetailEntity : sampleReturnDetailEntities) {
+            sampleReturnDetailEntity.setMainId(sampleReturnInfoEntity.getId());
+
+            SkuVO skuVO = skuMap.getOrDefault(sampleReturnDetailEntity.getSkuId(), null);
+            if(Objects.nonNull(skuVO)){
+                sampleReturnDetailEntity.setSkuNo(skuVO.getSkuNo());
+                sampleReturnDetailEntity.setProductName(skuVO.getSkuName());
+            }
+        }
+
+        checkDetailQty(sampleReturnDetailEntities);
+
+        if(CollUtil.isNotEmpty(oldList)){
+            List<String> detailIds = detailList.stream().map(SampleReturnDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            // 处理删除的数据
+            List<SampleReturnDetailEntity> remove = oldList.stream()
+                    .filter(oldEntity -> !detailIds.contains(oldEntity.getId()))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(remove)){
+                sampleReturnDetailService.removeByIds(remove.stream().map(SampleReturnDetailEntity::getId).collect(Collectors.toList()));
+                //添加日志
+                List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), removePairList, "编辑操作");
+            }
+        }
+        //处理需要新增的数据
+        List<SampleReturnDetailEntity> addList = sampleReturnDetailEntities.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(addList)){
+            sampleReturnDetailService.saveBatch(addList);
+
+            //添加日志
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addPairList, "编辑操作");
+        }
+        //处理需要更新的数据
+        List<SampleReturnDetailEntity> updateList = sampleReturnDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(updateList)){
+            sampleReturnDetailService.updateBatchById(updateList);
+            //添加日志
+            String msg = "编辑SKU【%s】";
+            for (SampleReturnDetailEntity sampleReturnDetailEntity : updateList) {
+                SampleReturnDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleReturnDetailEntity.getId())).findFirst().orElse(null);
+                if(Objects.nonNull(oldDetail)){
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
+                }
+            }
+        }
+    }
+
+    private void updateAttachment(SampleReturnInfoDTO.UpdateDTO addOrUpdateDTO, SampleReturnInfoEntity old) {
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
+            List<WmsAttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
+            if(CollUtil.isNotEmpty(oldAttachmentList)){
+                // 处理删除的数据
+                List<WmsAttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
+                        .collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(remove)){
+                    attachmentService.deleteByUrlList(remove.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+                }
+            }
+
+            //处理需要新增的数据
+            List<String> oldUrlList = oldAttachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> add = attachmentUrlList.stream()
+                    .filter(url -> !oldUrlList.contains(url))
+                    .collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(add)){
+                Class<SampleReturnInfoEntity> credentialClass = SampleReturnInfoEntity.class;
+                TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+                //获取到表名
+                String type = tableName.value();
+                List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    if(!add.contains(attachmentUrlList.get(i))){
+                        continue;
+                    }
+                    WmsAttachmentEntity addAttachment = new WmsAttachmentEntity();
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    addAttachment.setAttachName(attachmentNameList.get(i));
+                    addAttachment.setBusinessId(old.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
+
+                if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                    attachmentService.saveBatch(batchAttachmentList);
+                }
+            }
+        }
     }
 
 
@@ -442,7 +623,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
-// 记录台账流水
+        // 记录台账流水
         try {
             ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
@@ -461,9 +642,25 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     public SampleReturnInfoDTO.ViewDTO view(String id) {
         SampleReturnInfoEntity sampleReturnInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品归还单数据"));
         SampleReturnInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleReturnInfoDTO.ViewDTO.class, sampleReturnInfoEntity);
+        data.setApproveStatus(sampleReturnInfoEntity.getApproveStatus().getStatus());
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        // 获取归还单明细列表，并查询对应的借用信息
+        List<SampleReturnDetailEntity> sampleReturnDetailEntities = sampleReturnDetailService.listByMainId(id);
+        List<String> sourceDetailIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SampleBorrowInfoDTO.SampleReturnView> sampleReturnViews = sampleBorrowInfoService.listSampleReturnView(sourceDetailIds);
+        Map<String, SampleBorrowInfoDTO.SampleReturnView> viewMap = sampleReturnViews.stream().collect(Collectors.toMap(SampleBorrowInfoDTO.SampleReturnView::getSourceDetailId, Function.identity(), (o1, o2) -> o1));
+        // 转换明细数据并填充借用相关信息
+        List<SampleReturnDetailDTO.ViewDTO> viewDTOS = BeanMapperUtils.copyList(SampleReturnDetailDTO.ViewDTO.class, sampleReturnDetailEntities);
+        for (SampleReturnDetailDTO.ViewDTO viewDTO : viewDTOS) {
+            SampleBorrowInfoDTO.SampleReturnView sampleReturnView = viewMap.getOrDefault(viewDTO.getSourceDetailId(), null);
+            if(Objects.nonNull(sampleReturnView)){
+                viewDTO.setWaitReturnQty(sampleReturnView.getWaitReturnQty());
+                viewDTO.setReturnedQty(sampleReturnView.getReturnedQty());
+                viewDTO.setCanReturnQty(sampleReturnView.getCanReturnQty());
+            }
+        }
+        data.setDetailList(viewDTOS);
         return data;
     }
     /**
@@ -492,6 +689,8 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
     }
 
     /**
@@ -547,7 +746,6 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         for(SampleReturnInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
         }
     }
     /**
@@ -565,7 +763,43 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     * 新增修改处理数据
     */
     private void handleData(SampleReturnInfoEntity sampleReturnInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+        String returnUserId = sampleReturnInfoEntity.getReturnUserId();
+        String receiverUserId = sampleReturnInfoEntity.getReceiverUserId();
+        List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));
+        if(CollUtil.isEmpty(users) || users.size() != 2){
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        FindUserDTO returnUser = users.stream().filter(e -> Objects.equals(e.getUserId(), returnUserId)).findFirst().orElse(null);
+        if(Objects.isNull(returnUser)){
+            throw new ServiceException(ApiError.NOT_EXIST,"归还人");
+        }
+        FindUserDTO receiverUser = users.stream().filter(e -> Objects.equals(e.getUserId(), receiverUserId)).findFirst().orElse(null);
+        if(Objects.isNull(receiverUser)){
+            throw new ServiceException(ApiError.NOT_EXIST,"接收人");
+        }
+
+        String returnDeptId = sampleReturnInfoEntity.getReturnDeptId();
+        String receiverDeptId = sampleReturnInfoEntity.getReceiverDeptId();
+        List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(returnDeptId, receiverDeptId));
+        if(CollUtil.isEmpty(sysDepartmentEntities) || sysDepartmentEntities.size() != 2){
+            throw new ServiceException(ApiError.ERROR_9029);
+        }
+
+        SysDepartmentEntity returnDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), returnDeptId)).findFirst().orElse(null);
+        if(Objects.isNull(returnDept)){
+            throw new ServiceException(ApiError.NOT_EXIST,"归还部门");
+        }
+        SysDepartmentEntity receiverDept = sysDepartmentEntities.stream().filter(e -> Objects.equals(e.getId(), receiverDeptId)).findFirst().orElse(null);
+        if(Objects.isNull(receiverDept)){
+            throw new ServiceException(ApiError.NOT_EXIST,"接收部门");
+        }
+        //赋值
+        sampleReturnInfoEntity.setReturnUserName(returnUser.getUserName());
+        sampleReturnInfoEntity.setReceiverUserName(receiverUser.getUserName());
+        sampleReturnInfoEntity.setReturnDeptName(returnDept.getName());
+        sampleReturnInfoEntity.setReceiverDeptName(receiverDept.getName());
+
+
     }
 
     // ==================== 台账流水构建器实现 ====================
