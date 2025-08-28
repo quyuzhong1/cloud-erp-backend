@@ -13,9 +13,11 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="main_id" property="mainId" />
+       <result column="source_detail_id" property="sourceDetailId" />
        <result column="sku_no" property="skuNo" />
        <result column="sku_id" property="skuId" />
        <result column="product_name" property="productName" />
+       <result column="use_user_id" property="useUserId" />
        <result column="qty" property="qty" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -31,7 +33,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_no, sku_id, product_name, qty, remark
+        main_id, source_detail_id, sku_no, sku_id, product_name, use_user_id, qty, remark
     </sql>
 
 

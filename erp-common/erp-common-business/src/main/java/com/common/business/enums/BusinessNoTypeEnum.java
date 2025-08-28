@@ -127,6 +127,7 @@ public enum BusinessNoTypeEnum {
     CODE_YPJY(98, "YPJY","样品借用单", BusinessNoConstant.YPJY),
     CODE_YPGH(99, "YPGH","样品归还单", BusinessNoConstant.YPGH),
     CODE_ZHDD(100, "ZHDD","展会订单", BusinessNoConstant.ZHDD),
+    CODE_YPTH(101, "CODE_YPTH","样品退回单", BusinessNoConstant.YPTH),
 
     ;
 

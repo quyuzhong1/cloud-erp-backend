@@ -15,6 +15,8 @@ import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -168,6 +170,11 @@ public class SampleBackInfoDTO implements Serializable {
         private String warehouseName;
 
         /**
+        * 退回组织ID
+        */
+        private String orgId;
+
+        /**
         * 备注
         */
         private String remark;
@@ -308,9 +315,19 @@ public class SampleBackInfoDTO implements Serializable {
         private String warehouseName;
 
         /**
+        * 退回组织ID
+        */
+        private String orgId;
+
+        /**
         * 备注
         */
         private String remark;
+
+        /**
+        * 明细列表
+        */
+        private List<SampleBackDetailDTO.ViewDTO> detailList;
 
 
     }
@@ -321,7 +338,11 @@ public class SampleBackInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        /**
+         * 明细列表
+         */
+        @NotEmpty(message = "明细不能为空")
+        private List<SampleBackDetailDTO.@Valid AddDTO> detailList;
 
     }
 
@@ -338,6 +359,12 @@ public class SampleBackInfoDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 明细列表
+         */
+        @NotEmpty(message = "明细不能为空")
+        private List<SampleBackDetailDTO.@Valid UpdateDTO> detailList;
+
     }
 
     @Data
@@ -348,13 +375,6 @@ public class SampleBackInfoDTO implements Serializable {
         * 作废时间
         */
         private LocalDateTime invalidTime;
-
-        /**
-        * 单据状态
-        */
-        @NotBlank(message = "单据状态不能为空")
-        @Size(max = 50,message = "单据状态最大长度不能超过50位")
-        private String status;
 
         /**
         * 执行状态
@@ -417,6 +437,13 @@ public class SampleBackInfoDTO implements Serializable {
         @NotBlank(message = "warehouseName不能为空")
         @Size(max = 100,message = "warehouseName最大长度不能超过100位")
         private String warehouseName;
+
+        /**
+        * 退回组织ID
+        */
+        @NotBlank(message = "退回组织ID不能为空")
+        @Size(max = 19,message = "退回组织ID最大长度不能超过19位")
+        private String orgId;
 
         /**
         * 备注

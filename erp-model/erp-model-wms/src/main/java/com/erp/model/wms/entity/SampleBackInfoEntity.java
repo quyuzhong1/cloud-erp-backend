@@ -67,11 +67,6 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     @TableField("code")
     private String code;
     /**
-    * 单据状态
-    */
-    @TableField("status")
-    private String status;
-    /**
     * 执行状态
     */
     @TableField("exec_status")
@@ -116,6 +111,11 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     @TableField("warehouse_name")
     private String warehouseName;
     /**
+    * 退回组织ID
+    */
+    @TableField("org_id")
+    private String orgId;
+    /**
     * 备注
     */
     @TableField("remark")
@@ -138,8 +138,6 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
 
     public static final String CODE = "code";
 
-    public static final String STATUS = "status";
-
     public static final String EXEC_STATUS = "exec_status";
 
     public static final String BACK_DATE = "back_date";
@@ -159,6 +157,8 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     public static final String WAREHOUSE_ID = "warehouse_id";
 
     public static final String WAREHOUSE_NAME = "warehouse_name";
+
+    public static final String ORG_ID = "org_id";
 
     public static final String REMARK = "remark";
 

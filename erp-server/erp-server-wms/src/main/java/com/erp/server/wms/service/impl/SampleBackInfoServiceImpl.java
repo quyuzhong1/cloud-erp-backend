@@ -1,62 +1,51 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.entity.SampleBackInfoEntity;
-import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.mapper.SampleBackInfoMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleBackInfoDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.SampleBackDetailDTO;
+import com.erp.model.wms.dto.SampleBackInfoDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.entity.SampleBackDetailEntity;
+import com.erp.model.wms.entity.SampleBackInfoEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.mapper.SampleBackInfoMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.entity.SampleBackDetailEntity;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.apache.commons.collections4.CollectionUtils;
+import java.util.stream.Collectors;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 
 /**
  * <p>
@@ -83,6 +72,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     private SysUserFeign sysUserFeign;
     @Autowired
     private SampleBackDetailService sampleBackDetailService;
+    @Autowired
+    private SampleLedgerService sampleLedgerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -96,19 +87,34 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         log.info("开始新增样品退回单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YPTH);
         sampleBackInfoEntity.setCode(code);
+        
+        // 设置默认审批状态为待提交
+        sampleBackInfoEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        
         boolean save = super.save(sampleBackInfoEntity);
         if(!save) {
             throw new ServiceException("样品退回单保存失败");
         }
 
+        // 保存明细
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
+            for (SampleBackDetailDTO.AddDTO detailDTO : addDTO.getDetailList()) {
+                SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
+                BeanMapperUtils.copy(detailDTO, detailEntity);
+                detailEntity.setMainId(sampleBackInfoEntity.getId());
+                
+                boolean detailSave = sampleBackDetailService.save(detailEntity);
+                if (!detailSave) {
+                    throw new ServiceException("样品退回单明细保存失败");
+                }
+            }
+        }
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品退回单" , sampleBackInfoEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, sampleBackInfoEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), sampleBackInfoEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(sampleBackInfoEntity.getId(), code);
     }
@@ -134,13 +140,62 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if(!save) {
             throw new ServiceException("样品退回单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 处理明细数据（包含增删改）
+        if (CollUtil.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            // 获取原有明细列表
+            LambdaQueryWrapper<SampleBackDetailEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SampleBackDetailEntity::getMainId, addOrUpdateDTO.getId());
+            List<SampleBackDetailEntity> existingDetails = sampleBackDetailService.list(wrapper);
+            
+            // 创建原有明细的ID集合，用于判断哪些需要删除
+            Set<String> existingDetailIds = existingDetails.stream()
+                .map(SampleBackDetailEntity::getId)
+                .collect(Collectors.toSet());
+            
+            // 创建新明细的ID集合，用于判断哪些需要新增
+            Set<String> newDetailIds = addOrUpdateDTO.getDetailList().stream()
+                .map(SampleBackDetailDTO.UpdateDTO::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+            
+            // 删除不再存在的明细
+            Set<String> toDeleteIds = existingDetailIds.stream()
+                .filter(id -> !newDetailIds.contains(id))
+                .collect(Collectors.toSet());
+            if (!toDeleteIds.isEmpty()) {
+                sampleBackDetailService.removeByIds(toDeleteIds);
+            }
+            
+            // 处理新增和更新
+            for (SampleBackDetailDTO.UpdateDTO detailDTO : addOrUpdateDTO.getDetailList()) {
+                if (StrUtil.isBlank(detailDTO.getId())) {
+                    // 新增明细
+                    SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
+                    BeanMapperUtils.copy(detailDTO, detailEntity);
+                    detailEntity.setMainId(addOrUpdateDTO.getId());
+                    
+                    boolean detailSave = sampleBackDetailService.save(detailEntity);
+                    if (!detailSave) {
+                        throw new ServiceException("样品退回单明细保存失败");
+                    }
+                } else {
+                    // 更新明细
+                    SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
+                    BeanMapperUtils.copy(detailDTO, detailEntity);
+                    detailEntity.setMainId(addOrUpdateDTO.getId());
+                    
+                    boolean detailUpdate = sampleBackDetailService.updateById(detailEntity);
+                    if (!detailUpdate) {
+                        throw new ServiceException("样品退回单明细更新失败");
+                    }
+                }
+            }
+        }
 
         // 记录主单操作日志
             log.info("编辑 开始记录样品退回单日志数据，单号：【{}】", sampleBackInfoEntity.getCode());
             String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleBackInfoEntity.getCode(), "样品退回单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, sampleBackInfoEntity, null, sampleBackInfoEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, sampleBackInfoEntity, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), sampleBackInfoEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -179,7 +234,41 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Override
     public SampleBackInfoDTO.ViewDTO view(String id) {
-        return null;
+        SampleBackInfoDTO.ViewDTO viewDTO = new SampleBackInfoDTO.ViewDTO();
+        SampleBackInfoEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单");
+        }
+        BeanMapperUtils.copy(entity, viewDTO);
+        // 设置明细列表到ViewDTO中
+        List<SampleBackDetailDTO.ViewDTO> detailList = sampleBackDetailService.list(new LambdaQueryWrapper<SampleBackDetailEntity>().eq(SampleBackDetailEntity::getMainId, id)).stream()
+            .map(detail -> {
+                SampleBackDetailDTO.ViewDTO detailDTO = new SampleBackDetailDTO.ViewDTO();
+                BeanMapperUtils.copy(detail, detailDTO);
+                
+                // 查询可退回数量
+                SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+                searchDTO.setUserId(detail.getUseUserId());
+                searchDTO.setSkuNo(detail.getSkuNo());
+                searchDTO.setType("back");
+                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
+                
+                // 设置可退回数量
+                if (CollUtil.isNotEmpty(skuAvailableQtyDTOS)) {
+                    Integer availableQty = skuAvailableQtyDTOS.stream()
+                        .mapToInt(SampleLedgerDTO.SkuAvailableQtyDTO::getAvailableQty)
+                        .sum();
+                    detailDTO.setAvailableQty(availableQty);
+                } else {
+                    detailDTO.setAvailableQty(0);
+                }
+                
+                return detailDTO;
+            })
+            .collect(Collectors.toList());
+        viewDTO.setDetailList(detailList);
+        
+        return viewDTO;
     }
 
     @Override
@@ -222,8 +311,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 记录操作日志
         log.info("提交 开始记录样品退回单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
     /**
@@ -286,8 +374,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -302,7 +389,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -333,8 +420,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -363,7 +449,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         // 删除日志数据
         log.info("删除 开始删除样品退回单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除样品退回单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getCode(), "删除样品退回单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -385,8 +471,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -411,12 +496,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品退回单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);

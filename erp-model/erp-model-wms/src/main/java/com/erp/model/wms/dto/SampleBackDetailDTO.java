@@ -57,6 +57,16 @@ public class SampleBackDetailDTO implements Serializable {
         private String productName;
 
         /**
+        * 使用方ID
+        */
+        private String useUserId;
+
+        /**
+        * 可退回数量
+        */
+        private Integer availableQty;
+
+        /**
         * 退回数量
         */
         private Integer qty;
@@ -106,6 +116,19 @@ public class SampleBackDetailDTO implements Serializable {
         private String mainId;
 
         /**
+        * 来源明细ID
+        */
+        @Size(max = 19,message = "来源明细ID最大长度不能超过19位")
+        private String sourceDetailId;
+
+        /**
+        * SKU编码
+        */
+        @NotBlank(message = "SKU编码不能为空")
+        @Size(max = 100,message = "SKU编码最大长度不能超过100位")
+        private String skuNo;
+
+        /**
         * SKU ID
         */
         @NotBlank(message = "SKU ID不能为空")
@@ -120,6 +143,13 @@ public class SampleBackDetailDTO implements Serializable {
         private String productName;
 
         /**
+        * 使用方ID
+        */
+        @NotBlank(message = "使用方ID不能为空")
+        @Size(max = 19,message = "使用方ID最大长度不能超过19位")
+        private String useUserId;
+
+        /**
         * 退回数量
         */
         @NotNull(message = "退回数量不能为空")
@@ -128,7 +158,6 @@ public class SampleBackDetailDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 

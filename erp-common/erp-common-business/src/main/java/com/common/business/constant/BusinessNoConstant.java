@@ -206,5 +206,7 @@ public interface BusinessNoConstant {
 
     //样品领用
     String YPLY="YPLY";
+    //样品退回
+    String YPTH="YPTH";
 
 }

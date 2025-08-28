@@ -20,7 +20,6 @@
        <result column="invalid_remark" property="invalidRemark" />
        <result column="invalid_time" property="invalidTime" />
        <result column="code" property="code" />
-       <result column="status" property="status" />
        <result column="exec_status" property="execStatus" />
        <result column="back_date" property="backDate" />
        <result column="source_id" property="sourceId" />
@@ -31,6 +30,7 @@
        <result column="dept_id" property="deptId" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="warehouse_name" property="warehouseName" />
+       <result column="org_id" property="orgId" />
        <result column="remark" property="remark" />
     </resultMap>
 

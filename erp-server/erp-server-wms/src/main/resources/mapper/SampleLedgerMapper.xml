@@ -82,6 +82,18 @@
             GROUP BY ssd.sku_id
             ) as dd on dd.sku_id = sl.sku_id
         </if>
+        <if test="params.type != null and params.type == 'back'">
+            left join (
+            select ssd.sku_id , sum(ssd.return_qty) as freezeQty  from  sample_back_info ssi
+            inner join sample_back_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
+            where ssi.is_deleted = false
+            and ssi.approve_status !='approve'
+            <if test="params.childId != null and params.childId != ''">
+                and ssi.id != #{params.childId}
+            </if>
+            GROUP BY ssd.sku_id
+            ) as dd on dd.sku_id = sl.sku_id
+        </if>
         WHERE
         sl.is_deleted = FALSE
         AND sl.user_id = #{ params.userId}

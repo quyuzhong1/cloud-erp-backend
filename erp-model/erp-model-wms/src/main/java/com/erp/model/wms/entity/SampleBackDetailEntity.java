@@ -30,6 +30,11 @@ public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
     @TableField("main_id")
     private String mainId;
     /**
+    * 来源明细ID
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
     * SKU编码
     */
     @TableField("sku_no")
@@ -45,6 +50,11 @@ public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
     @TableField("product_name")
     private String productName;
     /**
+    * 使用方ID
+    */
+    @TableField("use_user_id")
+    private String useUserId;
+    /**
     * 退回数量
     */
     @TableField("qty")
@@ -58,11 +68,15 @@ public class SampleBackDetailEntity extends BaseEntity<SampleBackDetailEntity> {
 
     public static final String MAIN_ID = "main_id";
 
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
     public static final String SKU_NO = "sku_no";
 
     public static final String SKU_ID = "sku_id";
 
     public static final String PRODUCT_NAME = "product_name";
+
+    public static final String USE_USER_ID = "use_user_id";
 
     public static final String QTY = "qty";
 
