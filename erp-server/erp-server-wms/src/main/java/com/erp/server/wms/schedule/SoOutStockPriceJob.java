@@ -123,9 +123,11 @@ public class SoOutStockPriceJob {
                 }
             });
             if(CollectionUtils.isNotEmpty(updateList)){
+                XxlJobHelper.log("开始更新出库单明细数据，数量={}", updateList.size());
                 soOutstockDetailService.updateBatchById(updateList);
             }
             if(CollectionUtils.isNotEmpty(updateThirdWarehouseDetailList)){
+                XxlJobHelper.log("开始更新三方仓发货单明细数据，数量={}", updateThirdWarehouseDetailList.size());
                 thirdWarehouseDeliveryDetailService.updateBatchById(updateThirdWarehouseDetailList);
             }
         }
