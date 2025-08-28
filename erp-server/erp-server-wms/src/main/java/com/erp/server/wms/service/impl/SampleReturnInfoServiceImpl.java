@@ -100,7 +100,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     private SampleReturnDetailService sampleReturnDetailService;
 
     @Autowired
-    private SampleLedgerService sampleLedgerService;
+    private SampleLedgerFlowService sampleLedgerFlowService;
     @Autowired
     private WmsAttachmentService attachmentService;
     @Autowired
@@ -442,7 +442,18 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         // todo 明细数据处理 上下游数据处理
-
+// 记录台账流水
+        try {
+            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品归还单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+            }
+        } catch (Exception e) {
+            log.error("样品归还单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品归还单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
         return Boolean.TRUE;
     }
 
