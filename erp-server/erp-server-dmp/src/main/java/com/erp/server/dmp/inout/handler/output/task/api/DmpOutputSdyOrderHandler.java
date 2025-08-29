@@ -206,6 +206,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setTotal_freight(dmpSoInfoEntity.getShippingAmount());
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
+            	shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(dmpSoDetailEntity.getDiscountAmount());
+            	shudiyunB2cOrderDTO.setFreight(dmpSoDetailEntity.getShippingCost());
             	shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getSkuNo());
                 Map<String, Object> thirdShopEntityListMap = cacheMap.get("thirdShopEntityList");
                 if(thirdShopEntityListMap == null) {
@@ -764,6 +766,15 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             }
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
+            if (!PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
+            	BigDecimal goods_transaction_amount = shudiyunB2cOrderDTO.getGoods_transaction_amount();
+    			BigDecimal total_goods_transaction_amount = shudiyunB2cOrderDTO.getTotal_goods_transaction_amount();
+    			if(BigDecimal.ZERO.compareTo(goods_transaction_amount) != 0 && BigDecimal.ZERO.compareTo(total_goods_transaction_amount) != 0) {
+    				shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getDiscount_deduction_amount()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
+    				shudiyunB2cOrderDTO.setFreight(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getTotal_freight()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
+    				shudiyunB2cOrderDTO.setGoods_taxation(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getTaxation()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
+    			}
+            }
             shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
