@@ -152,4 +152,6 @@ public interface SampleReturnInfoService extends SuperService<SampleReturnInfoEn
      * @return
      */
     BatchResultDTO invalid(String id);
+
+    List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(String sourceId);
 }

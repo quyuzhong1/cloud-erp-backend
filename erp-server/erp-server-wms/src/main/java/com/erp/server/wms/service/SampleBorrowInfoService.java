@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import com.common.business.service.SuperService;
@@ -8,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
@@ -179,4 +181,10 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
     List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(SampleBorrowInfoDTO.SearchDTO dto);
 
     List<SampleBorrowInfoDTO.DropDownDTO> dropDown(SampleBorrowInfoDTO.SelectDTO dto);
+    /**
+     * 单据管理：根据借用单id查询关联的归还单
+     * @author jack
+     * @date:  2025-08-29
+     */
+    List<SampleReturnInfoDTO.ListDTO> listReturnById(String id);
 }

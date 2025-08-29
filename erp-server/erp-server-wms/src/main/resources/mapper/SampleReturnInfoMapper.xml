@@ -145,4 +145,52 @@ sri.remark as remark
         GROUP BY approve_status
     </select>
 
+    <select id="listReturnBySourceId" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
+        SELECT
+        sri.ID AS ID,
+        sri.create_user_id AS createUserId,
+        sri.create_user_name AS createUserName,
+        sri.create_time AS createTime,
+        sri.update_user_id AS updateUserId,
+        sri.update_user_name AS updateUserName,
+        sri.update_time AS updateTime,
+        sri.VERSION AS VERSION,
+        sri.is_deleted AS isDeleted,
+        sri.code AS code,
+        sri.source_id AS sourceId,
+        sri.source_code AS sourceCode,
+        sri.source_type AS sourceType,
+        sri.approve_status AS approveStatus,
+        sri.approve_time AS approveTime,
+        sri.approve_user_id AS approveUserId,
+        sri.approve_user_name AS approveUserName,
+        sri.invalid_status AS invalidStatus,
+        sri.return_user_id AS returnUserId,
+        sri.return_user_name AS returnUserName,
+        sri.return_dept_id AS returnDeptId,
+        sri.return_dept_name AS returnDeptName,
+        sri.receiver_user_id AS receiverUserId,
+        sri.receiver_user_name AS receiverUserName,
+        sri.receiver_dept_id AS receiverDeptId,
+        sri.receiver_dept_name AS receiverDeptName,
+        sri.return_date AS returnDate,
+        sri.remark AS remark,
+        srd.ID AS detailId,
+        srd.main_id AS mainId,
+        srd.source_detail_id AS sourceDetailId,
+        srd.sku_id AS skuId,
+        srd.sku_no AS skuNo,
+        srd.product_name AS productName,
+        srd.return_qty AS returnQty,
+        srd.remark AS detailRemark
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+        and sri.is_deleted = FALSE
+        and sri.source_id = #{sourceId}
+        ORDER BY
+        sri.create_time desc
+    </select>
 </mapper>

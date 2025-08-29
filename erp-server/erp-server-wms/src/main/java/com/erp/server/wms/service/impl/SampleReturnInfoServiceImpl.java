@@ -21,7 +21,6 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
-import com.erp.server.wms.mapper.SampleBorrowDetailMapper;
 import com.erp.server.wms.mapper.SampleReturnInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -29,7 +28,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -42,47 +40,28 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.model.wms.entity.SampleReturnDetailEntity;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.mapper.SampleReturnInfoMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SampleLedgerFlowBuilder;
 import com.erp.server.wms.service.SampleReturnDetailService;
 import com.erp.server.wms.service.SampleReturnInfoService;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BORROW_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_RETURN_INFO;
 
 /**
@@ -670,6 +649,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         data.setDetailList(viewDTOS);
         return data;
     }
+
+    @Override
+    public List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(String sourceId) {
+        return baseMapper.listReturnBySourceId(sourceId);
+    }
+
+
     /**
     * 启动流程
     *

@@ -112,6 +112,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     @Resource
     private SampleLedgerFlowService sampleLedgerFlowService;
 
+    @Resource
+    private SampleReturnInfoService sampleReturnInfoService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1051,6 +1054,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         queryWrapper.eq(SampleBorrowInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
         List<SampleBorrowInfoEntity> list = this.list(queryWrapper);
         return BeanMapperUtils.copyList(SampleBorrowInfoDTO.DropDownDTO.class, list);
+    }
+
+    @Override
+    public List<SampleReturnInfoDTO.ListDTO> listReturnById(String id) {
+        return sampleReturnInfoService.listReturnBySourceId(id);
     }
 
     /**

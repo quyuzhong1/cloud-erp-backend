@@ -52,4 +52,6 @@ public interface SampleReturnInfoMapper extends BaseMapper<SampleReturnInfoEntit
     * @return
     */
     List<SampleReturnInfoDTO.TabListDTO> tabList(@Param("params") SampleReturnInfoDTO.PagingParamDTO searchParam);
+
+    List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(@Param("sourceId") String sourceId);
 }

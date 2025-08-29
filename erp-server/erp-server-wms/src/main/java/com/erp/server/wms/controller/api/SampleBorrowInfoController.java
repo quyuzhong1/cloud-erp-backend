@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.SampleLedgerDTO;
+import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.server.wms.query.SampleBorrowInfoQueryHandler;
 import com.erp.server.wms.service.SampleScrapInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
@@ -467,6 +469,16 @@ public class SampleBorrowInfoController extends BaseController {
     @PostMapping("/drop/down")
     public ApiResult<List<SampleBorrowInfoDTO.DropDownDTO>> dropDown(@RequestBody SampleBorrowInfoDTO.SelectDTO dto) {
         return success(sampleBorrowInfoService.dropDown(dto));
+    }
+
+    /**
+     * 单据管理：根据借用单id查询关联的归还单
+     * @author jack
+     * @date:  2025-08-29
+     */
+    @GetMapping("/listReturnById")
+    public ApiResult<List<SampleReturnInfoDTO.ListDTO>>  listReturnById(@RequestParam("id") @NotBlank(message = "借用单ID不能为空") String id){
+        return success(sampleBorrowInfoService.listReturnById(id));
     }
 
 
