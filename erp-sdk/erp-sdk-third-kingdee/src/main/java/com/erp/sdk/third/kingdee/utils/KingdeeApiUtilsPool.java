@@ -22,9 +22,9 @@ public class KingdeeApiUtilsPool  {
 		GenericObjectPool<KingdeeApiUtils> genericObjectPool = kingdeePoolMap.get(formId);
 		if(genericObjectPool == null) {
 			lock.lock();
-			genericObjectPool = kingdeePoolMap.get(formId);
-			if(genericObjectPool == null) {
-				try {
+			try {
+				genericObjectPool = kingdeePoolMap.get(formId);
+				if(genericObjectPool == null) {
 					KingdeeApiUtilsFactory kingdeeApiUtilsFactory = new KingdeeApiUtilsFactory();
 					kingdeeApiUtilsFactory.setFormId(formId);
 					GenericObjectPoolConfig<KingdeeApiUtils> objectPoolConfig = new GenericObjectPoolConfig<>();
@@ -32,13 +32,14 @@ public class KingdeeApiUtilsPool  {
 			        objectPoolConfig.setTestOnBorrow(true);
 			        genericObjectPool = new GenericObjectPool<>(kingdeeApiUtilsFactory, objectPoolConfig);
 			        kingdeePoolMap.put(formId, genericObjectPool);
-				}catch(Exception e) {
-					log.error("创建金蝶连接池失败：{}" , formId , e);
-				}finally {
-					lock.unlock();
 				}
+			}catch(Exception e) {
+				log.error("创建金蝶连接池失败：{}" , formId , e);
+			}finally {
+				lock.unlock();
 			}
 		}
+		
         try {
 			return genericObjectPool.borrowObject();
 		} catch (Exception e) {
