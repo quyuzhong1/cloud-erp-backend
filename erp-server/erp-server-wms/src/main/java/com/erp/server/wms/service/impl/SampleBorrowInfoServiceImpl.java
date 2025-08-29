@@ -565,6 +565,18 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        // 记录台账流水（反审核）
+        try {
+            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
+            if (flowDTO != null) {
+                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                log.info("样品借用单反审核台账流水记录成功，单据编号：{}", entity.getCode());
+            }
+        } catch (Exception e) {
+            log.error("样品借用单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+            throw new ServiceException("样品借用单反审核台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
+        }
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品借用单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), entity.getId(), "反审核操作");
@@ -669,17 +681,21 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // 记录台账流水
-        try {
-            ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-            SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
-            if (flowDTO != null) {
-                sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
-                log.info("样品借用单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+        
+        // 只有审核通过和反审核才记录台账流水
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (ApproveTypeEnum.PASS.equals(approveType) || ApproveTypeEnum.DIS_APPROVE.equals(approveType)) {
+            // 记录台账流水
+            try {
+                SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), approveType);
+                if (flowDTO != null) {
+                    sampleLedgerFlowService.addSampleLedgerFlow(flowDTO);
+                    log.info("样品借用单台账流水记录成功，单据编号：{}，审核类型：{}", entity.getCode(), approveType.getName());
+                }
+            } catch (Exception e) {
+                log.error("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
+                throw new ServiceException("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
             }
-        } catch (Exception e) {
-            log.error("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage(), e);
-            throw new ServiceException("样品借用单台账流水记录失败，单据编号：{}，错误：{}", entity.getCode(), e.getMessage());
         }
 
         return Boolean.TRUE;
