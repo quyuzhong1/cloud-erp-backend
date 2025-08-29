@@ -157,6 +157,7 @@ public enum ModuleTypeEnum {
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
 
+    SO_RECEIPT("132", "收款单"),
 
     ;
 

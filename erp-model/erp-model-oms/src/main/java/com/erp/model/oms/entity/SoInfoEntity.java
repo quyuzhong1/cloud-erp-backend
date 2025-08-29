@@ -336,6 +336,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("country_name")
     private String countryName;
 
+    /**
+     * 订单金额
+     */
+    @TableField("order_amount")
+    private BigDecimal orderAmount;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

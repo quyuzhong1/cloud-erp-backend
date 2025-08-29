@@ -262,7 +262,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -364,7 +364,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //保存附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
             //添加日志
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
@@ -774,7 +774,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //获取到表名
             String type = tableName.value();
             //修改附件
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
 
             //批量修改联系人信息
             List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());

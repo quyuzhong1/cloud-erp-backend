@@ -365,7 +365,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             //添加日志
             String content = String.format("新增了一个{%s}-销售单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
@@ -1317,7 +1317,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             if (isFirst) {
                 //添加日志
@@ -1438,7 +1438,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+            omsAttachmentService.batchSaveOrUpdate(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
 
             /**
              * 添加修改日志
