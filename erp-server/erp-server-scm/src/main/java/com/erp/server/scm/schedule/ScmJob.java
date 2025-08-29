@@ -1,10 +1,11 @@
 package com.erp.server.scm.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+
 import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
 import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.scm.rocketmq.sync.wms.WmsSyncPurchaseService;
 import com.erp.server.scm.service.KingdeePaymentConditionService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
