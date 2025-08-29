@@ -782,6 +782,8 @@ public class SoMultiChannelDTO implements Serializable {
     public static class CreateResultDTO {
         //多渠道订单id
         private String id;
+        //发货单号
+        private String deliveryCode;
 
         private String createStatus;
         private String msg;

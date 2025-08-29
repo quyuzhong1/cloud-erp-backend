@@ -2,13 +2,24 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
+import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
+import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +66,10 @@ public class SoMultiChannelController extends BaseController {
     private SoB2cService soB2cService;
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private DmpAmazonFeign dmpAmazonFeign;
+    @Resource
+    private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
 //    /**
 //    * 新增
 //    * @author zdy
@@ -460,5 +475,82 @@ public class SoMultiChannelController extends BaseController {
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 获取亚马逊多渠道订单列表
+     * @param shopId
+     * @return
+     * @throws ApiException
+     * @throws LWAException
+     */
+    @PostMapping("/listAllFulfillmentOrders")
+    public ApiResult<ListAllFulfillmentOrdersResponse> listAllFulfillmentOrdersTest(@RequestParam("shopId") String shopId) throws ApiException, LWAException {
+        String queryStartDate = "2025-08-01T00:00:00";
+        String nextToken = null;
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        // 初始化API
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        ListAllFulfillmentOrdersResponse response = api.listAllFulfillmentOrders(queryStartDate, nextToken);
+        return success(response);
+    }
+
+    /**
+     * 获取亚马逊多渠道订单详情
+     * @param shopId
+     * @param orderId
+     * @return
+     * @throws ApiException
+     * @throws LWAException
+     */
+    @PostMapping("/getFulfillmentOrder")
+    public ApiResult<GetFulfillmentOrderResponse> getFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        // 初始化API
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        GetFulfillmentOrderResponse response = api.getFulfillmentOrder(orderId);
+        return success(response);
+    }
+
+    /**
+     * 创建亚马逊多渠道订单
+     * @param shopId
+     * @param orderId
+     * @return
+     * @throws ApiException
+     * @throws LWAException
+     */
+    @PostMapping("/createFulfillmentOrder")
+    public ApiResult<ApiResponse<CreateFulfillmentOrderResponse>> createFulfillmentOrder(@RequestParam("shopId") String shopId,@RequestParam("orderId") String orderId) throws ApiException, LWAException {
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.getByDeliveryCode(orderId);
+        Map<String, Object> map = syncAmazonSoMultiChannelService.newSyncDataToKingdee(soMultiChannelEntity, SyncOperateEnum.OPERATE_ADD.getCode());
+        System.out.println(JSONUtil.toJsonStr(map));
+        // 初始化API
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        CreateFulfillmentOrderRequest body = JSONUtil.toBean(JSONUtil.toJsonStr(map),CreateFulfillmentOrderRequest.class);
+        try {
+            ApiResponse<CreateFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.createFulfillmentOrderWithHttpInfo(body);
+            return success(fulfillmentOrderWithHttpInfo);
+        }catch (ApiException e){
+            return failure(e.getResponseBody());
+        }
+    }
+
+    /**
+     * 取消亚马逊多渠道订单
+     * @param shopId
+     * @param orderId
+     * @return
+     * @throws ApiException
+     * @throws LWAException
+     */
+    @PostMapping("/cancelFulfillmentOrder")
+    public ApiResult<ApiResponse<CancelFulfillmentOrderResponse>> cancelFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
+        // 初始化API
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(orderId);
+        return success(cancelFulfillmentOrderResponseApiResponse);
     }
 }

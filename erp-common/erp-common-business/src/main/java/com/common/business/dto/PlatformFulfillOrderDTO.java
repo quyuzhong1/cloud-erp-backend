@@ -54,6 +54,7 @@ public class PlatformFulfillOrderDTO extends UniqueDto {
      * 订单类型（soMultiChannel多渠道）
      */
     private String orderType;
+    private String orderStatus;
 
     /**
      * 货件id
