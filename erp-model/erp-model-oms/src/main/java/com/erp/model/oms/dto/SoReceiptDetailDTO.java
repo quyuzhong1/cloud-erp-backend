@@ -39,7 +39,7 @@ public class SoReceiptDetailDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
+        * 明细id
         */
         private String  id;
 
@@ -57,11 +57,20 @@ public class SoReceiptDetailDTO implements Serializable {
         * 销售单号
         */
         private String soCode;
+        /**
+         * 剩余收款金额
+         */
+        private String remainReceiptAmount;
 
         /**
-        * 来源明细id
-        */
-        private String sourceDetailId;
+         * 收款金额
+         */
+        private BigDecimal receiptAmount;
+
+        /**
+         * 附件
+         */
+        private List<AttachDTO> attachmentList;
 
         /**
         * 付款流水号
@@ -73,6 +82,10 @@ public class SoReceiptDetailDTO implements Serializable {
         */
         private String dictReceiptMethod;
 
+        /**
+         * 收款方式名称
+         */
+        private String dictReceiptMethodName;
         /**
         * 收款账号
         */
@@ -87,12 +100,6 @@ public class SoReceiptDetailDTO implements Serializable {
         * 备注
         */
         private String remark;
-
-        /**
-        * 收款金额
-        */
-        private BigDecimal receiptAmount;
-
 
     }
 

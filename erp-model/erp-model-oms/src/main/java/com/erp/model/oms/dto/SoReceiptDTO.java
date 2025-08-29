@@ -84,6 +84,10 @@ public class SoReceiptDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+          * 类型名称
+          */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -107,7 +111,10 @@ public class SoReceiptDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
-
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
      }
     /**
     * 分页列表
@@ -209,6 +216,7 @@ public class SoReceiptDTO implements Serializable {
         */
         private Boolean isPosted;
 
+        private String isPostedStr;
         /**
         * 入账账户
         */
@@ -223,7 +231,6 @@ public class SoReceiptDTO implements Serializable {
         * 审核时间
         */
         private LocalDateTime approveTime;
-
 
         /**
         * 审核人姓名
@@ -284,10 +291,7 @@ public class SoReceiptDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
+
     }
 
     /**
@@ -308,19 +312,9 @@ public class SoReceiptDTO implements Serializable {
         private String code;
 
         /**
-        * 第三方单据编号
-        */
-        private String thirdCode;
-
-        /**
         * 客户Id
         */
         private String customerId;
-
-        /**
-        * 审核状态
-        */
-        private String approveStatus;
 
         /**
         * 币种
@@ -343,36 +337,24 @@ public class SoReceiptDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 来源单号
-        */
-        private String sourceCode;
-
-        /**
-        * 来源Id
-        */
-        private String sourceId;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
-
-        /**
-        * 审核人姓名
-        */
-        private String approveUserName;
-
-        /**
         * 备注
         */
         private String remark;
 
 
+        /**
+         * 总收款金额
+         */
+        private BigDecimal totalReceiptAmount;
+
+        /**
+         * 附件
+         */
+        private List<AttachDTO> attachDTOList;
+        /**
+         * 明细
+         */
+        private List<SoReceiptDetailDTO.ViewDTO> detailList;
     }
 
     /**

@@ -133,7 +133,7 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     * @param response
     * @return
     */
-    void exportList(SoReceiptDTO.ExportDTO dto, HttpServletResponse response);
+    boolean exportList(SoReceiptDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

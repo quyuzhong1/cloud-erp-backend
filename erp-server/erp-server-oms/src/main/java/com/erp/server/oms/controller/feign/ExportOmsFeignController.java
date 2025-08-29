@@ -64,6 +64,8 @@ public class ExportOmsFeignController {
     @Resource
     private SoPriceChangeService soPriceChangeService;
 
+    @Resource
+    private SoReceiptService soReceiptService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -249,7 +251,11 @@ public class ExportOmsFeignController {
     public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
         return cfgInvoiceInvalidService.paging(dto);
     }
-
+    @PostMapping("/exportSoReceipt")
+    @WebAdvanceQuery
+    public PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto) {
+        return soReceiptService.paging(dto);
+    }
     /**
      * 销售价目表导出
      * @param dto

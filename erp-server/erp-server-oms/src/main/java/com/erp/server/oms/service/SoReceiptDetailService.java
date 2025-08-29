@@ -17,16 +17,9 @@ import java.util.List;
  */
 public interface SoReceiptDetailService extends SuperService<SoReceiptDetailEntity> {
 
-
-    /**
-    * 修改
-    * @author lrp
-    * @date: 2025-08-28
-    * @param dto
-    * @return
-    */
-    Boolean update(SoReceiptDetailDTO.UpdateDTO dto);
-
-
     Boolean addDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.AddDTO> detailList);
+
+    List<SoReceiptDetailEntity> listByMainIds(List<String> list);
+
+    void updateDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.UpdateDTO> detailList);
 }

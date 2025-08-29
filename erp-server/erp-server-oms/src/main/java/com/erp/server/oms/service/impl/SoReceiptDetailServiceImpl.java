@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -41,32 +43,6 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
     @Resource
     private OmsAttachmentService attachmentService;
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(SoReceiptDetailDTO.UpdateDTO addOrUpdateDTO) {
-        SoReceiptDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "收款单明细"));
-        SoReceiptDetailEntity soReceiptDetailEntity =  BeanMapperUtils.map(SoReceiptDetailEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(soReceiptDetailEntity);
-        log.info("编辑 开始修改收款单明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(soReceiptDetailEntity);
-        if(!save) {
-            throw new ServiceException("收款单明细保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录收款单明细日志数据，id：【{}】", soReceiptDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptDetailEntity.getId(), "收款单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soReceiptDetailEntity, null, soReceiptDetailEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -103,6 +79,80 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             attachmentService.batchSaveOrUpdate(allAttachDTOS, tableName.value());
         }
         return true;
+    }
+
+    @Override
+    public List<SoReceiptDetailEntity> listByMainIds(List<String> mainIds) {
+
+        if(CollectionUtils.isNotEmpty(mainIds)){
+            return super.lambdaQuery().in(SoReceiptDetailEntity::getMainId, mainIds).list();
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.UpdateDTO> detailList) {
+        //处理删除
+        List<String> ids = detailList.stream().filter(v -> StrUtil.isNotBlank(v.getId())).map(SoReceiptDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<SoReceiptDetailEntity> dbList = this.lambdaQuery().eq(SoReceiptDetailEntity::getMainId, soReceiptEntity.getId()).list();
+        List<SoReceiptDetailEntity> deleteList = dbList.stream().filter(v -> !ids.contains(v.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deleteList)){
+            List<String> deleteIds = deleteList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
+            this.removeByIds(deleteIds);
+        }
+        //付款流水号不能重复
+        Set<String> paymentNoSet = new HashSet<>();
+        for (SoReceiptDetailDTO.UpdateDTO dto : detailList) {
+            if(!paymentNoSet.add(dto.getPaymentNo())){
+                throw new ServiceException("付款流水号不能重复");
+            }
+        }
+        //销售单号不能重复
+        Set<String> soCodeSet = new HashSet<>();
+        for (SoReceiptDetailDTO.UpdateDTO dto : detailList) {
+            if(!soCodeSet.add(dto.getSoCode())){
+                throw new ServiceException("销售单号不能重复");
+            }
+        }
+        //新增的
+        List<SoReceiptDetailDTO.UpdateDTO> addList = detailList.stream().filter(v -> StrUtil.isBlank(v.getId())).collect(Collectors.toList());
+        List<SoReceiptDetailDTO.AddDTO> addDTOList = BeanMapper.copyList(addList, SoReceiptDetailDTO.AddDTO.class);
+        this.addDetail(soReceiptEntity, addDTOList);
+
+        //修改的
+        List<SoReceiptDetailDTO.UpdateDTO> updateList = detailList.stream().filter(v -> StrUtil.isNotBlank(v.getId())).collect(Collectors.toList());
+        List<SoReceiptDetailEntity> updateEntityList = new ArrayList<>();
+        for (SoReceiptDetailDTO.UpdateDTO updateDTO : updateList) {
+            SoReceiptDetailEntity soReceiptDetailEntity = dbList.stream().filter(v -> v.getId().equals(updateDTO.getId())).findFirst().orElse(new SoReceiptDetailEntity());
+            soReceiptDetailEntity.setSoCode(updateDTO.getSoCode());
+            soReceiptDetailEntity.setSoId(updateDTO.getSoId());
+            soReceiptDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
+            soReceiptDetailEntity.setPaymentNo(updateDTO.getPaymentNo());
+            soReceiptDetailEntity.setDictReceiptMethod(updateDTO.getDictReceiptMethod());
+            soReceiptDetailEntity.setReceiptAccount(updateDTO.getReceiptAccount());
+            soReceiptDetailEntity.setReceiptDate(updateDTO.getReceiptDate());
+            soReceiptDetailEntity.setRemark(updateDTO.getRemark());
+            soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
+            soReceiptDetailEntity.setId(updateDTO.getId());
+            updateEntityList.add(soReceiptDetailEntity);
+        }
+        if(CollectionUtils.isNotEmpty(updateEntityList)){
+            this.updateBatchById(updateEntityList);
+        }
+        //处理修改的附件
+        List<AttachDTO> allAttachDTOS = new ArrayList<>();
+        for (SoReceiptDetailEntity soReceiptDetailEntity : updateEntityList) {
+            SoReceiptDetailDTO.UpdateDTO addDTO = detailList.stream().filter(v -> v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.UpdateDTO());
+            List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
+            attachDTOS.forEach(v->v.setBusinessId(soReceiptDetailEntity.getId()));
+            allAttachDTOS.addAll(attachDTOS);
+        }
+        // 保存附件
+        TableName tableName = SoReceiptDetailEntity.class.getDeclaredAnnotation(TableName.class);
+        if(CollectionUtils.isNotEmpty(allAttachDTOS)){
+            attachmentService.batchSaveOrUpdate(allAttachDTOS, tableName.value());
+        }
     }
 
 

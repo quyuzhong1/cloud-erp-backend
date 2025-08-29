@@ -63,7 +63,10 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/exportInvoiceInvalid")
     PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
-    //销售调价导出
+    //收款单导出
+    @PostMapping("/feign/export/exportSoReceipt")
+    PagingVO<SoReceiptDTO.ListDTO> exportSoReceipt(@RequestBody PagingDTO<SoReceiptDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soPriceChange")
     PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
     //销售价目导出

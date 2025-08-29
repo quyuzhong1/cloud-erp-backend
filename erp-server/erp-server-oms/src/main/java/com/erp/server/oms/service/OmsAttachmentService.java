@@ -85,4 +85,6 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
      */
     List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
+
+    List<OmsAttachmentEntity> listByBusinessIdsAndType(List<String> businessIds,String type);
 }

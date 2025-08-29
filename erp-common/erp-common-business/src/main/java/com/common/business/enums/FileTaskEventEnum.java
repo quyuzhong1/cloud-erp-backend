@@ -69,6 +69,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_SO_RETURN("EXPORT_OMS_SO_RETURN","销售退货订单","","",""),
     EXPORT_OMS_SO_B2C_RETURN("EXPORT_OMS_SO_B2C_RETURN","b2c销售退货订单","","",""),
     EXPORT_OMS_SO("EXPORT_OMS_SO","B2B销售订单","","",""),
+    EXPORT_OMS_SO_RECEIPT("EXPORT_OMS_SO_RECEIPT","收款单","","",""),
     EXPORT_OMS_SO_B2C_ABNORMAL("EXPORT_OMS_SO_B2C_ABNORMAL","B2C异常销售订单","","",""),
     EXPORT_OMS_SO_B2C_ABNORMAL_POOLS("EXPORT_OMS_SO_B2C_ABNORMAL_POOLS","B2C异常订单错误池","","",""),
     EXPORT_OMS_SO_B2C("EXPORT_OMS_SO_B2C","B2C销售订单","","",""),

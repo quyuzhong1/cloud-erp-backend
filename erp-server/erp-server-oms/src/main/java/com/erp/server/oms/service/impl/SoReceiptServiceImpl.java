@@ -1,55 +1,61 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.dto.AttachDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.SoReceiptEntity;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.oms.mapper.SoReceiptMapper;
-import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.google.common.collect.Lists;
-import io.seata.common.util.StringUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoReceiptDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.PagingVO;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.SoReceiptDTO;
+import com.erp.model.oms.dto.SoReceiptDetailDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.OmsAttachmentEntity;
+import com.erp.model.oms.entity.SoReceiptDetailEntity;
+import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.dto.ContractInfoDTO;
+import com.erp.model.scm.entity.ContractInfoEntity;
+import com.erp.model.scm.enums.ContractInfoStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.mapper.SoReceiptMapper;
+import com.erp.server.oms.service.*;
+import com.google.common.collect.Lists;
+import io.seata.common.util.StringUtils;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RECEIPT;
+
 /**
  * <p>
  * 收款单 服务实现类
@@ -77,6 +83,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -87,6 +96,13 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 数据处理
         handleData(soReceiptEntity);
 
+        List<SoReceiptDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        //求和总收款金额
+        if(CollectionUtils.isEmpty(detailList)){
+            throw new ServiceException("收款单明细不能为空");
+        }
+        BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        soReceiptEntity.setReceiptAmount(totalAmount);
         log.info("开始新增收款单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SKD);
@@ -128,18 +144,33 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
         // 数据处理
         handleData(soReceiptEntity);
+        List<SoReceiptDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+        //求和总收款金额
+        if(CollectionUtils.isEmpty(detailList)){
+            throw new ServiceException("收款单明细不能为空");
+        }
+        BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        soReceiptEntity.setReceiptAmount(totalAmount);
+
         log.info("编辑 开始修改收款单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(soReceiptEntity);
         if(!save) {
             throw new ServiceException("收款单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //更新明细
+        soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList());
+        // 保存附件
+        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        List<AttachDTO> list = addOrUpdateDTO.getAttachmentList();
+        if(CollectionUtils.isNotEmpty(list)){
+            list.forEach(v->v.setBusinessId(soReceiptEntity.getId()));
+            omsAttachmentService.batchSaveOrUpdate(list, tableName.value());
+        }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录收款单日志数据，单号：【{}】", soReceiptEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soReceiptEntity, null, soReceiptEntity.getId(), msg);
+        log.info("编辑 开始记录收款单日志数据，单号：【{}】", soReceiptEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
+        operateLogService.addModuleOperateLogByObj(old, soReceiptEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -162,40 +193,36 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         SoReceiptDTO.PagingParamDTO searchParam = new SoReceiptDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<SoReceiptDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SoReceiptDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SoReceiptDTO.TabListDTO(status, 0));
+
+        //待我审核
+        //根据单据id查询审核流程
+        LoginUser user = UserContext.getNonLoginUser();
+        int waitMeApproveCount = 0;
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SO_RECEIPT.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(user.getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            waitMeApproveCount = lambdaQuery().eq(SoReceiptEntity::getId, ids).count();
         }
-        });
-        list.add(new SoReceiptDTO.TabListDTO("all", list.stream().mapToInt(SoReceiptDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+
+        //生效状态
+        Map<String, SoReceiptDTO.TabListDTO> map = list.stream().collect(Collectors.toMap(SoReceiptDTO.TabListDTO::getTabFlag, t -> t));
+        List<SoReceiptDTO.TabListDTO> result = new ArrayList<>();
+
+        result.add(new SoReceiptDTO.TabListDTO( ApproveStatusEnum.WAIT_SUBMIT.getCode(), ApproveStatusEnum.WAIT_SUBMIT.getName() , map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()) == null ? 0 : map.get(ApproveStatusEnum.WAIT_SUBMIT.getCode()).getCount()));
+        result.add(new SoReceiptDTO.TabListDTO( ApproveStatusEnum.APPROVE_ING.getCode(), ApproveStatusEnum.APPROVE_ING.getName() , waitMeApproveCount));
+        result.add(new SoReceiptDTO.TabListDTO( ApproveStatusEnum.APPROVE.getCode(), ApproveStatusEnum.APPROVE.getName() , map.get(ApproveStatusEnum.APPROVE.getCode()) == null ? 0 : map.get(ApproveStatusEnum.APPROVE.getCode()).getCount()));
+        result.add(new SoReceiptDTO.TabListDTO( ApproveStatusEnum.REJECT.getCode(), ApproveStatusEnum.REJECT.getName() , map.get(ApproveStatusEnum.REJECT.getCode()) == null ? 0 : map.get(ApproveStatusEnum.REJECT.getCode()).getCount()));
+        return result;
     }
 
     @Override
-    public void exportList(SoReceiptDTO.ExportDTO param, HttpServletResponse response) {
-        List<SoReceiptDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/soReceipt.xlsx";
-        String name = "收款单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public boolean exportList(SoReceiptDTO.PagingParamDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("收款单", EXPORT_OMS_SO_RECEIPT.getCode(), param);
+        return Boolean.TRUE;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -408,9 +435,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public SoReceiptDTO.ViewDTO view(String id) {
         SoReceiptEntity soReceiptEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到收款单数据"));
         SoReceiptDTO.ViewDTO data = BeanMapperUtils.map(SoReceiptDTO.ViewDTO.class, soReceiptEntity);
+        List<SoReceiptDetailEntity> detailList = soReceiptDetailService.listByMainIds(Arrays.asList(id));
         // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        fillOne(data,soReceiptEntity,detailList);
         return data;
     }
     /**
@@ -435,10 +462,51 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(SoReceiptDTO.ViewDTO data) {
+    private void fillOne(SoReceiptDTO.ViewDTO data,SoReceiptEntity entity,List<SoReceiptDetailEntity> detailList) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        //查询主记录附件
+        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(entity.getId()),tableName.value());
+        List<AttachDTO> attachDTOList = BeanMapper.copyList(omsAttachmentEntities, AttachDTO.class);
+        data.setAttachDTOList(attachDTOList);
+
+        //查询明细记录附件
+        TableName detailTableName = SoReceiptDetailEntity.class.getDeclaredAnnotation(TableName.class);
+        List<String> detailIds = detailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
+        List<OmsAttachmentEntity> detailAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(detailIds,tableName.value());
+        // 属性赋值
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+
+        //查询销售订单信息
+        List<String> soCodes = detailList.stream().map(SoReceiptDetailEntity::getSoCode).distinct().collect(Collectors.toList());
+        SoReceiptDTO.SoSearchDTO dto = new SoReceiptDTO.SoSearchDTO();
+        dto.setCustomerId(entity.getCustomerId());
+        dto.setSoCodeList(soCodes);
+        List<SoReceiptDTO.SoInfoAndReceiptDTO> soInfoDTOS = this.listSoReceiptBySoCode(dto);
+        List<SoReceiptDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
+        for (SoReceiptDetailEntity soReceiptDetailEntity : detailList) {
+            SoReceiptDetailDTO.ViewDTO viewDTO = BeanMapperUtils.map(SoReceiptDetailDTO.ViewDTO.class, soReceiptDetailEntity);
+            List<OmsAttachmentEntity> detailAttachList = detailAttachmentEntities.stream().filter(v -> v.getBusinessId().equals(soReceiptDetailEntity.getId())).collect(Collectors.toList());
+            List<AttachDTO> detailAttachDTOList = BeanMapper.copyList(detailAttachList, AttachDTO.class);
+            viewDTO.setAttachmentList(detailAttachDTOList);
+
+            SoReceiptDTO.SoInfoAndReceiptDTO soInfoAndReceiptDTO = soInfoDTOS.stream().filter(v -> v.getSoCode().equals(soReceiptDetailEntity.getSoCode())).findFirst().orElse(new SoReceiptDTO.SoInfoAndReceiptDTO());
+
+            viewDTO.setRemainReceiptAmount(soInfoAndReceiptDTO.getRemainReceiptAmount());
+            DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(soReceiptDetailEntity.getDictReceiptMethod())).findFirst().orElse(null);
+            if(ObjectUtil.isNotEmpty(receiveMethod)) {
+                viewDTO.setDictReceiptMethodName(receiveMethod.getName());
+            }
+        }
+        data.setDetailList(detailViewList);
     }
 
     /**
@@ -504,6 +572,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if(ObjectUtil.isNotEmpty(receiveMethod)) {
                 data.setDictReceiptMethodName(receiveMethod.getName());
             }
+            data.setIsPostedStr(ObjectUtil.isNotEmpty(data.getIsPosted()) && data.getIsPosted() ? "是" : "否");
         }
     }
     /**

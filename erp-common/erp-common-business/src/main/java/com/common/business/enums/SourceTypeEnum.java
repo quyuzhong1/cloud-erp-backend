@@ -118,6 +118,7 @@ public enum SourceTypeEnum {
     CAINIAO_LISTING( "cainiao_listing", "菜鸟仓listing","cainiao_listing"),
     CAINIAO_SO_RETURN_INSTOCK("cainiaoSoReturnInstock", "菜鸟仓退货入库单","so_return_instock"),
 
+    SO_RECEIPT("soReceipt", "收款单","so_receipt"),
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),

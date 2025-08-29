@@ -230,4 +230,15 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
+
+    @Override
+    public List<OmsAttachmentEntity> listByBusinessIdsAndType(List<String> businessIds, String type) {
+        if (CollectionUtils.isNotEmpty(businessIds) && StringUtils.isNotBlank(type)) {
+            LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(OmsAttachmentEntity::getBusinessId, businessIds);
+            queryWrapper.eq(OmsAttachmentEntity::getType, type);
+            return this.list(queryWrapper);
+        }
+        return Collections.emptyList();
+    }
 }

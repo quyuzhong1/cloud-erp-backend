@@ -82,7 +82,7 @@ public class SoReceiptController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soReceipt:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     public ApiResult<List<SoReceiptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soReceiptService.tabList(dto));
@@ -99,7 +99,7 @@ public class SoReceiptController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soReceipt:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     public ApiResult<PagingVO<SoReceiptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoReceiptDTO.PagingParamDTO> dto) {
         return success(soReceiptService.paging(dto));
@@ -362,11 +362,11 @@ public class SoReceiptController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soReceipt:export",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "收款单导出Excel数据")
-    public void exportList(@RequestBody @Validated SoReceiptDTO.ExportDTO dto, HttpServletResponse response) {
-        soReceiptService.exportList(dto, response);
+    public boolean exportList(@RequestBody @Validated SoReceiptDTO.PagingParamDTO dto, HttpServletResponse response) {
+        return soReceiptService.exportList(dto, response);
     }
 
     /**
