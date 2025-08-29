@@ -121,9 +121,9 @@ public class DmpInputAmzFulFillOrderApiInitHandler extends DmpInputInitHandler {
      */
     private List<DmpInputTaskInitDTO> queryListByPlatformCodeList(List<String> platformCodeList, AmazonShopInfoDTO shopInfoDTO, String rateLimitStr, String limitKey, DmpInputTaskResponse dmpResponse, String shopId, String shopName) {
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+        FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
         for (String platformCode : platformCodeList) {
             try {
-                FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
                 // 请求亚马逊接口
                 GetFulfillmentOrderResponse response = api.getFulfillmentOrder(platformCode);
                 GetFulfillmentOrderResult payload = response.getPayload();

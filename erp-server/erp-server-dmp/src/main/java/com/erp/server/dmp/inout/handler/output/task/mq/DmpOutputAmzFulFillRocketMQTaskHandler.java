@@ -3,14 +3,14 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.common.business.dto.PlatformFbaShipmentDTO;
+import com.common.business.dto.PlatformFulfillOrderDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpFbaShipmentDetailEntity;
-import com.erp.model.dmp.entity.DmpFbaShipmentEntity;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpPlatformSoDeliveryEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -28,22 +28,22 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        Map<String, DmpFbaShipmentEntity> dmpMainEntityMap = new HashMap<>();
-        Map<String, List<DmpFbaShipmentDetailEntity>> dmpDetailEntityMap = new HashMap<>();
+        Map<String, DmpPlatformSoDeliveryEntity> dmpMainEntityMap = new HashMap<>();
+        Map<String, List<DmpPlatformSoDeliveryDetailEntity>> dmpDetailEntityMap = new HashMap<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
                 String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_fba_shipment".equals(storageName)) {
+                if ("dmp_platform_so_delivery".equals(storageName)) {
                     for (BaseEntity v : value) {
-                        DmpFbaShipmentEntity dmpMainEntity = (DmpFbaShipmentEntity) v;
+                        DmpPlatformSoDeliveryEntity dmpMainEntity = (DmpPlatformSoDeliveryEntity) v;
                         dmpMainEntityMap.put(dmpMainEntity.getId(), dmpMainEntity);
                     }
-                } else if ("dmp_fba_shipment_detail".equals(storageName)) {
+                } else if ("dmp_platform_so_delivery_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
-                        DmpFbaShipmentDetailEntity dmpDetailEntity = (DmpFbaShipmentDetailEntity) v;
+                        DmpPlatformSoDeliveryDetailEntity dmpDetailEntity = (DmpPlatformSoDeliveryDetailEntity) v;
                         String mainId = dmpDetailEntity.getMainId();
-                        List<DmpFbaShipmentDetailEntity> list = dmpDetailEntityMap.get(mainId);
+                        List<DmpPlatformSoDeliveryDetailEntity> list = dmpDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
                         }
@@ -60,13 +60,13 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
             List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
                 String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_fba_shipment".equals(storageName)) {
+                if ("dmp_platform_so_delivery".equals(storageName)) {
                     for (BaseEntity v : value) {
                         changeIds.add(v.getId());
                     }
-                } else if ("dmp_fba_shipment_detail".equals(storageName)) {
+                } else if ("dmp_platform_so_delivery_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
-                        DmpFbaShipmentDetailEntity dmpDetailEntity = (DmpFbaShipmentDetailEntity) v;
+                        DmpPlatformSoDeliveryDetailEntity dmpDetailEntity = (DmpPlatformSoDeliveryDetailEntity) v;
                         changeIds.add(dmpDetailEntity.getMainId());
                     }
                 }
@@ -80,9 +80,9 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
         }
 
         for (String changId : changeIds) {
-            DmpFbaShipmentEntity dmpMainEntity = dmpMainEntityMap.get(changId);
-            List<DmpFbaShipmentDetailEntity> dmpDetailEntityList = dmpDetailEntityMap.get(changId);
-            PlatformFbaShipmentDTO dto = this.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId);
+            DmpPlatformSoDeliveryEntity dmpMainEntity = dmpMainEntityMap.get(changId);
+            List<DmpPlatformSoDeliveryDetailEntity> dmpDetailEntityList = dmpDetailEntityMap.get(changId);
+            PlatformFulfillOrderDTO dto = this.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId);
             if (null != dto){
                 map.put(dto.getUniqueId(), JSON.toJSONString(dto));
             }
@@ -93,7 +93,7 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
     /**
      * FBA数据
      **/
-    public PlatformFbaShipmentDTO convert(DmpFbaShipmentEntity dmpMainEntity, List<DmpFbaShipmentDetailEntity> dmpDetailEntityList, String cfgOutputId) {
+    public PlatformFulfillOrderDTO convert(DmpPlatformSoDeliveryEntity dmpMainEntity, List<DmpPlatformSoDeliveryDetailEntity> dmpDetailEntityList, String cfgOutputId) {
         if (this.validateDataBlack(dmpMainEntity, cfgOutputId)) {
             ServiceException.runError("校验参数出错");
         }
@@ -104,44 +104,32 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
         }
 
         // 主表
-        PlatformFbaShipmentDTO platformFbaShipmentDTO = new PlatformFbaShipmentDTO();
-        platformFbaShipmentDTO.setName(dmpMainEntity.getName());
-        platformFbaShipmentDTO.setCountryId(dmpMainEntity.getCountryId());
-        platformFbaShipmentDTO.setFulfillmentCenter(dmpMainEntity.getFulfillmentCenter());
-        platformFbaShipmentDTO.setPlatformShipmentStatus(dmpMainEntity.getPlatformShipmentStatus());
-        platformFbaShipmentDTO.setLabelType(dmpMainEntity.getLabelType());
-        platformFbaShipmentDTO.setFbaShipmentId(dmpMainEntity.getFbaShipmentId());
-        platformFbaShipmentDTO.setDmpSyncTaskId(dmpMainEntity.getInputTaskId());
-        platformFbaShipmentDTO.setUniqueId(dmpMainEntity.getFbaShipmentId());
-        platformFbaShipmentDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        platformFbaShipmentDTO.setShopId(dmpMainEntity.getNextLevelId());
-//        platformFbaShipmentDTO.setShopName();?
-        platformFbaShipmentDTO.setPlatformUpdateTime(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
-        platformFbaShipmentDTO.setShipmentCreateTime(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
-        platformFbaShipmentDTO.setPackType(dmpMainEntity.getPackType());
-        platformFbaShipmentDTO.setDeliveryFromAddress(dmpMainEntity.getDeliveryFromAddress());
-        platformFbaShipmentDTO.setDeliveryStatus("unShipped");
-
+        PlatformFulfillOrderDTO PlatformFulfillOrderDTO = new PlatformFulfillOrderDTO();
+        BeanMapperUtils.copy(dmpMainEntity, PlatformFulfillOrderDTO);
+        PlatformFulfillOrderDTO.setDmpSyncTaskId(dmpMainEntity.getInputTaskId());
+        PlatformFulfillOrderDTO.setUniqueId(dmpMainEntity.getShipmentId());
+        PlatformFulfillOrderDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        PlatformFulfillOrderDTO.setShopId(dmpMainEntity.getNextLevelId());
         // 明细
-        List<PlatformFbaShipmentReceiveDTO> dtoDetailList = new LinkedList<>();
-        for (DmpFbaShipmentDetailEntity item : dmpDetailEntityList) {
-            PlatformFbaShipmentReceiveDTO platformFbaShipmentReceiveDTO = new PlatformFbaShipmentReceiveDTO();
-            platformFbaShipmentReceiveDTO.setSellerSku(item.getMsku());
-            platformFbaShipmentReceiveDTO.setFnSku(item.getFnSku());
-            platformFbaShipmentReceiveDTO.setDeclareQty(item.getDeclareQty());
-            platformFbaShipmentReceiveDTO.setReceiveQty(item.getReceiveQty());
-            platformFbaShipmentReceiveDTO.setFbaShipmentId(item.getFbaShipmentId());
-            platformFbaShipmentReceiveDTO.setDeliveryQty(0);
-            platformFbaShipmentReceiveDTO.setReceiveDate(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
-            dtoDetailList.add(platformFbaShipmentReceiveDTO);
-        }
-        platformFbaShipmentDTO.setDetailList(dtoDetailList);
+//        List<PlatformFbaShipmentReceiveDTO> dtoDetailList = new LinkedList<>();
+//        for (DmpPlatformSoDeliveryDetailEntity item : dmpDetailEntityList) {
+//            PlatformFbaShipmentReceiveDTO platformFbaShipmentReceiveDTO = new PlatformFbaShipmentReceiveDTO();
+//            platformFbaShipmentReceiveDTO.setSellerSku(item.getMsku());
+//            platformFbaShipmentReceiveDTO.setFnSku(item.getFnSku());
+//            platformFbaShipmentReceiveDTO.setDeclareQty(item.getDeclareQty());
+//            platformFbaShipmentReceiveDTO.setReceiveQty(item.getReceiveQty());
+//            platformFbaShipmentReceiveDTO.setFbaShipmentId(item.getFbaShipmentId());
+//            platformFbaShipmentReceiveDTO.setDeliveryQty(0);
+//            platformFbaShipmentReceiveDTO.setReceiveDate(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
+//            dtoDetailList.add(platformFbaShipmentReceiveDTO);
+//        }
+//        PlatformFulfillOrderDTO.setDetailList(dtoDetailList);
 
-        return platformFbaShipmentDTO;
+        return PlatformFulfillOrderDTO;
     }
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Collections.singletonList("fbaShipmentId");
+        return Collections.singletonList("shipmentId");
     }
 }
