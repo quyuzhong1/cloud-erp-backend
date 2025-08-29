@@ -36,6 +36,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO$PagingViewDTO">
         select
             twd.id,
+            twdd.id as detailId,
             twd.so_id as soId,
             twd.code,
             twd.dict_platform as platform,
