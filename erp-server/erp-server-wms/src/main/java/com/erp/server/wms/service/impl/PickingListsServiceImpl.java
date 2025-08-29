@@ -315,7 +315,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
         //是否是整个sku删除
         List<String> checkSourceIds = deletedList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<PickingDetailEntity> checkList = detailEntities.stream().filter(v->!existIds.contains(v.getId()) && checkSourceIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
+        List<String> checkIds = deletedList.stream().map(PickingDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> checkList = detailEntities.stream().filter(v->!checkIds.contains(v.getId()) && checkSourceIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(checkList)){
             return;
         }
