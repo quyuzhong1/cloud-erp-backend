@@ -292,7 +292,7 @@ public class FbaOutboundApi {
     public ApiResponse<CreateFulfillmentOrderResponse> createFulfillmentOrderWithHttpInfo(CreateFulfillmentOrderRequest body) throws ApiException,LWAException {
         okhttp3.Call call = createFulfillmentOrderValidateBeforeCall(body, null, null);
         Type localVarReturnType = new TypeToken<CreateFulfillmentOrderResponse>(){}.getType();
-        return apiClient.execute(call, localVarReturnType);
+        return apiClient.execute(call);
     }
 
     /**
