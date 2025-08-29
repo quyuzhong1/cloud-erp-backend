@@ -110,7 +110,6 @@
         sbe.id as extendId,
         sbe.required_delivery_time as requiredDeliveryTime,
         COALESCE(NULLIF(twd.code, ''), NULLIF(sbd.code, '')) AS deliveryCode,
-        sb2c.nfe_invoice_status as nfeInvoiceStatus,
         sb2c.multi_channel_type as multiChannelType
     </sql>
     <sql id="Full_Managed_Column_List">
