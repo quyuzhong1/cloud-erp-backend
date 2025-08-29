@@ -564,6 +564,15 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        
+        // 检查是否有下推的其他出库单
+        BaseIdDTO baseIdDTO = new BaseIdDTO();
+        baseIdDTO.setId(entity.getId());
+        List<OtherOutstockDTO.ListDTO> associatedOutstockList = otherOutstockService.viewAssociatedDocuments(baseIdDTO);
+        if (CollUtil.isNotEmpty(associatedOutstockList)) {
+            throw new ServiceException(CharSequenceUtil.format("样品领用单【{}】已下推其他出库单，不能反审核", entity.getCode()));
+        }
+        
         // TODO 下游盘点计划单反审核
         return true;
     }
