@@ -230,7 +230,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 		
-		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getCreateTime().compareTo(d2.getCreateTime()));
 		dmpOutputExecutorPool.execute(() -> {
 			int i = 0;
 	    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
