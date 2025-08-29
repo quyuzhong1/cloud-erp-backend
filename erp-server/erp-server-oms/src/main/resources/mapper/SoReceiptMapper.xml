@@ -43,7 +43,48 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoReceiptDTO$ListDTO">
-
+        select sr.id,
+               srd.id as detailId,
+               sr.code,
+               sr.third_code as thirdCode,
+               sr.customer_id as customerId,
+               ci.name as customerName,
+               sr.approve_status as approveStatus,
+               sr.receipt_amount as totalReceiptAmount,
+               sr.currency,
+               srd.so_code as soCode,
+        si.receive_amount - COALESCE((
+        select sum(red2.receipt_amount) from so_receipt re2
+        inner join so_receipt_detail red2 on re2.id = red2.main_id
+        where re2.is_deleted = false
+        and red2.is_deleted = false and re2.approve_status = 'approved'
+        and red2.so_id = si.id
+        ),0) as remainReceiptAmount,
+            srd.receipt_amount as receiptAmount,
+            srd.receipt_account as receiptAccount,
+            srd.receipt_date as receiptDate,
+            srd.dict_receipt_method as dictReceiptMethod,
+        sr.is_posted as isPosted,
+        sr.posted_account as postedAccount,
+        sr.source_type as sourceType,
+        sr.approve_time as approveTime,
+        sr.approve_user_name as approveUserName,
+        sr.create_time as createTime,
+        sr.update_time as updateTime,
+        sr.create_user_name as createUserName,
+        sr.update_user_name as updateUserName,
+        srd.remark
+        from so_receipt sr
+        inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        inner join customer_info ci on ci.id = sr.customer_id and ci.is_deleted = false
+        left join so_info si on srd.so_id = si.id and si.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and  sr.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -78,7 +119,9 @@
         ),0) as remainReceiptAmount
                from
                      so_info si
-        where si.is_deleted = false and si.customer_id = #{params.customerId}
+        where si.is_deleted = false
+          and si.invalid_status = false
+          and si.customer_id = #{params.customerId}
         <if test="params != null and params.soCode != null and params.soCode != ''">
             and si.code  ILIKE concat('%',#{params.soCode}::text,'%')
         </if>

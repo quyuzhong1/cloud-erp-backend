@@ -9,7 +9,9 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.SoReceiptMapper;
 import com.erp.server.oms.service.*;
@@ -19,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.google.common.collect.Lists;
 import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -70,6 +73,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private SoReceiptDetailService soReceiptDetailService;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -485,9 +491,19 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
 
         // 属性赋值
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         for(SoReceiptDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            DictBasicEntity receiveMethod = receiveMethodList.stream().filter(v -> v.getValue().equals(data.getDictReceiptMethod())).findFirst().orElse(null);
+            if(ObjectUtil.isNotEmpty(receiveMethod)) {
+                data.setDictReceiptMethodName(receiveMethod.getName());
+            }
         }
     }
     /**

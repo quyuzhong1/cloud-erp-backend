@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.AttachDTO;
@@ -121,6 +122,10 @@ public class SoReceiptDTO implements Serializable {
         private String  id;
 
         /**
+         * 明细
+         */
+        private String  detailId;
+        /**
         * 单据编码
         */
         private String code;
@@ -136,14 +141,68 @@ public class SoReceiptDTO implements Serializable {
         private String customerId;
 
         /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
         * 审核状态
         */
         private String approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 总收款金额
+         */
+        private BigDecimal totalReceiptAmount;
+
+        /**
         * 币种
         */
         private String currency;
+
+        /**
+         * 销售单号
+         */
+        private String soCode;
+
+        /**
+         * 销售id
+         */
+        private String soId;
+
+        /**
+         * 待收款金额
+         */
+        private BigDecimal remainReceiptAmount;
+
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiptAmount;
+
+        /**
+         * 收款账号
+         */
+        private BigDecimal receiptAccount;
+
+        /**
+         * 收款日期
+         */
+        private BigDecimal receiptDate;
+
+        /**
+         * 收款方式
+         */
+        private String dictReceiptMethod;
+
+        /**
+         * 收款方式
+         */
+        private String dictReceiptMethodName;
 
         /**
         * 是否入账
@@ -161,24 +220,10 @@ public class SoReceiptDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 来源单号
-        */
-        private String sourceCode;
-
-        /**
-        * 来源Id
-        */
-        private String sourceId;
-
-        /**
         * 审核时间
         */
         private LocalDateTime approveTime;
 
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
 
         /**
         * 审核人姓名
@@ -192,19 +237,22 @@ public class SoReceiptDTO implements Serializable {
 
 
         /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-        /**
         * 创建时间
         */
         private LocalDateTime createTime;
 
         /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
         * 创建人名称
         */
         private String createUserName;
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
     }
 
     /**

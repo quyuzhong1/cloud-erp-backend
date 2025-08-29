@@ -2,6 +2,8 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -101,6 +103,11 @@ public class SoReceiptEntity extends BaseEntity<SoReceiptEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 收款金额
+     */
+    @TableField("receipt_amount")
+    private BigDecimal receiptAmount;
 
     public static final String CODE = "code";
 
