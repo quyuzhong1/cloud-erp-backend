@@ -1608,6 +1608,31 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    public List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto) {
+        List<OtherInstockDTO.ListDTO> list = baseMapper.viewAssociatedDocuments(dto);
+        // 格式化入库单数据
+        formatOtherInstock(list);
+        return list;
+    }
+
+    /**
+     * @description: 格式化列表数据
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param records
+     */
+    private void formatOtherInstock(List<OtherInstockDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 查询流程id判断是否存在流程
+        records.forEach(obj -> {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
+        });
+    }
+
+    @Override
     public Map<String, OtherInstockEntity> mapByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyMap();

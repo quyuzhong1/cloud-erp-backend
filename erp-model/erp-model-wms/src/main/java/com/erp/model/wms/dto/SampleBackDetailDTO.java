@@ -62,7 +62,7 @@ public class SampleBackDetailDTO implements Serializable {
         private String useUserId;
 
         /**
-        * 可退回数量
+        * 可退回数量 wms/sampleLedger/listSku  参数type=back
         */
         private Integer availableQty;
 

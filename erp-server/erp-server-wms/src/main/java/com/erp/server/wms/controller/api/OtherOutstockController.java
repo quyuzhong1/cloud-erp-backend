@@ -398,16 +398,12 @@ public class OtherOutstockController extends BaseController {
 
     /**
      * 样品领用单-关联出库单
-     * @author Will
-     * @date: 2024/12/19 10:16
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
      * @param dto
      * @return ApiResult<List<ListDTO>>
      */
     @PostMapping("/viewAssociatedDocuments")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "warehouse_keeper_id,create_user_id",
-//            menuCode = "wms:otherOutstock:paging",
-//            tableAlias = "oo")
     public ApiResult<List<OtherOutstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
         List<OtherOutstockDTO.ListDTO> resultDTO = otherOutstockService.viewAssociatedDocuments(dto);
         return success(resultDTO);

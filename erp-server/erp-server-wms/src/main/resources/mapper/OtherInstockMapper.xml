@@ -181,4 +181,42 @@
         ORDER BY oi.create_time desc
     </select>
 
+    <select id="viewAssociatedDocuments" resultType="com.erp.model.wms.dto.OtherInstockDTO$ListDTO">
+        select
+            oi.id,
+            oid.id as detailId,
+            oi.code,
+            oi.inventory_direction as inventoryDirection,
+            oi.approve_status as approveStatus,
+            oi.invalid_status as invalidStatus,
+            oid.sku_id as skuId,
+            oid.sku_no as skuNo,
+            oi.bill_date as billDate,
+            oid.actual_qty as actualQty,
+            oid.unit,
+            oi.warehouse_name as warehouseName,
+            oid.warehouse_location as warehouseLocation,
+            oi.approve_user_name as approveUserName,
+            oi.approve_time as approveTime,
+            oi.create_user_name as createUserName,
+            oi.create_time as createTime,
+            oi.third_code as thirdCode,
+            oi.remark,
+            oi.return_logistic_code as returnLogisticCode,
+            oi.type
+        from other_instock oi
+        left join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
+        <where>
+            oi.is_deleted = false
+            and oi.source_type = 'sampleBackInfo'
+            <if test="params.id != null and params.id != ''">
+                and oi.source_id = #{params.id}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        order by oi.create_time desc
+    </select>
+
 </mapper>

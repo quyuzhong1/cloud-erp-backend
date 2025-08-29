@@ -385,4 +385,17 @@ public class OtherInstockController extends BaseController {
         Boolean result = otherInstockService.importFile(excelFile, response);
         return result ? success() : failure();
     }
+
+    /**
+     * 样品退回单-关联其他入库单据
+     * @author wuhaotian
+     * @date: 2025/8/25 10:16
+     * @param dto
+     * @return ApiResult<List<ListDTO>>
+     */
+    @PostMapping("/viewAssociatedDocuments")
+    public ApiResult<List<OtherInstockDTO.ListDTO>> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        List<OtherInstockDTO.ListDTO> resultDTO = otherInstockService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
+    }
 }
