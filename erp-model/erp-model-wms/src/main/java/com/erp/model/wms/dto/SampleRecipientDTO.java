@@ -588,7 +588,6 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 备注
          */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200, message = "备注最大长度不能超过200位")
         private String remark;
 
