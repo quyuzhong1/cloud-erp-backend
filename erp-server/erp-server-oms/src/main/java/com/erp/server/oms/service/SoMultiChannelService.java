@@ -187,4 +187,6 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @return
      */
     SoMultiChannelEntity getBySoId(String id);
+
+    SoMultiChannelEntity getByDeliveryCode(String deliveryCode);
 }

@@ -628,6 +628,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         return this.lambdaQuery().eq(SoMultiChannelEntity::getSoId,soId).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
     }
 
+    @Override
+    public SoMultiChannelEntity getByDeliveryCode(String deliveryCode) {
+        return this.lambdaQuery().eq(SoMultiChannelEntity::getDeliveryCode,deliveryCode).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
+    }
+
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(soViewDTOS)) {
             return;
