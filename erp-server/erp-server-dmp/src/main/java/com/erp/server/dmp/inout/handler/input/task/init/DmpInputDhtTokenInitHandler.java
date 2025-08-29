@@ -93,22 +93,26 @@ public class DmpInputDhtTokenInitHandler extends DmpInputInitHandler {
             if (null == expireTime) {
                 ServiceException.runError("订货通对应授权token过期时间为空");
             }
-            // 热点任务不处理重试
-            if (DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(dmpInputTaskEntity.getTaskType())) {
+            LocalDateTime refreshTime = expireTime.minusSeconds(expireIntervalTime);
+            if (!refreshTime.isBefore(LocalDateTime.now())) {
+                // 热点任务不处理重试
+                if (DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(dmpInputTaskEntity.getTaskType())) {
+                    return Collections.emptyList();
+                }
+                // 更新下次刷新token时间
+                dmpInputTaskService.updateNextExecTime(inputTaskId, refreshTime);
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
-            LocalDateTime refreshTime = expireTime.minusSeconds(expireIntervalTime);
-            // 更新下次刷新token时间
-            dmpInputTaskService.updateNextExecTime(inputTaskId, refreshTime);
-            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextStatus(false);
-            return Collections.emptyList();
         }
+        DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(dmpCfgInputEntity.getTypeId());
+        String apiType = dmpCfgApiEntity.getApiType();
 
         String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.DHT.getCode(),dmpInputTaskEntity.getNextLevelId());
         Map<String, String> headerMap = new HashMap<>();
         Map<String, Object> bodyMap = new HashMap<>(clientEntity.getExtendData());
-        String bodyStr = OkHttpUtils.doPostJson(clientEntity.getUrl(), bodyMap, headerMap);
+        String bodyStr = OkHttpUtils.doPostJson(clientEntity.getUrl().concat(apiType), bodyMap, headerMap);
         JSONObject dto = JSON.parseObject(bodyStr);
         if (Objects.isNull(dto)) {
             log.error("订货通获取accessToken失败，返回结果：{}", bodyStr);
@@ -124,7 +128,8 @@ public class DmpInputDhtTokenInitHandler extends DmpInputInitHandler {
         if (null == expiresIn) {
             ServiceException.runError("过期时间为空");
         }
-
+        // 设置请求路径
+        dto.put("url", clientEntity.getUrl());
         //缓存6900s 6600-7200s会获取新token  必须保证过期时间在这个范围内
         redisUtil.set(tokenKey, dto, expiresIn);
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(dto)));
