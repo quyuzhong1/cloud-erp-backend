@@ -99,6 +99,7 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 				dmpInputTaskEntity.setEndTime(time.getValue());
 				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 				dmpInputTaskEntity.setTaskType(dmpInputHotfixCreateRequest.checkAndGetTaskType());
+				dmpInputTaskEntity.setExecSystem(dmpCfgInputEntity.getExecSystem());
 				dmpInputTaskEntity.setExecTimeout(dmpInputHotfixCreateRequest.getExecTimeout());
 				// 请求参数明细ExtendJson覆盖
 				String detailExtendJson = dmpCfgInputDetailEntity.getExtendJson();
