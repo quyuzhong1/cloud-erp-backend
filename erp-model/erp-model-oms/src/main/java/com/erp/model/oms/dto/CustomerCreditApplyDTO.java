@@ -1,21 +1,20 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
-import java.util.Map;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -384,10 +383,8 @@ public class CustomerCreditApplyDTO implements Serializable {
         * 审核备注
 
         */
-        @NotBlank(message = "审核备注
-不能为空")
-        @Size(max = 255,message = "审核备注
-最大长度不能超过255位")
+        @NotBlank(message = "审核备注不能为空")
+        @Size(max = 255,message = "审核备注最大长度不能超过255位")
         private String approveRemark;
 
 
