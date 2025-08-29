@@ -418,7 +418,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException(ApiError.ERROR_DELETE);
         }
         // TODO 删除明细数据（如果有明细数据的话）
 
@@ -727,13 +727,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
-        data.setDeliveryStatusName(DeliveryStatusEnum.getName(data.getDeliveryStatus()));
+        data.setDeliveryStatusName(SoB2cBillStatusEnum.getName(data.getDeliveryStatus()));
         data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
         //平台类型名称
         String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setDictPlatformName(dictPlatformName);
         String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        data.setDictPlatformName(deliveryPlatformName);
+        data.setDeliveryPlatformName(deliveryPlatformName);
     }
 
     /**

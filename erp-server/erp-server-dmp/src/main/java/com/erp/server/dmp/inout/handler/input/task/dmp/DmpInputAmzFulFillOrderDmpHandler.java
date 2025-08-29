@@ -39,6 +39,7 @@ public class DmpInputAmzFulFillOrderDmpHandler extends DmpInputDbConvertDmpHandl
                 if (null != orderObj) {
                     FulfillmentOrder fulfillmentOrder = JSON.parseObject(JSONObject.toJSONString(orderObj), FulfillmentOrder.class);
                     dmpDataMap.put("platformCode", fulfillmentOrder.getDisplayableOrderId());
+                    dmpDataMap.put("orderStatus", fulfillmentOrder.getFulfillmentOrderStatus());
                 }
                 Object fulfillmentShipments = dmpDataMap.get("fulfillmentShipments");
                 if (null != fulfillmentShipments) {

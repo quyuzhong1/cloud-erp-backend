@@ -14,7 +14,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.*;
@@ -22,10 +21,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
-import com.erp.server.oms.service.OmsPushMsgService;
-import com.erp.server.oms.service.SoB2cReceiverService;
-import com.erp.server.oms.service.SoB2cService;
-import com.erp.server.oms.service.SoMultiChannelDetailService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,8 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -49,10 +43,8 @@ import java.util.*;
 public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiChannelService {
     @Resource
     private DmpMqFeign dmpMqFeign;
-
     @Resource
     private SoB2cService soB2cService;
-
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
@@ -61,6 +53,8 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
     private LogisticsFeign logisticsFeign;
     @Resource
     private SoMultiChannelDetailService soMultiChannelDetailService;
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
 
     /**
      * 销售变更单同步金碟
@@ -134,6 +128,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         if (Objects.isNull(soB2cEntity)){
             throw new ServiceException("未找到销售订单【{}】信息", entity.getSoCode());
         }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(soId);
         if (Objects.isNull(soB2cReceiverEntity)){
             throw new ServiceException("未找到销售订单【{}】收货人信息", entity.getSoCode());
@@ -210,6 +205,12 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
                     itemMap.put("sellerFulfillmentOrderItemId", detail.getSoDetailId());
                     itemMap.put("quantity", detail.getDeliveryQty());
                     itemMap.put("fulfillmentNetworkSku", detail.getFnSku());
+                    soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {
+                        HashMap<String, Object> perUnitDeclaredValue = new HashMap<>();
+                        perUnitDeclaredValue.put("currencyCode", e.getCurrency());
+                        perUnitDeclaredValue.put("value", e.getPrice());
+                        itemMap.put("perUnitDeclaredValue", perUnitDeclaredValue);
+                    });
                     itemList.add(itemMap);
                 });
         resultMap.put("items", itemList);
