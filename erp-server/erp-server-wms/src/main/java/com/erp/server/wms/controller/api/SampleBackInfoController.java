@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
+import com.common.core.utils.ExcelUtil;
 
 /**
  * 样品退回单
@@ -399,12 +401,41 @@ public class SampleBackInfoController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:sampleBackInfo:export",
+            menuCode = "sampleBackInfo:export",
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品退回单导出Excel数据")
-    public void exportList(@RequestBody @Validated SampleBackInfoDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated SampleBackInfoDTO.ExportDTO dto, HttpServletResponse response) {
         sampleBackInfoService.exportList(dto, response);
+        return success();
+    }
+
+    /**
+     * 异步导入
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品退回单")
+    @PostMapping("/importFile")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = sampleBackInfoService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品退回单导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        sampleBackInfoService.downloadTemplate(response);
+        return success();
     }
 
 

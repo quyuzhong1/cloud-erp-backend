@@ -203,6 +203,9 @@ public class ExportWmsFeignController {
     @Resource
     private SampleReturnInfoService sampleReturnInfoService;
 
+    @Resource
+    private SampleBackInfoService sampleBackInfoService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -338,6 +341,16 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(@RequestBody PagingDTO<SampleRecipientDTO.ExportDTO> dto) {
         return sampleRecipientService.getSampleRecipientPageData(dto);
+    }
+
+    @PostMapping("/getSampleBackInfoPageData")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:sampleBackInfo:export"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(@RequestBody PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {
+        return sampleBackInfoService.getSampleBackInfoPageData(dto);
     }
 
     @PostMapping("/dailyQcBill")

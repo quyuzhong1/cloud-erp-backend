@@ -17,6 +17,8 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.enums.ImportTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -39,6 +41,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
+import com.erp.model.wms.dto.SampleRecipientDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
@@ -66,6 +69,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -1666,6 +1670,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importSampleRecipient(BaseDTO.ImportDTO dto) {
+        // SKU信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e, (o1, o2) -> o1));
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         SampleRecipientExcelListener excelListenerUtil = new SampleRecipientExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
@@ -1678,66 +1689,62 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(excelListenerUtil.getCount());
-
-        // 导出错误数据
         List<SampleRecipientExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
-        if (CollUtil.isNotEmpty(errorList)) {
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "样品领用单错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleRecipientExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-
         importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
-
-        // 处理成功的数据
-        List<SampleRecipientExcelDTO> successList = excelListenerUtil.getSuccessList();
-        if (CollUtil.isNotEmpty(successList)) {
-            // 在导入前预加载缓存，提升性能
-            preloadCacheForImport(successList);
-
-            handleImportSuccessList(successList, errorList, dto.getImportType());
-        }
     }
 
     /**
      * 处理导入成功的数据
      */
-    private void handleImportSuccessList(List<SampleRecipientExcelDTO> successList, List<SampleRecipientExcelDTO> errorList, String importType) {
-        try {
-            // 按主表信息分组处理
-            Map<String, List<SampleRecipientExcelDTO>> groupedData = successList.stream()
-                .collect(Collectors.groupingBy(data -> 
-                    data.getRecipientDate() + "_" + data.getUsage() + "_" + data.getWarehouseName() + "_" + 
-                    data.getUserName() + "_" + data.getDeptName() + "_" + data.getPickOrgName() + "_" + 
-                    data.getUsageScope() + "_" + data.getRemark()
-                ));
-            
-            for (Map.Entry<String, List<SampleRecipientExcelDTO>> entry : groupedData.entrySet()) {
-                List<SampleRecipientExcelDTO> groupData = entry.getValue();
-                if (CollUtil.isNotEmpty(groupData)) {
-                    try {
-                        // 创建样品领用单
-                        createSampleRecipientFromExcel(groupData);
-                    } catch (Exception e) {
-                        log.error("创建样品领用单失败", e);
-                        // 将失败的数据移到错误列表
-                        for (SampleRecipientExcelDTO data : groupData) {
-                            data.setErrorMsg("创建样品领用单失败：" + e.getMessage());
-                            errorList.add(data);
-                        }
-                    }
-                }
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<SampleRecipientExcelDTO> successList, List<String> errorNoList, List<SampleRecipientExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getSerialNumber()) && !errorNoList.contains(e.getSerialNumber())).collect(Collectors.toList());
+
+            // 全部返回到错误列表
+            List<SampleRecipientExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getSerialNumber()) || errorNoList.contains(e.getSerialNumber())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        SampleRecipientServiceImpl bean = ApplicationContextUtils.getBean(SampleRecipientServiceImpl.class);
+
+        // 按序号分组
+        Map<String, List<SampleRecipientExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(SampleRecipientExcelDTO::getSerialNumber));
+        for (Map.Entry<String, List<SampleRecipientExcelDTO>> entry : collect.entrySet()) {
+            List<SampleRecipientExcelDTO> value = entry.getValue();
+            SampleRecipientExcelDTO importMainDTO = value.get(0);
+            SampleRecipientDTO.AddDTO addDTO = new SampleRecipientDTO.AddDTO();
+            BeanMapperUtils.copy(importMainDTO, addDTO);
+            List<SampleRecipientDTO.ProductDTO> detailList = new ArrayList<>();
+            for (SampleRecipientExcelDTO importDTO : value) {
+                SampleRecipientDTO.ProductDTO detailDTO = new SampleRecipientDTO.ProductDTO();
+                BeanMapperUtils.copy(importDTO, detailDTO);
+                // 明细备注
+                detailDTO.setRemark(importDTO.getDetailRemark());
+                detailList.add(detailDTO);
             }
-        } catch (Exception e) {
-            log.error("处理导入数据失败", e);
-            throw new ServiceException("处理导入数据失败：" + e.getMessage());
+            addDTO.setDetailList(detailList);
+
+            if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                bean.add(addDTO);
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -260,5 +261,16 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      * @return 分页结果
      */
     PagingVO<SampleRecipientDTO.ListDTO> getSampleRecipientPageData(PagingDTO<SampleRecipientDTO.ExportDTO> dto);
+
+    /**
+     * 处理导入成功的数据列表
+     * @author wuhaotian
+     * @date: 2025-08-25
+     * @param successList 成功的数据列表
+     * @param errorNoList 错误的序号列表
+     * @param errorList2 错误数据列表2
+     * @param importType 导入类型
+     */
+    void handleImportSuccessList(List<SampleRecipientExcelDTO> successList, List<String> errorNoList, List<SampleRecipientExcelDTO> errorList2, String importType);
 
 }

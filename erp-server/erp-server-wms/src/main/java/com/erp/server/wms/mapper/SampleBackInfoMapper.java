@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -43,7 +44,7 @@ public interface SampleBackInfoMapper extends BaseMapper<SampleBackInfoEntity> {
     * @param params
     * @return
     */
-    List<SampleBackInfoDTO.ListDTO> listExport(@Param("params") SampleBackInfoDTO.ExportDTO params);
+    IPage<SampleBackInfoDTO.ListDTO>listExport(Page query, @Param("params") SampleBackInfoDTO.ExportDTO params);
 
 
     /**

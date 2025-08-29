@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -25,6 +26,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
@@ -35,18 +37,34 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SampleBackInfoMapper;
 import com.erp.server.wms.service.*;
+import com.common.core.utils.ExcelUtil;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
+import com.erp.server.wms.listener.SampleBackInfoExcelListener;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.enums.ImportTypeEnum;
+import com.erp.model.wms.dto.SampleBackDetailDTO;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -84,6 +102,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Autowired
     private OtherInstockDetailService otherInstockDetailService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -369,24 +393,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Override
     public void exportList(SampleBackInfoDTO.ExportDTO param, HttpServletResponse response) {
-        List<SampleBackInfoDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/sampleBackInfo.xlsx";
-        String name = "样品退回单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        downloadTaskFeign.saveDownloadTask("样品退回单导出", EXPORT_WMS_SAMPLE_BACK_INFO_REPORT.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -971,6 +978,142 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         } else {
             log.info("未找到关联的其他入库单，样品退回单号：{}", entity.getCode());
         }
+    }
+
+    /**
+     * 异步导入
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
+        try {
+            // 创建异步导入任务
+            downloadTaskFeign.saveImportTask("样品退回单导入", IMPORT_WMS_SAMPLE_BACK_INFO.getCode(), dto);
+            return true;
+        } catch (Exception e) {
+            log.error("创建样品退回单导入任务失败", e);
+            return false;
+        }
+    }
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param response
+     * @return
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/sampleBackInfoTemplate.xlsx";
+        String standardExcelName = "sampleBackInfoTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+    }
+
+    /**
+     * 导入样品退回单
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSampleBackInfo(BaseDTO.ImportDTO dto) {
+        // SKU信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e, (o1, o2) -> o1));
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        SampleBackInfoExcelListener excelListenerUtil = new SampleBackInfoExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount(), deptList, map, userList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SampleBackInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<SampleBackInfoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "样品退回单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleBackInfoImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<SampleBackInfoImportExcelDTO> successList, List<String> errorNoList, List<SampleBackInfoImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+
+            // 全部返回到错误列表
+            List<SampleBackInfoImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        SampleBackInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleBackInfoServiceImpl.class);
+
+        // 按序号分组
+        Map<String, List<SampleBackInfoImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(SampleBackInfoImportExcelDTO::getNo));
+        for (Map.Entry<String, List<SampleBackInfoImportExcelDTO>> entry : collect.entrySet()) {
+            List<SampleBackInfoImportExcelDTO> value = entry.getValue();
+            SampleBackInfoImportExcelDTO importMainDTO = value.get(0);
+            SampleBackInfoDTO.AddDTO addDTO = new SampleBackInfoDTO.AddDTO();
+            BeanMapperUtils.copy(importMainDTO, addDTO);
+            List<SampleBackDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (SampleBackInfoImportExcelDTO importDTO : value) {
+                SampleBackDetailDTO.AddDTO detailDTO = new SampleBackDetailDTO.AddDTO();
+                BeanMapperUtils.copy(importDTO, detailDTO);
+                // 明细备注
+                detailDTO.setRemark(importDTO.getDetailRemark());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+
+            if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                bean.add(addDTO);
+            }
+        }
+    }
+
+    /**
+     * 获取样品退回单分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {
+        Page<SampleBackInfoDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SampleBackInfoDTO.ListDTO> pageData = this.baseMapper.listExport(query, dto.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
 }

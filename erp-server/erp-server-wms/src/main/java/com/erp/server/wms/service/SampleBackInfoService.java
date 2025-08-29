@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.model.wms.entity.SampleBackInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -151,5 +152,51 @@ public interface SampleBackInfoService extends SuperService<SampleBackInfoEntity
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleBackInfoEntity entity);
+
+    /**
+    * 异步导入
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 下载导入模板
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param response
+    * @return
+    */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入样品退回单
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     */
+    void importSampleBackInfo(BaseDTO.ImportDTO dto);
+
+    /**
+     * 获取样品退回单分页数据（用于异步导出）
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     * @return
+     */
+    PagingVO<SampleBackInfoDTO.ListDTO> getSampleBackInfoPageData(PagingDTO<SampleBackInfoDTO.ExportDTO> dto);
+
+    /**
+     * 处理导入成功的数据列表
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param successList 成功的数据列表
+     * @param errorNoList 错误的序号列表
+     * @param errorList2 错误数据列表2
+     * @param importType 导入类型
+     */
+    void handleImportSuccessList(List<SampleBackInfoImportExcelDTO> successList, List<String> errorNoList, List<SampleBackInfoImportExcelDTO> errorList2, String importType);
 
 }

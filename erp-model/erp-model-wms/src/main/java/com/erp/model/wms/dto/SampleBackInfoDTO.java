@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -16,7 +15,6 @@ import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -442,6 +440,75 @@ public class SampleBackInfoDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+    }
+
+    /**
+     * 样品退回单导入DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 样品领用单号
+         */
+        private String sourceCode;
+        
+        /**
+         * 退回日期
+         */
+        private LocalDate backDate;
+        
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        
+        /**
+         * 部门ID
+         */
+        private String deptId;
+        
+        /**
+         * 备注
+         */
+        private String remark;
+        
+        /**
+         * 明细列表
+         */
+        private List<ImportDetailDTO> detailList;
+    }
+
+    /**
+     * 样品退回单导入明细DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDetailDTO {
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+        private String productName;
+        
+        /**
+         * 退回数量
+         */
+        private Integer qty;
+        
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
