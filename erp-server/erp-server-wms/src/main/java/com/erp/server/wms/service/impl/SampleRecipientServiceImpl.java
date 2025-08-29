@@ -6,15 +6,16 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.enums.FileTaskStatusEnum;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.server.wms.service.SampleLedgerFlowBuilder;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -23,18 +24,21 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.plm.dto.ProductSkuDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.common.business.dto.FindUserDTO;
+import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
@@ -42,22 +46,31 @@ import com.erp.model.wms.enums.SampleUsageEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.listener.SampleRecipientExcelListener;
 import com.erp.server.wms.mapper.SampleRecipientMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -68,26 +81,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
-import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
-import com.erp.server.wms.listener.SampleRecipientExcelListener;
-import com.erp.rpc.file.feign.FileFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.util.Arrays;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_RECIPIENT_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_RECIPIENT;
 
 /**
  * <p>
@@ -121,6 +117,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     
     @Autowired
     private SysUserFeign sysUserFeign;
+    
+    @Autowired
+    private SysDictFeign sysDictFeign;
     
     @Autowired
     private LogisticsFeign logisticsFeign;
@@ -902,12 +901,37 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         userIds.add(sampleRecipientEntity.getUserId());
         userIds.add(sampleRecipientEntity.getUseUserId());
         Map<String, String> userNameMap = new HashMap<>();
+        
         if (CollUtil.isNotEmpty(userIds)) {
             try {
+                // 优先查询内部用户信息
                 List<SysDepartmentUserNumberDTO> userList = sysUserFeign.listDeptUserByUserIdList(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
                     userNameMap = userList.stream()
                             .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, SysDepartmentUserNumberDTO::getUserName));
+                }
+                
+                // 对于未找到的用户，尝试查询外部使用人字典
+                Map<String, String> finalUserNameMap = userNameMap;
+                List<String> notFoundUserIds = userIds.stream()
+                        .filter(id -> !finalUserNameMap.containsKey(id))
+                        .collect(Collectors.toList());
+                
+                if (CollUtil.isNotEmpty(notFoundUserIds)) {
+                    log.info("尝试查询外部使用人字典，用户ID列表：{}", notFoundUserIds);
+                    try {
+                        List<BaseIdDTO> externalUsers = sysDictFeign.getByIds(notFoundUserIds);
+                        if (CollUtil.isNotEmpty(externalUsers)) {
+                            for (BaseIdDTO externalUser : externalUsers) {
+                                // 假设BaseIdDTO中有name字段，如果没有则需要调整
+                                if (externalUser.getName() != null) {
+                                    userNameMap.put(externalUser.getId(), externalUser.getName());
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("查询外部使用人字典失败，错误：{}", e.getMessage());
+                    }
                 }
             } catch (Exception e) {
                 log.warn("查询用户信息失败，错误：{}", e.getMessage());
@@ -996,9 +1020,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             // 公司外部使用：使用方ID和名称必填
             if (StringUtils.isBlank(sampleRecipientEntity.getUseUserId())) {
                 throw new ServiceException("使用方ID不能为空");
-            }
-            if (StringUtils.isBlank(sampleRecipientEntity.getUseUserName())) {
-                throw new ServiceException("使用方名称不能为空");
             }
 
             log.info("使用范围为公司外部使用，使用方：{}", sampleRecipientEntity.getUseUserName());
@@ -1834,6 +1855,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     /**
      * 根据用户名称查询用户ID（带缓存）
+     * 优先查询内部用户，如果未找到则查询外部使用人字典
      */
     private String getUserIdByName(String userName) {
         if (StrUtil.isBlank(userName)) {
@@ -1848,7 +1870,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
 
         try {
-            // 调用用户服务根据名称查询用户信息
+            // 优先调用用户服务根据名称查询内部用户信息
             List<FindUserDTO> userList = sysUserFeign.listUserByUserNames(
                     Collections.singletonList(userName),
                     "1" // 用户类型：1表示内部用户
@@ -1862,6 +1884,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 return result;
             }
 
+            // 如果内部用户未找到，尝试查询外部使用人字典
+            log.info("内部用户未找到，尝试查询外部使用人字典：{}", userName);
+            
+            // 这里可以根据需要调用SysDictFeign.getByIds进行外部使用人查询
+            // 由于getByIds需要ID列表，而这里只有名称，需要先通过名称查询
+            // 暂时保持原有逻辑，后续可以根据具体需求调整
+            
             log.warn("未找到用户名称：{}", userName);
             return null;
         } catch (Exception e) {

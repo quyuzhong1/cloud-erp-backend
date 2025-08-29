@@ -361,7 +361,6 @@ public class SampleLedgerFlowDTO implements Serializable {
         /**
         * 归属用户姓名
         */
-        @NotBlank(message = "归属用户姓名不能为空")
         @Size(max = 50,message = "归属用户姓名最大长度不能超过50位")
         private String userName;
 
@@ -434,7 +433,6 @@ public class SampleLedgerFlowDTO implements Serializable {
         /**
         * 使用方名称
         */
-        @NotBlank(message = "使用方名称不能为空")
         @Size(max = 50,message = "使用方名称最大长度不能超过50位")
         private String useUserName;
 
