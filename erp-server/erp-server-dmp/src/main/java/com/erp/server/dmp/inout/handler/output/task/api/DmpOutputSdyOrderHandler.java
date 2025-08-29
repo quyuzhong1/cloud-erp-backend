@@ -185,8 +185,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
-            
-            shudiyunB2cOrderDTO.setStatus("已创建");
+            if(dmpSoInfoEntity.getInvalidStatus() != null && dmpSoInfoEntity.getInvalidStatus()) {
+            	shudiyunB2cOrderDTO.setStatus("已删除");
+            }else {
+            	shudiyunB2cOrderDTO.setStatus("已创建");
+            }
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
