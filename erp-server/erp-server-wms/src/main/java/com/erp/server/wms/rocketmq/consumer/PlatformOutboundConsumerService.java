@@ -287,6 +287,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 generateB2cDTO.setDetailList(wantDetailList);
             }
             generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
         }
         // 第三方仓出库生成销售出库单（独立事务）
         generateB2cDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode());
