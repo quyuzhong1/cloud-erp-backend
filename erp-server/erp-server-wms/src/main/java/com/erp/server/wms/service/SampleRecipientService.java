@@ -162,6 +162,15 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
     */
     BatchResultDTO finishRecipient(String id);
 
+    /**
+    * 结束领用（带原因）
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param dto
+    * @return
+    */
+    List<BatchResultDTO> finishRecipient(SampleRecipientDTO.FinishRecipientDTO dto);
+
         /**
      * 查询SKU成本
      * @author wuhaotian

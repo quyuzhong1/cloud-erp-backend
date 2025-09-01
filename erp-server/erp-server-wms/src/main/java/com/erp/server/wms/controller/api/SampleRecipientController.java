@@ -418,28 +418,8 @@ public class SampleRecipientController extends BaseController {
             serviceClass = SampleRecipientService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "样品领用单结束领用")
-    public ApiResult<List<BatchResultDTO>> batchFinishRecipient(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SampleRecipientEntity> list = sampleRecipientService.lambdaQuery().in(SampleRecipientEntity::getId, ids).list();
-        Map<String, SampleRecipientEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
-        
-        for (String id : dto.getIds()) {
-            BatchResultDTO finishResult;
-            try {
-                finishResult = sampleRecipientService.finishRecipient(id);
-            } catch (Exception e) {
-                log.error("样品领用单结束领用失败", e);
-                SampleRecipientEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
-                    resultDTOS.add(finishResult);
-                    continue;
-                }
-                finishResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(finishResult);
-        }
+    public ApiResult<List<BatchResultDTO>> batchFinishRecipient(@RequestBody @Validated SampleRecipientDTO.FinishRecipientDTO dto) {
+        List<BatchResultDTO> resultDTOS = sampleRecipientService.finishRecipient(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

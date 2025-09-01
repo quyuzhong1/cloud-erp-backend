@@ -169,6 +169,12 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     @TableField("sku_total_cost")
     private BigDecimal skuTotalCost;
 
+    /**
+    * 结束领用原因
+    */
+    @TableField("reason")
+    private String reason;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -227,6 +233,8 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     public static final String SOURCE_TYPE = "source_type";
 
     public static final String SKU_TOTAL_COST = "sku_total_cost";
+
+    public static final String REASON = "reason";
 
     @Override
     public Serializable pkVal() {

@@ -707,6 +707,76 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     }
 
     /**
+    * 结束领用（带原因）
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<BatchResultDTO> finishRecipient(SampleRecipientDTO.FinishRecipientDTO dto) {
+        List<String> ids = dto.getIds();
+        String reason = dto.getReason();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SampleRecipientEntity> list = this.lambdaQuery().in(SampleRecipientEntity::getId, ids).list();
+        Map<String, SampleRecipientEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleRecipientEntity::getId, w -> w));
+        
+        for (String id : ids) {
+            BatchResultDTO finishResult;
+            try {
+                SampleRecipientEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
+                    resultDTOS.add(finishResult);
+                    continue;
+                }
+                
+                // 验证结束领用条件
+                validateFinishRecipient(entity);
+                
+                // 更新单据状态为已结束，并保存结束原因
+                log.info("结束领用 开始修改样品领用单状态，id：【{}】，原因：【{}】", id, reason);
+                
+                // 更新主单的结束原因
+                if (StrUtil.isNotBlank(reason)) {
+                    lambdaUpdate()
+                        .eq(SampleRecipientEntity::getId, id)
+                        .set(SampleRecipientEntity::getReason, reason)
+                        .update();
+                }
+                
+                // 更新明细状态
+                List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                    .eq(SampleRecipientDetailEntity::getMainId, entity.getId())
+                    .eq(SampleRecipientDetailEntity::getIsDeleted, false)
+                    .list();
+                for (SampleRecipientDetailEntity sampleRecipientDetailEntity : detailList) {
+                    sampleRecipientDetailEntity.setExecStatus(SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus());
+                }
+                sampleRecipientDetailService.saveOrUpdateBatch(detailList);
+                
+                // 操作日志
+                log.info("结束领用 开始记录操作日志，id：【{}】", id);
+                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据结束领用操作", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品领用单");
+                if (StrUtil.isNotBlank(reason)) {
+                    msg += StrUtil.format("，结束原因：【{}】", reason);
+                }
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), entity.getId(), "结束领用操作");
+                
+                finishResult = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+            } catch (Exception e) {
+                log.error("样品领用单结束领用失败", e);
+                SampleRecipientEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
+                } else {
+                    finishResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                }
+            }
+            resultDTOS.add(finishResult);
+        }
+        
+        return resultDTOS;
+    }
+
+    /**
     * 验证结束领用条件
     */
     private void validateFinishRecipient(SampleRecipientEntity entity) {

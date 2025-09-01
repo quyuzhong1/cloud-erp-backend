@@ -3,9 +3,12 @@ package com.erp.model.wms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
@@ -965,6 +968,26 @@ public class SampleRecipientDTO implements Serializable {
          */
         private Integer availableQty;
         
+    }
+
+    /**
+     * 结束领用DTO
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class FinishRecipientDTO extends PermissionsDTO {
+        /**
+         * 样品领用单ID列表
+         */
+        @NotEmpty(message = "样品领用单ID列表不能为空")
+        private List<String> ids;
+        
+        /**
+         * 结束领用原因
+         */
+        @Size(max = 200, message = "结束领用原因不能超过200字符")
+        private String reason;
     }
 
 }
