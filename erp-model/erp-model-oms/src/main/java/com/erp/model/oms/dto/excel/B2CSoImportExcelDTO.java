@@ -128,12 +128,12 @@ public class B2CSoImportExcelDTO {
     private String logisticsChannelName;
 
     /**
-     * 跟踪号
+     * 运单号
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "跟踪号")
-    @FieldValid(fieldName = "跟踪号",maxLength = 30)
+    @ExcelProperty(value = "运单号")
+    @FieldValid(fieldName = "运单号",maxLength = 30)
     private String trackNo;
 
 
