@@ -66,6 +66,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -140,6 +141,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
     @Autowired
     private WmsAttachmentService attachmentService;
+    @Autowired
+    @Lazy
+    private SampleRecipientService _this;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -1504,7 +1508,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      * 下推其他出库单保存
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> generateOutboundOrder(SampleRecipientDTO.ListGenerateOutboundOrderDTO dto) {
         if (CollUtil.isEmpty(dto.getList())) {
             return new ArrayList<>();
@@ -1524,7 +1527,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 
                 try {
                     // 为每个领用单创建一个其他出库单，详情数据为列表数据
-                    BatchResultDTO resultDTO = createOtherOutboundOrderBySourceId(sourceId, items);
+                    BatchResultDTO resultDTO = _this.createOtherOutboundOrderBySourceId(sourceId, items);
                     resultDTOS.add(resultDTO);
                     
                 } catch (Exception e) {
@@ -1562,7 +1565,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      * @param items 明细列表
      * @return 创建结果
      */
-    private BatchResultDTO createOtherOutboundOrderBySourceId(String sourceId, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO createOtherOutboundOrderBySourceId(String sourceId, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items) {
         try {
             // 查询样品领用单主表信息
             SampleRecipientEntity sampleRecipient = this.getById(sourceId);

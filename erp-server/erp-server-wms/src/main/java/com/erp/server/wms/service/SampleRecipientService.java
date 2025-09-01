@@ -282,4 +282,7 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      */
     void handleImportSuccessList(List<SampleRecipientExcelDTO> successList, List<String> errorNoList, List<SampleRecipientExcelDTO> errorList2, String importType);
 
+
+    BatchResultDTO createOtherOutboundOrderBySourceId(String sourceId, List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> items);
+
 }
