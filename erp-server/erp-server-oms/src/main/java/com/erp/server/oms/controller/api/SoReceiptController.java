@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.model.oms.entity.SoPriceChangeEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -234,7 +235,6 @@ public class SoReceiptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SoReceiptEntity> list = soReceiptService.lambdaQuery().in(SoReceiptEntity::getId, ids).list();
 		Map<String, SoReceiptEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoReceiptEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -313,24 +313,28 @@ public class SoReceiptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SoReceiptEntity> list = soReceiptService.lambdaQuery().in(SoReceiptEntity::getId, ids).list();
         Map<String, SoReceiptEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoReceiptEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
+            SoReceiptEntity entity = idEntityMap.get(id);
             try {
-                cancelResult = soReceiptService.cancelProcess(id);
+                boolean result = soReceiptService.cancelProcess(id);
+                if (result) {
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "撤销销售调价单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "撤销销售调价单失败"));
+                }
             }catch (Exception e){
                 log.error("收款单撤回流程失败",e);
-                SoReceiptEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "收款单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
                 cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(cancelResult);
             }
-            resultDTOS.add(cancelResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

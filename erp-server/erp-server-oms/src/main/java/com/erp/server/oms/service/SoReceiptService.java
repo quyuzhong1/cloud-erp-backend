@@ -123,7 +123,7 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     * @param id
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    Boolean cancelProcess(String id);
 
     /**
     * 导出Excel

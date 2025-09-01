@@ -155,6 +155,15 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         }
     }
 
+    @Override
+    public void removeByMainId(String id) {
+        List<SoReceiptDetailEntity> dbList = this.lambdaQuery().eq(SoReceiptDetailEntity::getMainId, id).list();
+        if(CollectionUtils.isNotEmpty(dbList)){
+            List<String> deleteIds = dbList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
+            this.removeByIds(deleteIds);
+        }
+    }
+
 
     /**
     * 新增修改处理数据
