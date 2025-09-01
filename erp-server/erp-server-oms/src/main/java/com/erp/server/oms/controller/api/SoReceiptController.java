@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -84,6 +85,7 @@ public class SoReceiptController extends BaseController {
             menuCode = "oms:soReceipt:paging",
             tableAlias = "sr"
     )
+    @WebAdvanceQuery
     public ApiResult<List<SoReceiptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soReceiptService.tabList(dto));
     }
@@ -101,6 +103,7 @@ public class SoReceiptController extends BaseController {
             menuCode = "oms:soReceipt:paging",
             tableAlias = "sr"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SoReceiptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoReceiptDTO.PagingParamDTO> dto) {
         return success(soReceiptService.paging(dto));
     }
