@@ -851,6 +851,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public SampleRecipientDTO.ViewDTO view(String id) {
         SampleRecipientEntity sampleRecipientEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品领用单数据"));
         SampleRecipientDTO.ViewDTO data = BeanMapperUtils.map(SampleRecipientDTO.ViewDTO.class, sampleRecipientEntity);
+        data.setApproveStatus(sampleRecipientEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
@@ -888,6 +889,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 设置明细数据到ViewDTO中
         data.setDetailList(productList);
+        // 查询相关的附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            data.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
         return data;
     }
     /**
@@ -915,7 +923,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        data.setApproveStatus(data.getApproveStatus().toLowerCase());
     }
 
     /**
