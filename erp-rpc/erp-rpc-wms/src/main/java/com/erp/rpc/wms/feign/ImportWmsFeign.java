@@ -24,4 +24,10 @@ public interface ImportWmsFeign {
     @PostMapping("/feign/import/importSampleBorrow")
     void importSampleBorrow(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importSampleBackInfo")
+    void importSampleBackInfo(@RequestBody BaseDTO.ImportDTO dto);
+
+    @PostMapping("/feign/import/importSampleInitialLedger")
+    void importSampleInitialLedger(@RequestBody BaseDTO.ImportDTO dto);
+
 }

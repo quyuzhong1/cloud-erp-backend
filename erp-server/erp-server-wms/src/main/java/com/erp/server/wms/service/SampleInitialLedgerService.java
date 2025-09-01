@@ -152,4 +152,40 @@ public interface SampleInitialLedgerService extends SuperService<SampleInitialLe
     */
     Boolean approveEnd(ApproveOneDTO dto, SampleInitialLedgerEntity entity);
 
+    /**
+    * 异步导入
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param dto
+    * @return
+    */
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+    * 下载导入模板
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param response
+    */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入样品期初台账
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     */
+    void importSampleInitialLedger(BaseDTO.ImportDTO dto);
+
+    /**
+     * 处理导入成功的数据列表
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param successList 成功的数据列表
+     * @param errorNoList 错误的序号列表
+     * @param errorList2 错误数据列表2
+     * @param importType 导入类型
+     */
+    void handleImportSuccessList(List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> successList, List<String> errorNoList, List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> errorList2, String importType);
+
 }

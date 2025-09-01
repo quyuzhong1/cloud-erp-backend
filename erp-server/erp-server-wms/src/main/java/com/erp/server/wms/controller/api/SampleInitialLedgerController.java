@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.common.core.enums.*;
 
 /**
  * 样品期初台账
@@ -365,6 +366,35 @@ public class SampleInitialLedgerController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "样品期初台账导出Excel数据")
     public void exportList(@RequestBody @Validated SampleInitialLedgerDTO.ExportDTO dto, HttpServletResponse response) {
         sampleInitialLedgerService.exportList(dto, response);
+    }
+
+
+    /**
+    * 异步导入
+    * @author wuhaotian
+    * @date: 2025-08-21
+    * @param dto
+    * @return ApiResult
+    */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品期初台账")
+    @PostMapping("/importFile")
+    public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = sampleInitialLedgerService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载样品期初台账导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        sampleInitialLedgerService.downloadTemplate(response);
+        return success();
     }
 
 

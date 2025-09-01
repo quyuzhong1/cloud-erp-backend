@@ -54,6 +54,20 @@ import java.util.stream.Collectors;
 import java.util.*;
 import java.util.Collections;
 import com.common.core.utils.*;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.common.core.utils.ExcelUtil;
+import com.common.business.enums.FileTaskEventEnum;
+import com.erp.server.wms.listener.SampleInitialLedgerExcelListener;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.enums.ImportTypeEnum;
+import com.erp.rpc.file.feign.FileFeign;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import org.springframework.transaction.annotation.Propagation;
+import org.apache.commons.lang3.StringUtils;
 import com.common.core.enums.ApiError;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -85,6 +99,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
     @Resource
     private SampleInitialLedgerDetailService sampleInitialLedgerDetailService;
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FileFeign fileFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -182,24 +200,27 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
     @Override
     public void exportList(SampleInitialLedgerDTO.ExportDTO param, HttpServletResponse response) {
-        List<SampleInitialLedgerDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
+        // 对齐参考：改为异步导出任务
+        downloadTaskFeign.saveDownloadTask("样品期初台账导出", FileTaskEventEnum.EXPORT_WMS_SAMPLE_INITIAL_LEDGER_REPORT.getCode(), param);
+    }
 
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/sampleInitialLedger.xlsx";
-        String name = "样品期初台账导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
+    @Override
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
         try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            // 创建异步导入任务
+            downloadTaskFeign.saveImportTask("样品期初台账导入", FileTaskEventEnum.IMPORT_WMS_SAMPLE_INITIAL_LEDGER.getCode(), dto);
+            return true;
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+            log.error("创建样品期初台账导入任务失败", e);
+            return false;
         }
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/sampleInitialLedgerTemplate.xlsx";
+        String standardExcelName = "sampleInitialLedgerTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -892,5 +913,92 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         }
         
         return skuNoProductNameMap;
+    }
+
+    /**
+     * 导入样品期初台账
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param dto
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSampleInitialLedger(BaseDTO.ImportDTO dto) {
+        // SKU信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e, (o1, o2) -> o1));
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        SampleInitialLedgerExcelListener excelListenerUtil = new SampleInitialLedgerExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount(), deptList, map, userList);
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "样品期初台账错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
+    @Override
+    public void handleImportSuccessList(List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> successList, List<String> errorNoList, List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> errorList2, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if (CollUtil.isNotEmpty(errorNoList)) {
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
+
+            // 全部返回到错误列表
+            List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getNo()) || errorNoList.contains(e.getNo())).collect(Collectors.toList());
+            errorList2.addAll(collect);
+        }
+
+        SampleInitialLedgerServiceImpl bean = ApplicationContextUtils.getBean(SampleInitialLedgerServiceImpl.class);
+
+        // 按序号分组
+        Map<String, List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO::getNo));
+        for (Map.Entry<String, List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO>> entry : collect.entrySet()) {
+            List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> value = entry.getValue();
+            com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO importMainDTO = value.get(0);
+            SampleInitialLedgerDTO.AddDTO addDTO = new SampleInitialLedgerDTO.AddDTO();
+            BeanMapperUtils.copy(importMainDTO, addDTO);
+            
+            List<SampleInitialLedgerDTO.DetailDTO> detailList = new ArrayList<>();
+            for (com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO importDTO : value) {
+                SampleInitialLedgerDTO.DetailDTO detailDTO = new SampleInitialLedgerDTO.DetailDTO();
+                detailDTO.setSkuId(importDTO.getSkuId());
+                detailDTO.setSkuNo(importDTO.getSkuNo());
+                detailDTO.setQty(Integer.valueOf(importDTO.getQty()));
+                // 明细备注
+                detailDTO.setRemark(importDTO.getDetailRemark());
+                detailList.add(detailDTO);
+            }
+            addDTO.setDetailList(detailList);
+
+            if (ImportTypeEnum.ADD.getCode().equals(importType)) {
+                bean.add(addDTO);
+            }
+        }
     }
 }
