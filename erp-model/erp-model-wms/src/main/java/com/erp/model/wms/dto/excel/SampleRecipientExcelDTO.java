@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.format.DateTimeFormat;
 import lombok.Data;
@@ -38,24 +39,32 @@ public class SampleRecipientExcelDTO {
      */
     @ExcelProperty(value = "发货仓库", index = 3)
     private String warehouseName;
+    @ExcelIgnore
+    private String warehouseId;
 
     /**
      * 领用人
      */
     @ExcelProperty(value = "领用人", index = 4)
     private String userName;
+    @ExcelIgnore
+    private String userId;
 
     /**
      * 领用部门
      */
     @ExcelProperty(value = "领用部门", index = 5)
     private String deptName;
+    @ExcelIgnore
+    private String deptId;
 
     /**
      * 领料组织
      */
     @ExcelProperty(value = "领料组织", index = 6)
     private String pickOrgName;
+    @ExcelIgnore
+    private String pickOrgId;
 
     /**
      * 使用范围
@@ -74,6 +83,10 @@ public class SampleRecipientExcelDTO {
      */
     @ExcelProperty(value = "SKU", index = 9)
     private String skuNo;
+    @ExcelIgnore
+    private String skuId;
+    @ExcelIgnore
+    private String productName;
 
     /**
      * 领用数量
