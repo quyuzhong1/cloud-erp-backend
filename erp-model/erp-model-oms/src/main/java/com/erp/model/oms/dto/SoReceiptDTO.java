@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.common.business.dto.AttachDTO;
@@ -10,12 +11,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -68,11 +68,6 @@ public class SoReceiptDTO implements Serializable {
          * 剩余收款金额
          */
         private String remainReceiptAmount;
-
-        /**
-         * 收款账号
-         */
-        private String receiptAccount;
 
     }
 
@@ -198,12 +193,12 @@ public class SoReceiptDTO implements Serializable {
         /**
          * 收款账号
          */
-        private BigDecimal receiptAccount;
+        private String receiptAccount;
 
         /**
          * 收款日期
          */
-        private BigDecimal receiptDate;
+        private LocalDate receiptDate;
 
         /**
          * 收款方式
@@ -354,7 +349,7 @@ public class SoReceiptDTO implements Serializable {
         /**
          * 附件
          */
-        private List<AttachDTO> attachDTOList;
+        private List<AttachDTO> attachmentList;
         /**
          * 明细
          */
@@ -429,7 +424,6 @@ public class SoReceiptDTO implements Serializable {
         /**
         * 入账账户
         */
-        @NotBlank(message = "入账账户不能为空")
         private String postedAccount;
 
         /**

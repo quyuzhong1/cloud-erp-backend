@@ -159,6 +159,7 @@ public enum ModuleTypeEnum {
 
     SO_RECEIPT("132", "收款单"),
 
+    CUSTOMER_CREDIT_APPLY("134", "客户授信"),
     ;
 
 

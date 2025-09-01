@@ -25,9 +25,6 @@ import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.scm.dto.ContractInfoDTO;
-import com.erp.model.scm.entity.ContractInfoEntity;
-import com.erp.model.scm.enums.ContractInfoStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -463,7 +460,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
         List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(entity.getId()),tableName.value());
         List<AttachDTO> attachDTOList = BeanMapper.copyList(omsAttachmentEntities, AttachDTO.class);
-        data.setAttachDTOList(attachDTOList);
+        data.setAttachmentList(attachDTOList);
 
         //查询明细记录附件
         TableName detailTableName = SoReceiptDetailEntity.class.getDeclaredAnnotation(TableName.class);

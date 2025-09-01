@@ -24,6 +24,8 @@ public interface BusinessNoConstant {
 
     String SKD = "SKD";
 
+    String KHSX = "KHSX";
+
     String CGJM = "CGJM";
 
     String CGTJ = "CGTJ";

@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -317,18 +318,12 @@ public class CustomerCreditApplyDTO implements Serializable {
         * 客户Id
         */
         @NotBlank(message = "客户Id不能为空")
-        @Size(max = 32,message = "客户Id最大长度不能超过32位")
         private String customerId;
 
         /**
         * 授信类型
         */
         private String creditType;
-
-        /**
-        * 授信状态
-        */
-        private String creditStatus;
 
         /**
         * 授信额度
@@ -347,8 +342,6 @@ public class CustomerCreditApplyDTO implements Serializable {
         /**
         * 销售员
         */
-        @NotBlank(message = "销售员不能为空")
-        @Size(max = 32,message = "销售员最大长度不能超过32位")
         private String saleUserId;
 
         /**
@@ -375,18 +368,22 @@ public class CustomerCreditApplyDTO implements Serializable {
         /**
         * 销售员部门
         */
-        @NotBlank(message = "销售员部门不能为空")
-        @Size(max = 255,message = "销售员部门最大长度不能超过255位")
         private String saleDeptId;
 
         /**
         * 审核备注
-
         */
-        @NotBlank(message = "审核备注不能为空")
-        @Size(max = 255,message = "审核备注最大长度不能超过255位")
         private String approveRemark;
 
+        /**
+         * 授信额度测评表
+         */
+        private List<AttachDTO> evaluationAttachmentList;
+
+        /**
+         * 其他附件
+         */
+        private List<AttachDTO> otherAttachmentList;
 
     }
 

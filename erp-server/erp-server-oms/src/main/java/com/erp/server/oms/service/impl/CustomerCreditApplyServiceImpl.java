@@ -1,16 +1,20 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.entity.CustomerCreditApplyEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CustomerCreditApplyMapper;
 import com.erp.server.oms.service.CustomerCreditApplyService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
@@ -66,20 +70,20 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private CustomerInfoService customerInfoService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CustomerCreditApplyDTO.AddDTO addDTO) {
         CustomerCreditApplyEntity customerCreditApplyEntity = new CustomerCreditApplyEntity();
         BeanMapperUtils.copy(addDTO, customerCreditApplyEntity);
-
         // 数据处理
         handleData(customerCreditApplyEntity);
 
-        log.info("开始新增客户授信");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHSX);
         customerCreditApplyEntity.setCode(code);
         boolean save = super.save(customerCreditApplyEntity);
         if(!save) {
@@ -88,9 +92,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户授信" , customerCreditApplyEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, customerCreditApplyEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), customerCreditApplyEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(customerCreditApplyEntity.getId(), code);
     }
@@ -475,6 +477,13 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     * 新增修改处理数据
     */
     private void handleData(CustomerCreditApplyEntity customerCreditApplyEntity) {
-    // TODO 验证数据 & 数据赋值
+        //设置销售员，销售部门
+        CustomerInfoEntity customerInfo = customerInfoService.getById(customerCreditApplyEntity.getCustomerId());
+        if(ObjectUtil.isEmpty(customerInfo)) {
+            throw new ServiceException("未找到客户信息");
+        }
+        customerCreditApplyEntity.setSaleUserId(customerInfo.getSellerId());
+        customerCreditApplyEntity.setSaleDeptId(customerInfo.getSalesDeptId());
+
     }
 }
