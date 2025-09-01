@@ -68,6 +68,16 @@ public class SoReceiptDetailDTO implements Serializable {
         private BigDecimal receiptAmount;
 
         /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态 name
+         */
+        private String approveStatusName;
+
+        /**
          * 附件
          */
         private List<AttachDTO> attachmentList;

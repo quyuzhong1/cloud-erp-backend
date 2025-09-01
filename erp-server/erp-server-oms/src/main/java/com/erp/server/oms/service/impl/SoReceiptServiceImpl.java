@@ -499,7 +499,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             viewDTO.setAttachmentList(detailAttachDTOList);
 
             SoReceiptDTO.SoInfoAndReceiptDTO soInfoAndReceiptDTO = soInfoDTOS.stream().filter(v -> v.getSoCode().equals(soReceiptDetailEntity.getSoCode())).findFirst().orElse(new SoReceiptDTO.SoInfoAndReceiptDTO());
-
+            viewDTO.setApproveStatus(soInfoAndReceiptDTO.getApproveStatus());
+            viewDTO.setApproveStatusName(ApproveStatusEnum.getName(soInfoAndReceiptDTO.getApproveStatus()));
             viewDTO.setRemainReceiptAmount(soInfoAndReceiptDTO.getRemainReceiptAmount());
             DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(soReceiptDetailEntity.getDictReceiptMethod())).findFirst().orElse(null);
             if(ObjectUtil.isNotEmpty(receiveMethod)) {

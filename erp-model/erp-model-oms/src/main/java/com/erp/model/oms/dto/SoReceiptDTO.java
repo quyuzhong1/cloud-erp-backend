@@ -51,6 +51,10 @@ public class SoReceiptDTO implements Serializable {
         private String soCode;
 
         /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
          * 订单审核状态
          */
         private String approveStatus;

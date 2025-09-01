@@ -108,6 +108,7 @@
     <select id="listSoReceiptBySoCode" resultType="com.erp.model.oms.dto.SoReceiptDTO$SoInfoAndReceiptDTO">
         select si.id as soId,
                si.code as soCode,
+               si.sales_org_id as salesOrgId,
                si.approve_status as approveStatus,
                si.receive_account as receiptAccount,
                si.receive_amount - COALESCE((
