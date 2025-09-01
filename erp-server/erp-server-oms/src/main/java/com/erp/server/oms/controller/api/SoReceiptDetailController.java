@@ -35,38 +35,5 @@ public class SoReceiptDetailController extends BaseController {
     @Resource
     private SoReceiptDetailService soReceiptDetailService;
 
-    /**
-    * 新增
-    * @author lrp
-    * @date:  2025-08-28
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "收款单明细新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoReceiptDetailDTO.AddDTO dto) {
-        return success(soReceiptDetailService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author lrp
-    * @date:  2025-08-28
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "收款单明细修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:soReceiptDetail:update",
-        serviceClass = SoReceiptDetailService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SoReceiptDetailDTO.UpdateDTO dto) {
-        soReceiptDetailService.update(dto);
-        return success();
-    }
-
-
 
 }
