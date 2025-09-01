@@ -286,6 +286,14 @@ public class CustomerDTO implements Serializable {
          *
          */
         private Boolean disabled;
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
     }
     /**
      * 远程搜索
