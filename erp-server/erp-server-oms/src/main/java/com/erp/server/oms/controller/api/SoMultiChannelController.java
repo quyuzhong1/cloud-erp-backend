@@ -467,6 +467,8 @@ public class SoMultiChannelController extends BaseController {
             try {
                 SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity,soB2cEntity,channelEntity);
                 BaseResultDTO.AddDTO add = soMultiChannelService.add(addDTO);
+                //自动提审
+                soMultiChannelService.submit(add.getId());
                 submit = BatchResultDTO.success(add.getId(), add.getCode());
             }catch (Exception e){
                 log.error("多渠道订单保存失败",e);

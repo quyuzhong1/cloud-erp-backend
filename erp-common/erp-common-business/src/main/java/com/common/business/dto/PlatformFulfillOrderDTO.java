@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * FBA货件DTO 所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -60,6 +61,8 @@ public class PlatformFulfillOrderDTO extends UniqueDto {
      * 货件id
      */
     private String shipmentId;
-
-
+    /**
+     * 货件明细
+     */
+    private List<PlatformFulfillOrderDetailDTO> detailList;
 }

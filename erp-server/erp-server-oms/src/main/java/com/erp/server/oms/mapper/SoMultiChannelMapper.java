@@ -59,4 +59,6 @@ public interface SoMultiChannelMapper extends BaseMapper<SoMultiChannelEntity> {
      * @return
      */
     List<SoMultiChannelDTO.SoViewDTO> listSoMultiChannelBySoId(@Param("ids") List<String> ids);
+
+    SoMultiChannelEntity getBySoId(@Param("soId") String soId);
 }

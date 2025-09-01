@@ -313,16 +313,16 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             FbaInventoryDTO.InventoryDTO inventoryDTO = new FbaInventoryDTO.InventoryDTO();
             inventoryDTO.setId(e.getTableId());
             inventoryDTO.setSkuNo(e.getProductSkuNo());
-            inventoryDTO.setWarehouseId(e.getWarehouseId());
             inventoryDTO.setPlatformProductName(e.getPlatformSkuName());
             inventoryDTO.setAsin(e.getPlatformSpuNo());
             inventoryDTO.setFnSku(e.getPlatformFnSku());
             inventoryDTO.setMsku(e.getPlatformSkuNo());
             FbaInventoryDTO.InventoryDTO inventoryDTO1 = inventoryDTOS.stream()
-                    .filter(d -> d.getSkuNo().equals(e.getProductSkuNo()) && d.getWarehouseId().equals(e.getWarehouseId()) && d.getAsin().equals(e.getPlatformSpuNo()))
+                    .filter(d -> d.getSkuNo().equals(e.getProductSkuNo()) && d.getFnSku().equals(e.getPlatformFnSku())  && d.getAsin().equals(e.getPlatformSpuNo()))
                     .max(Comparator.comparing(FbaInventoryDTO.InventoryDTO::getFulfillableQty)).orElse(null);
             inventoryDTO.setFbmFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFbmFulfillableQty() : 0);
             inventoryDTO.setFulfillableQty(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getFulfillableQty() : 0);
+            inventoryDTO.setWarehouseId(Objects.nonNull(inventoryDTO1) ? inventoryDTO1.getWarehouseId() : "");
             list.add(inventoryDTO);
         });
         return list;
