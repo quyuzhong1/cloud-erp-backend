@@ -44,8 +44,8 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -96,6 +96,7 @@ import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
+import com.erp.server.wms.dht.SyncDhtOutstockService;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
@@ -261,6 +262,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+
+    @Resource
+    private SyncDhtOutstockService syncDhtOutstockService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -765,17 +769,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送数帝云
             this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
-            this.syncB2bSoOutstockDht(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
-    }
-
-    private void syncB2bSoOutstockDht (SoOutstockEntity entity, String operate) {
-        if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
-            return;
-        }
-        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-
     }
 
     /**
