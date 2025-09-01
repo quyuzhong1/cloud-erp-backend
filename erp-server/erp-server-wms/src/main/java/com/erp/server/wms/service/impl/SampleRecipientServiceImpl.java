@@ -915,6 +915,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setApproveStatus(data.getApproveStatus().toLowerCase());
     }
 
     /**

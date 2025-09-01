@@ -3,6 +3,9 @@ import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleInitialLedgerDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -32,5 +35,14 @@ public interface SampleInitialLedgerDetailService extends SuperService<SampleIni
     */
     Boolean update(SampleInitialLedgerDetailDTO.UpdateDTO dto);
 
+    /**
+     * 导入Excel
+     * @author wuhaotian
+     * @date: 2025-09-01
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    SampleInitialLedgerDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
 }

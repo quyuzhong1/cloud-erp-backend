@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -113,6 +115,11 @@ public class SampleInitialLedgerDetailDTO implements Serializable {
         private String skuId;
 
         /**
+        * SKU编号
+        */
+        private String skuNo;
+
+        /**
         * 产品名称
         */
         @NotBlank(message = "产品名称不能为空")
@@ -123,17 +130,32 @@ public class SampleInitialLedgerDetailDTO implements Serializable {
         * 数量
         */
         @NotNull(message = "数量不能为空")
+        @Min(value = 1, message = "数量不能小于1")
         private Integer qty;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
-
     }
 
+    /**
+    * 导入
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
 
 }
