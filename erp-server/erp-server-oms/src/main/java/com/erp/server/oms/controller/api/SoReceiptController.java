@@ -86,7 +86,6 @@ public class SoReceiptController extends BaseController {
             menuCode = "oms:soReceipt:paging",
             tableAlias = "sr"
     )
-    @WebAdvanceQuery
     public ApiResult<List<SoReceiptDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soReceiptService.tabList(dto));
     }

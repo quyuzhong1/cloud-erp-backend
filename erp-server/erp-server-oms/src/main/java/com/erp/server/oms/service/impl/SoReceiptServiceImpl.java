@@ -23,10 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.OmsAttachmentEntity;
-import com.erp.model.oms.entity.SoReceiptDetailEntity;
-import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
@@ -85,6 +82,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SoInfoService soInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -338,6 +338,16 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<String> soIds = detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+        //校验订单是否全部为待提交或审核不通过
+        for (SoInfoEntity soInfoEntity : soInfoEntityList) {
+            if (!BillApproveStatusEnum.WAIT_SUBMIT.equals(soInfoEntity.getApproveStatus())
+             && !BillApproveStatusEnum.REJECT.equals(soInfoEntity.getApproveStatus())) {
+                throw new ServiceException(StrUtil.format("订单【{}】状态为【{}】，不允许进行反审核操作", soInfoEntity.getCode(), soInfoEntity.getApproveStatus().getName()));
+            }
+        }
         return true;
     }
 
@@ -402,7 +412,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             throw new ServiceException("客户不能为空");
         }
         List<SoReceiptDTO.SoInfoAndReceiptDTO> soInfoAndReceiptDTOList = baseMapper.listSoReceiptBySoCode(dto);
-        soInfoAndReceiptDTOList.forEach(v->v.setApproveStatus(ApproveStatusEnum.getName(v.getApproveStatus())));
+        soInfoAndReceiptDTOList.forEach(v->v.setApproveStatusName(ApproveStatusEnum.getName(v.getApproveStatus())));
         if(CollectionUtils.isNotEmpty(dto.getSoCodeList())){
             List<SoReceiptDTO.SoInfoAndReceiptDTO> result = new ArrayList<>();
             for (String soCode : dto.getSoCodeList()) {
