@@ -380,8 +380,8 @@ public class SoReceiptController extends BaseController {
      * 通过销售订单查订单收款信息
      */
     @PostMapping("/listSoReceiptBySoCode")
-    public List<SoReceiptDTO.SoInfoAndReceiptDTO> listSoReceiptBySoCode(@RequestBody @Validated SoReceiptDTO.SoSearchDTO dto) {
-       return soReceiptService.listSoReceiptBySoCode(dto);
+    public ApiResult<List<SoReceiptDTO.SoInfoAndReceiptDTO>> listSoReceiptBySoCode(@RequestBody @Validated SoReceiptDTO.SoSearchDTO dto) {
+       return success(soReceiptService.listSoReceiptBySoCode(dto));
     }
 
 
