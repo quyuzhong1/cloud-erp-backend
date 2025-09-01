@@ -548,9 +548,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         list.add(dto);
 
         // 如果是金额类型，再生成一个“币种”子项
-        if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(type)) {
+        /*if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(type)) {
             list.add(createAmountField(dto));
-        }
+        }*/
 
         return list;
     }

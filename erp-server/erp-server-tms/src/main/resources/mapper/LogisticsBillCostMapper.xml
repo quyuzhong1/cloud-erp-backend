@@ -287,5 +287,24 @@
         </if>
     </select>
 
+    <!-- 查询物流成本ID -->
+    <select id="listLogisticsBillCostId" resultType="java.lang.String">
+        select
+            lbc.id
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
+            <if test="params.isUpdatePayStatus == true">
+               and lbc.reconciliation_status = 'confirmed'
+            </if>
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

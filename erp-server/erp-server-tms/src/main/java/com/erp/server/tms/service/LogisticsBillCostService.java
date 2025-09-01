@@ -227,4 +227,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void importLogisticsBillCost(BaseDTO.ImportDTO dto);
 
     List<LogisticsBillCostDTO.CostDetailDTO> listCostDetailByBillAndReconciliationIds(List<String> billIds, List<String> mainIds, String type);
+    /**
+     * 根据高级查询查出符合条件的主表id集合
+     * @author will
+     * @date 2025/8/21 16:22
+     * @param dto
+     * @return List<String>
+     */
+    List<String> listLogisticsBillCostId(LogisticsBillCostDTO.ListParamDTO dto);
 }

@@ -113,7 +113,7 @@ public class TrackShipperService {
             throw new ServiceException("解析返回数据异常："+ result);
         }
     }
-    public RegisterResult updateTrack(String token, RegisterRequest registerRequest){
+    public String updateTrack(String token, RegisterRequest registerRequest){
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json;charset=utf-8");
@@ -122,11 +122,7 @@ public class TrackShipperService {
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.UPDATE_LOGISTICS_NUMBER, registerRequest, headers);
         System.out.println(result);
-        try {
-            return JSONUtil.toBean(result, RegisterResult.class);
-        }catch (Exception e){
-            throw new ServiceException("解析返回数据异常："+ result);
-        }
+        return result;
     }
 
     private static byte[] calculateHmacSHA256(String message, String secretKey)

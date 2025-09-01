@@ -345,6 +345,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDepartmentName);
     			
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}
