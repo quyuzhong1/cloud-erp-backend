@@ -248,6 +248,18 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     private String packingStatus;
 
     /**
+     * 出库通知状态
+     */
+    @TableField("outstock_notice_status")
+    private String outstockNoticeStatus;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
      * 中转仓库 以,分割记录
      */
     @TableField("transfer_warehouse_ids")

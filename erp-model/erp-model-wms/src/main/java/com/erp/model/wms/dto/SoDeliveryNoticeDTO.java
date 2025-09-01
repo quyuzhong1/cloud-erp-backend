@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -72,6 +71,11 @@ public class SoDeliveryNoticeDTO {
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 出库通知状态
+         */
+        private String outstockNoticeStatus;
         /**
          * 要货日期
          */
@@ -280,6 +284,14 @@ public class SoDeliveryNoticeDTO {
          */
         private String toCountry;
 
+        /**
+         * 出库通知状态
+         */
+        private String outstockNoticeStatus;
+        /**
+         * 出库通知状态名称
+         */
+        private String outstockNoticeStatusName;
     }
 
     /**
@@ -551,6 +563,20 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidRemark;
         /**
+         * 箱唛url
+         */
+        private String attachmentUrl;
+        /**
+         * 箱唛url名称
+         */
+        private String attachmentName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
          * 中转仓库集合
          */
         private List<String> transferWarehouseIdList;
@@ -745,5 +771,29 @@ public class SoDeliveryNoticeDTO {
          * 打印明细
          */
         private List<PrintSkuLabelDTO> detailList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PermitOutstockDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 附件url
+         */
+        private String attachmentUrl;
+        /**
+         * 附件名称
+         */
+        private String attachmentName;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

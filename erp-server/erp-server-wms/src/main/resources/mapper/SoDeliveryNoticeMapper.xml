@@ -41,6 +41,7 @@
             sdn.warehouse_name AS warehouseName,
             sdn.warehouse_org_id AS warehouseOrgId,
             sdn.warehouse_org_name AS warehouseOrgName,
+            sdn.outstock_notice_status as outstockNoticeStatus,
             sdnd.sku_id AS skuId,
             sdnd.sku_no AS skuNo,
             sdnd.delivery_qty AS deliveryQty,
