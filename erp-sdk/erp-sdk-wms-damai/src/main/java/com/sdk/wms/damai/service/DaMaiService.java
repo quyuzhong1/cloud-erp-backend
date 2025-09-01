@@ -25,7 +25,7 @@ public class DaMaiService {
 
     private String getPreUrl(){
         if (BusinessCommonConstants.hasProfile("prod")) {
-            return "";
+            return "https://oms.greatsell.cn";
         } else {
             return "https://uatoms.greatsell.cn";
         }

@@ -185,4 +185,6 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return List<SoOutstockDetailEntity>
      */
     List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
+
+    void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
 }
