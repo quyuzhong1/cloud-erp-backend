@@ -756,13 +756,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else {
                 handleSoB2cData(entity);
             }
-
-//            TransferDeclareDTO.UpdateOutstockStatusDTO statusDTO = new TransferDeclareDTO.UpdateOutstockStatusDTO();
-//            statusDTO.setSoIds(Collections.singletonList(entity.getSoId()));
-//            statusDTO.setStatus(TransferOutstockStatusEnum.OUTSTOCK.getCode());
-//            //修改中转报关单订单出库状态
-//            transferDeclareFeign.updateOutstockStatus(statusDTO);
-
             //走TMS自动生成报关单逻辑
             autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
             //B2B发送金蝶
@@ -771,13 +764,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云
             this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-
+            //推送到订货通
+            this.syncB2bSoOutstockDht(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-//        if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
-//            //订单推送dmp
-//            syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-//        }
         return Boolean.TRUE;
+    }
+
+    private void syncB2bSoOutstockDht (SoOutstockEntity entity, String operate) {
+        if (!OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            return;
+        }
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+
     }
 
     /**
