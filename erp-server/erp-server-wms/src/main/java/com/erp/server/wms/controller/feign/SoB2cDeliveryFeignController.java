@@ -204,6 +204,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @param generateDeliveryAndOutStockDTO
      */
     @PostMapping("/generateDeliveryAndOutStock")
+    @DistributeLocker(keyName = "generateDeliveryAndOutStockDTO.entity.id")
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         soB2cDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
     }
