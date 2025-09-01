@@ -67,11 +67,6 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     @TableField("code")
     private String code;
     /**
-    * 单据状态
-    */
-    @TableField("status")
-    private String status;
-    /**
     * 归属人ID
     */
     @TableField("user_id")
@@ -96,6 +91,11 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     */
     @TableField("sku_no")
     private String skuNo;
+    /**
+    * SKU ID
+    */
+    @TableField("sku_id")
+    private String skuId;
     /**
     * 产品名称
     */
@@ -124,8 +124,6 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
 
     public static final String CODE = "code";
 
-    public static final String STATUS = "status";
-
     public static final String USER_ID = "user_id";
 
     public static final String USER_NAME = "user_name";
@@ -135,6 +133,8 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     public static final String BILL_DATE = "bill_date";
 
     public static final String SKU_NO = "sku_no";
+
+    public static final String SKU_ID = "sku_id";
 
     public static final String PRODUCT_NAME = "product_name";
 

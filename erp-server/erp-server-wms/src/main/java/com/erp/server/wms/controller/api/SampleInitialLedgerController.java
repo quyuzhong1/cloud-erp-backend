@@ -192,7 +192,6 @@ public class SampleInitialLedgerController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleInitialLedgerEntity> list = sampleInitialLedgerService.lambdaQuery().in(SampleInitialLedgerEntity::getId, ids).list();
 		Map<String, SampleInitialLedgerEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleInitialLedgerEntity::getId, w -> w));
         for (String id : ids) {
@@ -214,44 +213,6 @@ public class SampleInitialLedgerController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-    * 反审核
-    * @author wuhaotian
-    * @date:  2025-08-21
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:sampleInitialLedger:disApprove",
-            serviceClass = SampleInitialLedgerService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "样品期初台账反审核")
-    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<SampleInitialLedgerEntity> list = sampleInitialLedgerService.lambdaQuery().in(SampleInitialLedgerEntity::getId, ids).list();
-		Map<String, SampleInitialLedgerEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleInitialLedgerEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
-            try {
-                disApproveResult = sampleInitialLedgerService.disApprove(id);
-            }catch (Exception e){
-                log.error("样品期初台账反审核失败",e);
-                SampleInitialLedgerEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "样品期初台账不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(disApproveResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
 
     /**
@@ -271,7 +232,6 @@ public class SampleInitialLedgerController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SampleInitialLedgerEntity> list = sampleInitialLedgerService.lambdaQuery().in(SampleInitialLedgerEntity::getId, ids).list();
 		Map<String, SampleInitialLedgerEntity> idEntityMap = list.stream().collect(Collectors.toMap(SampleInitialLedgerEntity::getId, w -> w));
         for (String id : dto.getIds()) {

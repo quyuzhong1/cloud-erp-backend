@@ -208,5 +208,8 @@ public interface BusinessNoConstant {
     String YPLY="YPLY";
     //样品退回
     String YPTH="YPTH";
+    //期初台账
+    String QCTZ="QCTZ";
+
 
 }

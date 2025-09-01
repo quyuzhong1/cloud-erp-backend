@@ -119,11 +119,6 @@ public class SampleInitialLedgerDTO implements Serializable {
         private String code;
 
         /**
-        * 单据状态
-        */
-        private String status;
-
-        /**
         * 归属人ID
         */
         private String userId;
@@ -139,6 +134,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         private String deptId;
 
         /**
+         * 归属部门
+         */
+        private String deptName;
+
+        /**
         * 业务日期
         */
         private LocalDate billDate;
@@ -147,6 +147,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         * SKU编码
         */
         private String skuNo;
+
+        /**
+        * SKU ID
+        */
+        private String skuId;
 
         /**
         * 产品名称
@@ -245,11 +250,6 @@ public class SampleInitialLedgerDTO implements Serializable {
         private String code;
 
         /**
-        * 单据状态
-        */
-        private String status;
-
-        /**
         * 归属人ID
         */
         private String userId;
@@ -269,20 +269,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         */
         private LocalDate billDate;
 
-        /**
-        * SKU编码
-        */
-        private String skuNo;
 
         /**
-        * 产品名称
-        */
-        private String productName;
-
-        /**
-        * 数量
-        */
-        private Integer qty;
+         * 详情
+         */
+        private List<SampleInitialLedgerDTO.DetailDTO>detailList;
 
 
     }
@@ -294,7 +285,48 @@ public class SampleInitialLedgerDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+        * 明细列表
+        */
+        @NotEmpty(message = "明细列表不能为空")
+        private List<DetailDTO> detailList;
 
+    }
+
+    /**
+    * 明细DTO
+    */
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+
+        /**
+        * SKU ID
+        */
+        @NotBlank(message = "SKU ID不能为空")
+        private String skuId;
+
+        /**
+        * SKU编码
+        */
+        @NotBlank(message = "SKU编码不能为空")
+        private String skuNo;
+
+        /**
+        * 数量
+        */
+        @NotNull(message = "数量不能为空")
+        private Integer qty;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 产品名称（通过feign获取，不需要前端传递）
+        */
+        private String productName;
     }
 
     /**
@@ -310,6 +342,12 @@ public class SampleInitialLedgerDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+        * 明细列表
+        */
+        @NotEmpty(message = "明细列表不能为空")
+        private List<DetailDTO> detailList;
+
     }
 
     @Data
@@ -322,25 +360,11 @@ public class SampleInitialLedgerDTO implements Serializable {
         private LocalDateTime invalidTime;
 
         /**
-        * 单据状态
-        */
-        @NotBlank(message = "单据状态不能为空")
-        @Size(max = 50,message = "单据状态最大长度不能超过50位")
-        private String status;
-
-        /**
         * 归属人ID
         */
         @NotBlank(message = "归属人ID不能为空")
         @Size(max = 19,message = "归属人ID最大长度不能超过19位")
         private String userId;
-
-        /**
-        * 归属人姓名
-        */
-        @NotBlank(message = "归属人姓名不能为空")
-        @Size(max = 50,message = "归属人姓名最大长度不能超过50位")
-        private String userName;
 
         /**
         * 归属部门ID
@@ -352,20 +376,8 @@ public class SampleInitialLedgerDTO implements Serializable {
         /**
         * 业务日期
         */
+        @NotEmpty(message = "业务日期不能为空")
         private LocalDate billDate;
-
-        /**
-        * 产品名称
-        */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 200,message = "产品名称最大长度不能超过200位")
-        private String productName;
-
-        /**
-        * 数量
-        */
-        @NotNull(message = "数量不能为空")
-        private Integer qty;
 
 
     }

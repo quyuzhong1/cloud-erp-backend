@@ -964,9 +964,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
         Map<String, String> warehouseNameMap = warehouseList.stream()
             .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
-        
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(list.stream().map(SampleRecipientDTO.ListDTO::getUserId).collect(Collectors.toList()));
 
-        
+        Map<String, String> userNameMap = userList.stream()
+                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -976,6 +978,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             // 设置仓库名称
             data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
+            data.setUserName(userNameMap.get(data.getUserId()));
+            data.setUseUserName(userNameMap.get(data.getUseUserId()));
         }
     }
     /**
@@ -1436,6 +1440,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     }
                 }
             }
+            // 用户
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(mainList.stream().map(SampleRecipientEntity::getUserId).collect(Collectors.toList()));
+
+            Map<String, String> userNameMap = userList.stream()
+                    .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
             
             // 组装返回数据
             for (SampleRecipientDetailEntity detail : detailList) {
@@ -1461,7 +1470,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 dto.setWarehouseName(warehouseNameMap.getOrDefault(main.getWarehouseId(), ""));
                 
                 // 设置领用人信息
-                dto.setUserName(main.getUserName());
+                dto.setUserName(userNameMap.get(main.getUserId()));
                 dto.setUserId(main.getUserId());
                 
                 // 设置数量信息
@@ -1559,6 +1568,93 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             SampleRecipientEntity sampleRecipient = this.getById(sourceId);
             if (sampleRecipient == null) {
                 return BatchResultDTO.fail(sourceId, items.get(0).getSourceCode(), "样品领用单不存在");
+            }
+            // 出库前校验：
+            // 1) 相同SKU(同一来源明细)不同仓位的出库数量合计不能大于待出库数量
+            // 2) 仓位的出库数量不能大于仓位的可用库存数量（通过 inventoryService 查询）
+            if (CollUtil.isNotEmpty(items)) {
+                // 批量查询来源明细，构建映射
+                List<String> sourceDetailIds = items.stream()
+                        .map(SampleRecipientDTO.ViewGenerateOutboundOrderDTO::getSourceDetailId)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .collect(Collectors.toList());
+                List<SampleRecipientDetailEntity> detailEntities = sampleRecipientDetailService.listByIds(sourceDetailIds);
+                Map<String, SampleRecipientDetailEntity> detailMap = detailEntities.stream()
+                        .collect(Collectors.toMap(SampleRecipientDetailEntity::getId, Function.identity()));
+
+                // 计算每个 skuNo 的出库数量合计（跨仓位）
+                Map<String, Integer> skuNoOutQtySumMap = new HashMap<>();
+                for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
+                    String skuNo = item.getSkuNo();
+                    if (StringUtils.isBlank(skuNo)) {
+                        throw new ServiceException("SKU编号不能为空");
+                    }
+                    int outQty = ObjectUtil.defaultIfNull(item.getOutQty(), ObjectUtil.defaultIfNull(item.getReservedQty(), 0));
+                    skuNoOutQtySumMap.merge(skuNo, outQty, Integer::sum);
+                }
+
+                // 统计整张单据内各 skuNo 的待出库数量（recipientQty - deliveryQty）
+                List<SampleRecipientDetailEntity> allDetailsOfDoc = sampleRecipientDetailService.lambdaQuery()
+                        .eq(SampleRecipientDetailEntity::getMainId, sourceId)
+                        .list();
+                Map<String, Integer> skuNoReservedQtyMap = new HashMap<>();
+                if (CollUtil.isNotEmpty(allDetailsOfDoc)) {
+                    for (SampleRecipientDetailEntity d : allDetailsOfDoc) {
+                        String skuNo = d.getSkuNo();
+                        int reserved = Math.max(ObjectUtil.defaultIfNull(d.getRecipientQty(), 0) - ObjectUtil.defaultIfNull(d.getDeliveryQty(), 0), 0);
+                        skuNoReservedQtyMap.merge(skuNo, reserved, Integer::sum);
+                    }
+                }
+
+                // 校验每个 skuNo 的合计出库数量不超过其总待出库数量
+                for (Map.Entry<String, Integer> entry : skuNoOutQtySumMap.entrySet()) {
+                    String skuNo = entry.getKey();
+                    Integer sumOutQty = entry.getValue();
+                    int reservedQty = skuNoReservedQtyMap.getOrDefault(skuNo, 0);
+                    if (sumOutQty > reservedQty) {
+                        throw new ServiceException(CharSequenceUtil.format("SKU【{}】出库数量合计{}超出待出库数量{}", skuNo, sumOutQty, reservedQty));
+                    }
+                }
+
+                // 聚合到(仓库-仓位-SKU)维度，校验每个仓位的可用库存
+                class Key {
+                    String warehouseId; String location; String skuId;
+                    Key(String w, String l, String s){this.warehouseId=w; this.location=l; this.skuId=s;}
+                    @Override public boolean equals(Object o){
+                        if(this==o) return true; if(!(o instanceof Key)) return false; Key k=(Key)o;
+                        return Objects.equals(warehouseId,k.warehouseId)&&Objects.equals(location,k.location)&&Objects.equals(skuId,k.skuId);
+                    }
+                    @Override public int hashCode(){return Objects.hash(warehouseId,location,skuId);} }
+
+                Map<Key, Integer> locationOutQtySumMap = new HashMap<>();
+                for (SampleRecipientDTO.ViewGenerateOutboundOrderDTO item : items) {
+                    SampleRecipientDetailEntity detail = detailMap.get(item.getSourceDetailId());
+                    if (detail == null) {
+                        throw new ServiceException("未找到样品领用单明细：" + item.getSourceDetailId());
+                    }
+                    String warehouseId = ObjectUtil.defaultIfNull(item.getWarehouseId(), sampleRecipient.getWarehouseId());
+                    String location = item.getWarehouseLocation();
+                    String skuId = detail.getSkuId();
+                    int outQty = ObjectUtil.defaultIfNull(item.getOutQty(), ObjectUtil.defaultIfNull(item.getReservedQty(), 0));
+                    Key key = new Key(warehouseId, location, skuId);
+                    locationOutQtySumMap.merge(key, outQty, Integer::sum);
+                }
+
+                for (Map.Entry<Key, Integer> entry : locationOutQtySumMap.entrySet()) {
+                    Key key = entry.getKey();
+                    Integer sumOutQty = entry.getValue();
+                    Integer usable = inventoryService.getUsableInventoryTotal(key.warehouseId, key.skuId, key.location);
+                    int usableQty = ObjectUtil.defaultIfNull(usable, 0);
+                    if (sumOutQty > usableQty) {
+                        // 反查SKU编号用于提示
+                        SampleRecipientDetailEntity anyDetail = detailEntities.stream()
+                                .filter(d -> Objects.equals(d.getSkuId(), key.skuId))
+                                .findFirst().orElse(null);
+                        String skuNo = (anyDetail == null ? "" : anyDetail.getSkuNo());
+                        throw new ServiceException(CharSequenceUtil.format("SKU【{}】仓位【{}】可用库存不足，出库{}，可用{}", skuNo, key.location, sumOutQty, usableQty));
+                    }
+                }
             }
             
             // 构建其他出库单主表数据

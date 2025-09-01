@@ -1,14 +1,18 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleInitialLedgerMapper;
@@ -35,9 +39,7 @@ import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -50,10 +52,13 @@ import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
+import java.util.Collections;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.erp.model.wms.dto.SampleLedgerFlowDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.entity.SampleInitialLedgerDetailEntity;
 /**
  * <p>
  * 样品期初台账 服务实现类
@@ -78,6 +83,9 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private SampleInitialLedgerDetailService sampleInitialLedgerDetailService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -90,19 +98,19 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
         log.info("开始新增样品期初台账");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCTZ);
         sampleInitialLedgerEntity.setCode(code);
         boolean save = super.save(sampleInitialLedgerEntity);
         if(!save) {
             throw new ServiceException("样品期初台账保存失败");
         }
 
+        // 处理明细数据
+        handleDetailData(sampleInitialLedgerEntity.getId(), addDTO.getDetailList());
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "样品期初台账" , sampleInitialLedgerEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, sampleInitialLedgerEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), sampleInitialLedgerEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(sampleInitialLedgerEntity.getId(), code);
     }
@@ -128,13 +136,14 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if(!save) {
             throw new ServiceException("样品期初台账保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 处理明细数据（先删除旧的，再新增新的）
+        handleDetailDataForUpdate(sampleInitialLedgerEntity.getId(), addOrUpdateDTO.getDetailList());
 
         // 记录主单操作日志
-            log.info("编辑 开始记录样品期初台账日志数据，单号：【{}】", sampleInitialLedgerEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleInitialLedgerEntity.getCode(), "样品期初台账");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, sampleInitialLedgerEntity, null, sampleInitialLedgerEntity.getId(), msg);
+        log.info("编辑 开始记录样品期初台账日志数据，单号：【{}】", sampleInitialLedgerEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleInitialLedgerEntity.getCode(), "样品期初台账");
+        operateLogService.addModuleOperateLogByObj(old, sampleInitialLedgerEntity, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), sampleInitialLedgerEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -205,14 +214,12 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         log.info("提交 开始修改样品期初台账状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动样品期初台账流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录样品期初台账日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -254,8 +261,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -269,8 +275,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -335,7 +340,8 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
+        List<SampleInitialLedgerDetailEntity> list = sampleInitialLedgerDetailService.list(new LambdaQueryWrapper<SampleInitialLedgerDetailEntity>().eq(SampleInitialLedgerDetailEntity::getMainId, id));
+        sampleInitialLedgerDetailService.removeByIds(list.stream().map(SampleInitialLedgerDetailEntity::getId).collect(Collectors.toList()));
 
         // 删除主单数据
         log.info("删除 开始删除样品期初台账主单数据，id：【{}】", id);
@@ -354,7 +360,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public BatchResultDTO invalid(String id, String remark) {
         SampleInitialLedgerEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品期初台账数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改样品期初台账状态数据，id：【{}】", id);
@@ -365,8 +371,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -382,7 +387,6 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改样品期初台账状态，id：【{}】", id);
@@ -391,12 +395,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -410,7 +412,6 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
         // 只有审核通过和反审核才记录台账流水
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
@@ -437,7 +438,26 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         SampleInitialLedgerDTO.ViewDTO data = BeanMapperUtils.map(SampleInitialLedgerDTO.ViewDTO.class, sampleInitialLedgerEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        // 查询明细数据
+        List<SampleInitialLedgerDetailEntity> detailList = sampleInitialLedgerDetailService.lambdaQuery()
+            .eq(SampleInitialLedgerDetailEntity::getMainId, id)
+            .eq(SampleInitialLedgerDetailEntity::getIsDeleted, false)
+            .list();
+        // 转换为DTO
+        List<SampleInitialLedgerDTO.DetailDTO> detailDTOList = detailList.stream()
+            .map(detail -> {
+                SampleInitialLedgerDTO.DetailDTO detailDTO = new SampleInitialLedgerDTO.DetailDTO();
+                detailDTO.setSkuId(detail.getSkuId());
+                detailDTO.setSkuNo(detail.getSkuNo());
+                detailDTO.setProductName(detail.getProductName());
+                detailDTO.setQty(detail.getQty());
+                detailDTO.setRemark(detail.getRemark());
+                return detailDTO;
+            })
+            .collect(Collectors.toList());
+        // 设置明细数据到ViewDTO中（需要在ViewDTO中添加detailList字段）
+         data.setDetailList(detailDTOList);
+        
         return data;
     }
     /**
@@ -452,8 +472,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SAMPLE_LEDGER_INIT.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -517,11 +536,38 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
            return;
         }
 
+        // 获取所有部门ID
+        List<String> deptIds = list.stream()
+            .map(SampleInitialLedgerDTO.ListDTO::getDeptId)
+            .filter(StrUtil::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 通过feign获取部门信息
+        Map<String, String> deptIdNameMap = getDeptNameByIds(deptIds);
+        // 用户
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(list.stream().map(SampleInitialLedgerDTO.ListDTO::getUserId).collect(Collectors.toList()));
+
+        Map<String, String> userNameMap = userList.stream()
+                .collect(Collectors.toMap(FindUserDTO::getUserId,FindUserDTO::getUserName));
+
         // 属性赋值
         for(SampleInitialLedgerDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            
+            // 设置部门名称
+            if (StrUtil.isNotBlank(data.getDeptId())) {
+                String deptName = deptIdNameMap.get(data.getDeptId());
+                data.setDeptName(deptName);
+            }
+            // 设置部门名称
+            if (StrUtil.isNotBlank(data.getUserId())) {
+                String userName = userNameMap.get(data.getUserId());
+                data.setUserName(userName);
+            }
+
+
         }
     }
     /**
@@ -539,7 +585,11 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     * 新增修改处理数据
     */
     private void handleData(SampleInitialLedgerEntity sampleInitialLedgerEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 如果sku_id为空，通过sku_no查询sku_id
+        if (StrUtil.isBlank(sampleInitialLedgerEntity.getSkuId()) && StrUtil.isNotBlank(sampleInitialLedgerEntity.getSkuNo())) {
+            String skuId = getSkuIdBySkuNo(sampleInitialLedgerEntity.getSkuNo());
+            sampleInitialLedgerEntity.setSkuId(skuId);
+        }
     }
 
     // ==================== 台账流水构建器实现 ====================
@@ -648,6 +698,34 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     }
 
     /**
+     * 批量根据部门ID查询部门名称
+     */
+    private Map<String, String> getDeptNameByIds(List<String> deptIds) {
+        Map<String, String> deptIdNameMap = new HashMap<>();
+        
+        if (CollUtil.isEmpty(deptIds)) {
+            return deptIdNameMap;
+        }
+
+        try {
+            // 调用部门服务批量查询部门信息
+            List<SysDepartmentEntity> departments = sysUserFeign.getDeptByIds(deptIds);
+            
+            if (CollUtil.isNotEmpty(departments)) {
+                for (SysDepartmentEntity department : departments) {
+                    if (department != null && StrUtil.isNotBlank(department.getId()) && StrUtil.isNotBlank(department.getName())) {
+                        deptIdNameMap.put(department.getId(), department.getName());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("批量查询部门名称失败，deptIds：{}，错误：{}", deptIds, e.getMessage(), e);
+        }
+        
+        return deptIdNameMap;
+    }
+
+    /**
      * 通过sku_no查询sku_id
      */
     private String getSkuIdBySkuNo(String skuNo) {
@@ -663,5 +741,156 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
             log.error("查询sku_id失败，sku_no：{}，错误：{}", skuNo, e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+    * 处理明细数据
+    */
+    private void handleDetailData(String mainId, List<SampleInitialLedgerDTO.DetailDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+
+        // 获取所有SKU编码
+        List<String> skuNoList = detailList.stream()
+            .map(SampleInitialLedgerDTO.DetailDTO::getSkuNo)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 通过feign获取产品信息
+        Map<String, String> skuNoProductNameMap = getProductNameBySkuNoList(skuNoList);
+
+        // 构建明细实体列表
+        List<SampleInitialLedgerDetailEntity> detailEntities = new ArrayList<>();
+        for (SampleInitialLedgerDTO.DetailDTO detailDTO : detailList) {
+            SampleInitialLedgerDetailEntity detailEntity = new SampleInitialLedgerDetailEntity();
+            detailEntity.setMainId(mainId);
+            detailEntity.setSkuId(detailDTO.getSkuId());
+            detailEntity.setSkuNo(detailDTO.getSkuNo());
+            detailEntity.setQty(detailDTO.getQty());
+            detailEntity.setRemark(detailDTO.getRemark());
+            
+            // 设置产品名称
+            String productName = skuNoProductNameMap.get(detailDTO.getSkuNo());
+            detailEntity.setProductName(productName);
+            
+            detailEntities.add(detailEntity);
+        }
+
+        // 批量保存明细
+        boolean saveResult = sampleInitialLedgerDetailService.saveBatch(detailEntities);
+        if (!saveResult) {
+            throw new ServiceException("样品期初台账明细保存失败");
+        }
+    }
+
+    /**
+    * 处理明细数据（更新时使用）
+    */
+    private void handleDetailDataForUpdate(String mainId, List<SampleInitialLedgerDTO.DetailDTO> detailList) {
+        // 获取现有的明细数据
+        List<SampleInitialLedgerDetailEntity> existingDetails = sampleInitialLedgerDetailService.lambdaQuery()
+            .eq(SampleInitialLedgerDetailEntity::getMainId, mainId)
+            .eq(SampleInitialLedgerDetailEntity::getIsDeleted, false)
+            .list();
+        
+        // 构建现有明细的Map，以SKU编码为key
+        Map<String, SampleInitialLedgerDetailEntity> existingDetailMap = existingDetails.stream()
+            .collect(Collectors.toMap(SampleInitialLedgerDetailEntity::getSkuNo, detail -> detail));
+        
+        // 构建新明细的Map，以SKU编码为key
+        Map<String, SampleInitialLedgerDTO.DetailDTO> newDetailMap = detailList.stream()
+            .collect(Collectors.toMap(SampleInitialLedgerDTO.DetailDTO::getSkuNo, detail -> detail));
+        
+        // 需要删除的明细（存在于现有数据中，但不在新数据中）
+        List<String> toDeleteSkuNos = existingDetails.stream()
+            .map(SampleInitialLedgerDetailEntity::getSkuNo)
+            .filter(skuNo -> !newDetailMap.containsKey(skuNo))
+            .collect(Collectors.toList());
+        
+        // 需要新增的明细（不存在于现有数据中，但在新数据中）
+        List<SampleInitialLedgerDTO.DetailDTO> toAddDetails = detailList.stream()
+            .filter(detail -> !existingDetailMap.containsKey(detail.getSkuNo()))
+            .collect(Collectors.toList());
+        
+        // 需要更新的明细（既存在于现有数据中，也存在于新数据中）
+        List<SampleInitialLedgerDetailEntity> toUpdateDetails = new ArrayList<>();
+        List<SampleInitialLedgerDTO.DetailDTO> toUpdateDetailDTOs = new ArrayList<>();
+        
+        for (SampleInitialLedgerDTO.DetailDTO detailDTO : detailList) {
+            if (existingDetailMap.containsKey(detailDTO.getSkuNo())) {
+                SampleInitialLedgerDetailEntity existingDetail = existingDetailMap.get(detailDTO.getSkuNo());
+                toUpdateDetails.add(existingDetail);
+                toUpdateDetailDTOs.add(detailDTO);
+            }
+        }
+        
+        // 执行删除操作
+        if (!toDeleteSkuNos.isEmpty()) {
+            sampleInitialLedgerDetailService.lambdaUpdate()
+                .eq(SampleInitialLedgerDetailEntity::getMainId, mainId)
+                .in(SampleInitialLedgerDetailEntity::getSkuNo, toDeleteSkuNos)
+                .remove();
+            log.info("删除明细数据，mainId：{}，删除的SKU编码：{}", mainId, toDeleteSkuNos);
+        }
+        
+        // 执行新增操作
+        if (!toAddDetails.isEmpty()) {
+            handleDetailData(mainId, toAddDetails);
+            log.info("新增明细数据，mainId：{}，新增数量：{}", mainId, toAddDetails.size());
+        }
+        
+        // 执行更新操作
+        if (!toUpdateDetails.isEmpty()) {
+            // 获取产品名称映射
+            List<String> skuNoList = toUpdateDetailDTOs.stream()
+                .map(SampleInitialLedgerDTO.DetailDTO::getSkuNo)
+                .distinct()
+                .collect(Collectors.toList());
+            Map<String, String> skuNoProductNameMap = getProductNameBySkuNoList(skuNoList);
+            
+            // 更新明细数据
+            for (int i = 0; i < toUpdateDetails.size(); i++) {
+                SampleInitialLedgerDetailEntity existingDetail = toUpdateDetails.get(i);
+                SampleInitialLedgerDTO.DetailDTO detailDTO = toUpdateDetailDTOs.get(i);
+                
+                existingDetail.setSkuId(detailDTO.getSkuId());
+                existingDetail.setQty(detailDTO.getQty());
+                existingDetail.setRemark(detailDTO.getRemark());
+                
+                // 更新产品名称
+                String productName = skuNoProductNameMap.get(detailDTO.getSkuNo());
+                if (StrUtil.isNotBlank(productName)) {
+                    existingDetail.setProductName(productName);
+                }
+            }
+            
+            sampleInitialLedgerDetailService.updateBatchById(toUpdateDetails);
+            log.info("更新明细数据，mainId：{}，更新数量：{}", mainId, toUpdateDetails.size());
+        }
+    }
+
+    /**
+    * 通过SKU编码列表获取产品名称
+    */
+    private Map<String, String> getProductNameBySkuNoList(List<String> skuNoList) {
+        Map<String, String> skuNoProductNameMap = new HashMap<>();
+        
+        try {
+            // 调用PLM服务获取产品信息
+            List<ProductDetailEntity> productList = plmTaskFeign.listBySkuNos(skuNoList);
+            
+            if (CollUtil.isNotEmpty(productList)) {
+                for (ProductDetailEntity product : productList) {
+                    if (StrUtil.isNotBlank(product.getSkuNo()) && StrUtil.isNotBlank(product.getName())) {
+                        skuNoProductNameMap.put(product.getSkuNo(), product.getName());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取产品信息失败，skuNoList：{}，错误：{}", skuNoList, e.getMessage(), e);
+        }
+        
+        return skuNoProductNameMap;
     }
 }
