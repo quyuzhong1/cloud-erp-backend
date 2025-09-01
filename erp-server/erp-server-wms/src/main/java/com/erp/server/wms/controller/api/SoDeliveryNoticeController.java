@@ -552,8 +552,8 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "允许出库")
-    @PostMapping(value = "/batchUpdateOutstockNoticeStatus")
-    public ApiResult<List<BatchResultDTO>> batchUpdateOutstockNoticeStatus(@RequestBody @Validated ValidList<SoDeliveryNoticeDTO.PermitOutstockDTO> list) {
+    @PostMapping(value = "/batchUpdateIsAllowOutstock")
+    public ApiResult<List<BatchResultDTO>> batchUpdateIsAllowOutstock(@RequestBody @Validated ValidList<SoDeliveryNoticeDTO.PermitOutstockDTO> list) {
         List<String> ids = list.stream().map(SoDeliveryNoticeDTO.PermitOutstockDTO::getId).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(ids);
@@ -566,7 +566,7 @@ public class SoDeliveryNoticeController extends BaseController {
                 continue;
             }
             try {
-                resultDTO = soDeliveryNoticeService.updateOutstockNoticeStatus(entity,dto);
+                resultDTO = soDeliveryNoticeService.updateIsAllowOutstock(entity,dto);
             }catch (Exception e){
                 log.error("发货通知单修改中转仓库失败",e);
                 if (ObjectUtil.isEmpty(entity)) {

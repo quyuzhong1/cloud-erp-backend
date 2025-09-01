@@ -75,7 +75,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 出库通知状态
          */
-        private String outstockNoticeStatus;
+        private Boolean isAllowOutstock;
         /**
          * 要货日期
          */
@@ -287,11 +287,11 @@ public class SoDeliveryNoticeDTO {
         /**
          * 出库通知状态
          */
-        private String outstockNoticeStatus;
+        private Boolean isAllowOutstock;
         /**
          * 出库通知状态名称
          */
-        private String outstockNoticeStatusName;
+        private String isAllowOutstockName;
     }
 
     /**

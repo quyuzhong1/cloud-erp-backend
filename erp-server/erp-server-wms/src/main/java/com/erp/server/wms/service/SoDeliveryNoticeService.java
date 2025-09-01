@@ -339,5 +339,5 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param entity
      * @return BatchResultDTO
      */
-    BatchResultDTO updateOutstockNoticeStatus(SoDeliveryNoticeEntity entity,SoDeliveryNoticeDTO.PermitOutstockDTO dto);
+    BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto);
 }

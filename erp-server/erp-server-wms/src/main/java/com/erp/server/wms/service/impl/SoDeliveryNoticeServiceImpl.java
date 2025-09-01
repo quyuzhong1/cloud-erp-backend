@@ -242,7 +242,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                obj.setOutstockNoticeStatusName(OutstockNoticeStatusEnum.getNameByCode(obj.getOutstockNoticeStatus()));
+                obj.setIsAllowOutstockName(IsAllowOutstockEnum.getNameByCode(obj.getIsAllowOutstock()));
                 //如果装箱数量大于发货数量，拆分处理
                 String key = obj.getId() + obj.getSkuId();
                 if(qtyMap.containsKey(key)){
@@ -306,13 +306,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             if (OsDeliveryChangeListTypeEnum.PACKING_COMPLETED.getCode().equals(item.getCode())) {
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
-                pagingParam.setOutstockNoticeStatus(OutstockNoticeStatusEnum.WAIT_NOTICE.getCode());
+                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.WAIT_NOTICE.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
-                pagingParam.setOutstockNoticeStatus(OutstockNoticeStatusEnum.PERMIT.getCode());
+                pagingParam.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
                 pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
@@ -2283,11 +2283,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO updateOutstockNoticeStatus(SoDeliveryNoticeEntity entity,SoDeliveryNoticeDTO.PermitOutstockDTO dto) {
-        if (!OutstockNoticeStatusEnum.WAIT_NOTICE.getCode().equals(entity.getOutstockNoticeStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_UPDATE_OUTSTOCK_NOTICE_STATUS.msg);
+    public BatchResultDTO updateIsAllowOutstock(SoDeliveryNoticeEntity entity, SoDeliveryNoticeDTO.PermitOutstockDTO dto) {
+        if (!IsAllowOutstockEnum.WAIT_NOTICE.getCode().equals(entity.getIsAllowOutstock())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_UPDATE_IS_ALLOW_OUTSTOCK.msg);
         }
-        entity.setOutstockNoticeStatus(OutstockNoticeStatusEnum.PERMIT.getCode());
+        entity.setIsAllowOutstock(IsAllowOutstockEnum.PERMIT.getCode());
         entity.setRemark(dto.getRemark());
         boolean update = super.updateById(entity);
         if (!update) {
