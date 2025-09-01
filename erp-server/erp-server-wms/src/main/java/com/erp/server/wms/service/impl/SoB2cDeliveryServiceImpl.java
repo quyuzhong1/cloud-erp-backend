@@ -1598,6 +1598,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             deliveryDetailList.add(addDTO);
         }
         soB2cDelivery.setDetailList(deliveryDetailList);
+        SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(soB2cEntity.getId());
+        if(Objects.nonNull(existEntity)){
+            log.warn("订单【{}】已存在发货单，跳过生成发货单",soB2cEntity.getCode());
+            return;
+        }
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(soB2cEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
