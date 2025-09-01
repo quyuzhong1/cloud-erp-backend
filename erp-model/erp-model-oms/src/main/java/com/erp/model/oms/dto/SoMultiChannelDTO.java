@@ -669,6 +669,10 @@ public class SoMultiChannelDTO implements Serializable {
         private String approveStatus;
         private String billStatus;
         /**
+         * 订单异常状态
+         */
+        private Boolean invalidStatus;
+        /**
          * 销售平台
          */
         private String dictPlatform;

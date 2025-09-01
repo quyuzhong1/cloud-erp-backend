@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -177,16 +178,19 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
     /**
      * 发货拦截
      * @param entity
+     * @param isCancel 是否取消创建
+     * @param isValidate 是否作废多渠道订单
      * @return
      */
-    BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity);
+    BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate);
 
     /**
      * 根据销售订单获取多渠道订单
      * @param id
+     * @param isContainDelete 是否包含已删除
      * @return
      */
-    SoMultiChannelEntity getBySoId(String id);
+    SoMultiChannelEntity getBySoId(String id, Boolean isContainDelete);
 
     SoMultiChannelEntity getByDeliveryCode(String deliveryCode);
 }

@@ -108,6 +108,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     if(valueStr.equals("refunded")){
                         sb.append(" sb2c.label_json::json->>'isRefunded' = 'true' ");
                     }
+                    if(valueStr.equals("soMultiChannel")){
+                        sb.append(" sb2c.multi_channel_type != '' ");
+                    }
                     isFirst = false;
                 }
             }

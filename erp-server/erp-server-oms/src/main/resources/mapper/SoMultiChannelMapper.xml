@@ -140,6 +140,7 @@
             sb2c.code as soCode,
             sb2c.approve_status as approveStatus,
             sb2c.bill_status as billStatus,
+            sb2c.invalid_status as invalidStatus,
             sb2c.dict_platform as dictPlatform,
             sb2c.platform_code as platformCode,
             sbd.id as soDetailId,
@@ -153,6 +154,9 @@
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
+    </select>
+    <select id="getBySoId" resultType="com.erp.model.oms.entity.SoMultiChannelEntity">
+        select * from so_multi_channel where so_id=#{soId} order by create_time desc limit 1
     </select>
 
 </mapper>

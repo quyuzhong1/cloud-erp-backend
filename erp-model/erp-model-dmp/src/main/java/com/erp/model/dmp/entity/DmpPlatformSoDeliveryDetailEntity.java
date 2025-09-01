@@ -50,6 +50,11 @@ public class DmpPlatformSoDeliveryDetailEntity extends BaseEntity<DmpPlatformSoD
     @TableField("qty")
     private Integer qty;
     /**
+     * 数量
+     */
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
+    /**
     * 发货单编码
     */
     @TableField("code")

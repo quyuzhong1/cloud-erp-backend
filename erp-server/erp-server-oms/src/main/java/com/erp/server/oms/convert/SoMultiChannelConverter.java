@@ -46,8 +46,10 @@ public interface SoMultiChannelConverter {
     })
     SoMultiChannelDTO.AddDTO soB2cToAddDTO(SoMultiChannelDTO.SaveDTO dto, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity);
     @Mappings({
-            @Mapping(target = "mainId", ignore = true)
+            @Mapping(target = "mainId", ignore = true),
+            @Mapping(target = "qty", source = "deliveryQty"),
+            @Mapping(target = "deliveryQty", ignore = true)
     })
-    SoMultiChannelDetailDTO.AddDTO soB2cDetailToAddDTO(SoMultiChannelDTO.SoViewDTO detailList);
+    SoMultiChannelDetailDTO.AddDTO soB2cDetailToAddDTO(SoMultiChannelDTO.SoViewDTO detail);
     List<SoMultiChannelDetailDTO.AddDTO> soB2cDetailToAddDTO(List<SoMultiChannelDTO.SoViewDTO> detailList);
 }

@@ -36,7 +36,6 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -49,7 +48,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -72,6 +70,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -137,6 +136,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // 生成发货单号
         String deliveryCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         soMultiChannelEntity.setDeliveryCode(deliveryCode);
+        soMultiChannelEntity.setRemark(deliveryCode);
         log.info("开始新增多渠道订单主单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DQDD);
@@ -180,14 +180,14 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         Map<String, List<SoMultiChannelDetailEntity>> collect = soMultiChannelDetailEntities.stream().collect(Collectors.groupingBy(e -> e.getSkuNo() + "-" + e.getFnSku()));
         for (Map.Entry<String, List<SoMultiChannelDetailEntity>> entry : collect.entrySet()) {
             List<SoMultiChannelDetailEntity> value = entry.getValue();
-            int deliveryQty = value.stream().mapToInt(SoMultiChannelDetailEntity::getDeliveryQty).sum();
+            int qty = value.stream().mapToInt(SoMultiChannelDetailEntity::getQty).sum();
             SoMultiChannelDetailEntity detailEntity = value.get(0);
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
             thirdWarehouseDeliveryDetailEntity.setSkuId(detailEntity.getSkuId());
             thirdWarehouseDeliveryDetailEntity.setSkuNo(detailEntity.getSkuNo());
-            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(deliveryQty);
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(qty);
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(soMultiChannelEntity.getDeliveryWarehouseId());
-            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(detailEntity.getFnSku());
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode("");
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(detailEntity.getSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(detailEntity.getSkuNo());
@@ -396,6 +396,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!b) {
             throw new ServiceException("反审核取消亚马逊订单同步失败");
         }
+        //不通过发起拦截
+        deliveryIntercept(entity, true, false);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -471,14 +473,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus(),dto.getComment());
         if (dto.getType().equals(ApproveType.PASS)) {
             // 创建亚马逊订单
             sendPusTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_ADD.getCode());
             //更新订单创建状态
             this.lambdaUpdate().set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CREATING.getCode())
-                    .set(SoMultiChannelEntity::getDeliveryStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
-                    .set(SoMultiChannelEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
                     .eq(SoMultiChannelEntity::getId, entity.getId()).update();
             //更新销售订单状态
             soB2cService.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
@@ -513,6 +513,14 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<String> soCodeList = soViewDTOS.stream().filter(e -> !ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) || !(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(e.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(e.getBillStatus()))).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(soCodeList)){
             throw new ServiceException("订单【" + soCodeList + "】非已审核且待配货或配货中，不能下推多渠道订单");
+        }
+        List<String> soCodeList2 = soViewDTOS.stream().filter(SoMultiChannelDTO.SoViewDTO::getInvalidStatus).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soCodeList2)){
+            throw new ServiceException("订单【" + soCodeList2 + "】已作废，不能下推多渠道订单");
+        }
+        List<String> soCodeList3 = soViewDTOS.stream().filter(e -> CharSequenceUtil.isBlank(e.getSkuId())).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soCodeList3)){
+            throw new ServiceException("订单【" + soCodeList3 + "】未绑定SKU，不能下推多渠道订单");
         }
         // 数据填充处理
         fillData(soViewDTOS, deliveryWarehouseId,shopId);
@@ -558,8 +566,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         sendPusTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_ADD.getCode());
         //更新订单创建状态
         this.lambdaUpdate().set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CREATING.getCode())
-                .set(SoMultiChannelEntity::getDeliveryStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
-                .set(SoMultiChannelEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
                 .eq(SoMultiChannelEntity::getId, entity.getId()).update();
         //更新销售订单状态
         soB2cService.lambdaUpdate()
@@ -571,14 +577,14 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity) {
-        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "订单状态非待发货，不能发货拦截");
+    public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate) {
+        if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isNotBlank(entity.getSoId())){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截作废成功");
         }
-        if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getDeliveryStatus())){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "订单状态非待发货，不能发货拦截");
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "订单状态已作废，不能发货拦截");
         }
-        if (CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus())){
+        if (CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus()) && isCancel){
             AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
             FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
             try {
@@ -598,34 +604,44 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         }
         //作废数据
-        this.lambdaUpdate()
-                .set(SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
-                .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
-                .eq(SoMultiChannelEntity::getId, entity.getId()).update();
-        //销售订单取消多渠道标识
-        soB2cService.lambdaUpdate()
-                .set(SoB2cEntity::getMultiChannelType, "")
-                .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode())
-                .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode())
-                .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
-                .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
-                .eq(SoB2cEntity::getId, entity.getSoId()).update();
+        if (!entity.getInvalidStatus() && isValidate){
+            this.lambdaUpdate()
+                    .set(SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
+                    .set(SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
+                    .eq(SoMultiChannelEntity::getId, entity.getId()).update();
+        }
+
+        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+        if (Objects.nonNull(soB2cEntity) && CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())){
+            //销售订单取消多渠道标识
+            soB2cService.lambdaUpdate()
+                    .set(SoB2cEntity::getMultiChannelType, "")
+                    .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode())
+                    .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode())
+                    .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
+                    .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
+                    .eq(SoB2cEntity::getId, entity.getSoId()).update();
+        }
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getSoId());
         //发货单标记取消发货
-        ThirdWarehouseDeliveryEntity deliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getSoId());
-        if (Objects.nonNull(deliveryEntity)){
-            deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
-            thirdWarehouseDeliveryFeign.update(deliveryEntity);
+        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())){
+            thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+            thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截作废成功");
     }
 
     @Override
-    public SoMultiChannelEntity getBySoId(String soId) {
+    public SoMultiChannelEntity getBySoId(String soId,Boolean isContainDelete) {
         if (CharSequenceUtil.isBlank(soId)){
             return null;
         }
-        return this.lambdaQuery().eq(SoMultiChannelEntity::getSoId,soId).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
+        if (Boolean.TRUE.equals(isContainDelete)){
+            return baseMapper.getBySoId(soId);
+        }else {
+            return this.lambdaQuery().eq(SoMultiChannelEntity::getSoId,soId).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
+        }
     }
 
     @Override
@@ -731,8 +747,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-        data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
-        data.setDeliveryStatusName(SoB2cBillStatusEnum.getName(data.getDeliveryStatus()));
+        data.setBillStatusName(data.getBillStatus());
+        data.setDeliveryStatusName(data.getDeliveryStatus());
         data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
         //平台类型名称
         String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -742,11 +758,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    public void updateForApprove(String id, String approveStatus) {
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     * @param comment
+     */
+    public void updateForApprove(String id, String approveStatus, String comment) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(SoMultiChannelEntity::getId, id)
@@ -755,6 +773,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             .set(SoMultiChannelEntity::getApproveStatus, approveStatus)
             .set(SoMultiChannelEntity::getApproveTime, LocalDateTime.now())
             .update(new SoMultiChannelEntity());
+        //记录审核状态变更
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单审核操作【{}】备注【{}】",ApproveStatusEnum.getName(approveStatus), comment), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), id, "审核操作");
      }
 
     /**
@@ -797,8 +817,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
-            data.setDeliveryStatusName(SoB2cBillStatusEnum.getName(data.getDeliveryStatus()));
+            data.setBillStatusName(data.getBillStatus());
+            data.setDeliveryStatusName(data.getDeliveryStatus());
             data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
             //平台类型名称
             String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -812,8 +832,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     */
     private void validateSubmit(SoMultiChannelEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+        if(!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || entity.getInvalidStatus()) {
+            throw new ServiceException("只有待提交并且未作废数据支持提交");
         }
         return;
     }
@@ -856,12 +876,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         if (Objects.isNull(soMultiChannelEntity.getInvalidStatus())){
             soMultiChannelEntity.setInvalidStatus(InvalidStatusEnum.NOT_VOIDED.getStatus());
-        }
-        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getCreateStatus())){
-            soMultiChannelEntity.setCreateStatus(CreateStatusEnum.WAIT.getCode());
-        }
-        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getDeliveryStatus())){
-            soMultiChannelEntity.setDeliveryStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         }
     }
 }

@@ -3104,7 +3104,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         boolean isMultiChannelOrder = false;
         SoMultiChannelEntity soMultiChannelEntity = null;
         if (CharSequenceUtil.isNotBlank(entity.getMultiChannelType())){
-            soMultiChannelEntity = soMultiChannelService.getBySoId(entity.getId());
+            soMultiChannelEntity = soMultiChannelService.getBySoId(entity.getId(), Boolean.TRUE);
             isMultiChannelOrder = Objects.nonNull(soMultiChannelEntity);
             addDTO.setLogisticsChannelId(soMultiChannelEntity.getLogisticsChannelId());
             addDTO.setLogisticsChannelName(soMultiChannelEntity.getLogisticsChannelName());
@@ -3115,7 +3115,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
             //发货拦截
-            BatchResultDTO resultDTO = soMultiChannelService.deliveryIntercept(soMultiChannelEntity);
+            BatchResultDTO resultDTO = soMultiChannelService.deliveryIntercept(soMultiChannelEntity, true, true);
             if (resultDTO.getSuccess()){
                 addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
                 addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());

@@ -4,12 +4,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformFulfillOrderDTO;
-import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
+import com.common.business.dto.PlatformFulfillOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpPlatformSoDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpPlatformSoDeliveryEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -107,29 +108,17 @@ public class DmpOutputAmzFulFillRocketMQTaskHandler extends DmpOutputRocketMQTas
         PlatformFulfillOrderDTO PlatformFulfillOrderDTO = new PlatformFulfillOrderDTO();
         BeanMapperUtils.copy(dmpMainEntity, PlatformFulfillOrderDTO);
         PlatformFulfillOrderDTO.setDmpSyncTaskId(dmpMainEntity.getInputTaskId());
-        PlatformFulfillOrderDTO.setUniqueId(dmpMainEntity.getShipmentId());
+        PlatformFulfillOrderDTO.setUniqueId(dmpMainEntity.getId());
         PlatformFulfillOrderDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         PlatformFulfillOrderDTO.setShopId(dmpMainEntity.getNextLevelId());
         // 明细
-//        List<PlatformFbaShipmentReceiveDTO> dtoDetailList = new LinkedList<>();
-//        for (DmpPlatformSoDeliveryDetailEntity item : dmpDetailEntityList) {
-//            PlatformFbaShipmentReceiveDTO platformFbaShipmentReceiveDTO = new PlatformFbaShipmentReceiveDTO();
-//            platformFbaShipmentReceiveDTO.setSellerSku(item.getMsku());
-//            platformFbaShipmentReceiveDTO.setFnSku(item.getFnSku());
-//            platformFbaShipmentReceiveDTO.setDeclareQty(item.getDeclareQty());
-//            platformFbaShipmentReceiveDTO.setReceiveQty(item.getReceiveQty());
-//            platformFbaShipmentReceiveDTO.setFbaShipmentId(item.getFbaShipmentId());
-//            platformFbaShipmentReceiveDTO.setDeliveryQty(0);
-//            platformFbaShipmentReceiveDTO.setReceiveDate(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
-//            dtoDetailList.add(platformFbaShipmentReceiveDTO);
-//        }
-//        PlatformFulfillOrderDTO.setDetailList(dtoDetailList);
-
+        List<PlatformFulfillOrderDetailDTO> detailDTOS = BeanMapperUtils.copyList(PlatformFulfillOrderDetailDTO.class,dmpDetailEntityList);
+        PlatformFulfillOrderDTO.setDetailList(detailDTOS);
         return PlatformFulfillOrderDTO;
     }
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Collections.singletonList("shipmentId");
+        return Collections.singletonList("code");
     }
 }
