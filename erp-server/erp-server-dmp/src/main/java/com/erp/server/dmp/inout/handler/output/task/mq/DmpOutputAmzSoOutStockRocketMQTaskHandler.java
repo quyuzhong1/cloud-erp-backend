@@ -111,10 +111,10 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
         if (null == mongoDTO){
             ServiceException.runError("亚马逊销售出库单填充数据失败:");
         }
-        if (mongoDTO.hasMultiChannel()){
-            // 多渠道订单不推送
-            return null;
-        }
+//        if (mongoDTO.hasMultiChannel()){
+//            // 多渠道订单不推送
+//            return null;
+//        }
 
         PlatformAmazonFulfilledShipmentsDTO fulfilledShipmentsDTO = SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(mongoDTO,
                 mongoDTO.getReportId(),
