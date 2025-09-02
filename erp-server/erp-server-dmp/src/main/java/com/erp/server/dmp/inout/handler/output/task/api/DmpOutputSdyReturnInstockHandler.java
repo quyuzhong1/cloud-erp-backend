@@ -328,6 +328,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
     			
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}

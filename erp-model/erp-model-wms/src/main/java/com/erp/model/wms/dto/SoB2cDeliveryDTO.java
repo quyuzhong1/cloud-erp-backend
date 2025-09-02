@@ -308,6 +308,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 状态 waitHandle:待处理  picking:拣货中 falseShipment:手动标发 shipped:已发货  cancelDelivery:取消发货
          */
         private String status;
+
+        /**
+         * 是否走中转规则
+         */
+        private Boolean isMatchTransferRule = true;
     }
 
     /**

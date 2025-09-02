@@ -583,8 +583,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
+    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(detailIdList);
         if(CollUtil.isEmpty(dataList)) {
             return null;
         }
@@ -710,15 +710,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(TransferOutEntity::getId,businessId)
-                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
-    }
-
-
-    @Override
     public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId) {
         List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(detailId);
         if(CollUtil.isNotEmpty(putawayDetailDTOS)){
@@ -744,6 +735,15 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
         return putawayDetailDTOS;
     }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferOutEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
 
     /**
      * 更新审核状态

@@ -23,10 +23,17 @@ import java.util.List;
 public interface SupplierMapper extends BaseMapper<SupplierEntity> {
 
     IPage<SupplierDTO.PagingViewDTO> paging(Page query, @Param("params") SupplierDTO.PagingParamDTO params);
+    /**
+     * 按导入模板导出
+     * @author will
+     * @date 2025/8/18 14:00
+     * @param query
+     * @param dto
+     * @return Page<PagingExportDTO>
+     */
+    Page<SupplierDTO.PagingExportDTO> getExportSupplier(Page query, @Param("params") SupplierDTO.PagingParamDTO dto);
 
-    Page<SupplierDTO.PagingExportDTO> getExportSupplier(@Param("page") Page<SupplierDTO.PagingViewDTO> page, @Param("params") SupplierDTO.PagingParamDTO dto);
-
-    List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("value")String categoryType,
+    List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("categoryTypeList")List<String> categoryTypeList,
                                                @Param("approveStatus")String approveStatus);
 
     IPage<BaseDropDownDTO.RemarkDTO> pagingSelect(Page query, @Param("params")BaseDropDownDTO.SelectDTO params);

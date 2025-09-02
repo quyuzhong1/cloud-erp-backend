@@ -55,8 +55,6 @@ public class ExportOmsFeignController {
     @Resource
     private InvoiceInfoService invoiceInfoService;
     @Resource
-    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
-    @Resource
     private FullyManagedOrderService fullyManagedOrderService;
 
     @Resource
@@ -64,6 +62,11 @@ public class ExportOmsFeignController {
     @Resource
     private SoPriceChangeService soPriceChangeService;
 
+    @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
+
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -231,12 +234,6 @@ public class ExportOmsFeignController {
         return invoiceInfoService.paging(dto, true);
     }
 
-    @PostMapping("/exportInvoiceInvalid")
-    @WebAdvanceQuery
-    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
-        return cfgInvoiceInvalidService.paging(dto);
-    }
-
     /**
      * 销售价目表导出
      * @param dto
@@ -265,5 +262,22 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         return soPriceChangeService.exportSoPriceChange(dto);
+    }
+
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
+    }
+
+
+    @PostMapping("/soMultiChannel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:soMultiChannel:paging",
+            tableAlias = "smc")
+    @WebAdvanceQuery
+    public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
+        return soMultiChannelService.paging(dto);
     }
 }

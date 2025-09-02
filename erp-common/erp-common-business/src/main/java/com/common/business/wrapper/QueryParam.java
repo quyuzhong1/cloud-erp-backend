@@ -15,8 +15,9 @@ import com.common.business.utils.StringUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 public class QueryParam {
     /**
      * 类型

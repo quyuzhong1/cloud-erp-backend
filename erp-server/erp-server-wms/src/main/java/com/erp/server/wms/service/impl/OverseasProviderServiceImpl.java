@@ -36,6 +36,9 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.SptWarehouseStatusEnum;
 import com.erp.model.wms.enums.SptWarehouseTypeEnum;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
+import com.erp.model.wms.enums.SptWarehouseStatusEnum;
+import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -436,7 +439,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
-        if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
+        if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform) || PlatformDictEnum.DA_MAI.getCode().equals(platform)){
             //邮政编码不能为空
             if (CharSequenceUtil.isBlank(params.getPostCode())){
                 return Collections.emptyList();

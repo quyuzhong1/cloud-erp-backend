@@ -807,5 +807,16 @@
             </foreach>
         </if>
     </select>
+    <select id="existOtherListing" resultType="java.lang.Boolean">
+select EXISTS (select 1
+               from sku_mapping sm
+                        inner join listing_info li on sm.listing_id = li.id
+               where sm.is_deleted = false
+                 and li.is_deleted = false
+                 and sm.is_expire = false
+                 and li.auth_id = #{authId}
+                 and sm.product_sku_id = #{productSkuId}
+                 and li.id != #{listingId})
+    </select>
 
 </mapper>

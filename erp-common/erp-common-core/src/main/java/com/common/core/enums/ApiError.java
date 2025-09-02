@@ -119,13 +119,18 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
+    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
+
+
+
+
+    ERROR_CREATE_UPDATE_WRAPPER_ERROR(1065,"创建UpdateWrapper异常"),
     ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
     ERROR_NOT_FOUND_APPROVE_HANDLER(1066,"类型【{}】未找到审核处理器"),
     ERROR_NOT_FOUND_APPROVE_BUSINESSKEY(1067,"{}操作，未找到单据类型【{}】"),
     RETRY_SUBMIT_ERROR(1068,"流程提审失败，请重试提审"),
 
-    ERROR_ENABLE_FAIL(1065,"数据未禁用不支持启用"),
-    ERROR_DISABLE_FAIL(1066,"数据未启用不支持禁用"),
     ERROR_NOT_FOUND(1067,"{}未找到"),
     ERROR_HAS_EXIST(1068,"{}已存在"),
 
@@ -189,10 +194,9 @@ public enum ApiError implements Serializable {
     SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
     SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
     MOBILE_IS_EXIST(9054,"手机号已注册"),
-
-
     ERROR_CRON(9055, "cron表达式不合法"),
     ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+    ERROR_9057(9057, "【{}】模板类型已存在默认合同"),
 
 
     /**
@@ -602,9 +606,9 @@ public enum ApiError implements Serializable {
     ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
     ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
 
-    ERROR_95291(95291,"审核中不支持上传"),
-
     ERROR_95290(95290,"【{}】已存在【{}】国家"),
+
+    ERROR_95291(95291,"审核中不支持上传"),
 
     ERROR_95292(95292,"中国海关编码不存在于出口申报要素"),
 
@@ -847,10 +851,12 @@ public enum ApiError implements Serializable {
     ERROR_98124(98124,"证照名称已存在"),
     ERROR_98125(98125,"失效时间要大于生效时间"),
     ERROR_PAYMENT_CONDITION_NOT_EXIST(98126,"未找到付款条件【{}】"),
+    ERROR_CONTACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
     ERROR_PURCHASE_PRICE_CHANGE_APPROVE_STATUS(98127,"采购调价表未审核通过不支持调价"),
     ERROR_PURCHASE_ORDER_ADJUST_PRICE(98128,"采购订单审核中不支持调价"),
     ERROR_PURCHASE_PRICE_CHANGE_ADJUST(98129,"该调价表数据非最新报价数据不支持批量调价"),
     ERROR_PURCHASE_PRICE_SKU(98130,"SKU【{}】未找到数量【{}】的供应商报价信息"),
+    ERROR_SUPPLIER_UPDATE_FIELD_APPROVEING(98131,"状态在审核中不可更新"),
 
 
     /**
@@ -1322,6 +1328,7 @@ public enum ApiError implements Serializable {
 
     TMS_FIRST_MILE_LOGISTIC_EXISTS_NOT_DEL(92286,"物流单【{}】已生成，不可删除"),
     TMS_DECLARE_BILL_EXISTS_NOT_DEL(92287,"报关单【{}】已生成，不可删除"),
+    ERROR_FBA_FNSKU_NOT_EXIST(92280, "平台SKU【{}】未匹配到FNSKU，请检查SKU是否已绑定FNSKU"),
 
     /**
      * OMS 错误

@@ -1,7 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.*;
-import com.common.business.dto.base.*;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.PlatformOutboundDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -578,13 +584,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     BatchResultDTO handleWdtData(String id);
 
     List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
-
-    /**
-     * 根据ID列表获取实体Map
-     * @param ids
-     * @return Map<String, SoOutstockEntity>
-     */
-    Map<String, SoOutstockEntity> mapByIds(List<String> ids);
     /**
      * 下推B2B报关单
      * @author jack
@@ -593,4 +592,16 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return ApiResult<List<BatchResultDTO>>
      */
     BatchResultDTO generateB2bDeclar(String id);
+
+    /**
+     * 根据ID列表获取实体Map
+     * @param ids
+     * @return Map<String, SoOutstockEntity>
+     */
+    Map<String, SoOutstockEntity> mapByIds(List<String> ids);
+
+    /**
+     * @param entity
+     */
+    void updateSkuStdCostOutstock(SoOutstockEntity entity);
 }

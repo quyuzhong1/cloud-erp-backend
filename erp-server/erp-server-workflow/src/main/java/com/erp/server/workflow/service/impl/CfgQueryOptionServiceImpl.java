@@ -11,6 +11,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
@@ -51,7 +52,13 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @Override
     public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType) {
-        return baseMapper.proDropDownByMain(bussinessKey,useType);
+        List<CfgQueryOptionEntity> list = lambdaQuery().eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).orderByDesc(CfgQueryOptionEntity::getId).list();
+        List<CfgQueryOptionDTO.ListDTO> result = BeanMapper.copyList(list, CfgQueryOptionDTO.ListDTO.class);
+        List<CfgQueryOptionDTO.ListDTO> listDTOS = baseMapper.proDropDownByMain(bussinessKey, useType);
+        if(CollUtil.isNotEmpty(listDTOS)){
+            result.addAll(listDTOS);
+        }
+        return result;
     }
 
     @Override
@@ -211,7 +218,6 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         return variablesMap;
     }
 
-    @Transactional(rollbackFor =Exception.class)
     @Override
     public void genBySql(CfgQueryOptionDTO.GenDTO dto) {
         if(Objects.nonNull(dto)){
@@ -238,15 +244,14 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 if(count > 0){
                     continue;
                 }
-                saveFromSql(dto,tableNames[i]);
+                saveFromSql(dto,tableNames[i],fieldBelongsTypes[i]);
             }
         }
     }
 
 
-    private void saveFromSql(CfgQueryOptionDTO.GenDTO dto,String tableName) {
+    private void saveFromSql(CfgQueryOptionDTO.GenDTO dto,String tableName,String fieldBelongsType) {
         String model = dto.getModel();
-        String fieldBelongsType = dto.getFieldBelongsType();
         String businessKey = dto.getBussinessKey();
         String useType = dto.getUseType();
 
@@ -276,8 +281,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 results.add(cfgQueryOption);
             }
             saveBatch(results);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("错误信息=="+e.getMessage());
         }
     }
 

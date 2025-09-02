@@ -19,6 +19,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 
 import com.common.business.enums.PlatformDictEnum;
+import cn.hutool.json.JSONUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
@@ -310,7 +311,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				}
 				shudiyunB2cOrderDTO.setDepartment_code(kingdeeDeptCode);
 				shudiyunB2cOrderDTO.setDepartment_name(kingdeeDeptName);
-    			
+
     	        shudiyunB2cOrderDTO.setBiz_uni_key(thirdCode + dmpSoOutstockDetailEntity.getThirdDetailId());
     	        shudiyunB2cOrderDTO.setBiz_no(thirdBillNo);
     	        shudiyunB2cOrderDTO.setBiz_time(billDateFormat);
@@ -372,7 +373,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						}
 					}
 				}
-	            
+
 	            LocalDateTime estimateInvestmentTime = dmpSoOutstockDetailEntity.getEstimateInvestmentTime();
 	            if(StringUtils.isBlank(shudiyunB2cOrderDTO.getEstimate_investment_time()) && estimateInvestmentTime != null) {
 	            	shudiyunB2cOrderDTO.setEstimate_investment_time(estimateInvestmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -433,6 +434,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoOutstockDetailEntity.getThirdOrderCode());
     	        shudiyunB2cOrderDTO.setParent_node_no(platformCode);
     			
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}
@@ -539,12 +541,12 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
 
-        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type()) 
-        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK") 
+        List<String> thirdCodeList = shudiyunB2cOrderDTOList.stream().filter(s -> "销售出库单".equals(s.getTransaction_type())
+        		&& StringUtils.isNotBlank(s.getBiz_no()) && s.getBiz_no().startsWith("CK")
         		&& StringUtils.isNotBlank(s.getParent_node_no()))
         	.map(ShudiyunB2cOrderDTO::getParent_node_no).collect(Collectors.toList());
 
-        
+
         if(CollUtil.isNotEmpty(thirdCodeList)) {
         	List<String> mainIds = dmpSoInfoService.lambdaQuery()
         			.eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
@@ -562,11 +564,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                 		DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
                         request.setCfgOutputId(s);
                         List<QueryParam> queryParams = new ArrayList<>();
-                        QueryParam queryParam = new QueryParam();
-                        queryParam.setType(QueryTypeEnum.IN);
-                        queryParam.setName("id");
-                        queryParam.setValue(filterMainIds);
-                        queryParams.add(queryParam);
+                        queryParams.add(new QueryParam(QueryTypeEnum.IN, "id", filterMainIds));
                         request.setQueryParams(queryParams);
                         dmpOutputCreateFactory.doHotfixOutputTask(request);
                 	});
@@ -574,7 +572,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	}
         }
     }
-	
+
     @Override
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");

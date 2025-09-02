@@ -80,4 +80,22 @@ public class ExportSrmFeignController {
     public PagingVO<SalesSharingDTO.ListDTO> paging(@RequestBody @Validated PagingDTO<SalesSharingDTO.PagingParamDTO> pagingParamDTO) {
         return salesSharingService.paging(pagingParamDTO);
     }
+
+    /**
+     * 导出所有采购对账单明细
+     * @author will
+     * @date 2025/8/12 18:01
+     * @param dto
+     * @return PagingVO<ExportDetailDTO>
+     */
+    @PostMapping("/exportAllPoReconciliationDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:scm:paging",
+            tableAlias = "pr"
+    )
+    @WebAdvanceQuery(handler = PoReconciliationScmQueryHandler.class)
+    public PagingVO<PoReconciliationDTO.ExportDetailDTO> exportAllPoReconciliationDetail(@RequestBody PagingDTO<PoReconciliationDTO.PagingParamDTO> dto){
+        return poReconciliationScmService.exportAllPoReconciliationDetail(dto);
+    }
 }

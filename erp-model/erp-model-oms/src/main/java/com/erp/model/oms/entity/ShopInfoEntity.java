@@ -157,6 +157,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private Boolean isHaveWarehouse;
 
     /**
+     * 是否多渠道发货
+     */
+    @TableField("is_multi_channel")
+    private Boolean isMultiChannel;
+
+    /**
      * 平台店铺编码/卖家编码
      * 亚马逊平台=卖家ID
      */
@@ -174,7 +180,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("ioss_tax_no")
     private String iossTaxNo;
-
+    /**
+     * EORI税号
+     */
+    @TableField("eori_tax_no")
+    private String eoriTaxNo;
     /**
      * 平台店铺状态:none=无, open=正常, closed关闭
      * ShopPlatformStatusEnum

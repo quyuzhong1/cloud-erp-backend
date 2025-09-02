@@ -11,6 +11,9 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import org.apache.ibatis.annotations.Param;
+import com.erp.model.oms.dto.OperateLogDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -299,7 +302,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     void syncPlatformProduct(List<String> ids);
 
     void syncWarehouseProduct(List<String> ids);
-
     /**
      * 根据参数获取映射列表
      * @param queryDTO
@@ -333,5 +335,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     List<BatchResultDTO> pushProduct(List<String> ids);
 
-//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+    /**
+     * 单个同步商品
+     * @author will
+     * @date 2025/8/7 16:31
+     * @param dto
+     * @return void
+     */
+    List<BatchResultDTO> syncPlatformProductByOne(SkuMappingDTO.SyncPlatformProductDTO dto);
+
 }

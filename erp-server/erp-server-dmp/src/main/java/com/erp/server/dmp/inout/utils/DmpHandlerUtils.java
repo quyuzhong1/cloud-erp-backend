@@ -46,6 +46,15 @@ public class DmpHandlerUtils {
 
 	private static Sequence sequence = new Sequence();
 	
+	private static Map<String, String> countryMap = new HashMap<>();
+	static {
+		countryMap.put("UK", "GB");
+		countryMap.put("MNE", "ME");
+		countryMap.put("SRB", "RS");
+		countryMap.put("ALA", "AX");
+		countryMap.put("BLM", "BL");
+	}
+	
 	public static String getId() {
 		long nextId = sequence.nextId();
 		return Long.valueOf(nextId).toString();
@@ -523,4 +532,15 @@ public class DmpHandlerUtils {
         return result;
 
 	}
+    
+    public static String convertCountry(String country) {
+    	if(StringUtils.isBlank(country)) {
+    		return "";
+    	}
+    	String convertValue = countryMap.get(country);
+    	if(StringUtils.isNotBlank(convertValue)) {
+    		return convertValue;
+    	}
+		return country;
+    }
 }

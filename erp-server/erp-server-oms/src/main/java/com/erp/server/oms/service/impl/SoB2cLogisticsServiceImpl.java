@@ -279,6 +279,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                         entity.setLogisticsChannelId(channelByNames.get(0).getId());
                     }
                 }
+                //买家自选物流
+                entity.setName(platformOrderLogisticsDTO.getBuyerSelectedLogistics());
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
@@ -323,7 +325,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 entity2.setWidth(maxWidth);
                 entity2.setHeight(totalHeight);
                 entity2.setId(entity.getId());
-
+                //买家自选物流
+                entity2.setName(platformOrderLogisticsDTO.getBuyerSelectedLogistics());
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }

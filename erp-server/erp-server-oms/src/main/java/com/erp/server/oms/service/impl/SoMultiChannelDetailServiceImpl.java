@@ -1,184 +1,165 @@
 package com.erp.server.oms.service.impl;
 
 
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.plm.vo.SkuInfoSimpleVO;
-import com.erp.model.wms.dto.WarehouseMappingDTO;
-import com.erp.rpc.wms.feign.WarehouseMappingFeign;
-import com.erp.server.oms.convert.SoMultiChannelConsumerConverter;
+import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.SoMultiChannelDetailMapper;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoMultiChannelDetailService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.CommonService;
+import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * <p>
- * 多渠道订单明细表 服务实现类
+ * 多渠道订单明细 服务实现类
  * </p>
  *
- * @author Jim
- * @since 2024-05-30
+ * @author zdy
+ * @since 2025-08-20
  */
 @Slf4j
 @Service
 public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiChannelDetailMapper, SoMultiChannelDetailEntity> implements SoMultiChannelDetailService {
-
+    @Autowired
+    private OperateLogService operateLogService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
     @Resource
     private SkuMappingService skuMappingService;
-    @Resource
-    private WarehouseMappingFeign warehouseMappingFeign;
 
-    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public List<SoMultiChannelDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoMultiChannelEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList) {
-        // 订单明细
-        List<SoMultiChannelDetailEntity> oldDetailEntityList = this.listByMainId(mainEntity.getId());
-        // 来源为空
-        if (CollectionUtils.isEmpty(dto.getDetails())) {
-            if (CollectionUtils.isEmpty(oldDetailEntityList)) {
-                // 新建空
-                SoMultiChannelDetailEntity detailEntity = SoMultiChannelConsumerConverter.INSTANCE.convertNewDetail(null, mainEntity.getId(), "", "", "", "");
-                if (!this.save(detailEntity)) {
-                    throw new ServiceException("[SoMultiChannelDetailEntity] 保存失败");
-                }
-                return Collections.singletonList(detailEntity);
-            }
-            return oldDetailEntityList;
+    @Override
+    public BaseResultDTO.AddDTO add(SoMultiChannelDetailDTO.AddDTO addDTO) {
+        SoMultiChannelDetailEntity soMultiChannelDetailEntity = new SoMultiChannelDetailEntity();
+        BeanMapperUtils.copy(addDTO, soMultiChannelDetailEntity);
+
+        // 数据处理
+        handleData(soMultiChannelDetailEntity);
+
+        log.info("开始新增多渠道订单明细");
+        boolean save = super.save(soMultiChannelDetailEntity);
+        if(!save) {
+            throw new ServiceException("多渠道订单明细保存失败");
         }
 
-        // 来源不为空
-        // 历史map
-        Map<String, SoMultiChannelDetailEntity> oldDetailMap = oldDetailEntityList.stream()
-                .filter(e -> StringUtils.isNotEmpty(e.getSourceDetailId()))
-                .collect(Collectors.toMap(SoMultiChannelDetailEntity::getSourceDetailId, Function.identity()));
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单明细" , soMultiChannelDetailEntity.getId());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, soMultiChannelDetailEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
 
-        //查询速卖通仓库名称是否映射ERP仓库
-        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = new ArrayList<>();
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
-            mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
+        return new BaseResultDTO.AddDTO(soMultiChannelDetailEntity.getId(), soMultiChannelDetailEntity.getId());
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(SoMultiChannelDetailDTO.UpdateDTO addOrUpdateDTO) {
+        SoMultiChannelDetailEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "多渠道订单明细"));
+        SoMultiChannelDetailEntity soMultiChannelDetailEntity =  BeanMapperUtils.map(SoMultiChannelDetailEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(soMultiChannelDetailEntity);
+        log.info("编辑 开始修改多渠道订单明细数据，id：【{}】", old.getId());
+        boolean save = super.updateById(soMultiChannelDetailEntity);
+        if(!save) {
+            throw new ServiceException("多渠道订单明细保存失败");
         }
-        //已发货
-        String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-        String billStatus = mainEntity.getBillStatus();
-        boolean isShipped = shipped.equals(billStatus);
-        // 新增或更新列表
-        List<WarehouseMappingDTO.MappingViewDTO> finalMappingViewDTOS = mappingViewDTOS;
-        List<SoMultiChannelDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
-            // 历史记录
-            SoMultiChannelDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
-            // 映射关系
-            List<ListingInfoWithSkuMappingDTO> mappingDTOList;
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-            if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
-                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())){
-                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSpuNo());
-            }else{
-                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
-            }
-            // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform(),detailDTO.getPlatformSkuNo());
-
-            String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
-            String skuNO = null == oldEntity ? "" : oldEntity.getSkuNo();
-            String imageUrl = null == oldEntity ? "" : oldEntity.getImageUrl();
-            String platformSpuNo = null == oldEntity ? detailDTO.getPlatformSpuNo() : oldEntity.getPlatformSpuNo();
-            // 历史不为空不更新
-            if (null != mappingDTO && StringUtils.isBlank(skuNO) && StringUtils.isBlank(skuId)) {
-                skuId = mappingDTO.checkAndGetProductSkuId();
-                skuNO = mappingDTO.checkAndGetProductSkuNo();
-                imageUrl = mappingDTO.checkAndGetProductImageUrl();
-            }
-            if (null != mappingDTO && StringUtils.isBlank(platformSpuNo)) {
-                platformSpuNo = mappingDTO.getPlatformSpuNo();
-            }
-
-            SoMultiChannelDetailEntity saveOrUpdateEntity;
-            if (null != oldEntity) {
-                // 更新指定内容
-                saveOrUpdateEntity = SoMultiChannelConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo);
-            } else {
-                // 新记录
-                saveOrUpdateEntity = SoMultiChannelConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
-            }
-
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && isShipped) {
-                //查询映射的仓库信息
-                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream().filter(req -> detailDTO.getWarehouseName().equals(req.getThirdWarehouseName())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(mappingViewDTO)) {
-                    saveOrUpdateEntity.setWarehouseId(mappingViewDTO.getWarehouseId());
-                    saveOrUpdateEntity.setWarehouseName(mappingViewDTO.getWarehouseName());
-                    saveOrUpdateEntity.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
-                    saveOrUpdateEntity.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
-                } else {
-                    saveOrUpdateEntity.setWarehouseId("");
-                    saveOrUpdateEntity.setWarehouseName("");
-                    saveOrUpdateEntity.setWarehouseOrgId("");
-                    saveOrUpdateEntity.setWarehouseOrgName("");
-                }
-            }
-
-            return saveOrUpdateEntity;
-        }).collect(Collectors.toList());
-
-        // 其他处理
-        consumerHandleDetailList(saveOrUpdateList, mainEntity, skuList);
-
-        // 批量保存和更新
-        if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
-            throw new ServiceException(" [SoMultiChannelDetailEntity] 订单明细批量更新或保存失败");
-        }
-        return saveOrUpdateList;
+        // 记录主单操作日志
+            log.info("编辑 开始记录多渠道订单明细日志数据，id：【{}】", soMultiChannelDetailEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelDetailEntity.getId(), "多渠道订单明细");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, soMultiChannelDetailEntity, null, soMultiChannelDetailEntity.getId(), msg);
+        return Boolean.TRUE;
     }
 
     @Override
-    public List<SoMultiChannelDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery()
-                .eq(SoMultiChannelDetailEntity::getIsDeleted, false)
-                .eq(SoMultiChannelDetailEntity::getMainId, mainId)
-                .list();
-    }
-
-    public void consumerHandleDetailList(List<SoMultiChannelDetailEntity> list, SoMultiChannelEntity mainEntity, List<SkuInfoSimpleVO> skuList) {
-        for (SoMultiChannelDetailEntity detailEntity : list) {
-            //产品信息
-            SkuInfoSimpleVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-            detailEntity.setCurrency(mainEntity.getCurrency());
-            detailEntity.setExchangeRate(mainEntity.getExchangeRate());
-
-            //建议售价
-            BigDecimal advicePrice = null == skuVO ? BigDecimal.ZERO : skuVO.getRetailPrice();
-            detailEntity.setAdvicePrice(advicePrice);
-            //含税单价
-            BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
-            detailEntity.setTaxCost(costPrice);
-            detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty()));
-            // 产品图片
-            detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
+    public List<SoMultiChannelDetailEntity> addDetail(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailDTO.AddDTO> detailList) {
+        if(CollUtil.isEmpty(detailList)) {
+            return null;
         }
+        List<String> skuIds = detailList.stream().map(SoMultiChannelDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        detailList.forEach(detail -> {
+            detail.setMainId(soMultiChannelEntity.getId());
+            skuVOS.stream().filter(e -> e.getSkuId().equals(detail.getSkuId())).findFirst().ifPresent(skuVO -> {
+                detail.setProductName(skuVO.getSkuName());
+                detail.setSkuNo(skuVO.getSkuNo());
+            });
+        });
+        List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = BeanMapperUtils.copyList(SoMultiChannelDetailEntity.class, detailList);
+        //平台SKU校验
+//        checkData(soMultiChannelEntity,soMultiChannelDetailEntities);
+        super.saveBatch(soMultiChannelDetailEntities);
+        return soMultiChannelDetailEntities;
     }
 
+    @Override
+    public List<SoMultiChannelDetailEntity> listByMainIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return null;
+        }
+        return baseMapper.selectList(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().in(SoMultiChannelDetailEntity::getMainId, ids));
+    }
+
+    private void checkData(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities) {
+        // 查询该店铺所有平台sku
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(soMultiChannelEntity.getDeliveryPlatform());
+        paramDTO.setShopIdList(Collections.singletonList(soMultiChannelEntity.getShopId()));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(soMultiChannelDetailEntities.stream().map(SoMultiChannelDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+        //平台sku映射检查
+        if (CollUtil.isEmpty(listDto)){
+            throw new ServiceException("平台sku映射不存在");
+        }
+        soMultiChannelDetailEntities.forEach(detail -> {
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listDto.stream().filter(e -> e.getPlatformSkuNo().equals(detail.getPlatformSkuNo()) && e.getProductSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNull(listingInfoWithSkuMappingDTO)){
+                throw new ServiceException("产品sku【{}】平台sku【{}】映射不存在", detail.getSkuNo(), detail.getPlatformSkuNo());
+            }
+        });
+    }
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(SoMultiChannelDetailEntity soMultiChannelDetailEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
 }

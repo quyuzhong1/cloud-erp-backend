@@ -179,9 +179,9 @@ public interface BusinessNoConstant {
     String XSJM = "XSJM";
     String XSTJ = "XSTJ";
 
-    String ZJTZ = "ZJTZ";
     //售后
     String SHSQ = "SHSQ";
+    String ZJTZ = "ZJTZ";
     String TCTZ = "TCTZ";
 
     //委托审批
@@ -197,5 +197,6 @@ public interface BusinessNoConstant {
 
     //合同管理
     String GYSHT = "GYSHT";
+    String MB = "MB";
 
 }

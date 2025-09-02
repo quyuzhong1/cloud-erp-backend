@@ -13,28 +13,16 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="main_id" property="mainId" />
-       <result column="image_url" property="imageUrl" />
+       <result column="so_detail_id" property="soDetailId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
        <result column="platform_sku_no" property="platformSkuNo" />
        <result column="platform_spu_no" property="platformSpuNo" />
-       <result column="warehouse_sku_no" property="warehouseSkuNo" />
+       <result column="platform_product_name" property="platformProductName" />
        <result column="qty" property="qty" />
-       <result column="warehouse_id" property="warehouseId" />
-       <result column="warehouse_name" property="warehouseName" />
-       <result column="price" property="price" />
-       <result column="amount" property="amount" />
-       <result column="currency" property="currency" />
-       <result column="exchange_rate" property="exchangeRate" />
-       <result column="advice_price" property="advicePrice" />
-       <result column="tax_cost" property="taxCost" />
-       <result column="source_detail_id" property="sourceDetailId" />
-       <result column="label_json" property="labelJson" />
-       <result column="warehouse_org_id" property="warehouseOrgId" />
-       <result column="warehouse_org_name" property="warehouseOrgName" />
-       <result column="warehouse_location" property="warehouseLocation" />
-       <result column="platform_line_number" property="platformLineNumber" />
-       <result column="source_platform" property="sourcePlatform" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="product_name" property="productName" />
+       <result column="fn_sku" property="fnSku" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -48,7 +36,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, image_url, sku_id, sku_no, platform_sku_no, platform_spu_no, warehouse_sku_no, qty, warehouse_id, warehouse_name, price, amount, currency, exchange_rate, advice_price, tax_cost, source_detail_id, label_json, warehouse_org_id, warehouse_org_name, warehouse_location, platform_line_number, source_platform
+        main_id, so_detail_id, sku_id, sku_no, platform_sku_no, platform_spu_no, platform_product_name, qty, delivery_qty, product_name, fn_sku
     </sql>
 
 

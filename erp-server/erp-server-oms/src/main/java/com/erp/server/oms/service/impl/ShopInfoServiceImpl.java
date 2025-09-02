@@ -621,12 +621,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
         shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
+        shopInfo.setEoriTaxNo(dto.getEoriTaxNo());
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+
+
+        shopInfo.setDictCountryCode(dto.getDictCountryCode());
         shopInfo.setBusinessModel(dto.getBusinessModel());
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
+        shopInfo.setIsMultiChannel(Objects.nonNull(dto.getIsMultiChannel())? dto.getIsMultiChannel() : shopInfo.getIsMultiChannel());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -1478,6 +1483,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         return baseMapper.listByParam(platformList,permissionSql);
     }
+
 
     @Override
     public List<ShopInfoEntity> listShopByAmazon() {

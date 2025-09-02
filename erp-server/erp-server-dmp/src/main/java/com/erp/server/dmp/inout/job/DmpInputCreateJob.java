@@ -82,7 +82,7 @@ public class DmpInputCreateJob {
 		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
 			try {
 				List<DmpCfgInputEntity> list = dmpCfgInputService.lambdaQuery()
-						.eq(DmpCfgInputEntity::getSystemId, systemId)
+						.eq(DmpCfgInputEntity::getId, systemId)
 						.eq(DmpCfgInputEntity::getDisabled, false)
 						.select(DmpCfgInputEntity::getId)
 						.list();

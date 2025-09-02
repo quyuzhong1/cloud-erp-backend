@@ -10,19 +10,23 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
-import com.google.gson.annotations.SerializedName;
-
-
 import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 /**
  * Address information for tracking the package.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class TrackingAddress {
   @SerializedName("city")
   private String city = null;
@@ -42,7 +46,7 @@ public class TrackingAddress {
    * The city.
    * @return city
   **/
-
+  
   public String getCity() {
     return city;
   }
@@ -60,7 +64,7 @@ public class TrackingAddress {
    * The state.
    * @return state
   **/
-
+  
   public String getState() {
     return state;
   }
@@ -78,7 +82,7 @@ public class TrackingAddress {
    * The country.
    * @return country
   **/
-
+  
   public String getCountry() {
     return country;
   }
@@ -89,7 +93,7 @@ public class TrackingAddress {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -124,7 +128,7 @@ public class TrackingAddress {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -132,4 +136,3 @@ public class TrackingAddress {
   }
 
 }
-

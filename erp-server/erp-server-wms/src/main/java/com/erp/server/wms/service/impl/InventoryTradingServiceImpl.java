@@ -67,7 +67,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private VirtualInventoryService virtualInventoryService;
 
     @Override
-    @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus")
+    @DistributeLocker(businessType = InventoryTransCoreService.BUSINESS_TYPE,keyName = "transactionList.skuId,transactionList.warehouseId,transactionList.warehouseLocation,transactionList.inventoryStatus",unlockAfterTx = true)
     public void doTransactionList(List<InventoryTransactionDTO> transactionList, String approveType) {
         // 2-移除忽略的sku 先移除避免只存在忽略的sku的单据导致错误
         transactionList.removeIf(InventoryTransactionDTO::isIgnoreTransaction);
@@ -110,7 +110,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         } finally {
             stopwatch.stop();
             // 计时器-结束
-            log.info("单据编号：{}，库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            if(stopwatch.elapsed(TimeUnit.SECONDS) > 30) {
+                log.warn("单据编号：{}，库存交易耗时：{} ms", transactionList.get(0).getSourceCode(),stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            }
         }
     }
 

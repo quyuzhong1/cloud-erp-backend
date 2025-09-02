@@ -59,7 +59,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
     EXPORT_PLM_PRODUCT_CUSTOMS("EXPORT_PLM_PRODUCT_CUSTOMS", "目的国清关导出","","",""),
-
+    EXPORT_PLM_SKU_STD_COST("EXPORT_PLM_SKU_STD_COST", "SKU标准成本导出","","",""),
+    IMPORT_PLM_SKU_STD_COST("IMPORT_PLM_SKU_STD_COST", "SKU标准成本导入","com.erp.rpc.plm.feign.ImportPlmFeign","skuStdCostDetail",""),
 
     //oms
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
@@ -85,6 +86,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号","","",""),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据","","",""),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据","","",""),
+    EXPORT_SO_MULTI_CHANNEL("EXPORT_SO_MULTI_CHANNEL","多渠道订单数据","","",""),
 
 
     //scm
@@ -108,6 +110,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SCM_SUPPLIER_PHASE("EXPORT_SCM_SUPPLIER_PHASE","供应商阶段数据","","",""),
     EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE("EXPORT_SCM_DYNAMIC_SUPPLIER_PHASE","供应商阶段数据","","",""),
     EXPORT_SCM_PURCHASE_ORDER_ADJUST("EXPORT_SCM_PURCHASE_ORDER_ADJUST","历史未完结订单","","",""),
+    EXPORT_SCM_PO_RECONCILIATION_DETAIL("EXPORT_SCM_PO_RECONCILIATION_DETAIL","采购对账单-明细数据导出","","",""),
 
     //srm
     EXPORT_SRM_SALES_SHARING_REPORT("EXPORT_SRM_SALES_SHARING_REPORT","销量共享导出","","",""),
@@ -124,6 +127,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SYS_GLOBAL_AREA("EXPORT_SYS_GLOBAL_AREA","区域Excel导出","","",""),
     EXPORT_SYS_THIRD_NOTICE("EXPORT_SYS_THIRD_NOTICE", "三方通知配置导出","","",""),
     EXPORT_SYS_THIRD_NOTICE_RECORD("EXPORT_SYS_THIRD_NOTICE_RECORD", "三方通知推送导出","","",""),
+    EXPORT_SYS_TEMPLATE("EXPORT_SYS_TEMPLATE", "模板导出","","",""),
+
     //wms
     EXPORT_WMS_INVENTORY("EXPORT_WMS_INVENTORY","即时库存导出","","",""),
     EXPORT_WMS_B2C_DELIVERY_ORDER("EXPORT_WMS_B2C_DELIVERY_ORDER", "发货单导出","","",""),
@@ -251,6 +256,8 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入自发货费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
+    IMPORT_TMS_LOGISTICS_TRACK_INFO("IMPORT_TMS_LOGISTICS_TRACK_INFO", "导入物流单信息","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsTrackInfo",""),
+
     //mrp
     EXPORT_MRP_REPLENISHMENT_RULE("EXPORT_MRP_REPLENISHMENT_RULE", "补货规则","","",""),
     EXPORT_MRP_HISTORY_SALES_QTY("EXPORT_MRP_HISTORY_SALES_QTY", "历史销量","","",""),

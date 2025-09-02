@@ -10,40 +10,43 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 import java.io.IOException;
-import java.util.Objects;
-
 /**
  * The weight.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class Weight {
   /**
    * The unit of weight.
    */
   @JsonAdapter(UnitEnum.Adapter.class)
   public enum UnitEnum {
+    @SerializedName("KG")
     KG("KG"),
-    
-    LB("LB");
+    @SerializedName("KILOGRAMS")
+    KILOGRAMS("KILOGRAMS"),
+    @SerializedName("LB")
+    LB("LB"),
+    @SerializedName("POUNDS")
+    POUNDS("POUNDS");
 
     private String value;
 
     UnitEnum(String value) {
       this.value = value;
     }
-
     public String getValue() {
       return value;
     }
@@ -52,31 +55,27 @@ public class Weight {
     public String toString() {
       return String.valueOf(value);
     }
-
-    public static UnitEnum fromValue(String text) {
+    public static UnitEnum fromValue(String input) {
       for (UnitEnum b : UnitEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(input)) {
           return b;
         }
       }
       return null;
     }
-
     public static class Adapter extends TypeAdapter<UnitEnum> {
       @Override
       public void write(final JsonWriter jsonWriter, final UnitEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
+        jsonWriter.value(String.valueOf(enumeration.getValue()));
       }
 
       @Override
       public UnitEnum read(final JsonReader jsonReader) throws IOException {
-        String value = jsonReader.nextString();
-        return UnitEnum.fromValue(String.valueOf(value));
+        Object value = jsonReader.nextString();
+        return UnitEnum.fromValue((String)(value));
       }
     }
-  }
-
-  @SerializedName("unit")
+  }  @SerializedName("unit")
   private UnitEnum unit = null;
 
   @SerializedName("value")
@@ -91,7 +90,7 @@ public class Weight {
    * The unit of weight.
    * @return unit
   **/
-
+  
   public UnitEnum getUnit() {
     return unit;
   }
@@ -109,7 +108,7 @@ public class Weight {
    * The weight value.
    * @return value
   **/
-
+  
   public String getValue() {
     return value;
   }
@@ -120,7 +119,7 @@ public class Weight {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -153,7 +152,7 @@ public class Weight {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -161,4 +160,3 @@ public class Weight {
   }
 
 }
-

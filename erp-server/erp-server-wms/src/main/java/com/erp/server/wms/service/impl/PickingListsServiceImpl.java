@@ -249,6 +249,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
         checkStatus(entity);
         checkCombination(entity, dto);
+        checkPartDelete(entity,dto);
         PickingListsDTO.View view = this.view(dto.getId());
         List<PickingDetailDTO.View> mismatchedDetails = this.getDiffQtyView(dto,view);
         if(CollectionUtils.isEmpty(mismatchedDetails)){
@@ -302,6 +303,24 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             changeQtyViews.add(changeQtyView);
         });
         return changeQtyViews;
+    }
+
+    private void checkPartDelete(PickingListsEntity entity, PickingListsDTO.UpdateDTO dto) {
+        List<PickingDetailEntity> detailEntities = pickingDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        //查被删除的明细
+        List<String> existIds = dto.getDetails().stream().map(v->v.getId()).collect(Collectors.toList());
+        List<PickingDetailEntity> deletedList = detailEntities.stream().filter(v->!existIds.contains(v.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(deletedList)){
+            return;
+        }
+        //是否是整个sku删除
+        List<String> checkSourceIds = deletedList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> checkIds = deletedList.stream().map(PickingDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> checkList = detailEntities.stream().filter(v->!checkIds.contains(v.getId()) && checkSourceIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(checkList)){
+            return;
+        }
+        throw new ServiceException("同个要货申请的明细不能部分删除");
     }
 
     @Override

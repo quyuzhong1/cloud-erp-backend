@@ -111,6 +111,15 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private QcNoticeService qcNoticeService;
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
+
+
+    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
 
     @Resource
@@ -122,13 +131,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Resource
     private SyncKingdeeTransferInService syncKingdeeTransferInService;
 
-    @Resource
-    private TransferOutService transferOutService;
 
-    @Resource
-    private QcNoticeService qcNoticeService;
-    @Resource
-    private QcNoticeDetailService qcNoticeDetailService;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {

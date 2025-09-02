@@ -356,13 +356,12 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
         	plmPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
         }else {
-        	ProductInfoEntity productInfo = null;
+            ProductInfoEntity productInfo = null;
             if (StringUtils.isNotBlank(entity.getProductId())){
                 productInfo = productInfoService.getById(entity.getProductId());
             }
             plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), productInfo, operate)));
         }
-        
         plmPushMsgService.save(plmPushMsgEntity);
 	}
 

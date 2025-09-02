@@ -434,7 +434,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/otherOutStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "warehouse_keeper_id,create_user_id",
             warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
@@ -987,7 +987,6 @@ public class ExportWmsFeignController {
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
         return virtualInventoryAgeService.framePaging(dto);
     }
-
 
     /**
      * 导出FBA在途核对列表

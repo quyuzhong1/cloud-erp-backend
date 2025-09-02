@@ -334,6 +334,15 @@ public class SoB2cDTO implements Serializable {
          */
         private String platformOrderStatusName;
         /**
+         * 多渠道类型
+         * SoB2cMultiChannelTypeEnum
+         */
+        private String multiChannelType;
+        /**
+         * 多渠道类型名称
+         */
+        private String multiChannelTypeName;
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -790,7 +799,7 @@ public class SoB2cDTO implements Serializable {
 
         private String extendId;
         /**
-         * 要求发货时间
+         * 最晚发货时间/要求发货时间
          */
         private LocalDateTime requiredDeliveryTime;
         /**
@@ -839,6 +848,16 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
+
+
+
     }
 
     @Data
@@ -972,6 +991,11 @@ public class SoB2cDTO implements Serializable {
          * 是否可送
          */
         private Boolean isDeliver;
+
+        /**
+         * 发票状态，SoB2cNfeStatusEnum枚举
+         */
+        private String invoiceStatus;
     }
 
 
@@ -2590,6 +2614,7 @@ public class SoB2cDTO implements Serializable {
          * 渠道id
          */
         private String logisticsChannelId;
+        private String logisticsChannelName;
 
         /**
          * 运输单号
@@ -3426,6 +3451,12 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

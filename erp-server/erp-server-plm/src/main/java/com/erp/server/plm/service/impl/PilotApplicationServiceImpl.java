@@ -47,7 +47,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
@@ -136,11 +135,11 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Resource
     private ProductPackService productPackService;
     @Resource
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
 
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
     private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
 
     @GlobalTransactional(rollbackFor = Exception.class)

@@ -234,7 +234,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         //新增装箱任务
 //        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
-
         //根据装箱状态自动生成报关单
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -1039,13 +1038,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(entity.getDestWarehouseId()));
                 // 查询发货目的仓平台
                 OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-                if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-                    providerEntity = null;
-                }
+
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)
+                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)
+                        && Objects.nonNull(providerEntity)
                         && !OmsPlatformEnum.JIFENG.getCode().equals(providerEntity.getCode())
-                        && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())) {
+                        && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())
+                        && !OmsPlatformEnum.WEI_SHI.getCode().equals(providerEntity.getCode())
+                        && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
@@ -1524,7 +1524,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             .set(FirstMileDeliveryEntity::getApproveUserName, userInfo.getUserName())
             .set(FirstMileDeliveryEntity::getApproveStatus, approveStatus)
             .set(FirstMileDeliveryEntity::getApproveTime, LocalDateTime.now())
-            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
+            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, deliveryDate)
             .set(FirstMileDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode())
             .update(new FirstMileDeliveryEntity());
      }
@@ -2079,9 +2079,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         // 所属平台:未绑定海外仓为空
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(destWarehouseId);
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         //物流信息
@@ -2749,6 +2746,34 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
+    }
+
+    @Override
+    public BatchResultDTO retryOutstock(String id) {
+        FirstMileDeliveryEntity entity = super.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"发货单不存在");
+        }
+        if (validateExistsTransferInfo(entity.getId())) {
+            throw new ServiceException(ApiError.ERROR_92138, "发货单已调拨出库，不允许重新出库");
+        }
+        //查询发货详情
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单明细不存在");
+        }
+        //匹配到规则则进行中转调拨，否则直接生成调拨单
+        if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            List<String> split = CharSequenceUtil.split(entity.getTransferWarehouseIds(), ",");
+            //中转循环调拨
+            generateTransferByRule(split,entity, detailEntityList,batchNo);
+        }else {
+            generateTransferOut(entity, detailEntityList);
+        }
+        //日志
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("【{}】重新出库", UserContext.getLoginUser().getUserName()), ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "重新出库");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
     }
 }
 

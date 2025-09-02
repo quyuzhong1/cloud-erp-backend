@@ -84,7 +84,6 @@ public enum ModuleTypeEnum {
     CFG_RULE_ORDER_HANDLE("73", "订单处理规则"),
     SO_B2C_DECLARE("74", "B2C销售订单申报信息"),
 
-    SO_MULTI_CHANNEL("75", "多渠道订单"),
     DMP_THIRD_WAREHOUSE("76", "第三方仓库"),
     DMP_THIRD_SHOP("77", "第三方店铺"),
     DMP_THIRD_MAPPING("78", "第三方映射"),
@@ -130,14 +129,17 @@ public enum ModuleTypeEnum {
     RULE_PROMPT_WORD("115", "汉化管理"),
     CFG_VAT_INVOICE("116", "VAT发票设置"),
     INVOICE_INFO("117", "发票上传记录"),
+
     CFG_SETTING("118", "系统配置"),
     SO_B2C_EXTEND("119", "销售订单扩展信息"),
     SO_PRICE("118", "销售价目表"),
     SO_PRICE_CHANGE("119", "销售调目表"),
-    AFTER_SALE("118", "售后申请"),
+
+    AFTER_SALE("120", "售后申请"),
     INVOICE_SETTING("121", "发票设置"),
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
     INVOICE_INVALID("123", "发票设置明细"),
+
     QC_NOTICE("124", "质检通知"),
     FIRST_MILE_CHANGE_RECORD("125", "头程调整记录"),
     CFG_RULE_INVOICE("126", "开票规则"),
@@ -154,8 +156,11 @@ public enum ModuleTypeEnum {
     LOGISTICS_THIRD_CHANNEL_REF("130", "物流第三方渠道关系"),
     CFG_RULE_INVOICE_PRODUCT_AMOUNT("130", "发票产品总价计算规则"),
     DICT_HS_CODE("133", "出口申报要素"),
+    TEMPLATE_MANAGEMENT("132", "模板管理"),
+    SKU_STD_COST_DETAIL("140", "SKU标准成本"),
 
     THIRD_WAREHOUSE_DELIVERY("131", "三方仓发货单"),
+    SO_MULTI_CHANNEL("134", "多渠道订单"),
 
 
     ;

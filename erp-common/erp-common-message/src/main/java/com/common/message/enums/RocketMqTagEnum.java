@@ -352,6 +352,10 @@ public enum RocketMqTagEnum {
      * 对账单同步金蝶
      */
     KINGDEE_PO_RECONCILIATION_TAG(1036, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_reconciliation_tag"),
+    /**
+     * 多渠道订单同步金蝶
+     */
+    KINGDEE_SO_MULTI_CHANNEL_TAG(1037, RocketMqTagEnum.SYNC_AMAZON,"kingdee_so_multi_channel_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -631,6 +635,7 @@ public enum RocketMqTagEnum {
     public static final String SKU_INFO = "sku";
 
     public static final String SYNC_KINGDEE = "sync_kingdee";
+    public static final String SYNC_AMAZON = "sync_amazon";
 
     public static final String STOCK = "stock";
 

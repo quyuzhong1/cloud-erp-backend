@@ -793,6 +793,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
 
+    void uploadSkuImage(UploadSkuDTO dto);
+
     /**
      * 根据skuIds获取产品包装尺寸明细
      * @param ids skuIds
@@ -804,7 +806,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
 
-    void uploadSkuImage(UploadSkuDTO dto);
 
     /**
      * 导入更新
@@ -831,4 +832,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return SkuVO
      */
     List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList);
+    /**
+     * 根据skuid 集合获取到sku分类信息（基础信息+产品信息+包装信息+采购信息）
+     * @author will
+     * @date 2025/8/21 11:35
+     * @param skuIds
+     * @return List<SkuVO>
+     */
+    List<SkuVO> listSkuPackAndPurchaseByIds(List<String> skuIds);
 }

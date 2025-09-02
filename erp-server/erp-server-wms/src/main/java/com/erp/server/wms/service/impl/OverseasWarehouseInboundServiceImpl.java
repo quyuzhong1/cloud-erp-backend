@@ -154,11 +154,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
-
 
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         // 数据处理
@@ -215,7 +211,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         // 推送到第三方草稿
-        if (null != providerEntity && !OmsPlatformEnum.CAI_NIAO.getCode().equals(providerEntity.getCode())) {
+        if (null != providerEntity) {
             // 推送到第三方草稿
             ApiResult<String> resultInfo = this.pullThirdOverseasPlatformWithSkuMapping( providerEntity, mainEntity, deliveryDetailEntityList, OverseasVerifyEnum.INIT.getCode());
             if (200 != resultInfo.getCode()) {
@@ -380,9 +376,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-        }
         String dictPlatform = null == providerEntity ? "" : providerEntity.getCode();
 
         // 发货单明细
@@ -836,10 +829,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
-        if(Objects.nonNull(providerEntity) && providerEntity.getCode().equals(OmsPlatformEnum.CAI_NIAO.getCode())){
-            providerEntity = null;
-            isApi = false;
-        }
+
         // 发货单明细
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
         if (CollectionUtils.isEmpty(deliveryDetailEntityList)) {
@@ -1178,7 +1168,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtil.isBlank(detailId)) {
                     continue;
                 }
-                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
+                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())
+                 ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 按流水ID判断已存在
                     if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId()))){
                         continue;

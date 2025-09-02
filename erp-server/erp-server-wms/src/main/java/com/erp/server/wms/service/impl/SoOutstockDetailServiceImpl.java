@@ -48,6 +48,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -892,7 +894,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param detailList
      */
-    private void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
+    @Override
+    public void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -902,6 +905,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+        if(Objects.isNull(soB2cEntity)){
+            return;
+        }
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getSoId()));
         if(CollectionUtils.isEmpty(soDetailList)){
             return;
@@ -1095,5 +1101,17 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             }
         }
         return result;
+    }
+
+    @Override
+    public Map<String, LocalDate> mapLastOutstockDateBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoOutstockDTO.LastBillDateDTO> lastBillDateDTOS = baseMapper.mapLastOutstockDateBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(lastBillDateDTOS)) {
+            return Collections.emptyMap();
+        }
+        return lastBillDateDTOS.stream().collect(Collectors.toMap(SoOutstockDTO.LastBillDateDTO::getSkuId, SoOutstockDTO.LastBillDateDTO::getBillDate));
     }
 }

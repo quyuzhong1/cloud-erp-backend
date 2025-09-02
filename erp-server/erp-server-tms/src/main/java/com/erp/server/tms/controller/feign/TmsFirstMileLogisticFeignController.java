@@ -45,15 +45,6 @@ public class TmsFirstMileLogisticFeignController {
     BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsFirstMileLogisticService.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
     }
-
-    /**
-     *获取有预警的物流单
-     **/
-    @PostMapping("/hasWarnPaging")
-    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO){
-        return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
-    }
-
     /**
      * 根据来源id和业务类型查询头程费用分摊记录
      * @param detailDTO
@@ -72,4 +63,13 @@ public class TmsFirstMileLogisticFeignController {
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
         return firstMileCostAllocationService.getRecordBySkuIdAndCode(detailDTO.getSkuId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
     }
+
+    /**
+     *获取有预警的物流单
+     **/
+    @PostMapping("/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO){
+        return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
+    }
+
 }

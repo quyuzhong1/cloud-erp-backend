@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -176,8 +177,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
 
-            // 主单待发货首次变成已发货才触发标记
-            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
+            // 明细的存在没有标发的情况触发
+            List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(mainEntity.getId()));
+            if(detailList.stream().anyMatch(v->!v.getIsSignShipped())){
                 // 校验平台来源明细
                 if (soB2cFeign.checkPlatformShipOrder(mainEntity.getId())) {
                     // 调用第三方平台SDK标记发货(独立事务)
@@ -229,6 +231,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 mainEntity.setRemark("三方仓出库单废弃,拦截成功");
                 if(mainEntity.getIsCancel()){
                     mainEntity.setInvalidStatus(Boolean.TRUE);
+                    mainEntity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
                     mainEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
                 }
                 soB2cFeign.updateStatus(mainEntity);
@@ -286,6 +289,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 generateB2cDTO.setDetailList(wantDetailList);
             }
             generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
+            generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
         }
         // 第三方仓出库生成销售出库单（独立事务）
         generateB2cDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode());

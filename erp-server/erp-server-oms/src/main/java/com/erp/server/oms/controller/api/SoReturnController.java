@@ -38,7 +38,7 @@ import java.util.Objects;
  * @since 2023-05-10
  */
 @RestController
-@LogSystemModule("销售退货订单")
+@LogSystemModule("销售退货定单")
 @RequestMapping("/soReturn")
 @Slf4j
 public class SoReturnController extends BaseController {

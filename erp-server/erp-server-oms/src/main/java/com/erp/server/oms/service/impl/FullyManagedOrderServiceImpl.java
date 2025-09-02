@@ -359,6 +359,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         List<SoB2cDTO.ExcelExportDTO> records;
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //是否缺货 过滤
         Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         try {

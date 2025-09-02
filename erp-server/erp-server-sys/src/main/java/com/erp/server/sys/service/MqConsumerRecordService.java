@@ -14,6 +14,7 @@ import com.erp.model.sys.dto.MqConsumerRecordDTO;
  */
 public interface MqConsumerRecordService extends SuperService<MqConsumerRecordEntity> {
 
-
     String addMqRecord(MqConsumerRecordDTO.MqDTO dto);
+
+    String buildMqDTO(MqConsumerRecordDTO.BuildMqDTO dto);
 }

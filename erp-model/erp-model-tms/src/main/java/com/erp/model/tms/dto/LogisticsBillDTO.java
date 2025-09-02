@@ -443,6 +443,7 @@ public class LogisticsBillDTO implements Serializable {
          * 渠道id
          */
         private String channelId;
+        private String channelName;
 
 
         /**
@@ -693,6 +694,11 @@ public class LogisticsBillDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
 
         /**
          * 币别

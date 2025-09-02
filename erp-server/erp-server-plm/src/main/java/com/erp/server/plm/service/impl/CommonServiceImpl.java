@@ -186,10 +186,8 @@ public class CommonServiceImpl implements CommonService {
         if (MathUtil.compareTo(size,MathUtil.ZERO) == MathUtil.ZERO) {
             return multipartFile;
         }
-        //类型转换
-        File file = FileUtil.multiToFile(multipartFile);
         try {
-            multipartFile = ImageUtil.compressImageMultipartFile(file, size * 1024);
+            multipartFile = ImageUtil.compressImageMultipartFile(multipartFile, size );
         } catch (IOException e) {
             throw new ServiceException("图片压缩失败");
         }

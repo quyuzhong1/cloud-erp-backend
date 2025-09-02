@@ -10,6 +10,10 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpReturnInstockDTO;
+import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpReturnInstockDTO;
@@ -311,11 +315,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (null != dictCountryEntity){
             countryName = dictCountryEntity.getShortNameCn();
             // 区域编码
-            regionCode = dictCountryEntity.getSubregionCode();
+            regionCode = dictCountryEntity.getRegionCode();
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                regionName = dictGlobalAreaEntity.getSubregionName();
+                regionName = dictGlobalAreaEntity.getRegionName();
             }
         }
 
@@ -583,7 +587,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (null != dictCountryEntity){
             countryName = dictCountryEntity.getShortNameCn();
             // 区域编码
-            regionCode = dictCountryEntity.getSubregionCode();
+            regionCode = dictCountryEntity.getRegionCode();
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){

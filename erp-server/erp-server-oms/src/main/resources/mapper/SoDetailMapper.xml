@@ -165,6 +165,49 @@
         GROUP BY tt."type"
     </select>
 
+    <!-- 待发货统计（新逻辑） -->
+    <select id="listWaitDeliveryCount" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT si.id)
+        FROM so_info si
+        INNER JOIN so_detail sd ON si.id = sd.main_id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted = FALSE 
+            AND si.approve_status = 'approve'
+            AND sd.is_close = FALSE
+            AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment')
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
+
+    <!-- 已发货统计（新逻辑） -->
+    <select id="listDeliveredCount" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT si.id)
+        FROM so_info si
+        WHERE si.is_deleted = FALSE 
+            AND si.approve_status = 'approve'
+            AND (
+                -- 情况1：所有明细已发货
+                NOT EXISTS (
+                    SELECT 1 FROM so_detail sd 
+                    WHERE sd.main_id = si.id 
+                        AND sd.is_deleted = FALSE 
+                        AND sd.delivery_status != 'completeShipment'
+                )
+                OR
+                -- 情况2：发货明细部分未发货并且发货明细已关闭
+                EXISTS (
+                    SELECT 1 FROM so_detail sd 
+                    WHERE sd.main_id = si.id 
+                        AND sd.is_deleted = FALSE 
+                        AND (sd.delivery_status = 'unShipped' OR sd.delivery_status = 'partialShipment')
+                        AND sd.is_close = TRUE
+                )
+            )
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
+
     <!-- 查询所有虚拟仓B2B销售订单数据 -->
     <select id="listAllVirtualSoDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
         select

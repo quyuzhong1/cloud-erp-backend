@@ -119,7 +119,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity) {
+    public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity,Boolean isAddDetail) {
 
         // 生成单号
         boolean save = super.save(entity);
@@ -130,7 +130,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             entity.getDetailEntityList().forEach(v->{
                 v.setMainId(entity.getId());
             });
-            detailService.saveBatch(entity.getDetailEntityList());
+            if(isAddDetail){
+                detailService.saveBatch(entity.getDetailEntityList());
+            }
         }
 
         // 操作日志
@@ -172,6 +174,12 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         List<SoB2cDetailEntity> soB2cDetailEntityList = generateDeliveryAndOutStockDTO.getDetailEntityList();
         SoB2cDTO.DeliveryWithNotOutboundDTO deliveryWithNotOutboundDTO = generateDeliveryAndOutStockDTO.getDto();
         OverseasProviderWarehouseDTO.ViewDTO viewDTO = generateDeliveryAndOutStockDTO.getOverseasWarehouseDto();
+        //查询是否存在
+        ThirdWarehouseDeliveryEntity exist = service.getLatestBySoId(entity.getId());
+        if(ObjectUtil.isNotEmpty(exist) && exist.getStatus().equals(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus())){
+            log.warn("销售订单{}已存在三方仓发货单{}",entity.getCode(), JSONUtil.toJsonStr(exist));
+            return;
+        }
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
@@ -200,7 +208,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
         }
         addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity);
+        thirdWarehouseDeliveryEntity = service.add(addThirdWarehouseDeliveryEntity,true);
 
         PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
@@ -354,7 +362,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     }
 
     @Override
-    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity) {
+    public ThirdWarehouseDeliveryEntity generatePlatformDelivery(SoOutstockEntity soOutstockEntity,List<SoOutstockDetailDTO.AddDTO> addDTOList) {
         SoB2cEntity entity = soB2cFeign.getById(soOutstockEntity.getSoId());
 
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
@@ -366,19 +374,25 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setCode(code);
         addThirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
-//        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
-//        for (SoOutstockDetailEntity addDTO : detailList) {
-//            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
-//            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
-//            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
-//            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
-//            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
-//            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
-//            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
-//            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
-//        }
-//        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
-        return service.add(addThirdWarehouseDeliveryEntity);
+        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
+        for (SoOutstockDetailDTO.AddDTO addDTO : addDTOList) {
+            if(StringUtils.isBlank(addDTO.getPlatformSoDetailId()) && StringUtils.isNotBlank(addDTO.getSourceDetailId())){
+                addDTO.setPlatformSoDetailId(addDTO.getSourceDetailId());
+            }
+            String id = IdWorker.getIdStr();
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setId(id);
+            thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(addDTO.getActualQty());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(addDTO.getWarehouseId());
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
+            thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
+            thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+            addDTO.setSourceDetailId(id);
+        }
+        addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
+        return service.add(addThirdWarehouseDeliveryEntity,false);
 
     }
 
@@ -396,7 +410,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 .collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listByMainIds(ids);
-
+        List<SoOutstockDetailEntity> updateDetailList = new ArrayList<>();
         List<ThirdWarehouseDeliveryEntity> addList = new ArrayList<>();
         for (SoOutstockEntity soOutstock : soOutstockEntityList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream()
@@ -420,7 +434,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             addThirdWarehouseDeliveryEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
             for (SoOutstockDetailEntity addDTO : soOutstockDetailEntities) {
+                String id = IdWorker.getIdStr();
                 ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+                thirdWarehouseDeliveryDetailEntity.setId(id);
                 thirdWarehouseDeliveryDetailEntity.setSkuId(addDTO.getSkuId());
                 thirdWarehouseDeliveryDetailEntity.setSkuNo(addDTO.getSkuNo());
                 thirdWarehouseDeliveryDetailEntity.setSourceSkuId(addDTO.getSkuId());
@@ -430,7 +446,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
                 thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo("");
                 thirdWarehouseDeliveryDetailEntity.setSoDetailId(addDTO.getSoDetailId());
                 thirdWarehouseDetailList.add(thirdWarehouseDeliveryDetailEntity);
+                addDTO.setSourceDetailId(id);
             }
+            updateDetailList.addAll(soOutstockDetailEntities);
             soOutstock.setSourceId(idStr);
             soOutstock.setSourceCode(code);
             addThirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDetailList);
@@ -438,6 +456,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         }
         service.batchAdd(addList);
         soOutstockService.updateBatchById(soOutstockEntityList);
+        soOutstockDetailService.updateBatchById(updateDetailList);
         return addList;
     }
 

@@ -294,6 +294,11 @@ public class ShopDTO implements Serializable {
         private Boolean  isHaveWarehouse;
 
         /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannel;
+
+        /**
          * 数据下载时间
          */
         @NotNull(message = "数据下载时间不能为空")
@@ -328,6 +333,11 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
         
         /**
          * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
@@ -450,7 +460,10 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓  true 包含
          */
         private Boolean  isHaveWarehouse;
-
+        /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannel;
         /**
          * ioss税号
          */
@@ -459,6 +472,10 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
         /**
          * 国家id
          */
@@ -675,6 +692,10 @@ public class ShopDTO implements Serializable {
         @NotNull(message = "是否包含平台仓不能为空")
         private Boolean  isHaveWarehouse;
         /**
+         * 是否多渠道发货
+         */
+        private Boolean isMultiChannel;
+        /**
          * 数据下载时间
          */
         @NotNull(message = "数据下载时间不能为空")
@@ -687,6 +708,10 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+        /**
+         * EORI税号
+         */
+        private String eoriTaxNo;
         /**
          * 销售组织
          */
@@ -1067,9 +1092,17 @@ public class ShopDTO implements Serializable {
          */
         private Boolean showByAuth;
         /**
+         * 是否多渠道
+         */
+        private Boolean isMultiChannel;
+        /**
          * 平台
          */
         private List<String> shopIdList;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
 
     }
     @Data
@@ -1103,6 +1136,14 @@ public class ShopDTO implements Serializable {
          * 授权状态
          */
         private String authStatus;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
 
         /**
          * 是否可选

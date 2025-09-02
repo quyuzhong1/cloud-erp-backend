@@ -110,11 +110,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
-    @Resource
-    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private SoB2cCoreService soB2cCoreService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;

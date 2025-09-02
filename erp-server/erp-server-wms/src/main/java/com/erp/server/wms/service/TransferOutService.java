@@ -140,16 +140,16 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 反审核
-     * @param ids
+     * @param
      */
     BatchResultDTO disApprove(TransferOutEntity transferOutEntity);
 
     /**
      * 分步式调出单下推分布式调入单
-     * @param ids
+     * @param detailIdList
      * @return
      */
-    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids);
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> detailIdList);
 
     /**
      * 下推分布式调入单保存
@@ -173,7 +173,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto);
 
-    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId);
+    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String id);
     /**
      *  更新明细金蝶id
      * @author will

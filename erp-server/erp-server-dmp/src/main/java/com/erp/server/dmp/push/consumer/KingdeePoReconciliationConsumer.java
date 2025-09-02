@@ -6,8 +6,8 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeePoReconciliationConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +40,9 @@ public class KingdeePoReconciliationConsumer<T extends DmpSyncTaskIdDTO> extends
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.AP_PAYABLE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "DZD250625000007"));
+        queryFilters.add(String.format("FBillNo = '%s'", "DZD250730000004"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FEntityPlan_FEntryID,FENDDATE,FPAYAMOUNTFOR,FPAYRATE,FPURCHASEORDERID,FPRICE_P";
+        String fieldKeys = "FORDERNUMBER";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 

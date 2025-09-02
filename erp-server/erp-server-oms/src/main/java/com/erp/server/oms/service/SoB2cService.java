@@ -905,7 +905,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
-     * @param skuId
+     * @param
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1072,15 +1072,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
-    /**
-     * 根据nfe发票状态
-     * @author will
-     * @date 2025/4/11 16:35
-     * @param soId
-     * @param nfeInvoiceStatus
-     * @return void
-     */
-    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     /**
      * 根据销售订单id和平台获取分区id
@@ -1105,6 +1096,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param extendDataDTO
      */
     void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
+
 
     /**
      * 根据物流id标识是否匹配渠道规则
@@ -1122,4 +1123,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateAmount(String id, BigDecimal amount);
 
     void clearOutDateBySoIds(List<String> clearOutDateSoIds);
+
+    /**
+     * 更新销售订单渠道信息
+     * @param soMultiChannelEntity
+     */
+    void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity);
 }

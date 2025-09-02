@@ -2,9 +2,9 @@ package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -47,6 +47,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -128,12 +129,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @author yl
      * @date 2023-06-07 14:08
      */
-    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId, String soCode) {
-        //销售变更单详情
-        List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
-        //订单详情的ids
-        List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soDetailService.listByIdsSeq(soDetailIdList);
+    private SoChangeEntity fillDb(SoChangeEntity entity,List<SoChangeDetailEntity> details,List<SoDetailEntity> soDetailList, String soKingdeeId, String soCode) {
+
         List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //表示是新增加审核
         if (StringUtils.isEmpty(entity.getSyncKingdeeId())) {
@@ -246,9 +243,14 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         if (Objects.isNull(soInfo) || Objects.isNull(soInfoEntity)) {
            throw new ServiceException("未找到销售订单数据");
         }
-
+        //销售变更单详情
+        List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
+        //订单详情的ids
+        List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soDetailService.listByIdsSeq(soDetailIdList);
+        Map<String, SoDetailEntity> soDetailMap = CollUtil.isEmpty(soDetailList) ? new HashMap<>() : soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
         //填充数据
-        fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
+        fillDb(entity,details,soDetailList, soInfo.getSyncKingdeeId(), soInfo.getCode());
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -274,6 +276,10 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
         resultMap.put("discountAmount", soInfoEntity.getDiscountAmount());
+
+        //销售订单金蝶id
+        resultMap.put("soKingdeeId", soInfoEntity.getSyncKingdeeId());
+
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
@@ -337,6 +343,12 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         for (SoChangeDetailDTO.ViewDTO item : laterDetailList) {
             JSONObject jsonObject = new JSONObject();
             String changeType = item.getChangeType().getCode();
+            //来源id
+            SoDetailEntity soDetailEntity = soDetailMap.get(item.getSoDetailId());
+            if (ObjectUtil.isNotEmpty(soDetailEntity)) {
+                jsonObject.set("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
+            }
+
             //是否是删除
             Boolean isDelete = deleteCode.equals(changeType);
             //金蝶详情id

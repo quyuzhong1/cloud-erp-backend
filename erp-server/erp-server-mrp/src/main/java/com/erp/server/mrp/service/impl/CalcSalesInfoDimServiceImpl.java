@@ -141,31 +141,31 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     private void executeTask(CalcSalesInfoDimDTO.CalcResultDTO dto, AtomicInteger index) {
         try {
-            CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
-            entity.setSerialNo(String.format("%06d", index.incrementAndGet()));
-            entity.setId(dto.getCalcSalesInfoDimId());
-            List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
-            //开始计算去噪销量
-            List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
-            //开始计算分时段销量和日均
-            List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
-            //开始计算销量预估
-            List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
-            List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(dto.getShopId(), dto.getSkuId(),
-                    dto.getStartCalcDate(), dto.getEndCalcDate());
-            Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
-                    .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
-            //开始计算分时段预估
-            calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
-            //计算吻合度
-            calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
-            //计算月吻合度
-            calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
-            calcSalesInfoDenoisingService.saveBatch(calculationSales);
-            calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
-            entity.setStatus(CalcStatusEnum.FINISH.getCode());
-            dto.setStatus(CalcStatusEnum.FINISH.getCode());
-            updateById(entity);
+        CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+        entity.setSerialNo(String.format("%06d", index.incrementAndGet()));
+        entity.setId(dto.getCalcSalesInfoDimId());
+        List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
+        //开始计算去噪销量
+        List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
+        //开始计算分时段销量和日均
+        List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
+        //开始计算销量预估
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(dto.getShopId(), dto.getSkuId(),
+                dto.getStartCalcDate(), dto.getEndCalcDate());
+        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
+        //开始计算分时段预估
+        calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
+        //计算吻合度
+        calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
+        //计算月吻合度
+        calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
+        calcSalesInfoDenoisingService.saveBatch(calculationSales);
+        calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
+        entity.setStatus(CalcStatusEnum.FINISH.getCode());
+        dto.setStatus(CalcStatusEnum.FINISH.getCode());
+        updateById(entity);
         } catch (Exception e) {
             dto.setStatus(CalcStatusEnum.DOING.getCode());
             log.error("计算失败，原因：{}", e.getMessage(), e);

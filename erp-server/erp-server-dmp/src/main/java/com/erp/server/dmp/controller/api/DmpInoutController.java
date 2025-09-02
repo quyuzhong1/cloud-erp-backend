@@ -57,6 +57,7 @@ import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.WdtInsufficientInventoryDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.dto.SdyPushDTO;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
@@ -78,6 +79,10 @@ import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgMqService;
@@ -91,13 +96,16 @@ import cn.hutool.core.date.DateUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -646,7 +654,6 @@ public class DmpInoutController extends BaseController {
 				queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
 			}else {
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "invalid_status", false));
 			}
 			queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
 			queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
@@ -658,7 +665,6 @@ public class DmpInoutController extends BaseController {
 				queryParams = new ArrayList<>();
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "invalid_status", false));
 				queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
 				queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
 				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));

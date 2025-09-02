@@ -19,7 +19,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.dto.UserInfoDTO;
@@ -28,6 +27,7 @@ import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.sys.mapper.KingdeeOperatorRefPostMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeOperatorService;
 import com.erp.server.sys.service.*;
@@ -301,13 +301,8 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             }else {
                 item.setIsMyState(0);
             }
-            Integer deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
-            if (MathUtil.ZERO.equals(deleteState) || MathUtil.ZERO.equals(userState)) {
-                item.setDisabled(Boolean.TRUE);
-            } else {
-                item.setDisabled(Boolean.FALSE);
-            }
+            item.setDisabled(MathUtil.ZERO.equals(userState));
             //部门为空时设置为时效
             if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
                 item.setDisabled(Boolean.TRUE);
@@ -333,6 +328,29 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
             throw new ServiceException("业务员状态更新失败");
         }
         log.warn("业务员状态更新成功, ids: {}, disabled: {}", dto.getIds(), dto.getDisabled());
+    }
+
+    @Override
+    public List<UserInfoDTO.BusinessOperationUserDTO> listUser(KingdeeBusinessOperatorDTO.ListBusinessOperatorUserDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listUser(dto);
+        if (CollUtil.isEmpty(dbList)){
+            return Collections.emptyList();
+        }
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        dbList.forEach(item -> {
+            if (CharSequenceUtil.isNotBlank(item.getUserId()) && item.getUserId().equals(userId)){
+                item.setIsMyState(1);
+            }else {
+                item.setIsMyState(0);
+            }
+            Integer userState = item.getUserState();
+            item.setDisabled(MathUtil.ZERO.equals(userState));
+            //部门为空时设置为时效
+            if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
+                item.setDisabled(Boolean.TRUE);
+            }
+        });
+        return dbList;
     }
 
 }

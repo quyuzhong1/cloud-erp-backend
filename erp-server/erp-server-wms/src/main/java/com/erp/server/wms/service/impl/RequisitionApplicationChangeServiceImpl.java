@@ -118,10 +118,10 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
+    private AuthDataFeign authDataFeign;
+    @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
-    @Resource
-    private AuthDataFeign authDataFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.ViewDTO addDTO) {

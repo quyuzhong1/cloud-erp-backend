@@ -419,7 +419,7 @@ public class BomInfoController extends BaseController {
      **/
     @PostMapping("/combinationSkuChildDetail")
     public ApiResult<List<BomChildrenSkuDTO>> combinationSkuChildDetail(@RequestBody ProductBomInfoDTO.SkuIdParams dto) {
-        return success(bomSkuService.listBomChildBySkuIds(dto.getSkuIds()));
+        return success(bomSkuService.listBomChildBySoB2cDetailId(dto));
     }
 }
 

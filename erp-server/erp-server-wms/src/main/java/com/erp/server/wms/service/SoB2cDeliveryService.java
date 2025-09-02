@@ -435,13 +435,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
-    /**
-     * 查询b2c流水
-     * @author will
-     * @date 2025/3/31 11:56
-     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
-     */
-    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 
     /**
      * 打印条码列表展示
@@ -470,6 +463,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
+    /**
+     * 查询b2c流水
+     * @author will
+     * @date 2025/3/31 11:56
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 
     void generateDeliveryAndOutStock(GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 }

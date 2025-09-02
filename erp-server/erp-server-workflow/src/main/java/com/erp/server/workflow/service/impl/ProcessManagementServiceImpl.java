@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -34,8 +35,10 @@ import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.JsonPathUtil;
+import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -91,6 +94,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
+import com.common.business.annotation.DistributeLocker;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -175,6 +179,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
 
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessId")
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);

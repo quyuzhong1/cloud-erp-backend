@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -82,6 +83,7 @@ public class DmpInputTaskJob {
 							.in(DmpInputTaskEntity::getId, ids)
 							.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
 							.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.ERROR.getCode())
+							.eq(DmpInputTaskEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 							.list();
 					List<DmpInputTaskEntity> updateList = new ArrayList<>();
 					if(CollUtil.isNotEmpty(errorList)) {
@@ -111,6 +113,7 @@ public class DmpInputTaskJob {
 				.in(CollUtil.isNotEmpty(ids) ,DmpInputTaskEntity::getId, ids)
 				.in(CollUtil.isNotEmpty(cfgInputIds) ,DmpInputTaskEntity::getCfgInputId, cfgInputIds)
 				.eq(DmpInputTaskEntity::getTaskType, dmpInputTaskTaskTypeEnum.getCode())
+				.eq(DmpInputTaskEntity::getExecSystem, DmpCfgInputExecSystemEnum.DMP.getCode())
 				.and(d -> d.isNull(DmpInputTaskEntity::getNextExecTime).or().le(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now()))
 				.select(DmpInputTaskEntity::getId , DmpInputTaskEntity::getCfgInputId , DmpInputTaskEntity::getNextLevelId , DmpInputTaskEntity::getExecTimeout)
 				.orderByAsc(DmpInputTaskEntity::getUpdateTime)

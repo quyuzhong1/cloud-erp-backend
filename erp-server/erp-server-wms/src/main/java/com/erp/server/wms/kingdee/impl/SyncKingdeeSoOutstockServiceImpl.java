@@ -626,6 +626,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -851,6 +853,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -1062,6 +1066,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
         //订单标签
         resultMap.put("tradeLabel", entity.getTradeLabel());
+        //来源单号
+        resultMap.put("F_Ulz_ConsignNum", entity.getSourceCode());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -1219,11 +1225,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             // 国家名称
             shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
             // 区域编码
-            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getRegionCode());
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getRegionName());
             }
         }
 
@@ -1469,7 +1475,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountry)).findFirst().orElse(null);
     	if (null != dictCountryEntity){
     		// 区域编码
-    		viewDto.setProvince(dictCountryEntity.getSubregionCode());
+    		viewDto.setProvince(dictCountryEntity.getRegionCode());
     	}
     	
     	String finalPartitionId = partitionId;
