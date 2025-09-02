@@ -44,7 +44,7 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     /**
     * 来源明细id
     */
-    @TableField("source_detail_Id")
+    @TableField("source_detail_id")
     private String sourceDetailId;
     /**
     * 付款流水号
@@ -83,8 +83,6 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     public static final String SO_ID = "so_id";
 
     public static final String SO_CODE = "so_code";
-
-    public static final String SOURCE_DETAIL_ID = "source_detail_Id";
 
     public static final String PAYMENT_NO = "payment_no";
 

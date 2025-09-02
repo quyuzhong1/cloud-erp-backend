@@ -1,26 +1,28 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.AttachDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.CustomerCreditApplyEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.CustomerCreditStatusEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerCreditApplyMapper;
-import com.erp.server.oms.service.CustomerCreditApplyService;
+import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +75,15 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     @Resource
     private CustomerInfoService customerInfoService;
 
+    @Resource
+    private OmsAttachmentService omsAttachmentService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -88,6 +99,18 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         boolean save = super.save(customerCreditApplyEntity);
         if(!save) {
             throw new ServiceException("客户授信保存失败");
+        }
+        // 保存附件
+        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        List<AttachDTO> list = addDTO.getEvaluationAttachmentList();
+        if(CollectionUtils.isNotEmpty(list)){
+            list.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
+            omsAttachmentService.batchSaveOrUpdate(list, tableName.value() + "_evaluation");
+        }
+        List<AttachDTO> otherAttachmentList = addDTO.getOtherAttachmentList();
+        if(CollectionUtils.isNotEmpty(otherAttachmentList)){
+            otherAttachmentList.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
+            omsAttachmentService.batchSaveOrUpdate(otherAttachmentList, tableName.value() + "_other");
         }
 
         // 操作日志
@@ -118,13 +141,25 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         if(!save) {
             throw new ServiceException("客户授信保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 保存附件
+        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        List<AttachDTO> list = addOrUpdateDTO.getEvaluationAttachmentList();
+        if(CollectionUtils.isNotEmpty(list)){
+            list.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
+            omsAttachmentService.batchSaveOrUpdate(list, tableName.value() + "_evaluation");
+        }
+        List<AttachDTO> otherAttachmentList = addOrUpdateDTO.getOtherAttachmentList();
+        if(CollectionUtils.isNotEmpty(otherAttachmentList)){
+            otherAttachmentList.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
+            omsAttachmentService.batchSaveOrUpdate(otherAttachmentList, tableName.value() + "_other");
+        }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录客户授信日志数据，单号：【{}】", customerCreditApplyEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerCreditApplyEntity.getCode(), "客户授信");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, customerCreditApplyEntity, null, customerCreditApplyEntity.getId(), msg);
+        log.info("编辑 开始记录客户授信日志数据，单号：【{}】", customerCreditApplyEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), customerCreditApplyEntity.getCode(), "客户授信");
+
+        operateLogService.addModuleOperateLogByObj(old, customerCreditApplyEntity, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), customerCreditApplyEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -365,7 +400,6 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
     }
@@ -376,7 +410,6 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         CustomerCreditApplyDTO.ViewDTO data = BeanMapperUtils.map(CustomerCreditApplyDTO.ViewDTO.class, customerCreditApplyEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -405,6 +438,28 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.CREDIT_PERIOD.getType(),DictBasicTypeEnum.CREDIT_TYPE.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        List<DictBasicEntity> creditPeriodDictList = dictBasicMap.get(DictBasicTypeEnum.CREDIT_PERIOD.getType());
+        List<DictBasicEntity> creditTypeList = dictBasicMap.get(DictBasicTypeEnum.CREDIT_TYPE.getType());
+
+        String creditPeriodName = creditPeriodDictList.stream().filter(v->Objects.equals(v.getValue(), data.getPeriod())).map(DictBasicEntity::getName).findFirst().orElse("");
+        String creditTypeName = creditTypeList.stream().filter(v->Objects.equals(v.getValue(), data.getCreditType())).map(DictBasicEntity::getName).findFirst().orElse("");
+        data.setPeriodName(creditPeriodName);
+        data.setCreditTypeName(creditTypeName);
+        //查询测评表附件
+        TableName tableName = CustomerCreditApplyEntity.class.getDeclaredAnnotation(TableName.class);
+        List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(data.getId()),tableName.value() + "_evaluation");
+        List<AttachDTO> attachDTOList = BeanMapper.copyList(omsAttachmentEntities, AttachDTO.class);
+        data.setEvaluationAttachmentList(attachDTOList);
+
+        //查询其他附件
+        List<OmsAttachmentEntity> otherAttachment = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(data.getId()),tableName.value() + "_other");
+        List<AttachDTO> otherAttachDTOList = BeanMapper.copyList(otherAttachment, AttachDTO.class);
+        data.setOtherAttachmentList(otherAttachDTOList);
     }
 
     /**
@@ -456,10 +511,22 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
            return;
         }
 
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.CREDIT_TYPE.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        List<DictBasicEntity> creditTypeList = dictBasicMap.get(DictBasicTypeEnum.CREDIT_TYPE.getType());
+
+        List<String> saleUserIds = list.stream().map(CustomerCreditApplyDTO.ListDTO::getSaleUserId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+
         // 属性赋值
         for(CustomerCreditApplyDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+
+            String creditTypeName = creditTypeList.stream().filter(v->Objects.equals(v.getValue(), data.getCreditType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            data.setCreditTypeName(creditTypeName);
+            data.setCreditStatusName(CustomerCreditStatusEnum.getName(data.getCreditStatus()));
         }
     }
     /**

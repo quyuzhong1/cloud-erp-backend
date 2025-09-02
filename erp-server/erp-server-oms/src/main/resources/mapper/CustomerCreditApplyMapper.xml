@@ -45,7 +45,32 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.CustomerCreditApplyDTO$ListDTO">
-
+        select cca.id,
+               cca.code,
+               cca.customer_id as customerId,
+                ci.name as customerName,
+                cca.approve_status as approveStatus,
+                cca.credit_type as creditType,
+                cca.credit_status as creditStatus,
+                cca.credit_amount as creditAmount,
+                cca.currency,
+                cca.sale_user_id as saleUserId,
+                cca.create_user_name as createUserName,
+                cca.sale_org_id as saleOrgId,
+                cca.create_time as createTime,
+                cca.approve_time as approveTime,
+                ci.code as customerCode
+        from
+                     customer_credit_apply cca
+        inner join customer_info ci on cca.customer_id = ci.id
+        where
+        ${params.sqlMap.default}
+        and  cca.is_deleted = false
+            and ci.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

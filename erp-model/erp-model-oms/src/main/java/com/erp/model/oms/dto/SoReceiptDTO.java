@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -196,6 +198,10 @@ public class SoReceiptDTO implements Serializable {
         private String receiptAccount;
 
         /**
+         * 收款账号名称
+         */
+        private String receiptAccountName;
+        /**
          * 收款日期
          */
         private LocalDate receiptDate;
@@ -315,6 +321,18 @@ public class SoReceiptDTO implements Serializable {
         */
         private String customerId;
 
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
         /**
         * 币种
         */

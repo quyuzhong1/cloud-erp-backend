@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -101,6 +102,7 @@ public class CustomerCreditApplyController extends BaseController {
             menuCode = "oms:customerCreditApply:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<CustomerCreditApplyDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CustomerCreditApplyDTO.PagingParamDTO> dto) {
         return success(customerCreditApplyService.paging(dto));
     }

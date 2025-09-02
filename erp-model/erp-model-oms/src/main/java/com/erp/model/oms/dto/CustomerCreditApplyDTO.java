@@ -89,35 +89,48 @@ public class CustomerCreditApplyDTO implements Serializable {
         */
         private String customerId;
 
+
+        /**
+         * 客户编码
+         */
+        private String customerCode;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
         /**
         * 审核状态
         */
         private String approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
         * 审核时间
         */
         private LocalDateTime approveTime;
 
         /**
-        * 审核人id
-        */
-        private String approveUserId;
-
-        /**
-        * 审核人姓名
-        */
-        private String approveUserName;
-
-        /**
         * 授信类型
         */
         private String creditType;
+        /**
+         * 授信类型名称
+         */
+        private String creditTypeName;
 
         /**
         * 授信状态
         */
         private String creditStatus;
+
+        /**
+         * 授信状态名称
+         */
+        private String creditStatusName;
 
         /**
         * 授信额度
@@ -135,36 +148,25 @@ public class CustomerCreditApplyDTO implements Serializable {
         private String saleUserId;
 
         /**
+         * 销售员名称
+         */
+        private String saleUserName;
+
+        /**
         * 销售组织id
         */
         private String saleOrgId;
 
         /**
-        * 账期
-        */
-        private String period;
-
-        /**
-        * 贸易条款
-        */
-        private String tradeTerm;
-
-        /**
-        * 销售员部门
-        */
-        private String saleDeptId;
+         * 销售组织id名称
+         */
+        private String saleOrgName;
 
         /**
         * 审核备注
 
         */
         private String approveRemark;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
 
         /**
         * 创建时间
@@ -212,34 +214,18 @@ public class CustomerCreditApplyDTO implements Serializable {
         private String customerId;
 
         /**
-        * 审核状态
-        */
-        private String approveStatus;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
-
-        /**
-        * 审核人姓名
-        */
-        private String approveUserName;
-
+         * 客户名称
+         */
+        private String customerName;
         /**
         * 授信类型
         */
         private String creditType;
 
         /**
-        * 授信状态
-        */
-        private String creditStatus;
+         * 授信类型名称
+         */
+        private String creditTypeName;
 
         /**
         * 授信额度
@@ -252,37 +238,34 @@ public class CustomerCreditApplyDTO implements Serializable {
         private String currency;
 
         /**
-        * 销售员
-        */
-        private String saleUserId;
-
-        /**
-        * 销售组织id
-        */
-        private String saleOrgId;
-
-        /**
         * 账期
         */
         private String period;
 
         /**
+         * 账期名称
+         */
+        private String periodName;
+        /**
         * 贸易条款
         */
         private String tradeTerm;
 
-        /**
-        * 销售员部门
-        */
-        private String saleDeptId;
 
         /**
         * 审核备注
-
         */
         private String approveRemark;
 
+        /**
+         * 授信额度测评表
+         */
+        private List<AttachDTO> evaluationAttachmentList;
 
+        /**
+         * 其他附件
+         */
+        private List<AttachDTO> otherAttachmentList;
     }
 
     /**

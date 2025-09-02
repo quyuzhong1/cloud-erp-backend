@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -21,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -82,6 +84,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private BankAccountService bankAccountService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -456,6 +464,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getCustomerId());
+        if(ObjectUtil.isNotEmpty(customerInfo)) {
+            data.setCustomerName(customerInfo.getName());
+        }
+        data.setApproveStatusName(data.getApproveStatus().getName());
+
         //查询主记录附件
         TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
         List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(entity.getId()),tableName.value());
@@ -465,7 +479,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         //查询明细记录附件
         TableName detailTableName = SoReceiptDetailEntity.class.getDeclaredAnnotation(TableName.class);
         List<String> detailIds = detailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
-        List<OmsAttachmentEntity> detailAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(detailIds,tableName.value());
+        List<OmsAttachmentEntity> detailAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(detailIds,detailTableName.value());
         // 属性赋值
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
@@ -496,6 +510,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if(ObjectUtil.isNotEmpty(receiveMethod)) {
                 viewDTO.setDictReceiptMethodName(receiveMethod.getName());
             }
+            detailViewList.add(viewDTO);
         }
         data.setDetailList(detailViewList);
     }
@@ -554,7 +569,11 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
-
+        List<String> receiveAccountList = list.stream().map(SoReceiptDTO.ListDTO::getReceiptAccount).filter(org.apache.commons.lang3.StringUtils::isNotBlank).collect(Collectors.toList());
+        List<BankAccountEntity> bankAccountList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(receiveAccountList)) {
+            bankAccountList = bankAccountService.listByIds(receiveAccountList);
+        }
         // 收款方式
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         for(SoReceiptDTO.ListDTO data : list) {
@@ -564,6 +583,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 data.setDictReceiptMethodName(receiveMethod.getName());
             }
             data.setIsPostedStr(ObjectUtil.isNotEmpty(data.getIsPosted()) && data.getIsPosted() ? "是" : "否");
+            BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), data.getReceiptAccount())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
+                data.setReceiptAccountName(bankAccountEntity.getAccountName());
+            }
         }
     }
     /**
