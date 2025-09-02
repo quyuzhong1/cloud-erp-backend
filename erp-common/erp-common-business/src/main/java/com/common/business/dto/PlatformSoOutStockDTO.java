@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -40,7 +41,22 @@ public class PlatformSoOutStockDTO extends UniqueDto {
     private String country;
 
     /**
+     * 销售渠道
+     */
+    private String salesChannel;
+
+    /**
      * 明细列表
      */
     private List<PlatformSoOutStockDetailDTO> detailList;
+
+    /**
+     * 是否是多渠道订单
+     */
+    public boolean hasMultiChannel() {
+        if (StringUtils.isBlank(this.getSalesChannel())){
+            return false;
+        }
+        return this.getSalesChannel().contains("Non") || this.getPlatformCode().contains("S");
+    }
 }

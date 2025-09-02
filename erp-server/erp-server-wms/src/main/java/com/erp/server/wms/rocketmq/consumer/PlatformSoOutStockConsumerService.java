@@ -103,6 +103,12 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 亚马逊物流销售消费服务
         log.info("[销售出库单] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformSoOutStockDTO dto = JSONUtil.toBean(ext.toString(), PlatformSoOutStockDTO.class);
+        // 多渠道处理
+        if (dto.hasMultiChannel()){
+            // TODO 处理多渠道出库
+            return ApiResult.success();
+        }
+
         // 查询销售订单是否存在?
         // 忽略店铺
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
