@@ -33,9 +33,9 @@ public class KingdeeApiUtilsFactory extends BasePooledObjectFactory<KingdeeApiUt
     @Override
     public KingdeeApiUtils create() throws Exception {
         // 实现线程安全避免在高并发的场景下出现clientId重复导致无法创建连接的情况
-        KingdeeApiUtils KingdeeApiUtils = new KingdeeApiUtils(formId);
-        KingdeeApiUtils.setCreateTime(new Date());
-        return KingdeeApiUtils;
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(formId);
+        kingdeeApiUtils.setCreateTime(new Date());
+        return kingdeeApiUtils;
     }
 
     /**
@@ -46,8 +46,8 @@ public class KingdeeApiUtilsFactory extends BasePooledObjectFactory<KingdeeApiUt
      * @return
      */
     @Override
-    public PooledObject<KingdeeApiUtils> wrap(KingdeeApiUtils KingdeeApiUtils) {
-        return new DefaultPooledObject<>(KingdeeApiUtils);
+    public PooledObject<KingdeeApiUtils> wrap(KingdeeApiUtils kingdeeApiUtils) {
+        return new DefaultPooledObject<>(kingdeeApiUtils);
     }
 
     /**
@@ -58,7 +58,6 @@ public class KingdeeApiUtilsFactory extends BasePooledObjectFactory<KingdeeApiUt
      */
     @Override
     public void destroyObject(PooledObject<KingdeeApiUtils> p) throws Exception {
-    	KingdeeApiUtils object = p.getObject();
         super.destroyObject(p);
     }
 

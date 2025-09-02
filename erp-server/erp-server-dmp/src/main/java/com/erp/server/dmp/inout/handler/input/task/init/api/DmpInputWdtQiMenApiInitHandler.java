@@ -82,13 +82,17 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			Class<?> paramsClass = Class.forName(className + "$Params");
 			Object params = paramsClass.newInstance();
 			for(Map.Entry<String , Object> parse: parseObject.entrySet()) {
+				String key = parse.getKey();
+				if(key.startsWith("dmp")) {
+					continue;
+				}
 				Object value = parse.getValue();
 				Method paramsMethod = null;
 				try {
-					paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(parse.getKey()), value.getClass());
+					paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(key), value.getClass());
 				} catch (NoSuchMethodException e) {
 					if(value instanceof Integer) {
-						paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(parse.getKey()), Long.class);
+						paramsMethod = paramsClass.getMethod("set" + StringUtils.capitalize(key), Long.class);
 						value = Long.valueOf((Integer) value);
 					}else {
 						throw e;
