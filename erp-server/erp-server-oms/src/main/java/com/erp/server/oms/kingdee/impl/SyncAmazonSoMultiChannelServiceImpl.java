@@ -70,31 +70,31 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoMultiChannelEntity entity, String operate) {
         //生成任务
-    	if(SyncOperateEnum.OPERATE_ADD.getCode().equals(operate)) {
-    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
-    	}else {
+        if (SyncOperateEnum.OPERATE_ADD.getCode().equals(operate)) {
+            return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+        } else {
             throw new ServiceException("操作类型【{}】不支持同步亚马逊", operate);
         }
     }
 
 
     /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
      * @param entity
      * @param operate
      * @param resultMap
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
      */
-    private DmpPushTaskEntity saveTask (SoMultiChannelEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+    private DmpPushTaskEntity saveTask(SoMultiChannelEntity entity, String operate, Map<String, Object> resultMap) {
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_MULTI_CHANNEL.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_MULTI_CHANNEL.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
             taskFeignDTO.setSourceId(entity.getId());
             taskFeignDTO.setSourceCode(entity.getCode());
@@ -105,10 +105,10 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             taskFeignDTO.setTargetPlatformName(PlatformEnum.AMAZON.getDesc());
             taskFeignDTO.setSyncOperate(operate);
-           return dmpMqFeign.saveTask(taskFeignDTO);
+            return dmpMqFeign.saveTask(taskFeignDTO);
         }
-       
-    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setSourceId(entity.getId());
         omsPushMsgEntity.setSourceCode(entity.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
@@ -116,82 +116,82 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         omsPushMsgEntity.setTargetPlatform(PlatformEnum.AMAZON.getName());
         omsPushMsgEntity.setSyncOperate(operate);
         omsPushMsgService.save(omsPushMsgEntity);
-        
+
         return null;
     }
 
 
-	@Override
-	public Map<String, Object> newSyncDataToKingdee(SoMultiChannelEntity entity, String operate) {
-		String soId = entity.getSoId();
+    @Override
+    public Map<String, Object> newSyncDataToKingdee(SoMultiChannelEntity entity, String operate) {
+        String soId = entity.getSoId();
         SoB2cEntity soB2cEntity = CharSequenceUtil.isNotBlank(soId) ? soB2cService.getById(soId) : null;
-        if (Objects.isNull(soB2cEntity)){
+        if (Objects.isNull(soB2cEntity)) {
             throw new ServiceException("未找到销售订单【{}】信息", entity.getSoCode());
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(soId);
-        if (Objects.isNull(soB2cReceiverEntity)){
+        if (Objects.isNull(soB2cReceiverEntity)) {
             throw new ServiceException("未找到销售订单【{}】收货人信息", entity.getSoCode());
         }
         List<SoMultiChannelDetailEntity> detailList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        if (CollectionUtils.isEmpty(detailList)){
+        if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("未找到多渠道订单【{}】明细信息", entity.getCode());
         }
         Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("id",entity.getId());
-        resultMap.put("shopId",entity.getDeliveryShopId());
+        resultMap.put("id", entity.getId());
+        resultMap.put("shopId", entity.getDeliveryShopId());
 //        resultMap.put("marketplaceId",entity.getDeliveryShopId());
-        if (CharSequenceUtil.isBlank(entity.getDeliveryCode())){
+        if (CharSequenceUtil.isBlank(entity.getDeliveryCode())) {
             throw new ServiceException("未找到多渠道订单【{}】发货单号", entity.getDeliveryCode());
         }
-        resultMap.put("sellerFulfillmentOrderId",entity.getDeliveryCode());
+        resultMap.put("sellerFulfillmentOrderId", entity.getDeliveryCode());
         String displayableOrderId = CharSequenceUtil.isNotBlank(entity.getPlatformCode()) ? entity.getPlatformCode() : entity.getSoCode();
-        if (CharSequenceUtil.isBlank(displayableOrderId)){
+        if (CharSequenceUtil.isBlank(displayableOrderId)) {
             throw new ServiceException("亚马逊订单编号不能为空");
         }
         resultMap.put("displayableOrderId", displayableOrderId);
         LocalDateTime createTime = entity.getCreateTime();
         //默认订单的创建时间，统一需要转换成0时区
         resultMap.put("displayableOrderDate", DateUtil.plus8SameUtcOffset(createTime).toString());
-        resultMap.put("displayableOrderComment",CharSequenceUtil.isNotBlank(entity.getRemark())?entity.getRemark():entity.getDeliveryCode());
+        resultMap.put("displayableOrderComment", CharSequenceUtil.isNotBlank(entity.getRemark()) ? entity.getRemark() : entity.getDeliveryCode());
         String logisticsChannelId = entity.getLogisticsChannelId();
-        if (CharSequenceUtil.isBlank(logisticsChannelId)){
+        if (CharSequenceUtil.isBlank(logisticsChannelId)) {
             throw new ServiceException("未找到配送服务");
         }
         LogisticsChannelEntity channel = logisticsFeign.getChannelById(logisticsChannelId);
-        if (Objects.isNull(channel)){
+        if (Objects.isNull(channel)) {
             throw new ServiceException("未找到物流渠道【{}】信息", entity.getLogisticsChannelName());
         }
         //配送服务
-        resultMap.put("shippingSpeedCategory",channel.getCode());
+        resultMap.put("shippingSpeedCategory", channel.getCode());
         //配送方式
-        resultMap.put("fulfillmentPolicy",entity.getShippingMethod());
+        resultMap.put("fulfillmentPolicy", entity.getShippingMethod());
         //配送地址
         HashMap<String, Object> addressMap = new HashMap<>();
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getReceiverName())){
+        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getReceiverName())) {
             throw new ServiceException("收货人姓名不能为空");
         }
-        addressMap.put("name",soB2cReceiverEntity.getReceiverName());
-        if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFirstAddress())){
+        addressMap.put("name", soB2cReceiverEntity.getReceiverName());
+        if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFirstAddress())) {
             addressMap.put("addressLine1", soB2cReceiverEntity.getFirstAddress());
-        }else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getSecondAddress())){
+        } else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getSecondAddress())) {
             addressMap.put("addressLine1", soB2cReceiverEntity.getSecondAddress());
-        }else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFullAddress())){
+        } else if (CharSequenceUtil.isNotBlank(soB2cReceiverEntity.getFullAddress())) {
             addressMap.put("addressLine1", soB2cReceiverEntity.getFullAddress());
         }
         addressMap.put("addressLine2", soB2cReceiverEntity.getSecondAddress());
         addressMap.put("addressLine3", soB2cReceiverEntity.getFullAddress());
         addressMap.put("city", soB2cReceiverEntity.getCityName());
         addressMap.put("districtOrCounty", soB2cReceiverEntity.getDistrictName());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getProvinceName())){
+        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getProvinceName())) {
             throw new ServiceException("收货人州省不能为空");
         }
         addressMap.put("stateOrRegion", soB2cReceiverEntity.getProvinceName());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getPostCode())){
+        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getPostCode())) {
             throw new ServiceException("收货人邮编不能为空");
         }
         addressMap.put("postalCode", soB2cReceiverEntity.getPostCode());
-        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getCountry())){
+        if (CharSequenceUtil.isBlank(soB2cReceiverEntity.getCountry())) {
             throw new ServiceException("收货人国家不能为空");
         }
         addressMap.put("countryCode", soB2cReceiverEntity.getCountry());
@@ -199,22 +199,27 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
         resultMap.put("destinationAddress", addressMap);
 
         List<HashMap<String, Object>> itemList = new ArrayList<>();
-        detailList.forEach(detail -> {
-                    HashMap<String, Object> itemMap = new HashMap<>();
-                    itemMap.put("sellerSku", detail.getPlatformSkuNo());
-                    itemMap.put("sellerFulfillmentOrderItemId", detail.getSoDetailId());
-                    itemMap.put("quantity", detail.getQty());
-                    itemMap.put("fulfillmentNetworkSku", detail.getFnSku());
-                    soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {
-                        HashMap<String, Object> perUnitDeclaredValue = new HashMap<>();
-                        perUnitDeclaredValue.put("currencyCode", e.getCurrency());
-                        perUnitDeclaredValue.put("value", e.getPrice());
-                        itemMap.put("perUnitDeclaredValue", perUnitDeclaredValue);
-                    });
-                    itemList.add(itemMap);
-                });
+        for (int i = 0; i < detailList.size(); i++) {
+            SoMultiChannelDetailEntity detail = detailList.get(i);
+            HashMap<String, Object> itemMap = new HashMap<>();
+            itemMap.put("sellerSku", detail.getPlatformSkuNo());
+            itemMap.put("sellerFulfillmentOrderItemId", entity.getDeliveryCode() + "_" + i);
+            itemMap.put("quantity", detail.getQty());
+            itemMap.put("fulfillmentNetworkSku", detail.getFnSku());
+            soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {
+                HashMap<String, Object> perUnitDeclaredValue = new HashMap<>();
+                perUnitDeclaredValue.put("currencyCode", e.getCurrency());
+                perUnitDeclaredValue.put("value", e.getPrice().toString());
+                itemMap.put("perUnitDeclaredValue", perUnitDeclaredValue);
+            });
+            itemList.add(itemMap);
+        }
         resultMap.put("items", itemList);
+        HashMap<String, String> featureConstraintsMap = new HashMap<>();
+        featureConstraintsMap.put("featureName", "BLANK_BOX");
+        featureConstraintsMap.put("featureFulfillmentPolicy", "NotRequired");
+        resultMap.put("featureConstraints", Collections.singletonList(featureConstraintsMap));
         return resultMap;
-	}
+    }
 
 }
