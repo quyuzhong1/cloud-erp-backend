@@ -147,7 +147,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("多渠道订单主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】卖家订单编号【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单", soMultiChannelEntity.getCode(), soMultiChannelEntity.getDeliveryCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】卖家订单编号【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单", soMultiChannelEntity.getDeliveryCode(), soMultiChannelEntity.getDeliveryCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "新增操作");
         //新增明细（如果有明细的话）
         List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = soMultiChannelDetailService.addDetail(soMultiChannelEntity, addDTO.getDetailList());
@@ -226,8 +226,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-        log.info("编辑 开始记录多渠道订单主单日志数据，单号：【{}】", soMultiChannelEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelEntity.getCode(), "多渠道订单主单");
+        log.info("编辑 开始记录多渠道订单主单日志数据，单号：【{}】", soMultiChannelEntity.getDeliveryCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soMultiChannelEntity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), msg);
         return Boolean.TRUE;
@@ -306,9 +306,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录多渠道订单主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), OperationTypeEnum.SUBMIT);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -348,11 +348,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单", approveType.getName(), dto.getComment());
         //此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
@@ -394,17 +394,18 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
+        Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getDeliveryCode()), "反审核取消同步"));
         if (!b) {
             throw new ServiceException("反审核取消亚马逊订单同步失败");
         }
+
         //不通过发起拦截
         deliveryIntercept(entity, true, false);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), OperationTypeEnum.DISAPPROVE);
     }
 
     private Boolean validateDisApprove(SoMultiChannelEntity entity) {
@@ -412,7 +413,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+        // 只允许创建中和创建失败允许反审核
+//        if (!Objects.equals(entity.getCreateStatus(), CreateStatusEnum.CREATING.getCode()) && !Objects.equals(entity.getBillStatus(), CreateStatusEnum.FAILED.getCode())) {
+//            throw new ServiceException("只允许创建中和创建失败允许反审核");
+//        }
         return true;
     }
 
@@ -431,9 +435,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除多渠道订单主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getCode(), "删除多渠道订单主单数据");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getDeliveryCode(), "删除多渠道订单主单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), OperationTypeEnum.DELETE);
     }
 
     /**
@@ -445,7 +449,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     public BatchResultDTO cancelProcess(String id) {
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
@@ -456,16 +460,16 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "多渠道订单主单");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SO_MULTI_CHANNEL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -562,7 +566,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Override
     public BatchResultDTO reCreate(SoMultiChannelEntity entity) {
         if (!(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()) && (CreateStatusEnum.FAILED.getCode().equals(entity.getCreateStatus()) || CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())))) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "只允许审核通过，创建失败或待创建的单据重新创建");
+            return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "只允许审核通过，创建失败或待创建的单据重新创建");
         }
         // 创建亚马逊订单
         sendPusTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_ADD.getCode());
@@ -574,17 +578,19 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
                 .set(SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_APPROVING.getCode())
                 .eq(SoB2cEntity::getId, entity.getSoId()).update();
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "重新创建成功");
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "重新创建成功");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate) {
-        if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isNotBlank(entity.getSoId())) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截作废成功");
+        //重新查询订单信息
+        entity = this.getById(entity.getId());
+        if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isBlank(entity.getSoId())) {
+            return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "订单状态已作废，不能发货拦截");
+            return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "订单状态已作废，不能发货拦截");
         }
         if (CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus()) && isCancel) {
             AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
@@ -592,12 +598,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             try {
                 CancelFulfillmentOrderResponse cancelFulfillmentOrderResponse = api.cancelFulfillmentOrder(entity.getDeliveryCode());
                 if (Objects.isNull(cancelFulfillmentOrderResponse)) {
-                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), "亚马逊取消订单失败：接口返回为空");
+                    return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败：接口返回为空");
                 }
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{}", entity.getDeliveryCode()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
             } catch (ApiException | LWAException e) {
                 log.error("亚马逊发货拦截异常：", e);
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "亚马逊取消订单失败" + e.getMessage());
+                return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
         if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
@@ -619,7 +625,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             soB2cService.lambdaUpdate()
                     .set(SoB2cEntity::getMultiChannelType, "")
                     .set(SoB2cEntity::getAbnormalType, SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode())
-                    .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode())
+                    .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())
                     .set(SoB2cEntity::getIsIntercept, Boolean.FALSE)
                     .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
                     .eq(SoB2cEntity::getId, entity.getSoId()).update();
@@ -631,7 +637,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截作废成功");
+        return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
     }
 
     @Override

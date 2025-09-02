@@ -31,6 +31,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
+import com.erp.server.oms.query.SoMultiChannelQueryHandler;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cService;
 import com.erp.server.oms.service.SoMultiChannelService;
@@ -129,7 +130,7 @@ public class SoMultiChannelController extends BaseController {
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoMultiChannelQueryHandler.class)
     public ApiResult<PagingVO<SoMultiChannelDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return success(soMultiChannelService.paging(dto));
     }
@@ -187,17 +188,17 @@ public class SoMultiChannelController extends BaseController {
         Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
+            SoMultiChannelEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                submit = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 提交失败");
+                resultDTOS.add(submit);
+                continue;
+            }
             try {
                 submit = soMultiChannelService.submit(id);
             } catch (Exception e) {
                 log.error("多渠道订单主单 提交审核失败", e);
-                SoMultiChannelEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 提交失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -236,7 +237,7 @@ public class SoMultiChannelController extends BaseController {
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -276,7 +277,7 @@ public class SoMultiChannelController extends BaseController {
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }
@@ -317,7 +318,7 @@ public class SoMultiChannelController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -351,7 +352,7 @@ public class SoMultiChannelController extends BaseController {
                 deleteResult = soMultiChannelService.reCreate(entity);
             } catch (Exception e) {
                 log.error("多渠道订单主单重新创建失败", e);
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -391,7 +392,7 @@ public class SoMultiChannelController extends BaseController {
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }
