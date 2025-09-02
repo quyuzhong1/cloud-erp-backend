@@ -3,6 +3,9 @@ import com.erp.model.wms.entity.SampleRecipientDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleRecipientDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -32,5 +35,14 @@ public interface SampleRecipientDetailService extends SuperService<SampleRecipie
     */
     Boolean update(SampleRecipientDetailDTO.UpdateDTO dto);
 
+    /**
+     * 导入Excel
+     * @author wuhaotian
+     * @date: 2025-09-01
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    SampleRecipientDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
 }
