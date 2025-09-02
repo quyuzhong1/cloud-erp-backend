@@ -467,6 +467,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getCustomerId());
         if(ObjectUtil.isNotEmpty(customerInfo)) {
             data.setCustomerName(customerInfo.getName());
+            data.setSalesOrgId(customerInfo.getUseOrgId());
         }
         data.setApproveStatusName(data.getApproveStatus().getName());
 

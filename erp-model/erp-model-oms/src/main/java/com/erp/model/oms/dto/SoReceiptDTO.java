@@ -312,6 +312,10 @@ public class SoReceiptDTO implements Serializable {
         private String  id;
 
         /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
         * 单据编码
         */
         private String code;
