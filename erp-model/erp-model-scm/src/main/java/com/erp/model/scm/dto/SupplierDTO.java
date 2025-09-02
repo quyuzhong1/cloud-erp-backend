@@ -13,6 +13,8 @@ import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -1269,5 +1271,34 @@ public class SupplierDTO implements Serializable {
         //校验数据枚举类型
         @StateEnumValue(strValues = {"waitSubmit","approveIng","reject","approve"}, message = "审核类型有误")
         private ApproveStatusEnum approveStatus;
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddPlantAddrDTO {
+
+        /**
+         * 国家集合
+         */
+        private  List<DictCountryEntity> countylist;
+        /**
+         * 城市集合
+         */
+        private List<DictCityEntity> cityList;
+        /**
+         * 工厂所在地，只取最后一级
+         */
+        private String plantAddr;
+        /**
+         * 错误信息
+         */
+        private  List<String> errorMsgList;
+        /**
+         * 是否更新
+         */
+        private Boolean isUpdatePart;
     }
 }
