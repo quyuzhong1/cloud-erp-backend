@@ -166,6 +166,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private SoReceiptService soReceiptService;
 
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
@@ -878,7 +880,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
-
         //虚拟仓库存
         List<String> virtualWarehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
@@ -1109,6 +1110,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
+            //剩余收款金额
+            item.setRemainReceiveAmount(item.getOrderAmount().subtract(item.getReceiveAmount()));
         }
 
 

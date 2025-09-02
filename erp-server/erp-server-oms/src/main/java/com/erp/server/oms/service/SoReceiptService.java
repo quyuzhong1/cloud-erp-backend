@@ -144,4 +144,11 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     Boolean approveEnd(ApproveOneDTO dto, SoReceiptEntity entity);
 
     List<SoReceiptDTO.SoInfoAndReceiptDTO> listSoReceiptBySoCode(SoReceiptDTO.SoSearchDTO dto);
+
+    /**
+     * 通过销售订单id查询收款金额
+     * @param soIds
+     * @return
+     */
+    List<SoReceiptDTO.AmountDTO> queryAmountBySoIds(List<String> soIds);
 }

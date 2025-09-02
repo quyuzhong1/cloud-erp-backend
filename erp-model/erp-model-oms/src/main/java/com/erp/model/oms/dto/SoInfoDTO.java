@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -93,6 +94,11 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
 
         /**
          * 军区id
@@ -463,6 +469,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal receiveAmount;
 
+        /**
+         * 剩余收款金额
+         */
+        private BigDecimal remainReceiveAmount;
         /**
          * 贸易条款
          */

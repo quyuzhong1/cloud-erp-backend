@@ -34,6 +34,19 @@ import java.util.Map;
 public class SoReceiptDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AmountDTO {
+
+        private String soId;
+
+        private String soCode;
+
+        private BigDecimal receiptAmount;
+
+    }
+
     /**
      * 状态统计
      */

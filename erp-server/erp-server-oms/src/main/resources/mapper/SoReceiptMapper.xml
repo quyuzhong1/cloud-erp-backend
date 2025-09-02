@@ -133,5 +133,19 @@
             </foreach>
         </if>
     </select>
+    <select id="queryAmountBySoIds" resultType="com.erp.model.oms.dto.SoReceiptDTO$AmountDTO">
+        select srd.so_code,
+               srd.so_id,
+            sum(srd.receipt_amount) as receiptAmount
+        from so_receipt sr
+                 inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        where sr.is_deleted = false
+          and sr.approve_status = 'approved'
+        and srd.so_id in
+        <foreach collection="soIds" item="soId" open="(" separator="," close=")">
+            #{soId}
+        </foreach>
+        group by srd.so_code,srd.so_id
+    </select>
 
 </mapper>

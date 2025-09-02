@@ -22,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -429,6 +428,16 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
         return soInfoAndReceiptDTOList;
     }
+
+    @Override
+    public List<SoReceiptDTO.AmountDTO> queryAmountBySoIds(List<String> soIds) {
+
+        if(CollectionUtils.isNotEmpty(soIds)){
+            return baseMapper.queryAmountBySoIds(soIds);
+        }
+        return Collections.emptyList();
+    }
+
 
     @Override
     public SoReceiptDTO.ViewDTO view(String id) {
