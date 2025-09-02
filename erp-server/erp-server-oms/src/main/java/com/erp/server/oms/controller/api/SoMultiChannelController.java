@@ -1,17 +1,28 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
@@ -22,31 +33,18 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.SoMultiChannelService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.SoMultiChannelService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.SoMultiChannelDTO;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-import com.erp.model.oms.entity.SoMultiChannelEntity;
 
 /**
  * 多渠道订单主表
@@ -103,9 +101,10 @@ public class SoMultiChannelController extends BaseController {
 //    }
 
     /**
-    * 获取状态统计
-    * @return
-    */
+     * 获取状态统计
+     *
+     * @return
+     */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -113,16 +112,17 @@ public class SoMultiChannelController extends BaseController {
             tableAlias = "smc"
     )
     public ApiResult<List<SoMultiChannelDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-       return success(soMultiChannelService.tabList(dto));
+        return success(soMultiChannelService.tabList(dto));
     }
 
     /**
-    * 列表查询
-    * @author zdy
-    * @date: 2025-08-20
-    * @param dto
-    * @return ApiResult<PagingVO<SoMultiChannelDTO.ListDTO>>
-    */
+     * 列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < SoMultiChannelDTO.ListDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -166,12 +166,13 @@ public class SoMultiChannelController extends BaseController {
 //    }
 
     /**
-    * 提交审核
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 提交审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -181,15 +182,15 @@ public class SoMultiChannelController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "多渠道订单主表提交审核")
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
-		Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
+        Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
                 submit = soMultiChannelService.submit(id);
-            }catch (Exception e){
-                log.error("多渠道订单主单 提交审核失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单主单 提交审核失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 提交失败");
@@ -204,12 +205,13 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
-    * 审核
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -219,15 +221,15 @@ public class SoMultiChannelController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "多渠道订单主表审核")
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
-		Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
+        Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = soMultiChannelService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("多渠道订单主单审核失败",e);
+                approveResult = soMultiChannelService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+            } catch (Exception e) {
+                log.error("多渠道订单主单审核失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 审核失败");
@@ -242,12 +244,13 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 反审核
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -257,16 +260,16 @@ public class SoMultiChannelController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "多渠道订单主表反审核")
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
-		Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
+        Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = soMultiChannelService.disApprove(id);
-            }catch (Exception e){
-                log.error("多渠道订单主单反审核失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单主单反审核失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     disApproveResult = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 反审核失败");
@@ -282,12 +285,13 @@ public class SoMultiChannelController extends BaseController {
 
 
     /**
-    * 删除
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 删除
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -297,16 +301,16 @@ public class SoMultiChannelController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "多渠道订单主表删除")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
-		Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
+        Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = soMultiChannelService.delete(id);
-            }catch (Exception e){
-                log.error("多渠道订单主单删除失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单主单删除失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 删除失败");
@@ -322,10 +326,11 @@ public class SoMultiChannelController extends BaseController {
 
     /**
      * 重新创建
-     * @author zdy
-     * @date:  2025-08-20
+     *
      * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
      */
     @PostMapping("/reCreate")
     @LogAction(value = LogActionEnum.UPDATE, desc = "多渠道订单重新创建")
@@ -344,8 +349,8 @@ public class SoMultiChannelController extends BaseController {
             }
             try {
                 deleteResult = soMultiChannelService.reCreate(entity);
-            }catch (Exception e){
-                log.error("多渠道订单主单重新创建失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单主单重新创建失败", e);
                 deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
@@ -354,12 +359,13 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
-    * 撤销
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
+     * 撤销
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -369,7 +375,7 @@ public class SoMultiChannelController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "多渠道订单主表撤销")
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
         Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
@@ -377,8 +383,8 @@ public class SoMultiChannelController extends BaseController {
             BatchResultDTO cancelResult;
             try {
                 cancelResult = soMultiChannelService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("多渠道订单主单撤回流程失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单主单撤回流程失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "多渠道订单主单不存在, 撤回流程失败");
@@ -393,12 +399,13 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
-    * 详情
-    * @author zdy
-    * @date:  2025-08-20
-    * @param id
-    * @return ApiResult<SoMultiChannelDTO.ViewDTO>>
-    */
+     * 详情
+     *
+     * @param id
+     * @return ApiResult<SoMultiChannelDTO.ViewDTO>>
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
@@ -411,13 +418,14 @@ public class SoMultiChannelController extends BaseController {
     }
 
     /**
-    * 导出Excel数据
-    * @author zdy
-    * @date:  2025-08-20
-    * @param dto
-    * @param response
-    * @return
-    */
+     * 导出Excel数据
+     *
+     * @param dto
+     * @param response
+     * @return
+     * @author zdy
+     * @date: 2025-08-20
+     */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -425,23 +433,25 @@ public class SoMultiChannelController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "多渠道订单主表导出Excel数据")
-    public ApiResult<Boolean>  exportList(@RequestBody @Validated SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response) {
         soMultiChannelService.exportList(dto, response);
         return success(true);
     }
 
     /**
      * 创建多渠道订单弹窗
+     *
      * @return
      */
     @PostMapping("/listSoMultiChannel")
     public ApiResult<List<SoMultiChannelDTO.SoViewDTO>> listSoMultiChannel(@RequestBody @Validated SoMultiChannelDTO.IdsDTO idDTO) {
         List<String> ids = idDTO.getSoIds().stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        return success(soMultiChannelService.listSoMultiChannel(ids, idDTO.getDeliveryWarehouseId(),idDTO.getShopId()));
+        return success(soMultiChannelService.listSoMultiChannel(ids, idDTO.getDeliveryWarehouseId(), idDTO.getShopId()));
     }
 
     /**
      * 多渠道订单保存
+     *
      * @param dto
      * @return
      */
@@ -461,17 +471,17 @@ public class SoMultiChannelController extends BaseController {
                 continue;
             }
             ShopInfoEntity shopInfoEntity1 = shopInfoService.getById(soB2cEntity.getShopId());
-            if (Objects.nonNull(shopInfoEntity1)){
+            if (Objects.nonNull(shopInfoEntity1)) {
                 soB2cEntity.setShopName(shopInfoEntity1.getName());
             }
             try {
-                SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity,soB2cEntity,channelEntity);
+                SoMultiChannelDTO.AddDTO addDTO = soMultiChannelService.buildAddDTO(dto, id, shopInfoEntity, soB2cEntity, channelEntity);
                 BaseResultDTO.AddDTO add = soMultiChannelService.add(addDTO);
                 //自动提审
                 soMultiChannelService.submit(add.getId());
                 submit = BatchResultDTO.success(add.getId(), add.getCode());
-            }catch (Exception e){
-                log.error("多渠道订单保存失败",e);
+            } catch (Exception e) {
+                log.error("多渠道订单保存失败", e);
                 submit = BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
@@ -481,6 +491,7 @@ public class SoMultiChannelController extends BaseController {
 
     /**
      * 获取亚马逊多渠道订单列表
+     *
      * @param shopId
      * @return
      * @throws ApiException
@@ -499,6 +510,7 @@ public class SoMultiChannelController extends BaseController {
 
     /**
      * 获取亚马逊多渠道订单详情
+     *
      * @param shopId
      * @param orderId
      * @return
@@ -516,6 +528,7 @@ public class SoMultiChannelController extends BaseController {
 
     /**
      * 创建亚马逊多渠道订单
+     *
      * @param shopId
      * @param orderId
      * @return
@@ -523,24 +536,25 @@ public class SoMultiChannelController extends BaseController {
      * @throws LWAException
      */
     @PostMapping("/createFulfillmentOrder")
-    public ApiResult<ApiResponse<CreateFulfillmentOrderResponse>> createFulfillmentOrder(@RequestParam("shopId") String shopId,@RequestParam("orderId") String orderId) throws ApiException, LWAException {
+    public ApiResult<ApiResponse<CreateFulfillmentOrderResponse>> createFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.getByDeliveryCode(orderId);
         Map<String, Object> map = syncAmazonSoMultiChannelService.newSyncDataToKingdee(soMultiChannelEntity, SyncOperateEnum.OPERATE_ADD.getCode());
         System.out.println(JSONUtil.toJsonStr(map));
         // 初始化API
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
-        CreateFulfillmentOrderRequest body = JSONUtil.toBean(JSONUtil.toJsonStr(map),CreateFulfillmentOrderRequest.class);
+        CreateFulfillmentOrderRequest body = JSONUtil.toBean(JSONUtil.toJsonStr(map), CreateFulfillmentOrderRequest.class);
         try {
             ApiResponse<CreateFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.createFulfillmentOrderWithHttpInfo(body);
             return success(fulfillmentOrderWithHttpInfo);
-        }catch (ApiException e){
+        } catch (ApiException e) {
             return failure(e.getResponseBody());
         }
     }
 
     /**
      * 取消亚马逊多渠道订单
+     *
      * @param shopId
      * @param orderId
      * @return
