@@ -86,7 +86,7 @@ public class SampleRecipientDetailExcelListener extends AnalysisEventListener<Sa
                 if (recipientQty <= 0) {
                     errorMsgList.add("领用数量必须大于0");
                 } else {
-                    addDTO.setRecipientQty(recipientQty);
+                    addDTO.setQuantity(recipientQty);
                     // 默认已出库数量为0
                     addDTO.setDeliveryQty(0);
                 }

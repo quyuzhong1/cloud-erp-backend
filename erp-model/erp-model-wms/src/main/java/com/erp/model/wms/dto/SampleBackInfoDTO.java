@@ -119,11 +119,6 @@ public class SampleBackInfoDTO implements Serializable {
         private String code;
 
         /**
-        * 单据状态
-        */
-        private String status;
-
-        /**
         * 执行状态
         */
         private String execStatus;
@@ -173,10 +168,44 @@ public class SampleBackInfoDTO implements Serializable {
         private String orgId;
 
         /**
+        * 退回组织名称
+        */
+        private String orgName;
+
+        /**
         * 备注
         */
         private String remark;
 
+        /**
+        * 明细ID
+        */
+        private String detailId;
+
+        /**
+        * SKU编码
+        */
+        private String skuNo;
+
+        /**
+        * SKU ID
+        */
+        private String skuId;
+
+        /**
+        * 产品名称
+        */
+        private String productName;
+
+        /**
+        * 退回数量
+        */
+        private Integer qty;
+
+        /**
+        * 明细备注
+        */
+        private String detailRemark;
 
         /**
         * 审核状态名称
@@ -263,10 +292,6 @@ public class SampleBackInfoDTO implements Serializable {
         */
         private String code;
 
-        /**
-        * 单据状态
-        */
-        private String status;
 
         /**
         * 执行状态
@@ -326,6 +351,15 @@ public class SampleBackInfoDTO implements Serializable {
         * 明细列表
         */
         private List<SampleBackDetailDTO.ViewDTO> detailList;
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
 
 
     }
@@ -378,19 +412,16 @@ public class SampleBackInfoDTO implements Serializable {
         /**
         * 来源ID（关联样品领用单）
         */
-        @NotBlank(message = "来源ID不能为空")
         private String sourceId;
 
         /**
         * 来源单号（样品领用单号）
         */
-        @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
 
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
         /**

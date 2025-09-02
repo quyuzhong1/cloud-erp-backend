@@ -108,13 +108,16 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     */
     @TableField("warehouse_id")
     private String warehouseId;
-    @TableField("warehouse_name")
-    private String warehouseName;
     /**
     * 退回组织ID
     */
     @TableField("org_id")
     private String orgId;
+    /**
+     * 退回组织名称
+     */
+    @TableField("org_name")
+    private String orgName;
     /**
     * 备注
     */
@@ -161,6 +164,7 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     public static final String ORG_ID = "org_id";
 
     public static final String REMARK = "remark";
+    public static final String ORG_NAME = "org_name";
 
     @Override
     public Serializable pkVal() {

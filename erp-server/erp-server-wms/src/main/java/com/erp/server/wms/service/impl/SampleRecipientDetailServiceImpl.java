@@ -12,6 +12,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.wms.dto.SampleRecipientDetailDTO;
@@ -144,11 +145,11 @@ public class SampleRecipientDetailServiceImpl extends SuperServiceImpl<SampleRec
         List<SampleRecipientDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
         if (CollUtil.isNotEmpty(successList)) {
             //获取产品名称映射
-            List<String> skuIds = successList.stream().map(SampleRecipientDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-            List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIds);
-            Map<String, String> productNameMap = productList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductDTO::getSkuId, ProductDetailDTO.ProductDTO::getProductId, (o1, o2) -> o1));
+            List<String> skuIds = successList.stream().map(SampleRecipientDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
+            List<ProductDetailEntity> productList = plmTaskFeign.listBySkuNos(skuIds);
+            Map<String, String> productNameMap = productList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getName, (o1, o2) -> o1));
             for (SampleRecipientDetailDTO.AddDTO addDTO : successList) {
-                addDTO.setProductName(productNameMap.get(addDTO.getSkuId()));
+                addDTO.setProductName(productNameMap.get(addDTO.getSkuNo()));
             }
             importDTO.setSuccessList(successList);
         }

@@ -108,12 +108,11 @@ public class SampleBackDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
-        /**
-        * 主表ID（关联样品退回单）
-        */
-        @NotBlank(message = "主表ID（关联样品退回单）不能为空")
-        @Size(max = 19,message = "主表ID（关联样品退回单）最大长度不能超过19位")
-        private String mainId;
+//        /**
+//        * 主表ID（关联样品退回单）
+//        */
+//        @Size(max = 19,message = "主表ID（关联样品退回单）最大长度不能超过19位")
+//        private String mainId;
 
         /**
         * 来源明细ID

@@ -437,7 +437,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         // 计算合计数量
         int totalCount = list.stream().mapToInt(SampleRecipientDTO.TabListDTO::getCount).sum();
-        list.add(new SampleRecipientDTO.TabListDTO("all", totalCount));
+        list.add(0, new SampleRecipientDTO.TabListDTO("all", totalCount));
         
         return list;
     }

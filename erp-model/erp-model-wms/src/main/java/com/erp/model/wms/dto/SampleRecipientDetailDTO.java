@@ -2,9 +2,8 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -148,7 +147,7 @@ public class SampleRecipientDetailDTO implements Serializable {
         */
         @NotNull(message = "领用数量不能为空")
         @Min(value = 1, message = "领用数量不能小于1")
-        private Integer recipientQty;
+        private Integer quantity;
 
         /**
         * 已出库数量

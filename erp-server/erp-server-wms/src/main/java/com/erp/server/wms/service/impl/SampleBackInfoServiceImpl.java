@@ -50,6 +50,7 @@ import com.common.business.enums.ImportTypeEnum;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.Collections;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -105,6 +106,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private WarehouseService warehouseService;
 
     @Autowired
     private FileFeign fileFeign;
@@ -387,6 +391,13 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             })
             .collect(Collectors.toList());
         viewDTO.setDetailList(detailList);
+        // 查询相关的附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            viewDTO.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            viewDTO.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
         
         return viewDTO;
     }
@@ -550,7 +561,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
     private Boolean validateDisApprove(SampleBackInfoEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // TODO 下游盘点计划单反审核
@@ -724,11 +735,39 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
            return;
         }
 
+        // 获取所有仓库ID
+        List<String> warehouseIds = list.stream()
+                .map(SampleBackInfoDTO.ListDTO::getWarehouseId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 批量查询仓库信息
+        Map<String, String> warehouseNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(warehouseIds)) {
+            try {
+                List<WarehouseEntity> warehouseList = warehouseService.lambdaQuery()
+                        .in(WarehouseEntity::getId, warehouseIds)
+                        .list();
+                if (CollUtil.isNotEmpty(warehouseList)) {
+                    warehouseNameMap = warehouseList.stream()
+                            .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+                }
+            } catch (Exception e) {
+                log.warn("获取仓库信息失败，错误：{}", e.getMessage());
+            }
+        }
+
         // 属性赋值
         for(SampleBackInfoDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            
+            // 设置仓库名称
+            if (StrUtil.isNotBlank(data.getWarehouseId())) {
+                String warehouseName = warehouseNameMap.get(data.getWarehouseId());
+                data.setWarehouseName(warehouseName != null ? warehouseName : "");
+            }
         }
     }
     /**
@@ -746,7 +785,39 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     * 新增修改处理数据
     */
     private void handleData(SampleBackInfoEntity sampleBackInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 处理用户名
+        if (StrUtil.isNotBlank(sampleBackInfoEntity.getUserId())) {
+            try {
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(sampleBackInfoEntity.getUserId()));
+                if (CollUtil.isNotEmpty(userList)) {
+                    String userName = userList.stream()
+                            .filter(user -> user.getUserId().equals(sampleBackInfoEntity.getUserId()))
+                            .map(FindUserDTO::getUserName)
+                            .findFirst()
+                            .orElse("");
+                    sampleBackInfoEntity.setUserName(userName);
+                }
+            } catch (Exception e) {
+                log.warn("获取用户信息失败，用户ID：{}，错误：{}", sampleBackInfoEntity.getUserId(), e.getMessage());
+            }
+        }
+
+        // 处理组织名称
+        if (StrUtil.isNotBlank(sampleBackInfoEntity.getOrgId())) {
+            try {
+                List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(sampleBackInfoEntity.getOrgId()));
+                if (CollUtil.isNotEmpty(orgList)) {
+                    String orgName = orgList.stream()
+                            .filter(org -> org.getId().equals(sampleBackInfoEntity.getOrgId()))
+                            .map(BaseIdDTO.CodeDTO::getName)
+                            .findFirst()
+                            .orElse("");
+                    sampleBackInfoEntity.setOrgName(orgName);
+                }
+            } catch (Exception e) {
+                log.warn("获取组织信息失败，组织ID：{}，错误：{}", sampleBackInfoEntity.getOrgId(), e.getMessage());
+            }
+        }
     }
 
     // ==================== 台账流水构建器实现 ====================
@@ -896,25 +967,57 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         // 调用其他入库单服务的新增方法
         String otherInstockId = otherInstockService.add(addDTO);
+        if (StrUtil.isBlank(otherInstockId)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
         
         if (StrUtil.isNotBlank(otherInstockId)) {
-            // 获取生成的其他入库单实体，用于设置来源信息
+            // 设置来源字段到其他入库单主表
             OtherInstockEntity otherInstock = otherInstockService.getById(otherInstockId);
             if (otherInstock != null) {
-                // 设置来源信息
                 otherInstock.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
                 otherInstock.setSourceId(sampleBackInfo.getId());
                 otherInstock.setSourceCode(sampleBackInfo.getCode());
-                
-                // 更新来源信息
                 otherInstockService.updateById(otherInstock);
-                
-                log.info("样品退回单生成其他入库单成功，样品退回单号：{}，其他入库单号：{}", 
-                        sampleBackInfo.getCode(), otherInstock.getCode());
             }
-        } else {
-            log.error("样品退回单生成其他入库单失败，样品退回单号：{}", sampleBackInfo.getCode());
-            throw new ServiceException("样品退回单生成其他入库单失败");
+            
+            // 获取其他入库单明细列表
+            List<OtherInstockDetailEntity> otherInstockDetailEntities = otherInstockDetailService.listByMainId(otherInstockId);
+            
+            // 构建 skuId 到 sourceDetailId 的映射关系
+            Map<String, String> skuIdToSourceDetailIdMap = new HashMap<>();
+            for (SampleBackDetailEntity detail : detailList) {
+                skuIdToSourceDetailIdMap.put(detail.getSkuId(), detail.getId());
+            }
+            
+            // 批量更新其他入库单明细的 sourceDetailId 字段
+            List<OtherInstockDetailEntity> toUpdateDetails = new ArrayList<>();
+            for (OtherInstockDetailEntity otherInstockDetailEntity : otherInstockDetailEntities) {
+                String sourceDetailId = skuIdToSourceDetailIdMap.get(otherInstockDetailEntity.getSkuId());
+                if (sourceDetailId != null) {
+                    otherInstockDetailEntity.setSourceDetailId(sourceDetailId);
+                    toUpdateDetails.add(otherInstockDetailEntity);
+                }
+            }
+            
+            // 批量更新明细
+            if (!toUpdateDetails.isEmpty()) {
+                otherInstockDetailService.updateBatchById(toUpdateDetails);
+                log.info("成功更新其他入库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
+            }
+            
+            // 提交其他入库单
+            otherInstockService.submit(otherInstockId, Boolean.FALSE);
+            
+            // 审核通过其他入库单
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(Collections.singletonList(otherInstockId));
+            baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            baseApproveParamDTO.setComment("样品退回单自动审核通过");
+            otherInstockService.approve(otherInstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(),false);
+
+            log.info("样品退回单生成其他入库单并审核通过成功，样品退回单号：{}，其他入库单号：{}", 
+                    sampleBackInfo.getCode(), otherInstock.getCode());
         }
     }
 
