@@ -68,21 +68,19 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
             log.info("订单不存在，订单编号：{}",bean.getCode());
             return;
         }
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "更新亚马逊多渠道订单");
+        //订单状态和发货状态
+        soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
+        soMultiChannelEntity.setTrackNo(bean.getTrackNo());
+        soMultiChannelEntity.setBillStatus(bean.getOrderStatus());
+        soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus())?bean.getDeliveryStatus():"");
+        soMultiChannelService.updateById(soMultiChannelEntity);
+
         List<SoMultiChannelDetailEntity> detailEntityList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(soMultiChannelEntity.getId()));
         if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())){
             //订单已取消
             soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true);
         }else {
-            if (bean.getDeliveryStatus().equalsIgnoreCase(soMultiChannelEntity.getDeliveryStatus())){
-                return;
-            }
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "更新亚马逊多渠道订单");
-            //已发货
-            soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
-            soMultiChannelEntity.setTrackNo(bean.getTrackNo());
-            soMultiChannelEntity.setBillStatus(bean.getOrderStatus());
-            soMultiChannelEntity.setDeliveryStatus(bean.getDeliveryStatus());
-            soMultiChannelService.updateById(soMultiChannelEntity);
             //更新发货数量
             updateSoMultiChannelDetail(detailEntityList, detailList);
             if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())){

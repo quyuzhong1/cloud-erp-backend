@@ -254,7 +254,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             }
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> shopAccount.equals(e.getAccount()) && AuthStatusEnum.ALREADY.getCode().equals(e.getAuthStatus())).findFirst().orElse(null);
             if (Objects.isNull(shopInfoEntity)) {
-                throw new ServiceException("请先完成店铺授权后再执行物流授权");
+                throw new ServiceException("未找到【{}】平台店铺授权信息",LogisticsPlatformEnum.getDescByCode(logisticsPlatform));
             }
             shopAuthEntity = authEntityList.stream().filter(e -> shopInfoEntity.getId().equals(e.getShopId())).findFirst().orElse(null);
         }
