@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.dmp.entity.RuleConditionEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
@@ -86,6 +87,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY,keyName = "addDTO.mainId",waiteTime = 20)
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
         //记录是否已存在
         SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
