@@ -88,7 +88,8 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             BigDecimal allAmount = orderItemList.stream()
                     .filter(e-> null != e.getItemPrice() && null != e.getQuantityOrdered())
                     .filter(e-> null != e.getItemPrice().getAmount())
-                    .map(e -> new BigDecimal(e.getItemPrice().getAmount()).multiply(BigDecimal.valueOf(e.getQuantityOrdered())))
+                    .filter(e-> 0 != e.getQuantityOrdered())
+                    .map(e -> new BigDecimal(e.getItemPrice().getAmount()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal totalDiscount = orderItemList.stream()
