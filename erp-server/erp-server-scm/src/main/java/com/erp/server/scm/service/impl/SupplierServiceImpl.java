@@ -2009,6 +2009,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String platAddr = plantAddrList.stream().map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
             variablesMap.put("plantAddr", platAddr);
         }
+        //阶段
+        if (ObjectUtil.isNotEmpty(entity.getPhase())) {
+            variablesMap.put("phaseCode", entity.getPhase().getPhase());
+        }
         return variablesMap;
     }
 
