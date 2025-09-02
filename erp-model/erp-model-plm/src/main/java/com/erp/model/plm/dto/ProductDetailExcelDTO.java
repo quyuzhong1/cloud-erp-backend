@@ -158,6 +158,7 @@ public class ProductDetailExcelDTO {
     /**
      * 单位
      */
+    @FieldValid(fieldName = "单位", isNotBlank = true)
     private String unitName;
 
     /**
