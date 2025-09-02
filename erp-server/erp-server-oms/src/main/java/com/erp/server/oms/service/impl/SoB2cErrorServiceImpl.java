@@ -144,6 +144,8 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public String generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson,String code) {
+        //先删除所有同类型异常再添加
+        this.removeErrorOrder(mainId, type);
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
         soB2cErrorEntity.setType(type);

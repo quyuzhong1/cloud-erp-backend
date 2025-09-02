@@ -2189,7 +2189,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submitDelivery(String id, String channelId) {
         try {
-            this.autoOrderForecast(Collections.singletonList(id));
+            List<BatchResultDTO> batchResultDTOS = this.autoOrderForecast(Collections.singletonList(id));
+            //在提交发货中，清除异常订单报错
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            if (CollUtil.isNotEmpty(batchResultDTOS) && !batchResultDTOS.get(0).getSuccess()){
+                SoB2cErrorDTO.AddDTO dto = new SoB2cErrorDTO.AddDTO();
+                dto.setMainId(id);
+                dto.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                dto.setMessage(CharSequenceUtil.format("自动预报失败:{}", batchResultDTOS.get(0).getMsg()));
+                soB2cErrorService.add(dto);
+                return batchResultDTOS.get(0);
+            }
         }catch (Exception e){
             log.error("自动预报失败",e);
             throw new ServiceException("自动预报失败:{}",e.getMessage());
@@ -8605,8 +8615,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 existDTO.getIds().add(soB2cEntity.getId());
             }
         }
-        transferDeclareDTOList.forEach(soB2cService::orderForecast);
-        return new ArrayList<>();
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        transferDeclareDTOList.forEach(e ->{
+            List<BatchResultDTO> batchResultDTOS = soB2cService.orderForecast(e);
+            if (CollUtil.isNotEmpty(batchResultDTOS)){
+                batchResultDTOList.addAll(batchResultDTOS);
+            }
+        });
+        return batchResultDTOList;
     }
 
     @Override
