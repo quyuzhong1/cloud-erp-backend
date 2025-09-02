@@ -90,7 +90,7 @@ public abstract class DmpInputInitHandler extends DmpInputTaskHandler{
 				Integer limitSize = parseObject.getInteger("dmpLimitSize");
 				Integer intervalTime = parseObject.getInteger("dmpIntervalTime");
 				if(intervalTime == null) {
-					intervalTime = 120;
+					intervalTime = 300;
 				}
 				int size = dmpInputTaskInitDTOList.size();
 				if(limitSize != null && limitSize > 1 && size > limitSize) {
