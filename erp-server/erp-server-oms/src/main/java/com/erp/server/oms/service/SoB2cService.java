@@ -101,7 +101,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
       * @author Will
       * @date: 2023-08-18
       */
-    BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
+    ApproveResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
 
     /**
     * 审核
