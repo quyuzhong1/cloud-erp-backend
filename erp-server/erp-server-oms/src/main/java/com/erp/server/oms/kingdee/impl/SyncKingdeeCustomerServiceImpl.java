@@ -122,7 +122,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate) {
     	Map<String, Object> resultMap = null;
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {

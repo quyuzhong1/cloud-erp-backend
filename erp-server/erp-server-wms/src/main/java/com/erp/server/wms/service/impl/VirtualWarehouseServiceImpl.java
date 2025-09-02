@@ -95,7 +95,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO addDTO) {
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         BeanMapperUtils.copy(addDTO, virtualWarehouseEntity);
@@ -210,7 +210,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     /**
      * 修改
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(VirtualWarehouseDTO.UpdateDTO updateDTO) {

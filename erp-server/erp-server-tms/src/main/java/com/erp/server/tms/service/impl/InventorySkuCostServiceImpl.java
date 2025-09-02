@@ -271,7 +271,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateAndSubmit(InventorySkuCostDTO.UpdateDTO dto) {
         this.update(dto);
         this.submit(this.getById(dto.getId()));

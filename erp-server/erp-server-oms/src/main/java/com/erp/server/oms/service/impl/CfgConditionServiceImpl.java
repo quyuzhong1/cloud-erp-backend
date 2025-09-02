@@ -40,7 +40,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Resource
     private DictRuleConditionService dictRuleConditionService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(CfgConditionDTO.AddDTO addDTO) {

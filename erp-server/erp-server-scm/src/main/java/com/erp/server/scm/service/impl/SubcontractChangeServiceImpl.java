@@ -203,7 +203,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         operateLogService.batchAddModuleOperateLog("作废了一个委外变更单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "作废操作");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(SubcontractChangeDTO.AddDTO addDTO) {
@@ -291,7 +291,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
        operateLogService.batchAddModuleOperateLog("提交了一个委外变更单【%s】", ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "提交操作");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(SubcontractChangeDTO.AddDTO dto) {
@@ -301,7 +301,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         this.submit(Arrays.asList(id));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(SubcontractChangeDTO.UpdateDTO dto) {
@@ -311,7 +311,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         this.submit(Arrays.asList(dto.getId()));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approve(BaseApproveParamDTO dto) {
@@ -653,7 +653,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     }
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void disApprove(List<String> ids) {

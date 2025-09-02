@@ -72,7 +72,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     @Resource
     private CfgRuleInvoiceService cfgRuleInvoiceService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(CfgRuleInvoiceDTO.AddDTO addDTO) {

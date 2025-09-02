@@ -58,7 +58,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean saveOrUpdateBatchGroup(ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         if (CollectionUtils.isEmpty(groupList)) {
             throw new ServiceException(ApiError.ERROR_92000);

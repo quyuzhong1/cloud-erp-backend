@@ -111,7 +111,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(PoReturnEntity entity, String operate) {
     	if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             return null;

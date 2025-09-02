@@ -62,7 +62,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(WmsCartonSpecDTO.AddDTO addDTO) {

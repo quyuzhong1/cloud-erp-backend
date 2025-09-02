@@ -37,7 +37,7 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
     @Resource
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(TmsDeclareBillEntity tmsDeclareBillEntity, List<TmsDeclareBillDetailEntity> detailEntityList) {

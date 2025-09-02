@@ -74,7 +74,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         // 获取需要授权的店铺列表
         List<ShopInfoEntity> shopInfoEntityList = new ArrayList<>();
@@ -168,7 +168,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
@@ -281,7 +281,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelAuthorize(CancelAuthorizeDTO dto) {
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
         if (Objects.isNull(shopInfo)) {

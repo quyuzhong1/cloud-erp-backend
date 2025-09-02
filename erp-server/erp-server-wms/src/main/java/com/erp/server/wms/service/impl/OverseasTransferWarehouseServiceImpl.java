@@ -51,7 +51,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Resource
     private OverseasProviderService overseasProviderService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(OverseasTransferWarehouseDTO.AddDTO addDTO) {

@@ -84,7 +84,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Resource
     private DictBasicService dictBasicService;
 
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
 //    @Override
 //    public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
@@ -140,7 +140,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     @Resource
     private List<ThirdMappingStrategy> addStrategies;
 
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    @Transactional(rollbackFor = Exception.class)
 //    @Override
 //    public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
@@ -304,7 +304,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
 //        existMappingList.forEach(existMapping -> {
 //            // 操作日志
@@ -486,7 +486,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO batchAdd(ThirdMappingDTO.FeignMappingDTO feignMappingDTO) {
         //查询当前类型下所有的绑定数据
         List<ThirdMappingDTO.ThirdAddDTO> bindedList = baseMapper.getByThirdSysCode(feignMappingDTO.getThirdSysType(), feignMappingDTO.getType());

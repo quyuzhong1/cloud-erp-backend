@@ -116,7 +116,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity,Boolean isAddDetail) {

@@ -82,7 +82,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<DmpPushTaskEntity> syncDataToKingdee(BomInfoEntity entity,String operate) {
 
         //bom历史数据
