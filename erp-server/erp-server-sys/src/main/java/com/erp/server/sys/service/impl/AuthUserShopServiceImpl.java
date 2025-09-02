@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @Service
 public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper, AuthUserShopEntity> implements AuthUserShopService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AuthUserShopDTO.AddDTO addDTO) {

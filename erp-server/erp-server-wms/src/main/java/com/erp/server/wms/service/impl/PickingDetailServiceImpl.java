@@ -42,7 +42,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     private PickingListsService pickingListsService;
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PickingDetailDTO.CommonDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {

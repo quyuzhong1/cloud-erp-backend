@@ -94,7 +94,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO add(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
@@ -144,7 +144,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO addAndSubmit(CustomerB2bSellerChangeDTO.AddDTO addDTO) {
         BatchResultDTO batchResultDTO = service.add(addDTO);
         if(Boolean.FALSE.equals(batchResultDTO.getSuccess())){

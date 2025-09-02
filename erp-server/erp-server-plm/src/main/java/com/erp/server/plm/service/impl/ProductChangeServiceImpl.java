@@ -135,7 +135,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean add(AddChangeDTO dto) {
         ProductChangeEntity change = new ProductChangeEntity();
         String type = dto.getType();
@@ -267,7 +267,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         //获取到变更信息
         ProductChangeEntity entity = this.getById(dto.getId());
@@ -389,7 +389,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(String id) {
         ProductChangeEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
@@ -414,7 +414,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(String id, Boolean isProcess) {
         ProductChangeEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {

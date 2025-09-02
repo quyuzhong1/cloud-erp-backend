@@ -61,7 +61,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RemotePostcodeDTO.AddDTO addDTO) {

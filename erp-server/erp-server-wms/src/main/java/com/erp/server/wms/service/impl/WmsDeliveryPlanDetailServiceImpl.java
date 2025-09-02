@@ -61,7 +61,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
     @Resource
     private SkuMappingFeign skuMappingFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WmsDeliveryPlanDTO.AddDTO addDTO, String mainId) {

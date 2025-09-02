@@ -491,7 +491,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2023-05-25 19:25
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void closeBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isNotEmpty(soDetailIds)) {
