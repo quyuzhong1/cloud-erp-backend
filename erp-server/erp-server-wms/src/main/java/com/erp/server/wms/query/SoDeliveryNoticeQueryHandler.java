@@ -21,12 +21,12 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
             }
             if ("packingCompleted".equals(value)) {
-                super.buildDefaultDTO("sdn.outstock_notice_status", IsAllowOutstockEnum.WAIT_NOTICE.getCode());
+                super.buildSplicingSQLDTO("sdn.is_allow_outstock", QueryConditionEnum.EQ, IsAllowOutstockEnum.WAIT_NOTICE.getCode(), QueryDataTypeEnum.BOOLEAN);
                 super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE.getCode());
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
             }
             if ("unShipped".equals(value)) {
-                super.buildDefaultDTO("sdn.outstock_notice_status", IsAllowOutstockEnum.PERMIT.getCode());
+                super.buildSplicingSQLDTO("sdn.is_allow_outstock", QueryConditionEnum.EQ, IsAllowOutstockEnum.PERMIT.getCode(), QueryDataTypeEnum.BOOLEAN);
                 super.buildDefaultDTO("sdn.approve_status", ApproveStatusEnum.APPROVE.getCode());
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
             }
