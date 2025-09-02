@@ -3,8 +3,8 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.AttachDTO;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -38,8 +38,6 @@ import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -90,6 +88,14 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     public BaseResultDTO.AddDTO add(CustomerCreditApplyDTO.AddDTO addDTO) {
         CustomerCreditApplyEntity customerCreditApplyEntity = new CustomerCreditApplyEntity();
         BeanMapperUtils.copy(addDTO, customerCreditApplyEntity);
+        //校验客户授信是否已存在
+        List<CustomerCreditApplyEntity> existingCredits = this.lambdaQuery()
+                .eq(CustomerCreditApplyEntity::getCustomerId, customerCreditApplyEntity.getCustomerId())
+                .ne(CustomerCreditApplyEntity::getCreditStatus, CustomerCreditStatusEnum.CANCEL.getCode())
+                .list();
+        if (CollectionUtils.isNotEmpty(existingCredits)) {
+            throw new ServiceException("该客户已有未作废的授信记录，不能重复新增");
+        }
         // 数据处理
         handleData(customerCreditApplyEntity);
 
@@ -185,15 +191,20 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(CustomerCreditApplyDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<CustomerCreditApplyDTO.TabListDTO> result = new ArrayList<>();
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new CustomerCreditApplyDTO.TabListDTO(status, 0));
-        }
+            CustomerCreditApplyDTO.TabListDTO tabListDTO = list.stream().filter(v -> Objects.equals(v.getTabFlag(), status)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(tabListDTO)) {
+                tabListDTO = new CustomerCreditApplyDTO.TabListDTO();
+                tabListDTO.setTabFlag(status);
+                tabListDTO.setTabFlagName(ApproveStatusEnum.getName(status));
+                tabListDTO.setCount(0);
+            }else{
+                tabListDTO.setTabFlagName(ApproveStatusEnum.getName(status));
+            }
+            result.add(tabListDTO);
         });
-        list.add(new CustomerCreditApplyDTO.TabListDTO("all", list.stream().mapToInt(CustomerCreditApplyDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
-        return list;
+        return result;
     }
 
     @Override
@@ -227,17 +238,12 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改客户授信状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动客户授信流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录客户授信日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -280,7 +286,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信", approveType.getName(), dto.getComment());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -327,7 +333,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -348,15 +354,11 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
 
         // 删除主单数据
-        log.info("删除 开始删除客户授信主单数据，id：【{}】", id);
         super.removeById(id);
-        // 删除日志数据
-        log.info("删除 开始删除客户授信日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除客户授信数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getCode(), "删除客户授信数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -382,7 +384,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "客户授信");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CUSTOMER_CREDIT_APPLY.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
@@ -424,8 +426,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_CREDIT_APPLY.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -519,7 +520,10 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         List<DictBasicEntity> creditTypeList = dictBasicMap.get(DictBasicTypeEnum.CREDIT_TYPE.getType());
 
         List<String> saleUserIds = list.stream().map(CustomerCreditApplyDTO.ListDTO::getSaleUserId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FindUserDTO> findUserDTOS = sysUserFeign.getUserListByUserIds(saleUserIds);
 
+        List<String> orgIds = list.stream().map(CustomerCreditApplyDTO.ListDTO::getSaleOrgId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
         // 属性赋值
         for(CustomerCreditApplyDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -527,6 +531,15 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
             String creditTypeName = creditTypeList.stream().filter(v->Objects.equals(v.getValue(), data.getCreditType())).map(DictBasicEntity::getName).findFirst().orElse("");
             data.setCreditTypeName(creditTypeName);
             data.setCreditStatusName(CustomerCreditStatusEnum.getName(data.getCreditStatus()));
+
+            FindUserDTO user = findUserDTOS.stream().filter(v -> Objects.equals(v.getUserId(), data.getSaleUserId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(user)) {
+                data.setSaleUserName(user.getRealName());
+            }
+            BaseIdDTO.CodeDTO org = accountingCompanyList.stream().filter(v -> Objects.equals(v.getId(), data.getSaleOrgId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(org)) {
+                data.setSaleOrgName(org.getCode());
+            }
         }
     }
     /**

@@ -44,6 +44,10 @@ public class CustomerCreditApplyDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 类型名称
+          */
+         private String tabFlagName;
+         /**
          * 数量
          */
          private Integer count;

@@ -83,7 +83,7 @@ public class CustomerCreditApplyController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:customerCreditApply:paging",
-            tableAlias = ""
+            tableAlias = "cca"
     )
     public ApiResult<List<CustomerCreditApplyDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(customerCreditApplyService.tabList(dto));
@@ -100,7 +100,7 @@ public class CustomerCreditApplyController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:customerCreditApply:paging",
-            tableAlias = ""
+            tableAlias = "cca"
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CustomerCreditApplyDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CustomerCreditApplyDTO.PagingParamDTO> dto) {
@@ -155,7 +155,6 @@ public class CustomerCreditApplyController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
 		Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -178,85 +177,6 @@ public class CustomerCreditApplyController extends BaseController {
     }
 
     /**
-    * 审核
-    * @author lrp
-    * @date:  2025-08-28
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/approve")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:customerCreditApply:approve",
-            serviceClass = CustomerCreditApplyService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "客户授信审核")
-    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
-		Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
-        for (String id : ids) {
-            BatchResultDTO approveResult;
-            try {
-                approveResult = customerCreditApplyService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("客户授信审核失败",e);
-                CustomerCreditApplyEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "客户授信不存在, 审核失败");
-                    resultDTOS.add(approveResult);
-                    continue;
-                }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(approveResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-    * 反审核
-    * @author lrp
-    * @date:  2025-08-28
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:customerCreditApply:disApprove",
-            serviceClass = CustomerCreditApplyService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "客户授信反审核")
-    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
-		Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
-            try {
-                disApproveResult = customerCreditApplyService.disApprove(id);
-            }catch (Exception e){
-                log.error("客户授信反审核失败",e);
-                CustomerCreditApplyEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "客户授信不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(disApproveResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-
-    /**
     * 删除
     * @author lrp
     * @date:  2025-08-28
@@ -273,7 +193,6 @@ public class CustomerCreditApplyController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
 		Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -294,46 +213,6 @@ public class CustomerCreditApplyController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
-    /**
-    * 撤销
-    * @author lrp
-    * @date:  2025-08-28
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/cancelProcess")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:customerCreditApply:cancelProcess",
-            serviceClass = CustomerCreditApplyService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "客户授信撤销")
-    public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
-        List<CustomerCreditApplyEntity> list = customerCreditApplyService.lambdaQuery().in(CustomerCreditApplyEntity::getId, ids).list();
-        Map<String, CustomerCreditApplyEntity> idEntityMap = list.stream().collect(Collectors.toMap(CustomerCreditApplyEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO cancelResult;
-            try {
-                cancelResult = customerCreditApplyService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("客户授信撤回流程失败",e);
-                CustomerCreditApplyEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "客户授信不存在, 撤回流程失败");
-                    resultDTOS.add(cancelResult);
-                    continue;
-                }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(cancelResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
     /**
     * 详情
     * @author lrp
@@ -364,7 +243,7 @@ public class CustomerCreditApplyController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:customerCreditApply:export",
-            tableAlias = ""
+            tableAlias = "cca"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "客户授信导出Excel数据")
     public void exportList(@RequestBody @Validated CustomerCreditApplyDTO.ExportDTO dto, HttpServletResponse response) {

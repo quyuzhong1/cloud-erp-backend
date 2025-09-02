@@ -106,6 +106,7 @@ public enum SourceTypeEnum {
     TIK_TOK_FULLY( "TikTokFully", "TikTok全托管","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    CUSTOMER_CREDIT_APPLY( "customerCreditApply", "客户授信","customer_credit_apply"),
     SHOP( "shop", "店铺","shop_info"),
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
