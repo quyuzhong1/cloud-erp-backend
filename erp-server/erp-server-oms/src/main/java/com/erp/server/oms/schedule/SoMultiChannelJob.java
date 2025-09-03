@@ -64,7 +64,7 @@ public class SoMultiChannelJob {
                     //订单状态和发货状态
                     soMultiChannelEntity.setDeliveryTime(e.getDeliveryTime());
                     soMultiChannelEntity.setTrackNo(e.getTrackNo());
-                    soMultiChannelEntity.setBillStatus(e.getOrderStatus());
+                    soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(e.getOrderStatus())?e.getOrderStatus():"");
                     soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(e.getDeliveryStatus())?e.getDeliveryStatus():"");
 
                     if ("CANCELLED".equalsIgnoreCase(e.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(e.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(e.getDeliveryStatus())){

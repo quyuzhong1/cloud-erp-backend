@@ -151,11 +151,7 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
     */
     @TableField("remark")
     private String remark;
-    /**
-    * 系统是否已出库
-    */
-    @TableField("has_outstock")
-    private Boolean hasOutstock;
+
     /**
      * 创建状态(wait待创建,creating创建中,success创建成功,failed创建失败)
      */
@@ -234,7 +230,6 @@ public class SoMultiChannelEntity extends BaseEntity<SoMultiChannelEntity> {
 
     public static final String REMARK = "remark";
 
-    public static final String HAS_OUTSTOCK = "has_outstock";
 
     @Override
     public Serializable pkVal() {

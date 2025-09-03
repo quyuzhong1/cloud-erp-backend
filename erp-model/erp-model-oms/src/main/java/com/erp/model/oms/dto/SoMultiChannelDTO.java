@@ -222,10 +222,10 @@ public class SoMultiChannelDTO implements Serializable {
         private String remark;
 
         /**
-        * 系统是否已出库【可排序】
-        */
-        private Boolean hasOutstock;
-        private String hasOutstockName;
+         * 系统是否已出库【可排序】
+         */
+        private String outstockStatus;
+        private String outstockStatusName;
 
 
         /**
@@ -454,8 +454,8 @@ public class SoMultiChannelDTO implements Serializable {
         /**
         * 系统是否已出库
         */
-        private Boolean hasOutstock;
-        private String hasOutstockName;
+        private String outstockStatus;
+        private String outstockStatusName;
         /**
          * 明细列表
          */
@@ -644,14 +644,6 @@ public class SoMultiChannelDTO implements Serializable {
         */
 //        @NotBlank(message = "订单备注不能为空")
         private String remark;
-
-        /**
-        * 系统是否已出库
-        */
-//        @NotNull(message = "系统是否已出库不能为空")
-        private Boolean hasOutstock;
-
-
     }
 
 

@@ -789,7 +789,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         data.setBillStatusName(data.getBillStatus());
         data.setDeliveryStatusName(data.getDeliveryStatus());
-        data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
+        data.setOutstockStatusName(OutstockStatusEnum.getName(data.getOutstockStatus()));
         //平台类型名称
         String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setDictPlatformName(dictPlatformName);
@@ -860,7 +860,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setBillStatusName(data.getBillStatus());
             data.setDeliveryStatusName(data.getDeliveryStatus());
-            data.setHasOutstockName(data.getHasOutstock() ? "是" : "否");
+            data.setOutstockStatusName(OutstockStatusEnum.getName(data.getOutstockStatus()));
             //平台类型名称
             String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             data.setDictPlatformName(dictPlatformName);
