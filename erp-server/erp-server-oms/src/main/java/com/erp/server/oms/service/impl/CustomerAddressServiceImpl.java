@@ -84,7 +84,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      * @date 2023-05-12 15:56
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void saveBatchAddress(String mainId, List<CustomerAddressDTO.AddDTO> addressList) {
         if (CollectionUtils.isEmpty(addressList)) {

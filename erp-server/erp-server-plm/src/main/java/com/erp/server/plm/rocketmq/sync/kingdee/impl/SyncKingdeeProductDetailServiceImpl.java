@@ -100,7 +100,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());

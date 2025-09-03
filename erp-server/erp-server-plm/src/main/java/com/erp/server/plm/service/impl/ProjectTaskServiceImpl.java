@@ -3841,7 +3841,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approvalPass(TaskOperateDTO dto) {
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
@@ -4040,7 +4040,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-06-25 17:11
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean cancelProcess(List<String> taskIdList) {
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
@@ -4136,7 +4136,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO) {
         if (StringUtils.isBlank(sysUserInfoDTO.getUid()) || StringUtils.isBlank(sysUserInfoDTO.getUserName())) {
             return;

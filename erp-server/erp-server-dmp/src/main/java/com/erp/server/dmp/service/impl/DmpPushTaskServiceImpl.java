@@ -630,7 +630,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity) {
         DmpSyncTaskDTO.OneDTO map = BeanMapperUtils.map(DmpSyncTaskDTO.OneDTO.class, entity);
         DmpPushTaskServiceImpl bean = ApplicationContextUtils.getBean(DmpPushTaskServiceImpl.class);
@@ -648,7 +648,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         return entity.getId();
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public DmpPushTaskEntity queryByParam(DmpSyncTaskDTO.OneDTO oneDTO) {
         return lambdaQuery()
@@ -665,7 +665,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     /**
      * 新增
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void saveDmpSyncTask(DmpPushTaskEntity entity) {
     	this.save(entity);
@@ -675,7 +675,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
      * 修改
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public void updateDmpSyncTask(DmpPushTaskEntity entity) {
     	try {
@@ -760,7 +760,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public List<DmpPushTaskEntity> queryList(List<String> sourceIdList){
     	return lambdaQuery()
@@ -773,13 +773,13 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
               .list();
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void insertBatchList(List<DmpPushTaskEntity> insertEntityList) {
     	this.saveBatch(insertEntityList);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED)
     @Transactional(rollbackFor = Exception.class , propagation = Propagation.NOT_SUPPORTED)
     public void updateBatchList(List<DmpPushTaskEntity> updateEntityList) {
     	try {

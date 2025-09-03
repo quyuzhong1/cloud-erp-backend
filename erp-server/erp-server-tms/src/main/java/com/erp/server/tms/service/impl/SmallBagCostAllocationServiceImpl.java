@@ -98,7 +98,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SmallBagCostAllocationDTO.AddDTO addDTO) {

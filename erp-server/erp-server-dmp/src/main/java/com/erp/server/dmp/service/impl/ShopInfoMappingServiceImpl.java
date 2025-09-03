@@ -54,7 +54,7 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void saveAndHandle(ShopEntity sourceEntity) {
         // 查询是否有对应店铺
         // 查询指定或所有已授权店铺

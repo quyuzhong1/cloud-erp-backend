@@ -161,7 +161,7 @@ public class TbTaskTypeService {
      * @Date 2022/11/9 14:49
      * @return void
      **/
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务

@@ -22,7 +22,7 @@ public class KingdeeApiAspect {
 
     @Around("kingdeeApiPointCut()")
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
-        Method method = currentMethod(pjp);
+    	Method method = currentMethod(pjp);
         // 校验 method 是否为 null
         if (method == null) {
             log.error("无法获取当前方法信息，请检查切入点配置");
@@ -31,18 +31,28 @@ public class KingdeeApiAspect {
         //获取到方法的注解对象
         KingdeeApi annotation = method.getAnnotation(KingdeeApi.class);
         KingdeePushModuleEnum kingdeePushModuleEnum = annotation.value();
-        KingdeeApiUtils kingdeeApiUtils = null;
+        
+        KingdeeApiThreadLocal.enter(); // 进入时计数+1
+        boolean reused = true;
         try {
-			kingdeeApiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(kingdeePushModuleEnum.getCode());
-			KingdeeApiThreadLocal.set(kingdeeApiUtils);
-			return pjp.proceed();
-		} catch (Exception e) {
-			log.info("金蝶API切面错误" , e);
-			throw e;
-		}finally {
-			KingdeeApiUtilsPool.returnKingdeeApiUtils(kingdeeApiUtils);
-			KingdeeApiThreadLocal.remove();
-		}
+        	KingdeeApiUtils current = KingdeeApiThreadLocal.get();
+            if (current == null || !kingdeePushModuleEnum.getCode().equals(current.getFormId())) {
+            	// 挂起旧的，换新的
+                KingdeeApiUtils newApiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(kingdeePushModuleEnum.getCode());
+                KingdeeApiThreadLocal.suspendAndReplace(newApiUtils);
+                reused = false;
+            }
+            return pjp.proceed();
+        } catch (Exception e) {
+            log.error("金蝶API切面错误", e);
+            throw e;
+        } finally {
+            if (!reused) {
+                // 归还当前的，恢复上一个
+            	KingdeeApiThreadLocal.resumePrevious();
+            }
+            KingdeeApiThreadLocal.exit(); // 离开时计数-1，最外层时才 clear
+        }
     }
 
     /**

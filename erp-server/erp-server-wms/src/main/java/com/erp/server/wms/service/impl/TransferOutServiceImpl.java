@@ -144,7 +144,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 .list();
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(TransferOutDTO.AddDTO addDTO) {
@@ -359,7 +359,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(ApproveOneDTO dto, TransferOutEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;

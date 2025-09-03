@@ -34,7 +34,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class ShippingRegionCityServiceImpl extends SuperServiceImpl<ShippingRegionCityMapper, ShippingRegionCityEntity> implements ShippingRegionCityService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(List<ShippingRegionCityDTO.AddDTO> list) {

@@ -74,7 +74,7 @@ public @interface DistributeLocker {
      * 重试次数
      * @return  重试次数
      */
-    int maxRetries() default 3;
+    int maxRetries() default 2;
 
     /**
      * 重试间隔时间(毫秒)

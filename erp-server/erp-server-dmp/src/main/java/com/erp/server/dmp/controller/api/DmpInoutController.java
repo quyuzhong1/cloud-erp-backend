@@ -363,7 +363,7 @@ public class DmpInoutController extends BaseController {
      * 获取旺店通库存不足单据
      * @return
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @GetMapping("getWdtInsufficientInventory")
     public ApiResult<Collection<WdtInsufficientInventoryDTO>> getWdtInsufficientInventory() {

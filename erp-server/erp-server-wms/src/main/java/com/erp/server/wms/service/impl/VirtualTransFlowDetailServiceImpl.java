@@ -77,7 +77,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAdd(List<VirtualTransFlowDetailDTO.AddDTO> addDTOList) {

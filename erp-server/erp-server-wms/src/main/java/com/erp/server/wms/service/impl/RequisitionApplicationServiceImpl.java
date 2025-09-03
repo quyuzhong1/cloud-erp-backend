@@ -225,7 +225,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WmsCartonService wmsCartonService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO addDTO) {

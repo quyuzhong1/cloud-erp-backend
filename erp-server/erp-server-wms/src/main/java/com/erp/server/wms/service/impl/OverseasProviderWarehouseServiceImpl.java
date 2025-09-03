@@ -85,7 +85,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     /**
      * 修改
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(OverseasProviderDTO.UpdateDTO updateDTO, String mainId) {
@@ -278,7 +278,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean feignBind(OverseasProviderDTO.FeignDTO feignDTO) {
         //获取系统仓库获取绑定的第三方仓
         List<OverseasProviderWarehouseEntity> providerWarehouseEntityList = this.listByWarehouseIds(Arrays.asList(feignDTO.getWarehouseId()));
