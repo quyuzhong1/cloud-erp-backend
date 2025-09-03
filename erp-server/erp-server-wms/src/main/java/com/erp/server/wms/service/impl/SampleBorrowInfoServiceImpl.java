@@ -298,9 +298,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             }
         }
 
-        String BorrowUserId = sampleBorrowInfoEntity.getBorrowUserId();
+        String lendUserId = sampleBorrowInfoEntity.getLendUserId();
         //校验可用数量是否足够
-        checkDetailQty(sampleBorrowInfoEntity.getId(),BorrowUserId, skuIds, sampleBorrowDetailEntities);
+        checkDetailQty(sampleBorrowInfoEntity.getId(),lendUserId, skuIds, sampleBorrowDetailEntities);
 
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
 
@@ -784,7 +784,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             List<String> skuIds = value.stream().map(SampleBorrowImportExcelDTO::getSkuId).collect(Collectors.toList());
             // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-            dto.setUserId(importMainDTO.getBorrowUserId());
+            dto.setUserId(importMainDTO.getLendUserId());
             dto.setSkuIds(skuIds);
             dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
@@ -852,12 +852,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<SampleBorrowDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(SampleBorrowDetailDTO.ViewDTO.class, sampleBorrowDetailEntities);
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuIds = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> sampleLedgerIds = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSampleLedgerId).distinct().collect(Collectors.toList());
 
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-        dto.setUserId(sampleBorrowInfoEntity.getBorrowUserId());
-        dto.setSkuIds(skuIds);
+        dto.setUserId(sampleBorrowInfoEntity.getLendUserId());
+        dto.setIds(sampleLedgerIds);
         dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1, o2)-> o1));

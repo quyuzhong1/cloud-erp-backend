@@ -217,43 +217,43 @@ public class ExhibitionOrderController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    /**
-    * 反审核
-    * @author jack
-    * @date:  2025-08-29
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:exhibitionOrder:disApprove",
-            serviceClass = ExhibitionOrderService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "展会订单信息反审核")
-    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
-		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
-            try {
-                disApproveResult = exhibitionOrderService.disApprove(id);
-            }catch (Exception e){
-                log.error("展会订单信息反审核失败",e);
-                ExhibitionOrderEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "展会订单信息不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(disApproveResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
+//    /**
+//    * 反审核
+//    * @author jack
+//    * @date:  2025-08-29
+//    * @param dto
+//    * @return ApiResult<List<BatchResultDTO>>
+//    */
+//    @PostMapping("/disApprove")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "oms:exhibitionOrder:disApprove",
+//            serviceClass = ExhibitionOrderService.class,
+//            keyIdName = "ids")
+//    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "展会订单信息反审核")
+//    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+//        List<String> ids = dto.getIds();
+//		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+//		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
+//		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
+//        for (String id : dto.getIds()) {
+//            BatchResultDTO disApproveResult;
+//            try {
+//                disApproveResult = exhibitionOrderService.disApprove(id);
+//            }catch (Exception e){
+//                log.error("展会订单信息反审核失败",e);
+//                ExhibitionOrderEntity entity = idEntityMap.get(id);
+//                if (ObjectUtil.isEmpty(entity)) {
+//                    disApproveResult = BatchResultDTO.fail(id, id, "展会订单信息不存在, 反审核失败");
+//                    resultDTOS.add(disApproveResult);
+//                    continue;
+//                }
+//                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+//            }
+//            resultDTOS.add(disApproveResult);
+//        }
+//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+//    }
 
 
     /**

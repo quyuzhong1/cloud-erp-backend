@@ -26,10 +26,9 @@ import java.util.*;
  */
 public class SampleBorrowDetailExcelListener extends AnalysisEventListener<SampleBorrowDetailImportExcelDTO> {
 
+    private String lendUserId;
     //sku信息
     private Map<String,SkuVO> skuMap ;
-    //用户
-    private List<FindUserDTO> userList ;
 
     private SampleLedgerService sampleLedgerService;
     /**
@@ -41,10 +40,10 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
 
     public SampleBorrowDetailExcelListener(SampleLedgerService sampleLedgerService,
                                            Map<String,SkuVO> skuMap,
-                                           List<FindUserDTO> userList) {
+                                           String lendUserId) {
         this.sampleLedgerService = sampleLedgerService;
         this.skuMap = skuMap;
-        this.userList = userList;
+        this.lendUserId = lendUserId;
     }
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -68,12 +67,6 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
             errorMsgList.addAll(msgList);
         }
         SampleBorrowDetailDTO.AddDTO addDTO = new SampleBorrowDetailDTO.AddDTO();
-        //借出人
-        String lendUserName = excelDTO.getLendUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
-        if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("借出人不存在");
-        }
 
         //备注
         addDTO.setRemark(excelDTO.getDetailRemark());
@@ -100,9 +93,9 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
         //使用方
         String useUserName = excelDTO.getUseUserName();
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        if(StringUtils.isNotBlank(addDTO.getSkuId()) && Objects.isNull(findUserDTO) && StringUtils.isNotBlank(useUserName)){
+        if(StringUtils.isNotBlank(addDTO.getSkuId()) && StringUtils.isNotBlank(useUserName)){
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-            dto.setUserId(findUserDTO.getUserId());
+            dto.setUserId(lendUserId);
             dto.setSkuIds(Arrays.asList(addDTO.getSkuId()));
             dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
