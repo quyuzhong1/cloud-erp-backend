@@ -31,6 +31,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -374,7 +375,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
                 searchDTO.setUserId(detail.getUseUserId());
                 searchDTO.setSkuNo(detail.getSkuNo());
-                searchDTO.setType("back");
+                searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
                 List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
                 
                 // 设置可退回数量

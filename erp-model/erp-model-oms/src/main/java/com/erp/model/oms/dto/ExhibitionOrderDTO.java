@@ -3,6 +3,9 @@ package com.erp.model.oms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -24,7 +27,7 @@ import javax.validation.constraints.Digits;
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
 */
 @Data
 @NoArgsConstructor
@@ -43,6 +46,10 @@ public class ExhibitionOrderDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+         * 类型
+         */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -68,266 +75,302 @@ public class ExhibitionOrderDTO implements Serializable {
         private Map<String,String> sqlMap;
 
      }
+
     /**
-    * 分页列表
-    */
+     * 分页列表
+     */
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 创建人id
+         */
+        private String createUserId;
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 创建人名称
+         */
+        private String createUserName;
 
         /**
-        * 作废状态
-        */
-        private Boolean invalidStatus;
-
-        /**
-        * code
-        */
-        private String code;
-
-        /**
-        * 展会主题
-        */
-        private String exhibitionTitle;
-
-        /**
-        * 审核状态
-        */
-        private String approveStatus;
-
-        /**
-        * 销售组织id
-        */
-        private String salesOrgId;
-
-        /**
-        * 销售部门id
-        */
-        private String salesDeptId;
-
-        /**
-        * 销售员id
-        */
-        private String sellerId;
-
-        /**
-        * 销售员
-        */
-        private String sellerName;
-
-        /**
-        * 领用人id
-        */
-        private String recipientUserId;
-
-        /**
-        * 领用人
-        */
-        private String recipientUserName;
-
-        /**
-        * 是否收取运费
-        */
-        private Boolean isCollectShippingFee;
-
-        /**
-        * 仓库id
-        */
-        private String warehouseId;
-
-        /**
-        * 仓库组织id
-        */
-        private String warehouseOrgId;
-
-        /**
-        * 银行手续费
-        */
-        private BigDecimal bankServiceFee;
-
-        /**
-        * 运费
-        */
-        private BigDecimal shippingFee;
-
-        /**
-        * 客户id
-        */
-        private String customerId;
-
-        /**
-        * 收货人
-        */
-        private String receiverName;
-
-        /**
-        * 联系人电话
-        */
-        private String telNumber;
-
-        /**
-        * 收货地址
-        */
-        private String receiveAddress;
-
-        /**
-        * 交货方式
-        */
-        private String deliveryMode;
-
-        /**
-        * 币种
-        */
-        private String currency;
-
-        /**
-        * 币种符号
-        */
-        private String currencySymbol;
-
-        /**
-        * 是否含税
-        */
-        private Boolean isTax;
-
-        /**
-        * 地址类型
-        */
-        private String addressType;
-
-        /**
-        * 销售组织名
-        */
-        private String salesOrgName;
-
-        /**
-        * 仓库组织名称
-        */
-        private String warehouseOrgName;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 收货地址id
-        */
-        private String receiveAddressId;
-
-        /**
-        * 审核人
-        */
-        private String approveUserName;
-
-        /**
-        * 收款条件
-        */
-        private String receiveCondition;
-
-        /**
-        * 收款账号
-        */
-        private String receiveAccount;
-
-        /**
-        * 收款金额
-        */
-        private BigDecimal receiveAmount;
-
-        /**
-        * 收款日期
-        */
-        private LocalDate receiveDate;
-
-        /**
-        * 收款方式
-        */
-        private String receiveMethod;
-
-        /**
-        * 备注
-        */
-        private String remark;
-
-        /**
-        * 单据日期
-        */
-        private LocalDate billDate;
-
-        /**
-        * 贸易条款
-        */
-        private String tradeTerm;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 折扣总额
-        */
-        private BigDecimal discountAmount;
-
-        /**
-        * 总价税合计本位币
-        */
-        private BigDecimal allAmountLc;
-
-        /**
-        * 收货国家id
-        */
-        private String countryId;
-
-        /**
-        * 收货国家
-        */
-        private String countryName;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
-
-        /**
-        * 作废状态名称
-        */
-        private String invalidStatusName;
-
-        /**
-        * 创建时间
-        */
+         * 创建时间
+         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
-        */
-        private String createUserName;
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * code
+         */
+        private String code;
+        /**
+         * 展会主题
+         */
+        private String exhibitionTitle;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        private String customerName;
+
+        /**
+         * 收货国家id
+         */
+        private String countryId;
+
+        /**
+         * 收货国家
+         */
+        private String countryName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 分区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        private String partitionName;
+
+
+
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售组织名
+         */
+        private String salesOrgName;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        private String salesDeptName;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        private String warehouseName;
+
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+        private String productName;
+
+        /**
+         * SPU ID
+         */
+        private String spuId;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * SPU名称
+         */
+        private String spuName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 销售单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 销售单价（本位币
+         */
+        private BigDecimal priceLc;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 含税单价(本位币)
+         */
+        private BigDecimal taxPriceLc;
+        /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 销售金额（本位币）
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计（本位币）
+         */
+        private BigDecimal allAmountLocalCurrency;
+        /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal allAmountLc;
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiveAmount;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+        /**
+         * 审批完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 审批人ID
+         */
+        private String approveUserId;
+
+        /**
+         * 审批人姓名
+         */
+        private String approveUserName;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+        /**
+         * 收款方式
+         */
+        private String receiveMethod;
+        private String receiveMethodName;
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+        private String receiveConditionName;
+        /**
+         * 收款账号
+         */
+        private String receiveAccount;
+        private String receiveAccountName;
+        /**
+         * 地址类型
+         */
+        private String addressType;
+        private String addressTypeName;
+        /**
+         * 交货方式
+         */
+        private String deliveryMode;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryModeName;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 主表id
+         */
+        private String sourceDetailId;
+
     }
 
-    /**
-    * 导出Excel
-    */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-        * 勾选的id集合
-        */
-        private List<String> ids;
-    }
 
     /**
     * 详情
@@ -345,6 +388,7 @@ public class ExhibitionOrderDTO implements Serializable {
         * 作废状态
         */
         private Boolean invalidStatus;
+        private String invalidStatusName;
 
         /**
         * code
@@ -360,16 +404,19 @@ public class ExhibitionOrderDTO implements Serializable {
         * 审核状态
         */
         private String approveStatus;
+        private String approveStatusName;
 
         /**
         * 销售组织id
         */
         private String salesOrgId;
+        private String salesOrgName;
 
         /**
         * 销售部门id
         */
         private String salesDeptId;
+        private String salesDeptName;
 
         /**
         * 销售员id
@@ -400,11 +447,13 @@ public class ExhibitionOrderDTO implements Serializable {
         * 仓库id
         */
         private String warehouseId;
+        private String warehouseName;
 
         /**
         * 仓库组织id
         */
         private String warehouseOrgId;
+        private String warehouseOrgName;
 
         /**
         * 银行手续费
@@ -420,6 +469,7 @@ public class ExhibitionOrderDTO implements Serializable {
         * 客户id
         */
         private String customerId;
+        private String customerName;
 
         /**
         * 收货人
@@ -440,6 +490,7 @@ public class ExhibitionOrderDTO implements Serializable {
         * 交货方式
         */
         private String deliveryMode;
+        private String deliveryModeName;
 
         /**
         * 币种
@@ -460,26 +511,7 @@ public class ExhibitionOrderDTO implements Serializable {
         * 地址类型
         */
         private String addressType;
-
-        /**
-        * 销售组织名
-        */
-        private String salesOrgName;
-
-        /**
-        * 仓库组织名称
-        */
-        private String warehouseOrgName;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
+        private String addressTypeName;
 
         /**
         * 收货地址id
@@ -495,11 +527,13 @@ public class ExhibitionOrderDTO implements Serializable {
         * 收款条件
         */
         private String receiveCondition;
+        private String receiveConditionName;
 
         /**
         * 收款账号
         */
         private String receiveAccount;
+        private String receiveAccountName;
 
         /**
         * 收款金额
@@ -515,6 +549,7 @@ public class ExhibitionOrderDTO implements Serializable {
         * 收款方式
         */
         private String receiveMethod;
+        private String receiveMethodName;
 
         /**
         * 备注
@@ -556,6 +591,24 @@ public class ExhibitionOrderDTO implements Serializable {
         */
         private String countryName;
 
+        /**
+        * 分区id
+        */
+        private String partitionId;
+        private String partitionCode;
+        private String partitionName;
+
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
+
+
+        /**
+         * 订单产品详情
+         */
+        private List<ExhibitionOrderDetailDTO.ViewDTO> detailList;
 
     }
 
@@ -565,6 +618,9 @@ public class ExhibitionOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+
+        @NotEmpty(message = "明细不能为空" )
+        private List<ExhibitionOrderDetailDTO.AddDTO> detailList;
 
 
     }
@@ -582,6 +638,9 @@ public class ExhibitionOrderDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        @NotEmpty(message = "明细不能为空" )
+        private List<ExhibitionOrderDetailDTO.UpdateDTO> detailList;
+
     }
 
     @Data
@@ -598,226 +657,174 @@ public class ExhibitionOrderDTO implements Serializable {
         /**
         * 销售组织id
         */
-        @NotBlank(message = "销售组织id不能为空")
-        @Size(max = 19,message = "销售组织id最大长度不能超过19位")
+        @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
         /**
         * 销售部门id
         */
-        @NotBlank(message = "销售部门id不能为空")
-        @Size(max = 19,message = "销售部门id最大长度不能超过19位")
+        @NotBlank(message = "销售部门不能为空")
         private String salesDeptId;
 
         /**
         * 销售员id
         */
-        @NotBlank(message = "销售员id不能为空")
-        @Size(max = 19,message = "销售员id最大长度不能超过19位")
+        @NotBlank(message = "销售员不能为空")
         private String sellerId;
 
         /**
         * 销售员
         */
-        @NotBlank(message = "销售员不能为空")
-        @Size(max = 50,message = "销售员最大长度不能超过50位")
         private String sellerName;
 
         /**
         * 领用人id
         */
-        @NotBlank(message = "领用人id不能为空")
-        @Size(max = 19,message = "领用人id最大长度不能超过19位")
+        @NotBlank(message = "领用人不能为空")
         private String recipientUserId;
 
         /**
         * 领用人
         */
-        @NotBlank(message = "领用人不能为空")
-        @Size(max = 50,message = "领用人最大长度不能超过50位")
         private String recipientUserName;
 
         /**
         * 是否收取运费
         */
-        @NotNull(message = "是否收取运费不能为空")
         private Boolean isCollectShippingFee;
 
         /**
         * 仓库id
         */
-        @NotBlank(message = "仓库id不能为空")
-        @Size(max = 19,message = "仓库id最大长度不能超过19位")
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
         /**
         * 仓库组织id
         */
-        @NotBlank(message = "仓库组织id不能为空")
-        @Size(max = 19,message = "仓库组织id最大长度不能超过19位")
+        @NotBlank(message = "仓库组织不能为空")
         private String warehouseOrgId;
 
         /**
         * 银行手续费
         */
-        @NotNull(message = "银行手续费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "银行手续费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal bankServiceFee;
 
         /**
         * 运费
         */
-        @NotNull(message = "运费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingFee;
 
         /**
         * 客户id
         */
-        @NotBlank(message = "客户id不能为空")
-        @Size(max = 19,message = "客户id最大长度不能超过19位")
+        @NotBlank(message = "客户不能为空")
         private String customerId;
 
         /**
         * 收货人
         */
-        @NotBlank(message = "收货人不能为空")
-        @Size(max = 50,message = "收货人最大长度不能超过50位")
         private String receiverName;
 
         /**
         * 联系人电话
         */
-        @NotBlank(message = "联系人电话不能为空")
-        @Size(max = 50,message = "联系人电话最大长度不能超过50位")
         private String telNumber;
 
         /**
         * 收货地址
         */
         @NotBlank(message = "收货地址不能为空")
-        @Size(max = 500,message = "收货地址最大长度不能超过500位")
         private String receiveAddress;
 
         /**
         * 交货方式
         */
         @NotBlank(message = "交货方式不能为空")
-        @Size(max = 30,message = "交货方式最大长度不能超过30位")
         private String deliveryMode;
 
         /**
         * 币种
         */
         @NotBlank(message = "币种不能为空")
-        @Size(max = 30,message = "币种最大长度不能超过30位")
         private String currency;
 
         /**
         * 币种符号
         */
-        @NotBlank(message = "币种符号不能为空")
-        @Size(max = 10,message = "币种符号最大长度不能超过10位")
         private String currencySymbol;
 
         /**
         * 是否含税
         */
-        @NotNull(message = "是否含税不能为空")
         private Boolean isTax;
 
         /**
         * 地址类型
         */
         @NotBlank(message = "地址类型不能为空")
-        @Size(max = 30,message = "地址类型最大长度不能超过30位")
         private String addressType;
 
         /**
         * 销售组织名
         */
-        @NotBlank(message = "销售组织名不能为空")
-        @Size(max = 50,message = "销售组织名最大长度不能超过50位")
         private String salesOrgName;
 
         /**
         * 仓库组织名称
         */
-        @NotBlank(message = "仓库组织名称不能为空")
-        @Size(max = 50,message = "仓库组织名称最大长度不能超过50位")
         private String warehouseOrgName;
-
-        /**
-        * 来源id
-        */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 20,message = "来源id最大长度不能超过20位")
-        private String sourceId;
-
-        /**
-        * 来源类型
-        */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 30,message = "来源类型最大长度不能超过30位")
-        private String sourceType;
-
         /**
         * 收货地址id
         */
-        @NotBlank(message = "收货地址id不能为空")
-        @Size(max = 19,message = "收货地址id最大长度不能超过19位")
+        @NotBlank(message = "收货地址不能为空")
         private String receiveAddressId;
 
         /**
         * 收款条件
         */
         @NotBlank(message = "收款条件不能为空")
-        @Size(max = 50,message = "收款条件最大长度不能超过50位")
         private String receiveCondition;
 
         /**
         * 收款账号
         */
         @NotBlank(message = "收款账号不能为空")
-        @Size(max = 50,message = "收款账号最大长度不能超过50位")
         private String receiveAccount;
 
         /**
         * 收款金额
         */
         @NotNull(message = "收款金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "收款金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal receiveAmount;
 
         /**
         * 收款日期
         */
+        @NotNull(message = "收款日期不能为空")
         private LocalDate receiveDate;
 
         /**
         * 收款方式
         */
         @NotBlank(message = "收款方式不能为空")
-        @Size(max = 50,message = "收款方式最大长度不能超过50位")
         private String receiveMethod;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
         * 单据日期
         */
+        @NotNull(message = "单据日期不能为空")
         private LocalDate billDate;
 
         /**
         * 贸易条款
         */
-        @NotBlank(message = "贸易条款不能为空")
-        @Size(max = 255,message = "贸易条款最大长度不能超过255位")
         private String tradeTerm;
 
         /**
@@ -828,26 +835,57 @@ public class ExhibitionOrderDTO implements Serializable {
         /**
         * 总价税合计本位币
         */
-        @NotNull(message = "总价税合计本位币不能为空")
-        @Digits(integer = 12, fraction = 4, message = "总价税合计本位币整数位不能超过12位，小数位不能超过4位")
         private BigDecimal allAmountLc;
 
         /**
         * 收货国家id
         */
-        @NotBlank(message = "收货国家id不能为空")
-        @Size(max = 10,message = "收货国家id最大长度不能超过10位")
+        @NotBlank(message = "收货国家不能为空")
         private String countryId;
 
         /**
         * 收货国家
         */
-        @NotBlank(message = "收货国家不能为空")
-        @Size(max = 255,message = "收货国家最大长度不能超过255位")
         private String countryName;
 
+        /**
+        * 分区id
+        */
+        private String partitionId;
+
+        /**
+         * 附件集合
+         */
+        private List<String> attachmentNameList;
+        private List<String> attachmentUrlList;
 
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+
+        private String childId;
+
+        private List<String> skuNos;
+    }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FreezeQtyBySku {
+
+        private String skuId;
+
+        private Integer freezeQty;
+    }
+
+
 
 
 }

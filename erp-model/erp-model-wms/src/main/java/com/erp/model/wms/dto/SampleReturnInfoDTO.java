@@ -85,6 +85,31 @@ public class SampleReturnInfoDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
 
         /**
         * 归还单号
@@ -191,16 +216,6 @@ public class SampleReturnInfoDTO implements Serializable {
         * 作废状态名称
         */
         private String invalidStatusName;
-
-        /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
-
-        /**
-        * 创建人名称
-        */
-        private String createUserName;
 
         /**
          * 明细id

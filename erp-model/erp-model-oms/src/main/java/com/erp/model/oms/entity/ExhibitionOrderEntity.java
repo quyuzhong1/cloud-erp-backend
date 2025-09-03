@@ -19,7 +19,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -158,16 +158,6 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
     @TableField("warehouse_org_name")
     private String warehouseOrgName;
     /**
-    * 来源id
-    */
-    @TableField("source_id")
-    private String sourceId;
-    /**
-    * 来源类型
-    */
-    @TableField("source_type")
-    private String sourceType;
-    /**
     * 收货地址id
     */
     @TableField("receive_address_id")
@@ -242,6 +232,11 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
     */
     @TableField("country_name")
     private String countryName;
+    /**
+    * 分区id
+    */
+    @TableField("partition_id")
+    private String partitionId;
 
 
     public static final String INVALID_STATUS = "invalid_status";
@@ -296,10 +291,6 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
 
     public static final String WAREHOUSE_ORG_NAME = "warehouse_org_name";
 
-    public static final String SOURCE_ID = "source_id";
-
-    public static final String SOURCE_TYPE = "source_type";
-
     public static final String RECEIVE_ADDRESS_ID = "receive_address_id";
 
     public static final String APPROVE_USER_NAME = "approve_user_name";
@@ -329,6 +320,8 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
     public static final String COUNTRY_ID = "country_id";
 
     public static final String COUNTRY_NAME = "country_name";
+
+    public static final String PARTITION_ID = "partition_id";
 
     @Override
     public Serializable pkVal() {

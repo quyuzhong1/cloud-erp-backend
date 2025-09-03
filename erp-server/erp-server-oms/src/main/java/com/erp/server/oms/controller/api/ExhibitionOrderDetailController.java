@@ -24,7 +24,7 @@ import com.erp.model.oms.dto.ExhibitionOrderDetailDTO;
  * 展会订单详情
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
  */
 @Slf4j
 @RestController
@@ -38,7 +38,7 @@ public class ExhibitionOrderDetailController extends BaseController {
     /**
     * 新增
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<String>
     */
@@ -51,7 +51,7 @@ public class ExhibitionOrderDetailController extends BaseController {
     /**
     * 修改
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult
     */

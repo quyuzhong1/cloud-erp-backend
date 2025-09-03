@@ -8,8 +8,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -24,10 +27,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_LEDGER_REPORT;
@@ -48,6 +55,9 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private ExhibitionOrderFeign exhibitionOrderFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -138,8 +148,49 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             params.setSkuNo(params.getSkuNos().get(0));
         }
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+        //处理展会冻结库存数量
+        handleExhibitionFreezeQty(params, pageData);
         return new PagingVO<>(pageData);
     }
+
+    /**
+     * 处理展会冻结库存数量
+     * <p>当查询类型为展会时，获取SKU的冻结数量并从可用库存中扣除</p>
+     *
+     * @param params   查询参数对象，包含查询类型和子ID等信息
+     * @param pageData 分页数据对象，包含SKU可用库存记录列表
+     */
+    private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData) {
+        // 判断查询类型是否为展会类型
+        if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())){
+            // 提取所有记录的SKU编号并去重
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
+            List<String> skuNos = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo).distinct().collect(Collectors.toList());
+
+            // 构造展会订单查询条件并获取冻结库存数量
+            ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
+            dto.setSkuNos(skuNos);
+            dto.setChildId(params.getChildId());
+            List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
+
+            // 如果存在冻结库存数据，则更新可用库存数量
+            if(CollUtil.isNotEmpty(freezeQtyBySkus)){
+                // 将冻结库存数据转换为Map便于快速查找
+                Map<String, Integer> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, ExhibitionOrderDTO.FreezeQtyBySku::getFreezeQty));
+
+                // 遍历所有记录，扣除冻结库存数量
+                for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
+                    Integer freezeQty = map.getOrDefault(record.getSkuId(), 0);
+                    if(freezeQty > 0){
+                        Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
+                        record.setAvailableQty(availableQty - freezeQty);
+                    }
+                }
+                pageData.setRecords(records);
+            }
+        }
+    }
+
 
     @Override
     public SampleLedgerDTO.SampleScrapView generateSampleScrapView(List<String> ids) {

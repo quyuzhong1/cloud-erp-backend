@@ -18,7 +18,7 @@ import java.util.List;
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
  */
 @Mapper
 public interface ExhibitionOrderMapper extends BaseMapper<ExhibitionOrderEntity> {
@@ -43,7 +43,7 @@ public interface ExhibitionOrderMapper extends BaseMapper<ExhibitionOrderEntity>
     * @param params
     * @return
     */
-    List<ExhibitionOrderDTO.ListDTO> listExport(@Param("params") ExhibitionOrderDTO.ExportDTO params);
+    List<ExhibitionOrderDTO.ListDTO> listExport(@Param("params") ExhibitionOrderDTO.PagingParamDTO params);
 
 
     /**
@@ -52,4 +52,6 @@ public interface ExhibitionOrderMapper extends BaseMapper<ExhibitionOrderEntity>
     * @return
     */
     List<ExhibitionOrderDTO.TabListDTO> tabList(@Param("params") ExhibitionOrderDTO.PagingParamDTO searchParam);
+
+    List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(@Param("params") ExhibitionOrderDTO.SearchDTO params);
 }

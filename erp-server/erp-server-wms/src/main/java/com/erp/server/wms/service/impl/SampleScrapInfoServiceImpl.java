@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -17,10 +18,12 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
 import com.erp.model.wms.entity.SampleScrapDetailEntity;
 import com.erp.model.wms.entity.SampleScrapInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -148,10 +151,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         }
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
         //校验可用数量是否足够
-        checkDetailQty("" , scrapUserId, skuNos, sampleScrapDetailEntities);
+        checkDetailQty("" , scrapUserId, skuIds, sampleScrapDetailEntities);
 
         sampleScrapDetailService.saveBatch(sampleScrapDetailEntities);
 
@@ -176,12 +178,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         sampleScrapInfoEntity.setScrapDeptName(deptByIds.get(0).getName());
     }
 
-    private void checkDetailQty(String id , String scrapUserId, List<String> skuNos, List<SampleScrapDetailEntity> sampleScrapDetailEntities) {
+    private void checkDetailQty(String id , String scrapUserId, List<String> skuIds, List<SampleScrapDetailEntity> sampleScrapDetailEntities) {
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(scrapUserId);
-        dto.setSkuNos(skuNos);
-        dto.setType("scrap");
+        dto.setSkuIds(skuIds);
+        dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
         dto.setChildId(id);
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
@@ -302,10 +304,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         }
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         String scrapUserId = sampleScrapInfoEntity.getScrapUserId();
         //校验可用数量是否足够
-        checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuNos, sampleScrapDetailEntities);
+        checkDetailQty(sampleScrapInfoEntity.getId(),scrapUserId, skuIds, sampleScrapDetailEntities);
 
         if(CollUtil.isNotEmpty(oldList)){
             List<String> detailIds = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -708,13 +709,13 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<SampleScrapDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(SampleScrapDetailDTO.ViewDTO.class,sampleScrapDetailEntities);
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuIds = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(sampleScrapInfoEntity.getScrapUserId());
-        dto.setSkuNos(skuNos);
-        dto.setType("scrap");
+        dto.setSkuIds(skuIds);
+        dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
 
@@ -946,8 +947,19 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         List<SampleScrapImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
+            List<SampleScrapImportExcelDTO> sortedErrorList = errorList.stream()
+                    .filter(e -> e.getNo() != null && !e.getNo().isEmpty()) // 过滤掉 null 或空字符串
+                    .sorted(Comparator.comparingInt(e -> {
+                        try {
+                            return Integer.parseInt(e.getNo());
+                        } catch (Exception ex) {
+                            // 处理非数字字符串，可以返回一个默认值
+                            return 0;
+                        }
+                    }))
+                    .collect(Collectors.toList());
             String fileName = "样品报废单错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleScrapImportExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, SampleScrapImportExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -981,20 +993,62 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         for (Map.Entry<String, List<SampleScrapImportExcelDTO>> entry : collect.entrySet()) {
             List<SampleScrapImportExcelDTO> value = entry.getValue();
             SampleScrapImportExcelDTO importMainDTO = value.get(0);
-            SampleScrapInfoDTO.AddDTO addDTO = new SampleScrapInfoDTO.AddDTO();
-            BeanMapperUtils.copy(importMainDTO, addDTO);
+
+            List<String> skuIds = value.stream().map(SampleScrapImportExcelDTO::getSkuId).collect(Collectors.toList());
+            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+            SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+            dto.setUserId(importMainDTO.getScrapUserId());
+            dto.setSkuIds(skuIds);
+            dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
+
+            Boolean isAdd = Boolean.TRUE;
             List<SampleScrapDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleScrapImportExcelDTO importDTO : value) {
-                SampleScrapDetailDTO.AddDTO detailDTO = new SampleScrapDetailDTO.AddDTO();
-                BeanMapperUtils.copy(importDTO, detailDTO);
-                //明细备注
-                detailDTO.setRemark(importDTO.getDetailRemark());
-                detailList.add(detailDTO);
+                String errorMsg = importDTO.getErrorMsg();
+                String[] split = errorMsg.split("；");
+                int indexTemp = split.length + 1;
+                //关联台账
+                if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
+                    errorMsg = errorMsg + indexTemp + "、" + "样品台账不存在" + "；";
+                } else {
+                    SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(importDTO.getSkuId()) && e.getUseUserName().equals(importDTO.getUseUserName())).findFirst().orElse(null);
+                    if (Objects.isNull(skuAvailableQtyDTO)) {
+                        errorMsg = errorMsg + indexTemp + "、" + "样品台账不存在" + "；";
+                    } else {
+                        Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty();
+                        Integer scrapQty = Objects.isNull(importDTO.getScrapQty()) ? 0 : Integer.valueOf(importDTO.getScrapQty());
+                        if (scrapQty.compareTo(availableQty) > 0) {
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "报废") + "；";
+                        } else {
+                            importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
+                            //防止超量借用
+                            skuAvailableQtyDTO.setAvailableQty(availableQty - scrapQty);
+                        }
+                    }
+                }
+                if(StringUtils.isNotBlank(errorMsg)){
+                    isAdd = Boolean.FALSE;
+                    importDTO.setErrorMsg(errorMsg);
+                }else {
+                    SampleScrapDetailDTO.AddDTO detailDTO = new SampleScrapDetailDTO.AddDTO();
+                    BeanMapperUtils.copy(importDTO, detailDTO);
+                    //明细备注
+                    detailDTO.setRemark(importDTO.getDetailRemark());
+                    detailList.add(detailDTO);
+                }
             }
-            addDTO.setDetailList(detailList);
 
-            if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                bean.add(addDTO);
+            if (!isAdd) {
+                errorList2.addAll(value);
+            }else {
+                SampleScrapInfoDTO.AddDTO addDTO = new SampleScrapInfoDTO.AddDTO();
+                BeanMapperUtils.copy(importMainDTO, addDTO);
+                addDTO.setDetailList(detailList);
+
+                if (ImportTypeEnum.ADD.getCode().equals(importType)){
+                    bean.add(addDTO);
+                }
             }
         }
     }

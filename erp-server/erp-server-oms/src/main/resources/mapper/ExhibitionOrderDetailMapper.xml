@@ -37,21 +37,69 @@
        <result column="bom_version" property="bomVersion" />
        <result column="cost_source" property="costSource" />
        <result column="tax_price" property="taxPrice" />
+       <result column="sample_ledger_id" property="sampleLedgerId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        main_id, sku_id, sku_no, qty, price, tax_rate, amount, currency, currency_symbol, is_gift, remark, purchase_price, sale_cost, sale_profit, sale_profit_rate, tax_amount, amount_local_currency, all_amount_local_currency, discount_amount, tax_amount_before, exchange_rate, tax, bom_version, cost_source, tax_price
+        eod.id as id,
+eod.create_user_id as createUserId,
+eod.create_user_name as createUserName,
+eod.create_time as createTime,
+eod.update_user_id as updateUserId,
+eod.update_user_name as updateUserName,
+eod.update_time as updateTime,
+eod.version as version,
+eod.is_deleted as isDeleted,
+eod.main_id as mainId,
+eod.sku_id as skuId,
+eod.sku_no as skuNo,
+eod.product_name as productName,
+eod.qty as qty,
+eod.price as price,
+eod.tax_rate as taxRate,
+eod.amount as amount,
+eod.currency as currency,
+eod.currency_symbol as currencySymbol,
+eod.is_gift as isGift,
+eod.remark as remark,
+eod.purchase_price as purchasePrice,
+eod.sale_cost as saleCost,
+eod.sale_profit as saleProfit,
+eod.sale_profit_rate as saleProfitRate,
+eod.tax_amount as taxAmount,
+eod.amount_local_currency as amountLocalCurrency,
+eod.all_amount_local_currency as allAmountLocalCurrency,
+eod.discount_amount as discountAmount,
+eod.tax_amount_before as taxAmountBefore,
+eod.exchange_rate as exchangeRate,
+eod.tax as tax,
+eod.bom_version as bomVersion,
+eod.cost_source as costSource,
+eod.tax_price as taxPrice,
+eod.sample_ledger_id as sampleLedgerId
     </sql>
-
-
+    <select id="listBySourceDetailIds"  resultType="com.erp.model.oms.dto.ExhibitionOrderDetailDTO$SkuQtyDetailDTO">
+       SELECT
+          eo.ID,
+          eod.ID AS detailId,
+          eod.sample_ledger_id AS sampleLedgerId,
+          eod.sku_id,
+          eod.sku_no,
+          eod.qty,
+          eo.approve_status
+       FROM
+          exhibition_order AS eo
+             LEFT JOIN exhibition_order_detail AS eod ON eo.ID = eod.main_id
+             AND eod.is_deleted = FALSE
+       where
+          eo.is_deleted = false
+         and eo.invalid_status = false
+       <if test="sourceDetailIdList != null and sourceDetailIdList.size > 0">
+          AND eod.sample_ledger_id IN
+          <foreach item="item" index="index" collection="sourceDetailIdList" open="(" separator="," close=")">
+             #{item}
+          </foreach>
+       </if>
+    </select>
 </mapper>

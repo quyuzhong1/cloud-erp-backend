@@ -1,6 +1,10 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.utils.ExcelUtil;
+import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
+import com.erp.server.oms.query.ExhibitionOrderQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -31,7 +35,7 @@ import com.erp.model.oms.entity.ExhibitionOrderEntity;
  * 展会订单信息
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
  */
 @Slf4j
 @RestController
@@ -45,7 +49,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 新增
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<String>
     */
@@ -58,7 +62,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 修改
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult
     */
@@ -82,7 +86,7 @@ public class ExhibitionOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:exhibitionOrder:paging",
-            tableAlias = ""
+            tableAlias = "eo"
     )
     public ApiResult<List<ExhibitionOrderDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(exhibitionOrderService.tabList(dto));
@@ -91,7 +95,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 列表查询
     * @author jack
-    * @date: 2025-08-20
+    * @date: 2025-08-29
     * @param dto
     * @return ApiResult<PagingVO<ExhibitionOrderDTO.ListDTO>>
     */
@@ -99,8 +103,9 @@ public class ExhibitionOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:exhibitionOrder:paging",
-            tableAlias = ""
+            tableAlias = "eo"
     )
+    @WebAdvanceQuery(handler = ExhibitionOrderQueryHandler.class)
     public ApiResult<PagingVO<ExhibitionOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto) {
         return success(exhibitionOrderService.paging(dto));
     }
@@ -108,7 +113,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 新增并提交审核
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<Void>
     */
@@ -121,7 +126,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 修改并提交审核
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<Void>
     */
@@ -139,7 +144,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 提交审核
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -153,7 +158,6 @@ public class ExhibitionOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
 		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -178,7 +182,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 审核
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -192,7 +196,6 @@ public class ExhibitionOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
 		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
         for (String id : ids) {
@@ -217,7 +220,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 反审核
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -231,7 +234,6 @@ public class ExhibitionOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
 		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -257,7 +259,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 删除
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -271,7 +273,6 @@ public class ExhibitionOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
 		Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -294,9 +295,47 @@ public class ExhibitionOrderController extends BaseController {
     }
 
     /**
+     * 作废
+     * @author jack
+     * @date:  2025-08-29
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:exhibitionOrder:invalid",
+            serviceClass = ExhibitionOrderService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "展会订单信息作废")
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
+        Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = exhibitionOrderService.invalid(id);
+            }catch (Exception e){
+                log.error("展会订单信息作废失败",e);
+                ExhibitionOrderEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "展会订单信息不存在, 作废失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 撤销
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
     */
@@ -310,7 +349,6 @@ public class ExhibitionOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
         Map<String, ExhibitionOrderEntity> idEntityMap = list.stream().collect(Collectors.toMap(ExhibitionOrderEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -335,16 +373,11 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 详情
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param id
     * @return ApiResult<ExhibitionOrderDTO.ViewDTO>>
     */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:exhibitionOrder:view",
-            serviceClass = ExhibitionOrderService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<ExhibitionOrderDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(exhibitionOrderService.view(id));
@@ -353,7 +386,7 @@ public class ExhibitionOrderController extends BaseController {
     /**
     * 导出Excel数据
     * @author jack
-    * @date:  2025-08-20
+    * @date:  2025-08-29
     * @param dto
     * @param response
     * @return
@@ -362,12 +395,45 @@ public class ExhibitionOrderController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:exhibitionOrder:export",
-            tableAlias = ""
+            tableAlias = "eo"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "展会订单信息导出Excel数据")
-    public void exportList(@RequestBody @Validated ExhibitionOrderDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = ExhibitionOrderQueryHandler.class)
+    public ApiResult<Object> exportList(@RequestBody @Validated ExhibitionOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         exhibitionOrderService.exportList(dto, response);
+        return success();
     }
+
+    /**
+     *  异步导入
+     * @author jack
+     * @date:  2025-08-20
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入样品借用单")
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = exhibitionOrderService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-08-20
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "展会订单下载模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        String standardPath = "classpath:excel/exhibitionOrderTemplate.xlsx";
+        String standardExcelName = "exhibitionOrderTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
 
 
 }

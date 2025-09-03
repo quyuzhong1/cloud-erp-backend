@@ -344,17 +344,24 @@ public class SampleLedgerDTO implements Serializable {
 
         private List<String> ids;
 
-        private String childId;
 
+        /**
+         * 编辑必填，（借用、报废、退回、展会订单）主表主键id
+         */
+        private String childId;
+        /**
+         *  SampleLedgerTypeEnum  borrow：借用 ， scrap：报废 ， back：退回，exhibition：展会订单
+         */
         private String type;
 
         private String skuNo;
 
         private List<String> skuNos;
 
+        private List<String> skuIds;
+
         @NotBlank(message = "归属用户不能为空")
         private String userId;
-
     }
     /**
      *

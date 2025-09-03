@@ -54,7 +54,7 @@
             COALESCE(sl.qty, 0) - COALESCE(dd.freezeQty, 0) AS availableQty
         </if>
         <if test="params.type == null || params.type == ''">
-            sl.qty  AS availableQty
+            COALESCE(sl.qty, 0)  AS availableQty
         </if>
         FROM
         sample_ledger sl
@@ -97,9 +97,15 @@
         WHERE
         sl.is_deleted = FALSE
         AND sl.user_id = #{ params.userId}
-        <if test="params.ids != null and params.ids.size() > 1">
+        <if test="params.ids != null and params.ids.size() > 0">
             and sl.id in
             <foreach collection="params.ids" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuIds != null and params.skuIds.size() > 0">
+            and sl.sku_id in
+            <foreach collection="params.skuIds" open="(" separator="," close=")" item="item">
                 #{item}
             </foreach>
         </if>

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -36,6 +37,7 @@ import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -157,10 +159,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         String lendUserId = sampleBorrowInfoEntity.getLendUserId();
         //校验可用数量是否足够
-        checkDetailQty("" , lendUserId, skuNos, sampleBorrowDetailEntities);
+        checkDetailQty("" , lendUserId, skuIds, sampleBorrowDetailEntities);
 
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
         sampleBorrowDetailService.saveBatch(sampleBorrowDetailEntities);
@@ -169,12 +170,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         return new BaseResultDTO.AddDTO(sampleBorrowInfoEntity.getId(), code);
     }
 
-    private void checkDetailQty(String id , String lendUserId, List<String> skuNos, List<SampleBorrowDetailEntity> sampleBorrowDetailEntities) {
+    private void checkDetailQty(String id , String lendUserId, List<String> skuIds, List<SampleBorrowDetailEntity> sampleBorrowDetailEntities) {
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(lendUserId);
-        dto.setSkuNos(skuNos);
-        dto.setType("borrow");
+        dto.setSkuIds(skuIds);
+        dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
         dto.setChildId(id);
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1,o2)-> o1));
@@ -297,11 +298,9 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             }
         }
 
-        // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         String BorrowUserId = sampleBorrowInfoEntity.getBorrowUserId();
         //校验可用数量是否足够
-        checkDetailQty(sampleBorrowInfoEntity.getId(),BorrowUserId, skuNos, sampleBorrowDetailEntities);
+        checkDetailQty(sampleBorrowInfoEntity.getId(),BorrowUserId, skuIds, sampleBorrowDetailEntities);
 
         sampleBorrowDetailEntities.forEach(e -> e.setWaitReturnQty(e.getBorrowQty()));
 
@@ -734,8 +733,20 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<SampleBorrowImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
+            //排序
+            List<SampleBorrowImportExcelDTO> sortedErrorList = errorList.stream()
+                    .filter(e -> e.getNo() != null && !e.getNo().isEmpty()) // 过滤掉 null 或空字符串
+                    .sorted(Comparator.comparingInt(e -> {
+                        try {
+                            return Integer.parseInt(e.getNo());
+                        } catch (Exception ex) {
+                            // 处理非数字字符串，可以返回一个默认值
+                            return 0;
+                        }
+                    }))
+                    .collect(Collectors.toList());
             String fileName = "样品借用单错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleBorrowImportExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, SampleBorrowImportExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -769,20 +780,62 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         for (Map.Entry<String, List<SampleBorrowImportExcelDTO>> entry : collect.entrySet()) {
             List<SampleBorrowImportExcelDTO> value = entry.getValue();
             SampleBorrowImportExcelDTO importMainDTO = value.get(0);
-            SampleBorrowInfoDTO.AddDTO addDTO = new SampleBorrowInfoDTO.AddDTO();
-            BeanMapperUtils.copy(importMainDTO, addDTO);
+
+            List<String> skuIds = value.stream().map(SampleBorrowImportExcelDTO::getSkuId).collect(Collectors.toList());
+            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+            SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+            dto.setUserId(importMainDTO.getBorrowUserId());
+            dto.setSkuIds(skuIds);
+            dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
+            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
+
+            Boolean isAdd = Boolean.TRUE;
             List<SampleBorrowDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleBorrowImportExcelDTO importDTO : value) {
-                SampleBorrowDetailDTO.AddDTO detailDTO = new SampleBorrowDetailDTO.AddDTO();
-                BeanMapperUtils.copy(importDTO, detailDTO);
-                //明细备注
-                detailDTO.setRemark(importDTO.getDetailRemark());
-                detailList.add(detailDTO);
-            }
-            addDTO.setDetailList(detailList);
+                String errorMsg = importDTO.getErrorMsg();
+                String[] split = errorMsg.split("；");
+                int indexTemp = split.length + 1;
+                //关联台账
+                if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
+                    errorMsg = errorMsg + indexTemp + "、" + "样品台账不存在" + "；";
+                } else {
+                    SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(importDTO.getSkuId()) && e.getUseUserName().equals(importDTO.getUseUserName())).findFirst().orElse(null);
+                    if (Objects.isNull(skuAvailableQtyDTO)) {
+                        errorMsg = errorMsg + indexTemp + "、" + "样品台账不存在" + "；";
+                    } else {
 
-            if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                bean.add(addDTO);
+                        Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty();
+                        Integer borrowedQty = Objects.isNull(importDTO.getBorrowQty()) ? 0 : Integer.valueOf(importDTO.getBorrowQty());
+                        if (borrowedQty.compareTo(availableQty) > 0) {
+                            errorMsg = errorMsg + indexTemp + "、" + CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg, importDTO.getSkuNo(), "借用") + "；";
+                        } else {
+                            importDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
+                            //防止超量借用
+                            skuAvailableQtyDTO.setAvailableQty(availableQty - borrowedQty);
+                        }
+                    }
+                }
+                if(StringUtils.isNotBlank(errorMsg)){
+                    isAdd = Boolean.FALSE;
+                    importDTO.setErrorMsg(errorMsg);
+                }else {
+                    SampleBorrowDetailDTO.AddDTO detailDTO = new SampleBorrowDetailDTO.AddDTO();
+                    BeanMapperUtils.copy(importDTO, detailDTO);
+                    //明细备注
+                    detailDTO.setRemark(importDTO.getDetailRemark());
+                    detailList.add(detailDTO);
+                }
+            }
+            if (!isAdd) {
+                errorList2.addAll(value);
+            }else {
+                SampleBorrowInfoDTO.AddDTO addDTO = new SampleBorrowInfoDTO.AddDTO();
+                BeanMapperUtils.copy(importMainDTO, addDTO);
+                addDTO.setDetailList(detailList);
+
+                if (ImportTypeEnum.ADD.getCode().equals(importType)){
+                    bean.add(addDTO);
+                }
             }
         }
     }
@@ -799,13 +852,13 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         List<SampleBorrowDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(SampleBorrowDetailDTO.ViewDTO.class, sampleBorrowDetailEntities);
 
         // 提取所有SKU编号，用于后续查询可用数量
-        List<String> skuNos = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuIds = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(sampleBorrowInfoEntity.getBorrowUserId());
-        dto.setSkuNos(skuNos);
-        dto.setType("borrow");
+        dto.setSkuIds(skuIds);
+        dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
         Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSampleLedgerId, Function.identity(),(o1, o2)-> o1));
 

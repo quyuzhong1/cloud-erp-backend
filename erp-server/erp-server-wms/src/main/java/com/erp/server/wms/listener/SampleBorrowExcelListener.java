@@ -1,12 +1,15 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -178,25 +181,6 @@ public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorro
                 excelDTO.setSkuId(skuVO.getSkuId());
                 excelDTO.setSkuNo(skuVO.getSkuNo());
                 excelDTO.setProductName(skuVO.getSkuName());
-            }
-        }
-
-        if(Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(excelDTO.getUseUserName())){
-            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-            SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-            dto.setUserId(excelDTO.getBorrowUserId());
-            dto.setSkuNo(excelDTO.getSkuNo());
-            dto.setType("borrow");
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-            if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-                errorMsgList.add("样品台账不存在");
-            }else {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo) && e.getUseUserName().equals(excelDTO.getUseUserName())).findFirst().orElse(null);
-                if(Objects.isNull(skuAvailableQtyDTO)){
-                    errorMsgList.add("样品台账不存在");
-                }else {
-                    excelDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
-                }
             }
         }
 

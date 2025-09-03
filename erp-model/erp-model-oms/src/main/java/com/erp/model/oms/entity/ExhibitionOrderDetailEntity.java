@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author jack
- * @since 2025-08-20
+ * @since 2025-08-29
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,6 +25,11 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("exhibition_order_detail")
 public class ExhibitionOrderDetailEntity extends BaseEntity<ExhibitionOrderDetailEntity> {
 
+    /**
+    * 台账id
+    */
+    @TableField("sample_ledger_id")
+    private String sampleLedgerId;
     /**
     * 主表id
     */
@@ -40,6 +45,11 @@ public class ExhibitionOrderDetailEntity extends BaseEntity<ExhibitionOrderDetai
     */
     @TableField("sku_no")
     private String skuNo;
+    /**
+    * 产品名称
+    */
+    @TableField("product_name")
+    private String productName;
     /**
     * 销售数量
     */
