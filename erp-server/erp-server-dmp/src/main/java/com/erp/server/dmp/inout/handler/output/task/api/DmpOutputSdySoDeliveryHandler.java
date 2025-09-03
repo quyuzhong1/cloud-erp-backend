@@ -346,19 +346,9 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDepartmentName);
     			
-    	        BigDecimal goods_transaction_amount = shudiyunB2cOrderDTO.getGoods_transaction_amount();
-    			BigDecimal total_goods_transaction_amount = shudiyunB2cOrderDTO.getTotal_goods_transaction_amount();
-    			if(BigDecimal.ZERO.compareTo(goods_transaction_amount) != 0 && BigDecimal.ZERO.compareTo(total_goods_transaction_amount) != 0) {
-    				if(shudiyunB2cOrderDTO.getDiscount_deduction_amount() != null) {
-    					shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getDiscount_deduction_amount()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
-    				}
-    				if(shudiyunB2cOrderDTO.getTotal_freight() != null) {
-    					shudiyunB2cOrderDTO.setFreight(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getTotal_freight()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
-    				}
-    				if(shudiyunB2cOrderDTO.getTaxation() != null) {
-    					shudiyunB2cOrderDTO.setGoods_taxation(goods_transaction_amount.multiply(shudiyunB2cOrderDTO.getTaxation()).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
-    				}
-    			}
+    	        shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(dmpSoDeliveryDetailEntity.getDiscountAmount());
+    	        shudiyunB2cOrderDTO.setFreight(dmpSoDeliveryDetailEntity.getFreightAmount());
+    	        shudiyunB2cOrderDTO.setGoods_taxation(dmpSoDeliveryDetailEntity.getTaxAmount());
     	        
     	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
