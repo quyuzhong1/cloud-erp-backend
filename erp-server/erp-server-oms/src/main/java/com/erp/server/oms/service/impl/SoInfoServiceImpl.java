@@ -3514,6 +3514,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         this.updateApproveStatus(Collections.singletonList(updateApprovalStatusDTO.getSoInfoEntity()),  updateApprovalStatusDTO.getBillApproveStatusEnum(), updateApprovalStatusDTO.getSoInfoEntity().getApproveUserName());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap) {
+        List<String> ids = new ArrayList<>(updateSoReceiptAmountMap.keySet());
+        List<SoInfoEntity> soInfoEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soInfoEntityList)) {
+            return;
+        }
+        for (SoInfoEntity soInfoEntity : soInfoEntityList) {
+            BigDecimal receiptAmount = updateSoReceiptAmountMap.get(soInfoEntity.getId());
+            if (Objects.isNull(receiptAmount)) {
+                continue;
+            }
+            soInfoEntity.setReceiveAmount(soInfoEntity.getReceiveAmount().add(receiptAmount));
+        }
+        this.updateBatchById(soInfoEntityList);
+
+    }
+
     /**
      * 处理推送采购申请
      * @param list

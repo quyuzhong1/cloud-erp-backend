@@ -150,6 +150,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 数据处理
         handleData(soReceiptEntity);
         List<SoReceiptDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+
         //求和总收款金额
         if(CollectionUtils.isEmpty(detailList)){
             throw new ServiceException("收款单明细不能为空");
@@ -157,8 +158,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         BigDecimal totalAmount; detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //更新明细
-        soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList());
-        if(addOrUpdateDTO.isRecalculation()){
+        soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList(),addOrUpdateDTO.isFromSoUpdate());
+        if(addOrUpdateDTO.isFromSoUpdate()){
             List<SoReceiptDetailEntity> soReceiptDetailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(soReceiptEntity.getId()));
             totalAmount = soReceiptDetailEntityList.stream().map(SoReceiptDetailEntity::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         }else{
@@ -411,6 +412,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        if(Objects.equals(ApproveTypeEnum.PASS.getStatus(), dto.getType())){
+            List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            //更新销售订单的收款金额
+            Map<String,BigDecimal> updateSoReceiptAmountMap = detailEntityList.stream().collect(Collectors.groupingBy(SoReceiptDetailEntity::getSoId,Collectors.mapping(SoReceiptDetailEntity::getReceiptAmount,Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
+            soInfoService.updateSoReceiptAmount(updateSoReceiptAmountMap);
+        }
 
         return Boolean.TRUE;
     }
@@ -539,7 +546,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             SoReceiptDTO.UpdateDTO updateDTO = new SoReceiptDTO.UpdateDTO();
             updateDTO.setId(update.getId());
             updateDTO.setAttachmentList(update.getAttachmentList());
-            updateDTO.setRecalculation(true);
+            updateDTO.setFromSoUpdate(true);
             SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
             detailUpdateDTO.setId(update.getDetailId());
             detailUpdateDTO.setReceiptAmount(update.getReceiptAmount());

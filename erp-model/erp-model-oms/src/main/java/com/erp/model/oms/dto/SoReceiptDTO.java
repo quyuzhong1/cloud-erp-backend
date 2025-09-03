@@ -506,9 +506,9 @@ public class SoReceiptDTO implements Serializable {
         private List<SoReceiptDetailDTO.UpdateDTO> detailList;
 
         /**
-         * 是否需要重新查询所有明细重算金额
+         * 是否来源销售订单的修改
          */
-        private boolean isRecalculation = false;
+        private boolean isFromSoUpdate = false;
 
     }
 

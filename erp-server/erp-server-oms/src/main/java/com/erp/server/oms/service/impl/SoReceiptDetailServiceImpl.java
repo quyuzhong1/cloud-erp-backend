@@ -92,12 +92,12 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.UpdateDTO> detailList) {
+    public void updateDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.UpdateDTO> detailList,boolean isFromSoUpdate) {
         //处理删除
         List<String> ids = detailList.stream().filter(v -> StrUtil.isNotBlank(v.getId())).map(SoReceiptDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<SoReceiptDetailEntity> dbList = this.lambdaQuery().eq(SoReceiptDetailEntity::getMainId, soReceiptEntity.getId()).list();
         List<SoReceiptDetailEntity> deleteList = dbList.stream().filter(v -> !ids.contains(v.getId())).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(deleteList)){
+        if(CollectionUtils.isNotEmpty(deleteList) && !isFromSoUpdate){
             List<String> deleteIds = deleteList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
             this.removeByIds(deleteIds);
         }
