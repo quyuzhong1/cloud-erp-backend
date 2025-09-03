@@ -118,6 +118,9 @@
         <if test="params.skuNo != null and params.skuNo != ''">
             and sl.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
         </if>
+        <if test="params.useUserId != null and params.useUserId != ''">
+            and sl.use_user_id = #{params.useUserId}
+        </if>
         order by sl.sku_no desc
     </sql>
 

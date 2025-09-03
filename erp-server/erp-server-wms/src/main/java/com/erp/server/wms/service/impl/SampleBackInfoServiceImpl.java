@@ -18,11 +18,9 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -373,8 +371,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 
                 // 查询可退回数量
                 SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
-                searchDTO.setUserId(detail.getUseUserId());
-                searchDTO.setSkuNo(detail.getSkuNo());
+                searchDTO.setUserId(entity.getUserId());
+                searchDTO.setUseUserId(detail.getUseUserId());
+                searchDTO.setSkuIds(Collections.singletonList(detail.getSkuId()));
                 searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
                 List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(searchDTO);
                 

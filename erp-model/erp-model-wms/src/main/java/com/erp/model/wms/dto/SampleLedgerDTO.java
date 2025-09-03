@@ -7,8 +7,6 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.AdvanceQueryDTO;
 
 import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -362,6 +360,8 @@ public class SampleLedgerDTO implements Serializable {
 
         @NotBlank(message = "归属用户不能为空")
         private String userId;
+
+        private String useUserId;
     }
     /**
      *
