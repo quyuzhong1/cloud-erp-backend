@@ -55,6 +55,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.DhtService;
 import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -126,6 +127,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Resource
+    private DhtService dhtService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -2456,5 +2459,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public void updateApproveStatus(CustomerInfoEntity entity) {
         this.updateById(entity);
+    }
+
+    @Override
+    public CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto) {
+        CustomerInfoEntity entity = this.getById(dto.getId());
+        return dhtService.queryCustomerAccountByCustomerCode(entity);
     }
 }
