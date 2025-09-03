@@ -683,6 +683,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         return this.lambdaQuery().eq(SoMultiChannelEntity::getDeliveryCode, deliveryCode).eq(SoMultiChannelEntity::getInvalidStatus, Boolean.FALSE).one();
     }
 
+    @Override
+    public List<SoMultiChannelEntity> queryMultiChannelDeliveryStatus() {
+        return baseMapper.queryMultiChannelDeliveryStatus();
+    }
+
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(soViewDTOS)) {
             return;
@@ -889,11 +894,17 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             soMultiChannelEntity.setDeliveryWarehouseId(shopInfoEntity.getWarehouseId());
             soMultiChannelEntity.setDeliveryWarehouseName(shopInfoEntity.getWarehouseName());
         }
+        LogisticsChannelEntity logisticsChannelEntity = FeignQuery.getById(LogisticsChannelEntity.class, soMultiChannelEntity.getLogisticsChannelId());
+        if (ObjectUtil.isEmpty(logisticsChannelEntity)) {
+            throw new ServiceException("未找到物流渠道信息");
+        }
+        //校验物流渠道编码 防止配错
+        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey("multiChannelLogiticsCode");
+        List<String> codeList = dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
+        if (!codeList.contains(logisticsChannelEntity.getCode())) {
+            throw new ServiceException("物流渠道不支持多渠道订单");
+        }
         if (CharSequenceUtil.isBlank(soMultiChannelEntity.getLogisticsChannelName())) {
-            LogisticsChannelEntity logisticsChannelEntity = FeignQuery.getById(LogisticsChannelEntity.class, soMultiChannelEntity.getLogisticsChannelId());
-            if (ObjectUtil.isEmpty(logisticsChannelEntity)) {
-                throw new ServiceException("未找到物流渠道信息");
-            }
             soMultiChannelEntity.setLogisticsChannelName(logisticsChannelEntity.getName());
         }
         if (CharSequenceUtil.isBlank(soMultiChannelEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soMultiChannelEntity.getPlatformCode())) {
