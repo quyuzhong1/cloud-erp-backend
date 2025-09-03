@@ -9,16 +9,14 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleBorrowDetailDTO;
 import com.erp.model.wms.dto.excel.SampleBorrowDetailImportExcelDTO;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.server.wms.service.SampleLedgerService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author jack
@@ -101,16 +99,16 @@ public class SampleBorrowDetailExcelListener extends AnalysisEventListener<Sampl
         //使用方
         String useUserName = excelDTO.getUseUserName();
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-        if(Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(useUserName)){
+        if(StringUtils.isNotBlank(addDTO.getSkuId()) && Objects.isNull(findUserDTO) && StringUtils.isNotBlank(useUserName)){
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
             dto.setUserId(findUserDTO.getUserId());
-            dto.setSkuNo(addDTO.getSkuNo());
-            dto.setType("borrow");
+            dto.setSkuIds(Arrays.asList(addDTO.getSkuId()));
+            dto.setType(SampleLedgerTypeEnum.BORROW.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add("样品台账不存在");
             }else {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(addDTO.getSkuId()) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
                     errorMsgList.add("样品台账不存在");
                 }else {

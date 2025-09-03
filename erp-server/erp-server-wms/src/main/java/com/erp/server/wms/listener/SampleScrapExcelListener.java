@@ -137,31 +137,6 @@ public class SampleScrapExcelListener extends AnalysisEventListener<SampleScrapI
         //明细备注
         addDTO.setDetailRemark(excelDTO.getDetailRemark());
 
-//        if(Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(useUserName)){
-//            // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-//            SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-//            dto.setUserId(addDTO.getScrapUserId());
-//            dto.setSkuNo(addDTO.getSkuNo());
-//            dto.setType("scrap");
-//            List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
-//            if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-//                errorMsgList.add("样品台账不存在");
-//            }else {
-//                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo) && e.getUseUserName().equals(useUserName)).findFirst().orElse(null);
-//                if(Objects.isNull(skuAvailableQtyDTO)){
-//                    errorMsgList.add("样品台账不存在");
-//                }else {
-//                    Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
-//                    if(addDTO.getScrapQty().compareTo(availableQty) > 0){
-//                        errorMsgList.add(CharSequenceUtil.format(ApiError.ERROR_SAMPLE_AVAILABLE_QTY.msg,excelDTO.getSkuNo(),"报废"));
-//                    }else {
-//                        excelDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
-//                        addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
-//                    }
-//                }
-//            }
-//        }
-
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

@@ -15,6 +15,7 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.dto.SampleScrapInfoDTO;
 import com.erp.model.wms.dto.excel.SampleScrapImportExcelDTO;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.erp.server.wms.service.SampleScrapInfoService;
@@ -25,10 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -155,17 +153,17 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
             }
         }
 
-        if(Objects.nonNull(findUserDTO) && StringUtils.isNotBlank(excelDTO.getUseUserName())){
+        if(StringUtils.isNotBlank(excelDTO.getSkuId()) && StringUtils.isNotBlank(excelDTO.getScrapUserId()) && StringUtils.isNotBlank(excelDTO.getUseUserName())){
             // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
             SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
             dto.setUserId(excelDTO.getScrapUserId());
-            dto.setSkuNo(excelDTO.getSkuNo());
-            dto.setType("scrap");
+            dto.setSkuIds(Arrays.asList(excelDTO.getSkuId()));
+            dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
                 errorMsgList.add("样品台账不存在");
             }else {
-                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuNo().equals(skuNo) && e.getUseUserName().equals(excelDTO.getUseUserName())).findFirst().orElse(null);
+                SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getUseUserName().equals(excelDTO.getUseUserName())).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
                     errorMsgList.add("样品台账不存在");
                 }else {

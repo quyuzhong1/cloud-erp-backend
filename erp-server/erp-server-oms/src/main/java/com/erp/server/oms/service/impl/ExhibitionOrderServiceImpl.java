@@ -206,8 +206,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         }
 
-        List<String> skuNos = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuNo).collect(Collectors.toList());
-        checkDetailQty("",exhibitionOrderEntity.getRecipientUserId(), skuNos, exhibitionOrderDetailEntities);
+        List<String> skuIds = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        checkDetailQty("",exhibitionOrderEntity.getRecipientUserId(), skuIds, exhibitionOrderDetailEntities);
 
         // 金额折扣处理
         handleDetailAmount(exhibitionOrderEntity.getIsTax(), exhibitionOrderEntity.getDiscountAmount(), exhibitionOrderDetailEntities);
@@ -248,11 +248,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
      * @param skuNos SKU编号列表，用于限定查询的SKU范围
      * @param exhibitionOrderDetailEntities 展会订单明细实体列表，包含每个SKU的申请数量和台账ID等信息
      */
-    private void checkDetailQty(String id , String recipientUserId, List<String> skuNos, List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities) {
+    private void checkDetailQty(String id , String recipientUserId, List<String> skuIds, List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities) {
         // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
         SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
         dto.setUserId(recipientUserId);
-        dto.setSkuNos(skuNos);
+        dto.setSkuIds(skuIds);
         dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
         dto.setChildId(id);
         List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
@@ -395,8 +395,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         }
 
-        List<String> skuNos = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuNo).collect(Collectors.toList());
-        checkDetailQty(exhibitionOrderEntity.getId(),exhibitionOrderEntity.getRecipientUserId(), skuNos, exhibitionOrderDetailEntities);
+        List<String> skuIds = exhibitionOrderDetailEntities.stream().map(ExhibitionOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        checkDetailQty(exhibitionOrderEntity.getId(),exhibitionOrderEntity.getRecipientUserId(), skuIds, exhibitionOrderDetailEntities);
 
         // 金额折扣处理
         handleDetailAmount(exhibitionOrderEntity.getIsTax(), exhibitionOrderEntity.getDiscountAmount(), exhibitionOrderDetailEntities);
