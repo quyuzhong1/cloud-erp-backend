@@ -15,6 +15,8 @@ import com.common.business.vo.LoginUser;
 </#if>
 
 import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import ${package.Entity}.${entity};
 import ${package.Mapper}.${table.mapperName};
