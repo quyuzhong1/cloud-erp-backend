@@ -158,5 +158,12 @@
     <select id="getBySoId" resultType="com.erp.model.oms.entity.SoMultiChannelEntity">
         select * from so_multi_channel where so_id=#{soId} order by create_time desc limit 1
     </select>
+    <select id="queryMultiChannelDeliveryStatus" resultType="com.erp.model.oms.entity.SoMultiChannelEntity">
+        select * from so_multi_channel
+        where (delivery_status = '' or delivery_status='PING')
+        and is_deleted=false and create_status = 'success'
+        and bill_status != 'Cancelled'
+        order by create_time desc
+    </select>
 
 </mapper>
