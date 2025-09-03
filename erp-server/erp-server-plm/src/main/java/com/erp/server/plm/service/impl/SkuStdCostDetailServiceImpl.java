@@ -386,6 +386,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        validateDetail(entity);
+
         // 调用流程审核
         approveProcess(entity, dto);
 
@@ -678,7 +680,25 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        validateDetail(entity);
     }
+
+    /**
+     * 校验明细
+     */
+    private void validateDetail(SkuStdCostDetailEntity entity) {
+        if (null == entity.getEffectiveDate()){
+            throw new ServiceException("【提交】生效日期不能为空");
+        }
+        if (null == entity.getStdCostPrice()){
+            throw new ServiceException("【提交】标准成本不能为空");
+        }
+        if (BigDecimal.ZERO.compareTo(entity.getStdCostPrice()) == 0) {
+            throw new ServiceException("【提交】标准成本不能为0");
+        }
+    }
+
+
 
 
     @Override
