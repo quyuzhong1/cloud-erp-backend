@@ -563,7 +563,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt,Boolean isNeedProcess){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -574,16 +574,28 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         // 调用流程审核
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
         entity.setIsPushWdt(isPushWdt);
-        approveProcess(entity, dto);
-
+        if (isNeedProcess){
+            approveProcess(entity, dto);
+        }else {
+            dto.setVariablesMap(BeanUtil.beanToMap(entity));
+            approveEnd(dto,entity);
+        }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
+        return this.approve(id,type,comment,isPushWdt,true);
+    }
+
     /**
      * 审核流程处理
+     *
      * @param entity
      * @param dto
      */

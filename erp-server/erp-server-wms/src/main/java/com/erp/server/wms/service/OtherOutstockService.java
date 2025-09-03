@@ -128,6 +128,13 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @date: 2023/5/18 17:54
      * @param id
      */
+    BatchResultDTO approve(String id, String type, String comment,Boolean isNeedProcess);
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param id
+     */
     BatchResultDTO approve(String id, String type, String comment);
     /**
      * 结束审核

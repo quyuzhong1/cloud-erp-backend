@@ -136,8 +136,19 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @author Will
      * @date: 2023/12/5 11:58
      */
-    BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt);
+    BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt,Boolean isNeedProcess);
 
+
+    /**
+     * @param id
+     * @param type
+     * @param comment
+     * @param isPushWdt
+     * @description: 审核
+     * @author Will
+     * @date: 2023/12/5 11:58
+     */
+    BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt);
     /**
      * 结束审核
      * @author will
