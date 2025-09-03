@@ -469,6 +469,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 soB2cDeliveryFeign.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
             }
         }catch (Exception e){
+            log.error("订单{}不出库发货生成发货单或出库单失败，异常信息：{}", entity.getCode(), e.getMessage());
             entity.setSignOrderError(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
             entity.setIsNotOutbound(false);

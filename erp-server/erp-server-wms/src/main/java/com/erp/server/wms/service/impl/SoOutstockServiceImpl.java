@@ -2732,6 +2732,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 sourceCodes.add(generateB2cDTO.getSoCode());
                 if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                     sourceCodes.add(thirdWarehouseDeliveryEntity.getCode());
+                    generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
+                    generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
                 }
                 // 海外仓出库信息补充
                 List<DmpThirdOutboundEntity> list = FeignQuery.create(DmpThirdOutboundEntity.class)
