@@ -26,6 +26,7 @@ import com.erp.model.oms.dto.SoReceiptDTO;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoReceiptSourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -153,16 +154,21 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if(CollectionUtils.isEmpty(detailList)){
             throw new ServiceException("收款单明细不能为空");
         }
-        BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        soReceiptEntity.setReceiptAmount(totalAmount);
+        BigDecimal totalAmount; detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        log.info("编辑 开始修改收款单数据，单号：【{}】", old.getCode());
+        //更新明细
+        soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList());
+        if(addOrUpdateDTO.isRecalculation()){
+            List<SoReceiptDetailEntity> soReceiptDetailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(soReceiptEntity.getId()));
+            totalAmount = soReceiptDetailEntityList.stream().map(SoReceiptDetailEntity::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }else{
+            totalAmount = detailList.stream().map(SoReceiptDetailDTO.UpdateDTO::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        soReceiptEntity.setReceiptAmount(totalAmount);
         boolean save = super.updateById(soReceiptEntity);
         if(!save) {
             throw new ServiceException("收款单保存失败");
         }
-        //更新明细
-        soReceiptDetailService.updateDetail(soReceiptEntity,addOrUpdateDTO.getDetailList());
         // 保存附件
         TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
         List<AttachDTO> list = addOrUpdateDTO.getAttachmentList();
@@ -172,7 +178,6 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
 
         // 记录主单操作日志
-        log.info("编辑 开始记录收款单日志数据，单号：【{}】", soReceiptEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soReceiptEntity.getCode(), "收款单");
         operateLogService.addModuleOperateLogByObj(old, soReceiptEntity, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), msg);
         return Boolean.TRUE;
@@ -436,6 +441,143 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             return baseMapper.queryAmountBySoIds(soIds);
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<SoReceiptDTO.SoViewDTO> getSoViewDTO(SoInfoEntity soInfo) {
+        List<SoReceiptDTO.SoViewDTO> soViewDTOList = baseMapper.getSoViewDTO(soInfo.getId());
+
+        //查询主记录附件
+        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        List<String> ids = soViewDTOList.stream().map(SoReceiptDTO.SoViewDTO::getId).collect(Collectors.toList());
+        List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(ids,tableName.value());
+
+        //查询明细记录附件
+        TableName detailTableName = SoReceiptDetailEntity.class.getDeclaredAnnotation(TableName.class);
+        List<String> detailIds = soViewDTOList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).collect(Collectors.toList());
+        List<OmsAttachmentEntity> detailAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(detailIds,detailTableName.value());
+
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+
+        List<BankAccountEntity> bankAccountList = new ArrayList<>();
+        List<String> receiveAccountList = soViewDTOList.stream().map(SoReceiptDTO.SoViewDTO::getReceiptAccount).filter(org.apache.commons.lang3.StringUtils::isNotBlank).collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(receiveAccountList)) {
+            bankAccountList = bankAccountService.listByIds(receiveAccountList);
+        }
+
+        for (SoReceiptDTO.SoViewDTO soViewDTO : soViewDTOList) {
+            List<OmsAttachmentEntity> attachList = omsAttachmentEntities.stream().filter(v -> v.getBusinessId().equals(soViewDTO.getId())).collect(Collectors.toList());
+            List<AttachDTO> attachDTOList = BeanMapper.copyList(attachList, AttachDTO.class);
+            soViewDTO.setAttachmentList(attachDTOList);
+
+            List<OmsAttachmentEntity> detailAttachList = detailAttachmentEntities.stream().filter(v -> v.getBusinessId().equals(soViewDTO.getDetailId())).collect(Collectors.toList());
+            List<AttachDTO> detailAttachDTOList = BeanMapper.copyList(detailAttachList, AttachDTO.class);
+            soViewDTO.setDetailAttachmentList(detailAttachDTOList);
+
+            DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(soViewDTO.getDictReceiptMethod())).findFirst().orElse(null);
+            if(ObjectUtil.isNotEmpty(receiveMethod)) {
+                soViewDTO.setDictReceiptMethodName(receiveMethod.getName());
+            }
+
+            BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), soViewDTO.getReceiptAccount())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
+                soViewDTO.setReceiptAccountName(bankAccountEntity.getAccountName());
+            }
+            soViewDTO.setApproveStatusName(ApproveStatusEnum.getName(soViewDTO.getApproveStatus()));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addOrUpdateBySo(SoInfoEntity soInfo, String customerId, List<SoReceiptDTO.SoViewDTO> soReceiptDTOList) {
+        //查询原有
+        List<SoReceiptDTO.SoViewDTO> oldList = this.getSoViewDTO(soInfo);
+        List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).collect(Collectors.toList());
+        List<String> newDetailIds = soReceiptDTOList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StrUtils::isNotEmpty).collect(Collectors.toList());
+        List<SoReceiptDetailEntity> soReceiptDetailEntityList = soReceiptDetailService.listByIds(oldDetailIds);
+        List<SoReceiptEntity> soReceiptEntityList = this.listByIds(oldIds);
+        //新增
+        List<SoReceiptDTO.SoViewDTO> addList = soReceiptDTOList.stream().filter(v -> StrUtils.isEmpty(v.getDetailId())).collect(Collectors.toList());
+        for (SoReceiptDTO.SoViewDTO add : addList) {
+            SoReceiptDTO.AddDTO addDTO = new SoReceiptDTO.AddDTO();
+            addDTO.setCustomerId(customerId);
+            addDTO.setCurrency(soInfo.getCurrency());
+            addDTO.setIsPosted(false);
+            addDTO.setSourceType(SoReceiptSourceTypeEnum.SO_INFO.getCode());
+            addDTO.setAttachmentList(add.getAttachmentList());
+            SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
+            detailAddDTO.setSoId(soInfo.getId());
+            detailAddDTO.setSoCode(soInfo.getCode());
+            detailAddDTO.setSourceDetailId(soInfo.getId());
+            detailAddDTO.setPaymentNo(add.getPaymentNo());
+            detailAddDTO.setAttachmentList(add.getDetailAttachmentList());
+            detailAddDTO.setDictReceiptMethod(add.getDictReceiptMethod());
+            detailAddDTO.setReceiptAccount(add.getReceiptAccount());
+            detailAddDTO.setReceiptDate(add.getReceiptDate());
+            detailAddDTO.setRemark(add.getRemark());
+            detailAddDTO.setReceiptAmount(add.getReceiptAmount());
+            addDTO.setDetailList(Arrays.asList(detailAddDTO));
+            this.add(addDTO);
+        }
+        //更新
+        List<SoReceiptDTO.SoViewDTO> updateList = soReceiptDTOList.stream().filter(v -> StrUtils.isNotEmpty(v.getDetailId()) && oldDetailIds.contains(v.getDetailId())).collect(Collectors.toList());
+        for (SoReceiptDTO.SoViewDTO update : updateList) {
+            SoReceiptDetailEntity soReceiptDetailEntity = soReceiptDetailEntityList.stream().filter(v -> v.getId().equals(update.getDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单明细数据"));
+            SoReceiptEntity soReceiptEntity = soReceiptEntityList.stream().filter(v -> v.getId().equals(soReceiptDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
+            if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
+                continue;
+            }
+            SoReceiptDTO.UpdateDTO updateDTO = new SoReceiptDTO.UpdateDTO();
+            updateDTO.setId(update.getId());
+            updateDTO.setAttachmentList(update.getAttachmentList());
+            updateDTO.setRecalculation(true);
+            SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
+            detailUpdateDTO.setId(update.getDetailId());
+            detailUpdateDTO.setReceiptAmount(update.getReceiptAmount());
+            detailUpdateDTO.setReceiptDate(update.getReceiptDate());
+            detailUpdateDTO.setDictReceiptMethod(update.getDictReceiptMethod());
+            detailUpdateDTO.setReceiptAccount(update.getReceiptAccount());
+            detailUpdateDTO.setPaymentNo(update.getPaymentNo());
+            detailUpdateDTO.setRemark(update.getRemark());
+            updateDTO.setDetailList(Arrays.asList(detailUpdateDTO));
+            this.update(updateDTO);
+        }
+        //删除
+        List<String> delDetailIds = oldDetailIds.stream().filter(v -> !newDetailIds.contains(v)).collect(Collectors.toList());
+        List<SoReceiptDetailEntity> deleteDetailList = soReceiptDetailEntityList.stream().filter(v -> delDetailIds.contains(v.getId())).collect(Collectors.toList());
+        List<String> delIds = deleteDetailList.stream().map(SoReceiptDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoReceiptEntity> handleDelEntityList = soReceiptEntityList.stream().filter(v -> delIds.contains(v.getId())).collect(Collectors.toList());
+        for (SoReceiptDetailEntity deleteDetailEntity : deleteDetailList) {
+            SoReceiptEntity soReceiptEntity = handleDelEntityList.stream().filter(v -> v.getId().equals(deleteDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
+            if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
+                continue;
+            }
+            this.deleteByDetail(soReceiptEntity,deleteDetailEntity);
+        }
+    }
+
+    private void deleteByDetail(SoReceiptEntity soReceiptEntity, SoReceiptDetailEntity deleteDetailEntity) {
+        soReceiptDetailService.removeByIds(Arrays.asList(deleteDetailEntity.getId()));
+        //查询主表下是否还存在明细
+        List<SoReceiptDetailEntity> detailList = soReceiptDetailService.listByMainIds(Arrays.asList(soReceiptEntity.getId()));
+        //不存在明细，将主记录也删除
+        if(CollectionUtils.isEmpty(detailList)) {
+            this.removeById(soReceiptEntity.getId());
+        }else{
+            //存在明细，更新主表总金额
+            BigDecimal totalAmount = detailList.stream().map(SoReceiptDetailEntity::getReceiptAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+            soReceiptEntity.setReceiptAmount(totalAmount);
+            this.updateById(soReceiptEntity);
+        }
     }
 
 

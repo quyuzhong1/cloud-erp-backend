@@ -1019,6 +1019,11 @@ public class SoInfoDTO implements Serializable {
          * 单据子类型
          */
         private String transactionSubType;
+
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
     }
 
 
@@ -1324,6 +1329,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Integer version;
 
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
 
         /**
          * 订单产品详情
@@ -1690,6 +1699,11 @@ public class SoInfoDTO implements Serializable {
          */
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
+
+        /**
+         * 收款单信息
+         */
+        private List<SoReceiptDTO.SoViewDTO> soReceiptDTOList;
     }
 
     @Data

@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -151,4 +152,8 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
      * @return
      */
     List<SoReceiptDTO.AmountDTO> queryAmountBySoIds(List<String> soIds);
+
+    List<SoReceiptDTO.SoViewDTO> getSoViewDTO(SoInfoEntity soInfo);
+
+    void addOrUpdateBySo(SoInfoEntity soInfo, String customerId, List<SoReceiptDTO.SoViewDTO> soReceiptDTOList);
 }

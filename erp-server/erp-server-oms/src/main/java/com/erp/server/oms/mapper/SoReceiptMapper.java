@@ -56,4 +56,6 @@ public interface SoReceiptMapper extends BaseMapper<SoReceiptEntity> {
     List<SoReceiptDTO.SoInfoAndReceiptDTO> listSoReceiptBySoCode(@Param("params") SoReceiptDTO.SoSearchDTO dto);
 
     List<SoReceiptDTO.AmountDTO> queryAmountBySoIds(@Param("soIds") List<String> soIds);
+
+    List<SoReceiptDTO.SoViewDTO> getSoViewDTO(@Param("soId") String soId);
 }

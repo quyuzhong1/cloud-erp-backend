@@ -364,6 +364,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //添加明细
             soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            //更新收款单信息
+            soReceiptService.addOrUpdateBySo(addEntity,customerId, dto.getSoReceiptDTOList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -739,6 +741,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
         }
         view.setDetailList(detailList);
+        //查询收款单信息
+        List<SoReceiptDTO.SoViewDTO> soViewDTOS = soReceiptService.getSoViewDTO(soInfo);
+        view.setSoReceiptDTOList(soViewDTOS);
         return view;
     }
 
@@ -1110,8 +1115,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
-            //剩余收款金额
-            item.setRemainReceiveAmount(item.getOrderAmount().subtract(item.getReceiveAmount()));
+            //剩余收款金额,不能小于0
+            item.setRemainReceiveAmount(
+                    item.getOrderAmount()
+                            .subtract(item.getReceiveAmount())
+                            .max(BigDecimal.ZERO)
+            );
         }
 
 
@@ -1453,6 +1462,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //修改 订单详情
             soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),old);
+            //更新收款单信息
+            soReceiptService.addOrUpdateBySo(soInfo,customerId, dto.getSoReceiptDTOList());
             return id;
         }
         return "";

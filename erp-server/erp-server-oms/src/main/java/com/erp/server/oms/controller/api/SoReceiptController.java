@@ -273,7 +273,6 @@ public class SoReceiptController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SoReceiptEntity> list = soReceiptService.lambdaQuery().in(SoReceiptEntity::getId, ids).list();
 		Map<String, SoReceiptEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoReceiptEntity::getId, w -> w));
         for (String id : dto.getIds()) {

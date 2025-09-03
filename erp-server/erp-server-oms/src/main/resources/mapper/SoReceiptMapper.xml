@@ -147,5 +147,21 @@
         </foreach>
         group by srd.so_code,srd.so_id
     </select>
+    <select id="getSoViewDTO" resultType="com.erp.model.oms.dto.SoReceiptDTO$SoViewDTO">
+        select sr.id,
+               srd.id as detailId,
+               sr.code,
+               srd.receipt_amount as receiptAmount,
+               srd.receipt_date as receiptDate,
+               srd.dict_receipt_method as dictReceiptMethod,
+               srd.receipt_account as receiptAccount,
+               srd.payment_no as paymentNo,
+               sr.approve_status as approveStatus,
+               srd.remark
+        from so_receipt sr
+                 inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        where sr.is_deleted = false
+          and srd.so_id = #{soId}
+    </select>
 
 </mapper>

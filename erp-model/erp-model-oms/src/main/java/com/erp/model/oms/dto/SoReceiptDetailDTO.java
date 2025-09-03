@@ -171,7 +171,7 @@ public class SoReceiptDetailDTO implements Serializable {
         */
         @NotBlank(message = "付款流水号不能为空")
         @Size(max = 255,message = "付款流水号最大长度不能超过255位")
-        private String paymentNo;
+        private String paymentNo = "";
 
         /**
          * 附件列表
@@ -200,7 +200,7 @@ public class SoReceiptDetailDTO implements Serializable {
         /**
         * 备注
         */
-        private String remark;
+        private String remark = "";
 
         /**
         * 收款金额
