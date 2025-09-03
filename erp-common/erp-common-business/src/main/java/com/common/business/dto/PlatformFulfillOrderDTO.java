@@ -39,7 +39,7 @@ public class PlatformFulfillOrderDTO extends UniqueDto {
     /**
      * 发货状态
      */
-    private String deliveryStatus;
+    private String deliveryStatus = "";
 
     /**
      * 发货时间（东八区）
@@ -49,13 +49,13 @@ public class PlatformFulfillOrderDTO extends UniqueDto {
     /**
      * 物流跟踪号
      */
-    private String trackNo;
+    private String trackNo = "";
 
     /**
      * 订单类型（soMultiChannel多渠道）
      */
-    private String orderType;
-    private String orderStatus;
+    private String orderType = "";
+    private String orderStatus = "";
 
     /**
      * 货件id
