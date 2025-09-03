@@ -12,6 +12,8 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -42,6 +44,7 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.SAL_RETURNSTOCK)
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -56,7 +59,7 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
         /**
          * 作废

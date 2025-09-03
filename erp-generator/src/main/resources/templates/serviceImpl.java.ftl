@@ -15,6 +15,8 @@ import com.common.business.vo.LoginUser;
 </#if>
 
 import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import ${package.Entity}.${entity};
 import ${package.Mapper}.${table.mapperName};
@@ -32,7 +34,6 @@ import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import ${package.Dto}.${table.dtoName};
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
@@ -136,6 +137,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     /**
     * 修改
     */
+    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(${table.dtoName}.UpdateDTO addOrUpdateDTO) {
