@@ -17,6 +17,7 @@ public enum CreateStatusEnum implements EnumMessage {
     CREATING("creating",  "创建中"),
     SUCCESS("success",  "创建成功"),
     FAILED("failed",  "创建失败"),
+    CANCEL("cancel",  "取消创建"),
     ;
     /**
      * 类型

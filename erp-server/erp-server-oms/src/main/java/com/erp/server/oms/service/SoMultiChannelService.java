@@ -182,7 +182,7 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @param isValidate 是否作废多渠道订单
      * @return
      */
-    BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate);
+    BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark);
 
     /**
      * 根据销售订单获取多渠道订单
