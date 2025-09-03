@@ -14,6 +14,8 @@ import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderRequest;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
@@ -67,10 +69,12 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
         String shopId = jsonObject.getStr("shopId", "");
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
-            CreateFulfillmentOrderResponse response = api.createFulfillmentOrder(body);
-            System.out.println(response);
+            body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
+            ApiResponse<CreateFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.createFulfillmentOrderWithHttpInfo(body);
+            log.warn("创建订单响应：{}", JSONUtil.toJsonStr(fulfillmentOrderWithHttpInfo));
             //成功后，更新任务状态
             createResultDTO.setCreateStatus(CreateStatusEnum.SUCCESS.getCode());
             omsTaskFeign.updateSoMultiChannel(createResultDTO);

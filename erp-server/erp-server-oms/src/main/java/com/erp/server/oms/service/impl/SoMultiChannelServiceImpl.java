@@ -407,7 +407,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
 
         //不通过发起拦截
-         deliveryIntercept(entity, true, false, "多渠道订单反审核");
+        deliveryIntercept(entity, true, false, "多渠道订单反审核");
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -615,7 +615,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
-        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
+        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             this.cancelProcess(entity.getId());
         }
         //作废数据
@@ -646,7 +646,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
         //检查拦截单是否存在，不存在就新增
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
-        if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)){
+        if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)) {
             SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
             addDTO.setBillType(OrderTypeEnum.B2C.getCode());
             addDTO.setRemark(remark);
@@ -902,7 +902,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey("multiChannelLogiticsCode");
         List<String> codeList = dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
         if (!codeList.contains(logisticsChannelEntity.getCode())) {
-            throw new ServiceException("物流渠道不支持多渠道订单");
+            throw new ServiceException("物流渠道【{}】不支持创建多渠道订单", logisticsChannelEntity.getCode());
         }
         if (CharSequenceUtil.isBlank(soMultiChannelEntity.getLogisticsChannelName())) {
             soMultiChannelEntity.setLogisticsChannelName(logisticsChannelEntity.getName());

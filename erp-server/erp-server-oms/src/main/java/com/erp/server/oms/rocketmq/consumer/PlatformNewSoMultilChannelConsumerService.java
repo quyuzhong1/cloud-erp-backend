@@ -53,6 +53,7 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     private OperateLogService operateLogService;
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+
     @Override
     public String getBizName() {
         return "多渠道订单";
@@ -64,38 +65,38 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         PlatformFulfillOrderDTO bean = JSONUtil.toBean(data, PlatformFulfillOrderDTO.class);
         SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.getByDeliveryCode(bean.getCode());
         List<PlatformFulfillOrderDetailDTO> detailList = bean.getDetailList();
-        if (Objects.isNull(soMultiChannelEntity)){
+        if (Objects.isNull(soMultiChannelEntity)) {
             //订单不存在
-            log.info("订单不存在，订单编号：{}",bean.getCode());
+            log.info("订单不存在，订单编号：{}", bean.getCode());
             return;
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "更新亚马逊多渠道订单");
         //订单状态和发货状态
         soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
         soMultiChannelEntity.setTrackNo(bean.getTrackNo());
-        soMultiChannelEntity.setBillStatus(bean.getOrderStatus());
-        soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus())?bean.getDeliveryStatus():"");
+        soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(bean.getOrderStatus()) ? bean.getOrderStatus() : "");
+        soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus()) ? bean.getDeliveryStatus() : "");
 
         List<SoMultiChannelDetailEntity> detailEntityList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(soMultiChannelEntity.getId()));
-        if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())){
+        if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())) {
             soMultiChannelEntity.setCreateStatus(CreateStatusEnum.CANCEL.getCode());
             soMultiChannelService.updateById(soMultiChannelEntity);
             //订单已取消
             soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true, "订单已取消");
-        }else {
+        } else {
             soMultiChannelService.updateById(soMultiChannelEntity);
             //更新发货数量
             updateSoMultiChannelDetail(detailEntityList, detailList);
-            if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())){
+            if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())) {
                 SoB2cEntity entity = soB2cService.getById(soMultiChannelEntity.getSoId());
-                if (Objects.nonNull(entity) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())){
+                if (Objects.nonNull(entity) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
                     operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新销售订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "更新亚马逊多渠道订单");
                     soB2cService.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()).eq(SoB2cEntity::getId, entity.getId()).update();
 
                 }
                 //第三方发货单更新状态
                 ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(soMultiChannelEntity.getSoId());
-                if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getCode().equals(thirdWarehouseDelivery.getStatus())){
+                if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getCode().equals(thirdWarehouseDelivery.getStatus())) {
                     thirdWarehouseDelivery.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getCode());
                     thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
                 }
@@ -104,15 +105,15 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     }
 
     private void updateSoMultiChannelDetail(List<SoMultiChannelDetailEntity> detailEntityList, List<PlatformFulfillOrderDetailDTO> detailList) {
-        if (CollUtil.isEmpty(detailList)){
+        if (CollUtil.isEmpty(detailList)) {
             return;
         }
         //更新发货数量
         detailEntityList.forEach(e -> {
             int deliveryQty = detailList.stream().filter(f -> f.getFnSku().equals(e.getFnSku()) && e.getPlatformSkuNo().equals(f.getMsku())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
             e.setDeliveryQty(deliveryQty);
-            soMultiChannelDetailService.lambdaUpdate().set(SoMultiChannelDetailEntity::getDeliveryQty,deliveryQty).eq(SoMultiChannelDetailEntity::getId,e.getId()).update();
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细【{}】发货数量:【{}】改为【{}】", e.getSkuNo(),e.getDeliveryQty(), deliveryQty), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), e.getMainId(), "更新亚马逊多渠道订单");
+            soMultiChannelDetailService.lambdaUpdate().set(SoMultiChannelDetailEntity::getDeliveryQty, deliveryQty).eq(SoMultiChannelDetailEntity::getId, e.getId()).update();
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细【{}】发货数量:【{}】改为【{}】", e.getSkuNo(), e.getDeliveryQty(), deliveryQty), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), e.getMainId(), "更新亚马逊多渠道订单");
         });
     }
 
