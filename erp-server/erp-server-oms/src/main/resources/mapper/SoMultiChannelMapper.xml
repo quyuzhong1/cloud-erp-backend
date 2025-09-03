@@ -37,7 +37,6 @@
        <result column="approve_user_name" property="approveUserName" />
        <result column="sign_order_error" property="signOrderError" />
        <result column="remark" property="remark" />
-       <result column="has_outstock" property="hasOutstock" />
         <result column="create_status" property="createStatus" />
        <result column="invalid_status" property="invalidStatus" />
        <result column="invalid_remark" property="invalidRemark" />
@@ -58,7 +57,7 @@
         is_deleted,
         code, delivery_code, delivery_platform, dict_platform, platform_code, shop_id, shop_name, shipment_code, approve_status, so_id, so_code, track_no,
         bill_status, delivery_status, logistics_channel_id, logistics_channel_name, delivery_warehouse_id, delivery_warehouse_name, shipping_method,
-        delivery_time, approve_time, approve_user_id, approve_user_name, sign_order_error, remark, has_outstock,create_status,invalid_status,invalid_remark,
+        delivery_time, approve_time, approve_user_id, approve_user_name, sign_order_error, remark,create_status,invalid_status,invalid_remark,
         delivery_shop_id,delivery_shop_name
     </sql>
 
@@ -97,7 +96,7 @@
             smc.approve_user_name as approveUserName,
             smc.remark,
             smc.sign_order_error as signOrderError,
-            smc.has_outstock as hasOutstock
+            smcd.outstock_status as outstockStatus
         FROM so_multi_channel smc
         LEFT JOIN so_multi_channel_detail smcd on smcd.main_id=smc.id and smcd.is_deleted=false
         WHERE

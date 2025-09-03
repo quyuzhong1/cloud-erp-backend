@@ -28,7 +28,6 @@ public interface SoMultiChannelConverter {
             @Mapping(target = "shopName", source = "soB2cEntity.shopName"),
             @Mapping(target = "deliveryStatus", ignore = true),
             @Mapping(target = "deliveryTime", ignore = true),
-            @Mapping(target = "hasOutstock", constant = "false"),
             @Mapping(target = "platformCode", source = "soB2cEntity.platformCode"),
             @Mapping(target = "shipmentCode", ignore = true),
             @Mapping(target = "signOrderError", ignore = true),
@@ -48,7 +47,8 @@ public interface SoMultiChannelConverter {
     @Mappings({
             @Mapping(target = "mainId", ignore = true),
             @Mapping(target = "qty", source = "deliveryQty"),
-            @Mapping(target = "deliveryQty", ignore = true)
+            @Mapping(target = "deliveryQty", ignore = true),
+            @Mapping(target = "outstockStatus", ignore = true)
     })
     SoMultiChannelDetailDTO.AddDTO soB2cDetailToAddDTO(SoMultiChannelDTO.SoViewDTO detail);
     List<SoMultiChannelDetailDTO.AddDTO> soB2cDetailToAddDTO(List<SoMultiChannelDTO.SoViewDTO> detailList);

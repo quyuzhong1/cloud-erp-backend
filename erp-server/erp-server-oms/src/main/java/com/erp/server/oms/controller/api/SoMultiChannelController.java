@@ -28,6 +28,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
@@ -541,10 +542,12 @@ public class SoMultiChannelController extends BaseController {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.getByDeliveryCode(orderId);
         Map<String, Object> map = syncAmazonSoMultiChannelService.newSyncDataToKingdee(soMultiChannelEntity, SyncOperateEnum.OPERATE_ADD.getCode());
-        System.out.println(JSONUtil.toJsonStr(map));
         // 初始化API
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         CreateFulfillmentOrderRequest body = JSONUtil.toBean(JSONUtil.toJsonStr(map), CreateFulfillmentOrderRequest.class);
+        body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
+        System.out.println("创建订单请求参数："+JSONUtil.toJsonStr(body));
         try {
             ApiResponse<CreateFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.createFulfillmentOrderWithHttpInfo(body);
             return success(fulfillmentOrderWithHttpInfo);

@@ -102,6 +102,12 @@ public class SoPriceChangeDetailEntity extends BaseEntity<SoPriceChangeDetailEnt
     */
     @TableField("so_price_code")
     private String soPriceCode;
+    /**
+    * 系统是否已出库(none未出库part部分出库all已出库)
+     * OutstockStatusEnum
+    */
+    @TableField("outstock_status")
+    private String outstockStatus;
 
 
     public static final String SKU_ID = "sku_id";

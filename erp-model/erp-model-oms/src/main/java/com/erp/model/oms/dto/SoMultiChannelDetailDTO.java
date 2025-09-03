@@ -191,6 +191,10 @@ public class SoMultiChannelDetailDTO implements Serializable {
         @NotBlank(message = "FNSKU不能为空")
         @Size(max = 100,message = "FNSKU最大长度不能超过100位")
         private String fnSku;
+        /**
+         * 出库状态
+         */
+        private String outstockStatus;
     }
 
 
