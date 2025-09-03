@@ -16,6 +16,8 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.srm.feign.SrmTaskFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -47,6 +49,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.AP_PAYABLE)
     public void executeConsumer(Map<String, Object> map) {
 
         //操作项
@@ -57,7 +60,7 @@ public class KingdeePoReconciliationConsumerServiceImpl implements KingdeePoReco
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.AP_PAYABLE.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
 
         /**
