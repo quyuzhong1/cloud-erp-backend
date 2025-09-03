@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
 @EnableDiscoveryClient
 public class ErpServerAdminApplication {
 
