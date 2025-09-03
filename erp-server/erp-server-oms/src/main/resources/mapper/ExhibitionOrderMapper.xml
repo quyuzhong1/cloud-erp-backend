@@ -244,9 +244,9 @@ eo.partition_id as partitionId
         <if test="params.childId != null and params.childId != ''">
             and ssi.id != #{params.childId}
         </if>
-        <if test="params.skuNos != null and params.skuNos.size() > 0">
-            and ssd.sku_no in
-            <foreach collection="params.skuNos" open="(" separator="," close=")" item="item">
+        <if test="params.skuIds != null and params.skuIds.size() > 0">
+            and ssd.sku_id in
+            <foreach collection="params.skuIds" open="(" separator="," close=")" item="item">
                 #{item}
             </foreach>
         </if>

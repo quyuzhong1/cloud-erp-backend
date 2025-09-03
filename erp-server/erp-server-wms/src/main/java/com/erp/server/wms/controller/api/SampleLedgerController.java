@@ -103,11 +103,23 @@ public class SampleLedgerController extends BaseController {
      * @author jack
      * @date: 2025-08-20
      * @param dto
-     * @return ApiResult<PagingVO<SampleScrapInfoDTO.ListDTO>>
+     * @return ApiResult<SampleLedgerDTO.SampleScrapView>
      */
     @PostMapping("/generateSampleScrapView")
     public ApiResult<SampleLedgerDTO.SampleScrapView> generateSampleScrapView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(sampleLedgerService.generateSampleScrapView(dto.getIds()));
+    }
+
+    /**
+     *
+     * @author jack
+     * @date: 2025-08-20
+     * @param dto
+     * @return ApiResult<SampleLedgerDTO.ExhibitionOrderView>
+     */
+    @PostMapping("/generateExhibitionOrderView")
+    public ApiResult<SampleLedgerDTO.ExhibitionOrderView> generateExhibitionOrderView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(sampleLedgerService.generateExhibitionOrderView(dto.getIds()));
     }
 
 

@@ -95,4 +95,6 @@ public interface SampleLedgerService extends SuperService<SampleLedgerEntity> {
     PagingVO<SampleLedgerDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleLedgerDTO.SearchDTO> pagingDTO);
 
     SampleLedgerDTO.SampleScrapView generateSampleScrapView( List<String> ids);
+
+    SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView( List<String> ids);
 }

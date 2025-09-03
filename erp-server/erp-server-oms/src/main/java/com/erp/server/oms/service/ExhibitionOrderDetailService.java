@@ -3,7 +3,9 @@ import com.erp.model.oms.entity.ExhibitionOrderDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.ExhibitionOrderDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -16,24 +18,8 @@ import java.util.List;
  */
 public interface ExhibitionOrderDetailService extends SuperService<ExhibitionOrderDetailEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-08-29
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(ExhibitionOrderDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-08-29
-    * @param dto
-    * @return
-    */
-    Boolean update(ExhibitionOrderDetailDTO.UpdateDTO dto);
-
-
     List<ExhibitionOrderDetailDTO.ViewDTO> listViewByMainId(String id);
+
+
+    ExhibitionOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile,String id, String recipientUserId, Boolean isTax, HttpServletResponse response);
 }

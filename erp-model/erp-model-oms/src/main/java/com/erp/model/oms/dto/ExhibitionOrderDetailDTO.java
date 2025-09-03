@@ -1,10 +1,13 @@
 package com.erp.model.oms.dto;
 
 import java.math.BigDecimal;
+
+import com.erp.model.wms.dto.SampleBorrowDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
@@ -392,6 +395,127 @@ public class ExhibitionOrderDetailDTO implements Serializable {
         private String skuNo;
         private Integer qty;
         private String approveStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<SkuDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+
+    /**
+     * SKU 信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO{
+        /**
+         * 台账id
+         */
+        private String sampleLedgerId;
+        /**
+         * 使用方id
+         */
+        private String useUserId;
+
+        /**
+         * 使用方名称
+         */
+        private String useUserName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 可销售数量
+         */
+        private Integer availableQty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 价税销售金额
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 历史最高
+         */
+        private BigDecimal maxPrice;
+
+        /**
+         * 历史最低
+         */
+        private BigDecimal minPrice;
+
+        /**
+         * 平均价格
+         */
+        private BigDecimal avgPrice;
+
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
 

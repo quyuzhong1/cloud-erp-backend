@@ -27,6 +27,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -148,8 +149,11 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             params.setSkuNo(params.getSkuNos().get(0));
         }
         IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
         //处理展会冻结库存数量
-        handleExhibitionFreezeQty(params, pageData);
+        handleExhibitionFreezeQty(params, records);
+        pageData.setRecords(records);
         return new PagingVO<>(pageData);
     }
 
@@ -158,35 +162,39 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * <p>当查询类型为展会时，获取SKU的冻结数量并从可用库存中扣除</p>
      *
      * @param params   查询参数对象，包含查询类型和子ID等信息
-     * @param pageData 分页数据对象，包含SKU可用库存记录列表
+     * @param records
      */
-    private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, IPage<SampleLedgerDTO.SkuAvailableQtyDTO> pageData) {
+    private void handleExhibitionFreezeQty(SampleLedgerDTO.SearchDTO params, List<SampleLedgerDTO.SkuAvailableQtyDTO> records) {
         // 判断查询类型是否为展会类型
         if(Objects.equals(params.getType(), SampleLedgerTypeEnum.EXHIBITION.getCode())){
-            // 提取所有记录的SKU编号并去重
-            List<SampleLedgerDTO.SkuAvailableQtyDTO> records = pageData.getRecords();
-            List<String> skuNos = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuNo).distinct().collect(Collectors.toList());
+            // 提取所有记录的SKU并去重
+            List<String> skuIds = records.stream().map(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId).distinct().collect(Collectors.toList());
 
             // 构造展会订单查询条件并获取冻结库存数量
             ExhibitionOrderDTO.SearchDTO dto = new  ExhibitionOrderDTO.SearchDTO();
-            dto.setSkuNos(skuNos);
+            dto.setSkuIds(skuIds);
             dto.setChildId(params.getChildId());
             List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = exhibitionOrderFeign.listFreezeQtyBySku(dto);
 
             // 如果存在冻结库存数据，则更新可用库存数量
             if(CollUtil.isNotEmpty(freezeQtyBySkus)){
                 // 将冻结库存数据转换为Map便于快速查找
-                Map<String, Integer> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, ExhibitionOrderDTO.FreezeQtyBySku::getFreezeQty));
+                Map<String, ExhibitionOrderDTO.FreezeQtyBySku> map = freezeQtyBySkus.stream().collect(Collectors.toMap(ExhibitionOrderDTO.FreezeQtyBySku::getSkuId, Function.identity(),(o1,o2)->o1));
 
                 // 遍历所有记录，扣除冻结库存数量
                 for (SampleLedgerDTO.SkuAvailableQtyDTO record : records) {
-                    Integer freezeQty = map.getOrDefault(record.getSkuId(), 0);
-                    if(freezeQty > 0){
-                        Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
-                        record.setAvailableQty(availableQty - freezeQty);
+                    ExhibitionOrderDTO.FreezeQtyBySku freezeQtyBySku = map.getOrDefault(record.getSkuId(), null);
+                    if(Objects.nonNull(freezeQtyBySku)){
+                        Integer freezeQty = freezeQtyBySku.getFreezeQty();
+                        if(freezeQty > 0){
+                            Integer availableQty = Objects.isNull(record.getAvailableQty()) ? 0 : record.getAvailableQty();
+                            record.setAvailableQty(availableQty - freezeQty);
+                        }
+                        record.setMaxPrice(freezeQtyBySku.getMaxPrice());
+                        record.setMinPrice(freezeQtyBySku.getMinPrice());
+                        record.setAvgPrice(freezeQtyBySku.getAvgPrice());
                     }
                 }
-                pageData.setRecords(records);
             }
         }
     }
@@ -200,27 +208,62 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
         List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
         if(CollUtil.isEmpty(sampleLedgerEntities)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_VIEW);
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"报废单");
         }
         //校验是否存在多个报废人
         long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
         if(count > 1){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_IDS);
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"报废人");
         }
-
-
         SampleLedgerDTO.SampleScrapView viewDTO = new SampleLedgerDTO.SampleScrapView();
         SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
         params.setIds(ids);
+        params.setType(SampleLedgerTypeEnum.SCRAP.getCode());
         params.setUserId(sampleLedgerEntities.get(0).getUserId());
-        List<SampleScrapDetailDTO.ViewDTO> detailList = this.baseMapper.generateSampleScrapView(params);
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
         if(CollUtil.isEmpty(detailList)){
-            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_SCRAP_VIEW);
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"报废单");
         }
 
-        SampleScrapDetailDTO.ViewDTO detailView = detailList.get(0);
-        viewDTO.setScrapUserId(detailView.getUserId());
-        viewDTO.setScrapUserName(detailView.getUserName());
+        viewDTO.setScrapUserId(sampleLedgerEntities.get(0).getUserId());
+        viewDTO.setScrapUserName(sampleLedgerEntities.get(0).getUserName());
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
+    }
+
+
+
+    @Override
+    public SampleLedgerDTO.ExhibitionOrderView generateExhibitionOrderView(List<String> ids) {
+        if(CollUtil.isEmpty(ids)){
+            throw new ServiceException(ApiError.ERROR_92271);
+        }
+
+        List<SampleLedgerEntity> sampleLedgerEntities = lambdaQuery().in(SampleLedgerEntity::getId, ids).list();
+        if(CollUtil.isEmpty(sampleLedgerEntities)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"展会订单");
+        }
+        //校验是否存在多个领用人
+        long count = sampleLedgerEntities.stream().map(SampleLedgerEntity::getUserId).distinct().count();
+        if(count > 1){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_USER_IDS,"领用人");
+        }
+
+        SampleLedgerDTO.ExhibitionOrderView viewDTO = new SampleLedgerDTO.ExhibitionOrderView();
+        SampleLedgerDTO.SearchDTO params = new SampleLedgerDTO.SearchDTO();
+        params.setIds(ids);
+        params.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
+        params.setUserId(sampleLedgerEntities.get(0).getUserId());
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> detailList = this.baseMapper.listSkuAvailableQtyByUserId(params);
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_VIEW,"展会订单");
+        }
+
+        //处理展会冻结库存数量
+        handleExhibitionFreezeQty(params, detailList);
+
+        viewDTO.setRecipientUserId(sampleLedgerEntities.get(0).getUserId());
+        viewDTO.setRecipientUserName(sampleLedgerEntities.get(0).getUserName());
         viewDTO.setDetailList(detailList);
         return viewDTO;
     }

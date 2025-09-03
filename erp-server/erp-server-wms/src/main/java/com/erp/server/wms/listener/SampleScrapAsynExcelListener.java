@@ -7,6 +7,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -161,11 +162,11 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
             dto.setType(SampleLedgerTypeEnum.SCRAP.getCode());
             List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerService.listLedgerByUserId(dto);
             if(CollUtil.isEmpty(skuAvailableQtyDTOS)){
-                errorMsgList.add("样品台账不存在");
+                errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
             }else {
                 SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getUseUserName().equals(excelDTO.getUseUserName())).findFirst().orElse(null);
                 if(Objects.isNull(skuAvailableQtyDTO)){
-                    errorMsgList.add("样品台账不存在");
+                    errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                 }else {
                     excelDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                 }

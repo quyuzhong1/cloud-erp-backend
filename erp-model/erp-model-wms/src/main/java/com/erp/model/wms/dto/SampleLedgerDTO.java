@@ -7,6 +7,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.AdvanceQueryDTO;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -419,6 +420,21 @@ public class SampleLedgerDTO implements Serializable {
          */
         private Integer availableQty;
 
+        /**
+         * 历史最高
+         */
+        private BigDecimal maxPrice;
+
+        /**
+         * 历史最低
+         */
+        private BigDecimal minPrice;
+
+        /**
+         * 平均价格
+         */
+        private BigDecimal avgPrice;
+
     }
 
     /**
@@ -441,9 +457,34 @@ public class SampleLedgerDTO implements Serializable {
         /**
          * 明细
          */
-        private List<SampleScrapDetailDTO.ViewDTO> detailList;
+        private List<SkuAvailableQtyDTO> detailList;
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExhibitionOrderView {
+
+        /**
+         * 领用人ID
+         */
+        private String recipientUserId;
+
+        /**
+         * 领用人姓名
+         */
+        private String recipientUserName;
+        /**
+         * 是否含税
+         */
+        private Boolean isTax = Boolean.FALSE;
+        /**
+         * 明细
+         */
+        private List<SkuAvailableQtyDTO> detailList;
+    }
 
 }

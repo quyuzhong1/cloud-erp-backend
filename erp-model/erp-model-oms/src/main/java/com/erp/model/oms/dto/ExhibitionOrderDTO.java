@@ -871,7 +871,7 @@ public class ExhibitionOrderDTO implements Serializable {
 
         private String childId;
 
-        private List<String> skuNos;
+        private List<String> skuIds;
     }
     /**
      *
@@ -883,6 +883,21 @@ public class ExhibitionOrderDTO implements Serializable {
         private String skuId;
 
         private Integer freezeQty;
+
+        /**
+         * 历史最高
+         */
+        private BigDecimal maxPrice;
+
+        /**
+         * 历史最低
+         */
+        private BigDecimal minPrice;
+
+        /**
+         * 平均价格
+         */
+        private BigDecimal avgPrice;
     }
 
 

@@ -156,6 +156,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private KingdeeFeign kingdeeFeign;
     @Resource
     private SampleLedgerFeign sampleLedgerFeign;
+    @Resource
+    private SoDetailService soDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -245,7 +247,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
      *
      * @param id 订单ID，用于查询条件中的子ID
      * @param recipientUserId 接收用户ID，用于查询该用户下的样品台账数据
-     * @param skuNos SKU编号列表，用于限定查询的SKU范围
+     * @param skuIds SKU列表，用于限定查询的SKU范围
      * @param exhibitionOrderDetailEntities 展会订单明细实体列表，包含每个SKU的申请数量和台账ID等信息
      */
     private void checkDetailQty(String id , String recipientUserId, List<String> skuIds, List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities) {
@@ -1314,10 +1316,27 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Override
     public List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(ExhibitionOrderDTO.SearchDTO dto) {
-        if (Objects.isNull(dto)){
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuIds())){
             return Collections.emptyList();
         }
-        return baseMapper.listFreezeQtyBySku(dto);
+
+        List<ExhibitionOrderDTO.FreezeQtyBySku> freezeQtyBySkus = baseMapper.listFreezeQtyBySku(dto);
+        if(CollUtil.isNotEmpty(freezeQtyBySkus)){
+            //sku的历史价格
+            List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = soDetailService.listSkuPriceHistory(dto.getSkuIds());
+
+            for (ExhibitionOrderDTO.FreezeQtyBySku item : freezeQtyBySkus) {
+                String skuId = item.getSkuId();
+                SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
+                        filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+                if (skuHistoryPrice != null) {
+                    item.setMaxPrice(skuHistoryPrice.getMaxPrice());
+                    item.setMinPrice(skuHistoryPrice.getMinPrice());
+                    item.setAvgPrice(skuHistoryPrice.getAvgPrice());
+                }
+            }
+        }
+        return freezeQtyBySkus;
     }
 
     @Override
@@ -1436,7 +1455,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 addSo.setId(mainId);
 
 
-                Map<String, SampleLedgerDTO.SkuAvailableQtyDTO> sampleLedgerMap = new HashMap<>();
+                List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = new ArrayList<>();
                 //领用人
                 String recipientUserName = mainInfo.getRecipientUserName();
                 FindUserDTO recipientUser = userList.stream().filter(u -> u.getUserName().equals(recipientUserName)).findFirst().orElse(null);
@@ -1449,8 +1468,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                     SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
                     dto.setUserId(recipientUser.getUserId());
                     dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-                    List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
-                    sampleLedgerMap = skuAvailableQtyDTOS.stream().collect(Collectors.toMap(SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId, Function.identity(),(o1,o2)-> o1));
+                    skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
                 }
 
                 //单据日期
@@ -1694,9 +1712,12 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                     //台账
                     if(StringUtils.isNotBlank(addDetail.getSkuId())){
-                        SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = sampleLedgerMap.getOrDefault(addDetail.getSkuId(), null);
+                        SampleLedgerDTO.SkuAvailableQtyDTO skuAvailableQtyDTO = skuAvailableQtyDTOS.stream()
+                                .filter(e -> e.getSkuId().equals(addDetail.getSkuId()) && e.getUseUserName().equals(item.getUseUserName()))
+                                .findFirst()
+                                .orElse(null);
                         if(Objects.isNull(skuAvailableQtyDTO)){
-                            msgList.add("样品台账不存在");
+                            msgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
                         }else {
                             Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
                             if(qty.compareTo(availableQty) > 0){
@@ -1704,7 +1725,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                             }else {
                                 //防止明细里还有重复
                                 skuAvailableQtyDTO.setAvailableQty(availableQty - qty);
-                                sampleLedgerMap.put(addDetail.getSkuId(),skuAvailableQtyDTO);
 
                                 addDetail.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                             }
