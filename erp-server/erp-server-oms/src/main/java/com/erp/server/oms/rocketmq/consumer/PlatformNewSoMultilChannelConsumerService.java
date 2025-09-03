@@ -12,6 +12,7 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.oms.enums.CreateStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
@@ -74,13 +75,15 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         soMultiChannelEntity.setTrackNo(bean.getTrackNo());
         soMultiChannelEntity.setBillStatus(bean.getOrderStatus());
         soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus())?bean.getDeliveryStatus():"");
-        soMultiChannelService.updateById(soMultiChannelEntity);
 
         List<SoMultiChannelDetailEntity> detailEntityList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(soMultiChannelEntity.getId()));
         if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())){
+            soMultiChannelEntity.setCreateStatus(CreateStatusEnum.CANCEL.getCode());
+            soMultiChannelService.updateById(soMultiChannelEntity);
             //订单已取消
-            soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true);
+            soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true, "订单已取消");
         }else {
+            soMultiChannelService.updateById(soMultiChannelEntity);
             //更新发货数量
             updateSoMultiChannelDetail(detailEntityList, detailList);
             if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())){

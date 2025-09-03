@@ -3078,16 +3078,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
             //发货拦截
-            BatchResultDTO resultDTO = soMultiChannelService.deliveryIntercept(soMultiChannelEntity, true, true);
-            if (resultDTO.getSuccess()){
-                addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
-                addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
-                addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-                addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
-                addDTO.setHandleTime(LocalDateTime.now());
-                BaseResultDTO.AddDTO add = soB2cDeliveryInterceptFeign.add(addDTO);
-            }
-            return resultDTO;
+            return soMultiChannelService.deliveryIntercept(soMultiChannelEntity, true, true, remark);
         }else if (isApi) {
             //三方仓直接调接口
             addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());

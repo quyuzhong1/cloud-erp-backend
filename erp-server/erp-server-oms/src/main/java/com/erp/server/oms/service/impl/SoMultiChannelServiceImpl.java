@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -26,20 +27,19 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
-import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FbaInventoryDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -48,6 +48,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -55,8 +56,10 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CancelFulfillmentOrderResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.SoMultiChannelConverter;
 import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.mapper.SoMultiChannelMapper;
@@ -125,6 +128,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SkuMappingService skuMappingService;
+    @Resource
+    private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -400,7 +407,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
 
         //不通过发起拦截
-        deliveryIntercept(entity, true, false);
+         deliveryIntercept(entity, true, false, "多渠道订单反审核");
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -536,7 +543,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Override
     public SoMultiChannelDTO.AddDTO buildAddDTO(SoMultiChannelDTO.SaveDTO dto, String id, ShopInfoEntity shopInfoEntity, SoB2cEntity soB2cEntity, LogisticsChannelEntity channelEntity) {
         SoMultiChannelDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.soB2cToAddDTO(dto, shopInfoEntity, soB2cEntity, channelEntity);
-        List<SoMultiChannelDetailDTO.AddDTO> detailList = SoMultiChannelConverter.INSTANCE.soB2cDetailToAddDTO(dto.getDetailList());
+        List<SoMultiChannelDTO.SoViewDTO> detailList1 = dto.getDetailList().stream().filter(e -> e.getSoId().equals(id)).collect(Collectors.toList());
+        List<SoMultiChannelDetailDTO.AddDTO> detailList = SoMultiChannelConverter.INSTANCE.soB2cDetailToAddDTO(detailList1);
         addDTO.setDetailList(detailList);
         return addDTO;
     }
@@ -583,7 +591,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
         //重新查询订单信息
         entity = this.getById(entity.getId());
         if (Boolean.TRUE.equals(entity.getIsDeleted()) || CharSequenceUtil.isBlank(entity.getSoId())) {
@@ -596,20 +605,18 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
             FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
             try {
-                CancelFulfillmentOrderResponse cancelFulfillmentOrderResponse = api.cancelFulfillmentOrder(entity.getDeliveryCode());
-                if (Objects.isNull(cancelFulfillmentOrderResponse)) {
-                    return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败：接口返回为空");
-                }
-                operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{}", entity.getDeliveryCode()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
+                ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
+                this.lambdaUpdate()
+                        .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
+                        .eq(SoMultiChannelEntity::getId, entity.getId()).update();
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse.getData())), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
             } catch (ApiException | LWAException e) {
                 log.error("亚马逊发货拦截异常：", e);
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
-        if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
-            //反审核作废
-            this.disApprove(entity.getId());
-
+        if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
+            this.cancelProcess(entity.getId());
         }
         //作废数据
         if (!entity.getInvalidStatus() && isValidate) {
@@ -637,6 +644,25 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
+        //检查拦截单是否存在，不存在就新增
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntities = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
+        if (Objects.nonNull(soB2cEntity) && CollUtil.isEmpty(soB2cDeliveryInterceptEntities)){
+            SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
+            addDTO.setBillType(OrderTypeEnum.B2C.getCode());
+            addDTO.setRemark(remark);
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+            List<SoB2cDeliveryInterceptDetailDTO.AddDTO> detailList = B2cOrderConverter.INSTANCE.convertInterceptDetail(soB2cDetailEntityList);
+            addDTO.setDetailList(detailList);
+            addDTO.setLogisticsChannelId(entity.getLogisticsChannelId());
+            addDTO.setLogisticsChannelName(entity.getLogisticsChannelName());
+            addDTO.setTransportNo(entity.getTrackNo());
+            addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
+            addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+            addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+            addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+            addDTO.setHandleTime(LocalDateTime.now());
+            soB2cDeliveryInterceptFeign.add(addDTO);
+        }
         return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
     }
 
