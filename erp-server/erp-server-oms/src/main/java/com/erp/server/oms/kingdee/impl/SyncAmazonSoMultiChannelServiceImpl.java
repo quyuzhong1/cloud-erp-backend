@@ -215,10 +215,10 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             itemList.add(itemMap);
         }
         resultMap.put("items", itemList);
-        HashMap<String, String> featureConstraintsMap = new HashMap<>();
-        featureConstraintsMap.put("featureName", "BLANK_BOX");
-        featureConstraintsMap.put("featureFulfillmentPolicy", "NotRequired");
-        resultMap.put("featureConstraints", Collections.singletonList(featureConstraintsMap));
+//        HashMap<String, String> featureConstraintsMap = new HashMap<>();
+//        featureConstraintsMap.put("featureName", "BLANK_BOX");
+//        featureConstraintsMap.put("featureFulfillmentPolicy", "NotRequired");
+//        resultMap.put("featureConstraints", Collections.singletonList(featureConstraintsMap));
         return resultMap;
     }
 

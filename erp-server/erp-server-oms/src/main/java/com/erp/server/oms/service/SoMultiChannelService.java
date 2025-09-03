@@ -193,4 +193,10 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
     SoMultiChannelEntity getBySoId(String id, Boolean isContainDelete);
 
     SoMultiChannelEntity getByDeliveryCode(String deliveryCode);
+
+    /**
+     * 查询多渠道发货状态为空和PING状态数据
+     * @return
+     */
+    List<SoMultiChannelEntity> queryMultiChannelDeliveryStatus();
 }
