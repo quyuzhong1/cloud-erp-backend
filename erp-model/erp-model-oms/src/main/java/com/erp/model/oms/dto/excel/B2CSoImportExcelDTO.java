@@ -308,7 +308,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*SKU")
-    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 30)
+    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 64)
     private String skuNo;
 
 
