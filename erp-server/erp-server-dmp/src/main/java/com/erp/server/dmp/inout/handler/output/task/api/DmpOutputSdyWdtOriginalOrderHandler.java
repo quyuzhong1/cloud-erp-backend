@@ -46,6 +46,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -119,6 +120,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(allAmount);
             //总优惠金额
             shudiyunB2cOrderDTO.setDiscount_deduction_amount(dmpSoInfoEntity.getDiscount());
+            shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(dmpSoDetailEntity.getShareDiscount());
 
             BigDecimal totalQty = dmpSoDetailEntityList.stream().map(DmpSoOriginalDetailEntity::getNum).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty.intValue());
@@ -146,8 +148,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty.intValue() - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPaid());
-
-            shudiyunB2cOrderDTO.setTotal_freight(BigDecimal.ZERO);
 
             Map<String, Object> thirdShopEntityListMap = cacheMap.get("thirdShopEntityList");
             if(thirdShopEntityListMap == null) {
@@ -404,7 +404,21 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
+            
+            BigDecimal shippingAmount = dmpSoInfoEntity.getShippingAmount();
+            if(shippingAmount == null) {
+            	shippingAmount = BigDecimal.ZERO;
+            }
+			shudiyunB2cOrderDTO.setTotal_freight(shippingAmount);
+			
+			BigDecimal goods_transaction_amount = shudiyunB2cOrderDTO.getGoods_transaction_amount();
+			BigDecimal total_goods_transaction_amount = shudiyunB2cOrderDTO.getTotal_goods_transaction_amount();
+			if(BigDecimal.ZERO.compareTo(shippingAmount) != 0 && BigDecimal.ZERO.compareTo(goods_transaction_amount) != 0
+					&& BigDecimal.ZERO.compareTo(total_goods_transaction_amount) != 0) {
+				shudiyunB2cOrderDTO.setFreight(goods_transaction_amount.multiply(shippingAmount).divide(total_goods_transaction_amount , 4 , RoundingMode.HALF_UP));
+			}
 
+            shudiyunB2cOrderDTO.setDefaultValue();
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }

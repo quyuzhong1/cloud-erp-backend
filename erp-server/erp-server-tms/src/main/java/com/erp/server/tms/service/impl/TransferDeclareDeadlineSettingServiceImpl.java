@@ -40,7 +40,7 @@ public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<
     @Resource
     private MultipleOptionService multipleOptionService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(List<TransferDeclareDeadlineSettingDTO.AddDTO> addList) {

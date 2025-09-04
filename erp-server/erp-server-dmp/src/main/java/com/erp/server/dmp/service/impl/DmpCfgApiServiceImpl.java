@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DmpCfgApiServiceImpl extends SuperServiceImpl<DmpCfgApiMapper, DmpCfgApiEntity> implements DmpCfgApiService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpCfgApiDTO.AddDTO addDTO) {

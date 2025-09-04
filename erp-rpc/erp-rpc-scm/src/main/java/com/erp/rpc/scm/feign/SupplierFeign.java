@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -97,4 +98,14 @@ public interface SupplierFeign {
 
     @PostMapping("/feign/supplier/updateApproveStatus")
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+
+    /**
+     * 获取工厂所在地
+     * @author will
+     * @date 2025/9/2 14:21
+     * @param addPlantAddrDTO
+     * @return List<AddDTO>
+     */
+    @PostMapping("/feign/supplier/checkImportPlantAddr")
+    List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(@RequestBody SupplierDTO.AddPlantAddrDTO addPlantAddrDTO);
 }

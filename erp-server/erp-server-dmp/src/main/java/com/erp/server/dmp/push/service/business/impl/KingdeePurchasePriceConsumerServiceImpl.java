@@ -15,10 +15,12 @@ import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeePurchasePriceConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -49,6 +51,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.PUR_PRICECATEGORY)
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -61,7 +64,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");

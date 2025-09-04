@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -43,7 +44,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
 
     @PostMapping("/add")
     public ThirdWarehouseDeliveryEntity add(@RequestBody ThirdWarehouseDeliveryEntity entity) {
-        return thirdWarehouseDeliveryService.add(entity);
+        return thirdWarehouseDeliveryService.add(entity,true);
     }
 
     @PostMapping("/getLatestBySoId")
@@ -58,6 +59,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
     }
 
     @PostMapping("/generateDeliveryAndOutStock")
+    @DistributeLocker(keyName = "generateDeliveryAndOutStockDTO.entity.id")
     public  void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO) {
         thirdWarehouseDeliveryService.generateDeliveryAndOutStock(generateDeliveryAndOutStockDTO);
     }

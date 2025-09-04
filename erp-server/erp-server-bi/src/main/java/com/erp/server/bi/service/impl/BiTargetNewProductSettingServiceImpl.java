@@ -68,7 +68,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     @Autowired
     private BiTargetYearService biTargetYearService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetNewProductSettingDTO.AddDTO addDTO) {
@@ -185,7 +185,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     /**
      * 修改
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(BiTargetNewProductSettingDTO.UpdateDTO updateDTO) {

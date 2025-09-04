@@ -51,6 +51,8 @@ public class DmpHandlerUtils {
 		countryMap.put("UK", "GB");
 		countryMap.put("MNE", "ME");
 		countryMap.put("SRB", "RS");
+		countryMap.put("ALA", "AX");
+		countryMap.put("BLM", "BL");
 	}
 	
 	public static String getId() {

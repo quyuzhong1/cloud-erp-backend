@@ -505,7 +505,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public QcInfoEntity finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
@@ -1108,7 +1108,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO finish(QcInfoEntity entity) {
         List<QcInfoEntity> qcList = Collections.singletonList(entity);
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();

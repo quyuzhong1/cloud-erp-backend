@@ -11,9 +11,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSysPostConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -43,6 +45,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.HR_ORG_HRPOST)
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_POST.getCode();
@@ -58,7 +61,7 @@ public class KingdeeSysPostConsumerServiceImpl  implements KingdeeSysPostConsume
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.HR_ORG_HRPOST.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
         /**
          * 添加

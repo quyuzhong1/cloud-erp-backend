@@ -26,7 +26,7 @@ import java.util.*;
 @Service
 public class MultipleOptionServiceImpl extends SuperServiceImpl<MultipleOptionMapper, MultipleOptionEntity> implements MultipleOptionService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(MultipleOptionDTO.AddDTO addDTO) {

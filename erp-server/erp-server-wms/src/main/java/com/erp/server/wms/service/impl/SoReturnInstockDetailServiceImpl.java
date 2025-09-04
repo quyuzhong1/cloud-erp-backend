@@ -78,7 +78,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
         if("B2C".equals(dto.getType())){
             return addB2c(dto, id);
@@ -476,7 +476,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean update(SoReturnInstockDTO.Update dto) {
         if("B2C".equals(dto.getType())){
             return updateB2c(dto);
@@ -975,7 +975,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(SoReturnInstockDetailEntity::getIsDeleted, Boolean.TRUE)

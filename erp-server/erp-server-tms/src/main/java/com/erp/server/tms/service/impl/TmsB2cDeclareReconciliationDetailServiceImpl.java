@@ -123,7 +123,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Resource
     private FileFeign filefeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(List<TmsB2cDeclareReconciliationDetailDTO.AddDTO> detailList) {

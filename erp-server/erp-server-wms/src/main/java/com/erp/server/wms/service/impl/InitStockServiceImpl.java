@@ -288,7 +288,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         operateLogService.batchAddModuleOperateLog("提交了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "提交操作");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(InitStockDTO.AddDTO dto) {
@@ -298,7 +298,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         this.submit(Lists.newArrayList(id));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(InitStockDTO.UpdateDTO dto) {
@@ -308,7 +308,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         this.submit(Lists.newArrayList(dto.getId()));
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(InitStockEntity entity, String type, String comment, Boolean isNeedProcess) {
@@ -376,7 +376,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         return resultDTOList;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(InitStockEntity entity) {

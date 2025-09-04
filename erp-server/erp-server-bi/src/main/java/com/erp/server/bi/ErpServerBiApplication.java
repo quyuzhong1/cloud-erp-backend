@@ -9,8 +9,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @Slf4j
 @EnableCaching
-@SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(scanBasePackages = {"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @EnableDiscoveryClient
 public class ErpServerBiApplication {
 

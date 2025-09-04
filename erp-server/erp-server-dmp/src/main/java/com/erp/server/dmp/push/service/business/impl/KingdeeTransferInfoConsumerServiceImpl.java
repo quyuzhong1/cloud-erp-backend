@@ -11,9 +11,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeTransferInfoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -43,6 +45,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.STK_TRANSFERDIRECT)
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -55,7 +58,7 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
 
         /**

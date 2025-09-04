@@ -28,7 +28,7 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     * @date: 2024-10-17
     * @return
     */
-    ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity);
+    ThirdWarehouseDeliveryEntity add(ThirdWarehouseDeliveryEntity entity,Boolean isAddDetail);
 
     ThirdWarehouseDeliveryEntity getByCodeAndSoId(String outCode,String soId);
 

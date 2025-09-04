@@ -309,11 +309,18 @@
                 vtf.dict_inventory_status as dictInventoryStatus,
                 vtfd.qty,
                 vtfd.cur_inventory_qty as curInventoryQty,
-                vtf.org_id
+                vtf.org_id as orgId,
+                vtf.warehouse_id as warehouseId,
+                vtf.virtual_warehouse_id as virtualWarehouseId,
+                vtf.transaction_no as transactionNo,
+                wh.name as warehouseName,
+                vw.name as virtualWarehouseName
             from virtual_trans_flow_detail vtfd
             inner join virtual_inventory_detail vhd on vtfd.virtual_inventory_detail_id = vhd.id and vhd.is_deleted = false
             inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
             left join product_detail pd on vhd.sku_id = pd.id and pd.is_deleted = false
+            left join warehouse wh on vtf.warehouse_id = wh.id and wh.is_deleted = false
+            left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
             <where>
                 ${params.sqlMap.default}
                 and vtfd.is_deleted = false and vhd.sku_id = #{params.skuId} and vhd.warehouse_id = #{params.warehouseId}

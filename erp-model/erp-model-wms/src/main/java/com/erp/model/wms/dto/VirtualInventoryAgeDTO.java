@@ -670,11 +670,11 @@ public class VirtualInventoryAgeDTO implements Serializable {
     @NoArgsConstructor
     public static class InventoryAgeFlowDTO {
         /**
-         * 出入库时间
+         * 出入库时间【可排序】
          */
         private LocalDate billDate;
         /**
-         * 单据类型
+         * 单据类型【可排序】
          */
         private String sourceType;
         /**
@@ -682,15 +682,15 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private String sourceTypeName;
         /**
-         * 单据单号
+         * 单据单号【可排序】
          */
         private String sourceCode;
         /**
-         * 批次号
+         * 批次号【可排序】
          */
         private String batchNo;
         /**
-         * 操作
+         * 操作【可排序】
          */
         private String operationMode;
         /**
@@ -698,19 +698,19 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private String operationModeName;
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
         /**
-         * sku编码
+         * sku编码【可排序】
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
         /**
-         * 库存状态
+         * 库存状态【可排序】
          */
         private String dictInventoryStatus;
         /**
@@ -718,20 +718,40 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private String dictInventoryStatusName;
         /**
-         * 出入库数量
+         * 出入库数量【可排序】
          */
         private Integer qty;
         /**
-         * 操作后库存数量
+         * 操作后库存数量【可排序】
          */
         private Integer curInventoryQty;
         /**
-         * 组织id
+         * 组织id【可排序】
          */
         private String orgId;
         /**
          * 组织名称
          */
         private String orgName;
+        /**
+         * 仓库id【可排序】
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称【可排序】
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id【可排序】
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓名称【可排序】
+         */
+        private String virtualWarehouseName;
+        /**
+         * 流水号【可排序】
+         */
+        private String transactionNo;
     }
 }

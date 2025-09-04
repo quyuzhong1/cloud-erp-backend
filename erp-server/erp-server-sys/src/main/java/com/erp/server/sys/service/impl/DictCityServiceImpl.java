@@ -395,6 +395,13 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    public List<DictCityEntity> listCity() {
+        return this.lambdaQuery().eq(DictCityEntity::getType, city).
+                eq(DictCityEntity::getDisabled, Boolean.FALSE)
+                .list();
+    }
+
+        @Override
     public PagingVO<DictCityDTO.PagingViewDTO> exportCity(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
         Page<DictCityDTO.PagingViewDTO> page = this.baseMapper.cityExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         return new PagingVO<>(page);

@@ -35,7 +35,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public VirtualInventoryDetailEntity addOrUpdate(VirtualInventoryDetailDTO.UpdateDTO addOrUpdateDTO) {

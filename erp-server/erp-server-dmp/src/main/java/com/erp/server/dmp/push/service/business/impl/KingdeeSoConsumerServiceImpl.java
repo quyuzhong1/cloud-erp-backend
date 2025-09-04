@@ -14,12 +14,14 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.sdk.third.kingdee.utils.KingdeeApi;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -58,6 +60,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @KingdeeApi(KingdeePushModuleEnum.SAL_SALEORDER)
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -69,7 +72,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
 
         /**
          * 反审核

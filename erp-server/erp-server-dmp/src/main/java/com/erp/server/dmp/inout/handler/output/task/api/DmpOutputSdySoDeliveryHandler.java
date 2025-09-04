@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -345,6 +346,11 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        // 部门名称
     	        shudiyunB2cOrderDTO.setDepartment_name(kingdeeDepartmentName);
     			
+    	        shudiyunB2cOrderDTO.setGoods_discount_deduction_amount(dmpSoDeliveryDetailEntity.getDiscountAmount());
+    	        shudiyunB2cOrderDTO.setFreight(dmpSoDeliveryDetailEntity.getFreightAmount());
+    	        shudiyunB2cOrderDTO.setGoods_taxation(dmpSoDeliveryDetailEntity.getTaxAmount());
+    	        
+    	        shudiyunB2cOrderDTO.setDefaultValue();
     			result.put(detailId, shudiyunB2cOrderDTO);
     		}
     	}

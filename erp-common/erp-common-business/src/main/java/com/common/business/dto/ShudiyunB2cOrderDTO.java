@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+import org.apache.commons.lang3.StringUtils;
+
 @Getter
 @Setter
 @ToString
@@ -268,9 +270,17 @@ public class ShudiyunB2cOrderDTO {
      */
     private BigDecimal goods_transaction_amount = BigDecimal.ZERO;
     /**
+     * 商品优惠金额
+     */
+    private BigDecimal goods_discount_deduction_amount = BigDecimal.ZERO;
+    /**
      * 商品的分摊运费
      */
-    private BigDecimal freight;
+    private BigDecimal freight = BigDecimal.ZERO;
+    /**
+     * 商品分摊税费
+     */
+    private BigDecimal goods_taxation = BigDecimal.ZERO;
     /**
      * 商品基准售价
      */
@@ -627,5 +637,32 @@ public class ShudiyunB2cOrderDTO {
                 return "已创建";
             }
         }
+    }
+    
+    public void setDefaultValue() {
+    	if(StringUtils.isBlank(country_code) || StringUtils.equals("ALL", country_code)) {
+    		country_code = "CN";
+    	}
+    	if(StringUtils.isBlank(country)) {
+    		country = "中国大陆";
+    	}
+    	if(StringUtils.isBlank(region_code)) {
+    		region_code = "AS";
+    	}
+    	if(StringUtils.isBlank(region_name)) {
+    		region_name = "亚洲";
+    	}
+    	if(StringUtils.isBlank(military_region_code)) {
+    		military_region_code = "china";
+    	}
+    	if(StringUtils.isBlank(military_region_name)) {
+    		military_region_name = "中国军区";
+    	}
+    	if(StringUtils.isBlank(department_code)) {
+    		department_code = "BM00145";
+    	}
+    	if(StringUtils.isBlank(department_name)) {
+    		department_name = "直播电商组（中国军区 ）";
+    	}
     }
 }
