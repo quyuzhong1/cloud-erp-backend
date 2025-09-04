@@ -162,6 +162,10 @@ public class OtherInstockDTO implements Serializable {
          * 入库类型名称
          */
         private String typeName;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
     }
 
     @Data

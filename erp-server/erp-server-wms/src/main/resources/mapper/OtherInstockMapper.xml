@@ -29,6 +29,9 @@
         <result column="approve_time" property="approveTime" />
         <result column="approve_user_name" property="approveUserName" />
         <result column="approve_user_id" property="approveUserId" />
+        <result column="source_type" property="sourceType" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.wms.dto.OtherInstockDTO$ListDTO">
@@ -53,7 +56,8 @@
             oi.third_code as thirdCode,
             oi.remark,
             oi.return_logistic_code as returnLogisticCode,
-            oi.type
+            oi.type,
+            oi.source_code as sourceCode
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
@@ -130,7 +134,8 @@
             oi.third_code as thirdCode,
             oi.remark,
             oi.return_logistic_code as returnLogisticCode,
-            oi.type
+            oi.type,
+            oi.source_code as sourceCode
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>

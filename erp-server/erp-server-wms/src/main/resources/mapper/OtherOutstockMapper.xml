@@ -30,6 +30,9 @@
         <result column="approve_time" property="approveTime" />
         <result column="approve_user_name" property="approveUserName" />
         <result column="approve_user_id" property="approveUserId" />
+        <result column="source_type" property="sourceType" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
@@ -54,7 +57,8 @@
             oo.approve_user_name as approveUserName,
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
-            oo.create_time as createTime
+            oo.create_time as createTime,
+            oo.source_code as sourceCode
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false 
@@ -135,7 +139,8 @@
             oo.approve_user_name as approveUserName,
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
-            oo.create_time as createTime
+            oo.create_time as createTime,
+            oo.source_code as sourceCode
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
