@@ -1,25 +1,38 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.SampleBackDetailDTO;
+import com.erp.model.wms.dto.excel.SampleBackDetailImportExcelDTO;
 import com.erp.model.wms.entity.SampleBackDetailEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.listener.SampleBackDetailExcelListener;
 import com.erp.server.wms.mapper.SampleBackDetailMapper;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SampleBackDetailService;
+import com.erp.server.wms.service.SampleLedgerService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleBackDetailDTO;
-import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 样品退回详情 服务实现类
@@ -33,6 +46,12 @@ import com.common.core.enums.ApiError;
 public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDetailMapper, SampleBackDetailEntity> implements SampleBackDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SampleLedgerService sampleLedgerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,5 +116,37 @@ public class SampleBackDetailServiceImpl extends SuperServiceImpl<SampleBackDeta
     @Override
     public List<SampleBackDetailEntity> listByMainId(String mainId) {
         return lambdaQuery().eq(SampleBackDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public SampleBackDetailDTO.ImportDTO importFile(MultipartFile excelFile, String backUserId, HttpServletResponse response) {
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        Map<String, SkuVO> map = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, e -> e,(o1, o2)->o1));
+
+        SampleBackDetailExcelListener excelListenerUtil = new SampleBackDetailExcelListener(sampleLedgerService, map, backUserId);
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SampleBackDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入样品退回详情错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<SampleBackDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (errorList.size() > 0) {
+            String fileName = "样品退回详情错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SampleBackDetailImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        SampleBackDetailDTO.ImportDTO importDTO = new SampleBackDetailDTO.ImportDTO();
+        importDTO.setErrorUrl(url);
+        List<SampleBackDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
+        if(CollUtil.isNotEmpty(successList)){
+            importDTO.setSuccessList(successList);
+        }
+        return importDTO;
     }
 }

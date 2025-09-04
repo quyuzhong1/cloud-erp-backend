@@ -3,7 +3,9 @@ import com.erp.model.wms.entity.SampleBackDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SampleBackDetailDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -40,5 +42,16 @@ public interface SampleBackDetailService extends SuperService<SampleBackDetailEn
      * @return List<SampleBackDetailEntity>
      */
     List<SampleBackDetailEntity> listByMainId(String mainId);
+
+    /**
+     * 导入Excel
+     * @author wuhaotian
+     * @date: 2025-08-21
+     * @param excelFile
+     * @param backUserId 退回人ID
+     * @param response
+     * @return
+     */
+    SampleBackDetailDTO.ImportDTO importFile(MultipartFile excelFile, String backUserId, HttpServletResponse response);
 
 }
