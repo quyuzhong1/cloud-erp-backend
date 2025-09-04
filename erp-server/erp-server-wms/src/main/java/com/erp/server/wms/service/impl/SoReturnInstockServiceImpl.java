@@ -2236,7 +2236,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 add.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 add.setCurrency(dictCurrencyEntity.getId());
             }
-            add.setBillDate(LocalDateUtil.stringToLocalDate(excelDTO.getBillDateStr()));
+            add.setBillDate(excelDTO.getBillDate());
             add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
             add.setReturnLogisticCode(excelDTO.getReturnLogisticCode());
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
