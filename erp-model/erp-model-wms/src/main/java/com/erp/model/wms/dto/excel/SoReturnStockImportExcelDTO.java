@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.core.anno.FieldValid;
@@ -8,6 +9,7 @@ import com.erp.model.wms.enums.ReturnReasonEnum;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * 其他出库单导入
@@ -42,8 +44,10 @@ public class SoReturnStockImportExcelDTO implements Serializable {
      * 入库日期
      */
     @ExcelProperty(value = "入库日期", index = 3)
-    @FieldValid(fieldName = "入库日期",formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    @FieldValid(fieldName = "入库日期")
     private String billDateStr;
+    @ExcelIgnore
+    private LocalDate billDate;
 
     /**
      * 单据类型
