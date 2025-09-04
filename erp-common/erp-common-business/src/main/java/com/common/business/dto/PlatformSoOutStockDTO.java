@@ -39,6 +39,10 @@ public class PlatformSoOutStockDTO extends UniqueDto {
      * 收货国家
      */
     private String country;
+    /**
+     * 卖家订单id
+     */
+    private String merchantOrderId;
 
     /**
      * 销售渠道

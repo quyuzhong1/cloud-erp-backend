@@ -33,9 +33,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.wms.dto.FbaInventoryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
@@ -111,6 +109,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Resource
     private ShopInfoService shopInfoService;
     @Resource
+    private CustomerInfoService customerInfoService;
+    @Resource
     private SoMultiChannelDetailService soMultiChannelDetailService;
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
@@ -132,6 +132,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -686,6 +688,54 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Override
     public List<SoMultiChannelEntity> queryMultiChannelDeliveryStatus() {
         return baseMapper.queryMultiChannelDeliveryStatus();
+    }
+
+    @Override
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(String deliveryCode) {
+        SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
+        if (Objects.isNull(soMultiChannelEntity)){
+            return null;
+        }
+        SoB2cEntity soB2cEntity = soB2cService.getById(soMultiChannelEntity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            return null;
+        }
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfoEntity)){
+            return null;
+        }
+        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        if (Objects.isNull(soB2cReceiverEntity)){
+            return null;
+        }
+        String customerId = shopInfoEntity.getCustomerId();
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+        if (Objects.isNull(customerInfoEntity)){
+            return null;
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if (CollUtil.isEmpty(soB2cDetailEntityList)){
+            return null;
+        }
+        //获取三方仓发货单
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getByCodeAndSoId(soMultiChannelEntity.getDeliveryCode(),soB2cEntity.getId());
+        if (Objects.isNull(thirdWarehouseDeliveryEntity)){
+            return null;
+        }
+        List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryFeign.listByMainIds(Collections.singletonList(thirdWarehouseDeliveryEntity.getId()));
+        if (CollUtil.isEmpty(thirdWarehouseDeliveryDetailEntityList)){
+            return null;
+        }
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = SoMultiChannelConverter.INSTANCE.convertSoOutstockGenerateB2cDTO(soMultiChannelEntity, soB2cEntity, thirdWarehouseDeliveryEntity, soB2cDetailEntityList.get(0), customerInfoEntity, soB2cReceiverEntity);
+        LinkedList<SoOutstockDetailDTO.AddDTO> detailList = new LinkedList<>();
+        thirdWarehouseDeliveryDetailEntityList.forEach(thirdWarehouseDeliveryDetailEntity -> {
+            SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream().filter(e -> e.getId().equals(thirdWarehouseDeliveryDetailEntity.getSoDetailId())).findFirst().orElse(null);
+            SoOutstockDetailDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.convertSoOutstockGenerateB2cDetailDTO(thirdWarehouseDeliveryDetailEntity,detailEntity);
+            detailList.add(addDTO);
+        });
+        generateB2cDTO.setDetailList(detailList);
+        return generateB2cDTO;
     }
 
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {

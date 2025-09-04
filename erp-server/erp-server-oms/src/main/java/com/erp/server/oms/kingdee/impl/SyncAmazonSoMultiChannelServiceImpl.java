@@ -204,7 +204,7 @@ public class SyncAmazonSoMultiChannelServiceImpl implements SyncAmazonSoMultiCha
             HashMap<String, Object> itemMap = new HashMap<>();
             itemMap.put("sellerSku", detail.getPlatformSkuNo());
 //            itemMap.put("sellerFulfillmentOrderItemId", entity.getDeliveryCode() + "_" + i);
-            itemMap.put("sellerFulfillmentOrderItemId", detail.getId());
+            itemMap.put("sellerFulfillmentOrderItemId", detail.getSoDetailId());
             itemMap.put("quantity", detail.getQty());
             itemMap.put("fulfillmentNetworkSku", detail.getFnSku());
             soB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(detail.getSoDetailId()) && detail.getSoDetailId().equals(e.getId())).findFirst().ifPresent(e -> {

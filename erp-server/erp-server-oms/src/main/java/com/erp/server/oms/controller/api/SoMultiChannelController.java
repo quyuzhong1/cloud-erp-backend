@@ -520,12 +520,12 @@ public class SoMultiChannelController extends BaseController {
      * @throws LWAException
      */
     @PostMapping("/getFulfillmentOrder")
-    public ApiResult<GetFulfillmentOrderResponse> getFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
+    public ApiResult<ApiResponse<GetFulfillmentOrderResponse>> getFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         // 初始化API
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
-        GetFulfillmentOrderResponse response = api.getFulfillmentOrder(orderId);
-        return success(response);
+        ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.getFulfillmentOrderWithHttpInfo(orderId);
+        return success(fulfillmentOrderWithHttpInfo);
     }
 
     /**

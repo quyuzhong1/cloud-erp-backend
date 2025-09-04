@@ -4080,5 +4080,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
+    @Override
+    public SoOutstockEntity getBySourceCode(String sourceCode) {
+        if (CharSequenceUtil.isBlank(sourceCode)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoOutstockEntity::getSourceCode,sourceCode).orderByDesc(SoOutstockEntity::getCreateTime).last(" limit 1 ").one();
+    }
+
 
 }

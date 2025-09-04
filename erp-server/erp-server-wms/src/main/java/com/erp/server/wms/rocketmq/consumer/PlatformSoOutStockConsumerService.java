@@ -18,15 +18,23 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryDetailEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.server.wms.service.InventoryClosedRecordService;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryDetailService;
+import com.erp.server.wms.service.ThirdWarehouseDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -65,6 +73,11 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+    private ThirdWarehouseDeliveryDetailService thirdWarehouseDeliveryDetailService;
 
 
     @Override
@@ -105,7 +118,8 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         PlatformSoOutStockDTO dto = JSONUtil.toBean(ext.toString(), PlatformSoOutStockDTO.class);
         // 多渠道处理
         if (dto.hasMultiChannel()){
-            // TODO 处理多渠道出库
+            //处理多渠道出库
+            handleMultiChannel(dto);
             return ApiResult.success();
         }
 
@@ -241,5 +255,36 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         // 检查和生成销售出库单
         soOutstockService.checkAndGenerate(generateB2cDTO, dto, soB2cEntity);
         return ApiResult.success();
+    }
+
+    private void handleMultiChannel(PlatformSoOutStockDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getMerchantOrderId())){
+            return;
+        }
+        List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
+        //TODO 更新多渠道订单已出库标识
+
+        //查询销售出库单是否已存在
+        SoOutstockEntity soOutstockEntity = soOutstockService.getBySourceCode(dto.getMerchantOrderId());
+        if (Objects.nonNull(soOutstockEntity)){
+            return;
+        }
+        //生成销售出库单
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soMultiChannelFeign.getSoOutstockGenerateB2cDTO(dto.getMerchantOrderId());
+        if (Objects.isNull(generateB2cDTO)){
+            return;
+        }
+
+        generateB2cDTO.getDetailList().forEach(detail -> {
+            PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> e.getMerchantOrderItemId().equals(detail.getSoDetailId())).findFirst().orElse(null);
+            if (Objects.isNull(platformSoOutStockDetailDTO)) {
+                detail.setActualQty(0);
+            }else {
+                detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
+                generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
+            }
+        });
+        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+
     }
 }

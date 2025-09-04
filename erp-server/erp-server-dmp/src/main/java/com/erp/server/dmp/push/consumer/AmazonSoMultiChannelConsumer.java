@@ -10,7 +10,7 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.enums.CreateStatusEnum;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaOutboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -36,11 +36,11 @@ import javax.annotation.Resource;
 public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
-    private OmsTaskFeign omsTaskFeign;
-    @Resource
     private DmpPushTaskService dmpPushTaskService;
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     public static void main(String[] args) {
     }
@@ -77,16 +77,16 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
             log.warn("创建订单响应：{}", JSONUtil.toJsonStr(fulfillmentOrderWithHttpInfo));
             //成功后，更新任务状态
             createResultDTO.setCreateStatus(CreateStatusEnum.SUCCESS.getCode());
-            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+            soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
         } catch (ApiException e) {
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
             createResultDTO.setMsg("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getResponseBody()));
-            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+            soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
             throw new ServiceException("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getResponseBody()));
         } catch (LWAException e) {
             createResultDTO.setCreateStatus(CreateStatusEnum.FAILED.getCode());
             createResultDTO.setMsg("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getErrorMessage()));
-            omsTaskFeign.updateSoMultiChannel(createResultDTO);
+            soMultiChannelFeign.updateSoMultiChannel(createResultDTO);
             throw new ServiceException("亚马逊创建订单异常：" + JSONUtil.toJsonStr(e.getErrorMessage()));
         }
         return ApiResult.success();
