@@ -306,7 +306,7 @@ public class SampleScrapInfoController extends BaseController {
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "样品报废单作废")
-    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SampleScrapInfoEntity> list = sampleScrapInfoService.lambdaQuery().in(SampleScrapInfoEntity::getId, ids).list();
@@ -314,7 +314,7 @@ public class SampleScrapInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleScrapInfoService.invalid(id);
+                deleteResult = sampleScrapInfoService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("样品报废单作废失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);

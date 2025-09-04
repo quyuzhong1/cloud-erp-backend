@@ -604,7 +604,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(String id) {
+    public BatchResultDTO invalid(String id,String remark) {
         SampleScrapInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品报废单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
@@ -617,6 +617,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         log.info("作废 开始作废样品报废单数据，id：【{}】", id);
         lambdaUpdate()
                 .set(SampleScrapInfoEntity::getInvalidStatus, Boolean.TRUE)
+                .set(SampleScrapInfoEntity::getInvalidRemark, remark)
                 .eq(SampleScrapInfoEntity::getId, id)
                 .update();
 

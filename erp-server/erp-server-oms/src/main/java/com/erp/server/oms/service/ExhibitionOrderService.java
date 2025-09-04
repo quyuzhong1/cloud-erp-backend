@@ -151,7 +151,7 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
      * @param id
      * @return
      */
-    BatchResultDTO invalid(String id);
+    BatchResultDTO invalid(String id,String remark);
 
     List<ExhibitionOrderDTO.FreezeQtyBySku> listFreezeQtyBySku(ExhibitionOrderDTO.SearchDTO dto);
 
