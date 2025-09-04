@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
+import com.erp.model.oms.entity.ExhibitionOrderDetailEntity;
 import com.erp.model.oms.entity.ExhibitionOrderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -159,4 +160,7 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
     void importExhibitionOrder(BaseDTO.ImportDTO dto);
 
     void handleImportSuccessList(List<ExhibitionOrderImportExcelDTO> successList, List<String> errorNoList, List<ExhibitionOrderImportExcelDTO> errorList2, String importType);
+
+    void generateDownstreamByExhibitionOrder(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList);
+
 }

@@ -320,7 +320,24 @@ public class OtherInstockDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+        /**
+         *
+         */
+        private Boolean isProcess = Boolean.TRUE;
 
         /**
          * 明细

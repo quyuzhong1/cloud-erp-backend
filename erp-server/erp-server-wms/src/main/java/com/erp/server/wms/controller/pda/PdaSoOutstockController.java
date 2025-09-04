@@ -154,7 +154,7 @@ public class PdaSoOutstockController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.submit(dto.getIds());
+        Boolean result = soOutstockService.submit(dto.getIds(),Boolean.TRUE);
         return result ? success() : failure();
     }
 
@@ -214,7 +214,7 @@ public class PdaSoOutstockController extends BaseController {
 
             BatchResultDTO result;
             try {
-                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),Boolean.TRUE);
             } catch (Exception e) {
                 log.error("销售出库 审核失败>>>>{}", e);
                 SoOutstockEntity entity = soOutstockService.getById(id);

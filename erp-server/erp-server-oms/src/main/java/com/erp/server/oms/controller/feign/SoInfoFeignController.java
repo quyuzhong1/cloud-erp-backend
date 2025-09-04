@@ -165,7 +165,7 @@ public class SoInfoFeignController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.approve(dto, entity));
+                resultDTOS.add(soInfoService.approve(dto, entity,Boolean.TRUE));
             }catch (Exception e){
                 log.error("B2B销售订单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

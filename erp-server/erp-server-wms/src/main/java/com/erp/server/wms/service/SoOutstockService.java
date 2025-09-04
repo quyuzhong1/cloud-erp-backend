@@ -75,7 +75,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids,Boolean isNeedProcess);
 
     /**
      * 新增并提交
@@ -111,7 +111,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto,Boolean isNeedProcess);
 
     //TODO 物流单
 //    @Async("saveLogisticsBill")
