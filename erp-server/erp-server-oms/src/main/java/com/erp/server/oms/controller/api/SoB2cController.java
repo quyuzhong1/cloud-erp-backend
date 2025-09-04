@@ -25,10 +25,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
@@ -74,6 +71,10 @@ public class SoB2cController extends BaseController {
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private ShopInfoService shopInfoService;
+
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
@@ -152,6 +153,10 @@ public class SoB2cController extends BaseController {
          */
         // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
         dto.checkAndSetAfterTaxAmount();
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
+        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
+            throw new ServiceException("店铺已禁用，无法新增订单");
+        }
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
         //检查是否备案并修改状态
@@ -305,7 +310,7 @@ public class SoB2cController extends BaseController {
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
         List<SoB2cErrorEntity> soB2cErrorEntityList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
-        ProcessBusinessEntity processBusiness = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
+//        ProcessBusinessEntity processBusiness = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
         for (String id : ids) {
             BatchResultDTO submit;
             SoB2cEntity entity = soB2cEntityList.stream().filter(e -> Objects.equals(id, e.getId())).findFirst().orElse(null);
@@ -317,10 +322,8 @@ public class SoB2cController extends BaseController {
             SoB2cErrorEntity error = soB2cErrorEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             try {
-                if (Objects.nonNull(processBusiness)){
-                    submit = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
-                }else {
-                    soB2cService.submit(entity,error,logisticsEntity, Boolean.FALSE);
+                ApproveResultDTO submit1 = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
+                if (submit1.getSuccess() && !submit1.getIsExistProcess()){
                     submit = soB2cService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核"), null, "");
                     //速卖通平台仓订单不走任何规则
                     if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
@@ -328,8 +331,9 @@ public class SoB2cController extends BaseController {
                         continue;
                     }
                     afterApprove(id, entity);
+                }else {
+                    submit = submit1;
                 }
-
             } catch (Exception e) {
                 log.error("B2C销售订单 提交审核失败", e);
                 submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());

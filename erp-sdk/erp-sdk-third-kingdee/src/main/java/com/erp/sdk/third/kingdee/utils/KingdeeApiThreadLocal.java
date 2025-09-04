@@ -3,60 +3,42 @@ package com.erp.sdk.third.kingdee.utils;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import cn.hutool.core.lang.Pair;
+
 public class KingdeeApiThreadLocal {
     private KingdeeApiThreadLocal() {
     	
     }
-    private static final ThreadLocal<Deque<KingdeeApiUtils>> SUSPENDED =
-            ThreadLocal.withInitial(ArrayDeque::new);
-    private static final ThreadLocal<KingdeeApiUtils> CURRENT = new ThreadLocal<>();
-    private static final ThreadLocal<Integer> DEPTH = ThreadLocal.withInitial(() -> 0);
+    private static final ThreadLocal<Deque<Pair<Boolean, KingdeeApiUtils>>> STACK = ThreadLocal.withInitial(ArrayDeque::new);
 
     public static KingdeeApiUtils get() {
-        return CURRENT.get();
-    }
-
-    public static void set(KingdeeApiUtils apiUtils) {
-        CURRENT.set(apiUtils);
-    }
-
-    public static void suspendAndReplace(KingdeeApiUtils newApiUtils) {
-        KingdeeApiUtils current = CURRENT.get();
-        if (current != null) {
-            SUSPENDED.get().push(current);
-        }
-        CURRENT.set(newApiUtils);
-    }
-
-    public static void resumePrevious() {
-        KingdeeApiUtils old = CURRENT.get();
-        if (old != null) {
-            KingdeeApiUtilsPool.returnKingdeeApiUtils(old);
-        }
-        Deque<KingdeeApiUtils> stack = SUSPENDED.get();
+        Deque<Pair<Boolean, KingdeeApiUtils>> stack = STACK.get();
         if (!stack.isEmpty()) {
-            CURRENT.set(stack.pop());
-        } else {
-            CURRENT.remove();
+            return stack.peek().getValue();
+        }
+        return null;
+    }
+
+    public static void set(KingdeePushModuleEnum kingdeePushModuleEnum) {
+        boolean newFormId = false;
+        KingdeeApiUtils kingdeeApiUtils = get();
+        if (kingdeeApiUtils == null || !kingdeePushModuleEnum.getCode().equals(kingdeeApiUtils.getFormId())) {
+            newFormId = true;
+            kingdeeApiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(kingdeePushModuleEnum.getCode());
+        }
+        STACK.get().push(Pair.of(newFormId, kingdeeApiUtils));
+    }
+
+    public static void clear() {
+        Deque<Pair<Boolean, KingdeeApiUtils>> stack = STACK.get();
+        if (!stack.isEmpty()) {
+            Pair<Boolean, KingdeeApiUtils> top = stack.pop();
+            if (top.getKey()) {
+                KingdeeApiUtilsPool.returnKingdeeApiUtils(top.getValue());
+            }
+            if (stack.isEmpty()) {
+            	STACK.remove();
+            }
         }
     }
-
-    public static void enter() {
-        DEPTH.set(DEPTH.get() + 1);
-    }
-
-    public static void exit() {
-        int d = DEPTH.get() - 1;
-        DEPTH.set(d);
-        if (d == 0) {
-            clear();
-        }
-    }
-
-    private static void clear() {
-        CURRENT.remove();
-        SUSPENDED.remove();
-        DEPTH.remove();
-    }
-    
 }

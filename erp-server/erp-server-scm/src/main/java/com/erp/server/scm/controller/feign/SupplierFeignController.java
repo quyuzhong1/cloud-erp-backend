@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.SupplierPlantAddrDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
@@ -148,4 +149,17 @@ public class SupplierFeignController extends BaseController {
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO){
         supplierService.updateApproveStatus(updateApproveStatusDTO);
     }
+
+    /**
+     * 获取工厂所在地
+     * @author will
+     * @date 2025/9/2 14:23
+     * @param addPlantAddrDTO
+     * @return List<AddDTO>
+     */
+    @PostMapping("/checkImportPlantAddr")
+    List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(@RequestBody SupplierDTO.AddPlantAddrDTO addPlantAddrDTO){
+        return supplierService.checkImportPlantAddr(addPlantAddrDTO.getCountylist(),addPlantAddrDTO.getCityList(),addPlantAddrDTO.getPlantAddr(),addPlantAddrDTO.getErrorMsgList(),addPlantAddrDTO.getIsUpdatePart());
+    }
+
 }

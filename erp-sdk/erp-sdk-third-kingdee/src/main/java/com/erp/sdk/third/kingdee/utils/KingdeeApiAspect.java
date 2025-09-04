@@ -29,29 +29,15 @@ public class KingdeeApiAspect {
             throw new IllegalArgumentException("当前方法不存在");
         }
         //获取到方法的注解对象
-        KingdeeApi annotation = method.getAnnotation(KingdeeApi.class);
-        KingdeePushModuleEnum kingdeePushModuleEnum = annotation.value();
-        
-        KingdeeApiThreadLocal.enter(); // 进入时计数+1
-        boolean reused = true;
+        KingdeeApi kingdeeApi = method.getAnnotation(KingdeeApi.class);
         try {
-        	KingdeeApiUtils current = KingdeeApiThreadLocal.get();
-            if (current == null || !kingdeePushModuleEnum.getCode().equals(current.getFormId())) {
-            	// 挂起旧的，换新的
-                KingdeeApiUtils newApiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(kingdeePushModuleEnum.getCode());
-                KingdeeApiThreadLocal.suspendAndReplace(newApiUtils);
-                reused = false;
-            }
+        	KingdeeApiThreadLocal.set(kingdeeApi.value());
             return pjp.proceed();
         } catch (Exception e) {
             log.error("金蝶API切面错误", e);
             throw e;
         } finally {
-            if (!reused) {
-                // 归还当前的，恢复上一个
-            	KingdeeApiThreadLocal.resumePrevious();
-            }
-            KingdeeApiThreadLocal.exit(); // 离开时计数-1，最外层时才 clear
+            KingdeeApiThreadLocal.clear();
         }
     }
 
