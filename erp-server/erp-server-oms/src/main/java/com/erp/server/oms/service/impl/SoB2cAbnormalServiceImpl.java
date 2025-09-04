@@ -135,9 +135,6 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         soB2cEntityList.forEach(v->{
             v.setSignOrderError("");
-            //清除异常 -- 暂时只针对拉取失败的类型
-            soB2cErrorService.removeErrorOrder(v.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
-
             OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = OperateLogDTO.AddModuleOperateLogDTO.builder()
                     .content(msg)
                     .businessId(v.getId())
@@ -147,7 +144,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             operateLogList.add(addModuleOperateLogDTO);
         });
         soB2cService.updateBatchById(soB2cEntityList);
-
+        //清除异常
+        soB2cErrorService.deleteByMainIds(dto.getIds());
 
         operateLogService.batchAddModuleOperateLog(operateLogList);
 
