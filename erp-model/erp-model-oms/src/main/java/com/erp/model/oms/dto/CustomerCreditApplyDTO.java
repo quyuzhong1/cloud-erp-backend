@@ -218,6 +218,14 @@ public class CustomerCreditApplyDTO implements Serializable {
         private String customerId;
 
         /**
+         * 销售组织id
+         */
+        private String saleOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String saleOrgName;
+        /**
          * 客户名称
          */
         private String customerName;

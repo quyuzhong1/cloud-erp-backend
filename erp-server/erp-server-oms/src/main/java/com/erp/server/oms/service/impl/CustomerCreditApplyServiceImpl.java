@@ -107,7 +107,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
             throw new ServiceException("客户授信保存失败");
         }
         // 保存附件
-        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        TableName tableName = CustomerCreditApplyEntity.class.getDeclaredAnnotation(TableName.class);
         List<AttachDTO> list = addDTO.getEvaluationAttachmentList();
         if(CollectionUtils.isNotEmpty(list)){
             list.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
@@ -149,7 +149,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         }
 
         // 保存附件
-        TableName tableName = SoReceiptEntity.class.getDeclaredAnnotation(TableName.class);
+        TableName tableName = CustomerCreditApplyEntity.class.getDeclaredAnnotation(TableName.class);
         List<AttachDTO> list = addOrUpdateDTO.getEvaluationAttachmentList();
         if(CollectionUtils.isNotEmpty(list)){
             list.forEach(v->v.setBusinessId(customerCreditApplyEntity.getId()));
@@ -451,6 +451,10 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         String creditTypeName = creditTypeList.stream().filter(v->Objects.equals(v.getValue(), data.getCreditType())).map(DictBasicEntity::getName).findFirst().orElse("");
         data.setPeriodName(creditPeriodName);
         data.setCreditTypeName(creditTypeName);
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getSaleOrgId()));
+        if(CollectionUtils.isNotEmpty(accountingCompanyList)){
+            data.setSaleOrgName(accountingCompanyList.get(0).getName());
+        }
         //查询测评表附件
         TableName tableName = CustomerCreditApplyEntity.class.getDeclaredAnnotation(TableName.class);
         List<OmsAttachmentEntity> omsAttachmentEntities = omsAttachmentService.listByBusinessIdsAndType(Arrays.asList(data.getId()),tableName.value() + "_evaluation");
