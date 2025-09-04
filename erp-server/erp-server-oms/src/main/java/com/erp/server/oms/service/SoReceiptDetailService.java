@@ -24,4 +24,6 @@ public interface SoReceiptDetailService extends SuperService<SoReceiptDetailEnti
     void updateDetail(SoReceiptEntity soReceiptEntity, List<SoReceiptDetailDTO.UpdateDTO> detailList,boolean isFromSoUpdate);
 
     void removeByMainId(String id);
+
+    List<SoReceiptDetailEntity> listBySoId(String id);
 }

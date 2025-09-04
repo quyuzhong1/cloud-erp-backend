@@ -244,13 +244,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改收款单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        log.info("提交 开始启动收款单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录收款单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "收款单");
 
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), entity.getId(), "提交操作");
@@ -573,10 +570,70 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     }
 
     @Override
-    public void syncSubmitBySo(SoInfoEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void autoSubmitBySo(SoInfoEntity entity) {
         //查询包含销售订单的全部收款单
-        List<SoReceiptDTO.SoViewDTO> soReceiptDTOList = this.getSoViewDTO(entity);
+        List<SoReceiptDetailEntity> currencyDetailEntityList = soReceiptDetailService.listBySoId(entity.getId());
+        if(CollectionUtils.isEmpty(currencyDetailEntityList)){
+            return;
+        }
+        List<String> mainIds = currencyDetailEntityList.stream().map(SoReceiptDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoReceiptEntity> soReceiptEntityList = this.listByIds(mainIds);
+        List<SoReceiptDetailEntity> allDetailEntityList = soReceiptDetailService.listByMainIds(mainIds);
+        //查询销售订单信息
+        List<String> soIds = allDetailEntityList.stream().map(SoReceiptDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+        for (SoReceiptEntity soReceiptEntity : soReceiptEntityList) {
+            //待提交和审核不通过的单据进行提交
+            if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
+                continue;
+            }
+            List<SoReceiptDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v -> v.getMainId().equals(soReceiptEntity.getId())).collect(Collectors.toList());
+            List<SoInfoEntity> handleSoInfoList = soInfoEntityList.stream().filter(v -> detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).collect(Collectors.toList()).contains(v.getId())).collect(Collectors.toList());
+            //校验订单是否全部为待提交或审核不通过
+            if(handleSoInfoList.stream().allMatch(v-> BillApproveStatusEnum.WAIT_SUBMIT.equals(v.getApproveStatus())
+                    || BillApproveStatusEnum.REJECT.equals(v.getApproveStatus()))){
+                continue;
+            }
+            operateLogService.addModuleOperateLog(StrUtil.format("销售订单【{}】提交审核，系统自动提交收款单", entity.getCode()), ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), "系统自动提交操作");
+            this.submit(soReceiptEntity.getId());
+        }
+    }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void autoApproveBySo(SoInfoEntity entity) {
+        //查询包含销售订单的全部收款单
+        List<SoReceiptDetailEntity> currencyDetailEntityList = soReceiptDetailService.listBySoId(entity.getId());
+        if(CollectionUtils.isEmpty(currencyDetailEntityList)){
+            return;
+        }
+        List<String> mainIds = currencyDetailEntityList.stream().map(SoReceiptDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoReceiptEntity> soReceiptEntityList = this.listByIds(mainIds);
+        List<SoReceiptDetailEntity> allDetailEntityList = soReceiptDetailService.listByMainIds(mainIds);
+        //查询销售订单信息
+        List<String> soIds = allDetailEntityList.stream().map(SoReceiptDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+        for (SoReceiptEntity soReceiptEntity : soReceiptEntityList) {
+            //待提交和审核不通过的单据进行提交
+            if(!ApproveStatusEnum.APPROVE_ING.equals(soReceiptEntity.getApproveStatus())) {
+                continue;
+            }
+            List<SoReceiptDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v -> v.getMainId().equals(soReceiptEntity.getId())).collect(Collectors.toList());
+            List<SoInfoEntity> handleSoInfoList = soInfoEntityList.stream().filter(v -> detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).collect(Collectors.toList()).contains(v.getId())).collect(Collectors.toList());
+            //校验订单是否全部审核通过
+            if(handleSoInfoList.stream().anyMatch(v-> !BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()))){
+                continue;
+            }
+            operateLogService.addModuleOperateLog(StrUtil.format("销售订单【{}】审核通过，系统自动审核通过", entity.getCode()), ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), "系统自动提交操作");
+            workflowFeign.cancelProcess(Arrays.asList(soReceiptEntity.getId()));
+            ApproveOneDTO dto = new ApproveOneDTO();
+            dto.setId(soReceiptEntity.getId());
+            dto.setType(ApproveTypeEnum.PASS.getStatus());
+            this.approveEnd(dto,soReceiptEntity);
+        }
     }
 
     private void deleteByDetail(SoReceiptEntity soReceiptEntity, SoReceiptDetailEntity deleteDetailEntity) {

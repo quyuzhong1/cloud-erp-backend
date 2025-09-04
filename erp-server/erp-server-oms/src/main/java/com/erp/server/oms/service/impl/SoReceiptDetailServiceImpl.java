@@ -182,6 +182,14 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         }
     }
 
+    @Override
+    public List<SoReceiptDetailEntity> listBySoId(String id) {
+        if(StrUtil.isNotBlank(id)){
+            return super.lambdaQuery().eq(SoReceiptDetailEntity::getSoId, id).list();
+        }
+        return Collections.emptyList();
+    }
+
 
     /**
     * 新增修改处理数据

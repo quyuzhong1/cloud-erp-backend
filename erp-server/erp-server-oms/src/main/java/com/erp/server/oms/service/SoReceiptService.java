@@ -157,5 +157,7 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
 
     void addOrUpdateBySo(SoInfoEntity soInfo, String customerId, List<SoReceiptDTO.SoViewDTO> soReceiptDTOList);
 
-    void syncSubmitBySo(SoInfoEntity entity);
+    void autoSubmitBySo(SoInfoEntity entity);
+
+    void autoApproveBySo(SoInfoEntity entity);
 }
