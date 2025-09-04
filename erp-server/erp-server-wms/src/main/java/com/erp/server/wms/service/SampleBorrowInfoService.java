@@ -155,7 +155,7 @@ public interface SampleBorrowInfoService extends SuperService<SampleBorrowInfoEn
      * @param id
      * @return
      */
-    BatchResultDTO invalid(String id);
+    BatchResultDTO invalid(String id,String remark);
     /**
      * 导入Excel
      * @author jack

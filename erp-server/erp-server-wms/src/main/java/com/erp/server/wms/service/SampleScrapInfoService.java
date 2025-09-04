@@ -162,7 +162,7 @@ public interface SampleScrapInfoService extends SuperService<SampleScrapInfoEnti
      * @param id
      * @return
      */
-    BatchResultDTO invalid(String id);
+    BatchResultDTO invalid(String id,String remark);
 
     void importSampleScrap(BaseDTO.ImportDTO dto);
 

@@ -308,7 +308,7 @@ public class ExhibitionOrderController extends BaseController {
             serviceClass = ExhibitionOrderService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "展会订单信息作废")
-    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<ExhibitionOrderEntity> list = exhibitionOrderService.lambdaQuery().in(ExhibitionOrderEntity::getId, ids).list();
@@ -316,7 +316,7 @@ public class ExhibitionOrderController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = exhibitionOrderService.invalid(id);
+                deleteResult = exhibitionOrderService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("展会订单信息作废失败",e);
                 ExhibitionOrderEntity entity = idEntityMap.get(id);

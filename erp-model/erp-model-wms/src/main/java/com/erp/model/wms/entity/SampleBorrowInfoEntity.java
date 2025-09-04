@@ -112,6 +112,12 @@ public class SampleBorrowInfoEntity extends BaseEntity<SampleBorrowInfoEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
 
     public static final String CODE = "code";
 

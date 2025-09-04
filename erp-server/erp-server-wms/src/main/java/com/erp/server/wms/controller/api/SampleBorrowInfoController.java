@@ -308,7 +308,7 @@ public class SampleBorrowInfoController extends BaseController {
             serviceClass = SampleScrapInfoService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "样品借用单作废")
-    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SampleBorrowInfoEntity> list = sampleBorrowInfoService.lambdaQuery().in(SampleBorrowInfoEntity::getId, ids).list();
@@ -316,7 +316,7 @@ public class SampleBorrowInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = sampleBorrowInfoService.invalid(id);
+                deleteResult = sampleBorrowInfoService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("样品借用单作废失败",e);
                 SampleBorrowInfoEntity entity = idEntityMap.get(id);

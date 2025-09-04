@@ -238,6 +238,11 @@ public class ExhibitionOrderEntity extends BaseEntity<ExhibitionOrderEntity> {
     @TableField("partition_id")
     private String partitionId;
 
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
 
     public static final String INVALID_STATUS = "invalid_status";
 

@@ -621,7 +621,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO invalid(String id) {
+    public BatchResultDTO invalid(String id,String remark) {
         SampleBorrowInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品借用单数据"));
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
@@ -635,6 +635,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         log.info("作废 开始作废样品借用单主单数据，id：【{}】", id);
         lambdaUpdate()
                 .set(SampleBorrowInfoEntity::getInvalidStatus, Boolean.TRUE)
+                .set(SampleBorrowInfoEntity::getInvalidRemark, remark)
                 .eq(SampleBorrowInfoEntity::getId, id)
                 .update();
         // 日志
@@ -1040,7 +1041,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         String borrowDeptId = sampleBorrowInfoEntity.getBorrowDeptId();
         String lendDeptId = sampleBorrowInfoEntity.getLendDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(borrowDeptId, lendDeptId));
-        if(CollUtil.isEmpty(sysDepartmentEntities) || sysDepartmentEntities.size() != 2){
+        if(CollUtil.isEmpty(sysDepartmentEntities)){
             throw new ServiceException(ApiError.ERROR_9029);
         }
 
