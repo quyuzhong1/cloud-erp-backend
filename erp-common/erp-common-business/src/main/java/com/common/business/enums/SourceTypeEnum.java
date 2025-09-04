@@ -253,6 +253,7 @@ public enum SourceTypeEnum {
     WDT_WAREHOUSE("wdt_warehouse", "旺店通仓库基础数据", "dmp_pull_task"),
     WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
+    WDT_SO_PRESTOCK("wdt_so_prestock", "旺店通预入库", "dmp_so_prestock_info"),
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
@@ -270,6 +271,9 @@ public enum SourceTypeEnum {
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
     SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
     SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
+
+
 
 
     //售后申请

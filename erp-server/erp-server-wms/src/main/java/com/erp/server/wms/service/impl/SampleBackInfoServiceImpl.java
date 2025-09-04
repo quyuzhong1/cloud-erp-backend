@@ -967,6 +967,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             detailAddDTO.setSkuNo(detail.getSkuNo());
             detailAddDTO.setActualQty(detail.getQty());
             detailAddDTO.setRemark(detail.getRemark());
+            detailAddDTO.setSourceDetailId(detail.getId());
             detailAddDTOList.add(detailAddDTO);
         }
 
@@ -978,6 +979,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         addDTO.setDeptId(sampleBackInfo.getDeptId());
         addDTO.setType(InstockTypeEnum.SAMPLE_BACK.getCode());
         addDTO.setRemark("样品退回单自动生成：" + sampleBackInfo.getCode());
+        addDTO.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
+        addDTO.setSourceId(sampleBackInfo.getId());
+        addDTO.setSourceCode(sampleBackInfo.getCode());
         addDTO.setDetailList(detailAddDTOList);
 
         // 调用其他入库单服务的新增方法
@@ -989,38 +993,6 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (StrUtil.isNotBlank(otherInstockId)) {
             // 设置来源字段到其他入库单主表
             OtherInstockEntity otherInstock = otherInstockService.getById(otherInstockId);
-            if (otherInstock != null) {
-                otherInstock.setSourceType(SourceTypeEnum.SAMPLE_BACK_INFO.getCode());
-                otherInstock.setSourceId(sampleBackInfo.getId());
-                otherInstock.setSourceCode(sampleBackInfo.getCode());
-                otherInstockService.updateById(otherInstock);
-            }
-            
-            // 获取其他入库单明细列表
-            List<OtherInstockDetailEntity> otherInstockDetailEntities = otherInstockDetailService.listByMainId(otherInstockId);
-            
-            // 构建 skuId 到 sourceDetailId 的映射关系
-            Map<String, String> skuIdToSourceDetailIdMap = new HashMap<>();
-            for (SampleBackDetailEntity detail : detailList) {
-                skuIdToSourceDetailIdMap.put(detail.getSkuId(), detail.getId());
-            }
-            
-            // 批量更新其他入库单明细的 sourceDetailId 字段
-            List<OtherInstockDetailEntity> toUpdateDetails = new ArrayList<>();
-            for (OtherInstockDetailEntity otherInstockDetailEntity : otherInstockDetailEntities) {
-                String sourceDetailId = skuIdToSourceDetailIdMap.get(otherInstockDetailEntity.getSkuId());
-                if (sourceDetailId != null) {
-                    otherInstockDetailEntity.setSourceDetailId(sourceDetailId);
-                    toUpdateDetails.add(otherInstockDetailEntity);
-                }
-            }
-            
-            // 批量更新明细
-            if (!toUpdateDetails.isEmpty()) {
-                otherInstockDetailService.updateBatchById(toUpdateDetails);
-                log.info("成功更新其他入库单明细的 sourceDetailId 字段，共更新{}条明细", toUpdateDetails.size());
-            }
-            
             // 提交其他入库单
             otherInstockService.submit(otherInstockId, Boolean.FALSE);
             

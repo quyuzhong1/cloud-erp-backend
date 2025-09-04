@@ -188,7 +188,7 @@ sri.remark as remark
         LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
         AND srd.is_deleted = FALSE
         WHERE
-        and sri.is_deleted = FALSE
+         sri.is_deleted = FALSE
         and sri.source_id = #{sourceId}
         ORDER BY
         sri.create_time desc

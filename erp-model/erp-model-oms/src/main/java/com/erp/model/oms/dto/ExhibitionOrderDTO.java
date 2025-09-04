@@ -8,6 +8,9 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.erp.model.wms.dto.OtherInstockDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -898,6 +901,23 @@ public class ExhibitionOrderDTO implements Serializable {
          * 平均价格
          */
         private BigDecimal avgPrice;
+    }
+
+    /**
+     *
+     * 下推其他入库单和销售出库单
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DownstreamDTO {
+
+        private List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList;
+
+        private OtherInstockDTO.AddDTO otherInstockAddDTO;
+
+        private String soId;
+
     }
 
 

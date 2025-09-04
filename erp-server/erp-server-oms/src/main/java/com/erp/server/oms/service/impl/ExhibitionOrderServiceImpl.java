@@ -17,12 +17,9 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.DeliveryModeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
@@ -36,11 +33,10 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
-import com.erp.model.wms.entity.SampleBorrowDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InstockTypeEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -52,9 +48,12 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.wms.feign.OtherInstockFeign;
 import com.erp.rpc.wms.feign.SampleLedgerFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.oms.convert.SoInfoConverter;
 import com.erp.server.oms.listener.ExhibitionOrderExcelListener;
 import com.erp.server.oms.mapper.ExhibitionOrderMapper;
 import com.erp.server.oms.service.*;
@@ -93,6 +92,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -158,6 +158,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private SampleLedgerFeign sampleLedgerFeign;
     @Resource
     private SoDetailService soDetailService;
+    @Autowired
+    @Resource
+    private OtherInstockFeign otherInstockFeign;
+    @Resource
+    private SoInfoService soInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -861,7 +866,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -949,6 +953,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, ExhibitionOrderEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
@@ -957,8 +962,113 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         updateForApprove(entity.getId(), approveStatus.getStatus());
 
         //自动生成并审核完成其他入库单、B2B销售订单、销售出库单
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus.getStatus())) {
+            // 查询明细
+            List<ExhibitionOrderDetailEntity> detailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, entity.getId()).list();
+            if (CollUtil.isEmpty(detailList)) {
+                throw new ServiceException("未找到展会订单明细信息数据");
+            }
 
+            // 异步执行，不等待完成
+            CompletableFuture.runAsync(() -> {
+                try {
+                    generateDownstreamByExhibitionOrder(entity, detailList);
+                } catch (Exception e) {
+                    log.error("异步执行generateDownstreamByExhibitionOrder失败，展会订单ID: {}", entity.getId(), e);
+                }
+            });
+
+        }
         return Boolean.TRUE;
+    }
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void generateDownstreamByExhibitionOrder(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList){
+        String soId = generateSoInfo(entity, detailList);
+
+        // 构建销售出库单
+        List<SoDetailEntity> list = soDetailService.lambdaQuery().eq(SoDetailEntity::getMainId, soId).list();
+        List<String> soDetailIds = list.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+
+        List<SoInfoDTO.GenerateSoOutView> generateSoOutViews = soInfoService.generateSoOutView(soDetailIds);
+
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
+        for (SoInfoDTO.GenerateSoOutView soOutView : generateSoOutViews) {
+            //实发数量等于销量数量
+            soOutView.setActualDeliveryQty(soOutView.getSalesQty());
+
+            SoOutstockDTO.GenerateSoOutstockViewDTO generateB2cDTO = SoInfoConverter.INSTANCE.soOutViewToGenerateSoOut(soOutView);
+
+            generateSoOutstockViewDTOList.add(generateB2cDTO);
+        }
+
+
+        //构建其他入库单
+        List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
+        for (ExhibitionOrderDetailEntity detail : detailList) {
+            OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
+            detailAddDTO.setSkuId(detail.getSkuId());
+            detailAddDTO.setSkuNo(detail.getSkuNo());
+            detailAddDTO.setActualQty(detail.getQty());
+            detailAddDTO.setRemark(detail.getRemark());
+            detailAddDTO.setSourceDetailId(detail.getId());
+            detailAddDTOList.add(detailAddDTO);
+        }
+
+        OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
+        addDTO.setBillDate(entity.getBillDate());
+        addDTO.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        addDTO.setWarehouseId(entity.getWarehouseId());
+        addDTO.setDeptId(entity.getSalesDeptId());
+        addDTO.setType(InstockTypeEnum.EXHIBITION.getCode());
+        addDTO.setRemark("展会订单自动生成：" + entity.getCode());
+        addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setIsProcess(Boolean.FALSE);//不需要流程
+        addDTO.setDetailList(detailAddDTOList);
+
+        ExhibitionOrderDTO.DownstreamDTO downstreamDTO = new ExhibitionOrderDTO.DownstreamDTO();
+        downstreamDTO.setGenerateSoOutstockViewDTOList(generateSoOutstockViewDTOList);
+        downstreamDTO.setOtherInstockAddDTO(addDTO);
+        downstreamDTO.setSoId(soId);
+
+        otherInstockFeign.generateDownstreamByExhibitionOrder(downstreamDTO);
+    }
+
+
+    /**
+     * 根据展会订单生成B2B订单并下推销售出库单
+     * @param entity
+     */
+    private String generateSoInfo(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList) {
+        SoInfoDTO.AddDTO dto = new SoInfoDTO.AddDTO();
+        BeanMapperUtils.copy(entity,dto);
+        dto.setId("");
+        dto.setOrderType(BillTypeEnum.B2B.getCode());
+        dto.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
+
+        List<SoDetailDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(SoDetailDTO.AddDTO.class, detailList);
+        addDTOS.forEach(e -> e.setId(""));
+        dto.setDetailList(addDTOS);
+
+        String soId = soInfoService.add(dto);
+        SoInfoEntity soInfoEntity = soInfoService.getById(soId);
+
+        soInfoService.submit(soInfoEntity,Boolean.FALSE);
+
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Collections.singletonList(soId));
+        baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        baseApproveParamDTO.setComment("展会订单自动审核通过");
+        soInfoEntity = soInfoService.getById(soId);
+
+        soInfoService.approve(baseApproveParamDTO,soInfoEntity,Boolean.FALSE);
+        return soId;
+
     }
 
     @Override

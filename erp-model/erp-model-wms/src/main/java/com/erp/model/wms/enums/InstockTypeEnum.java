@@ -19,6 +19,7 @@ public enum InstockTypeEnum implements EnumMessage {
     REPORT_OVERFLOW("reportOverflow", "库存差异调整"),
     GIFT_INSTOCK("giftInstock", "赠品入库"),
     SAMPLE_BACK("sampleBack", "样品退回"),
+    EXHIBITION("exhibition", "展会订单"),
     ;
 
     /**
