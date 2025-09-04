@@ -1,7 +1,9 @@
 package com.erp.server.wms.query;
 
 import com.common.business.query.AbstractQueryHandler;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SampleBackInfoQueryHandler extends AbstractQueryHandler {
 
     @Override
