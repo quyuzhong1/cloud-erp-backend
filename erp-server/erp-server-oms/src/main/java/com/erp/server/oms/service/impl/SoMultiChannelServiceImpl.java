@@ -146,7 +146,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // 生成发货单号
         String deliveryCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         soMultiChannelEntity.setDeliveryCode(deliveryCode);
-        soMultiChannelEntity.setRemark(deliveryCode);
+        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getRemark())){
+            soMultiChannelEntity.setRemark(deliveryCode);
+        }
         log.info("开始新增多渠道订单主单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DQDD);
@@ -437,11 +439,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_DELETE);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
+        //进行发货拦截
+        deliveryIntercept(entity, true, false, "多渠道订单删除");
         // 删除主单数据
         log.info("删除 开始删除多渠道订单主单主单数据，id：【{}】", id);
         super.removeById(id);
+        //删除明细数据（如果有明细数据的话）
+        soMultiChannelDetailService.removeByMainId(id);
         // 删除日志数据
         log.info("删除 开始删除多渠道订单主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
@@ -525,17 +529,17 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         List<SoMultiChannelDTO.SoViewDTO> soViewDTOS = baseMapper.listSoMultiChannelBySoId(ids);
         //已审核 且 待配货或配货中可以下推多渠道订单
-        List<String> soCodeList = soViewDTOS.stream().filter(e -> !ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) || !(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(e.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(e.getBillStatus()))).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
+        List<String> soCodeList = soViewDTOS.stream().filter(e -> !ApproveStatusEnum.APPROVE.getCode().equals(e.getApproveStatus()) || !(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(e.getBillStatus()) || SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(e.getBillStatus()))).map(SoMultiChannelDTO.SoViewDTO::getSoCode).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(soCodeList)) {
-            throw new ServiceException("订单【" + soCodeList + "】非已审核且待配货或配货中，不能下推多渠道订单");
+            throw new ServiceException("销售订单【" + soCodeList + "】非已审核且待配货或配货中，不能下推多渠道订单");
         }
-        List<String> soCodeList2 = soViewDTOS.stream().filter(SoMultiChannelDTO.SoViewDTO::getInvalidStatus).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
+        List<String> soCodeList2 = soViewDTOS.stream().filter(SoMultiChannelDTO.SoViewDTO::getInvalidStatus).map(SoMultiChannelDTO.SoViewDTO::getSoCode).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(soCodeList2)) {
-            throw new ServiceException("订单【" + soCodeList2 + "】已作废，不能下推多渠道订单");
+            throw new ServiceException("销售订单【" + soCodeList2 + "】已作废，不能下推多渠道订单");
         }
-        List<String> soCodeList3 = soViewDTOS.stream().filter(e -> CharSequenceUtil.isBlank(e.getSkuId())).map(SoMultiChannelDTO.SoViewDTO::getSoCode).collect(Collectors.toList());
+        List<String> soCodeList3 = soViewDTOS.stream().filter(e -> CharSequenceUtil.isBlank(e.getSkuId())).map(SoMultiChannelDTO.SoViewDTO::getSoCode).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(soCodeList3)) {
-            throw new ServiceException("订单【" + soCodeList3 + "】未绑定SKU，不能下推多渠道订单");
+            throw new ServiceException("销售订单【" + soCodeList3 + "】未绑定SKU，不能下推多渠道订单");
         }
         // 数据填充处理
         fillData(soViewDTOS, deliveryWarehouseId, shopId);

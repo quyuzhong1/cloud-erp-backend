@@ -44,4 +44,6 @@ public interface SoMultiChannelDetailService extends SuperService<SoMultiChannel
      * @return
      */
     List<SoMultiChannelDetailEntity> listByMainIds(List<String> ids);
+
+    void removeByMainId(String id);
 }

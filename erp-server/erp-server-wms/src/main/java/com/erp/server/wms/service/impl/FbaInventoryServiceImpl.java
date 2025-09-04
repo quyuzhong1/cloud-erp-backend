@@ -296,15 +296,13 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setShopIdList(queryDTO.getShopIds());
         paramDTO.setType(RuleTypeEnum.PLATFORM.code);
-        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+//        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
         if (CollectionUtils.isEmpty(listingInfoWithSkuMappingDTOS)){
             return Collections.emptyList();
         }
-        List<String> skuNoList = listingInfoWithSkuMappingDTOS.stream()
-                .map(ListingInfoWithSkuMappingDTO::getProductSkuNo)
-                .collect(Collectors.toList());
+        List<String> skuNoList = listingInfoWithSkuMappingDTOS.stream().map(ListingInfoWithSkuMappingDTO::getProductSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         queryDTO.setSkuNos(skuNoList);
         List<FbaInventoryDTO.InventoryDTO> inventoryDTOS = baseMapper.listFbaInventory(queryDTO);
         //转换下拉列表
