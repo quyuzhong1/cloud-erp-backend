@@ -117,7 +117,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private PoReconciliationDetailScmService poReconciliationDetailScmService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(List<PoReconciliationDetailDTO.AddDTO> addList) {

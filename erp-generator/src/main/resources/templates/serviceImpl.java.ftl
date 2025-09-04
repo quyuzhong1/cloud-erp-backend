@@ -15,6 +15,8 @@ import com.common.business.vo.LoginUser;
 </#if>
 
 import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import ${package.Entity}.${entity};
 import ${package.Mapper}.${table.mapperName};
@@ -32,7 +34,6 @@ import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import ${package.Dto}.${table.dtoName};
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
@@ -94,7 +95,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     private WorkflowFeign workflowFeign;
     </#if>
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addDTO) {
@@ -136,6 +137,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     /**
     * 修改
     */
+    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(${table.dtoName}.UpdateDTO addOrUpdateDTO) {
@@ -254,7 +256,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addAndSubmit(${table.dtoName}.AddDTO dto) {
@@ -265,7 +267,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(${table.dtoName}.UpdateDTO dto) {
@@ -275,7 +277,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -325,7 +327,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         }
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(String id) {
@@ -401,7 +403,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {

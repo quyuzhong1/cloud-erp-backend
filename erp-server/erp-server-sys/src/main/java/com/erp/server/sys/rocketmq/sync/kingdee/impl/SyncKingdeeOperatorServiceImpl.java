@@ -61,7 +61,7 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
     private SysPushMsgService sysPushMsgService;
 
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public DmpPushTaskEntity syncDataToKingdee(KingdeeOperatorRefPostEntity entity, String operate) {
     	//生成任务

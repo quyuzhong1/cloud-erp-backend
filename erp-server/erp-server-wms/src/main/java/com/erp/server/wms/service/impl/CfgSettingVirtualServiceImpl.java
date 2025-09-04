@@ -46,7 +46,7 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BaseResultDTO.AddDTO addVirtual(CfgSettingVirtualDTO.AddDTO addDTO) {
         // 数据处理
         List<CfgSettingEntity> cfgSettingList = handleData(addDTO);

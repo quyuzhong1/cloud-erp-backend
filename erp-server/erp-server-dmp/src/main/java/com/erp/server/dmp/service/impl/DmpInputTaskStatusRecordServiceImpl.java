@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpInputTaskStatusRecordServiceImpl extends SuperServiceImpl<DmpInputTaskStatusRecordMapper, DmpInputTaskStatusRecordEntity> implements DmpInputTaskStatusRecordService {
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpInputTaskStatusRecordDTO.AddDTO addDTO) {

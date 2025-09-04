@@ -654,7 +654,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<CustomerB2cEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;

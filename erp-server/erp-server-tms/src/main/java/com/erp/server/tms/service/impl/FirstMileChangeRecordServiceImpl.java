@@ -66,7 +66,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService;
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FirstMileChangeRecordDTO.AddDTO addDTO) {

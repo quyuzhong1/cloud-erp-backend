@@ -22,27 +22,23 @@ public class KingdeeApiAspect {
 
     @Around("kingdeeApiPointCut()")
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
-        Method method = currentMethod(pjp);
+    	Method method = currentMethod(pjp);
         // 校验 method 是否为 null
         if (method == null) {
             log.error("无法获取当前方法信息，请检查切入点配置");
             throw new IllegalArgumentException("当前方法不存在");
         }
         //获取到方法的注解对象
-        KingdeeApi annotation = method.getAnnotation(KingdeeApi.class);
-        KingdeePushModuleEnum kingdeePushModuleEnum = annotation.value();
-        KingdeeApiUtils kingdeeApiUtils = null;
+        KingdeeApi kingdeeApi = method.getAnnotation(KingdeeApi.class);
         try {
-			kingdeeApiUtils = KingdeeApiUtilsPool.getKingdeeApiUtils(kingdeePushModuleEnum.getCode());
-			KingdeeApiThreadLocal.set(kingdeeApiUtils);
-			return pjp.proceed();
-		} catch (Exception e) {
-			log.info("金蝶API切面错误" , e);
-			throw e;
-		}finally {
-			KingdeeApiUtilsPool.returnKingdeeApiUtils(kingdeeApiUtils);
-			KingdeeApiThreadLocal.remove();
-		}
+        	KingdeeApiThreadLocal.set(kingdeeApi.value());
+            return pjp.proceed();
+        } catch (Exception e) {
+            log.error("金蝶API切面错误", e);
+            throw e;
+        } finally {
+            KingdeeApiThreadLocal.clear();
+        }
     }
 
     /**

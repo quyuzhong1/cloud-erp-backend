@@ -6,11 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Slf4j
-@SpringBootApplication(exclude = MongoAutoConfiguration.class, scanBasePackages ={"com.erp.*","com.common.*"})
-@EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@SpringBootApplication(exclude = MongoAutoConfiguration.class, scanBasePackages ={"com.erp","com.common"})
+@EnableFeignClients(basePackages = {"com.erp.rpc"})
 @ServletComponentScan
 public class ErpServerDmpApplication {
 

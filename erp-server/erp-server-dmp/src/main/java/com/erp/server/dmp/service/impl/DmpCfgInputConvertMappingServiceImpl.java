@@ -37,7 +37,7 @@ public class DmpCfgInputConvertMappingServiceImpl extends SuperServiceImpl<DmpCf
 	@Autowired
 	private RedisUtil redisUtil;
 	
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(DmpCfgInputConvertMappingDTO.AddDTO addDTO) {

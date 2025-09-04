@@ -70,7 +70,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetCategorySettingDTO.AddDTO addDTO) {

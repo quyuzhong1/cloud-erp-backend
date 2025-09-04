@@ -270,9 +270,17 @@ public class ShudiyunB2cOrderDTO {
      */
     private BigDecimal goods_transaction_amount = BigDecimal.ZERO;
     /**
+     * 商品优惠金额
+     */
+    private BigDecimal goods_discount_deduction_amount = BigDecimal.ZERO;
+    /**
      * 商品的分摊运费
      */
-    private BigDecimal freight;
+    private BigDecimal freight = BigDecimal.ZERO;
+    /**
+     * 商品分摊税费
+     */
+    private BigDecimal goods_taxation = BigDecimal.ZERO;
     /**
      * 商品基准售价
      */

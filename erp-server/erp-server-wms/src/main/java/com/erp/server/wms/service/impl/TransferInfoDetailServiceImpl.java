@@ -70,7 +70,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void add(List<TransferInfoDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");
@@ -88,7 +88,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void update(List<TransferInfoDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_1041,"直接调波单明细");

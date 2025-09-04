@@ -293,7 +293,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
         KingdeeDepartmentEntity entity = super.getById(id);
         List<KingdeePostEntity> postList = kingdeePostService.listByKingDeptId(id);

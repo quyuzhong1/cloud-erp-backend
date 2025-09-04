@@ -25,10 +25,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
@@ -74,6 +71,10 @@ public class SoB2cController extends BaseController {
 
     @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private ShopInfoService shopInfoService;
+
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
@@ -152,6 +153,10 @@ public class SoB2cController extends BaseController {
          */
         // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
         dto.checkAndSetAfterTaxAmount();
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
+        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
+            throw new ServiceException("店铺已禁用，无法新增订单");
+        }
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
         //检查是否备案并修改状态

@@ -44,7 +44,7 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     @Resource
     private FbaShipmentReceiveService fbaShipmentReceiveService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(FbaShipmentDetailDTO.AddDTO addDTO) {
