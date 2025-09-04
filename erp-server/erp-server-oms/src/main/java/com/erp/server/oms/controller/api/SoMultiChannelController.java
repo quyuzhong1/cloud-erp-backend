@@ -304,7 +304,7 @@ public class SoMultiChannelController extends BaseController {
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
+        //据查询放入外层，处理结果统一更新或单条更新
         List<SoMultiChannelEntity> list = soMultiChannelService.lambdaQuery().in(SoMultiChannelEntity::getId, ids).list();
         Map<String, SoMultiChannelEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoMultiChannelEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -520,12 +520,12 @@ public class SoMultiChannelController extends BaseController {
      * @throws LWAException
      */
     @PostMapping("/getFulfillmentOrder")
-    public ApiResult<GetFulfillmentOrderResponse> getFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
+    public ApiResult<ApiResponse<GetFulfillmentOrderResponse>> getFulfillmentOrder(@RequestParam("shopId") String shopId, @RequestParam("orderId") String orderId) throws ApiException, LWAException {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         // 初始化API
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
-        GetFulfillmentOrderResponse response = api.getFulfillmentOrder(orderId);
-        return success(response);
+        ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.getFulfillmentOrderWithHttpInfo(orderId);
+        return success(fulfillmentOrderWithHttpInfo);
     }
 
     /**

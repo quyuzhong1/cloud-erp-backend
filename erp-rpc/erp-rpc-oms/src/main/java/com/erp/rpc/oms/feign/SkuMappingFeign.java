@@ -55,7 +55,7 @@ public interface SkuMappingFeign {
      * @author Jim
      * @date 2023/11/2
      */
-    @PostMapping("feign/skuMapping/list")
+    @PostMapping("feign/skuMapping/listingInfoWithSkuMappingList")
     List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList(@RequestBody ListingInfoParamDTO dto);
 
 

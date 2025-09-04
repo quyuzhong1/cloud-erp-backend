@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -199,4 +200,11 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @return
      */
     List<SoMultiChannelEntity> queryMultiChannelDeliveryStatus();
+
+    /**
+     * 根据发货单编号查询销售出库单生成DTO
+     * @param deliveryCode
+     * @return
+     */
+    SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(String deliveryCode);
 }

@@ -2,13 +2,12 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.oms.service.SoMultiChannelService;
 import com.erp.server.oms.service.SyncTaskService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -31,5 +30,25 @@ public class SoMultiChannelFeignController {
     @PostMapping("/updateSoMultiChannel")
     public void updateSoMultiChannel(@RequestBody SoMultiChannelDTO.CreateResultDTO createResultDTO){
         soMultiChannelService.updateSoMultiChannel(createResultDTO);
+    }
+
+    /**
+     * 根据发货单编号查询多渠道订单
+     * @param deliveryCode
+     * @return
+     */
+    @GetMapping("/getByDeliveryCode")
+    public SoMultiChannelEntity getByDeliveryCode(@RequestParam("deliveryCode") String deliveryCode){
+        return soMultiChannelService.getByDeliveryCode(deliveryCode);
+    }
+
+    /**
+     * 根据发货单编号查询销售出库单生成DTO
+     * @param deliveryCode
+     * @return
+     */
+    @GetMapping("/getSoOutstockGenerateB2cDTO")
+    public SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(@RequestParam("deliveryCode") String deliveryCode){
+        return soMultiChannelService.getSoOutstockGenerateB2cDTO(deliveryCode);
     }
 }

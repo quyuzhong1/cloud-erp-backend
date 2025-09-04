@@ -136,6 +136,14 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
         return baseMapper.selectList(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().in(SoMultiChannelDetailEntity::getMainId, ids));
     }
 
+    @Override
+    public void removeByMainId(String id) {
+        if (CharSequenceUtil.isBlank(id)) {
+            return;
+        }
+        baseMapper.delete(new LambdaQueryWrapper<SoMultiChannelDetailEntity>().eq(SoMultiChannelDetailEntity::getMainId, id));
+    }
+
     private void checkData(SoMultiChannelEntity soMultiChannelEntity, List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities) {
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();

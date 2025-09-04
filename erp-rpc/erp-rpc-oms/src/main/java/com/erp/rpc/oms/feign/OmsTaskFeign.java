@@ -35,11 +35,4 @@ public interface OmsTaskFeign {
      */
     @PostMapping("/feign/omsSyncTask/findDataSendSyncTask")
     void findDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
-
-    /**
-     * 更新多渠道订单创建状态
-     * @param createResultDTO
-     */
-    @PostMapping("/feign/soMultiChannel/updateSoMultiChannel")
-    void updateSoMultiChannel(@RequestBody SoMultiChannelDTO.CreateResultDTO createResultDTO);
 }

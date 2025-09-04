@@ -71,6 +71,8 @@ public interface SdkSoOutStockConverter {
             @Mapping(target = "warehouseOrgId", source = "warehouseOrgId"),
             @Mapping(target = "warehouseOrgName", source = "warehouseOrgName"),
             @Mapping(target = "fulfillmentCenterId", source = "fulfillmentCenterId"),
+            @Mapping(target = "merchantOrderId", source = "merchantOrderId"),
+            @Mapping(target = "merchantOrderItemId", source = "merchantOrderItemId"),
     })
     PlatformSoOutStockDetailDTO amazonConvertDetailDTO(PlatformAmazonFulfilledShipmentsDTO sourceDetail);
 }
