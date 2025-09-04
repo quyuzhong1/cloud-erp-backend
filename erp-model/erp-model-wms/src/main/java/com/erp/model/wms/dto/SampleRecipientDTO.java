@@ -51,6 +51,11 @@ public class SampleRecipientDTO implements Serializable {
          private String tabFlag;
 
          /**
+          * 名称
+          */
+         private String tabFlagName;
+
+         /**
          * 数量
          */
          private Integer count;

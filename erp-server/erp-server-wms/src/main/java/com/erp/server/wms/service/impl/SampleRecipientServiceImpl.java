@@ -435,9 +435,20 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 使用一个SQL查询获取所有状态的统计数量
         List<SampleRecipientDTO.TabListDTO> list = baseMapper.getAllStatusCounts(param.getPermissionSql());
         
+        // 设置tabFlagName
+        list.stream().forEach(e ->{
+            if(Objects.equals("waitOutstock", e.getTabFlag())){
+                e.setTabFlagName("待出库");
+            }else if(Objects.equals("completeOutstock", e.getTabFlag())){
+                e.setTabFlagName("已出库");
+            }else {
+                e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+            }
+        });
+        
         // 计算合计数量
         int totalCount = list.stream().mapToInt(SampleRecipientDTO.TabListDTO::getCount).sum();
-        list.add(0, new SampleRecipientDTO.TabListDTO("all", totalCount));
+        list.add(0, new SampleRecipientDTO.TabListDTO("all", "全部", totalCount));
         
         return list;
     }

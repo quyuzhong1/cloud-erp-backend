@@ -190,10 +190,14 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         List<String> existStatusList = list.stream().map(SampleInitialLedgerDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new SampleInitialLedgerDTO.TabListDTO(status, 0));
+            list.add(new SampleInitialLedgerDTO.TabListDTO(status, "", 0));
         }
         });
-        list.add(new SampleInitialLedgerDTO.TabListDTO("all", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
+
+        list.forEach(e ->{
+            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+        });
+        list.add(new SampleInitialLedgerDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }

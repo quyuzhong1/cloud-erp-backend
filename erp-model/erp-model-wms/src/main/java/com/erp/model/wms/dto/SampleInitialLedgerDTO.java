@@ -41,7 +41,10 @@ public class SampleInitialLedgerDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
-
+         /**
+          * 名称
+          */
+         private String tabFlagName;
          /**
          * 数量
          */
