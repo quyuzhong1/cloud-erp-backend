@@ -64,8 +64,8 @@ public class DmpInputAmzFulFillOrderApiInitHandler extends DmpInputInitHandler {
         String extendJson = dmpInputTaskEntity.getExtendJson();
 //        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 目标店铺
-        String shopId = shopInfoDTO.getDictCountryCode();
-        String shopName = shopInfoDTO.getDictCountryCode();
+        String shopId = shopInfoDTO.getId();
+        String shopName = shopInfoDTO.getName();
 
         // 兼容手动拉取参数
         if (StringUtils.isNotBlank(extendJson)) {
