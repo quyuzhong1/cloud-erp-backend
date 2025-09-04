@@ -439,6 +439,10 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(data.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            data.setCustomerName(customerInfoEntity.getName());
+        }
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.CREDIT_PERIOD.getType(),DictBasicTypeEnum.CREDIT_TYPE.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
