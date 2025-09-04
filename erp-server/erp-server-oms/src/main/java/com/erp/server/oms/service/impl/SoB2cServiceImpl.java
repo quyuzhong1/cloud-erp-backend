@@ -1099,6 +1099,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(updateDTO.getShopId());
+        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
+            throw new ServiceException("店铺已禁用，无法修改");
+        }
         //未付款数据不能编辑
         soB2cCoreService.checkPayMent(old);
 
