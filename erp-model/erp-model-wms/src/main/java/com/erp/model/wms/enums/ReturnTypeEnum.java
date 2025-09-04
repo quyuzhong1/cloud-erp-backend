@@ -7,11 +7,11 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum ReturnTypeEnum implements EnumMessage {
 
+    DEDUCTION("refund","退货退款"),
+    REPLENISHMENT("replenishment","退货补货"),
 	CUSTOMER_RETURNS("customerReturns","买家退货"),
     RETURNS_FROM_SERVICE_PROVIDERS("returnsFromServiceProviders","服务商退件"),
     CLAIM("claim","认领"),
-    DEDUCTION("refund","退货退款"),
-    REPLENISHMENT("replenishment","退货补货")
     ;
 
     /**
