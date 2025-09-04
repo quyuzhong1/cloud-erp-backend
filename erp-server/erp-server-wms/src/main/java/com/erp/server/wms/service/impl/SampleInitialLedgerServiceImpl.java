@@ -11,6 +11,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.SampleBackInfoDTO;
 import com.erp.model.wms.entity.SampleInitialLedgerEntity;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -197,6 +198,17 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         list.forEach(e ->{
             e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
+        
+        // 按照指定顺序排序
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "rejected");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
         list.add(0,new SampleInitialLedgerDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;

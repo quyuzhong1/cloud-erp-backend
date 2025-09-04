@@ -354,6 +354,17 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         list.forEach(e ->{
             e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
+        
+        // 按照指定顺序排序
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "rejected");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
         list.add(0,new SampleBackInfoDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleBackInfoDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;

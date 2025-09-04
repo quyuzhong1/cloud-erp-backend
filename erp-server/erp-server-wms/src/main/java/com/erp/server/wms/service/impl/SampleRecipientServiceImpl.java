@@ -446,6 +446,16 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
         });
         
+        // 按照指定顺序排序
+        List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approved", "waitOutstock", "completeOutstock", "rejected");
+        list.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+        
         // 计算合计数量
         int totalCount = list.stream().mapToInt(SampleRecipientDTO.TabListDTO::getCount).sum();
         list.add(0, new SampleRecipientDTO.TabListDTO("all", "全部", totalCount));
