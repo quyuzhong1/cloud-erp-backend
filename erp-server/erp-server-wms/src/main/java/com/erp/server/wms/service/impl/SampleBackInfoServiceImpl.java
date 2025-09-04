@@ -354,7 +354,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         list.forEach(e ->{
             e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
-        list.add(new SampleBackInfoDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleBackInfoDTO.TabListDTO::getCount).sum()));
+        list.add(0,new SampleBackInfoDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleBackInfoDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }

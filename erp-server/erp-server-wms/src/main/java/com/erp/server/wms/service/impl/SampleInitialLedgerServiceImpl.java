@@ -197,7 +197,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         list.forEach(e ->{
             e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
-        list.add(new SampleInitialLedgerDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
+        list.add(0,new SampleInitialLedgerDTO.TabListDTO("all", "全部", list.stream().mapToInt(SampleInitialLedgerDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
