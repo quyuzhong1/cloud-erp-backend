@@ -4,10 +4,14 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.AttachDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReceiptDetailEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
 import com.erp.server.oms.mapper.SoReceiptDetailMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
+import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReceiptDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -43,6 +47,9 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
     @Resource
     private OmsAttachmentService attachmentService;
+
+    @Resource
+    private SoInfoService soInfoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -98,6 +105,11 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         List<SoReceiptDetailEntity> dbList = this.lambdaQuery().eq(SoReceiptDetailEntity::getMainId, soReceiptEntity.getId()).list();
         List<SoReceiptDetailEntity> deleteList = dbList.stream().filter(v -> !ids.contains(v.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(deleteList) && !isFromSoUpdate){
+            List<String> soIds = deleteList.stream().map(SoReceiptDetailEntity::getSoId).collect(Collectors.toList());
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+            if(soInfoEntityList.stream().anyMatch(v-> BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()))){
+                throw new ServiceException("销售单中存在已审核状态的，不能删除");
+            }
             List<String> deleteIds = deleteList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList());
             this.removeByIds(deleteIds);
         }
@@ -122,6 +134,12 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
         //修改的
         List<SoReceiptDetailDTO.UpdateDTO> updateList = detailList.stream().filter(v -> StrUtil.isNotBlank(v.getId())).collect(Collectors.toList());
+        List<String> updateSoIds = updateList.stream().map(SoReceiptDetailDTO.UpdateDTO::getSoId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(updateSoIds);
+        if(soInfoEntityList.stream().anyMatch(v-> BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()))){
+            throw new ServiceException("销售单中存在已审核状态的，不能编辑");
+        }
+
         List<SoReceiptDetailEntity> updateEntityList = new ArrayList<>();
         for (SoReceiptDetailDTO.UpdateDTO updateDTO : updateList) {
             SoReceiptDetailEntity soReceiptDetailEntity = dbList.stream().filter(v -> v.getId().equals(updateDTO.getId())).findFirst().orElse(new SoReceiptDetailEntity());

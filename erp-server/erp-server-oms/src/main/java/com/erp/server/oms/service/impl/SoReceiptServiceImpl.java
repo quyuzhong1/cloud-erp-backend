@@ -572,6 +572,13 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
     }
 
+    @Override
+    public void syncSubmitBySo(SoInfoEntity entity) {
+        //查询包含销售订单的全部收款单
+        List<SoReceiptDTO.SoViewDTO> soReceiptDTOList = this.getSoViewDTO(entity);
+
+    }
+
     private void deleteByDetail(SoReceiptEntity soReceiptEntity, SoReceiptDetailEntity deleteDetailEntity) {
         soReceiptDetailService.removeByIds(Arrays.asList(deleteDetailEntity.getId()));
         //查询主表下是否还存在明细

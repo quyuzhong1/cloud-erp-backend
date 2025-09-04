@@ -469,6 +469,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
+            //同步收款单审核
+            soReceiptService.syncSubmitBySo(entity);
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), entity.getId(), "状态变更");
