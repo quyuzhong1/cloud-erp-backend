@@ -355,14 +355,13 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
     private Boolean validateDisApprove(SampleInitialLedgerEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         // TODO 下游盘点计划单反审核
@@ -386,7 +385,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         // 删除日志数据
         log.info("删除 开始删除样品期初台账日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品期初台账");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除样品期初台账数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_LEDGER_INIT.getCode(), entity.getCode(), "删除样品期初台账数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -421,7 +420,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public BatchResultDTO cancelProcess(String id) {
         SampleInitialLedgerEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品期初台账数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         log.info("撤销 开始撤销流程，id：【{}】",id);
@@ -1006,8 +1005,6 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 detailDTO.setSkuId(importDTO.getSkuId());
                 detailDTO.setSkuNo(importDTO.getSkuNo());
                 detailDTO.setQty(Integer.valueOf(importDTO.getQty()));
-                // 明细备注
-                detailDTO.setRemark(importDTO.getDetailRemark());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);

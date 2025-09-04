@@ -1,6 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.wms.query.SampleInitialLedgerQueryHandler;
+import com.erp.server.wms.query.SampleRecipientQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -102,6 +105,7 @@ public class SampleInitialLedgerController extends BaseController {
             menuCode = "wms:sampleInitialLedger:paging",
             tableAlias = ""
     )
+    @WebAdvanceQuery(handler = SampleInitialLedgerQueryHandler.class)
     public ApiResult<PagingVO<SampleInitialLedgerDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleInitialLedgerDTO.PagingParamDTO> dto) {
         return success(sampleInitialLedgerService.paging(dto));
     }

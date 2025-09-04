@@ -31,28 +31,28 @@ public class SampleInitialLedgerImportExcelDTO implements Serializable {
      * 单据日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*单据日期", index = 1)
-    @FieldValid(fieldName = "*单据日期", isNotBlank = true)
+    @ExcelProperty(value = "*日期", index = 1)
+    @FieldValid(fieldName = "*日期", isNotBlank = true)
     private String billDateStr;
     @ExcelIgnore
     private LocalDate billDate;
 
     /**
-     * 使用人
+     * 归属人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*使用人", index = 2)
-    @FieldValid(fieldName = "*使用人", isNotBlank = true)
+    @ExcelProperty(value = "*归属人", index = 2)
+    @FieldValid(fieldName = "*归属人", isNotBlank = true)
     private String userName;
     @ExcelIgnore
     private String userId;
 
     /**
-     * 使用部门
+     * 归属部门
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*使用部门", index = 3)
-    @FieldValid(fieldName = "*使用部门", isNotBlank = true)
+    @ExcelProperty(value = "*归属部门", index = 3)
+    @FieldValid(fieldName = "*归属部门", isNotBlank = true)
     private String deptName;
     @ExcelIgnore
     private String deptId;
@@ -78,20 +78,12 @@ public class SampleInitialLedgerImportExcelDTO implements Serializable {
     private String productName;
 
     /**
-     * 期初数量
+     * 数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*期初数量", index = 6)
-    @FieldValid(fieldName = "*期初数量", isNotBlank = true)
+    @ExcelProperty(value = "*数量", index = 6)
+    @FieldValid(fieldName = "*数量", isNotBlank = true)
     private String qty;
-
-    /**
-     * 明细备注
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 7)
-    @FieldValid(fieldName = "明细备注", maxLength = 200)
-    private String detailRemark;
 
     /**
      * 错误数据

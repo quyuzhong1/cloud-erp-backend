@@ -2,6 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.wms.query.SampleBackInfoQueryHandler;
+import com.erp.server.wms.query.SampleRecipientQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -102,7 +104,7 @@ public class SampleRecipientController extends BaseController {
             menuCode = "wms:sampleRecipient:paging",
             tableAlias = ""
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SampleRecipientQueryHandler.class)
     public ApiResult<PagingVO<SampleRecipientDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SampleRecipientDTO.PagingParamDTO> dto) {
         return success(sampleRecipientService.paging(dto));
     }

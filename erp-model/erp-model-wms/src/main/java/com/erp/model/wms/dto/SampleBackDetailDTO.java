@@ -150,6 +150,11 @@ public class SampleBackDetailDTO implements Serializable {
         private String useUserId;
 
         /**
+         * 使用方名称
+         */
+        private String useUserName;
+
+        /**
         * 退回数量
         */
         @NotNull(message = "退回数量不能为空")

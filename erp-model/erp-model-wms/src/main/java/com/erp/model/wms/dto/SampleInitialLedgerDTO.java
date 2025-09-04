@@ -372,7 +372,6 @@ public class SampleInitialLedgerDTO implements Serializable {
         /**
         * 归属部门ID
         */
-        @NotBlank(message = "归属部门ID不能为空")
         @Size(max = 19,message = "归属部门ID最大长度不能超过19位")
         private String deptId;
 

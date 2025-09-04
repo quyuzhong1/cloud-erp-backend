@@ -166,9 +166,9 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
      */
     private void addAttachment(SampleBackInfoDTO.AddDTO addDTO, SampleBackInfoEntity sampleBackInfoEntity) {
         //附件集合
-        List<String> attachmentUrlList = addDTO.getAttachUrlList();
+        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
         //附件名
-        List<String> attachmentNameList = addDTO.getAttachNameList();
+        List<String> attachmentNameList = addDTO.getAttachmentNameList();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<SampleBackInfoEntity> credentialClass = SampleBackInfoEntity.class;
@@ -279,8 +279,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
      * @param old 旧的样品退回信息实体，用于获取业务ID
      */
     private void updateAttachment(SampleBackInfoDTO.UpdateDTO addOrUpdateDTO, SampleBackInfoEntity old) {
-        List<String> attachmentUrlList = addOrUpdateDTO.getAttachUrlList();
-        List<String> attachmentNameList = addOrUpdateDTO.getAttachNameList();
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
             List<WmsAttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
             if(CollUtil.isNotEmpty(oldAttachmentList)){
@@ -410,8 +410,8 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
         if(CollUtil.isNotEmpty(attachmentList)){
             // 分别提取附件名称和URL列表设置到返回对象中
-            viewDTO.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
-            viewDTO.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+            viewDTO.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            viewDTO.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
         
         return viewDTO;
@@ -615,7 +615,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public BatchResultDTO invalid(String id, String remark) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改样品退回单状态数据，id：【{}】", id);
@@ -639,7 +639,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public BatchResultDTO cancelProcess(String id) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程

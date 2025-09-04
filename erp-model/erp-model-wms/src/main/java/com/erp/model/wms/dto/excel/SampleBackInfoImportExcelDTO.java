@@ -27,13 +27,6 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     @FieldValid(fieldName = "*序号", isNotBlank = true)
     private String no;
 
-    /**
-     * 样品领用单号
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "*样品领用单号", index = 1)
-    @FieldValid(fieldName = "*样品领用单号", isNotBlank = true)
-    private String sourceCode;
 
     /**
      * 退回日期
@@ -44,6 +37,17 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     private String backDateStr;
     @ExcelIgnore
     private LocalDate backDate;
+
+    /**
+     * 交货仓库
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "*交货仓库", index = 5)
+    @FieldValid(fieldName = "*交货仓库", isNotBlank = true)
+    private String warehouseName;
+    @ExcelIgnore
+    private String warehouseId;
+
 
     /**
      * 退回人
@@ -66,14 +70,15 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     private String backDeptId;
 
     /**
-     * 收货仓库
+     * 退回组织
      */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "*收货仓库", index = 5)
-    @FieldValid(fieldName = "*收货仓库", isNotBlank = true)
-    private String warehouseName;
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*退回组织", index = 3)
+    @FieldValid(fieldName = "*退回组织", isNotBlank = true)
+    private String orgIdName;
     @ExcelIgnore
-    private String warehouseId;
+    private String orgId;
+
 
     /**
      * 备注

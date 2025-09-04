@@ -6,13 +6,17 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SampleBackInfoService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,10 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +52,8 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
 
     private final SampleBackInfoService sampleBackInfoService = SpringUtil.getBean(SampleBackInfoService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+    private final WarehouseService warehouseService = SpringUtil.getBean(WarehouseService.class);
+    private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
 
     /**
      * 错误信息
@@ -129,9 +132,22 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
 
         // 收货仓库
         String warehouseName = excelDTO.getWarehouseName();
-        // 这里需要根据仓库名称查找仓库ID，暂时使用名称作为ID
         if (StringUtils.isNotBlank(warehouseName)) {
-            excelDTO.setWarehouseId(warehouseName);
+            try {
+                List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listWarehouseByParams(
+                        WarehouseDTO.ListParamDTO.builder()
+                                .warehouseName(warehouseName)
+                                .showByAuth(false)
+                                .build()
+                );
+                if (CollectionUtils.isNotEmpty(warehouseList)) {
+                    excelDTO.setWarehouseId(warehouseList.get(0).getId());
+                } else {
+                    errorMsgList.add("仓库不存在：" + warehouseName);
+                }
+            } catch (Exception e) {
+                errorMsgList.add("查询仓库失败：" + warehouseName);
+            }
         }
 
         // SKU
@@ -144,6 +160,21 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
                 excelDTO.setSkuId(skuVO.getSkuId());
                 excelDTO.setSkuNo(skuVO.getSkuNo());
                 excelDTO.setProductName(skuVO.getSkuName());
+            }
+        }
+
+        // 退回组织
+        String orgIdName = excelDTO.getOrgIdName();
+        if (StringUtils.isNotBlank(orgIdName)) {
+            try {
+                List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgIdName));
+                if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                    excelDTO.setOrgId(accountingCompanyList.get(0).getId());
+                } else {
+                    errorMsgList.add("组织不存在：" + orgIdName);
+                }
+            } catch (Exception e) {
+                errorMsgList.add("查询组织失败：" + orgIdName);
             }
         }
 

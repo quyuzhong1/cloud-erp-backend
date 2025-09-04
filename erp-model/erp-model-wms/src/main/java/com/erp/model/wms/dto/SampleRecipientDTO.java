@@ -12,7 +12,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -425,12 +424,12 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        private List<String> attachNameList;
+        private List<String> attachmentNameList;
 
         /**
          * 附件URL集合
          */
-        private List<String> attachUrlList;
+        private List<String> attachmentUrlList;
 
         /**
          * 产品列表
@@ -455,12 +454,12 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        private List<String> attachNameList;
+        private List<String> attachmentNameList;
 
         /**
          * 附件URL集合
          */
-        private List<String> attachUrlList;
+        private List<String> attachmentUrlList;
 
     }
 
@@ -632,12 +631,12 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        private List<String> attachNameList;
+        private List<String> attachmentNameList;
 
         /**
          * 附件URL集合
          */
-        private List<String> attachUrlList;
+        private List<String> attachmentUrlList;
 
         /**
          * 验证：当选择邮寄时，收货地址必填

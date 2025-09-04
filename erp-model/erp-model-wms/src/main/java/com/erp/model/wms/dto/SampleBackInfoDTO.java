@@ -359,12 +359,12 @@ public class SampleBackInfoDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        private List<String> attachNameList;
+        private List<String> attachmentNameList;
 
         /**
          * 附件URL集合
          */
-        private List<String> attachUrlList;
+        private List<String> attachmentUrlList;
 
 
     }
@@ -469,12 +469,12 @@ public class SampleBackInfoDTO implements Serializable {
         /**
          * 附件名称集合
          */
-        private List<String> attachNameList;
+        private List<String> attachmentNameList;
 
         /**
          * 附件URL集合
          */
-        private List<String> attachUrlList;
+        private List<String> attachmentUrlList;
 
     }
 

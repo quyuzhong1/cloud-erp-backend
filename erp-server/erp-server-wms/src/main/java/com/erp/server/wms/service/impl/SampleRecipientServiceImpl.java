@@ -31,17 +31,14 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductSkuDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
-import com.erp.model.wms.dto.SampleRecipientDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
@@ -83,7 +80,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -226,9 +222,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     private void addAttachment(SampleRecipientDTO.AddDTO addDTO, SampleRecipientEntity sampleRecipientEntity) {
         //附件集合
-        List<String> attachmentUrlList = addDTO.getAttachUrlList();
+        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
         //附件名
-        List<String> attachmentNameList = addDTO.getAttachNameList();
+        List<String> attachmentNameList = addDTO.getAttachmentNameList();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<SampleRecipientEntity> credentialClass = SampleRecipientEntity.class;
@@ -370,8 +366,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      * @param old 旧的样品领用信息实体，用于获取业务ID
      */
     private void updateAttachment(SampleRecipientDTO.UpdateDTO addOrUpdateDTO, SampleRecipientEntity old) {
-        List<String> attachmentUrlList = addOrUpdateDTO.getAttachUrlList();
-        List<String> attachmentNameList = addOrUpdateDTO.getAttachNameList();
+        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
+        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()){
             List<WmsAttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessIds(Arrays.asList(old.getId()));
             if(CollUtil.isNotEmpty(oldAttachmentList)){
@@ -914,8 +910,8 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
         if(CollUtil.isNotEmpty(attachmentList)){
             // 分别提取附件名称和URL列表设置到返回对象中
-            data.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
-            data.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+            data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
         }
         return data;
     }
