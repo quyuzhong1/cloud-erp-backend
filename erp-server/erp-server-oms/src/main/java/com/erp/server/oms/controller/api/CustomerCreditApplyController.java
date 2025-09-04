@@ -251,4 +251,12 @@ public class CustomerCreditApplyController extends BaseController {
     }
 
 
+    /**
+     * 取消授信
+     */
+    @PostMapping("/cancel")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "客户授信取消")
+    public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success();
+    }
 }
