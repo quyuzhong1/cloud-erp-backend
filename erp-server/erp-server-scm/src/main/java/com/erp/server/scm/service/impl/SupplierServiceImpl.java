@@ -2002,7 +2002,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
-        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+        //工厂所在地
+        List<SupplierPlantAddrDTO.ViewDTO> plantAddrList = supplierPlantAddrService.listViewBySupplierIdList(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(plantAddrList)) {
+            String platAddr = plantAddrList.stream().map(obj -> CharSequenceUtil.format("{}{}{}", obj.getCountryName(), obj.getRegionName(), obj.getCityName())).collect(Collectors.joining(","));
+            variablesMap.put("plantAddr", platAddr);
+        }
+        //阶段
+        if (ObjectUtil.isNotEmpty(entity.getPhase())) {
+            variablesMap.put("phaseCode", entity.getPhase().getPhase());
+        }
+        return variablesMap;
     }
 
     /**
@@ -2264,7 +2275,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             chekImportSupplier(paymentConditionMap,dictProductCategoryList,dictApplicationCategoryList,supplierGradeList,userList,currencyList,dictBasicList,addDTO,excelDTO,errorMsgList,isUpdatePart);
 
             //供应商工厂表赋值
-            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, addDTO, excelDTO, errorMsgList, isUpdatePart);
+            List<SupplierPlantAddrDTO.AddDTO> plantAddrList = checkImportPlantAddr(countylist, cityList, excelDTO.getPlantAddr(), errorMsgList, isUpdatePart);
 
             //联系人信息赋值
             SupplierContactDTO.ImportAddDTO contactAddDTO = checkImportContact(contactList,excelDTO, addDTO, errorMsgList, isUpdatePart);
@@ -2301,17 +2312,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2025/7/24 19:04
      * @param countylist
      * @param cityList
-     * @param addDTO
-     * @param excelDTO
      * @param errorMsgList
      * @param isUpdatePart
      * @return List<AddDTO>
      */
-    private List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,SupplierDTO.ImportAddDTO addDTO,SupplierImportExcelDTO excelDTO,List<String> errorMsgList,boolean isUpdatePart) {
+    @Override
+    public List<SupplierPlantAddrDTO.AddDTO> checkImportPlantAddr(List<DictCountryEntity> countylist,List<DictCityEntity> cityList,String plantAddr,List<String> errorMsgList,boolean isUpdatePart) {
         List<SupplierPlantAddrDTO.AddDTO> plantAddrList = new ArrayList<>();
         //工厂地址
-        if (CharSequenceUtil.isNotBlank(excelDTO.getPlantAddr())) {
-            List<String> addrList = Arrays.stream(excelDTO.getPlantAddr().split(",")).collect(Collectors.toList());
+        if (CharSequenceUtil.isNotBlank(plantAddr)) {
+            List<String> addrList = Arrays.stream(plantAddr.split(",")).collect(Collectors.toList());
             for (String addr : addrList) {
                 SupplierPlantAddrDTO.AddDTO addrDTO = new SupplierPlantAddrDTO.AddDTO();
                 //查询是否是国家
@@ -2373,6 +2383,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         return plantAddrList;
     }
+
+
     /**
      * 资质信息处理
      * @author will
