@@ -300,7 +300,7 @@ sbi.remark as remark
         AND sbi.invalid_status = FALSE
         AND sbi.approve_status = 'approve'
         AND sbd.wait_return_qty > 0
-        AND sbd.code = #{params.sourceCode}
+        AND sbi.code = #{params.sourceCode}
         <if test="params.skuNos != null and params.skuNos.size > 1">
             AND sbd.sku_no IN
             <foreach item="item" index="index" collection="params.skuNos" open="(" separator="," close=")">
