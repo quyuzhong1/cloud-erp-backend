@@ -921,6 +921,127 @@ public class ExhibitionOrderDTO implements Serializable {
     }
 
 
+    /**
+     *
+     * 其他入库单和销售出库单查询字段
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DownstreamListDTO {
+
+        /**
+         * id
+         */
+
+        private String id;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        private String code;
+
+        /**
+         * 审批状态
+         */
+        private String approveStatus;
+        private String approveStatusName;
+
+        /**
+         * 审批完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 审批人ID
+         */
+        private String approveUserId;
+
+        /**
+         * 审批人姓名
+         */
+        private String approveUserName;
+
+        /**
+         * 是否作废
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        private String warehouseName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+
+
+    }
+
+
+
 
 
 }

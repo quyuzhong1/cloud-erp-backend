@@ -1080,7 +1080,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         baseApproveParamDTO.setComment("展会订单自动审核通过");
         soInfoEntity = soInfoService.getById(soId);
 
-        soInfoService.approve(baseApproveParamDTO,soInfoEntity,Boolean.FALSE);
+        soInfoService.approve(baseApproveParamDTO,soInfoEntity);
         return soId;
 
     }
@@ -1919,4 +1919,18 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             }
         }
     }
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockInById(String id) {
+
+
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listSoById(String id) {
+        return Collections.emptyList();
+    }
+
+
 }

@@ -111,7 +111,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(ApproveOneDTO dto,Boolean isNeedProcess);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     //TODO 物流单
 //    @Async("saveLogisticsBill")
