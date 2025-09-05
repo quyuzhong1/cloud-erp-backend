@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.PlatformFulfillOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
@@ -136,6 +137,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -774,6 +777,31 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         });
     }
 
+    @Override
+    public void updateSoMultiChannelStatus(PlatformFulfillOrderDTO bean, SoMultiChannelEntity soMultiChannelEntity) {
+        SoMultiChannelEntity old = this.getById(soMultiChannelEntity.getId());
+        soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
+        soMultiChannelEntity.setTrackNo(bean.getTrackNo());
+        soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(bean.getOrderStatus()) ? bean.getOrderStatus() : "");
+        soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus()) ? bean.getDeliveryStatus() : "");
+        soMultiChannelEntity.setShipmentCode(bean.getShipmentId());
+        if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())) {
+            soMultiChannelEntity.setCreateStatus(CreateStatusEnum.CANCEL.getCode());
+        }
+        this.updateById(soMultiChannelEntity);
+        operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "状态同步");
+        if (CharSequenceUtil.isNotBlank(bean.getTrackNo()) && CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId())){
+            //更新销售订单物流跟踪号 和三方仓发货单跟踪号
+            soB2cLogisticsService.lambdaUpdate()
+                    .set(SoB2cLogisticsEntity::getTrackNo, bean.getTrackNo())
+                    .set(SoB2cLogisticsEntity::getCode, bean.getTrackNo())
+                    .set(Objects.nonNull(bean.getDeliveryTime()),SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
+                    .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
+                    .update();
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】",bean.getTrackNo(),bean.getTrackNo(),bean.getDeliveryTime()),ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(),"多渠道订单信息同步");
+        }
+    }
+
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(soViewDTOS)) {
             return;
@@ -875,7 +903,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         data.setBillStatusName(data.getBillStatus());
         data.setDeliveryStatusName(data.getDeliveryStatus());
-        data.setOutstockStatusName(OutstockStatusEnum.getName(data.getOutstockStatus()));
         //平台类型名称
         String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         data.setDictPlatformName(dictPlatformName);

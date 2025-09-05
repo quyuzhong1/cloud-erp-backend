@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -60,8 +61,9 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void handle(String data) {
-        System.out.println(data);
+        log.info("多渠道订单下载FBA货件消费服务，数据：{}", data);
         PlatformFulfillOrderDTO bean = JSONUtil.toBean(data, PlatformFulfillOrderDTO.class);
         SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.lambdaQuery().eq(SoMultiChannelEntity::getDeliveryCode, bean.getCode()).one();
         if (Objects.isNull(soMultiChannelEntity)) {
@@ -69,21 +71,12 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
             log.info("订单不存在，订单编号：{}", bean.getCode());
             return;
         }
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "更新亚马逊多渠道订单");
-        //订单状态和发货状态
-        soMultiChannelEntity.setDeliveryTime(bean.getDeliveryTime());
-        soMultiChannelEntity.setTrackNo(bean.getTrackNo());
-        soMultiChannelEntity.setBillStatus(CharSequenceUtil.isNotBlank(bean.getOrderStatus()) ? bean.getOrderStatus() : "");
-        soMultiChannelEntity.setDeliveryStatus(CharSequenceUtil.isNotBlank(bean.getDeliveryStatus()) ? bean.getDeliveryStatus() : "");
-
+        soMultiChannelService.updateSoMultiChannelStatus(bean, soMultiChannelEntity);
         List<SoMultiChannelDetailEntity> detailEntityList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(soMultiChannelEntity.getId()));
         if ("CANCELLED".equalsIgnoreCase(bean.getOrderStatus()) || "CANCELLED_BY_FULFILLER".equalsIgnoreCase(bean.getDeliveryStatus()) || "CANCELLED_BY_SELLER".equalsIgnoreCase(bean.getDeliveryStatus())) {
-            soMultiChannelEntity.setCreateStatus(CreateStatusEnum.CANCEL.getCode());
-            soMultiChannelService.updateById(soMultiChannelEntity);
             //订单已取消
             soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true, "订单已取消");
         } else {
-            soMultiChannelService.updateById(soMultiChannelEntity);
             List<PlatformFulfillOrderDetailDTO> detailList = bean.getDetailList();
             //更新发货数量
             updateSoMultiChannelDetail(detailEntityList, detailList);
@@ -110,10 +103,12 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         }
         //更新发货数量
         detailEntityList.forEach(e -> {
-            int deliveryQty = detailList.stream().filter(f -> f.getFnSku().equals(e.getFnSku()) && e.getPlatformSkuNo().equals(f.getMsku())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
-            e.setDeliveryQty(deliveryQty);
-            soMultiChannelDetailService.lambdaUpdate().set(SoMultiChannelDetailEntity::getDeliveryQty, deliveryQty).eq(SoMultiChannelDetailEntity::getId, e.getId()).update();
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细【{}】发货数量:【{}】改为【{}】", e.getSkuNo(), e.getDeliveryQty(), deliveryQty), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), e.getMainId(), "更新亚马逊多渠道订单");
+            int deliveryQty = detailList.stream().filter(f -> CharSequenceUtil.isNotBlank(f.getSourceDetailId()) && f.getSourceDetailId().equals(e.getId())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
+            if (deliveryQty > 0){
+                e.setDeliveryQty(deliveryQty);
+                soMultiChannelDetailService.lambdaUpdate().set(SoMultiChannelDetailEntity::getDeliveryQty, deliveryQty).eq(SoMultiChannelDetailEntity::getId, e.getId()).update();
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细【{}】发货数量:【{}】改为【{}】", e.getSkuNo(), e.getDeliveryQty(), deliveryQty), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), e.getMainId(), "更新订单发货明细");
+            }
         });
     }
 
