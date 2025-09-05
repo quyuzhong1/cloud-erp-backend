@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.dto.PlatformFulfillOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -214,4 +215,11 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @param dto
      */
     void updateSoOutstock(PlatformSoOutStockDTO dto);
+
+    /**
+     * 更新发货状态
+     * @param bean
+     * @param soMultiChannelEntity
+     */
+    void updateSoMultiChannelStatus(PlatformFulfillOrderDTO bean, SoMultiChannelEntity soMultiChannelEntity);
 }

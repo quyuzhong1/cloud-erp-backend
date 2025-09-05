@@ -352,15 +352,16 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if(CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())){
             return BatchResultDTO.fail(id, entity.getCode(), "多渠道订单不能重新出库");
         }
-        if (CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
-            //多渠道订单根据配送报告依次生成出库单
-            List<DmpAmzSoOutstockDetailEntity> list = FeignQuery.create(DmpAmzSoOutstockDetailEntity.class).eq(DmpAmzSoOutstockDetailEntity::getMerchantOrderId, entity.getCode()).list();
-            if (CollUtil.isEmpty(list)) {
-                return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 未查到多渠道订单配送报告");
-            }
-            return batchBuildMultiChannelOutstock(entity, list);
-
-        }else if (soB2cEntity.hasPlatformWarehouseOrder()){
+//        if (CharSequenceUtil.isNotBlank(soB2cEntity.getMultiChannelType())) {
+//            //多渠道订单根据配送报告依次生成出库单
+//            List<DmpAmzSoOutstockDetailEntity> list = FeignQuery.create(DmpAmzSoOutstockDetailEntity.class).eq(DmpAmzSoOutstockDetailEntity::getMerchantOrderId, entity.getCode()).list();
+//            if (CollUtil.isEmpty(list)) {
+//                return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 未查到多渠道订单配送报告");
+//            }
+//            return batchBuildMultiChannelOutstock(entity, list);
+//
+//        }else
+            if (soB2cEntity.hasPlatformWarehouseOrder()){
             Boolean result = soB2cFeign.handleSoOutStock(soB2cEntity.getId());
             if (!result) {
                 return BatchResultDTO.fail(id, entity.getCode(), "重新出库失败, 请查看订单异常");
