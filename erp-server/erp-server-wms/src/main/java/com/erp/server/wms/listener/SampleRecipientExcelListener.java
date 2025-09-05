@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.UserTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
@@ -367,7 +368,7 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             // 优先调用用户服务根据名称查询内部用户信息
             List<com.common.business.dto.FindUserDTO> userList = sysUserFeign.listUserByUserNames(
                     Collections.singletonList(userName),
-                    "1" // 用户类型：1表示内部用户
+                    UserTypeEnum.ERP.code// 用户类型：1表示内部用户
             );
 
             if (CollUtil.isNotEmpty(userList)) {
