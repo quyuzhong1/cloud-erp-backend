@@ -737,6 +737,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 list.add(new ExhibitionOrderDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
             }
         });
+        list.stream().forEach(e ->{
+            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+        });
         list.sort(Comparator.comparing(ExhibitionOrderDTO.TabListDTO::getTabFlag));
         return list;
     }

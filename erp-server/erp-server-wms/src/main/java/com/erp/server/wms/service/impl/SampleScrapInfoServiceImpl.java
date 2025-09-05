@@ -437,6 +437,9 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             list.add(new SampleScrapInfoDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
         }
         });
+        list.stream().forEach(e ->{
+            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
+        });
         list.sort(Comparator.comparing(SampleScrapInfoDTO.TabListDTO::getTabFlag));
         return list;
     }

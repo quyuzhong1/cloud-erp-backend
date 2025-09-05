@@ -378,8 +378,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         List<String> existStatusList = list.stream().map(SampleReturnInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new SampleReturnInfoDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
-        }
+                list.add(new SampleReturnInfoDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            }
+        });
+        list.stream().forEach(e ->{
+            e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
         list.sort(Comparator.comparing(SampleReturnInfoDTO.TabListDTO::getTabFlag));
         return list;
@@ -679,7 +682,12 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
     @Override
     public List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(String sourceId) {
-        return baseMapper.listReturnBySourceId(sourceId);
+        List<SampleReturnInfoDTO.ListDTO> listDTOS = baseMapper.listReturnBySourceId(sourceId);
+        listDTOS.forEach(e -> {
+            e.setApproveStatusName(ApproveStatusEnum.getName(e.getApproveStatus()));
+            e.setInvalidStatusName(InvalidStatusEnum.getName(e.getInvalidStatus()));
+        });
+        return listDTOS;
     }
 
 
