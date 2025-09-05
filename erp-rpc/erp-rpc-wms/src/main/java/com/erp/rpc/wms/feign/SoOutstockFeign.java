@@ -162,5 +162,5 @@ public interface SoOutstockFeign {
     List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds);
 
     @GetMapping("/feign/soOutstock/listSoOutstockByExhibitionId")
-    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String id);
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId")String exhibitionId);
 }
