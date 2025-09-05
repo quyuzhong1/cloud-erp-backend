@@ -97,7 +97,7 @@ public class SampleRecipientExcelDTO {
     /**
      * 明细备注
      */
-    @ExcelProperty(value = "备注", index = 11)
+    @ExcelProperty(value = "明细备注", index = 11)
     private String detailRemark;
 
     /**
