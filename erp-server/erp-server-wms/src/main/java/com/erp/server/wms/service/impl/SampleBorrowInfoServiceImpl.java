@@ -141,6 +141,13 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), "新增操作");
         // 明细
         List<SampleBorrowDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(SampleBorrowDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
+
         List<SampleBorrowDetailEntity> sampleBorrowDetailEntities = BeanMapperUtils.copyList(SampleBorrowDetailEntity.class, detailList);
         List<String> skuIds = sampleBorrowDetailEntities.stream().map(SampleBorrowDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //sku信息
@@ -278,6 +285,13 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
      */
     private void updateDetail(SampleBorrowInfoDTO.UpdateDTO addOrUpdateDTO,  SampleBorrowInfoEntity sampleBorrowInfoEntity) {
         List<SampleBorrowDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(SampleBorrowDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
+
         List<SampleBorrowDetailEntity> oldList = sampleBorrowDetailService.listByMainId(sampleBorrowInfoEntity.getId());
 
         List<SampleBorrowDetailEntity> sampleBorrowDetailEntities = BeanMapperUtils.copyList(SampleBorrowDetailEntity.class, detailList);
@@ -1024,6 +1038,10 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
         String borrowUserId = sampleBorrowInfoEntity.getBorrowUserId();
         String lendUserId = sampleBorrowInfoEntity.getLendUserId();
+        if(Objects.equals(borrowUserId,lendUserId)){
+            throw new ServiceException(ApiError.ERROR_SAMPLE_BORROW_USER_SAME);
+        }
+
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(borrowUserId, lendUserId));
         if(CollUtil.isEmpty(users) || users.size() != 2){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
@@ -1094,14 +1112,14 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     }
 
     @Override
-    public List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(SampleBorrowInfoDTO.SearchDTO dto) {
-        if (Objects.isNull(dto)){
-            return Collections.emptyList();
+    public PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(PagingDTO<SampleBorrowInfoDTO.SearchDTO> pagingDTO) {
+        Page<SampleBorrowInfoDTO.SkuAvailableQtyDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        SampleBorrowInfoDTO.SearchDTO params = pagingDTO.getParams();
+        if(CollUtil.isNotEmpty(params.getSkuNos()) && params.getSkuNos().size() == 1){
+            params.setSkuNo(params.getSkuNos().get(0));
         }
-        if(CollUtil.isNotEmpty(dto.getSkuNos()) && dto.getSkuNos().size() == 1){
-            dto.setSkuNo(dto.getSkuNos().get(0));
-        }
-        return this.baseMapper.listSku(dto);
+        IPage<SampleBorrowInfoDTO.SkuAvailableQtyDTO> pageData = this.baseMapper.listSku(query, params);
+        return new PagingVO<>(pageData);
     }
     /**
      * 获取下拉列表数据

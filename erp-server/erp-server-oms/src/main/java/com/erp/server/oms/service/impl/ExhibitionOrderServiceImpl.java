@@ -183,6 +183,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         //明细
         List<ExhibitionOrderDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(ExhibitionOrderDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
 
         List<String> skuIdList = detailList.stream().map(ExhibitionOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
@@ -371,6 +376,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String id = old.getId();
         //明细
         List<ExhibitionOrderDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(ExhibitionOrderDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
         List<ExhibitionOrderDetailEntity> exhibitionOrderDetailEntities = BeanMapper.copyList(detailList, ExhibitionOrderDetailEntity.class);
         //旧明细
         List<ExhibitionOrderDetailEntity> oldDetailList = exhibitionOrderDetailService.lambdaQuery().eq(ExhibitionOrderDetailEntity::getMainId, old.getId()).list();

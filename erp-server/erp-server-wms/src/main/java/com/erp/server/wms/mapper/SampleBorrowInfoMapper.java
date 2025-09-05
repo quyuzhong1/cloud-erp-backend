@@ -55,5 +55,5 @@ public interface SampleBorrowInfoMapper extends BaseMapper<SampleBorrowInfoEntit
 
     List<SampleBorrowInfoDTO.SampleReturnView> generateSampleReturnView(@Param("notId")String notId, @Param("detailIdList") List<String> detailIdList);
 
-    List<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(@Param("params") SampleBorrowInfoDTO.SearchDTO dto);
+    IPage<SampleBorrowInfoDTO.SkuAvailableQtyDTO> listSku(Page query,@Param("params") SampleBorrowInfoDTO.SearchDTO dto);
 }

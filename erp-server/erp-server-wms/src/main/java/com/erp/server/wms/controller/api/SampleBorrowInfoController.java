@@ -456,7 +456,7 @@ public class SampleBorrowInfoController extends BaseController {
      * @return ApiResult<List<SampleBorrowInfoDTO.SkuAvailableQtyDTO>>
      */
     @PostMapping("/listSku")
-    public ApiResult<List<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated SampleBorrowInfoDTO.SearchDTO dto) {
+    public ApiResult<PagingVO<SampleBorrowInfoDTO.SkuAvailableQtyDTO>> listSku(@RequestBody @Validated PagingDTO<SampleBorrowInfoDTO.SearchDTO> dto) {
         return success(sampleBorrowInfoService.listSku(dto));
     }
 

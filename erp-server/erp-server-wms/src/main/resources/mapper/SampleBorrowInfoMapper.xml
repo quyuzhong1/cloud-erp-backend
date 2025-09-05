@@ -288,8 +288,8 @@ sbi.remark as remark
         sri.is_deleted = FALSE
         AND sri.invalid_status = FALSE
         AND sri.approve_status != 'approve'
-        <if test="notId != null and notId!=''">
-            AND sri .id != #{notId}
+        <if test="params.notId != null and params.notId!=''">
+            AND sri.id != #{notId}
         </if>
         GROUP BY
         srd.source_detail_id

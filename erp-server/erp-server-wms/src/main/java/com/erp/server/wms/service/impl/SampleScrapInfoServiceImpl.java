@@ -135,6 +135,11 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
         // 明细
         List<SampleScrapDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(SampleScrapDetailDTO.AddDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);
         List<String> skuIds = sampleScrapDetailEntities.stream().map(SampleScrapDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //sku信息
@@ -285,6 +290,11 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
      */
     private void updateDetail(SampleScrapInfoDTO.UpdateDTO addOrUpdateDTO,  SampleScrapInfoEntity sampleScrapInfoEntity) {
         List<SampleScrapDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+        //不允许重复添加
+        long sampleLedgerIdCount = detailList.stream().map(SampleScrapDetailDTO.UpdateDTO::getSampleLedgerId).distinct().count();
+        if(sampleLedgerIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
         List<SampleScrapDetailEntity> oldList = sampleScrapDetailService.listByMainId(sampleScrapInfoEntity.getId());
 
         List<SampleScrapDetailEntity> sampleScrapDetailEntities = BeanMapperUtils.copyList(SampleScrapDetailEntity.class, detailList);

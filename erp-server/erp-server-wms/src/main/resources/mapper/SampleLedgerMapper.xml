@@ -64,7 +64,8 @@
                 ssd.sku_id , sum(ssd.scrap_qty) as freezeQty  from  sample_scrap_info ssi
             inner join sample_scrap_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
                 where ssi.is_deleted = false
-                  and ssi.approve_status !='approve'
+                and ssi.invalid_status = false
+                and ssi.approve_status !='approve'
             <if test="params.childId != null and params.childId != ''">
                 and ssi.id != #{params.childId}
             </if>
@@ -75,6 +76,7 @@
             select ssd.sku_id , sum(ssd.borrow_qty) as freezeQty  from  sample_borrow_info ssi
             inner join sample_borrow_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
             where ssi.is_deleted = false
+            and ssi.invalid_status = false
             and ssi.approve_status !='approve'
             <if test="params.childId != null and params.childId != ''">
                 and ssi.id != #{params.childId}
@@ -87,6 +89,7 @@
             select ssd.sku_id , sum(ssd.qty) as freezeQty  from  sample_back_info ssi
             inner join sample_back_detail ssd on ssi.id = ssd.main_id and ssd.is_deleted = false
             where ssi.is_deleted = false
+            and ssi.invalid_status = false
             and ssi.approve_status !='approve'
             <if test="params.childId != null and params.childId != ''">
                 and ssi.id != #{params.childId}

@@ -14,6 +14,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -127,6 +128,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), "新增操作");
         //明细
         List<SampleReturnDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        //不允许重复添加
+        long sourceDetailIdCount = detailList.stream().map(SampleReturnDetailDTO.AddDTO::getSourceDetailId).distinct().count();
+        if(sourceDetailIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = BeanMapperUtils.copyList(SampleReturnDetailEntity.class, detailList);
         List<String> skuIds = sampleReturnDetailEntities.stream().map(SampleReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //sku信息
@@ -240,6 +246,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
     private void updateDetail(SampleReturnInfoDTO.UpdateDTO addOrUpdateDTO, SampleReturnInfoEntity sampleReturnInfoEntity) {
         List<SampleReturnDetailDTO.UpdateDTO> detailList = addOrUpdateDTO.getDetailList();
+        //不允许重复添加
+        long sourceDetailIdCount = detailList.stream().map(SampleReturnDetailDTO.UpdateDTO::getSourceDetailId).distinct().count();
+        if(sourceDetailIdCount != detailList.size()){
+            throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+        }
         List<SampleReturnDetailEntity> oldList = sampleReturnDetailService.listByMainId(sampleReturnInfoEntity.getId());
 
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = BeanMapperUtils.copyList(SampleReturnDetailEntity.class, detailList);
@@ -786,10 +797,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     */
     private void handleData(SampleReturnInfoEntity sampleReturnInfoEntity) {
         //来源借用单
-        sampleReturnInfoEntity.setSourceType("borrow");
+        sampleReturnInfoEntity.setSourceType(SampleLedgerTypeEnum.BORROW.getCode());
 
         String returnUserId = sampleReturnInfoEntity.getReturnUserId();
         String receiverUserId = sampleReturnInfoEntity.getReceiverUserId();
+        if(Objects.equals(returnUserId,receiverUserId)){
+            throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_USER_SAME);
+        }
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));
         if(CollUtil.isEmpty(users) || users.size() != 2){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
