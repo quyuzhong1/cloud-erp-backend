@@ -1494,17 +1494,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity,Boolean isNeedProcess) {
+    public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        if(isNeedProcess){
-            //审核流程
-            approveProcess(entity, dto);
-        }else {
-            approveEnd(dto,entity);
-        }
+        //审核流程
+        approveProcess(entity, dto);
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }

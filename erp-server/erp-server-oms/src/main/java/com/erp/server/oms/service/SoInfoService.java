@@ -129,7 +129,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-17 16:46
      */
-    BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity,Boolean isNeedProcess);
+    BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity);
 
     /**
      * 结束审核

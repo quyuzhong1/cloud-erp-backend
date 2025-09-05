@@ -1677,7 +1677,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         String comment = "展会订单自动审核通过";
         // 审核通过其他入库单
-        BatchResultDTO result = bean.approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE, Boolean.FALSE);
+        BatchResultDTO result = bean.approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE);
         if (!result.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }
@@ -1699,7 +1699,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         approveOneDTO.setId(soOutstockIds.get(0));
         approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
         approveOneDTO.setComment(comment);
-        BatchResultDTO approve = soOutstockService.approve(approveOneDTO, Boolean.FALSE);
+        BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
         if (!approve.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }
