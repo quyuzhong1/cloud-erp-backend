@@ -1788,7 +1788,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 baseApproveParamDTO.setIds(Collections.singletonList(outboundOrderId));
                 baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
                 baseApproveParamDTO.setComment("");
-                otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(),false);
+                otherOutstockService.approve(outboundOrderId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment());
 
                 log.info("成功创建其他出库单，ID：{}，来源：{}，明细数量：{}",
                         outboundOrderId, firstItem.getSourceCode(), detailList.size());
