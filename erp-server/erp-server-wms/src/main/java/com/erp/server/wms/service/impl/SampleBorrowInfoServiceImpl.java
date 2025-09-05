@@ -1043,7 +1043,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         }
 
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(borrowUserId, lendUserId));
-        if(CollUtil.isEmpty(users) || users.size() != 2){
+        if(CollUtil.isEmpty(users)){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
 
