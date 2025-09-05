@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleBackInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleBackInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="code" property="code" />
+       <result column="exec_status" property="execStatus" />
+       <result column="back_date" property="backDate" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="user_id" property="userId" />
+       <result column="user_name" property="userName" />
+       <result column="dept_id" property="deptId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="org_id" property="orgId" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, status, exec_status, back_date, source_id, source_code, source_type, user_id, user_name, dept_id, warehouse_id, warehouse_name, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleBackInfoDTO$ListDTO">
+        SELECT
+            sbi.id,
+            sbi.code,
+            sbi.approve_status AS approveStatus,
+            sbi.approve_user_id AS approveUserId,
+            sbi.approve_user_name AS approveUserName,
+            sbi.approve_time AS approveTime,
+            sbi.invalid_status AS invalidStatus,
+            sbi.invalid_remark AS invalidRemark,
+            sbi.invalid_time AS invalidTime,
+            sbi.back_date AS backDate,
+            sbi.source_id AS sourceId,
+            sbi.source_code AS sourceCode,
+            sbi.source_type AS sourceType,
+            sbi.user_id AS userId,
+            sbi.user_name AS userName,
+            sbi.dept_id AS deptId,
+            sbi.warehouse_id AS warehouseId,
+            sbi.org_id AS orgId,
+            sbi.org_name AS orgName,
+            sbi.remark,
+            sbi.exec_status AS execStatus,
+            sbi.create_time AS createTime,
+            sbi.create_user_name AS createUserName,
+            sbd.id AS detailId,
+            sbd.sku_no AS skuNo,
+            sbd.sku_id AS skuId,
+            sbd.product_name AS productName,
+            sbd.qty,
+            sbd.remark AS detailRemark
+        FROM sample_back_info sbi
+        LEFT JOIN sample_back_detail sbd
+        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND sbd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbi.create_time DESC, sbd.id ASC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_back_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleBackInfoDTO$ListDTO">
+        SELECT
+            sbi.id,
+            sbi.code,
+            sbi.approve_status AS approveStatus,
+            sbi.approve_user_id AS approveUserId,
+            sbi.approve_user_name AS approveUserName,
+            sbi.approve_time AS approveTime,
+            sbi.invalid_status AS invalidStatus,
+            sbi.invalid_remark AS invalidRemark,
+            sbi.invalid_time AS invalidTime,
+            sbi.back_date AS backDate,
+            sbi.source_id AS sourceId,
+            sbi.source_code AS sourceCode,
+            sbi.source_type AS sourceType,
+            sbi.user_id AS userId,
+            sbi.user_name AS userName,
+            sbi.dept_id AS deptId,
+            sbi.warehouse_id AS warehouseId,
+            sbi.org_id AS orgId,
+            sbi.org_name AS orgName,
+            sbi.remark,
+            sbi.exec_status AS execStatus,
+            sbi.create_time AS createTime,
+            sbi.create_user_name AS createUserName,
+            sbd.id AS detailId,
+            sbd.sku_no AS skuNo,
+            sbd.sku_id AS skuId,
+            sbd.product_name AS productName,
+            sbd.qty,
+            sbd.remark AS detailRemark
+        FROM sample_back_info sbi
+        LEFT JOIN sample_back_detail sbd
+        ON sbd.main_id = sbi.id AND sbi.is_deleted = false
+        WHERE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            ${params.sqlMap.default}
+        </if>
+        <if test="params.sqlMap == null or params.sqlMap.default == null or params.sqlMap.default == ''">
+            1=1
+        </if>
+        AND sbd.is_deleted = false
+        <!--勾选的id集合-->
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sbi.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbi.create_time DESC, sbd.id ASC
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleBackInfoDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  sample_back_info
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

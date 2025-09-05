@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleReturnInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleReturnInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="return_user_id" property="returnUserId" />
+       <result column="return_user_name" property="returnUserName" />
+       <result column="return_dept_id" property="returnDeptId" />
+       <result column="return_dept_name" property="returnDeptName" />
+       <result column="receiver_user_id" property="receiverUserId" />
+       <result column="receiver_user_name" property="receiverUserName" />
+       <result column="receiver_dept_id" property="receiverDeptId" />
+       <result column="receiver_dept_name" property="receiverDeptName" />
+       <result column="return_date" property="returnDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sri.id as id,
+sri.create_user_id as createUserId,
+sri.create_user_name as createUserName,
+sri.create_time as createTime,
+sri.update_user_id as updateUserId,
+sri.update_user_name as updateUserName,
+sri.update_time as updateTime,
+sri.version as version,
+sri.is_deleted as isDeleted,
+sri.code as code,
+sri.source_id as sourceId,
+sri.source_code as sourceCode,
+sri.source_type as sourceType,
+sri.approve_status as approveStatus,
+sri.approve_time as approveTime,
+sri.approve_user_id as approveUserId,
+sri.approve_user_name as approveUserName,
+sri.invalid_status as invalidStatus,
+sri.return_user_id as returnUserId,
+sri.return_user_name as returnUserName,
+sri.return_dept_id as returnDeptId,
+sri.return_dept_name as returnDeptName,
+sri.receiver_user_id as receiverUserId,
+sri.receiver_user_name as receiverUserName,
+sri.receiver_dept_id as receiverDeptId,
+sri.receiver_dept_name as receiverDeptName,
+sri.return_date as returnDate,
+sri.remark as remark
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+            sri.ID AS ID,
+            sri.create_user_id AS createUserId,
+            sri.create_user_name AS createUserName,
+            sri.create_time AS createTime,
+            sri.update_user_id AS updateUserId,
+            sri.update_user_name AS updateUserName,
+            sri.update_time AS updateTime,
+            sri.VERSION AS VERSION,
+            sri.is_deleted AS isDeleted,
+            sri.code AS code,
+            sri.source_id AS sourceId,
+            sri.source_code AS sourceCode,
+            sri.source_type AS sourceType,
+            sri.approve_status AS approveStatus,
+            sri.approve_time AS approveTime,
+            sri.approve_user_id AS approveUserId,
+            sri.approve_user_name AS approveUserName,
+            sri.invalid_status AS invalidStatus,
+            sri.return_user_id AS returnUserId,
+            sri.return_user_name AS returnUserName,
+            sri.return_dept_id AS returnDeptId,
+            sri.return_dept_name AS returnDeptName,
+            sri.receiver_user_id AS receiverUserId,
+            sri.receiver_user_name AS receiverUserName,
+            sri.receiver_dept_id AS receiverDeptId,
+            sri.receiver_dept_name AS receiverDeptName,
+            sri.return_date AS returnDate,
+            sri.remark AS remark,
+            srd.ID AS detailId,
+            srd.main_id AS mainId,
+            srd.source_detail_id AS sourceDetailId,
+            srd.sku_id AS skuId,
+            srd.sku_no AS skuNo,
+            srd.product_name AS productName,
+            srd.return_qty AS returnQty,
+            srd.remark AS detailRemark
+        FROM
+            sample_return_info AS sri
+                LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+                AND srd.is_deleted = FALSE
+        WHERE
+            ${params.sqlMap.default}
+            and sri.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sri.create_time desc
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_return_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  sample_return_info
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+    <select id="listReturnBySourceId" resultType="com.erp.model.wms.dto.SampleReturnInfoDTO$ListDTO">
+        SELECT
+        sri.ID AS ID,
+        sri.create_user_id AS createUserId,
+        sri.create_user_name AS createUserName,
+        sri.create_time AS createTime,
+        sri.update_user_id AS updateUserId,
+        sri.update_user_name AS updateUserName,
+        sri.update_time AS updateTime,
+        sri.VERSION AS VERSION,
+        sri.is_deleted AS isDeleted,
+        sri.code AS code,
+        sri.source_id AS sourceId,
+        sri.source_code AS sourceCode,
+        sri.source_type AS sourceType,
+        sri.approve_status AS approveStatus,
+        sri.approve_time AS approveTime,
+        sri.approve_user_id AS approveUserId,
+        sri.approve_user_name AS approveUserName,
+        sri.invalid_status AS invalidStatus,
+        sri.return_user_id AS returnUserId,
+        sri.return_user_name AS returnUserName,
+        sri.return_dept_id AS returnDeptId,
+        sri.return_dept_name AS returnDeptName,
+        sri.receiver_user_id AS receiverUserId,
+        sri.receiver_user_name AS receiverUserName,
+        sri.receiver_dept_id AS receiverDeptId,
+        sri.receiver_dept_name AS receiverDeptName,
+        sri.return_date AS returnDate,
+        sri.remark AS remark,
+        srd.ID AS detailId,
+        srd.main_id AS mainId,
+        srd.source_detail_id AS sourceDetailId,
+        srd.sku_id AS skuId,
+        srd.sku_no AS skuNo,
+        srd.product_name AS productName,
+        srd.return_qty AS returnQty,
+        srd.remark AS detailRemark
+        FROM
+        sample_return_info AS sri
+        LEFT JOIN sample_return_detail AS srd ON sri.ID = srd.main_id
+        AND srd.is_deleted = FALSE
+        WHERE
+         sri.is_deleted = FALSE
+        and sri.source_id = #{sourceId}
+        ORDER BY
+        sri.create_time desc
+    </select>
+</mapper>

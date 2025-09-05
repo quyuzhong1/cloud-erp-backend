@@ -1,25 +1,20 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
-import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
@@ -27,14 +22,10 @@ import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +53,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+
+    @Resource
+    private FileFeign fileFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -174,6 +168,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
         }
         this.remove(queryWrapper);
+        fileFeign.deleteFile(dto.getAttachUrl());
     }
 
     @Override
@@ -225,5 +220,17 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             entity.setBusinessId(soB2cDeliveryEntity.getId());
         }
         this.save(entity);
+    }
+
+
+    @Override
+    public void deleteByUrlList(List<String> urlList) {
+        if (CollectionUtils.isNotEmpty(urlList)) {
+            LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(WmsAttachmentEntity::getAttachUrl, urlList);
+            this.remove(queryWrapper);
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+        }
     }
 }

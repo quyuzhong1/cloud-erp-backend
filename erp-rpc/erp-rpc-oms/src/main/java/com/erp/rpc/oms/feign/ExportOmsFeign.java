@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
+import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,6 +67,11 @@ public interface ExportOmsFeign {
     //销售价目导出
     @PostMapping("/feign/export/soPrice")
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
+    /**
+     * 导出展会订单
+     */
+    @PostMapping("/feign/export/exportExhibitionOrder")
+    PagingVO<ExhibitionOrderDTO.ListDTO> exportExhibitionOrder(@RequestBody PagingDTO<ExhibitionOrderDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/exportInvoiceInvalid")
     PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);

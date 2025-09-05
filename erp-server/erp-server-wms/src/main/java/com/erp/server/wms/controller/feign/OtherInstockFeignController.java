@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
@@ -35,5 +36,10 @@ public class OtherInstockFeignController extends BaseController{
     @PostMapping("/updateApproveStatus")
     public void updateApproveStatus(@RequestBody @Validated OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         otherInstockService.updateApproveStatus(updateApprovalStatusDTO);
+    }
+
+    @PostMapping("/generateDownstreamByExhibitionOrder")
+    public void generateDownstreamByExhibitionOrder(@RequestBody ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
+        otherInstockService.generateDownstreamByExhibitionOrder(downstreamDTO);
     }
 }

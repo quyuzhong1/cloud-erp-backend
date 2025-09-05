@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleScrapInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleScrapInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="scrap_user_id" property="scrapUserId" />
+       <result column="scrap_user_name" property="scrapUserName" />
+       <result column="scrap_dept_id" property="scrapDeptId" />
+       <result column="scrap_dept_name" property="scrapDeptName" />
+       <result column="scrap_date" property="scrapDate" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+            ssi.ID AS ID,
+            ssi.create_user_id AS createUserId,
+            ssi.create_user_name AS createUserName,
+            ssi.create_time AS createTime,
+            ssi.update_user_id AS updateUserId,
+            ssi.update_user_name AS updateUserName,
+            ssi.update_time AS updateTime,
+            ssi.VERSION AS VERSION,
+            ssi.is_deleted AS isDeleted,
+            ssi.code AS code,
+            ssi.approve_status AS approveStatus,
+            ssi.approve_time AS approveTime,
+            ssi.approve_user_id AS approveUserId,
+            ssi.approve_user_name AS approveUserName,
+            ssi.invalid_status AS invalidStatus,
+            ssi.scrap_user_id AS scrapUserId,
+            ssi.scrap_user_name AS scrapUserName,
+            ssi.scrap_dept_id AS scrapDeptId,
+            ssi.scrap_dept_name AS scrapDeptName,
+            ssi.scrap_date AS scrapDate,
+            ssi.remark AS remark
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+            ssi.ID AS ID,
+            ssi.create_user_id AS createUserId,
+            ssi.create_user_name AS createUserName,
+            ssi.create_time AS createTime,
+            ssi.update_user_id AS updateUserId,
+            ssi.update_user_name AS updateUserName,
+            ssi.update_time AS updateTime,
+            ssi.VERSION AS VERSION,
+            ssi.is_deleted AS isDeleted,
+            ssi.code AS code,
+            ssi.approve_status AS approveStatus,
+            ssi.approve_time AS approveTime,
+            ssi.approve_user_id AS approveUserId,
+            ssi.approve_user_name AS approveUserName,
+            ssi.invalid_status AS invalidStatus,
+            ssi.scrap_user_id AS scrapUserId,
+            ssi.scrap_user_name AS scrapUserName,
+            ssi.scrap_dept_id AS scrapDeptId,
+            ssi.scrap_dept_name AS scrapDeptName,
+            ssi.scrap_date AS scrapDate,
+            ssi.remark AS remark,
+        ssid.id as detailId,
+        ssid.sku_id as skuId,
+        ssid.sku_no as skuNo,
+        ssid.product_name as productName,
+        ssid.scrap_qty as scrapQty,
+        ssid.remark as detailRemark
+        FROM
+            sample_scrap_info AS ssi
+            LEFT JOIN sample_scrap_detail AS ssid ON ssid.main_id = ssi.ID AND ssid.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND ssi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ssi.create_time desc
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SampleScrapInfoDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from sample_scrap_info where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SampleScrapInfoDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.SampleScrapInfoDTO$TabListDTO">
+        SELECT
+        ssi.approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  sample_scrap_info ssi
+        WHERE ssi.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY ssi.approve_status
+    </select>
+
+</mapper>

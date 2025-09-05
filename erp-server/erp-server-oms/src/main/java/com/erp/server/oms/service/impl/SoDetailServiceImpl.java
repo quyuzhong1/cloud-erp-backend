@@ -1199,7 +1199,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @author yl
      * @date 2023-05-17 9:21
      */
-    private List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList) {
+    @Override
+    public List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList) {
         if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.emptyList();
         }

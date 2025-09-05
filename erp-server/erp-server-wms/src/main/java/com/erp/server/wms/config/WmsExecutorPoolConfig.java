@@ -114,4 +114,21 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
+
+    /**
+     * 其他出入口单状态变更时间监听线程池
+     * @author wuhaotian
+     * @date 2025/8/22 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "outboundOrderDetailChangeEventPool")
+    public ExecutorService outboundOrderDetailChangeEventPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(1, 4,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
 }

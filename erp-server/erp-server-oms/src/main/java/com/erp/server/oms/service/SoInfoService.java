@@ -45,7 +45,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-16 14:41
      */
-    BatchResultDTO submit(SoInfoEntity entity);
+    BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess);
 
 
     /**
@@ -129,7 +129,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-17 16:46
      */
-    BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity);
+    BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity,Boolean isNeedProcess);
 
     /**
      * 结束审核

@@ -197,7 +197,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.submit(entity));
+                resultDTOS.add(soInfoService.submit(entity,Boolean.TRUE));
             }catch (Exception e){
                 log.error("销售订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -405,7 +405,7 @@ public class SoInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soInfoService.approve(dto, entity));
+                resultDTOS.add(soInfoService.approve(dto, entity,Boolean.TRUE));
             }catch (Exception e){
                 log.error("B2B销售订单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

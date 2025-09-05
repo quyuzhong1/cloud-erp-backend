@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SampleScrapDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SampleScrapDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="scrap_qty" property="scrapQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ssid.id as id,
+ssid.create_user_id as createUserId,
+ssid.create_user_name as createUserName,
+ssid.create_time as createTime,
+ssid.update_user_id as updateUserId,
+ssid.update_user_name as updateUserName,
+ssid.update_time as updateTime,
+ssid.version as version,
+ssid.is_deleted as isDeleted,
+ssid.main_id as mainId,
+ssid.sku_id as skuId,
+ssid.sku_no as skuNo,
+ssid.product_name as productName,
+ssid.scrap_qty as scrapQty,
+ssid.remark as remark
+    </sql>
+
+    <select id="listBySku" resultType="java.util.Map">
+        select
+        ssd.sku_no as skuNo,
+        sum(ssd.scrap_qty) as qty
+        from
+        sample_scrap_detail ssd
+        inner join sample_scrap_info ssi on ssd.main_id = ssi. id and ssi.is_deleted = false
+        where
+        ssd.is_deleted = false
+        and ssi.approve_status != 'approve'
+        <if test="skuNos != null and skuNos.size() > 0">
+            and ssd.sku_no in
+            <foreach collection="skuNos" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="id != null and id != '' ">
+            and ssd.main_id != #{id}
+        </if>
+        GROUP BY
+        ssd.sku_no
+    </select>
+
+
+</mapper>

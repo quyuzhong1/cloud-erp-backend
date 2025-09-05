@@ -6,6 +6,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -44,6 +45,7 @@ import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -185,6 +187,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private AbstractWdtService abstractWdtService;
     @Resource
     private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Lazy
     @Resource
@@ -286,6 +290,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 //        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTRK, BusinessNoTypeEnum.CODE_QTRK.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QTRK);
         entity.setCode(code);
+
+        if(StringUtils.isBlank(entity.getSourceType())){
+            //默认手动新增
+            entity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+        }
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
@@ -307,7 +316,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(id,Boolean.TRUE);
+        this.submit(id,dto.getIsProcess());
         return id;
     }
 
@@ -563,7 +572,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt,Boolean isNeedProcess){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -574,16 +583,28 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         // 调用流程审核
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
         entity.setIsPushWdt(isPushWdt);
-        approveProcess(entity, dto);
-
+        if (isNeedProcess){
+            approveProcess(entity, dto);
+        }else {
+            dto.setVariablesMap(BeanUtil.beanToMap(entity));
+            approveEnd(dto,entity);
+        }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
+        return this.approve(id,type,comment,isPushWdt,true);
+    }
+
     /**
      * 审核流程处理
+     *
      * @param entity
      * @param dto
      */
@@ -1023,7 +1044,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public String generateByOverseasInbound(OverseasWarehouseInboundEntity entity, List<OverseasWarehouseInboundDetailEntity> detailEntityList, String remark, boolean isTransitWarehouse) {
         //目的仓
         WarehouseEntity destWarehouse = warehouseService.getById(entity.getToWarehouseId());
-        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse, isTransitWarehouse, entity.getCreateUserId());
+        OtherInstockDTO.AddDTO addDTO = this.buildOverFlowMainDto(destWarehouse, isTransitWarehouse, entity);
         List<OtherInstockDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailEntityList) {
             OtherInstockDetailDTO.AddDTO detailAddDTO = new OtherInstockDetailDTO.AddDTO();
@@ -1031,6 +1052,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             detailAddDTO.setSkuNo(detailEntity.getSkuNo());
             detailAddDTO.setActualQty(Math.abs(detailEntity.getDiffQty()));
             detailAddDTO.setRemark(remark);
+            detailAddDTO.setSourceDetailId(detailEntity.getId());
             detailAddDTOList.add(detailAddDTO);
         }
         addDTO.setDetailList(detailAddDTOList);
@@ -1041,7 +1063,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      * 封装报损出库单主记录
      */
-    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse, boolean isTransitWarehouse, String userId) {
+    public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse, boolean isTransitWarehouse, OverseasWarehouseInboundEntity entity) {
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
         if (CharSequenceUtil.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
@@ -1058,11 +1080,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             addDTO.setWarehouseId(warehouse.getId());
         }
         //部门
-        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(userId);
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysUserFeign.getDeptByUserId(entity.getCreateUserId());
         addDTO.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
         //出库类型：报损
         addDTO.setType(InstockTypeEnum.REPORT_OVERFLOW.getCode());
         addDTO.setTypeName(InstockTypeEnum.REPORT_OVERFLOW.getName());
+        //来源：海外仓入库单
+        addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
         return addDTO;
     }
 
@@ -1497,6 +1523,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         otherInstockEntity.setThirdCode(dto.getThirdCode());
         otherInstockEntity.setThirdPlatform(PlatformDictEnum.WDT.getCode());
         otherInstockEntity.setRemark(dto.getRemark());
+        otherInstockEntity.setSourceType(SourceTypeEnum.WDT_SO_PRESTOCK.getCode());
+        otherInstockEntity.setSourceId(dto.getId());
+        otherInstockEntity.setSourceCode(dto.getThirdCode());
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (DmpSoPrestockDetailDTO.PrestockDetailDTO prestockDetailDTO : dto.getDetailList()) {
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
@@ -1507,6 +1536,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setWarehouseLocation(WmsConstant.WDT_NULL_LOCATION.contains(prestockDetailDTO.getWarehouseLocation()) ? "" : prestockDetailDTO.getWarehouseLocation());
             detailEntity.setRemark(prestockDetailDTO.getRemark());
+            detailEntity.setSourceDetailId(prestockDetailDTO.getId());
             detailEntityList.add(detailEntity);
         }
         otherInstockEntity.setDetailEntityList(detailEntityList);
@@ -1608,6 +1638,31 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    public List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto) {
+        List<OtherInstockDTO.ListDTO> list = baseMapper.viewAssociatedDocuments(dto);
+        // 格式化入库单数据
+        formatOtherInstock(list);
+        return list;
+    }
+
+    /**
+     * @description: 格式化列表数据
+     * @author Will
+     * @date: 2024/12/19 10:16
+     * @param records
+     */
+    private void formatOtherInstock(List<OtherInstockDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 查询流程id判断是否存在流程
+        records.forEach(obj -> {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(obj.getInvalidStatus() ? "已作废" : "未作废");
+        });
+    }
+
+    @Override
     public Map<String, OtherInstockEntity> mapByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyMap();
@@ -1615,4 +1670,50 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockEntity> list = this.listByIds(ids);
         return list.stream().collect(Collectors.toMap(OtherInstockEntity::getId, Function.identity()));
     }
+
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
+
+        // 生成其他入库单
+        OtherInstockDTO.AddDTO otherInstockAddDTO = downstreamDTO.getOtherInstockAddDTO();
+        OtherInstockService bean = SpringUtil.getBean(OtherInstockService.class);
+        String otherInstockId = bean.addAndSubmit(otherInstockAddDTO);
+        if(StringUtils.isBlank(otherInstockId)){
+            throw new ServiceException("展会订单自动生成其他入库单失败");
+        }
+
+        String comment = "展会订单自动审核通过";
+        // 审核通过其他入库单
+        BatchResultDTO result = bean.approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE, Boolean.FALSE);
+        if (!result.getSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+
+        //生成销售出库单
+        Boolean save = soOutstockService.addB2bPushDownNo(downstreamDTO.getGenerateSoOutstockViewDTOList());
+        if(!save){
+            throw new ServiceException("展会订单自动生成销售出库单失败");
+        }
+
+        List<SoOutstockEntity> soOutstockEntities = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getSoId, downstreamDTO.getSoId()).list();
+        List<String> soOutstockIds = soOutstockEntities.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+
+        //提审
+        soOutstockService.submit(soOutstockIds,Boolean.FALSE);
+
+        //审核通过
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setId(soOutstockIds.get(0));
+        approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        approveOneDTO.setComment(comment);
+        BatchResultDTO approve = soOutstockService.approve(approveOneDTO, Boolean.FALSE);
+        if (!approve.getSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
 }

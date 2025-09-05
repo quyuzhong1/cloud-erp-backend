@@ -427,7 +427,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
-    public BatchResultDTO submit(SoInfoEntity entity) {
+    public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
@@ -462,7 +462,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //启动审核流程
-        startProcess(entity);
+        if(isNeedProcess){
+            startProcess(entity);
+        }
 
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
@@ -629,7 +631,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE);
         return submit.getSuccess();
     }
 
@@ -1030,7 +1032,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailList)) {
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(item.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 item.setEffectiveNoticeQty(effectiveNoticeQty);
-                
+
                 //剩余发货通知数量 = 销售数量 - 发货通知数量
                 Integer remainingNoticeQty = qty - effectiveNoticeQty;
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
@@ -1497,7 +1499,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        BatchResultDTO submit = this.submit(soInfoEntity);
+        BatchResultDTO submit = this.submit(soInfoEntity,Boolean.TRUE);
         return submit.getSuccess();
     }
 
@@ -1513,14 +1515,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
+    public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity,Boolean isNeedProcess) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        //审核流程
-        approveProcess(entity, dto);
-
+        if(isNeedProcess){
+            //审核流程
+            approveProcess(entity, dto);
+        }else {
+            approveEnd(dto,entity);
+        }
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -3345,14 +3350,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         groupMap.forEach((key,val)->{
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
-            
+
             // 收集所有仓库ID用于虚拟仓校验
             List<String> warehouseIdList = val.stream()
                     .map(SoInfoDTO.GenerateSoOutView::getWarehouseId)
                     .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
-            
+
             // 校验仓库是否绑定了虚拟仓
             if (CollectionUtils.isNotEmpty(warehouseIdList)) {
                 List<VirtualWarehouseRelationEntity> virtualWarehouseRelationList = wmsVirtualWarehouseFeign.getByWarehouseIds(warehouseIdList);
@@ -3363,7 +3368,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             .distinct()
                             .collect(Collectors.toList());
                     List<VirtualWarehouseEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.listByIds(virtualWarehouseIdList);
-                    
+
                     // 构建仓库ID到虚拟仓名称的映射
                     Map<String, String> warehouseToVirtualMap = new HashMap<>();
                     for (VirtualWarehouseRelationEntity relation : virtualWarehouseRelationList) {
@@ -3375,19 +3380,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             warehouseToVirtualMap.put(relation.getWarehouseId(), virtualWarehouse.getName());
                         }
                     }
-                    
+
                     // 检查是否有仓库绑定了虚拟仓
                     for (SoInfoDTO.GenerateSoOutView soOutView : val) {
                         String virtualWarehouseName = warehouseToVirtualMap.get(soOutView.getWarehouseId());
                         if (CharSequenceUtil.isNotBlank(virtualWarehouseName)) {
-                            batchResultDTOList.add(BatchResultDTO.fail(key, key, 
+                            batchResultDTOList.add(BatchResultDTO.fail(key, key,
                                 CharSequenceUtil.format("发货仓库绑定虚拟仓【{}】，不允许直接下推销售出库单", virtualWarehouseName)));
                             return;
                         }
                     }
                 }
             }
-            
+
             for (SoInfoDTO.GenerateSoOutView soOutView : val) {
                 if(soOutView.getActualDeliveryQty() > soOutView.getWaitDeliveryQty()){
                     batchResultDTOList.add(BatchResultDTO.fail(key,key, CharSequenceUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));

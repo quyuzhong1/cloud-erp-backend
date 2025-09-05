@@ -65,6 +65,12 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源明细ID
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 
