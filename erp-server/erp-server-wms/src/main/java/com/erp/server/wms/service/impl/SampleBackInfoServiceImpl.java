@@ -1222,6 +1222,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 SampleBackDetailDTO.AddDTO detailDTO = new SampleBackDetailDTO.AddDTO();
                 BeanMapperUtils.copy(importDTO, detailDTO);
                 // 明细备注
+                detailDTO.setRemark(importDTO.getDetailRemark());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
