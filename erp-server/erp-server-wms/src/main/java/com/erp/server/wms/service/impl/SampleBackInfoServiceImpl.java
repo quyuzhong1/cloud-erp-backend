@@ -1001,7 +1001,7 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             baseApproveParamDTO.setIds(Collections.singletonList(otherInstockId));
             baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
             baseApproveParamDTO.setComment("样品退回单自动审核通过");
-            otherInstockService.approve(otherInstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(),false,false);
+            otherInstockService.approve(otherInstockId, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(),false);
 
             log.info("样品退回单生成其他入库单并审核通过成功，样品退回单号：{}，其他入库单号：{}", 
                     sampleBackInfo.getCode(), otherInstock.getCode());

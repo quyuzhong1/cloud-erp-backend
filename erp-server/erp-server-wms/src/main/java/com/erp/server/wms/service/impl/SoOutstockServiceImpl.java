@@ -658,7 +658,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @DataIdempotent(keyIdName = "dto.id")
-    public BatchResultDTO approve(ApproveOneDTO dto,Boolean isNeedProcess) {
+    public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_99058);
@@ -2831,7 +2831,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
-                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""),Boolean.TRUE);
+                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
             return Boolean.TRUE;
         }
@@ -2986,7 +2986,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //提交
         Boolean submitResult = soOutstockService.submit(Collections.singletonList(id),Boolean.TRUE);
         if (submitResult) {
-            soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""),Boolean.TRUE);
+            soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
         }
     }
 
@@ -3667,7 +3667,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
-                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""),Boolean.TRUE);
+                soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
         }
         return Boolean.TRUE;

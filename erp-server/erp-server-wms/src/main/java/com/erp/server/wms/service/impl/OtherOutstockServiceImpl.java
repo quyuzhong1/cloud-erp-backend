@@ -504,10 +504,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         return Boolean.TRUE;
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO approve(String id, String type, String comment,Boolean isNeedProcess) {
+    public BatchResultDTO approve(String id, String type, String comment) {
         //根据id查询
         OtherOutstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -519,12 +520,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         // 调用流程审核
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
-        if (isNeedProcess){
-            approveProcess(entity, dto);
-        }else {
-            // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
-        }
+        approveProcess(entity, dto);
 
         log.info("其他出库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
 
@@ -532,13 +528,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他出库单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "审核操作");
 
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"其他出库单审核");
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment) {
-        return this.approve(id,type,comment,true);
     }
 
     /**

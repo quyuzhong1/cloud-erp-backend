@@ -249,7 +249,7 @@ public class SoOutstockController extends BaseController {
         for (String id : ids) {
             BatchResultDTO result;
             try {
-                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()),Boolean.TRUE);
+                result = soOutstockService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()));
             } catch (Exception e) {
                 log.error("销售出库 审核失败>>>>{}", e);
                 SoOutstockEntity entity = soOutstockService.getById(id);

@@ -569,10 +569,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         return Boolean.TRUE;
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt,Boolean isNeedProcess){
+    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
         //审核中允许审核
@@ -583,23 +584,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         // 调用流程审核
         ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
         entity.setIsPushWdt(isPushWdt);
-        if (isNeedProcess){
-            approveProcess(entity, dto);
-        }else {
-            dto.setVariablesMap(BeanUtil.beanToMap(entity));
-            approveEnd(dto,entity);
-        }
+        approveProcess(entity, dto);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
-        return this.approve(id,type,comment,isPushWdt,true);
     }
 
     /**
@@ -1688,7 +1677,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         String comment = "展会订单自动审核通过";
         // 审核通过其他入库单
-        BatchResultDTO result = bean.approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE, Boolean.FALSE);
+        BatchResultDTO result = bean.approve(otherInstockId, ApproveTypeEnum.PASS.getStatus(), comment, Boolean.FALSE);
         if (!result.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }
@@ -1710,7 +1699,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         approveOneDTO.setId(soOutstockIds.get(0));
         approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
         approveOneDTO.setComment(comment);
-        BatchResultDTO approve = soOutstockService.approve(approveOneDTO, Boolean.FALSE);
+        BatchResultDTO approve = soOutstockService.approve(approveOneDTO);
         if (!approve.getSuccess()) {
             throw new ServiceException(result.getMsg());
         }

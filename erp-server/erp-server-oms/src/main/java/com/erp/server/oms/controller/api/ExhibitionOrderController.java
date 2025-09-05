@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.wms.dto.SampleReturnInfoDTO;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.server.oms.query.ExhibitionOrderQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -432,6 +433,25 @@ public class ExhibitionOrderController extends BaseController {
         String standardExcelName = "exhibitionOrderTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
+    }
+
+    /**
+     * 单据管理：根据id查询关联查询入库单
+     * @author jack
+     * @date:  2025-08-29
+     */
+    @GetMapping("/listOtherInstockInById")
+    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listOtherInstockInById(@RequestParam(value = "id",required = true)String id){
+        return success(exhibitionOrderService.listOtherInstockInById(id));
+    }
+    /**
+     * 单据管理：根据id查询关联查询销售单
+     * @author jack
+     * @date:  2025-08-29
+     */
+    @GetMapping("/listSoById")
+    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listSoById(@RequestParam(value = "id",required = true)String id){
+        return success(exhibitionOrderService.listSoById(id));
     }
 
 
