@@ -228,4 +228,16 @@ public class ThirdProcessDefinitionController extends BaseController {
     public ApiResult<List<ThirdProcessDefinitionDTO.DropDownDTO>> dropDown(@RequestParam("type") @Validated String type) {
         return success(thirdProcessDefinitionService.dropDown(type));
     }
+
+
+    /**
+     * 获取飞书应用id
+     * @author will
+     * @date 2025/9/5 10:57
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getFsAppId")
+    public ApiResult<String> getFsAppId() {
+        return success(thirdProcessDefinitionService.getFsAppId());
+    }
 }
