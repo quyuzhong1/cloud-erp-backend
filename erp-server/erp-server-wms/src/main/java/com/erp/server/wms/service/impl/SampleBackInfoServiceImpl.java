@@ -793,7 +793,53 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        
+        // 校验明细SKU退回数量是否小于等于台账数量
+        validateSampleBackQty(entity);
+    }
+    
+    /**
+     * 校验样品退回数量
+     * @param entity 样品退回单实体
+     */
+    private void validateSampleBackQty(SampleBackInfoEntity entity) {
+        // 获取样品退回单明细
+        List<SampleBackDetailEntity> detailList = sampleBackDetailService.list(
+            new LambdaQueryWrapper<SampleBackDetailEntity>()
+                .eq(SampleBackDetailEntity::getMainId, entity.getId())
+        );
+        
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        
+        // 查询台账可用数量
+        SampleLedgerDTO.SearchDTO searchDTO = new SampleLedgerDTO.SearchDTO();
+        searchDTO.setUserId(entity.getUserId());
+        searchDTO.setType(SampleLedgerTypeEnum.BACK.getCode());
+        searchDTO.setChildId(entity.getId()); // 排除当前单据
+        searchDTO.setSkuIds(detailList.stream().map(SampleBackDetailEntity::getSkuId).collect(Collectors.toList()));
+        
+        List<SampleLedgerDTO.SkuAvailableQtyDTO> ledgerList = sampleLedgerService.listLedgerByUserId(searchDTO);
+        
+        // 构建SKU台账数量映射
+        Map<String, Integer> skuLedgerQtyMap = ledgerList.stream()
+            .collect(Collectors.toMap(
+                SampleLedgerDTO.SkuAvailableQtyDTO::getSkuId,
+                dto -> dto.getAvailableQty() != null ? dto.getAvailableQty() : 0,
+                (existing, replacement) -> existing + replacement // 如果有重复SKU，累加数量
+            ));
+        
+        // 校验每个明细的退回数量
+        for (SampleBackDetailEntity detail : detailList) {
+            String skuId = detail.getSkuId();
+            Integer backQty = detail.getQty();
+            Integer ledgerQty = skuLedgerQtyMap.getOrDefault(skuId, 0);
+            
+            if (backQty != null && backQty > ledgerQty) {
+                throw new ServiceException(StrUtil.format("SKU【{}】退回数量不能大于台账数量", detail.getSkuNo()));
+            }
+        }
     }
 
     /**
