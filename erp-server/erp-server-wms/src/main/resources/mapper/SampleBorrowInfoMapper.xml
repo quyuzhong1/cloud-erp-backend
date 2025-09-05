@@ -253,6 +253,7 @@ sbi.remark as remark
         sbd.sku_id AS skuId,
         sbd.sku_no AS skuNo,
         sbd.product_name AS productName,
+        COALESCE ( sbd.borrow_qty, 0 ) AS borrowQty,
         COALESCE ( sbd.wait_return_qty, 0 ) AS waitReturnQty,
         COALESCE ( b.returnedQty, 0 ) AS returnedQty,
         COALESCE ( sbd.wait_return_qty, 0 ) - COALESCE ( C.returnedQty, 0 ) AS canReturnQty,
@@ -299,7 +300,7 @@ sbi.remark as remark
         AND sbi.invalid_status = FALSE
         AND sbi.approve_status = 'approve'
         AND sbd.wait_return_qty > 0
-        AND sri.code = #{params.sourceCode}
+        AND sbi.code = #{params.sourceCode}
         <if test="params.skuNos != null and params.skuNos.size > 1">
             AND sbd.sku_no IN
             <foreach item="item" index="index" collection="params.skuNos" open="(" separator="," close=")">

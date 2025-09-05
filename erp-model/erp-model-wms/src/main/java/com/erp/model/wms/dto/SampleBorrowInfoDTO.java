@@ -624,6 +624,10 @@ public class SampleBorrowInfoDTO implements Serializable {
         private String productName;
 
         /**
+         * 借用数量
+         */
+        private Integer borrowQty;
+        /**
          * 待归还数量=借用数量-已归还数量
          */
         private Integer waitReturnQty;
