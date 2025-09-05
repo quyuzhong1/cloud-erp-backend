@@ -63,8 +63,7 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     public void handle(String data) {
         System.out.println(data);
         PlatformFulfillOrderDTO bean = JSONUtil.toBean(data, PlatformFulfillOrderDTO.class);
-        SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.getByDeliveryCode(bean.getCode());
-        List<PlatformFulfillOrderDetailDTO> detailList = bean.getDetailList();
+        SoMultiChannelEntity soMultiChannelEntity = soMultiChannelService.lambdaQuery().eq(SoMultiChannelEntity::getDeliveryCode, bean.getCode()).one();
         if (Objects.isNull(soMultiChannelEntity)) {
             //订单不存在
             log.info("订单不存在，订单编号：{}", bean.getCode());
@@ -85,6 +84,7 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
             soMultiChannelService.deliveryIntercept(soMultiChannelEntity, false, true, "订单已取消");
         } else {
             soMultiChannelService.updateById(soMultiChannelEntity);
+            List<PlatformFulfillOrderDetailDTO> detailList = bean.getDetailList();
             //更新发货数量
             updateSoMultiChannelDetail(detailEntityList, detailList);
             if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())) {

@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
@@ -43,6 +44,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -259,32 +261,34 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
     private void handleMultiChannel(PlatformSoOutStockDTO dto) {
         if (CharSequenceUtil.isBlank(dto.getMerchantOrderId())){
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】发货单号为空", dto.getPlatformCode());
             return;
         }
         List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
-        //TODO 更新多渠道订单已出库标识
-
-        //查询销售出库单是否已存在
-        SoOutstockEntity soOutstockEntity = soOutstockService.getBySourceCode(dto.getMerchantOrderId());
-        if (Objects.nonNull(soOutstockEntity)){
-            return;
-        }
         //生成销售出库单
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soMultiChannelFeign.getSoOutstockGenerateB2cDTO(dto.getMerchantOrderId());
         if (Objects.isNull(generateB2cDTO)){
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】出库基础信息不足", dto.getPlatformCode());
             return;
         }
-
+        generateB2cDTO.setThirdCode(dto.getPlatformCode());
+        LinkedList<SoOutstockDetailDTO.AddDTO> detailList1 = new LinkedList<>();
         generateB2cDTO.getDetailList().forEach(detail -> {
             PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> e.getMerchantOrderItemId().equals(detail.getSoDetailId())).findFirst().orElse(null);
-            if (Objects.isNull(platformSoOutStockDetailDTO)) {
-                detail.setActualQty(0);
-            }else {
+            if (Objects.nonNull(platformSoOutStockDetailDTO)) {
                 detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
                 generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
+                detailList1.add(detail);
             }
         });
+        if (CollUtil.isEmpty(detailList1)){
+            //没有可以出库的明细
+            log.warn("[销售出库销售消费服务]:当前销售出库单【{}】无可以出库的明细", dto.getPlatformCode());
+            return;
+        }
+        generateB2cDTO.setDetailList(detailList1);
         soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-
+        //更新多渠道订单生成出库单标识
+        soMultiChannelFeign.updateSoOutstock(dto);
     }
 }

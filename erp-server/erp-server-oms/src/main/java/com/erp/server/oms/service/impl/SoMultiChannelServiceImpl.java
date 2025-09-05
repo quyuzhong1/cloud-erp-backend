@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.business.dto.PlatformSoOutStockDetailDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -146,7 +148,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         // 生成发货单号
         String deliveryCode = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         soMultiChannelEntity.setDeliveryCode(deliveryCode);
-        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getRemark())){
+        if (CharSequenceUtil.isBlank(soMultiChannelEntity.getRemark())) {
             soMultiChannelEntity.setRemark(deliveryCode);
         }
         log.info("开始新增多渠道订单主单");
@@ -208,9 +210,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         thirdWarehouseDeliveryEntity.setDetailEntityList(detailEntityList);
         thirdWarehouseDeliveryFeign.add(thirdWarehouseDeliveryEntity);
-        //海外仓出库单
-//        createOutboundReq.setReferenceNo(soMultiChannelEntity.getDeliveryCode());
-//        ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
     }
 
     /**
@@ -502,6 +501,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             //更新销售订单状态
             soB2cService.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
                     .eq(SoB2cEntity::getId, entity.getSoId()).update();
+        } else if (ApproveType.REJECT.equals(dto.getType())) {
+            //不通过发起拦截
+            deliveryIntercept(entity, true, false, "多渠道订单审核不通过");
         }
         return Boolean.TRUE;
     }
@@ -643,7 +645,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .set(SoB2cEntity::getApproveStatus, ApproveStatusEnum.REJECT)
                     .eq(SoB2cEntity::getId, entity.getSoId()).update();
         }
-        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getSoId());
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(entity.getDeliveryCode(), entity.getSoId());
         //发货单标记取消发货
         if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
             thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
@@ -697,49 +699,79 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @Override
     public SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(String deliveryCode) {
         SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
-        if (Objects.isNull(soMultiChannelEntity)){
-            return null;
+        if (Objects.isNull(soMultiChannelEntity)) {
+            throw new ServiceException("多渠道订单不存在");
         }
         SoB2cEntity soB2cEntity = soB2cService.getById(soMultiChannelEntity.getSoId());
-        if (Objects.isNull(soB2cEntity)){
-            return null;
+        if (Objects.isNull(soB2cEntity)) {
+            throw new ServiceException("销售订单不存在");
         }
         String shopId = soB2cEntity.getShopId();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfoEntity)){
-            return null;
+        if (Objects.isNull(shopInfoEntity)) {
+            throw new ServiceException("店铺不存在");
         }
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
-        if (Objects.isNull(soB2cReceiverEntity)){
-            return null;
+        if (Objects.isNull(soB2cReceiverEntity)) {
+            throw new ServiceException("销售订单接收人不存在");
         }
         String customerId = shopInfoEntity.getCustomerId();
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
-        if (Objects.isNull(customerInfoEntity)){
-            return null;
+        if (Objects.isNull(customerInfoEntity)) {
+            throw new ServiceException("客户不存在");
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
-        if (CollUtil.isEmpty(soB2cDetailEntityList)){
-            return null;
+        if (CollUtil.isEmpty(soB2cDetailEntityList)) {
+            throw new ServiceException("销售订单详情不存在");
         }
         //获取三方仓发货单
-        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getByCodeAndSoId(soMultiChannelEntity.getDeliveryCode(),soB2cEntity.getId());
-        if (Objects.isNull(thirdWarehouseDeliveryEntity)){
-            return null;
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getByCodeAndSoId(soMultiChannelEntity.getDeliveryCode(), soB2cEntity.getId());
+        if (Objects.isNull(thirdWarehouseDeliveryEntity)) {
+            throw new ServiceException("三方仓发货单不存在");
         }
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntityList = thirdWarehouseDeliveryFeign.listByMainIds(Collections.singletonList(thirdWarehouseDeliveryEntity.getId()));
-        if (CollUtil.isEmpty(thirdWarehouseDeliveryDetailEntityList)){
-            return null;
+        if (CollUtil.isEmpty(thirdWarehouseDeliveryDetailEntityList)) {
+            throw new ServiceException("三方仓发货单详情不存在");
         }
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = SoMultiChannelConverter.INSTANCE.convertSoOutstockGenerateB2cDTO(soMultiChannelEntity, soB2cEntity, thirdWarehouseDeliveryEntity, soB2cDetailEntityList.get(0), customerInfoEntity, soB2cReceiverEntity);
         LinkedList<SoOutstockDetailDTO.AddDTO> detailList = new LinkedList<>();
         thirdWarehouseDeliveryDetailEntityList.forEach(thirdWarehouseDeliveryDetailEntity -> {
             SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream().filter(e -> e.getId().equals(thirdWarehouseDeliveryDetailEntity.getSoDetailId())).findFirst().orElse(null);
-            SoOutstockDetailDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.convertSoOutstockGenerateB2cDetailDTO(thirdWarehouseDeliveryDetailEntity,detailEntity);
+            SoOutstockDetailDTO.AddDTO addDTO = SoMultiChannelConverter.INSTANCE.convertSoOutstockGenerateB2cDetailDTO(thirdWarehouseDeliveryDetailEntity, detailEntity);
             detailList.add(addDTO);
         });
         generateB2cDTO.setDetailList(detailList);
         return generateB2cDTO;
+    }
+
+    @Override
+    public void updateSoOutstock(PlatformSoOutStockDTO dto) {
+        String deliveryCode = dto.getMerchantOrderId();
+        List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
+
+        SoMultiChannelEntity soMultiChannelEntity = this.getByDeliveryCode(deliveryCode);
+        if (Objects.isNull(soMultiChannelEntity)) {
+            return;
+        }
+        List<SoMultiChannelDetailEntity> soMultiChannelDetailEntityList = soMultiChannelDetailService.listByMainIds(Collections.singletonList(soMultiChannelEntity.getId()));
+        if (CollUtil.isEmpty(soMultiChannelDetailEntityList)) {
+            return;
+        }
+        soMultiChannelDetailEntityList.forEach(soMultiChannelDetailEntity -> {
+            PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> soMultiChannelDetailEntity.getId().equals(e.getMerchantOrderItemId())).findFirst().orElse(null);
+            if (Objects.nonNull(platformSoOutStockDetailDTO)){
+                Integer qtyShipped = platformSoOutStockDetailDTO.getQtyShipped();
+                soMultiChannelDetailEntity.setHasOutstockQty(qtyShipped + soMultiChannelDetailEntity.getHasOutstockQty());
+                if (soMultiChannelDetailEntity.getHasOutstockQty() >= soMultiChannelDetailEntity.getDeliveryQty()){
+                    soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.ALL.getCode());
+                }else if (soMultiChannelDetailEntity.getHasOutstockQty() > 0){
+                    soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.PART.getCode());
+                }else {
+                    soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.NONE.getCode());
+                }
+                soMultiChannelDetailService.updateById(soMultiChannelDetailEntity);
+            }
+        });
     }
 
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
@@ -772,7 +804,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             //FBA库存 获取最大库存记录
             finalInventoryDTOList.stream().filter(obj -> obj.getSkuNo().equals(soViewDTO.getSkuNo()) && CharSequenceUtil.isNotBlank(deliveryWarehouseId) && obj.getWarehouseId().equals(deliveryWarehouseId))
                     .max(Comparator.comparing(FbaInventoryDTO.InventoryDTO::getFulfillableQty)).ifPresent(f -> {
-                        soViewDTO.setFulfillableQty(f.getFbmFulfillableQty());
+                        soViewDTO.setFulfillableQty(f.getFulfillableQty());
                         soViewDTO.setFnSku(f.getFnSku());
                         soViewDTO.setPlatformSpuNo(f.getAsin());
                         soViewDTO.setPlatformProductName(f.getPlatformProductName());
