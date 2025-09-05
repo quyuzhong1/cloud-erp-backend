@@ -342,6 +342,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("order_amount")
     private BigDecimal orderAmount;
 
+    /**
+     * 平台订单Id
+     */
+    @TableField("platform_order_id")
+    private String platform_order_id;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
