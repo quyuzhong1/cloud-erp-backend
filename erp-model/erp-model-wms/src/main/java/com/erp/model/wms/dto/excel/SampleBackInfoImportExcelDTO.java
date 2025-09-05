@@ -75,7 +75,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "*退回组织", index = 5)
     @FieldValid(fieldName = "*退回组织", isNotBlank = true)
-    private String orgIdName;
+    private String orgName;
     @ExcelIgnore
     private String orgId;
 
