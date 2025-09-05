@@ -1108,7 +1108,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(CollUtil.isEmpty(detailIdList)){
             return Collections.emptyList();
         }
-        return this.baseMapper.generateSampleReturnView("",detailIdList);
+        return this.baseMapper.generateSampleReturnView(notId,detailIdList);
     }
 
     @Override
