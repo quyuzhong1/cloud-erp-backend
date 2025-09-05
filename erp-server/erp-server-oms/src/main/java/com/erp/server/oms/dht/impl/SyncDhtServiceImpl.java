@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerAddressEntity;
+import com.erp.model.oms.entity.CustomerCreditApplyEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.server.oms.dht.SyncDhtService;
@@ -45,4 +46,17 @@ public class SyncDhtServiceImpl implements SyncDhtService {
         omsPushMsgService.save(omsPushMsgEntity);
     }
 
+
+
+    @Override
+    public void createSyncCustomerCreditApplyTaskToDht(CustomerCreditApplyEntity entity, String operate) {
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.CUSTOMER_CREDIT_APPLY.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(entity));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.DHT.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+    }
 }

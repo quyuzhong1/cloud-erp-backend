@@ -38,6 +38,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.mapper.CustomerCreditApplyMapper;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -82,6 +83,10 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SyncDhtService syncDhtService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -403,6 +408,11 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+
+        //通过后添加账户余额
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+            syncDhtService.createSyncCustomerCreditApplyTaskToDht(entity,OperationTypeEnum.APPROVE_PASS.getStatus());
+        }
 
         return Boolean.TRUE;
     }
