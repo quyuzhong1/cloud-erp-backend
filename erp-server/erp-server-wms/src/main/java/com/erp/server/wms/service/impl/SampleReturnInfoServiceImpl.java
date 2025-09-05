@@ -813,7 +813,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_USER_SAME);
         }
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));
-        if(CollUtil.isEmpty(users) || users.size() != 2){
+        if(CollUtil.isEmpty(users)){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         FindUserDTO returnUser = users.stream().filter(e -> Objects.equals(e.getUserId(), returnUserId)).findFirst().orElse(null);
@@ -828,7 +828,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         String returnDeptId = sampleReturnInfoEntity.getReturnDeptId();
         String receiverDeptId = sampleReturnInfoEntity.getReceiverDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(returnDeptId, receiverDeptId));
-        if(CollUtil.isEmpty(sysDepartmentEntities) || sysDepartmentEntities.size() != 2){
+        if(CollUtil.isEmpty(sysDepartmentEntities)){
             throw new ServiceException(ApiError.ERROR_9029);
         }
 
