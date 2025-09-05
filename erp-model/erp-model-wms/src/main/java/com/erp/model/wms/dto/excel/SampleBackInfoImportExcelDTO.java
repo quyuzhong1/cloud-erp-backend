@@ -42,7 +42,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 交货仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*交货仓库", index = 5)
+    @ExcelProperty(value = "*交货仓库", index = 6)
     @FieldValid(fieldName = "*交货仓库", isNotBlank = true)
     private String warehouseName;
     @ExcelIgnore
@@ -73,7 +73,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 退回组织
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*退回组织", index = 3)
+    @ExcelProperty(value = "*退回组织", index = 5)
     @FieldValid(fieldName = "*退回组织", isNotBlank = true)
     private String orgIdName;
     @ExcelIgnore
@@ -84,7 +84,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 6)
+    @ExcelProperty(value = "备注", index = 7)
     @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
 
@@ -92,7 +92,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * SKU
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 7)
+    @ExcelProperty(value = "*SKU", index = 8)
     @FieldValid(fieldName = "*SKU", isNotBlank = true)
     private String skuNo;
     @ExcelIgnore
@@ -104,7 +104,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 退回数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*退回数量", index = 8)
+    @ExcelProperty(value = "*退回数量", index = 9)
     @FieldValid(fieldName = "*退回数量", isNotBlank = true)
     private String qty;
 
@@ -112,14 +112,14 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 9)
+    @ExcelProperty(value = "明细备注", index = 10)
     @FieldValid(fieldName = "明细备注", maxLength = 200)
     private String detailRemark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 10)
+    @ExcelProperty(value = "错误数据", index = 11)
     @ColumnWidth(50)
     private String errorMsg;
 }
