@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -252,6 +253,11 @@ public class SoOutstockFeignController {
     @PostMapping("/getPushDownBySoDetailIds")
     public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
         return soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
+    }
+
+    @GetMapping("/listSoOutstockByExhibitionId")
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
+        return soOutstockService.listSoOutstockByExhibitionId(exhibitionId);
     }
 }
 

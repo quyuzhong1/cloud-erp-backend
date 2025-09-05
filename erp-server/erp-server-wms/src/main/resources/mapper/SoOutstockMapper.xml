@@ -515,4 +515,32 @@
         </if>
         order by so.actual_delivery_date desc
     </select>
+
+    <select id="listSoOutstockByExhibitionId"  resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$DownstreamListDTO">
+        SELECT
+            so.ID,
+            so.code,
+            so.approve_status,
+            so.invalid_status,
+            so.approve_time,
+            so.approve_status,
+            so.approve_user_name,
+            so.bill_date,
+            so.remark,
+            so.warehouse_id,
+            so.warehouse_name,
+            sod.ID AS detailId,
+            sod.sku_id,
+            sod.sku_no,
+            sod.actual_qty AS qty,
+            sod.remark AS detailRemark
+        FROM
+            so_outstock so
+                left JOIN so_outstock_detail sod ON so.ID = sod.main_id AND sod.is_deleted = FALSE
+        WHERE
+            so.is_deleted = FALSE
+          AND so.source_id = #{ exhibitionId }
+        ORDER BY
+            so.create_time DESC
+    </select>
 </mapper>

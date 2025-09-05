@@ -677,6 +677,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             }
         }
         data.setDetailList(viewDTOS);
+        // 查询相关的附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
         return data;
     }
 

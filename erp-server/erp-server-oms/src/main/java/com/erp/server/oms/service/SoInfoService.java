@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -523,4 +524,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
 }

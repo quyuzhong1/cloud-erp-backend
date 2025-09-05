@@ -275,4 +275,6 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
     List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(BaseIdDTO dto);
 
     void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId);
 }

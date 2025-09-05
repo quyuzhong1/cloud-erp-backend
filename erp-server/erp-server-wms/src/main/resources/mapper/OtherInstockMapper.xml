@@ -224,4 +224,33 @@
         order by oi.create_time desc
     </select>
 
+    <select id="listOtherInstockInByExhibitionId" resultType="com.erp.model.oms.dto.ExhibitionOrderDTO$DownstreamListDTO">
+        SELECT
+            oi.ID,
+            oi.code,
+            oi.approve_status,
+            oi.invalid_status,
+            oi.approve_time,
+            oi.approve_status,
+            oi.approve_user_name,
+            oi.bill_date,
+            oi.remark,
+            oi.warehouse_id,
+            oi.warehouse_name,
+            OID.ID AS detailId,
+            OID.sku_id,
+            OID.sku_no,
+            OID.actual_qty AS qty,
+            OID.remark AS detailRemark
+        FROM
+            other_instock oi
+                LEFT JOIN other_instock_detail OID ON oi.ID = OID.main_id
+                AND OID.is_deleted = FALSE
+        WHERE
+            oi.is_deleted = FALSE
+          AND oi.source_id = #{ exhibitionId }
+        ORDER BY
+            oi.create_time DESC
+    </select>
+
 </mapper>

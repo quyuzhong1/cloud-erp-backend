@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -593,4 +594,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return ApiResult<List<BatchResultDTO>>
      */
     BatchResultDTO generateB2bDeclar(String id);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String exhibitionId);
 }
