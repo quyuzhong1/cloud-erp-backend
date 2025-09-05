@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -40,4 +41,10 @@ public interface SoMultiChannelFeign {
      */
     @GetMapping("/feign/soMultiChannel/getSoOutstockGenerateB2cDTO")
     SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(@RequestParam("deliveryCode") String deliveryCode);
+    /**
+     * 更新销售出库单标识
+     * @param dto
+     */
+    @PostMapping("/feign/soMultiChannel/updateSoOutstock")
+    void updateSoOutstock(@RequestBody PlatformSoOutStockDTO dto);
 }

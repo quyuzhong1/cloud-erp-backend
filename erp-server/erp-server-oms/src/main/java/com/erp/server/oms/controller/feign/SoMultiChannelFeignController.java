@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -50,5 +51,14 @@ public class SoMultiChannelFeignController {
     @GetMapping("/getSoOutstockGenerateB2cDTO")
     public SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(@RequestParam("deliveryCode") String deliveryCode){
         return soMultiChannelService.getSoOutstockGenerateB2cDTO(deliveryCode);
+    }
+
+    /**
+     * 更新销售出库单标识
+     * @param dto
+     */
+    @PostMapping("/updateSoOutstock")
+    public void updateSoOutstock(@RequestBody PlatformSoOutStockDTO dto){
+        soMultiChannelService.updateSoOutstock(dto);
     }
 }

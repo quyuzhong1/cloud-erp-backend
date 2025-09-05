@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
@@ -207,4 +208,10 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @return
      */
     SoOutstockDTO.GenerateB2cDTO getSoOutstockGenerateB2cDTO(String deliveryCode);
+
+    /**
+     * 更新销售出库单标识
+     * @param dto
+     */
+    void updateSoOutstock(PlatformSoOutStockDTO dto);
 }

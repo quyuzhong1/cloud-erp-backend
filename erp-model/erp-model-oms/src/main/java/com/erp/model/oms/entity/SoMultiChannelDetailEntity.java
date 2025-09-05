@@ -70,6 +70,11 @@ public class SoMultiChannelDetailEntity extends BaseEntity<SoMultiChannelDetailE
     @TableField("delivery_qty")
     private Integer deliveryQty;
     /**
+     * 已出库数量
+     */
+    @TableField("has_outstock_qty")
+    private Integer hasOutstockQty;
+    /**
     * 产品名称
     */
     @TableField("product_name")
@@ -79,6 +84,13 @@ public class SoMultiChannelDetailEntity extends BaseEntity<SoMultiChannelDetailE
     */
     @TableField("fn_sku")
     private String fnSku;
+
+    /**
+     * 系统是否已出库(none未出库part部分出库all已出库)
+     * OutstockStatusEnum
+     */
+    @TableField("outstock_status")
+    private String outstockStatus;
 
 
     public static final String MAIN_ID = "main_id";

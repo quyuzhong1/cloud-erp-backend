@@ -73,6 +73,7 @@ public class AmazonSoMultiChannelConsumer<T extends DmpSyncTaskIdDTO> extends Ab
         try {
             CreateFulfillmentOrderRequest body = JSONUtil.toBean(jsonObject, CreateFulfillmentOrderRequest.class);
             body.setMarketplaceId(marketplaceEnum.getMarketplaceId());
+            log.warn("创建订单请求：{}", JSONUtil.toJsonStr(JSONUtil.toJsonStr(body)));
             ApiResponse<CreateFulfillmentOrderResponse> fulfillmentOrderWithHttpInfo = api.createFulfillmentOrderWithHttpInfo(body);
             log.warn("创建订单响应：{}", JSONUtil.toJsonStr(fulfillmentOrderWithHttpInfo));
             //成功后，更新任务状态
