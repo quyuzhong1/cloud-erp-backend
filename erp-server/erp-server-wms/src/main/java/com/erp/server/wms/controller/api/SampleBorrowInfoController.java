@@ -477,7 +477,7 @@ public class SampleBorrowInfoController extends BaseController {
      * @date:  2025-08-29
      */
     @GetMapping("/listReturnById")
-    public ApiResult<List<SampleReturnInfoDTO.ListDTO>>  listReturnById(@RequestParam("id") @NotBlank(message = "借用单ID不能为空") String id){
+    public ApiResult<List<SampleReturnInfoDTO.ListDTO>>  listReturnById(@RequestParam("id")String id){
         return success(sampleBorrowInfoService.listReturnById(id));
     }
 
