@@ -6553,6 +6553,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ) {
                 // 查询是否是本平台发货
                 dto.setInvalidStatus(false);
+                dto.setInvalidType(oldEntity.getInvalidType());
                 dto.setInvalidRemark("平台取消或退款");
             }else if (dto.getInvalidStatus()){
                 dto.setInvalidType(oldEntity.getInvalidType());
