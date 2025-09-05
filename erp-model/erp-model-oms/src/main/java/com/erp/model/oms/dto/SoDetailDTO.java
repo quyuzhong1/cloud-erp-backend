@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -146,6 +147,11 @@ public class SoDetailDTO implements Serializable {
          * 目的地
          */
         private String toCountry;
+
+        /**
+         * 来源明细ID
+         */
+        private String sourceDetailId;
     }
 
 

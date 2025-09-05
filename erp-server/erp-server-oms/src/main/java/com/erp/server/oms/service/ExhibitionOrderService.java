@@ -163,7 +163,9 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
 
     void generateDownstreamByExhibitionOrder(ExhibitionOrderEntity entity,List<ExhibitionOrderDetailEntity> detailList);
 
-    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockInById(String id);
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String id);
 
-    List<ExhibitionOrderDTO.DownstreamListDTO> listSoById(String id);
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String id);
+
+    List<ExhibitionOrderDTO.DownstreamListDTO> listSoByExhibitionId(String id);
 }
