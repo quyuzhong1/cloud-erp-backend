@@ -71,7 +71,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 价税合计（CNY）
          */
-        private BigDecimal totalTaxAmount;
+        private String totalTaxAmount;
     }
 
     /**
