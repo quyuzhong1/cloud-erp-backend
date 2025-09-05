@@ -765,6 +765,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else {
                 handleSoB2cData(entity);
             }
+            // 销售出库单推送数帝云
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
             //走TMS自动生成报关单逻辑
             autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
             //B2B发送金蝶
@@ -772,9 +775,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云
-            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
-            syncDhtOutstockService.syncB2bSoOutstockDht(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -813,7 +816,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
-    private void syncToSdy(SoOutstockEntity entity, String operate) {
+    private void syncToSdy(SoOutstockEntity entity,List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
         // 配货单推送数帝云
         if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             // B2B
@@ -827,8 +830,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
 
-        // 销售出库单推送数帝云
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
         syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
 
     }
@@ -1283,7 +1285,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
             //推送到订货通
-            syncDhtOutstockService.syncB2bSoOutstockDht(entity, SyncOperateEnum.OPERATE_INVALID.getCode());
+            syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_INVALID.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }

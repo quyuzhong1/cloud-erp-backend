@@ -1,57 +1,58 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.*;
+import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.CustomerCreditApplyDTO;
+import com.erp.model.oms.entity.CustomerCreditApplyEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.OmsAttachmentEntity;
 import com.erp.model.oms.enums.CustomerCreditStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.CustomerCreditApplyMapper;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CustomerCreditApplyDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 客户授信 服务实现类
@@ -429,12 +430,46 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
         startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_CREDIT_APPLY.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+
+    /**
+     * 流程参数
+     * @author will
+     * @date 2025/9/5 15:29
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(CustomerCreditApplyEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        //客户名称
+        CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class,entity.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
+            variablesMap.put("customerName", customerInfoEntity.getName());
+        }
+        //部门名称
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Collections.singletonList(entity.getSaleDeptId()));
+        if (CollUtil.isNotEmpty(deptList)) {
+            variablesMap.put("salesDeptName", deptList.get(0).getName());
+        }
+        //组织名称
+        List<BaseIdDTO.CodeDTO> accountList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getSaleOrgId()));
+        if (CollUtil.isNotEmpty(accountList)) {
+            variablesMap.put("SaleOrgName", accountList.get(0).getName());
+        }
+        //结算币别
+        DictCurrencyEntity currencyEntity = FeignQuery.getById(DictCurrencyEntity.class, entity.getCurrency());
+        if (ObjectUtil.isNotEmpty(currencyEntity)) {
+            variablesMap.put("currencyName", currencyEntity.getName());
+        }
+        return variablesMap;
+    }
+
+
     private void fillOne(CustomerCreditApplyDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
