@@ -14,8 +14,8 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -56,7 +56,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.ENG_BOM)
+    @KingdeeApi
     public void executeBomInfoConsumer(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
@@ -68,7 +68,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
             throw new ServiceException(ApiError.ERROR_97022);
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
 
         //操作项
         String operate = (String) map.get("operate");
