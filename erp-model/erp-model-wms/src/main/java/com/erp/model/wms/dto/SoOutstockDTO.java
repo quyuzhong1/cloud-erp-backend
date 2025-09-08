@@ -56,6 +56,7 @@ public class SoOutstockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingTotalDTO {
 
         /**
