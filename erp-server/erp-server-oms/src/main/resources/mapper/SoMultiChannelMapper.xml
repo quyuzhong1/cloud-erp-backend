@@ -115,23 +115,19 @@
         smc.create_time DESC
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from so_multi_channel where is_deleted = false group by approve_status
-    </select>
-
     <select id="listExport" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
 
     </select>
     <select id="tabList" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  so_multi_channel
-        WHERE is_deleted=FALSE
+        smc.approve_status AS tabFlag,
+        count(1)  AS count
+        FROM  so_multi_channel smc
+        WHERE smc.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY smc.approve_status
     </select>
     <select id="listSoMultiChannelBySoId" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$SoViewDTO">
         SELECT

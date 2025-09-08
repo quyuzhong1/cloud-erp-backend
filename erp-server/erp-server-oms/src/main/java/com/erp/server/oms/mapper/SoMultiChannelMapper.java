@@ -32,13 +32,6 @@ public interface SoMultiChannelMapper extends BaseMapper<SoMultiChannelEntity> {
     IPage<SoMultiChannelDTO.ListDTO> paging(Page query, @Param("params") SoMultiChannelDTO.PagingParamDTO params);
 
     /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SoMultiChannelDTO.PagingParamDTO params);
-
-    /**
     * 导出Excel查询
     * @param params
     * @return
