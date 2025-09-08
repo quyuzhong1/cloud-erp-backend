@@ -383,7 +383,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         list.stream().forEach(e ->{
             e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
         });
-        list.sort(Comparator.comparing(SampleReturnInfoDTO.TabListDTO::getTabFlag));
+        // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
         return list;
     }
 
