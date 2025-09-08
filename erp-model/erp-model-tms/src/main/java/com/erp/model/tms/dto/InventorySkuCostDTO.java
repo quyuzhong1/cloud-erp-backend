@@ -483,4 +483,90 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private LocalDate billDate;
     }
+
+    /**
+     * SKU成本人民币查询请求DTO
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SkuCostCNYQueryDTO {
+        /**
+         * SKU ID列表
+         */
+        @NotNull(message = "SKU ID列表不能为空")
+        private List<String> skuIds;
+        
+        /**
+         * 仓库ID列表
+         */
+        @NotNull(message = "仓库ID列表不能为空")
+        private List<String> warehouseIds;
+        
+        /**
+         * 组织ID
+         */
+        @NotBlank(message = "组织ID不能为空")
+        private String orgId;
+    }
+
+    /**
+     * SKU成本人民币响应DTO
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SkuCostCNYDTO {
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        
+        /**
+         * 仓库ID
+         */
+        private String warehouseId;
+        
+        /**
+         * 组织ID
+         */
+        private String orgId;
+        
+        /**
+         * 材料成本（原币种）
+         */
+        private BigDecimal productCost;
+        
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        
+        /**
+         * 材料成本（人民币）
+         */
+        private BigDecimal productCostCNY;
+        
+        /**
+         * 币种
+         */
+        private String currency;
+        
+        /**
+         * 单据ID
+         */
+        private String mainId;
+        
+        /**
+         * 单据编号
+         */
+        private String code;
+        
+        /**
+         * 分摊月份
+         */
+        private LocalDate allocatedMonth;
+    }
 }

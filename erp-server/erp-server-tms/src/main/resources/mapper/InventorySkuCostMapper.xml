@@ -161,4 +161,60 @@
         WHERE rn = 1
     </select>
 
+    <!-- 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币） -->
+    <select id="getSkuCostInCNY" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostCNYDTO">
+        WITH latest_approved_costs AS (
+            SELECT
+                isc.id as mainId,
+                isc.code,
+                isc.allocated_month as allocatedMonth,
+                isc.currency,
+                isc.exchange_rate,
+                iscd.sku_id as skuId,
+                iscd.warehouse_id as warehouseId,
+                iscd.product_cost as productCost,
+                isc.company_id as orgId,
+                ROW_NUMBER() OVER (PARTITION BY iscd.sku_id, iscd.warehouse_id, isc.company_id ORDER BY isc.allocated_month DESC, isc.create_time DESC) as rn
+            FROM
+                inventory_sku_cost isc
+            LEFT JOIN inventory_sku_cost_detail iscd ON iscd.main_id = isc.id AND iscd.is_deleted = FALSE
+            WHERE 
+                isc.is_deleted = FALSE 
+                AND isc.status = 'approve'
+                AND iscd.sku_id IS NOT NULL
+                AND iscd.warehouse_id IS NOT NULL
+                AND isc.company_id = #{orgId}
+                <if test="skuIds != null and skuIds.size > 0">
+                    AND iscd.sku_id IN
+                    <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="warehouseIds != null and warehouseIds.size > 0">
+                    AND iscd.warehouse_id IN
+                    <foreach collection="warehouseIds" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            skuId,
+            warehouseId,
+            orgId,
+            productCost,
+            exchange_rate as exchangeRate,
+            CASE 
+                WHEN exchange_rate IS NOT NULL AND exchange_rate > 0 
+                THEN productCost * exchange_rate 
+                ELSE productCost 
+            END as productCostCNY,
+            currency,
+            mainId,
+            code,
+            allocatedMonth
+        FROM
+            latest_approved_costs
+        WHERE rn = 1
+    </select>
+
 </mapper>

@@ -715,6 +715,14 @@ public class SampleRecipientDTO implements Serializable {
          */
         @NotBlank(message = "仓库ID不能为空")
         private String warehouseId;
+
+        /**
+         * 领料组织ID
+         */
+        @NotBlank(message = "领料组织ID不能为空")
+        private String orgId;
+
+
     }
 
     /**
@@ -737,6 +745,11 @@ public class SampleRecipientDTO implements Serializable {
          * SKU成本
          */
         private BigDecimal skuCost;
+
+        /**
+         * 币种
+         */
+        private String currency;
     }
 
     /**

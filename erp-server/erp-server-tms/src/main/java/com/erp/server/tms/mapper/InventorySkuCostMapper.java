@@ -64,4 +64,13 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      * @return
      */
     List<InventorySkuCostDTO.SkuCostDTO> listSkuCost(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("salesOrgIds") List<String> salesOrgIds,@Param("month")String month);
+
+    /**
+     * 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币）
+     * @param skuIds
+     * @param warehouseIds
+     * @param orgId
+     * @return
+     */
+    List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("orgId") String orgId);
 }
