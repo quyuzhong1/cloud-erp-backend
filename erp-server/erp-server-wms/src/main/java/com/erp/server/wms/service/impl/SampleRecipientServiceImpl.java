@@ -990,9 +990,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if(CollUtil.isEmpty(list)) {
            return;
         }
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
-        Map<String, String> warehouseNameMap = warehouseList.stream()
-            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
+//        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
+//        Map<String, String> warehouseNameMap = warehouseList.stream()
+//            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
         // 用户
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(list.stream().map(SampleRecipientDTO.ListDTO::getUserId).collect(Collectors.toList()));
 
@@ -1005,7 +1005,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUsage(SampleUsageEnum.getName(data.getUsage()));
             data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
-            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
+//            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
