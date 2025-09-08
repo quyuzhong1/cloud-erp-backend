@@ -172,6 +172,13 @@ public class OtherOutstockDTO implements Serializable {
          */
         private String sourceCode;
 
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
+        
+
     }
 
     @Data
