@@ -345,11 +345,10 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         if(CollUtil.isNotEmpty(updateList)){
             sampleBorrowDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【%s】";
             for (SampleBorrowDetailEntity sampleBorrowDetailEntity : updateList) {
                 SampleBorrowDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleBorrowDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleBorrowDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleBorrowDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
                 }
             }
         }

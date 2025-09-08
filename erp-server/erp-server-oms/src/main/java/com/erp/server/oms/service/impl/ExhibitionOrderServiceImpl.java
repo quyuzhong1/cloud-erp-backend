@@ -443,19 +443,19 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             List<ExhibitionOrderDetailEntity> removeList = oldDetailList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
             //删除日志
             List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(id, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个销售产品【%s】", ModuleTypeEnum.EXHIBITION_ORDER.getCode(), removePairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.EXHIBITION_ORDER.getCode(), removePairList, "编辑操作");
         }
 
         //这种新增的
         List<Pair<String, String>> addPairList = exhibitionOrderDetailEntities.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(id, obj.getSkuNo())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("添加了一个销售产品【%s】", ModuleTypeEnum.EXHIBITION_ORDER.getCode(), addPairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.EXHIBITION_ORDER.getCode(), addPairList, "编辑操作");
 
         //这个是要修改的实体
         List<ExhibitionOrderDetailEntity> updateEntityList = exhibitionOrderDetailEntities.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
         for (ExhibitionOrderDetailEntity update : updateEntityList) {
             ExhibitionOrderDetailEntity oldDetail = oldDetailList.stream().filter(d -> d.getId().equals(update.getId())).findFirst().orElse(null);
             if (oldDetail != null) {
-                operateLogService.addModuleOperateLogByObj(oldDetail, update, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), id, "", "");
+                operateLogService.addModuleOperateLogByObj(oldDetail, update, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), id, "", String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
             }
         }
         // 保存明细

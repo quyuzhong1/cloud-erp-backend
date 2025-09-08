@@ -298,11 +298,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         if(CollUtil.isNotEmpty(updateList)){
             sampleReturnDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【%s】";
             for (SampleReturnDetailEntity sampleReturnDetailEntity : updateList) {
                 SampleReturnDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleReturnDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
                 }
             }
         }
@@ -493,6 +492,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+
+        //回写借用单sku明细的待归还数量
+        writeBackSampleBorrowInfo(entity.getId(),ApproveStatusEnum.WAIT_SUBMIT);
+
         // 记录台账流水（反审核）
         try {
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
@@ -613,7 +616,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         if(Objects.equals(approveStatus,ApproveStatusEnum.APPROVE)){
             //回写借用单sku明细的待归还数量
-            writeBackSampleBorrowInfo(entity.getId());
+            writeBackSampleBorrowInfo(entity.getId(),approveStatus);
         }
 
         // 只有审核通过和反审核才记录台账流水
@@ -634,7 +637,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         return Boolean.TRUE;
     }
 
-    private void writeBackSampleBorrowInfo(String id) {
+    private void writeBackSampleBorrowInfo(String id,ApproveStatusEnum approveStatus) {
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = sampleReturnDetailService.listByMainId(id);
         Map<String, Integer> returnQtySumBySourceDetailId = sampleReturnDetailEntities.stream()
                 .collect(Collectors.groupingBy(
@@ -649,7 +652,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         for (SampleBorrowDetailEntity sampleBorrowDetailEntity : sampleBorrowDetailEntities) {
             Integer returnQty = returnQtySumBySourceDetailId.getOrDefault(sampleBorrowDetailEntity.getId(), 0);
             int waitReturnQty = Objects.isNull(sampleBorrowDetailEntity.getWaitReturnQty()) ? 0 : sampleBorrowDetailEntity.getWaitReturnQty();
-            sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty - returnQty);
+            if(Objects.equals(approveStatus,ApproveStatusEnum.APPROVE)){
+                sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty - returnQty);
+            }else {
+                sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty + returnQty);
+            }
         }
         sampleBorrowDetailService.updateBatchById(sampleBorrowDetailEntities);
     }

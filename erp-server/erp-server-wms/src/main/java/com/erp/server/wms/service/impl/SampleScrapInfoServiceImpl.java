@@ -345,11 +345,10 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         if(CollUtil.isNotEmpty(updateList)){
             sampleScrapDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【%s】";
             for (SampleScrapDetailEntity sampleScrapDetailEntity : updateList) {
                 SampleScrapDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleScrapDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleScrapDetailEntity, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), sampleScrapInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleScrapDetailEntity, ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), sampleScrapInfoEntity.getId(), String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
                 }
             }
         }
