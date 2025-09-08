@@ -71,7 +71,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
      * @param soId
      * @return
      */
-    @GetMapping("feign/thirdWarehouseDelivery/getByCodeAndSoId")
+    @GetMapping("/getByCodeAndSoId")
     public ThirdWarehouseDeliveryEntity getByCodeAndSoId(@RequestParam("code") String code, @RequestParam("soId") String soId){
         return thirdWarehouseDeliveryService.getByCodeAndSoId(code, soId);
     }
@@ -81,7 +81,7 @@ public class ThirdWarehouseDeliveryFeignController extends BaseController {
      * @param mainIds
      * @return
      */
-    @PostMapping("feign/thirdWarehouseDeliveryDetail/listByMainIds")
+    @PostMapping("/listByMainIds")
     public List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(@RequestBody List<String> mainIds){
         return thirdWarehouseDeliveryDetailService.listByMainIds(mainIds);
     }

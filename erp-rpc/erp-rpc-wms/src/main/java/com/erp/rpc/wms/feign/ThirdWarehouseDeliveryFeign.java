@@ -52,6 +52,6 @@ public interface ThirdWarehouseDeliveryFeign {
      * @param mainIds
      * @return
      */
-    @PostMapping("feign/thirdWarehouseDeliveryDetail/listByMainIds")
+    @PostMapping("feign/thirdWarehouseDelivery/listByMainIds")
     List<ThirdWarehouseDeliveryDetailEntity> listByMainIds(@RequestBody List<String> mainIds);
 }
