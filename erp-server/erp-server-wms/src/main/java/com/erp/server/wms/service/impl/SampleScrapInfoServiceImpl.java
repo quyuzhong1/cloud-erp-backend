@@ -328,7 +328,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 sampleScrapDetailService.removeByIds(remove.stream().map(SampleScrapDetailEntity::getId).collect(Collectors.toList()));
                 //添加日志
                 List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), removePairList, "编辑操作");
+                operateLogService.batchAddModuleOperateLog("删除SKU【{}】", ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), removePairList, "编辑操作");
             }
         }
         //处理需要新增的数据
@@ -338,14 +338,14 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
 
             //添加日志
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加SKU【{}】", ModuleTypeEnum.SAMPLE_SCRAP_INFO.getCode(), addPairList, "编辑操作");
         }
         //处理需要更新的数据
         List<SampleScrapDetailEntity> updateList = sampleScrapDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(updateList)){
             sampleScrapDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【%s】";
+            String msg = "编辑SKU【{}】";
             for (SampleScrapDetailEntity sampleScrapDetailEntity : updateList) {
                 SampleScrapDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleScrapDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
