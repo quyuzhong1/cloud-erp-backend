@@ -1,6 +1,5 @@
 package com.erp.server.wms.listener;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -11,6 +10,7 @@ import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.SampleBackInfoImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -164,12 +164,12 @@ public class SampleBackInfoExcelListener extends AnalysisEventListener<SampleBac
         }
 
         // 退回组织
-        String orgIdName = excelDTO.getOrgIdName();
+        String orgIdName = excelDTO.getOrgName();
         if (StringUtils.isNotBlank(orgIdName)) {
             try {
-                List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgIdName));
-                if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-                    excelDTO.setOrgId(accountingCompanyList.get(0).getId());
+                SysAccountingCompanyEntity company = sysUserFeign.getCompanyByName(orgIdName);
+                if (company != null) {
+                    excelDTO.setOrgId(company.getId());
                 } else {
                     errorMsgList.add("组织不存在：" + orgIdName);
                 }

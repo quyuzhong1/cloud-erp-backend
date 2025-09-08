@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -69,4 +70,5 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      */
     List<OtherInstockDTO.ListDTO> viewAssociatedDocuments(@Param("params") BaseIdDTO dto);
 
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockInByExhibitionId(@Param("exhibitionId") String exhibitionId);
 }

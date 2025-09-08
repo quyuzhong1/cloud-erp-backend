@@ -3,11 +3,9 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.wms.dto.SampleReturnInfoDTO;
-import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
 import com.erp.server.oms.query.ExhibitionOrderQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +20,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.oms.service.ExhibitionOrderService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -436,22 +433,31 @@ public class ExhibitionOrderController extends BaseController {
     }
 
     /**
-     * 单据管理：根据id查询关联查询入库单
+     * 单据管理：根据id查询关联查询销售出库单
      * @author jack
      * @date:  2025-08-29
      */
-    @GetMapping("/listOtherInstockInById")
-    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listOtherInstockInById(@RequestParam(value = "id",required = true)String id){
-        return success(exhibitionOrderService.listOtherInstockInById(id));
+    @GetMapping("/listSoOutstockByExhibitionId")
+    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listSoOutstockByExhibitionId(@RequestParam(value = "id",required = true)String id){
+        return success(exhibitionOrderService.listSoOutstockByExhibitionId(id));
     }
     /**
-     * 单据管理：根据id查询关联查询销售单
+     * 单据管理：根据id查询关联查询其他入库单
      * @author jack
      * @date:  2025-08-29
      */
-    @GetMapping("/listSoById")
-    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listSoById(@RequestParam(value = "id",required = true)String id){
-        return success(exhibitionOrderService.listSoById(id));
+    @GetMapping("/listOtherInstockByExhibitionId")
+    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listOtherInstockByExhibitionId(@RequestParam(value = "id",required = true)String id){
+        return success(exhibitionOrderService.listOtherInstockByExhibitionId(id));
+    }
+    /**
+     * 单据管理：根据id查询关联查询B2B销售单
+     * @author jack
+     * @date:  2025-08-29
+     */
+    @GetMapping("/listSoByExhibitionId")
+    public ApiResult<List<ExhibitionOrderDTO.DownstreamListDTO>>  listSoByExhibitionId(@RequestParam(value = "id",required = true)String id){
+        return success(exhibitionOrderService.listSoByExhibitionId(id));
     }
 
 

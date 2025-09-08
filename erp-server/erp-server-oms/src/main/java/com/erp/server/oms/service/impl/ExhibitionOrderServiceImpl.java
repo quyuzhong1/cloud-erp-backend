@@ -21,6 +21,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -158,9 +159,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     private SampleLedgerFeign sampleLedgerFeign;
     @Resource
     private SoDetailService soDetailService;
-    @Autowired
     @Resource
     private OtherInstockFeign otherInstockFeign;
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
     @Resource
     private SoInfoService soInfoService;
 
@@ -1064,9 +1066,18 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         dto.setId("");
         dto.setOrderType(BillTypeEnum.B2B.getCode());
         dto.setTransactionSubType(OrderSubTypeEnum.OFFLINE_ORDER.getCode());
+        dto.setSourceId(entity.getId());
+        dto.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
 
-        List<SoDetailDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(SoDetailDTO.AddDTO.class, detailList);
-        addDTOS.forEach(e -> e.setId(""));
+        List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
+        for (ExhibitionOrderDetailEntity detail : detailList) {
+            SoDetailDTO.AddDTO addDTO = new SoDetailDTO.AddDTO();
+            BeanMapperUtils.copy(detail,dto);
+            addDTO.setId("");
+            addDTO.setSourceDetailId(detail.getId());
+            addDTOS.add(addDTO);
+        }
+
         dto.setDetailList(addDTOS);
 
         String soId = soInfoService.add(dto);
@@ -1921,15 +1932,36 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     }
 
     @Override
-    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockInById(String id) {
-
-
-        return Collections.emptyList();
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listSoOutstockByExhibitionId(String id) {
+        return soOutstockFeign.listSoOutstockByExhibitionId(id);
     }
 
     @Override
-    public List<ExhibitionOrderDTO.DownstreamListDTO> listSoById(String id) {
-        return Collections.emptyList();
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String id) {
+        return otherInstockFeign.listOtherInstockByExhibitionId(id);
+    }
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listSoByExhibitionId(String id) {
+        List<ExhibitionOrderDTO.DownstreamListDTO> resultList = soInfoService.listByExhibitionId(id);
+        if(CollUtil.isEmpty(resultList)){
+            return Collections.emptyList();
+        }
+        List<String> warehouseIds = resultList.stream().map(ExhibitionOrderDTO.DownstreamListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class).in(WarehouseEntity::getId, warehouseIds).list();
+        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        List<String> skuIds = resultList.stream().map(ExhibitionOrderDTO.DownstreamListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+
+        for (ExhibitionOrderDTO.DownstreamListDTO listDTO : resultList) {
+            listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            listDTO.setInvalidStatusName(InvalidStatusEnum.getName(listDTO.getInvalidStatus()));
+            listDTO.setWarehouseName(warehouseMap.getOrDefault(listDTO.getWarehouseId(), ""));
+            listDTO.setProductName(skuMap.getOrDefault(listDTO.getSkuId(),""));
+        }
+        return resultList;
     }
 
 

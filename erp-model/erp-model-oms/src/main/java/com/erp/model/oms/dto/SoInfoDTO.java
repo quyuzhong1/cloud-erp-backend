@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -1029,6 +1030,15 @@ public class SoInfoDTO implements Serializable {
          * 单据子类型
          */
         private String transactionSubType;
+
+        /**
+         * 来源单据ID
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
 

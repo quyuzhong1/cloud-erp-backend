@@ -88,7 +88,7 @@ public class SampleInitialLedgerImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 7)
     @ColumnWidth(50)
     private String errorMsg;
 }

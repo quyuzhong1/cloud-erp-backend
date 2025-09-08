@@ -32,7 +32,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 退回日期
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*退回日期", index = 2)
+    @ExcelProperty(value = "*退回日期", index = 1)
     @FieldValid(fieldName = "*退回日期", isNotBlank = true)
     private String backDateStr;
     @ExcelIgnore
@@ -42,7 +42,7 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 交货仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*交货仓库", index = 5)
+    @ExcelProperty(value = "*交货仓库", index = 2)
     @FieldValid(fieldName = "*交货仓库", isNotBlank = true)
     private String warehouseName;
     @ExcelIgnore
@@ -73,9 +73,9 @@ public class SampleBackInfoImportExcelDTO implements Serializable {
      * 退回组织
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*退回组织", index = 3)
+    @ExcelProperty(value = "*退回组织", index = 5)
     @FieldValid(fieldName = "*退回组织", isNotBlank = true)
-    private String orgIdName;
+    private String orgName;
     @ExcelIgnore
     private String orgId;
 

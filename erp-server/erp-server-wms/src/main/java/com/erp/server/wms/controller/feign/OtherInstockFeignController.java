@@ -9,10 +9,7 @@ import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.server.wms.service.OtherInstockService;
 import com.erp.server.wms.service.TransferApplicationService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -41,5 +38,10 @@ public class OtherInstockFeignController extends BaseController{
     @PostMapping("/generateDownstreamByExhibitionOrder")
     public void generateDownstreamByExhibitionOrder(@RequestBody ExhibitionOrderDTO.DownstreamDTO downstreamDTO) {
         otherInstockService.generateDownstreamByExhibitionOrder(downstreamDTO);
+    }
+
+    @GetMapping("/listOtherInstockByExhibitionId")
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(@RequestParam(value = "exhibitionId") String exhibitionId) {
+        return otherInstockService.listOtherInstockByExhibitionId(exhibitionId);
     }
 }

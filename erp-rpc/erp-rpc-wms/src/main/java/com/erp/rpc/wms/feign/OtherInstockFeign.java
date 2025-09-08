@@ -7,7 +7,9 @@ import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -43,6 +45,8 @@ public interface OtherInstockFeign {
     @PostMapping("/feign/otherInstock/generateDownstreamByExhibitionOrder")
     void generateDownstreamByExhibitionOrder(ExhibitionOrderDTO.DownstreamDTO downstreamDTO);
 
+    @GetMapping("/feign/otherInstock/listOtherInstockByExhibitionId")
+    List<ExhibitionOrderDTO.DownstreamListDTO> listOtherInstockByExhibitionId(String exhibitionId);
 
 
 }

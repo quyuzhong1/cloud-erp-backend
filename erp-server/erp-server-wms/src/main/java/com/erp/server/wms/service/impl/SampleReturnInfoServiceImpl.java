@@ -493,6 +493,10 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+
+        //回写借用单sku明细的待归还数量
+        writeBackSampleBorrowInfo(entity.getId(),ApproveStatusEnum.WAIT_SUBMIT);
+
         // 记录台账流水（反审核）
         try {
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = buildFlow(entity.getId(), entity.getCode(), ApproveTypeEnum.DIS_APPROVE);
@@ -613,7 +617,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
         if(Objects.equals(approveStatus,ApproveStatusEnum.APPROVE)){
             //回写借用单sku明细的待归还数量
-            writeBackSampleBorrowInfo(entity.getId());
+            writeBackSampleBorrowInfo(entity.getId(),approveStatus);
         }
 
         // 只有审核通过和反审核才记录台账流水
@@ -634,7 +638,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         return Boolean.TRUE;
     }
 
-    private void writeBackSampleBorrowInfo(String id) {
+    private void writeBackSampleBorrowInfo(String id,ApproveStatusEnum approveStatus) {
         List<SampleReturnDetailEntity> sampleReturnDetailEntities = sampleReturnDetailService.listByMainId(id);
         Map<String, Integer> returnQtySumBySourceDetailId = sampleReturnDetailEntities.stream()
                 .collect(Collectors.groupingBy(
@@ -649,7 +653,11 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         for (SampleBorrowDetailEntity sampleBorrowDetailEntity : sampleBorrowDetailEntities) {
             Integer returnQty = returnQtySumBySourceDetailId.getOrDefault(sampleBorrowDetailEntity.getId(), 0);
             int waitReturnQty = Objects.isNull(sampleBorrowDetailEntity.getWaitReturnQty()) ? 0 : sampleBorrowDetailEntity.getWaitReturnQty();
-            sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty - returnQty);
+            if(Objects.equals(approveStatus,ApproveStatusEnum.APPROVE)){
+                sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty - returnQty);
+            }else {
+                sampleBorrowDetailEntity.setWaitReturnQty(waitReturnQty + returnQty);
+            }
         }
         sampleBorrowDetailService.updateBatchById(sampleBorrowDetailEntities);
     }
@@ -677,6 +685,13 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             }
         }
         data.setDetailList(viewDTOS);
+        // 查询相关的附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(id));
+        if(CollUtil.isNotEmpty(attachmentList)){
+            // 分别提取附件名称和URL列表设置到返回对象中
+            data.setAttachmentNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            data.setAttachmentUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        }
         return data;
     }
 
@@ -813,7 +828,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
             throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_USER_SAME);
         }
         List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(Arrays.asList(returnUserId, receiverUserId));
-        if(CollUtil.isEmpty(users) || users.size() != 2){
+        if(CollUtil.isEmpty(users)){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         FindUserDTO returnUser = users.stream().filter(e -> Objects.equals(e.getUserId(), returnUserId)).findFirst().orElse(null);
@@ -828,7 +843,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
         String returnDeptId = sampleReturnInfoEntity.getReturnDeptId();
         String receiverDeptId = sampleReturnInfoEntity.getReceiverDeptId();
         List<SysDepartmentEntity> sysDepartmentEntities = sysUserFeign.listDeptByIds(Arrays.asList(returnDeptId, receiverDeptId));
-        if(CollUtil.isEmpty(sysDepartmentEntities) || sysDepartmentEntities.size() != 2){
+        if(CollUtil.isEmpty(sysDepartmentEntities)){
             throw new ServiceException(ApiError.ERROR_9029);
         }
 

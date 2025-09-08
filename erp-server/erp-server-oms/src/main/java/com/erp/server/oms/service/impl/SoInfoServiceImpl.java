@@ -354,6 +354,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setCountryId(base.getCountryId());
             addEntity.setCountryName(base.getCountryName());
         }
+
+        //来源
+        addEntity.setSourceId(dto.getSourceId());
+        addEntity.setSourceType(dto.getSourceType());
+
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -4358,4 +4363,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
         return baseMapper.pagePartitionIsNull(query);
     }
+
+
+    @Override
+    public List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId) {
+        return baseMapper.listByExhibitionId(exhibitionId);
+    }
+
+
 }
