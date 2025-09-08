@@ -351,7 +351,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
         // 记录主单操作日志
             log.info("编辑 开始记录样品领用单日志数据，单号：【{}】", sampleRecipientEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), sampleRecipientEntity.getCode(), "样品领用单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "样品领用单");
         operateLogService.addModuleOperateLogByObj(old, sampleRecipientEntity, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), sampleRecipientEntity.getId(), msg);
 
         // 更新附件信息

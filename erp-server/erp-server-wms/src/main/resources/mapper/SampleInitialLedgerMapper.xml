@@ -24,10 +24,6 @@
        <result column="user_name" property="userName" />
        <result column="dept_id" property="deptId" />
        <result column="bill_date" property="billDate" />
-       <result column="sku_no" property="skuNo" />
-       <result column="sku_id" property="skuId" />
-       <result column="product_name" property="productName" />
-       <result column="qty" property="qty" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -41,7 +37,7 @@
         update_time,
         version,
         is_deleted,
-                 approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, user_id, user_name, dept_id, bill_date, sku_no, sku_id, product_name, qty
+                 approve_status, approve_user_id, approve_user_name, approve_time, invalid_status, invalid_remark, invalid_time, code, user_id, user_name, dept_id, bill_date
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SampleInitialLedgerDTO$ListDTO">
@@ -59,13 +55,14 @@
             sil.user_name,
             sil.dept_id,
             sil.bill_date,
-            sil.sku_no,
-            sil.sku_id,
-            sil.product_name,
-            sil.qty,
             sil.create_time,
-            sil.create_user_name
+            sil.create_user_name,
+            sild.sku_no,
+            sild.sku_id,
+            sild.product_name,
+            sild.qty
         FROM sample_initial_ledger sil
+        LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND sil.is_deleted = false
@@ -101,13 +98,14 @@
             sil.user_name,
             sil.dept_id,
             sil.bill_date,
-            sil.sku_no,
-            sil.sku_id,
-            sil.product_name,
-            sil.qty,
             sil.create_time,
-            sil.create_user_name
+            sil.create_user_name,
+            sild.sku_no,
+            sild.sku_id,
+            sild.product_name,
+            sild.qty
         FROM sample_initial_ledger sil
+        LEFT JOIN sample_initial_ledger_detail sild ON sil.id = sild.main_id AND sild.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND sil.is_deleted = false

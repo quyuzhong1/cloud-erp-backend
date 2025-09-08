@@ -86,26 +86,6 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     */
     @TableField("bill_date")
     private LocalDate billDate;
-    /**
-    * SKU编码
-    */
-    @TableField("sku_no")
-    private String skuNo;
-    /**
-    * SKU ID
-    */
-    @TableField("sku_id")
-    private String skuId;
-    /**
-    * 产品名称
-    */
-    @TableField("product_name")
-    private String productName;
-    /**
-    * 数量
-    */
-    @TableField("qty")
-    private Integer qty;
 
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -131,14 +111,6 @@ public class SampleInitialLedgerEntity extends BaseEntity<SampleInitialLedgerEnt
     public static final String DEPT_ID = "dept_id";
 
     public static final String BILL_DATE = "bill_date";
-
-    public static final String SKU_NO = "sku_no";
-
-    public static final String SKU_ID = "sku_id";
-
-    public static final String PRODUCT_NAME = "product_name";
-
-    public static final String QTY = "qty";
 
     @Override
     public Serializable pkVal() {
