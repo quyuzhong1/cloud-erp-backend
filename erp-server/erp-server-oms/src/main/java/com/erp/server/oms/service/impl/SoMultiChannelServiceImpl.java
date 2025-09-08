@@ -511,7 +511,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         return Boolean.TRUE;
     }
 
-    private void sendPusTask(List<SoMultiChannelEntity> list, String operate) {
+    @Transactional(rollbackFor = Exception.class)
+    public void sendPusTask(List<SoMultiChannelEntity> list, String operate) {
         //审核通过发送金蝶
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
@@ -583,6 +584,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO reCreate(SoMultiChannelEntity entity) {
         if (!(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()) && (CreateStatusEnum.FAILED.getCode().equals(entity.getCreateStatus()) || CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())))) {
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "只允许审核通过，创建失败或待创建的单据重新创建");
@@ -762,14 +764,14 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         soMultiChannelDetailEntityList.forEach(soMultiChannelDetailEntity -> {
             PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> soMultiChannelDetailEntity.getId().equals(e.getMerchantOrderItemId())).findFirst().orElse(null);
-            if (Objects.nonNull(platformSoOutStockDetailDTO)){
+            if (Objects.nonNull(platformSoOutStockDetailDTO)) {
                 Integer qtyShipped = platformSoOutStockDetailDTO.getQtyShipped();
                 soMultiChannelDetailEntity.setHasOutstockQty(qtyShipped + soMultiChannelDetailEntity.getHasOutstockQty());
-                if (soMultiChannelDetailEntity.getHasOutstockQty() >= soMultiChannelDetailEntity.getDeliveryQty()){
+                if (soMultiChannelDetailEntity.getHasOutstockQty() >= soMultiChannelDetailEntity.getDeliveryQty()) {
                     soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.ALL.getCode());
-                }else if (soMultiChannelDetailEntity.getHasOutstockQty() > 0){
+                } else if (soMultiChannelDetailEntity.getHasOutstockQty() > 0) {
                     soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.PART.getCode());
-                }else {
+                } else {
                     soMultiChannelDetailEntity.setOutstockStatus(OutstockStatusEnum.NONE.getCode());
                 }
                 soMultiChannelDetailService.updateById(soMultiChannelDetailEntity);
@@ -790,15 +792,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         this.updateById(soMultiChannelEntity);
         operateLogService.addModuleOperateLogByObj(old, soMultiChannelEntity, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "状态同步");
-        if (CharSequenceUtil.isNotBlank(bean.getTrackNo()) && CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId())){
+        if (CharSequenceUtil.isNotBlank(bean.getTrackNo()) && CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId())) {
             //更新销售订单物流跟踪号 和三方仓发货单跟踪号
             soB2cLogisticsService.lambdaUpdate()
                     .set(SoB2cLogisticsEntity::getTrackNo, bean.getTrackNo())
                     .set(SoB2cLogisticsEntity::getCode, bean.getTrackNo())
-                    .set(Objects.nonNull(bean.getDeliveryTime()),SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
+                    .set(Objects.nonNull(bean.getDeliveryTime()), SoB2cLogisticsEntity::getDeliveryTime, bean.getDeliveryTime())
                     .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
                     .update();
-            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】",bean.getTrackNo(),bean.getTrackNo(),bean.getDeliveryTime()),ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(),"多渠道订单信息同步");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
         }
     }
 
