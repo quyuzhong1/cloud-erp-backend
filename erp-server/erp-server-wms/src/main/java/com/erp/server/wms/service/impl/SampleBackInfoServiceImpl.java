@@ -197,6 +197,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     public Boolean update(SampleBackInfoDTO.UpdateDTO addOrUpdateDTO) {
         SampleBackInfoEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品退回单"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(old.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持修改操作");
+        }
+        
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -429,6 +435,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到样品退回单数据");
         }
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持提交操作");
+        }
+        
         validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改样品退回单状态数据，id：【{}】", id);
@@ -495,6 +507,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         SampleBackInfoEntity entity = getById(dto.getId());
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持审核操作");
+        }
+        
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -540,6 +558,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     public BatchResultDTO disApprove(String id) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持反审核操作");
+        }
+        
         // 反审核条件判断
         validateDisApprove(entity);
         // TODO 检查是否有下推单据（如果支持下推的话）明细数据
@@ -638,6 +662,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     public BatchResultDTO cancelProcess(String id) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持撤销操作");
+        }
+        
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98007);

@@ -254,6 +254,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     public Boolean update(SampleRecipientDTO.UpdateDTO addOrUpdateDTO) {
         SampleRecipientEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "样品领用单"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(old.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持修改操作");
+        }
+        
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -485,6 +491,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到样品领用单数据");
         }
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持提交操作");
+        }
+        
         validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改样品领用单状态数据，id：【{}】", id);
@@ -529,6 +541,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         SampleRecipientEntity entity = getById(dto.getId());
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持审核操作");
+        }
+        
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -573,6 +591,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public BatchResultDTO disApprove(String id) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持反审核操作");
+        }
+        
         // 反审核条件判断
         validateDisApprove(entity);
 
@@ -678,6 +702,12 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public BatchResultDTO cancelProcess(String id) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持撤销操作");
+        }
+        
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
@@ -707,6 +737,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @Override
     public BatchResultDTO finishRecipient(String id) {
         SampleRecipientEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品领用单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持结束领用操作");
+        }
         
         // 验证结束领用条件
         validateFinishRecipient(entity);
@@ -746,6 +781,13 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 SampleRecipientEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     finishResult = BatchResultDTO.fail(id, id, "样品领用单不存在, 结束领用失败");
+                    resultDTOS.add(finishResult);
+                    continue;
+                }
+                
+                // 检查单据是否已作废
+                if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+                    finishResult = BatchResultDTO.fail(id, entity.getCode(), "已作废的样品领用单不支持结束领用操作");
                     resultDTOS.add(finishResult);
                     continue;
                 }
@@ -1423,6 +1465,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             
             // 1. 验证勾选数据的单据状态：已审核，只支持已审核的单据下推其他出库
             for (SampleRecipientEntity main : mainList) {
+                // 检查单据是否已作废
+                if (InvalidStatusEnum.VOIDED.getStatus().equals(main.getInvalidStatus())) {
+                    throw new ServiceException("已作废的样品领用单不支持下推其他出库单");
+                }
+                
                 if (main.getApproveStatus() != ApproveStatusEnum.APPROVE) {
                     throw new ServiceException("只有已审核的样品领用单支持下推其他出库单");
                 }
@@ -1637,6 +1684,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             SampleRecipientEntity sampleRecipient = this.getById(sourceId);
             if (sampleRecipient == null) {
                 return BatchResultDTO.fail(sourceId, items.get(0).getSourceCode(), "样品领用单不存在");
+            }
+            
+            // 检查单据是否已作废
+            if (InvalidStatusEnum.VOIDED.getStatus().equals(sampleRecipient.getInvalidStatus())) {
+                return BatchResultDTO.fail(sourceId, sampleRecipient.getCode(), "已作废的样品领用单不支持下推其他出库单");
             }
             // 出库前校验：
             // 1) 相同SKU(同一来源明细)不同仓位的出库数量合计不能大于待出库数量
