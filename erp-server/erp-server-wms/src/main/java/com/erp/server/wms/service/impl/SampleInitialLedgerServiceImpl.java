@@ -472,6 +472,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public SampleInitialLedgerDTO.ViewDTO view(String id) {
         SampleInitialLedgerEntity sampleInitialLedgerEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品期初台账数据"));
         SampleInitialLedgerDTO.ViewDTO data = BeanMapperUtils.map(SampleInitialLedgerDTO.ViewDTO.class, sampleInitialLedgerEntity);
+        data.setApproveStatus(sampleInitialLedgerEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
