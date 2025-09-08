@@ -444,7 +444,11 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 e.setTabFlagName(ApproveStatusEnum.getName(e.getTabFlag()));
             }
         });
-        list.sort(Comparator.comparing(SampleBorrowInfoDTO.TabListDTO::getTabFlag));
+        // 修改为按照 ApproveStatusEnum 枚举声明顺序排序
+        list.sort(Comparator.comparingInt(tabDto -> {
+            ApproveStatusEnum statusEnum = ApproveStatusEnum.getByStatus(tabDto.getTabFlag());
+            return statusEnum != null ? statusEnum.ordinal() : Integer.MAX_VALUE;
+        }));
         return list;
     }
 
@@ -1092,9 +1096,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             return Collections.emptyList();
         }
         List<SampleBorrowInfoDTO.SampleReturnView> list = this.baseMapper.generateSampleReturnView("",detailIdList);
+        if(CollUtil.isEmpty(list)){
+            throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
+        }
         // 查找第一个不符合审批通过状态的记录
         Optional<SampleBorrowInfoDTO.SampleReturnView> firstNotApproved = list.stream()
-                .filter(e -> !isApprovedStatus(e.getApproveStatus()))
+                .filter(e -> !isApprovedStatus(e.getApproveStatus()) || e.getWaitReturnQty() <= 0 )
                 .findFirst();
         if(firstNotApproved.isPresent()){
             throw new ServiceException(ApiError.ERROR_GENERATE_SAMPLE_RETURN_VIEW);
