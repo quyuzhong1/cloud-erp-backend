@@ -281,7 +281,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
                 sampleReturnDetailService.removeByIds(remove.stream().map(SampleReturnDetailEntity::getId).collect(Collectors.toList()));
                 //添加日志
                 List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-                operateLogService.batchAddModuleOperateLog("删除SKU【{}】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), removePairList, "编辑操作");
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), removePairList, "编辑操作");
             }
         }
         //处理需要新增的数据
@@ -291,18 +291,17 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
 
             //添加日志
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加SKU【{}】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), addPairList, "编辑操作");
         }
         //处理需要更新的数据
         List<SampleReturnDetailEntity> updateList = sampleReturnDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(updateList)){
             sampleReturnDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【{}】";
             for (SampleReturnDetailEntity sampleReturnDetailEntity : updateList) {
                 SampleReturnDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleReturnDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleReturnDetailEntity, ModuleTypeEnum.SAMPLE_RETURN_INFO.getCode(), sampleReturnInfoEntity.getId(), String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
                 }
             }
         }

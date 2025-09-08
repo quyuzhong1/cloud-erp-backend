@@ -328,7 +328,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 sampleBorrowDetailService.removeByIds(remove.stream().map(SampleBorrowDetailEntity::getId).collect(Collectors.toList()));
                 //添加日志
                 List<Pair<String, String>> removePairList = remove.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-                operateLogService.batchAddModuleOperateLog("删除SKU【{}】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), removePairList, "编辑操作");
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), removePairList, "编辑操作");
             }
         }
         //处理需要新增的数据
@@ -338,18 +338,17 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
 
             //添加日志
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加SKU【{}】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), addPairList, "编辑操作");
         }
         //处理需要更新的数据
         List<SampleBorrowDetailEntity> updateList = sampleBorrowDetailEntities.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(updateList)){
             sampleBorrowDetailService.updateBatchById(updateList);
             //添加日志
-            String msg = "编辑SKU【{}】";
             for (SampleBorrowDetailEntity sampleBorrowDetailEntity : updateList) {
                 SampleBorrowDetailEntity oldDetail = oldList.stream().filter(e -> Objects.equals(e.getId(), sampleBorrowDetailEntity.getId())).findFirst().orElse(null);
                 if(Objects.nonNull(oldDetail)){
-                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleBorrowDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), msg);
+                    operateLogService.addModuleOperateLogByObj(oldDetail, sampleBorrowDetailEntity, ModuleTypeEnum.SAMPLE_BORROW_INFO.getCode(), sampleBorrowInfoEntity.getId(), String.format("编辑SKU【%s】",oldDetail.getSkuNo()));
                 }
             }
         }
