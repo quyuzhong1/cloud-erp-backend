@@ -1949,6 +1949,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        if (StringUtils.isBlank(importType)){
+            //给个默认值
+            importType=ImportTypeEnum.ADD.getCode();
+        }
 
         if (CollUtil.isNotEmpty(errorNoList)) {
             successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getSerialNumber()) && !errorNoList.contains(e.getSerialNumber())).collect(Collectors.toList());

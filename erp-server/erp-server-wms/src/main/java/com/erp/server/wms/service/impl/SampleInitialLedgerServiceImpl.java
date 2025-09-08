@@ -984,6 +984,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        if (StringUtils.isBlank(importType)){
+            //给个默认值
+            importType=ImportTypeEnum.ADD.getCode();
+        }
 
         if (CollUtil.isNotEmpty(errorNoList)) {
             successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getNo()) && !errorNoList.contains(e.getNo())).collect(Collectors.toList());
