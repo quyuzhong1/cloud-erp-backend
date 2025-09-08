@@ -16,6 +16,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.enums.ImportTypeEnum;
@@ -1420,10 +1421,38 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 return result;
             }
             
+            // 1. 验证勾选数据的单据状态：已审核，只支持已审核的单据下推其他出库
+            for (SampleRecipientEntity main : mainList) {
+                if (main.getApproveStatus() != ApproveStatusEnum.APPROVE) {
+                    throw new ServiceException("只有已审核的样品领用单支持下推其他出库单");
+                }
+            }
+            
             // 查询样品领用单明细数据
             List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
                 .in(SampleRecipientDetailEntity::getMainId, ids)
                 .list();
+            
+            if (CollUtil.isEmpty(detailList)) {
+                return result;
+            }
+            
+            // 2. 验证勾选数据执行状态不能全部为已出库状态
+            boolean hasNonCompleteOutstock = detailList.stream()
+                .anyMatch(detail -> !SampleRecipientExecStatusEnum.COMPLETE_OUTSTOCK.getExecStatus().equals(detail.getExecStatus()));
+            
+            if (!hasNonCompleteOutstock) {
+                throw new ServiceException("只有待出库，部分出库的样品领用单支持下推其他出库单");
+            }
+            
+            // 3. 过滤出待出库数量大于0的明细数据
+            detailList = detailList.stream()
+                .filter(detail -> {
+                    Integer recipientQty = detail.getRecipientQty() != null ? detail.getRecipientQty() : 0;
+                    Integer deliveryQty = detail.getDeliveryQty() != null ? detail.getDeliveryQty() : 0;
+                    return (recipientQty - deliveryQty) > 0; // 待出库数量大于0
+                })
+                .collect(Collectors.toList());
             
             if (CollUtil.isEmpty(detailList)) {
                 return result;
