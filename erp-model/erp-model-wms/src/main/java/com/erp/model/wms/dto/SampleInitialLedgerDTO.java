@@ -378,7 +378,7 @@ public class SampleInitialLedgerDTO implements Serializable {
         /**
         * 业务日期
         */
-        @NotEmpty(message = "业务日期不能为空")
+        @NotNull(message = "业务日期不能为空")
         private LocalDate billDate;
 
 

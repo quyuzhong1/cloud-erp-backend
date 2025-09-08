@@ -990,9 +990,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if(CollUtil.isEmpty(list)) {
            return;
         }
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
-        Map<String, String> warehouseNameMap = warehouseList.stream()
-            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
+//        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(list.stream().map(SampleRecipientDTO.ListDTO::getWarehouseId).collect(Collectors.toList()));
+//        Map<String, String> warehouseNameMap = warehouseList.stream()
+//            .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName));
         // 用户
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(list.stream().map(SampleRecipientDTO.ListDTO::getUserId).collect(Collectors.toList()));
 
@@ -1005,7 +1005,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             data.setUsage(SampleUsageEnum.getName(data.getUsage()));
             data.setUsageScope(SampleUsageScopeEnum.getName(data.getUsageScope()));
             // 设置仓库名称
-            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
+//            data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
             data.setExecStatusName(SampleRecipientExecStatusEnum.getName(data.getExecStatus()));
             data.setUserName(userNameMap.get(data.getUserId()));
             data.setUseUserName(userNameMap.get(data.getUseUserId()));
@@ -1182,7 +1182,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
             
             // 2. 构建调用LogisticsFeign的参数
-            List<InventorySkuCostDTO.QueryDetailDTO> queryDetailList = new ArrayList<>();
+            List<String> skuIds = new ArrayList<>();
+            List<String> warehouseIds = new ArrayList<>();
+            String orgId = null;
+            
             for (SampleRecipientDTO.SkuCostQueryDetailDTO detail : dto.getDetailList()) {
                 // 找到对应的SKU信息
                 SkuVO sku = skuList.stream()
@@ -1191,21 +1194,27 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                         .orElse(null);
                 
                 if (sku != null) {
-                    InventorySkuCostDTO.QueryDetailDTO queryDetail = InventorySkuCostDTO.QueryDetailDTO.builder()
-                            .skuId(sku.getSkuId())
-                            .warehouseId(detail.getWarehouseId())
-                            .build();
-                    queryDetailList.add(queryDetail);
+                    skuIds.add(sku.getSkuId());
+                    warehouseIds.add(detail.getWarehouseId());
+                    if (orgId == null) {
+                        orgId = detail.getOrgId();
+                    }
                 }
             }
             
-            if (CollUtil.isEmpty(queryDetailList)) {
+            if (CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseIds) || orgId == null) {
                 log.warn("没有有效的查询参数");
                 return Collections.emptyList();
             }
             
-            // 3. 调用LogisticsFeign查询SKU成本
-            List<InventorySkuCostDTO.SkuCostDTO> skuCostList = logisticsFeign.listSkuCostByDetailList(queryDetailList);
+            // 3. 调用LogisticsFeign查询SKU成本（人民币）
+            InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
+                    .skuIds(skuIds)
+                    .warehouseIds(warehouseIds)
+                    .orgId(orgId)
+                    .build();
+            
+            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
             
             // 4. 组装返回结果
             List<SampleRecipientDTO.SkuDTO> result = new ArrayList<>();
@@ -1222,20 +1231,21 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                     skuDTO.setSkuId(sku.getSkuId());
                 }
                 
-                // 找到对应的成本信息
-                InventorySkuCostDTO.SkuCostDTO skuCost = skuCostList.stream()
+                // 找到对应的成本信息（人民币）
+                InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
                         .filter(cost -> cost.getSkuId().equals(sku != null ? sku.getSkuId() : null) 
                                 && cost.getWarehouseId().equals(detail.getWarehouseId()))
                         .findFirst()
                         .orElse(null);
                 
                 if (skuCost != null) {
-                    // 使用材料成本作为SKU成本
-                    skuDTO.setSkuCost(skuCost.getProductCost() != null ? skuCost.getProductCost() : BigDecimal.ZERO);
+                    // 使用人民币材料成本作为SKU成本
+                    skuDTO.setSkuCost(skuCost.getProductCostCNY() != null ? skuCost.getProductCostCNY() : BigDecimal.ZERO);
+                    skuDTO.setCurrency("CNY"); // 统一使用人民币
                 } else {
                     skuDTO.setSkuCost(BigDecimal.ZERO);
                 }
-                
+
                 result.add(skuDTO);
                 }
             

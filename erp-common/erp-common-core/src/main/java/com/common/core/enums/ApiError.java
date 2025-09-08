@@ -1126,7 +1126,7 @@ public enum ApiError implements Serializable {
 
     ERROR_SAMPLE_AVAILABLE_QTY(99153,"SKU【{}】{}数量不能大于台账数量"),
     ERROR_SAMPLE_BORROW_DATE(99154,"预计退回日期不能小于借用日期"),
-    ERROR_GENERATE_SAMPLE_RETURN_VIEW(99155,"只有已审核的样品借用单支持下推样品归还单"),
+    ERROR_GENERATE_SAMPLE_RETURN_VIEW(99155,"只有已审核且待归还数量大于0的样品借用单支持下推样品归还单"),
     ERROR_GENERATE_SAMPLE_VIEW(99156,"台账数量为0，无法下推{}"),
     ERROR_GENERATE_SAMPLE_USER_IDS(99157,"请勿选择多个{}"),
     ERROR_SAMPLE_RETURN_QTY_NOT_EXIST(99158,"【{}】不存在可归还数量"),
