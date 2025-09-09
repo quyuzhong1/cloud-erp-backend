@@ -181,9 +181,9 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
      */
     private void validateAndResolveIds(SampleRecipientExcelDTO data, List<String> errorMsgList) {
 
-        String usage = SampleUsageEnum.getUsageByName(data.getUsage());
+        String usage = SampleUsageEnum.getUsageByName(data.getUsageStr());
         if (StringUtils.isBlank(usage)){
-            errorMsgList.add(CharSequenceUtil.format("未知用途:{}",data.getUsage()));
+            errorMsgList.add(CharSequenceUtil.format("未知用途:{}",data.getUsageStr()));
         }else {
             data.setUsage(usage);
         }
@@ -220,12 +220,12 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             data.setPickOrgId(orgId);
         }
         
-        if (data.getUsageScope() == null || data.getUsageScope().trim().isEmpty()) {
+        if (data.getUsageScopeStr() == null || data.getUsageScopeStr().trim().isEmpty()) {
             errorMsgList.add("使用范围不能为空");
         }
-        String usageScopeByName = SampleUsageScopeEnum.getUsageScopeByName(data.getUsageScope());
+        String usageScopeByName = SampleUsageScopeEnum.getUsageScopeByName(data.getUsageScopeStr());
         if (StringUtils.isBlank(usageScopeByName)){
-            errorMsgList.add(CharSequenceUtil.format("未知使用范围:{}",data.getUsageScope()));
+            errorMsgList.add(CharSequenceUtil.format("未知使用范围:{}",data.getUsageScopeStr()));
         }else {
             data.setUsageScope(usageScopeByName);
         }

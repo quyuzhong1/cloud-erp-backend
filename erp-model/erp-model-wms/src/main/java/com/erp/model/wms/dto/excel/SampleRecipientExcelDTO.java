@@ -44,6 +44,8 @@ public class SampleRecipientExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "*用途", index = 2)
     @FieldValid(fieldName = "*用途",isNotBlank = true)
+    private String usageStr;
+    @ExcelIgnore
     private String usage;
 
     /**
@@ -92,8 +94,9 @@ public class SampleRecipientExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "*使用范围", index = 7)
     @FieldValid(fieldName = "*使用范围",isNotBlank = true)
+    private String usageScopeStr;
+    @ExcelIgnore
     private String usageScope;
-
     /**
      * 使用方
      */
