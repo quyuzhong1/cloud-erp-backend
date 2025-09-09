@@ -46,4 +46,13 @@ public interface DictSampleUseUserService extends SuperService<DictSampleUseUser
      * @return java.util.List<com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO>
      */
     List<SampleUseUserDTO.ViewDTO> getListByCondition(SampleUseUserDTO.QueryDTO queryDTO);
+
+    /**
+     * 根据名称列表批量查询示例用户
+     * @author Lambda
+     * @date 2025-01-27 16:33
+     * @param nameList 名称列表
+     * @return java.util.List<com.erp.model.sys.dto.SampleUseUserDTO.ViewDTO>
+     */
+    List<SampleUseUserDTO.ViewDTO> getListByNameList(List<String> nameList);
 }

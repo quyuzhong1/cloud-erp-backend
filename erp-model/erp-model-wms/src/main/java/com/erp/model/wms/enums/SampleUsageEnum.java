@@ -62,6 +62,16 @@ public enum SampleUsageEnum implements EnumMessage {
         }
         return "";
     }
+    public static String getUsageByName(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (SampleUsageEnum item : SampleUsageEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getUsage();
+                }
+            }
+        }
+        return "";
+    }
 
     public static SampleUsageEnum getByUsage(String usage) {
         return Arrays.stream(values()).filter(a -> a.getUsage().equals(usage))

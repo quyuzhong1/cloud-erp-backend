@@ -79,5 +79,19 @@ public class DictSampleUseUserController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 根据名称列表批量查询示例用户
+     *
+     * @param nameList 名称列表
+     * @return com.common.core.controller.vo.ApiResult
+     * @author Lambda
+     * @date 2025-01-27 16:29
+     */
+    @PostMapping("/feign/getListByNameList")
+    public ApiResult<List<SampleUseUserDTO.ViewDTO>> getListByNameList(@RequestBody List<String> nameList) {
+        List<SampleUseUserDTO.ViewDTO> list = sampleUseUserService.getListByNameList(nameList);
+        return success(list);
+    }
+
 
 }

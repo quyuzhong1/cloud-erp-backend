@@ -52,6 +52,17 @@ public enum SampleUsageScopeEnum implements EnumMessage {
         return "";
     }
 
+    public static String getUsageScopeByName(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (SampleUsageScopeEnum item : SampleUsageScopeEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getUsageScope();
+                }
+            }
+        }
+        return "";
+    }
+
     public static SampleUsageScopeEnum getByUsageScope(String usageScope) {
         return Arrays.stream(values()).filter(a -> a.getUsageScope().equals(usageScope))
                 .findFirst().orElse(null);
