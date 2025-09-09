@@ -101,6 +101,10 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal orderAmount;
 
         /**
+         * 平台订单编号
+         */
+        private BigDecimal platformOrderCode;
+        /**
          * 军区id
          */
         private String partitionId;
@@ -1016,6 +1020,10 @@ public class SoInfoDTO implements Serializable {
         private String customerOrderNo;
 
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
          * 单据子类型
          */
         private String transactionSubType;
@@ -1044,6 +1052,11 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
+
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
         /**
          * 虚拟仓id
          */
@@ -1527,6 +1540,11 @@ public class SoInfoDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptId;
+
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
 
         /**
          * 销售员id

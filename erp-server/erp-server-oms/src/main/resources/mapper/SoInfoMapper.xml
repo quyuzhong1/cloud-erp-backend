@@ -14,6 +14,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
         si.code,
+        si.platform_order_code as platformOrderCode,
         si.order_amount as orderAmount,
         si.order_type AS orderType,
         si.approve_status AS approveStatus,

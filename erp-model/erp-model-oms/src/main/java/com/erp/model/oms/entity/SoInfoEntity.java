@@ -347,6 +347,11 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("platform_order_id")
     private String platform_order_id;
+    /**
+     * 平台订单编号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
 
     public static final String CODE = "code";
 
