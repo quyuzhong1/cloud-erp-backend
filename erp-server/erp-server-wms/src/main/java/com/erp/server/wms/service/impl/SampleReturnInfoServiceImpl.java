@@ -812,7 +812,7 @@ public class SampleReturnInfoServiceImpl extends SuperServiceImpl<SampleReturnIn
     */
     private void validateSubmit(SampleReturnInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
