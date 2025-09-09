@@ -767,7 +767,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         log.info("提交 开始修改展会订单信息状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动展会订单信息流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
@@ -1368,7 +1367,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
      */
     private void validateSubmit(ExhibitionOrderEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;

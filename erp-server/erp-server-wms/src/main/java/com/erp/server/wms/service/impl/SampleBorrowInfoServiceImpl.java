@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SampleBorrowImportExcelDTO;
 import com.erp.model.wms.entity.SampleBorrowDetailEntity;
 import com.erp.model.wms.entity.SampleBorrowInfoEntity;
+import com.erp.model.wms.entity.SampleReturnInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
@@ -469,7 +470,6 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         log.info("提交 开始修改样品借用单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动样品借用单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
@@ -603,6 +603,16 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        Integer count = sampleReturnInfoService.lambdaQuery()
+                .eq(SampleReturnInfoEntity::getSourceId, entity.getId())
+                .eq(SampleReturnInfoEntity::getSourceType, SampleLedgerTypeEnum.BORROW.getCode())
+                .eq(SampleReturnInfoEntity::getIsDeleted, Boolean.FALSE)
+                .eq(SampleReturnInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_SAMPLE_RETURN_EXIST);
         }
         return true;
     }
@@ -1026,7 +1036,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
     */
     private void validateSubmit(SampleBorrowInfoEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;

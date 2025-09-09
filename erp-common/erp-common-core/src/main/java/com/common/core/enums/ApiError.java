@@ -1134,6 +1134,7 @@ public enum ApiError implements Serializable {
     ERROR_SAMPLE_LEDGER_NOT_EXIST(99160,"样品台账不存在"),
     ERROR_SAMPLE_BORROW_USER_SAME(99161,"借入人和借出人不能相同"),
     ERROR_SAMPLE_RETURN_USER_SAME(99162,"归还人和接收人不能相同"),
+    ERROR_SAMPLE_RETURN_EXIST(99163,"已下推的归还单不支持反审核"),
 
 
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
