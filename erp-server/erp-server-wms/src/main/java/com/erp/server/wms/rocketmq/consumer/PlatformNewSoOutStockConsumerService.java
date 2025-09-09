@@ -204,14 +204,6 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
             log.warn("[销售出库销售消费服务]:当前销售出库单【{}】发货单号为空", dto.getPlatformCode());
             return;
         }
-        String platformDetailId = dto.getDetailList().get(0).getPlatformDetailId();
-        if (CharSequenceUtil.isNotBlank(platformDetailId)){
-            Integer count = soOutstockDetailService.lambdaQuery().eq(SoOutstockDetailEntity::getPlatformDetailId, platformDetailId).count();
-            if (count > 0){
-                log.warn("[销售出库销售消费服务]:当前销售出库单【{}】已存在", dto.getPlatformCode());
-                return;
-            }
-        }
         List<PlatformSoOutStockDetailDTO> detailList = dto.getDetailList();
         //生成销售出库单
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soMultiChannelFeign.getSoOutstockGenerateB2cDTO(dto.getMerchantOrderId());
@@ -224,10 +216,20 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         generateB2cDTO.getDetailList().forEach(detail -> {
             PlatformSoOutStockDetailDTO platformSoOutStockDetailDTO = detailList.stream().filter(e -> e.getMerchantOrderItemId().equals(detail.getSoDetailId())).findFirst().orElse(null);
             if (Objects.nonNull(platformSoOutStockDetailDTO)) {
-                detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
-                detail.setPlatformCode(platformSoOutStockDetailDTO.getPlatformCode());
-                generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
-                detailList1.add(detail);
+                String platformDetailId = platformSoOutStockDetailDTO.getPlatformDetailId();
+                Integer count = 0;
+                if (CharSequenceUtil.isNotBlank(platformDetailId)){
+                    count = soOutstockDetailService.lambdaQuery().eq(SoOutstockDetailEntity::getPlatformDetailId, platformDetailId).count();
+                }
+                if (count > 0){
+                    log.warn("[销售出库销售消费服务]:当前销售出库单【{}】已存在", dto.getPlatformCode());
+                }else {
+                    detail.setActualQty(platformSoOutStockDetailDTO.getQtyShipped());
+                    detail.setPlatformCode(platformSoOutStockDetailDTO.getPlatformCode());
+                    detail.setPlatformDetailId(platformSoOutStockDetailDTO.getPlatformDetailId());
+                    generateB2cDTO.setBillDate(platformSoOutStockDetailDTO.convertPlatformDeliveryDateTime());
+                    detailList1.add(detail);
+                }
             }
         });
         if (CollUtil.isEmpty(detailList1)){
