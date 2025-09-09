@@ -1,16 +1,15 @@
 package com.erp.server.oms.controller.feign;
 
-import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
+import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.oms.service.SoMultiChannelService;
-import com.erp.server.oms.service.SyncTaskService;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @description: 推送数据
@@ -60,5 +59,14 @@ public class SoMultiChannelFeignController {
     @PostMapping("/updateSoOutstock")
     public void updateSoOutstock(@RequestBody PlatformSoOutStockDTO dto){
         soMultiChannelService.updateSoOutstock(dto);
+    }
+
+    /**
+     * 更新多渠道订单出库数量
+     * @param outstockQtyDTOList
+     */
+    @PostMapping("/updateSoMultiOutstockQty")
+    public void updateSoMultiOutstockQty(@RequestBody List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList){
+        soMultiChannelService.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 }

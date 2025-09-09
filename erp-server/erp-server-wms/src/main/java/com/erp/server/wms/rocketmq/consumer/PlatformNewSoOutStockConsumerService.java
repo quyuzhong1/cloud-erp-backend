@@ -238,8 +238,10 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
             return;
         }
         generateB2cDTO.setDetailList(detailList1);
-        soOutstockService.generateB2cSoOutstock(generateB2cDTO);
-        //更新多渠道订单生成出库单标识
-        soMultiChannelFeign.updateSoOutstock(dto);
+        Boolean result = soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+        if (result){
+            //更新多渠道订单生成出库单标识
+            soMultiChannelFeign.updateSoOutstock(dto);
+        }
     }
 }

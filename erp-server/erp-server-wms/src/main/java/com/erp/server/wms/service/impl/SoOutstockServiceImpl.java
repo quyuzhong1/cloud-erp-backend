@@ -44,8 +44,8 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -90,6 +90,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -271,6 +272,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -4112,6 +4115,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(removeIdList);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+        //更新多渠道订单出库数量
+        updateSoMultiOutstockQty(removeList,soOutstockDetailEntityList);
 
         Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
@@ -4150,6 +4155,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         // 返回成功结果
         return resultDTOList;
+    }
+
+    private void updateSoMultiOutstockQty(List<SoOutstockEntity> removeList, List<SoOutstockDetailEntity> soOutstockDetailAllList) {
+        List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList = new ArrayList<>();
+        soOutstockDetailAllList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getPlatformDetailId())).forEach(e -> {
+            SoMultiChannelDetailDTO.OutstockQtyDTO outstockQtyDTO = new SoMultiChannelDetailDTO.OutstockQtyDTO();
+            outstockQtyDTO.setPlatformDetailId(e.getPlatformDetailId());
+            outstockQtyDTO.setSoDetailId(e.getSoDetailId());
+            outstockQtyDTO.setOutstockQty(e.getActualQty());
+            removeList.stream().filter(f -> f.getId().equals(e.getMainId())).findFirst().ifPresent(f -> {
+                outstockQtyDTO.setDeliveryCode(f.getSourceCode());
+            });
+            outstockQtyDTOList.add(outstockQtyDTO);
+        });
+        if (CollUtil.isEmpty(outstockQtyDTOList)){
+            return;
+        }
+        soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 
     @Override

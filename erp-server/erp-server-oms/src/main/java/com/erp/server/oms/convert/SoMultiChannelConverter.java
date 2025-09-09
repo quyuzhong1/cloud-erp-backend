@@ -84,6 +84,7 @@ public interface SoMultiChannelConverter {
             @Mapping(target = "sellerName", source = "customerInfoEntity.sellerName"),
             @Mapping(target = "transportNo", source = "soMultiChannelEntity.trackNo"),
             @Mapping(target = "trackNo", source = "soMultiChannelEntity.trackNo"),
+            @Mapping(target = "sourceType", constant = "soMultiChannel"),
             @Mapping(target = "warehouseId", source = "soB2cDetailEntity.warehouseId"),
             @Mapping(target = "warehouseName", source = "soB2cDetailEntity.warehouseName"),
             @Mapping(target = "warehouseOrgId", source = "soB2cDetailEntity.warehouseOrgId"),

@@ -196,15 +196,11 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         thirdWarehouseDeliveryEntity.setShippingMethod(soMultiChannelEntity.getShippingMethod());
         List<ThirdWarehouseDeliveryDetailEntity> detailEntityList = new ArrayList<>();
         //根据SKU+库存SKU（FNSKU）行合并数量累加
-        Map<String, List<SoMultiChannelDetailEntity>> collect = soMultiChannelDetailEntities.stream().collect(Collectors.groupingBy(e -> e.getSkuNo() + "-" + e.getFnSku()));
-        for (Map.Entry<String, List<SoMultiChannelDetailEntity>> entry : collect.entrySet()) {
-            List<SoMultiChannelDetailEntity> value = entry.getValue();
-            int qty = value.stream().mapToInt(SoMultiChannelDetailEntity::getQty).sum();
-            SoMultiChannelDetailEntity detailEntity = value.get(0);
+        for (SoMultiChannelDetailEntity detailEntity : soMultiChannelDetailEntities) {
             ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
             thirdWarehouseDeliveryDetailEntity.setSkuId(detailEntity.getSkuId());
             thirdWarehouseDeliveryDetailEntity.setSkuNo(detailEntity.getSkuNo());
-            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(qty);
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(detailEntity.getQty());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(soMultiChannelEntity.getDeliveryWarehouseId());
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(detailEntity.getFnSku());
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode("");
@@ -428,7 +424,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-         //只允许创建中和创建失败允许反审核
+        //只允许创建中和创建失败允许反审核
         if (Objects.equals(entity.getCreateStatus(), CreateStatusEnum.CREATING.getCode())) {
             throw new ServiceException("创建中不允许反审核");
         }
@@ -582,7 +578,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoMultiChannelEntity::getCreateStatus, createResultDTO.getCreateStatus())
                 .set(SoMultiChannelEntity::getSignOrderError, CharSequenceUtil.isNotBlank(createResultDTO.getMsg()) ? createResultDTO.getMsg() : "")
                 .eq(SoMultiChannelEntity::getId, createResultDTO.getId()).update();
-        if (CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus())){
+        if (CreateStatusEnum.FAILED.getCode().equals(createResultDTO.getCreateStatus())) {
             Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(soMultiChannelEntity.getCode()), "亚马逊订单创建失败，取消同步"));
             if (!b) {
                 throw new ServiceException("创建订单失败，取消亚马逊订单同步失败");
@@ -810,6 +806,43 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                     .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId())
                     .update();
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新物流单信息跟踪号【{}】运单号【{}】发货时间【{}】", bean.getTrackNo(), bean.getTrackNo(), bean.getDeliveryTime()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "多渠道订单信息同步");
+        }
+    }
+
+    @Override
+    public void updateSoMultiOutstockQty(List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList) {
+        if (CollUtil.isEmpty(outstockQtyDTOList)) {
+            return;
+        }
+        List<String> deliveryCodeList = outstockQtyDTOList.stream().map(SoMultiChannelDetailDTO.OutstockQtyDTO::getDeliveryCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoMultiChannelEntity> list = this.lambdaQuery().in(SoMultiChannelEntity::getDeliveryCode, deliveryCodeList).list();
+        List<String> ids = list.stream().map(SoMultiChannelEntity::getId).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = soMultiChannelDetailService.listByMainIds(ids);
+        if (CollUtil.isEmpty(soMultiChannelDetailEntities)) {
+            return;
+        }
+        for (SoMultiChannelDetailEntity soMultiChannelDetailEntity : soMultiChannelDetailEntities) {
+            int sum = outstockQtyDTOList.stream().filter(e -> e.getSoDetailId().equals(soMultiChannelDetailEntity.getSoDetailId())).mapToInt(SoMultiChannelDetailDTO.OutstockQtyDTO::getOutstockQty).sum();
+            if (sum > 0) {
+                int hasOutstockQty = Math.max(soMultiChannelDetailEntity.getHasOutstockQty() - sum, 0);
+                String outstockStatus;
+                if (hasOutstockQty >= soMultiChannelDetailEntity.getDeliveryQty()) {
+                    outstockStatus = OutstockStatusEnum.ALL.getCode();
+                } else if (hasOutstockQty > 0) {
+                    outstockStatus = OutstockStatusEnum.PART.getCode();
+                } else {
+                    outstockStatus = OutstockStatusEnum.NONE.getCode();
+                }
+                soMultiChannelDetailService.lambdaUpdate()
+                        .set(SoMultiChannelDetailEntity::getHasOutstockQty, hasOutstockQty)
+                        .set(SoMultiChannelDetailEntity::getOutstockStatus, outstockStatus)
+                        .eq(SoMultiChannelDetailEntity::getId, soMultiChannelDetailEntity.getId())
+                        .update();
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细信息出库数量【{}】出库状态【{}】", hasOutstockQty, OutstockStatusEnum.getName(outstockStatus)), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelDetailEntity.getMainId(), "销售出库单删除");
+            }
         }
     }
 
