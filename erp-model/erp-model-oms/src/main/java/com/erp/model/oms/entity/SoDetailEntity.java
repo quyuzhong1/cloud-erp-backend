@@ -281,6 +281,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 平台明细Id
+     */
+    @TableField("platform_detail_id")
+    private String platform_detail_id;
 
 
     public static final String MAIN_ID = "main_id";

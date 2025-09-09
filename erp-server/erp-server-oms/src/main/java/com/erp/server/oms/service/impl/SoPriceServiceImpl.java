@@ -158,7 +158,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, soPrice.getId());
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, soPrice.getId());
         //添加明细
         soPriceDetailService.addPriceDetail(soPrice.getId(), dto.getSoPriceDetailList());
         //添加日志
@@ -280,7 +280,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
         //获取到表名
         String type = tableName.value();
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        attachmentService.batchSaveOrUpdate(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
         //修改明细
         soPriceDetailService.updatePriceDetail(id, dto.getSoPriceDetailList());
         return soPrice;

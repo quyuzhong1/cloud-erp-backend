@@ -35,7 +35,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -79,6 +78,18 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/getErrorData")
 	public DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody DmpSyncTaskDTO.OneDTO oneDTO) {
 		return dmpOutputTaskRecordService.getErrorData(oneDTO);
+	}
+
+	/**
+	 * 获取最后一条拉取记录
+	 * @author will
+	 * @date 2025/8/27 18:24
+	 * @param paramDTO
+	 * @return LastPullDTO
+	 */
+	@PostMapping("/getLastPullRecord")
+	public DmpPushTaskDTO.LastPullDTO getLastPullRecord(@RequestBody DmpPushTaskDTO.LastPullParamDTO paramDTO) {
+		return dmpOutputTaskRecordService.getLastPullRecord(paramDTO);
 	}
 
 

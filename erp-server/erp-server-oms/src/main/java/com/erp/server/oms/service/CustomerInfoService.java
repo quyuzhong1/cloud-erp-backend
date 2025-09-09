@@ -395,4 +395,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     List<CustomerInfoEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(CustomerInfoEntity entity);
+
+    CustomerDTO.ThirdCustomerAccountDTO getThirdCustomerAccount(BaseIdDTO dto);
 }

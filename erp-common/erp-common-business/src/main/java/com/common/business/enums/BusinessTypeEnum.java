@@ -27,6 +27,7 @@ public enum BusinessTypeEnum implements EnumMessage {
     PRODUCT_LISTING("product_listing","商品列表", SourceTypeEnum.LISTING_INFO),
 
     GLOBAL_PRODUCT("global_product","全球商品", SourceTypeEnum.LISTING_INFO),
+    LISTING_INFO("listingInfo","获取出库单状态", SourceTypeEnum.LISTING_INFO),
     // TODO 补充来源类型
     RETURN("return","退货单", null),
     DELIVERY("delivery","发货单", SourceTypeEnum.SO_B2C_DELIVERY),
@@ -54,6 +55,8 @@ public enum BusinessTypeEnum implements EnumMessage {
     INBOUND("inbound","获取收货批次", SourceTypeEnum.THIRD_WAREHOUSE_GET_INBOUND_RECEIPT),
     OUTBOUND("outbound","获取出库单状态", SourceTypeEnum.THIRD_WAREHOUSE_GET_OUTBOUND_RECEIPT),
     INVENTORY("inventory","库存", SourceTypeEnum.THIRD_WAREHOUSE_GET_INVENTORY)
+
+
     ;
 
     @JsonValue

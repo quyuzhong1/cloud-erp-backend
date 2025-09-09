@@ -34,6 +34,9 @@ public enum DictBasicTypeEnum {
     ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
     MINI_PROGRAM_SALES_PLATFORM_INTERNAL("miniProgramSalesPlatform" , "微信小程序国内销售平台"),
 
+    CREDIT_PERIOD("creditPeriod",  "授信账期"),
+    CREDIT_TYPE("creditType",  "授信类型"),
+
     // 数帝云
     SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),
     SDY_PARTITION_LEVEL1_DEPT("sdyPartitionLevel1Dept" , "数帝云军区一级部门映射"),

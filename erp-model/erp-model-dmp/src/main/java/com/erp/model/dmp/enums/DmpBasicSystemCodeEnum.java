@@ -34,6 +34,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     CAINIAO("cainiao", "菜鸟仓"),
     WEI_SHI("weishi", "纬狮"),
     DA_MAI("damai", "大卖仓"),
+    DHT("dht", "订货通"),
     ;
     /**
      * 类型

@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
@@ -334,6 +335,37 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     BatchResultDTO generateCustomerLabel(ListingInfoEntity entity, SkuMappingEntity skuMapping);
 
     List<BatchResultDTO> pushProduct(List<String> ids);
+    /**
+     * b2b平台分页列表
+     * @author will
+     * @date 2025/8/26 17:00
+     * @param dto
+     * @return PagingVO<PagingViewDTO>
+     */
+    PagingVO<SkuMappingDTO.PagingViewDTO> b2bPlatformPaging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
+    /**
+     * 查看b2b平台sku同步
+     * @author will
+     * @date 2025/8/27 10:18
+     * @return PagingViewDTO
+     */
+    DmpPushTaskDTO.LastPullDTO viewB2bPlatformSyncSku();
+    /**
+     * b2b平台sku同步
+     * @author will
+     * @date 2025/8/27 10:28
+     * @param dto
+     * @return Boolean
+     */
+    Boolean b2bPlatformSyncSku(SkuMappingDTO.SyncSkuDTO dto);
+    /**
+     * 导出b2b平台SKU列表
+     * @author will
+     * @date 2025/8/27 16:18
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportB2bPlatformSku(SkuMappingDTO.ExportDTO dto);
 
     /**
      * 单个同步商品

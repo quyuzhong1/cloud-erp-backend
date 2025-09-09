@@ -3,7 +3,6 @@ package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,7 +17,8 @@ import java.util.stream.Stream;
  */
 @Getter
 public enum RuleTypeEnum implements EnumMessage {
-    PLATFORM("platform","平台"),
+    B2C_PLATFORM("platform","b2c平台"),
+    B2B_PLATFORM("b2b_platform","b2b平台"),
     WAREHOUSE("warehouse","仓库"),
     CUSTOMER("customer","客户"),
     ASSIGN("assign","指定物流"),

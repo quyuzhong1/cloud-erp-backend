@@ -14,8 +14,10 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -526,4 +528,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     List<ExhibitionOrderDTO.DownstreamListDTO> listByExhibitionId(String exhibitionId);
+
+    void updateSoReceiptAmount(Map<String, BigDecimal> updateSoReceiptAmountMap);
 }

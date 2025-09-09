@@ -1351,6 +1351,9 @@ public enum ApiError implements Serializable {
 
 
 
+    ERROR_UPDATE_IS_ALLOW_OUTSTOCK(92288,"只有待通知出库状态下允许操作待通知出库"),
+
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
