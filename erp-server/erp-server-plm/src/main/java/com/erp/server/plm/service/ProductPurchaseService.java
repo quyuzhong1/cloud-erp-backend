@@ -100,4 +100,6 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
     ProductPurchaseEntity getByEan(String ean);
 
     ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId);
+
+    List<ProductDetailDTO.SkuDTO> listSkuInfoByEanOrSkuNo(ProductDetailDTO.SearchDTO dto);
 }

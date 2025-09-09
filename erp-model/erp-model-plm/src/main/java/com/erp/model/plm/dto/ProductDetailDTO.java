@@ -142,6 +142,7 @@ public class ProductDetailDTO implements Serializable {
 
         /**
          * 状态
+         * 任务状态 0待审核，1审核中，2审核通过，3审核不通过，4待提交
          */
         private  Integer status;
 
@@ -385,6 +386,10 @@ public class ProductDetailDTO implements Serializable {
          * 标准零售价
          */
         private BigDecimal retailPrice;
+        /**
+         * 状态
+         */
+        private  Integer status;
     }
 
     @Data

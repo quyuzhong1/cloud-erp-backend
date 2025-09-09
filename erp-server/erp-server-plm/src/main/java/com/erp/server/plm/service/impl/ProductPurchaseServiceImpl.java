@@ -16,6 +16,7 @@ import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -258,6 +260,24 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     @Override
     public ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(String skuId) {
         return baseMapper.listWavePickingDTOBySkuIds(skuId);
+    }
+
+    @Override
+    public List<ProductDetailDTO.SkuDTO> listSkuInfoByEanOrSkuNo(ProductDetailDTO.SearchDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getSearchKeyword())) {
+            return null;
+        }
+        List<ProductDetailDTO.SkuDTO> skuDTOS = baseMapper.listSkuInfoByEanOrSkuNo(dto);
+        if (CollectionUtils.isEmpty(skuDTOS)) {
+            return null;
+        }
+        //存在的已审核sku
+        List<String> skuNoList = skuDTOS.stream().filter(e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+        String skuNOs = skuDTOS.stream().filter(e -> !Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode()) && !skuNoList.contains(e.getSkuNo())).map(ProductDetailDTO.SkuDTO::getSkuNo).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(skuNOs)){
+            throw new ServiceException("扫码SKU【{}】未审核", skuNOs);
+        }
+        return skuDTOS.stream().filter( e -> Objects.equals(e.getStatus(), ProductDetailStatusEnum.APPROVAL_PASS.getCode())).collect(Collectors.toList());
     }
 }
 
