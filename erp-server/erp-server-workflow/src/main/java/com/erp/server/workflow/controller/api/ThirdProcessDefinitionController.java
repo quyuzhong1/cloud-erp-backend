@@ -19,6 +19,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.CfgThirdProcessDTO;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -46,6 +47,9 @@ public class ThirdProcessDefinitionController extends BaseController {
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
 
+
+    @Resource
+    private FsService fsService;
     /**
      * 新增
      *
@@ -226,4 +230,14 @@ public class ThirdProcessDefinitionController extends BaseController {
         return success(thirdProcessDefinitionService.dropDown(type));
     }
 
+    /**
+     * 获取飞书应用id
+     * @author will
+     * @date 2025/9/5 10:57
+     * @return ApiResult<String>
+     */
+    @GetMapping("/getFsAppId")
+    public ApiResult<String> getFsAppId() {
+        return success(fsService.getFsClientId());
+    }
 }
