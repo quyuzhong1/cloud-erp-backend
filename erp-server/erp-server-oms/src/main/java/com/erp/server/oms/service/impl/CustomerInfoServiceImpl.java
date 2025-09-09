@@ -1094,7 +1094,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (dto.getDisabled()) {
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
+        // 发送金蝶
         sendPushTask(customerList,operate);
+        // 发送订货通
+        sendDhtPushTask(customerList, operate);
         return  update;
     }
 
