@@ -48,6 +48,17 @@ public class DhtCommonService {
         return bodyStr;
     }
 
+
+    public String  download(DhtDownloadReq req) {
+        DhtAuthDTO authDTO = getCorpAccessToken();
+        req.setCorpAccessToken(authDTO.getCorpAccessToken());
+        req.setCorpId(authDTO.getCorpId());
+        String api = "/media/download";
+        Map<String, String> headerMap = new HashMap<>();
+        String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, JSONUtil.toJsonStr(req), headerMap);
+        return bodyStr;
+    }
+
     /**
      * 简单查询
      * @param req
@@ -93,26 +104,27 @@ public class DhtCommonService {
         String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.DHT.getCode(),"1600000000000000000");
         Object token = redisUtil.get(tokenKey);
         if(token != null){
-            return (DhtAuthDTO) token;
+            return JSON.parseObject(token.toString(), new TypeReference<DhtAuthDTO>() {});
         }else{
-            Map<String, String> headerMap = new HashMap<>();
-            Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("appId", dhtConfig.appId());
-            bodyMap.put("appSecret", dhtConfig.appSecret());
-            bodyMap.put("permanentCode", dhtConfig.permanentCode());
-            String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, bodyMap, headerMap);
-            DhtAuthDTO dto = JSON.parseObject(bodyStr, new TypeReference<DhtAuthDTO>() {});
-            if(Objects.isNull(dto)){
-                log.error("订货通获取accessToken失败，返回结果：{}", bodyStr);
-                throw new RuntimeException("订货通获取accessToken失败");
-            }
-            if(dto.getErrorCode()!=0){
-                log.error("订货通获取accessToken失败，返回结果：{}", bodyStr);
-                throw new RuntimeException("订货通获取accessToken失败，错误码：" + dto.getErrorCode() + "，错误信息：" + dto.getErrorMessage());
-            }
-            //缓存6900s 6600-7200s会获取新token  必须保证过期时间在这个范围内
-            redisUtil.set(tokenKey, dto, 6900);
-            return dto;
+//            Map<String, String> headerMap = new HashMap<>();
+//            Map<String, Object> bodyMap = new HashMap<>();
+//            bodyMap.put("appId", dhtConfig.appId());
+//            bodyMap.put("appSecret", dhtConfig.appSecret());
+//            bodyMap.put("permanentCode", dhtConfig.permanentCode());
+//            String bodyStr = OkHttpUtils.doPostJson(dhtConfig.url() + api, bodyMap, headerMap);
+//            DhtAuthDTO dto = JSON.parseObject(bodyStr, new TypeReference<DhtAuthDTO>() {});
+//            if(Objects.isNull(dto)){
+//                log.error("订货通获取accessToken失败，返回结果：{}", bodyStr);
+//                throw new RuntimeException("订货通获取accessToken失败");
+//            }
+//            if(dto.getErrorCode()!=0){
+//                log.error("订货通获取accessToken失败，返回结果：{}", bodyStr);
+//                throw new RuntimeException("订货通获取accessToken失败，错误码：" + dto.getErrorCode() + "，错误信息：" + dto.getErrorMessage());
+//            }
+//            //缓存6900s 6600-7200s会获取新token  必须保证过期时间在这个范围内
+//            redisUtil.set(tokenKey, dto, 6900);
+//            return dto;
+            return null;
         }
     }
 }

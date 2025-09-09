@@ -1,6 +1,6 @@
 package com.sdk.oms.dht.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,16 +15,24 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class DhtAuthDTO extends BaseResult{
 
-
-    @JsonProperty("corpAccessToken")
-    private String corpAccessToken;
-
-    @JsonProperty("corpId")
+    @JSONField(name = "corpId")
     private String corpId;
-
-    @JsonProperty("expiresIn")
+    @JSONField(name = "mobile")
+    private String mobile;
+    @JSONField(name = "openUserId")
+    private String openUserId;
+    @JSONField(name = "url")
+    private String url;
+    @JSONField(name = "expiresIn")
     private Integer expiresIn;
-
-    @JsonProperty("traceId")
-    private String traceId;
+    @JSONField(name = "corpAccessToken")
+    private String corpAccessToken;
+    @JSONField(name = "name")
+    private String name;
+    @JSONField(name = "enterpriseId")
+    private Integer enterpriseId;
+    @JSONField(name = "account")
+    private String account;
+    @JSONField(name = "status")
+    private String status;
 }

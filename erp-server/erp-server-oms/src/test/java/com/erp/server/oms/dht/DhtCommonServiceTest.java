@@ -45,9 +45,19 @@ public class DhtCommonServiceTest {
         req.setCurrentOpenUserId(resp1.getEmpList().get(0).getOpenUserId());
         req.setData(DhtQueryObjReq.DataDTO.builder()
                 .includeDetail(true)
-                .apiName("FundAccountObj")
+                .apiName("PaymentObj")
                 .build());
         String resp = dhtCommonService.queryObj(req);
+        System.out.println(JSONUtil.toJsonStr(resp));
+    }
+
+    @Test
+    public void download() {
+        DhtDownloadReq req = new DhtDownloadReq();
+        req.setMediaTypeDesc("IMAGE");
+        req.setIgonreMediaIdConvert(true);
+        req.setMediaId("N_202508_07_1a88a44dd657466e944a365dcf90733f.jpeg");
+        String resp = dhtCommonService.download(req);
         System.out.println(JSONUtil.toJsonStr(resp));
     }
 

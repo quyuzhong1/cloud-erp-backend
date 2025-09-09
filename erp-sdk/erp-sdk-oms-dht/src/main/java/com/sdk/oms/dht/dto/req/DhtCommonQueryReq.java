@@ -71,7 +71,7 @@ public class DhtCommonQueryReq extends BaseReq {
                 @Alias("field_name")
                 private String fieldName;
                 @Alias("field_values")
-                private List<String> fieldValues;
+                private List<Object> fieldValues;
             }
         }
     }

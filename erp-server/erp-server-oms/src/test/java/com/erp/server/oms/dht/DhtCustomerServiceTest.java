@@ -93,12 +93,11 @@ public class DhtCustomerServiceTest {
                         .orders(null)
                         .filters(Arrays.asList(
                                 DhtCommonQueryReq.DataDTO.SearchQueryInfoDTO.FiltersDTO.builder()
-                                        .fieldName("erp_number__c")
-                                        .fieldValues(Arrays.asList("TEST_CUST_20250821"))
+                                        .fieldName("_id")
+                                        .fieldValues(Arrays.asList("689d87b0aa607b00019ef4c2"))
                                         .operator("EQ")
                                         .build()
                         ))
-                        .fieldProjection(Arrays.asList("_id","erp_number__c","account_no", "name", "object_describe_api_name", "record_type", "customer_status__c","account_status"))
                         .build())
                 .build();
         req.setData(dataDTO);
