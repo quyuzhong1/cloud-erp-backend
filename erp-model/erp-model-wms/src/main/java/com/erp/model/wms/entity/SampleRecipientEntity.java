@@ -82,6 +82,11 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     */
     @TableField("warehouse_id")
     private String warehouseId;
+    /**
+    * 发货仓库名称
+    */
+    @TableField(exist = false)
+    private String warehouseName;
 
     /**
     * 领用人ID
@@ -98,6 +103,11 @@ public class SampleRecipientEntity extends BaseEntity<SampleRecipientEntity> {
     */
     @TableField("dept_id")
     private String deptId;
+    /**
+    * 领用部门名称
+    */
+    @TableField(exist = false)
+    private String deptName;
     /**
     * 领料组织ID
     */

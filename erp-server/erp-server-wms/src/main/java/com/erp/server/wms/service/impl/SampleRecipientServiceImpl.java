@@ -16,6 +16,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import org.apache.commons.math3.util.Pair;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -265,6 +266,11 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             throw new ServiceException(ApiError.ERROR_1029);
         }
         SampleRecipientEntity sampleRecipientEntity =  BeanMapperUtils.map(SampleRecipientEntity.class, addOrUpdateDTO);
+        
+        // 查询并回填部门名称和仓库名称
+        fillDeptAndWarehouseNames(old);
+        fillDeptAndWarehouseNames(sampleRecipientEntity);
+        
         // 数据处理
         handleData(sampleRecipientEntity);
 
@@ -336,22 +342,63 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
 
             // 执行删除操作
             if (!toDelete.isEmpty()) {
+                // 查询要删除的明细信息用于日志记录
+                List<SampleRecipientDetailEntity> deleteDetails = existingDetails.stream()
+                    .filter(detail -> toDelete.contains(detail.getId()))
+                    .collect(Collectors.toList());
+                
                 boolean deleteResult = sampleRecipientDetailService.lambdaUpdate()
                     .in(SampleRecipientDetailEntity::getId, toDelete)
                     .remove();
 
                 if (!deleteResult) {
                     log.warn("删除样品领用单明细数据失败，ids：{}", toDelete);
+                } else {
+                    // 添加删除日志
+                    List<Pair<String, String>> deletePairList = deleteDetails.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), deletePairList, "编辑操作");
                 }
                 log.info("删除样品领用单明细数据成功，共删除{}条明细", toDelete.size());
             }
 
             // 执行保存/更新操作
             if (!toSave.isEmpty()) {
+                // 分离新增和更新的明细
+                List<SampleRecipientDetailEntity> addList = toSave.stream()
+                    .filter(e -> StringUtils.isBlank(e.getId()))
+                    .collect(Collectors.toList());
+                List<SampleRecipientDetailEntity> updateList = toSave.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getId()))
+                    .collect(Collectors.toList());
+
                 boolean saveResult = sampleRecipientDetailService.saveOrUpdateBatch(toSave);
                 if (!saveResult) {
                     throw new ServiceException("样品领用单明细保存失败");
                 }
+
+                // 添加新增日志
+                if (CollUtil.isNotEmpty(addList)) {
+                    List<Pair<String, String>> addPairList = addList.stream()
+                        .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo()))
+                        .collect(Collectors.toList());
+                    operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), addPairList, "编辑操作");
+                }
+
+                // 添加更新日志
+                if (CollUtil.isNotEmpty(updateList)) {
+                    for (SampleRecipientDetailEntity updateDetail : updateList) {
+                        SampleRecipientDetailEntity oldDetail = existingDetails.stream()
+                            .filter(e -> Objects.equals(e.getId(), updateDetail.getId()))
+                            .findFirst()
+                            .orElse(null);
+                        if (Objects.nonNull(oldDetail)) {
+                            operateLogService.addModuleOperateLogByObj(oldDetail, updateDetail, ModuleTypeEnum.SAMPLE_RECIPIENT.getCode(), addOrUpdateDTO.getId(), String.format("编辑SKU【%s】", oldDetail.getSkuNo()));
+                        }
+                    }
+                }
+
                 log.info("样品领用单明细更新成功，共处理{}条明细", toSave.size());
             }
         }
@@ -2223,6 +2270,39 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         }
         
         return originalQty;
+    }
+
+    /**
+     * 查询并回填部门名称和仓库名称
+     */
+    private void fillDeptAndWarehouseNames(SampleRecipientEntity entity) {
+        if (entity == null) {
+            return;
+        }
+
+        // 查询部门名称
+        if (StrUtil.isNotBlank(entity.getDeptId())) {
+            try {
+                SysDepartmentDTO department = sysUserFeign.getUserDeptById(entity.getDeptId());
+                if (department != null && StrUtil.isNotBlank(department.getName())) {
+                    entity.setDeptName(department.getName());
+                }
+            } catch (Exception e) {
+                log.warn("查询部门名称失败，部门ID：{}，错误：{}", entity.getDeptId(), e.getMessage());
+            }
+        }
+
+        // 查询仓库名称
+        if (StrUtil.isNotBlank(entity.getWarehouseId())) {
+            try {
+                WarehouseEntity warehouse = warehouseService.getById(entity.getWarehouseId());
+                if (warehouse != null && StrUtil.isNotBlank(warehouse.getName())) {
+                    entity.setWarehouseName(warehouse.getName());
+                }
+            } catch (Exception e) {
+                log.warn("查询仓库名称失败，仓库ID：{}，错误：{}", entity.getWarehouseId(), e.getMessage());
+            }
+        }
     }
 
 
