@@ -2029,6 +2029,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 BeanMapperUtils.copy(importDTO, detailDTO);
                 // 明细备注
                 detailDTO.setRemark(importDTO.getDetailRemark());
+                detailDTO.setQuantity(importDTO.getRecipientQty());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);

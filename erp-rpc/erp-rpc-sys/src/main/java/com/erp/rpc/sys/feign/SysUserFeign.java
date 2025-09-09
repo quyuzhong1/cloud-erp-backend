@@ -162,6 +162,12 @@ public interface SysUserFeign {
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
 
     /**
+     * 根据名称列表批量查询示例用户
+     */
+    @PostMapping("feign/sampleUseUser/getListByNameList")
+    ApiResult<List<SampleUseUserDTO.ViewDTO>> getSampleUseUserListByNameList(@RequestBody List<String> nameList);
+
+    /**
      * 查询spu编码
      */
     @PostMapping("feign/code/getSpuNo")

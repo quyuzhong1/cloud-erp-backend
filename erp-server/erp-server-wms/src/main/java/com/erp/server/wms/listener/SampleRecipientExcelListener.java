@@ -1,46 +1,43 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.UserTypeEnum;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
-import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.erp.model.wms.entity.SampleRecipientDetailEntity;
-import com.erp.model.wms.enums.SampleRecipientExecStatusEnum;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.wms.service.SampleRecipientService;
-import com.erp.server.wms.service.SampleRecipientDetailService;
-import com.erp.server.wms.service.WarehouseService;
 import com.erp.model.wms.dto.WarehouseDTO;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
+import com.erp.model.wms.enums.SampleUsageEnum;
+import com.erp.model.wms.enums.SampleUsageScopeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.service.SampleRecipientDetailService;
+import com.erp.server.wms.service.SampleRecipientService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -114,6 +111,9 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             errorMsgList.addAll(msgList);
         }
         
+        // 日期转换处理
+        convertDateFields(data, errorMsgList);
+        
         // 数据校验和ID解析
         validateAndResolveIds(data, errorMsgList);
         
@@ -161,69 +161,96 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
     }
 
     /**
+     * 日期转换处理
+     */
+    private void convertDateFields(SampleRecipientExcelDTO data, List<String> errorMsgList) {
+        // 领用日期转换
+        String recipientDateStr = data.getRecipientDateStr();
+        if (StringUtils.isNotBlank(recipientDateStr)) {
+            try {
+                LocalDate recipientDate = LocalDate.parse(recipientDateStr, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                data.setRecipientDate(recipientDate);
+            } catch (Exception e) {
+                errorMsgList.add("领用日期格式错误，请使用yyyy/M/d格式");
+            }
+        }
+    }
+
+    /**
      * 数据校验和ID解析
      */
     private void validateAndResolveIds(SampleRecipientExcelDTO data, List<String> errorMsgList) {
-        // 必填字段校验
-        if (data.getRecipientDate() == null) {
-            errorMsgList.add("领用日期不能为空");
+
+        String usage = SampleUsageEnum.getUsageByName(data.getUsage());
+        if (StringUtils.isBlank(usage)){
+            errorMsgList.add(CharSequenceUtil.format("未知用途:{}",data.getUsage()));
+        }else {
+            data.setUsage(usage);
         }
-        
-        if (data.getUsage() == null || data.getUsage().trim().isEmpty()) {
-            errorMsgList.add("用途不能为空");
-        }
-        
-        if (data.getWarehouseName() == null || data.getWarehouseName().trim().isEmpty()) {
-            errorMsgList.add("发货仓库不能为空");
+
+        // 验证仓库名称是否存在并解析仓库ID
+        String warehouseId = getWarehouseIdByName(data.getWarehouseName());
+        if (StrUtil.isBlank(warehouseId)) {
+            errorMsgList.add("发货仓库【" + data.getWarehouseName() + "】不存在");
         } else {
-            // 验证仓库名称是否存在并解析仓库ID
-            String warehouseId = getWarehouseIdByName(data.getWarehouseName());
-            if (StrUtil.isBlank(warehouseId)) {
-                errorMsgList.add("发货仓库【" + data.getWarehouseName() + "】不存在");
-            } else {
-                data.setWarehouseId(warehouseId);
-            }
+            data.setWarehouseId(warehouseId);
         }
-        
-        if (data.getUserName() == null || data.getUserName().trim().isEmpty()) {
-            errorMsgList.add("领用人不能为空");
+
+        // 验证用户名称是否存在并解析用户ID
+        String userId = getUserIdByName(data.getUserName());
+        if (StrUtil.isBlank(userId)) {
+            errorMsgList.add("领用人【" + data.getUserName() + "】不存在");
         } else {
-            // 验证用户名称是否存在并解析用户ID
-            String userId = getUserIdByName(data.getUserName());
-            if (StrUtil.isBlank(userId)) {
-                errorMsgList.add("领用人【" + data.getUserName() + "】不存在");
-            } else {
-                data.setUserId(userId);
-            }
+            data.setUserId(userId);
         }
-        
-        if (data.getDeptName() == null || data.getDeptName().trim().isEmpty()) {
-            errorMsgList.add("领用部门不能为空");
+
+        // 验证部门名称是否存在并解析部门ID
+        String deptId = getDeptIdByName(data.getDeptName());
+        if (StrUtil.isBlank(deptId)) {
+            errorMsgList.add("领用部门【" + data.getDeptName() + "】不存在");
         } else {
-            // 验证部门名称是否存在并解析部门ID
-            String deptId = getDeptIdByName(data.getDeptName());
-            if (StrUtil.isBlank(deptId)) {
-                errorMsgList.add("领用部门【" + data.getDeptName() + "】不存在");
-            } else {
-                data.setDeptId(deptId);
-            }
+            data.setDeptId(deptId);
         }
-        
-        if (data.getPickOrgName() == null || data.getPickOrgName().trim().isEmpty()) {
-            errorMsgList.add("领料组织不能为空");
+
+        // 验证组织名称是否存在并解析组织ID
+        String orgId = getOrgIdByName(data.getPickOrgName());
+        if (StrUtil.isBlank(orgId)) {
+            errorMsgList.add("领料组织【" + data.getPickOrgName() + "】不存在");
         } else {
-            // 验证组织名称是否存在并解析组织ID
-            String orgId = getOrgIdByName(data.getPickOrgName());
-            if (StrUtil.isBlank(orgId)) {
-                errorMsgList.add("领料组织【" + data.getPickOrgName() + "】不存在");
-            } else {
-                data.setPickOrgId(orgId);
-            }
+            data.setPickOrgId(orgId);
         }
         
         if (data.getUsageScope() == null || data.getUsageScope().trim().isEmpty()) {
             errorMsgList.add("使用范围不能为空");
         }
+        String usageScopeByName = SampleUsageScopeEnum.getUsageScopeByName(data.getUsageScope());
+        if (StringUtils.isBlank(usageScopeByName)){
+            errorMsgList.add(CharSequenceUtil.format("未知使用范围:{}",data.getUsageScope()));
+        }else {
+            data.setUsageScope(usageScopeByName);
+        }
+
+        // 处理使用方逻辑
+        if (StringUtils.isNotBlank(usageScopeByName)) {
+            if (SampleUsageScopeEnum.INTERNAL_USE.getUsageScope().equals(usageScopeByName)) {
+                // 公司内部使用：使用方名称和ID都用领用人的
+                data.setUseUserName(data.getUserName());
+                data.setUseUserId(data.getUserId());
+            } else if (SampleUsageScopeEnum.EXTERNAL_USE.getUsageScope().equals(usageScopeByName)) {
+                // 公司外部使用：通过nameList eq批量查询获取id
+                if (StringUtils.isNotBlank(data.getUseUserName())) {
+                    String useUserId = getSampleUseUserIdByName(data.getUseUserName());
+                    if (StringUtils.isBlank(useUserId)) {
+                        errorMsgList.add(CharSequenceUtil.format("未知使用方:{}",data.getUseUserName()));
+                    } else {
+                        data.setUseUserId(useUserId);
+                    }
+                } else {
+                    errorMsgList.add(CharSequenceUtil.format("公司外部使用时 使用方不能为空"));
+                }
+            }
+        }
+
         
         if (data.getSkuNo() == null || data.getSkuNo().trim().isEmpty()) {
             errorMsgList.add("SKU不能为空");
@@ -241,10 +268,8 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
                 }
             }
         }
+        data.setRecipientQty( Objects.isNull(data.getRecipientQtyStr()) ? 0 : Integer.parseInt(data.getRecipientQtyStr()));
         
-        if (data.getRecipientQty() == null || data.getRecipientQty() <= 0) {
-            errorMsgList.add("领用数量必须大于0");
-        }
     }
 
     /**
@@ -498,6 +523,42 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
             return null;
         } catch (Exception e) {
             log.error("查询产品名称失败，SKU ID：{}，错误：{}", skuId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 根据使用方名称查询使用方ID（带缓存）
+     */
+    private String getSampleUseUserIdByName(String useUserName) {
+        if (StrUtil.isBlank(useUserName)) {
+            return null;
+        }
+
+        // 先从缓存获取
+        String cacheKey = "sample_use_user_name_to_id:" + useUserName;
+        String useUserId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(useUserId)) {
+            return useUserId;
+        }
+
+        try {
+            // 调用feign接口查询
+            List<String> nameList = Collections.singletonList(useUserName);
+            ApiResult<List<SampleUseUserDTO.ViewDTO>> result = sysUserFeign.getSampleUseUserListByNameList(nameList);
+            
+            if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                SampleUseUserDTO.ViewDTO user = result.getData().get(0);
+                useUserId = user.getId();
+                
+                // 缓存结果，有效期1小时
+                redissonClient.getBucket(cacheKey).set(useUserId, 1, TimeUnit.HOURS);
+                return useUserId;
+            }
+            
+            return null;
+        } catch (Exception e) {
+            log.error("查询使用方ID失败，使用方名称：{}，错误：{}", useUserName, e.getMessage(), e);
             return null;
         }
     }

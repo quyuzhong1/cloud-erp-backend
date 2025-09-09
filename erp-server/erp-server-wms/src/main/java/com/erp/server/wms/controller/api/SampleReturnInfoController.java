@@ -2,10 +2,13 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.dto.SampleReturnDetailDTO;
 import com.erp.server.wms.query.SampleReturnInfoQueryHandler;
@@ -406,7 +409,6 @@ public class SampleReturnInfoController extends BaseController {
         return success();
     }
 
-
     /**
      * 生成样品归还单
      * <p>
@@ -424,57 +426,9 @@ public class SampleReturnInfoController extends BaseController {
      */
     @PostMapping("/generateSampleReturn")
     public ApiResult<List<BatchResultDTO>> generateSampleReturn(@RequestBody @Validated ValidList<SampleBorrowInfoDTO.SampleReturnView> list) {
-        if (CollUtil.isEmpty(list)) {
-            return success(Collections.emptyList());
-        }
-
-        // 按 sourceId 分组
-        Map<String, List<SampleBorrowInfoDTO.SampleReturnView>> sourceGroupMap = list.stream()
-                .collect(Collectors.groupingBy(SampleBorrowInfoDTO.SampleReturnView::getSourceId));
-
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
-
-        for (Map.Entry<String, List<SampleBorrowInfoDTO.SampleReturnView>> sourceEntry : sourceGroupMap.entrySet()) {
-            List<SampleBorrowInfoDTO.SampleReturnView> bySourceIdList = sourceEntry.getValue();
-
-            // 在同一 sourceId 下，再按 returnDate 分组
-            Map<LocalDate, List<SampleBorrowInfoDTO.SampleReturnView>> dateGroupMap = bySourceIdList.stream()
-                    .collect(Collectors.groupingBy(SampleBorrowInfoDTO.SampleReturnView::getReturnDate));
-
-            for (Map.Entry<LocalDate, List<SampleBorrowInfoDTO.SampleReturnView>> dateEntry : dateGroupMap.entrySet()) {
-                List<SampleBorrowInfoDTO.SampleReturnView> byReturnDateList = dateEntry.getValue();
-
-                if (CollUtil.isEmpty(byReturnDateList)) {
-                    continue;
-                }
-
-                // 构造归还单主表数据
-                SampleBorrowInfoDTO.SampleReturnView firstItem = byReturnDateList.get(0);
-                SampleReturnInfoDTO.AddDTO addDTO = new SampleReturnInfoDTO.AddDTO();
-                BeanMapperUtils.copy(firstItem, addDTO);
-
-                // 构造归还单明细数据
-                List<SampleReturnDetailDTO.AddDTO> detailList = BeanMapperUtils.copyList(SampleReturnDetailDTO.AddDTO.class, byReturnDateList);
-                addDTO.setDetailList(detailList);
-
-                BatchResultDTO result;
-                try {
-                    // 调用服务保存归还单
-                    BaseResultDTO.AddDTO add = sampleReturnInfoService.add(addDTO);
-                    result = BatchResultDTO.success(add.getId(), add.getCode(), OperationTypeEnum.ADD);
-                } catch (Exception e) {
-                    log.error("系统异常：sourceId={}, sourceCode={}", firstItem.getSourceId(), firstItem.getSourceCode(), e);
-                    result = BatchResultDTO.fail(firstItem.getSourceId(), firstItem.getSourceCode(),  e.getMessage());
-                }
-                resultDTOS.add(result);
-            }
-        }
-
+        List<BatchResultDTO> resultDTOS = sampleReturnInfoService.generateSampleReturn(list);
         // 判断是否全部成功，决定返回成功还是部分失败
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
-
-
 
 }
