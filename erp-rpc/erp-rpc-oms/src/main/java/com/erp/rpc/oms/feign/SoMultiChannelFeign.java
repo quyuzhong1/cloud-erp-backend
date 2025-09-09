@@ -1,12 +1,11 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
+import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
-import java.util.Map;
 
 @FeignClient(name = "erp-oms", contextId = "soMultiChannelFeign",configuration = {FeignErrorDecoder.class})
 public interface SoMultiChannelFeign {
@@ -47,4 +45,11 @@ public interface SoMultiChannelFeign {
      */
     @PostMapping("/feign/soMultiChannel/updateSoOutstock")
     void updateSoOutstock(@RequestBody PlatformSoOutStockDTO dto);
+
+    /**
+     * 更新多渠道订单出库数量
+     * @param outstockQtyDTOList
+     */
+    @PostMapping("/feign/soMultiChannel/updateSoMultiOutstockQty")
+    void updateSoMultiOutstockQty(@RequestBody List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList);
 }
