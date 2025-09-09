@@ -2,33 +2,30 @@ package com.erp.server.workflow.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgThirdProcessDTO;
-import com.erp.model.workflow.entity.CfgThirdProcessEntity;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.workflow.dto.CfgThirdProcessDTO;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
+import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.server.workflow.service.ThirdProcessDefinitionService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -229,15 +226,4 @@ public class ThirdProcessDefinitionController extends BaseController {
         return success(thirdProcessDefinitionService.dropDown(type));
     }
 
-
-    /**
-     * 获取飞书应用id
-     * @author will
-     * @date 2025/9/5 10:57
-     * @return ApiResult<String>
-     */
-    @GetMapping("/getFsAppId")
-    public ApiResult<String> getFsAppId() {
-        return success(thirdProcessDefinitionService.getFsAppId());
-    }
 }
