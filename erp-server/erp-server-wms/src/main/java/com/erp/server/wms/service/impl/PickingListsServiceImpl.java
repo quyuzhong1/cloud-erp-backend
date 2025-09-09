@@ -39,6 +39,7 @@ import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -142,6 +143,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PickingListsDTO.PagingView> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            page.getRecords().forEach(infoDTO -> {
+                infoDTO.setPrintStatusName(PackagePrintStatusEnum.getName(infoDTO.getPrintStatus()));
+            });
+        }
         return new PagingVO<>(page);
     }
 
@@ -595,6 +601,48 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             });
         }
         return printViews;
+    }
+
+    @Override
+    public void printConfirm(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return;
+        }
+        List<PickingListsEntity> pickingLists = listByIds(ids);
+        if (CollUtil.isEmpty(pickingLists)){
+            throw new ServiceException("拣货单不存在");
+        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        pickingLists.forEach(pickingListsEntity -> {
+            this.lambdaUpdate()
+                    .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.ALREADY.getCode())
+                    .set(PickingListsEntity::getPrintTime, LocalDateTime.now())
+                    .set(PickingListsEntity::getPrintUserId, loginUser.getUid())
+                    .set(PickingListsEntity::getPrintUserName, loginUser.getUserName())
+                    .eq(PickingListsEntity::getId, pickingListsEntity.getId()).update();
+            operateLogService.addModuleOperateLog("执行了打印拣货单，状态变更为已打印", ModuleTypeEnum.PICKING_LISTS.getCode(), pickingListsEntity.getId(), "打印操作");
+        });
+    }
+
+    @Override
+    public void printCancel(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return;
+        }
+        List<PickingListsEntity> pickingLists = listByIds(ids);
+        if (CollUtil.isEmpty(pickingLists)){
+            throw new ServiceException("拣货单不存在");
+        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        pickingLists.forEach(pickingListsEntity -> {
+            this.lambdaUpdate()
+                    .set(PickingListsEntity::getPrintStatus, PackagePrintStatusEnum.NOT.getCode())
+                    .set(PickingListsEntity::getPrintTime, LocalDateTime.now())
+                    .set(PickingListsEntity::getPrintUserId, loginUser.getUid())
+                    .set(PickingListsEntity::getPrintUserName, loginUser.getUserName())
+                    .eq(PickingListsEntity::getId, pickingListsEntity.getId()).update();
+            operateLogService.addModuleOperateLog("执行了取消打印拣货单，状态变更为未打印", ModuleTypeEnum.PICKING_LISTS.getCode(), pickingListsEntity.getId(), "取消打印");
+        });
     }
 
     /**
@@ -1519,6 +1567,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         for (PickingListsDTO.ExportInfoDTO infoDTO : page.getRecords()) {
             infoDTO.setWarehouseAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getWarehouseLocation())));
             infoDTO.setStagingAreaName(areaMap.get(locationMap.get(infoDTO.getWarehouseId() + ":" + infoDTO.getStagingLocation())));
+            infoDTO.setPrintStatus(PackagePrintStatusEnum.getName(infoDTO.getPrintStatus()));
         }
         return new PagingVO<>(page);
     }
