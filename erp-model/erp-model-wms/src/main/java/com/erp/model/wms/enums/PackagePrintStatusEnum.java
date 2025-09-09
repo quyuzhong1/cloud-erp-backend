@@ -11,7 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum PackagePrintStatusEnum implements EnumMessage {
 
     NOT("not", "未打印"),
-    CANCEL("already", "已打印"),
+    ALREADY("already", "已打印"),
+    CANCEL("cancel", "已取消"),
     ;
     /**
      * 类型
