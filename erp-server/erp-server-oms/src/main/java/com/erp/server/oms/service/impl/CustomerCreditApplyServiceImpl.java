@@ -411,7 +411,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
         //通过后添加账户余额
         if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            syncDhtService.createSyncCustomerCreditApplyTaskToDht(entity,OperationTypeEnum.APPROVE_PASS.getStatus());
+            syncDhtService.createSyncCustomerCreditApplyTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
         return Boolean.TRUE;
