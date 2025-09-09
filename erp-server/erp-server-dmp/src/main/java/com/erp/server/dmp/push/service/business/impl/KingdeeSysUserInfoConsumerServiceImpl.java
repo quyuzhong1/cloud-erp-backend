@@ -14,7 +14,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -55,7 +55,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @KingdeeApi(KingdeePushModuleEnum.BD_EMPINFO)
+    @KingdeeApi
     public void executeSysUserConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_USER_INFO.getCode();
@@ -67,7 +67,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_EMPINFO.getCode());
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
