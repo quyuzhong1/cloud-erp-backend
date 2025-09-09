@@ -1158,6 +1158,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
         queryWrapper.eq(SampleBorrowInfoEntity::getInvalidStatus, false);
         queryWrapper.eq(SampleBorrowInfoEntity::getIsDeleted, false);
         queryWrapper.eq(SampleBorrowInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+        queryWrapper.orderByDesc(SampleBorrowInfoEntity::getCreateTime);
         List<SampleBorrowInfoEntity> list = this.list(queryWrapper);
         return BeanMapperUtils.copyList(SampleBorrowInfoDTO.DropDownDTO.class, list);
     }
