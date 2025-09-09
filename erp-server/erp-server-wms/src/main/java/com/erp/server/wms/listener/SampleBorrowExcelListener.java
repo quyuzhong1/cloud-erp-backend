@@ -113,22 +113,26 @@ public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorro
         }
         //借入人
         String borrowUserName = excelDTO.getBorrowUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> borrowUserName.equals(e.getUserName())).findFirst().orElse(null);
-        if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("借入人不存在");
-        }else {
-            excelDTO.setBorrowUserId(findUserDTO.getUserId());
-            excelDTO.setBorrowUserName(findUserDTO.getUserName());
+        if(StringUtils.isNotBlank(borrowUserName)){
+            FindUserDTO findUserDTO = userList.stream().filter(e -> borrowUserName.equals(e.getUserName())).findFirst().orElse(null);
+            if(Objects.isNull(findUserDTO)){
+                errorMsgList.add("借入人不存在");
+            }else {
+                excelDTO.setBorrowUserId(findUserDTO.getUserId());
+                excelDTO.setBorrowUserName(findUserDTO.getUserName());
+            }
         }
 
         //借出人
         String lendUserName = excelDTO.getLendUserName();
-        FindUserDTO lendUser = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
-        if(Objects.isNull(lendUser)){
-            errorMsgList.add("借出人不存在");
-        }else {
-            excelDTO.setLendUserId(lendUser.getUserId());
-            excelDTO.setLendUserName(lendUser.getUserName());
+        if(StringUtils.isNotBlank(lendUserName)){
+            FindUserDTO lendUser = userList.stream().filter(e -> lendUserName.equals(e.getUserName())).findFirst().orElse(null);
+            if(Objects.isNull(lendUser)){
+                errorMsgList.add("借出人不存在");
+            }else {
+                excelDTO.setLendUserId(lendUser.getUserId());
+                excelDTO.setLendUserName(lendUser.getUserName());
+            }
         }
 
         //借入日期
@@ -154,21 +158,26 @@ public class SampleBorrowExcelListener extends AnalysisEventListener<SampleBorro
 
         //借入部门
         String borrowDeptName = excelDTO.getBorrowDeptName();
-        SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> borrowDeptName.equals(e.getName())).findFirst().orElse(null);
-        if(Objects.isNull(sysDepartmentDTO)){
-            errorMsgList.add("借入部门不存在");
-        }else {
-            excelDTO.setBorrowDeptId(sysDepartmentDTO.getId());
-            excelDTO.setBorrowDeptName(sysDepartmentDTO.getName());
+        if(StringUtils.isNotBlank(borrowDeptName)){
+            SysDepartmentDTO sysDepartmentDTO = deptList.stream().filter(e -> borrowDeptName.equals(e.getName())).findFirst().orElse(null);
+            if(Objects.isNull(sysDepartmentDTO)){
+                errorMsgList.add("借入部门不存在");
+            }else {
+                excelDTO.setBorrowDeptId(sysDepartmentDTO.getId());
+                excelDTO.setBorrowDeptName(sysDepartmentDTO.getName());
+            }
         }
+
         //借出部门
         String lendDeptName = excelDTO.getLendDeptName();
-        SysDepartmentDTO lendDept = deptList.stream().filter(e -> lendDeptName.equals(e.getName())).findFirst().orElse(null);
-        if(Objects.isNull(lendDept)){
-            errorMsgList.add("借出部门不存在");
-        }else {
-            excelDTO.setLendDeptId(lendDept.getId());
-            excelDTO.setLendDeptName(lendDept.getName());
+        if(StringUtils.isNotBlank(lendDeptName)){
+            SysDepartmentDTO lendDept = deptList.stream().filter(e -> lendDeptName.equals(e.getName())).findFirst().orElse(null);
+            if(Objects.isNull(lendDept)){
+                errorMsgList.add("借出部门不存在");
+            }else {
+                excelDTO.setLendDeptId(lendDept.getId());
+                excelDTO.setLendDeptName(lendDept.getName());
+            }
         }
 
         //sku

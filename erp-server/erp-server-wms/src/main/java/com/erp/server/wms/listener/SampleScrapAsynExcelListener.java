@@ -113,13 +113,17 @@ public class SampleScrapAsynExcelListener extends AnalysisEventListener<SampleSc
         }
         //报废人
         String scrapUserName = excelDTO.getScrapUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
-        if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("报废人不存在");
-        }else {
-            excelDTO.setScrapUserId(findUserDTO.getUserId());
-            excelDTO.setScrapUserName(findUserDTO.getUserName());
+        FindUserDTO findUserDTO = null;
+        if(StringUtils.isNotBlank(scrapUserName)){
+            findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
+            if(Objects.isNull(findUserDTO)){
+                errorMsgList.add("报废人不存在");
+            }else {
+                excelDTO.setScrapUserId(findUserDTO.getUserId());
+                excelDTO.setScrapUserName(findUserDTO.getUserName());
+            }
         }
+
 
         //报废日期
         String scrapDateStr = excelDTO.getScrapDateStr();

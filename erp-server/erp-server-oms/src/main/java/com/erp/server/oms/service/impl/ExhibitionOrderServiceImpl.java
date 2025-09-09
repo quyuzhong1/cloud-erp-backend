@@ -1598,30 +1598,34 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 List<SampleLedgerDTO.SkuAvailableQtyDTO> skuAvailableQtyDTOS = new ArrayList<>();
                 //领用人
                 String recipientUserName = mainInfo.getRecipientUserName();
-                FindUserDTO recipientUser = userList.stream().filter(u -> u.getUserName().equals(recipientUserName)).findFirst().orElse(null);
-                if(Objects.isNull(recipientUser)){
-                    errorMsgList.add("领用人不存在");
-                }else {
-                    addSo.setRecipientUserId(recipientUser.getUserId());
+                if(StringUtils.isNotBlank(recipientUserName)){
+                    FindUserDTO recipientUser = userList.stream().filter(u -> u.getUserName().equals(recipientUserName)).findFirst().orElse(null);
+                    if(Objects.isNull(recipientUser)){
+                        errorMsgList.add("领用人不存在");
+                    }else {
+                        addSo.setRecipientUserId(recipientUser.getUserId());
 
-                    // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
-                    SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
-                    dto.setUserId(recipientUser.getUserId());
-                    dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
-                    skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
+                        // 构造查询条件：根据用户ID和SKU列表查询样品台账中的可用数量
+                        SampleLedgerDTO.SearchDTO dto = new SampleLedgerDTO.SearchDTO();
+                        dto.setUserId(recipientUser.getUserId());
+                        dto.setType(SampleLedgerTypeEnum.EXHIBITION.getCode());
+                        skuAvailableQtyDTOS = sampleLedgerFeign.listLedgerByUserId(dto);
+                    }
                 }
 
                 //单据日期
                 String billDateStr = mainInfo.getBillDateStr();
-                LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
-                if (Objects.isNull(billDate)) {
-                    errorMsgList.add("单据日期不能为空");
+                if(StringUtils.isNotBlank(billDateStr)){
+                    LocalDate billDate = LocalDateUtil.parseStrToLocalDate(billDateStr);
+                    if (Objects.isNull(billDate)) {
+                        errorMsgList.add("单据日期不能为空");
+                    }
+                    addSo.setBillDate(billDate);
                 }
-                addSo.setBillDate(billDate);
 
                 //销售组织
                 String salesOrgName = mainInfo.getSalesOrgName();
-                BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> o.getName().equals(salesOrgName)).findFirst().
+                BaseIdDTO.CodeDTO salesOrg = orgList.stream().filter(o -> StringUtils.isNotBlank(salesOrgName) && o.getName().equals(salesOrgName)).findFirst().
                         orElse(null);
                 if (Objects.isNull(salesOrg)) {
                     errorMsgList.add("销售组织不存在");
@@ -1635,28 +1639,30 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //销售员
                 String sellerName = mainInfo.getSellerName();
-                FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().orElse(null);
-                if(Objects.isNull(findUserDTO)){
-                    errorMsgList.add("销售员不存在");
-                }else {
-                    String sellerId = findUserDTO.getUserId();
-                    addSo.setSellerId(sellerId);
-                    addSo.setSellerName(sellerName);
+                if(StringUtils.isNotBlank(sellerName)){
+                    FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserName().equals(sellerName)).findFirst().orElse(null);
+                    if(Objects.isNull(findUserDTO)){
+                        errorMsgList.add("销售员不存在");
+                    }else {
+                        String sellerId = findUserDTO.getUserId();
+                        addSo.setSellerId(sellerId);
+                        addSo.setSellerName(sellerName);
 
-                    //销售部门
-                    String salesDeptId = findUserDTO.getDepartmentId();
-                    addSo.setSalesDeptId(salesDeptId);
-                    if (StringUtils.isBlank(salesDeptId)) {
-                        errorMsgList.add("销售部门不存在");
-                    }
+                        //销售部门
+                        String salesDeptId = findUserDTO.getDepartmentId();
+                        addSo.setSalesDeptId(salesDeptId);
+                        if (StringUtils.isBlank(salesDeptId)) {
+                            errorMsgList.add("销售部门不存在");
+                        }
 
-                    String finalSalesOrgId1 = salesOrgId;
-                    KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
-                            k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
-                            xsyCode.equals(k.getTypeCode())
-                    ).findFirst().orElse(null);
-                    if (Objects.isNull(businessOperator)) {
-                        errorMsgList.add("金蝶未存在该销售员");
+                        String finalSalesOrgId1 = salesOrgId;
+                        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeBusinessOperatorList.stream().filter(k -> k.getUserId().equals(sellerId) &&
+                                k.getOrgId().equals(finalSalesOrgId1) && salesDeptId.equals(k.getErpDeptId()) &&
+                                xsyCode.equals(k.getTypeCode())
+                        ).findFirst().orElse(null);
+                        if (Objects.isNull(businessOperator)) {
+                            errorMsgList.add("金蝶未存在该销售员");
+                        }
                     }
                 }
 
@@ -1670,7 +1676,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //仓库
                 String warehouseName = mainInfo.getWarehouseName();
-                WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
+                WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(w -> StringUtils.isNotBlank(warehouseName) && w.getName().equals(warehouseName)).findFirst().
                         orElse(null);
                 String warehouseId = "";
                 String warehouseOrgId = "";
@@ -1691,7 +1697,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String receiveAccountStr = mainInfo.getReceiveAccount();
                 String receiveAccount = "";
                 String finalSalesOrgId = salesOrgId;
-                BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> b.getAccountName().equals(receiveAccountStr) &&
+                BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> StringUtils.isNotBlank(receiveAccountStr) && b.getAccountName().equals(receiveAccountStr) &&
                         finalSalesOrgId.equals(b.getOrgId())).findFirst().orElse(null);
                 if (Objects.isNull(bankAccount)) {
                     errorMsgList.add("收款账号不存在");
@@ -1702,7 +1708,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //收款方式
                 String receiveMethodStr = mainInfo.getReceiveMethod();
-                String receiveMethod = dictBasicList.stream().filter(d -> d.getName().equals(receiveMethodStr)).findFirst().
+                String receiveMethod = dictBasicList.stream().filter(d ->  StringUtils.isNotBlank(receiveMethodStr) &&  d.getName().equals(receiveMethodStr)).findFirst().
                         map(DictBasicEntity::getValue).orElse("");
                 if (StringUtils.isBlank(receiveMethod)) {
                     errorMsgList.add("收款方式不存在");
@@ -1729,7 +1735,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //客户
                 String customerName = mainInfo.getCustomerName();
-                CustomerInfoEntity customerInfoEntity = customerList.stream().filter(c -> c.getName().equals(customerName)).findFirst().orElse(null);
+                CustomerInfoEntity customerInfoEntity = customerList.stream().filter(c ->StringUtils.isNotBlank(customerName) && c.getName().equals(customerName)).findFirst().orElse(null);
                 if (Objects.isNull(customerInfoEntity)) {
                     errorMsgList.add("客户不存在");
                 }else {
@@ -1748,7 +1754,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //收货地址
                 String receiveAddress = mainInfo.getReceiveAddress();
-                String customerAddressId = customerAddressList.stream().filter(c -> c.getAddress().equals(receiveAddress)).
+                String customerAddressId = customerAddressList.stream().filter(c -> StringUtils.isNotBlank(receiveAddress) && c.getAddress().equals(receiveAddress)).
                         findFirst().map(CustomerAddressEntity::getId).orElse("");
                 if (StringUtils.isBlank(customerAddressId)) {
                     errorMsgList.add("联系地址不存在");
@@ -1757,7 +1763,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //交货方式
                 String deliveryModeStr = mainInfo.getDeliveryMode();
-                String deliveryMode = dictBasicList.stream().filter(d -> d.getName().equals(deliveryModeStr)).findFirst().
+                String deliveryMode = dictBasicList.stream().filter(d -> StringUtils.isNotBlank(deliveryModeStr) && d.getName().equals(deliveryModeStr)).findFirst().
                         map(DictBasicEntity::getValue).orElse("");
                 if (StringUtils.isBlank(deliveryMode)) {
                     errorMsgList.add("交货方式不存在");
@@ -1774,7 +1780,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //币别
                 String currencyStr = mainInfo.getCurrency();
-                DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
+                DictCurrencyEntity currencyEntity = currencyList.stream().filter(c ->StringUtils.isNotBlank(currencyStr ) && c.getName().equals(currencyStr)).
                         findFirst().orElse(null);
                 String symbol = "";
                 String currency = "";
@@ -1794,7 +1800,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
                 //收款条件
                 String receiveConditionStr = mainInfo.getReceiveCondition();
-                String receiveCondition = receiptConditionList.stream().filter(d -> d.getName().equals(receiveConditionStr)).findFirst().
+                String receiveCondition = receiptConditionList.stream().filter(d -> StringUtils.isNotBlank(receiveConditionStr ) && d.getName().equals(receiveConditionStr)).findFirst().
                         map(KingdeeReceiptConditionEntity::getId).orElse("");
                 if (StringUtils.isBlank(receiveCondition)) {
                     errorMsgList.add("收款条件不存在");

@@ -811,8 +811,12 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
             List<SampleBorrowDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleBorrowImportExcelDTO importDTO : value) {
                 String errorMsg = importDTO.getErrorMsg();
-                String[] split = errorMsg.split("；");
-                int indexTemp = split.length + 1;
+                int indexTemp = 1;
+                if(StringUtils.isNotBlank(errorMsg)){
+                    String[] split = errorMsg.split("；");
+                    indexTemp = split.length + 1;
+                }
+
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
                     errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
@@ -851,9 +855,7 @@ public class SampleBorrowInfoServiceImpl extends SuperServiceImpl<SampleBorrowIn
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setDetailList(detailList);
 
-                if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                    bean.add(addDTO);
-                }
+                bean.add(addDTO);
             }
         }
     }

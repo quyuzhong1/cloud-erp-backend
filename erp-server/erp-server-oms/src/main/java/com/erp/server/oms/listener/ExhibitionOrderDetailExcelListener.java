@@ -4,11 +4,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ExhibitionOrderImportDetailExcelDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.ExhibitionOrderDetailDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SampleLedgerDTO;
@@ -70,6 +68,7 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
      */
     @Override
     public void invoke(ExhibitionOrderImportDetailExcelDTO exhibitionOrderImportDetailExcelDTO, AnalysisContext analysisContext) {
+        ExhibitionOrderDetailDTO.SkuDTO addDTO = new ExhibitionOrderDetailDTO.SkuDTO();
         List<String> msgList = FieldValidUtil.fieldValid(exhibitionOrderImportDetailExcelDTO);
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
@@ -86,18 +85,20 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
             if (Objects.isNull(sku)) {
                 errorMsgList.add("sku不存在");
             }
+        }else {
+            addDTO.setSkuNo(skuNo);
+            addDTO.setSkuId(sku.getSkuId());
+            addDTO.setProductName(sku.getSkuName());
+            addDTO.setUnit(sku.getUnitName());
         }
-        ExhibitionOrderDetailDTO.SkuDTO addDTO = new ExhibitionOrderDetailDTO.SkuDTO();
+
         //是否赠品
-        String isGift = exhibitionOrderImportDetailExcelDTO.getIsGift();
+        String isGift = StringUtils.isBlank(exhibitionOrderImportDetailExcelDTO.getIsGift()) ? "":exhibitionOrderImportDetailExcelDTO.getIsGift();
         addDTO.setIsGift(isGift.equals("是"));
-        addDTO.setSkuNo(skuNo);
-        addDTO.setSkuId(sku.getSkuId());
-        addDTO.setProductName(sku.getSkuName());
-        addDTO.setUnit(sku.getUnitName());
+
         //销售数量
-        String qty = exhibitionOrderImportDetailExcelDTO.getQty();
-        addDTO.setQty(Integer.valueOf(qty));
+        Integer qty = StringUtils.isBlank(exhibitionOrderImportDetailExcelDTO.getQty()) ? 0 :Integer.valueOf(exhibitionOrderImportDetailExcelDTO.getQty());
+        addDTO.setQty(qty);
 
         //税率
         String taxRateStr = exhibitionOrderImportDetailExcelDTO.getTaxRate();
@@ -142,7 +143,6 @@ public class ExhibitionOrderDetailExcelListener extends AnalysisEventListener<Ex
                 .findFirst()
                 .orElse(null);
         if(Objects.isNull(skuAvailableQtyDTO)){
-            //ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg
             errorMsgList.add(ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg);
         }else {
             Integer availableQty = Objects.isNull(skuAvailableQtyDTO.getAvailableQty()) ? 0 : skuAvailableQtyDTO.getAvailableQty() ;
