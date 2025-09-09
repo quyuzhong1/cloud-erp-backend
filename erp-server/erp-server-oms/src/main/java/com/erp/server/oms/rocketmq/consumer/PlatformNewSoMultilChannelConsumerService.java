@@ -12,7 +12,7 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
-import com.erp.model.oms.enums.CreateStatusEnum;
+import com.erp.model.oms.enums.OutstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
@@ -105,8 +105,20 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         detailEntityList.forEach(e -> {
             int deliveryQty = detailList.stream().filter(f -> CharSequenceUtil.isNotBlank(f.getSourceDetailId()) && f.getSourceDetailId().equals(e.getId())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
             if (deliveryQty > 0){
+                String outstockStatus;
                 e.setDeliveryQty(deliveryQty);
-                soMultiChannelDetailService.lambdaUpdate().set(SoMultiChannelDetailEntity::getDeliveryQty, deliveryQty).eq(SoMultiChannelDetailEntity::getId, e.getId()).update();
+                int hasOutstockQty = Objects.nonNull(e.getHasOutstockQty()) ? e.getHasOutstockQty() : 0;
+                if (hasOutstockQty >= deliveryQty){
+                    outstockStatus = OutstockStatusEnum.ALL.getCode();
+                }else if ( hasOutstockQty > 0){
+                    outstockStatus = OutstockStatusEnum.PART.getCode();
+                }else {
+                    outstockStatus = OutstockStatusEnum.NONE.getCode();
+                }
+                soMultiChannelDetailService.lambdaUpdate()
+                        .set(SoMultiChannelDetailEntity::getDeliveryQty, deliveryQty)
+                        .set(SoMultiChannelDetailEntity::getOutstockStatus, outstockStatus)
+                        .eq(SoMultiChannelDetailEntity::getId, e.getId()).update();
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新多渠道订单明细【{}】发货数量:【{}】改为【{}】", e.getSkuNo(), e.getDeliveryQty(), deliveryQty), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), e.getMainId(), "更新订单发货明细");
             }
         });
