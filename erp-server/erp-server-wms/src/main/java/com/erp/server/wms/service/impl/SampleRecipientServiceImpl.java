@@ -1183,25 +1183,47 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         // 查询库存信息
         List<InventoryDTO.InventoryViewQtyDTO> inventoryList = inventoryService.getInventoryQty(inventoryParams);
         Map<String, InventoryDTO.InventoryViewQtyDTO> inventoryMap = inventoryList.stream()
-            .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item));
+            .collect(Collectors.toMap(InventoryDTO.InventoryViewQtyDTO::getSkuId, item -> item, (existing, replacement) -> existing));
 
-        // 校验每个明细的库存
-        for (SampleRecipientDTO.ProductDTO detail : detailList) {
-            InventoryDTO.InventoryViewQtyDTO inventory = inventoryMap.get(detail.getSkuId());
+        // 按SKU分组累计数量
+        Map<String, Integer> skuTotalQuantityMap = detailList.stream()
+            .collect(Collectors.groupingBy(
+                SampleRecipientDTO.ProductDTO::getSkuId,
+                Collectors.summingInt(SampleRecipientDTO.ProductDTO::getQuantity)
+            ));
+
+        // 校验每个SKU的总库存
+        for (Map.Entry<String, Integer> entry : skuTotalQuantityMap.entrySet()) {
+            String skuId = entry.getKey();
+            Integer totalQuantity = entry.getValue();
+            
+            InventoryDTO.InventoryViewQtyDTO inventory = inventoryMap.get(skuId);
             if (inventory == null) {
-                throw new ServiceException(String.format("SKU【%s】在仓库【%s】中不存在库存信息", detail.getSkuNo(), warehouseId));
+                // 从detailList中找到对应的SKU编号用于错误提示
+                String skuNo = detailList.stream()
+                    .filter(detail -> skuId.equals(detail.getSkuId()))
+                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
+                    .findFirst()
+                    .orElse(skuId);
+                throw new ServiceException(String.format("SKU【%s】在仓库【%s】中不存在库存信息", skuNo, warehouseId));
             }
 
-            // 计算可领用库存：可用库存 - 领用数量
-            int availableQty = inventory.getUsableQty() - detail.getQuantity();
+            // 计算可领用库存：可用库存 - 总领用数量
+            int availableQty = inventory.getUsableQty() - totalQuantity;
             if (availableQty < 0) {
-                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可用库存：%d，领用数量：%d",
-                    detail.getSkuNo(), inventory.getUsableQty(), detail.getQuantity()));
+                // 从detailList中找到对应的SKU编号用于错误提示
+                String skuNo = detailList.stream()
+                    .filter(detail -> skuId.equals(detail.getSkuId()))
+                    .map(SampleRecipientDTO.ProductDTO::getSkuNo)
+                    .findFirst()
+                    .orElse(skuId);
+                throw new ServiceException(String.format("SKU【%s】可领用库存不足，可用库存：%d，总领用数量：%d", 
+                    skuNo, inventory.getUsableQty(), totalQuantity));
             }
 
-                    log.info("SKU【{}】库存校验通过，可用库存：{}，领用数量：{}，剩余可领用库存：{}",
-            detail.getSkuNo(), inventory.getUsableQty(), detail.getQuantity(), availableQty);
-    }
+            log.info("SKU【{}】库存校验通过，可用库存：{}，总领用数量：{}，剩余可领用库存：{}", 
+                skuId, inventory.getUsableQty(), totalQuantity, availableQty);
+        }
 
 
 
