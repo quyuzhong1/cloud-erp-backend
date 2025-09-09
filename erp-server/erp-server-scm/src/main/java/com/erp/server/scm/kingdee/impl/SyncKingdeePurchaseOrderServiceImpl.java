@@ -97,7 +97,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
         //生成任务
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {

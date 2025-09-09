@@ -56,7 +56,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(RequisitionApplicationDTO.AddDTO addDTO, String mainId) {

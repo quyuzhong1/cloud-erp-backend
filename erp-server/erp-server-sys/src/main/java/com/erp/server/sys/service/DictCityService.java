@@ -131,6 +131,13 @@ public interface DictCityService extends SuperService<DictCityEntity> {
     void cityExport(DictCityDTO.ProvincePagingParamDTO dto);
 
     List<DictCityEntity> listProvince();
+    /**
+     * 查询所有城市
+     * @author will
+     * @date 2025/9/2 16:58
+     * @return List<DictCityEntity>
+     */
+    List<DictCityEntity> listCity();
 
     PagingVO<DictCityDTO.PagingViewDTO> exportCity(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto);
 

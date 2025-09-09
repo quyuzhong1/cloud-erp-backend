@@ -54,7 +54,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Resource
     private AuthDataFeign authDataFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualWarehouseRelationDTO.AddDTO addDTO) {

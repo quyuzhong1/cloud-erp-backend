@@ -176,7 +176,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Lazy
     private PackageForecastService service;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(PackageForecastDTO.AddDTO addDTO) {
@@ -386,7 +386,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO delete(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -411,7 +411,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancel(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -518,7 +518,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @param logisticsPlatform
      * @param entity
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void aliExpressCancel(String logisticsPlatform, PackageForecastEntity entity) {
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
@@ -662,7 +662,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -953,7 +953,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO forecast(String id, String transferLogisticsSupplierId, String transferLogisticsChannelId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -1154,7 +1154,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void handleMergePackageDeliveryOther(String soId, SoB2cDeliveryEntity deliveryEntity) {
         //将发货状态更新为已发货
         deliveryEntity.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getCode());

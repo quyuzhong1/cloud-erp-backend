@@ -87,7 +87,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Lazy
     private TransferLogisticsSupplierServiceImpl supplierService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TransferLogisticsSupplierDTO.AddDTO addDTO) {
@@ -203,7 +203,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO sync(String id) {
         TransferLogisticsSupplierEntity logisticsSupplier = this.getById(id);
         if (Objects.isNull(logisticsSupplier)) {

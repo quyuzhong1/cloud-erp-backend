@@ -1987,7 +1987,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean delete(String skuId) {
         ProductDetailEntity detailEntity = this.getById(skuId);
         ProductDetailEntity oldEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
@@ -3558,7 +3558,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
@@ -4031,7 +4031,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt) {
         ProductDetailEntity entity = this.getById(dto.getId());
         if (!entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
@@ -4162,7 +4162,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO disApprove(ProductDetailEntity entity) {
         //已审核支持反审核
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
@@ -4183,7 +4183,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -4209,7 +4209,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean deleteBatch(List<String> ids) {
         List<ProductDetailEntity> entityListt = this.listByIds(ids);
         long count = entityListt.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();

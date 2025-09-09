@@ -61,7 +61,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
     @Lazy
     private FirstMileCostAllocationService firstMileCostAllocationService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ReportPeriodMonthDTO.AddDTO addDTO) {

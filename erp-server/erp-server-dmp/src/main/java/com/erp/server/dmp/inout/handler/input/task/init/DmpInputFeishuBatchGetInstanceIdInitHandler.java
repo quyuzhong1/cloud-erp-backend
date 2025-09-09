@@ -57,7 +57,7 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
                 }
             } catch (Exception e) {
                 log.error("调用飞书失败,e= {}",e.getMessage());
-                throw new ServiceException("调用飞书失败");
+                continue;
             }
         }
         dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(result.toJSONString()));

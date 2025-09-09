@@ -173,7 +173,7 @@ public class AsyncServiceImpl implements AsyncService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void soB2cDeliveryAutoOut (SoB2cEntity soB2cEntity, SoB2cDeliveryEntity entity) {
 
         if (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())

@@ -38,7 +38,7 @@ import javax.annotation.Resource;
 @Service
 public class ShippingTemplateCostSettingServiceImpl extends SuperServiceImpl<ShippingTemplateCostSettingMapper, ShippingTemplateCostSettingEntity> implements ShippingTemplateCostSettingService {
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(List<ShippingTemplateCostSettingDTO.AddDTO> list,List<String> otherCostIdList) {

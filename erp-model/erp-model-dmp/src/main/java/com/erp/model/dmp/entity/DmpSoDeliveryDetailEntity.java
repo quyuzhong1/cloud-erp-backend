@@ -82,6 +82,21 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     @TableField("transaction_amount")
     private BigDecimal transactionAmount;
     /**
+     * 折扣金额
+     */
+    @TableField("discount_amount")
+    private BigDecimal discountAmount;
+    /**
+     * 运费金额
+     */
+    @TableField("freight_amount")
+    private BigDecimal freightAmount;
+    /**
+     * 税费金额
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
+    /**
     * 规格型号
     */
     @TableField("spu_no")

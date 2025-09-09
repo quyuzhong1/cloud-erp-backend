@@ -69,7 +69,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void actionBatch(List<InventoryClosedRecordEntity> newEntityList, List<InventoryClosedRecordEntity> oldEntityList) {
         // 1: 新增列表
         List<InventoryClosedRecordEntity> saveEntityList = newEntityList.stream()

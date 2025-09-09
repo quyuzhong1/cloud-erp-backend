@@ -215,7 +215,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private TikTokFullService tikTokFullService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
@@ -231,7 +231,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 数据处理
         handleData(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
         //匹配中转规则
-        matchTransferRule(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
+        if(addDTO.getIsMatchTransferRule()){
+            matchTransferRule(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
+        }
         log.info("开始新增b2c发货单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHDC);
@@ -1598,6 +1600,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             deliveryDetailList.add(addDTO);
         }
         soB2cDelivery.setDetailList(deliveryDetailList);
+        SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(soB2cEntity.getId());
+        if(Objects.nonNull(existEntity)){
+            log.warn("订单【{}】已存在发货单，跳过生成发货单",soB2cEntity.getCode());
+            return;
+        }
+        soB2cDelivery.setIsMatchTransferRule(false);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(soB2cEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
@@ -2192,7 +2200,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelShipment(String id, List<SoB2cDeliveryDTO.CancelShipmentDTO> detail) {
         SoB2cDeliveryEntity old = getById(id);
         SoB2cDeliveryEntity entity = new SoB2cDeliveryEntity();
@@ -2310,7 +2318,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pushTransferInfo(SoB2cDeliveryEntity entity) {
 
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
@@ -2359,7 +2367,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO retryOutstock(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

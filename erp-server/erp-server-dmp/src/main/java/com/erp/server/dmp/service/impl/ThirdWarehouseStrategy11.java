@@ -65,7 +65,7 @@
 //
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public BaseResultDTO.AddDTO add(ThirdMappingDTO.AddDTO addDTO) {
 //        WarehouseDTO.ListDTO warehouse = null;
 //        //获取仓库信息
@@ -185,7 +185,7 @@
 //     */
 ////    @Override
 ////    @Transactional(rollbackFor = Exception.class)
-////    @GlobalTransactional(rollbackFor = Exception.class)
+////    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 ////    public void saveAddDto(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingDTO.ThirdAddDTO> thirdList, List<ThirdMappingDTO.ThirdAddDTO> resultUpdatedList, WarehouseDTO.ListDTO warehouse) {
 ////        thirdList.forEach(thirdAddDTO -> {
 ////            if (CollectionUtils.isNotEmpty(resultUpdatedList)) {
@@ -243,7 +243,7 @@
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void deleteBinded(List<ThirdMappingEntity> existMappingList) {
 //        existMappingList.forEach(existMapping -> {
 //            // 操作日志
@@ -269,7 +269,7 @@
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void saveOrDeleteFeignBind(ThirdMappingEntity existMapping, String warehouseId, String warehouseCode, String warehouseName, boolean disabled) {
 //        if (PlatformDictEnum.IML.getCode().equals(existMapping.getThirdSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(existMapping.getThirdSysType())) {
 //            OverseasProviderDTO.FeignDTO feignDTO = new OverseasProviderDTO.FeignDTO();
@@ -292,7 +292,7 @@
 //     */
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
 //    public void makeThirdMappingDto(ThirdMappingDTO.AddDTO addDTO, ThirdMappingDTO.ThirdAddDTO thirdAddDTO, WarehouseDTO.ListDTO warehouse) {
 //        ThirdMappingEntity thirdMappingEntity = new ThirdMappingEntity();
 //        BeanMapperUtils.copy(addDTO, thirdMappingEntity);
