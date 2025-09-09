@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.SampleBorrowInfoDTO;
 import com.erp.model.wms.entity.SampleReturnInfoEntity;
 import com.common.business.service.SuperService;
@@ -154,4 +155,6 @@ public interface SampleReturnInfoService extends SuperService<SampleReturnInfoEn
     BatchResultDTO invalid(String id,String remark);
 
     List<SampleReturnInfoDTO.ListDTO> listReturnBySourceId(String sourceId);
+
+    List<BatchResultDTO> generateSampleReturn(ValidList<SampleBorrowInfoDTO.SampleReturnView> list);
 }
