@@ -6517,24 +6517,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(StringUtils.isBlank(v.getProductPropertyId())){
                 return;
             }
+            List<String> markList = new ArrayList<>();
             List<String> propertyIds = Arrays.asList(v.getProductPropertyId().split(","));
             List<String> propertyNameList = allBasicDictEntities.stream().filter(t->propertyIds.contains(t.getId())).map(BasicDictEntity::getName).collect(Collectors.toList());
             propertyDTO.setIsElectric(propertyNameList.stream().anyMatch(t->t.contains("电") && !t.contains("充电盒")));
             propertyDTO.setElectricName(propertyNameList.stream().filter(t->t.contains("电") && !t.contains("充电盒")).collect(Collectors.joining(",")));
+            markList.add("电");
             propertyDTO.setIsMagnetism(propertyNameList.stream().anyMatch(t->t.contains("磁")));
             propertyDTO.setMagnetismName(propertyNameList.stream().filter(t->t.contains("磁")).collect(Collectors.joining(",")));
+            markList.add("磁");
             propertyDTO.setIsLiquid(propertyNameList.stream().anyMatch(t->t.contains("液体")));
             propertyDTO.setLiquidName(propertyNameList.stream().filter(t->t.contains("液体")).collect(Collectors.joining(",")));
+            markList.add("液");
             propertyDTO.setIsWood(propertyNameList.stream().anyMatch(t->t.contains("木")));
             propertyDTO.setWoodName(propertyNameList.stream().filter(t->t.contains("木")).collect(Collectors.joining(",")));
+            markList.add("木");
             propertyDTO.setIsPowder(propertyNameList.stream().anyMatch(t->t.contains("粉末")));
             propertyDTO.setPowderName(propertyNameList.stream().filter(t->t.contains("粉末")).collect(Collectors.joining(",")));
+            markList.add("粉");
             propertyDTO.setIsPlaster(propertyNameList.stream().anyMatch(t->t.contains("膏体")));
             propertyDTO.setPlasterName(propertyNameList.stream().filter(t->t.contains("膏体")).collect(Collectors.joining(",")));
+            markList.add("膏");
             propertyDTO.setIsCuttingTool(propertyNameList.stream().anyMatch(t->t.contains("刀具")));
             propertyDTO.setCuttingToolName(propertyNameList.stream().filter(t->t.contains("刀具")).collect(Collectors.joining(",")));
+            markList.add("刀");
             propertyDTO.setIsOther(propertyNameList.stream().anyMatch(t->t.contains("CCC")));
             propertyDTO.setOtherName(propertyNameList.stream().filter(t->t.contains("CCC")).collect(Collectors.joining(",")));
+            propertyDTO.setMarkList(markList);
         });
     }
 
