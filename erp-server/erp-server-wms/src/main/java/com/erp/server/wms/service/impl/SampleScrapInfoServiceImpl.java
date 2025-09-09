@@ -1022,9 +1022,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
             Boolean isAdd = Boolean.TRUE;
             List<SampleScrapDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SampleScrapImportExcelDTO importDTO : value) {
+                int indexTemp = 1;
                 String errorMsg = importDTO.getErrorMsg();
-                String[] split = errorMsg.split("；");
-                int indexTemp = split.length + 1;
+                if(StringUtils.isNotBlank(errorMsg)){
+                    String[] split = errorMsg.split("；");
+                    indexTemp = split.length + 1;
+                }
                 //关联台账
                 if (CollUtil.isEmpty(skuAvailableQtyDTOS)) {
                     errorMsg = errorMsg + indexTemp + "、" + ApiError.ERROR_SAMPLE_LEDGER_NOT_EXIST.msg + "；";
@@ -1063,9 +1066,7 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setDetailList(detailList);
 
-                if (ImportTypeEnum.ADD.getCode().equals(importType)){
-                    bean.add(addDTO);
-                }
+                bean.add(addDTO);
             }
         }
     }

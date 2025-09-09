@@ -277,9 +277,8 @@
     <select id="getAllStatusCounts" resultType="com.erp.model.wms.dto.SampleRecipientDTO$TabListDTO">
         SELECT 
             'waitSubmit' AS tabFlag,
-        COUNT(DISTINCT srd.id) AS count
+            COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
-        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
         AND approve_status = 'waitSubmit'
         <if test="permissionSql != null and permissionSql != ''">
@@ -290,9 +289,8 @@
         
         SELECT 
             'approveIng' AS tabFlag,
-        COUNT(DISTINCT srd.id) AS count
+            COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
-        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
         AND approve_status = 'approveIng'
         <if test="permissionSql != null and permissionSql != ''">
@@ -303,7 +301,7 @@
         
         SELECT 
             'waitOutstock' AS tabFlag,
-            COUNT(DISTINCT srd.id) AS count
+            COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
@@ -317,7 +315,7 @@
         
         SELECT 
             'completeOutstock' AS tabFlag,
-            COUNT(DISTINCT srd.id) AS count
+            COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
         INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
@@ -330,9 +328,8 @@
         
         SELECT 
             'reject' AS tabFlag,
-        COUNT(DISTINCT srd.id) AS count
+            COUNT(DISTINCT sr.id) AS count
         FROM sample_recipient sr
-        INNER JOIN sample_recipient_detail srd ON sr.id = srd.main_id
         WHERE sr.is_deleted = FALSE
         AND approve_status = 'reject'
         <if test="permissionSql != null and permissionSql != ''">

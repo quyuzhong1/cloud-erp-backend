@@ -74,9 +74,12 @@ public class SampleScrapDetailExcelListener extends AnalysisEventListener<Sample
         SampleScrapDetailDTO.AddDTO addDTO = new SampleScrapDetailDTO.AddDTO();
         //报废人
         String scrapUserName = excelDTO.getScrapUserName();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
-        if(Objects.isNull(findUserDTO)){
-            errorMsgList.add("报废人不存在");
+        FindUserDTO findUserDTO = null;
+        if(StringUtils.isNotBlank(scrapUserName)){
+            findUserDTO = userList.stream().filter(e -> scrapUserName.equals(e.getUserName())).findFirst().orElse(null);
+            if(Objects.isNull(findUserDTO)){
+                errorMsgList.add("报废人不存在");
+            }
         }
 
         //备注

@@ -33,7 +33,7 @@ public class ExhibitionOrderImportDetailExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "*使用方", index = 2)
     @FieldValid(fieldName = "*使用方",isNotBlank = true)
-    private String useUserName;
+    private String useUserName ="";
 
 
     /**
@@ -90,5 +90,5 @@ public class ExhibitionOrderImportDetailExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误数据", index =9)
     @ColumnWidth(50)
-    private String  errorMsg;
+    private String  errorMsg = "";
 }

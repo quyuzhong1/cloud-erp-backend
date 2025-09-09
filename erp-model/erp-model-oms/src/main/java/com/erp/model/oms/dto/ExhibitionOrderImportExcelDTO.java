@@ -300,5 +300,5 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误数据", index =33)
     @ColumnWidth(50)
-    private String  errorMsg;
+    private String  errorMsg = "";
 }

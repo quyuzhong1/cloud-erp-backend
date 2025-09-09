@@ -58,7 +58,8 @@
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
             oo.create_time as createTime,
-            oo.source_code as sourceCode
+            oo.source_code as sourceCode,
+            ood.remark as detailRemark
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false 
@@ -140,7 +141,8 @@
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
             oo.create_time as createTime,
-            oo.source_code as sourceCode
+            oo.source_code as sourceCode,
+            ood.remark as detailRemark
         from other_outstock oo
         inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
@@ -214,7 +216,8 @@
             oo.approve_user_name as approveUserName,
             oo.approve_time as approveTime,
             oo.create_user_name as createUserName,
-            oo.create_time as createTime
+            oo.create_time as createTime,
+            ood.remark as detailRemark
         from other_outstock oo
         left join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         left join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false

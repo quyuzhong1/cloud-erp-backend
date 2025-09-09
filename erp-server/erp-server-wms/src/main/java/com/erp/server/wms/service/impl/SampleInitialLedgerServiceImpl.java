@@ -472,6 +472,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public SampleInitialLedgerDTO.ViewDTO view(String id) {
         SampleInitialLedgerEntity sampleInitialLedgerEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品期初台账数据"));
         SampleInitialLedgerDTO.ViewDTO data = BeanMapperUtils.map(SampleInitialLedgerDTO.ViewDTO.class, sampleInitialLedgerEntity);
+        data.setApproveStatus(sampleInitialLedgerEntity.getApproveStatus().getCode());
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
@@ -621,11 +622,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     * 新增修改处理数据
     */
     private void handleData(SampleInitialLedgerEntity sampleInitialLedgerEntity) {
-        // 如果sku_id为空，通过sku_no查询sku_id
-        if (StrUtil.isBlank(sampleInitialLedgerEntity.getSkuId()) && StrUtil.isNotBlank(sampleInitialLedgerEntity.getSkuNo())) {
-            String skuId = getSkuIdBySkuNo(sampleInitialLedgerEntity.getSkuNo());
-            sampleInitialLedgerEntity.setSkuId(skuId);
-        }
+        // 主表不再处理SKU相关字段，这些字段已移至明细表
     }
 
     // ==================== 台账流水构建器实现 ====================
@@ -645,24 +642,31 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
                 return null;
             }
 
-            // 期初台账单没有明细，直接构建流水明细
+            // 获取明细数据
+            List<SampleInitialLedgerDetailEntity> detailList = sampleInitialLedgerDetailService.lambdaQuery()
+                .eq(SampleInitialLedgerDetailEntity::getMainId, sourceId)
+                .eq(SampleInitialLedgerDetailEntity::getIsDeleted, false)
+                .list();
+            
+            if (CollUtil.isEmpty(detailList)) {
+                log.warn("期初台账单没有明细数据，sourceId：{}", sourceId);
+                return null;
+            }
+
+            // 构建流水明细
             List<SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO> flowDetails = new ArrayList<>();
-            
-            // 计算数量：审核为+X（若导入填写的为负数，则为-X）
-            Integer qty = calculateQty(entity.getQty(), approveType);
-            
-            // 通过sku_no查询sku_id
-            String skuId = getSkuIdBySkuNo(entity.getSkuNo());
-            
-            SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
-            flowDetail.setSourceDetailId(entity.getId()); // 使用主表ID作为明细ID
-            flowDetail.setSkuNo(entity.getSkuNo());
-            flowDetail.setSkuId(skuId);
-            flowDetail.setProductName(entity.getProductName());
-            flowDetail.setQty(qty);
-            // 设置样品台账ID（如果有的话）
-            // flowDetail.setSampleLedgerId(entity.getSampleLedgerId());
-            flowDetails.add(flowDetail);
+            for (SampleInitialLedgerDetailEntity detail : detailList) {
+                // 计算数量：审核为+X（若导入填写的为负数，则为-X）
+                Integer qty = calculateQty(detail.getQty(), approveType);
+                
+                SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO flowDetail = new SampleLedgerFlowDTO.AddFlowDTO.FlowDetailDTO();
+                flowDetail.setSourceDetailId(detail.getId());
+                flowDetail.setSkuNo(detail.getSkuNo());
+                flowDetail.setSkuId(detail.getSkuId());
+                flowDetail.setProductName(detail.getProductName());
+                flowDetail.setQty(qty);
+                flowDetails.add(flowDetail);
+            }
 
             // 构建流水主表数据
             SampleLedgerFlowDTO.AddFlowDTO flowDTO = new SampleLedgerFlowDTO.AddFlowDTO();
@@ -979,6 +983,10 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     public void handleImportSuccessList(List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> successList, List<String> errorNoList, List<com.erp.model.wms.dto.excel.SampleInitialLedgerImportExcelDTO> errorList2, String importType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
+        }
+        if (StringUtils.isBlank(importType)){
+            //给个默认值
+            importType=ImportTypeEnum.ADD.getCode();
         }
 
         if (CollUtil.isNotEmpty(errorNoList)) {
