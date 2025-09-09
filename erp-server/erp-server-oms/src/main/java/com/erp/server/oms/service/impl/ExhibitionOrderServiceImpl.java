@@ -907,7 +907,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 删除日志数据
         log.info("删除 开始删除展会订单信息日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), entity.getCode(), "删除展会订单信息数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), entity.getId(), "删除展会订单信息数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -935,7 +935,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 日志数据
         log.info("作废 开始作废展会订单信息日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), entity.getCode(), "作废展会订单信息数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), entity.getId(),  OperationTypeEnum.INVALID.getName());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
