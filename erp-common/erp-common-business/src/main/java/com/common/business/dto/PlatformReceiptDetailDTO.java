@@ -47,4 +47,9 @@ public class PlatformReceiptDetailDTO extends UniqueDto {
      * 平台明细id
      */
     private String platformDetailId;
+
+    /**
+     * 是否作废
+     */
+    private Boolean isInvalid;
 }

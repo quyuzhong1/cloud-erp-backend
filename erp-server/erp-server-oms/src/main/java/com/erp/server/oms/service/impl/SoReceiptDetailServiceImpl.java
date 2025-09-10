@@ -77,6 +77,9 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
         for (SoReceiptDetailEntity soReceiptDetailEntity : saveList) {
             SoReceiptDetailDTO.AddDTO addDTO = detailList.stream().filter(v -> v.getPaymentNo().equals(soReceiptDetailEntity.getPaymentNo())).findFirst().orElse(new SoReceiptDetailDTO.AddDTO());
             List<AttachDTO> attachDTOS = addDTO.getAttachmentList();
+            if(CollectionUtils.isEmpty(attachDTOS)){
+                continue;
+            }
             attachDTOS.forEach(v->v.setBusinessId(soReceiptDetailEntity.getId()));
             allAttachDTOS.addAll(attachDTOS);
         }

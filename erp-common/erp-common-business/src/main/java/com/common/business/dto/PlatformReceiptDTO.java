@@ -44,6 +44,10 @@ public class PlatformReceiptDTO extends UniqueDto {
      * 是否入账
      */
     private Boolean isPosted;
+    /**
+     * 是否作废
+     */
+    private Boolean isInvalid;
 
     /**
      * 入账账户Id

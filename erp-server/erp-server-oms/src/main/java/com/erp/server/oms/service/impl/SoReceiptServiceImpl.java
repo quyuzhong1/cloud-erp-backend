@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -505,11 +506,11 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     public void addOrUpdateBySo(SoInfoEntity soInfo, String customerId, List<SoReceiptDTO.SoViewDTO> soReceiptDTOList) {
         //查询原有
         List<SoReceiptDTO.SoViewDTO> oldList = this.getSoViewDTO(soInfo);
-        List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).collect(Collectors.toList());
+        List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> newDetailIds = soReceiptDTOList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StrUtils::isNotEmpty).collect(Collectors.toList());
-        List<SoReceiptDetailEntity> soReceiptDetailEntityList = soReceiptDetailService.listByIds(oldDetailIds);
-        List<SoReceiptEntity> soReceiptEntityList = this.listByIds(oldIds);
+        List<SoReceiptDetailEntity> soReceiptDetailEntityList = CollectionUtil.isNotEmpty(oldDetailIds)? soReceiptDetailService.listByIds(oldDetailIds):new ArrayList<>();
+        List<SoReceiptEntity> soReceiptEntityList = CollectionUtil.isNotEmpty(oldIds)?this.listByIds(oldIds):new ArrayList<>();
         //新增
         List<SoReceiptDTO.SoViewDTO> addList = soReceiptDTOList.stream().filter(v -> StrUtils.isEmpty(v.getDetailId())).collect(Collectors.toList());
         for (SoReceiptDTO.SoViewDTO add : addList) {
