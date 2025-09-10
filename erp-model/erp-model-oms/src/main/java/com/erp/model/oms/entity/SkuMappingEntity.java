@@ -50,12 +50,6 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     private String platformName;
 
     /**
-     * 平台类型
-     */
-    @TableField("platform_type")
-    private String platformType;
-
-    /**
      * 产品sku id
      */
     @TableField("product_sku_id")
