@@ -142,6 +142,11 @@ public class SoReceiptEntity extends BaseEntity<SoReceiptEntity> {
      */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+    /**
+     * 销售组织Id
+     */
+    @TableField("sales_org_id")
+    private String salesOrgId;
 
     public static final String CODE = "code";
 

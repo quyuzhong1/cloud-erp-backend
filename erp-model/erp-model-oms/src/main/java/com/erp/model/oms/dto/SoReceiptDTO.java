@@ -423,6 +423,7 @@ public class SoReceiptDTO implements Serializable {
          */
         private String dictReceiptMethodName;
 
+
         /**
          * 销售组织id
          */
@@ -580,6 +581,11 @@ public class SoReceiptDTO implements Serializable {
         * 入账账户
         */
         private String postedAccount;
+
+        /**
+         * 销售组织Id
+         */
+        private String salesOrgId;
 
         /**
         * 来源类型
