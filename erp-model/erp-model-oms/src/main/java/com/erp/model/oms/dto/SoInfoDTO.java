@@ -1654,13 +1654,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
@@ -1677,7 +1675,6 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
          */
-        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
         private String receiveCondition;
 
         /**
