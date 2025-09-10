@@ -296,9 +296,11 @@ public class ExportOmsFeignController {
 
     @PostMapping("/soMultiChannel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
+            tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
-            tableAlias = "smc")
+            tableAlias = "smc"
+    )
     @WebAdvanceQuery
     public PagingVO<SoMultiChannelDTO.ListDTO> exportSoMultiChannel(@RequestBody PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {
         return soMultiChannelService.paging(dto);

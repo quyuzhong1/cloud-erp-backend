@@ -112,6 +112,7 @@ public class SoMultiChannelController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
@@ -130,6 +131,7 @@ public class SoMultiChannelController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "smc.delivery_shop_id",
             menuCode = "oms:soMultiChannel:paging",
             tableAlias = "smc"
     )
@@ -431,11 +433,6 @@ public class SoMultiChannelController extends BaseController {
      * @date: 2025-08-20
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soMultiChannel:export",
-            tableAlias = ""
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "多渠道订单主表导出Excel数据")
     public ApiResult<Boolean> exportList(@RequestBody @Validated SoMultiChannelDTO.PagingParamDTO dto, HttpServletResponse response) {
         soMultiChannelService.exportList(dto, response);
