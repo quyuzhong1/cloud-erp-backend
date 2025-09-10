@@ -1086,6 +1086,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(updateDTO.getShopId());
+        if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
+            throw new ServiceException("店铺已禁用，无法修改");
+        }
         //未付款数据不能编辑
         soB2cCoreService.checkPayMent(old);
 
@@ -1167,7 +1171,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess) {
+    public ApproveResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2C销售订单表数据");
         }
@@ -1190,12 +1194,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 更新单据审核状态
         log.info("提交 开始修改B2C销售订单表状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus(), isCleanError);
-
+        ApproveResultDTO resultDTO = new ApproveResultDTO();
+        Boolean isExistProcess = false;
         log.info("提交 开始启动B2C销售订单表流程，id=：【{}】", entity.getId());
         if (isProcess) {
-            startProcess(entity);
+            isExistProcess = startProcess(entity);
         }
-
         //如果是已拦截或已冻结修改拦截打标识、冻结状态
         if (entity.getIsIntercept() || entity.getIsFrozen()) {
             SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
@@ -1217,7 +1221,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+        resultDTO.setId(entity.getId());
+        resultDTO.setCode(entity.getCode());
+        resultDTO.setMsg(OperationTypeEnum.SUBMIT.getName() + "成功");
+        resultDTO.setSuccess(Boolean.TRUE);
+        resultDTO.setIsExistProcess(isExistProcess);
+        return resultDTO;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -2174,7 +2183,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
         try {
-            this.autoOrderForecast(Collections.singletonList(id));
+            List<BatchResultDTO> batchResultDTOS = this.autoOrderForecast(Collections.singletonList(id));
+            //在提交发货中，清除异常订单报错
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            if (CollUtil.isNotEmpty(batchResultDTOS) && !batchResultDTOS.get(0).getSuccess()){
+                SoB2cErrorDTO.AddDTO dto = new SoB2cErrorDTO.AddDTO();
+                dto.setMainId(id);
+                dto.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                dto.setMessage(CharSequenceUtil.format("自动预报失败:{}", batchResultDTOS.get(0).getMsg()));
+                soB2cErrorService.add(dto);
+                return batchResultDTOS.get(0);
+            }
         }catch (Exception e){
             log.error("自动预报失败",e);
             throw new ServiceException("自动预报失败:{}",e.getMessage());
@@ -2182,11 +2201,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+           return BatchResultDTO.fail(id,entity.getCode(),ApiError.ERROR_SO_B2C_NOT_EXIST.msg);
         }
         //已作废订单不能提交发货
         if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_STATUS_ERROR, entity.getCode());
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+            return BatchResultDTO.success(id,entity.getCode(),CharSequenceUtil.format(ApiError.ERROR_SO_B2C_ORDER_STATUS_ERROR.msg, entity.getCode()));
         }
         //全托管并且是平台订单就进行校验状态
         if (isFullyManagedOrder(entity.getDictPlatform()) && SourceTypeEnum.SO_B2C.getCode().equals(entity.getSourceType())){
@@ -3766,7 +3787,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return void
      * @Date 2023/7/4 10:07
      **/
-    public void startProcess(SoB2cEntity entity) {
+    public Boolean startProcess(SoB2cEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
@@ -3778,6 +3799,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
+        }else {
+            return result.getData().getIsExistProcess();
         }
     }
 
@@ -4976,7 +4999,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //自动提交
             SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
-            BatchResultDTO submit = soB2cService.submit(entity, error,soB2cLogisticsEntity, Boolean.FALSE);
+            ApproveResultDTO submit = soB2cService.submit(entity, error, soB2cLogisticsEntity, Boolean.FALSE);
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
@@ -8510,7 +8533,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setTransferStatus(TransferStatusEnum.SUCCESS.getCode());
                 updateForcastStatusDTO.setStatus(TransferStatusEnum.SUCCESS.getCode());
                 if (StringUtils.isNotBlank(error.getId())) {
-                    deleteErrorIds.add(error.getId());
+                    //避免存在一个订单多个相同异常
+                    List<String> errorIds = errorList.stream().filter(e -> e.getMainId().equals(shippingOrderDTO.getSoId())).map(SoB2cErrorEntity::getId).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(errorIds)){
+                        deleteErrorIds.addAll(errorIds);
+                    }
                 }
                 operateLogService.addModuleOperateLog("订单预报", ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "订单预报");
             } else {
@@ -8556,6 +8583,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NEVER)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
@@ -8600,8 +8628,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 existDTO.getIds().add(soB2cEntity.getId());
             }
         }
-        transferDeclareDTOList.forEach(soB2cService::orderForecast);
-        return new ArrayList<>();
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        transferDeclareDTOList.forEach(e ->{
+            List<BatchResultDTO> batchResultDTOS = soB2cService.orderForecast(e);
+            if (CollUtil.isNotEmpty(batchResultDTOS)){
+                batchResultDTOList.addAll(batchResultDTOS);
+            }
+        });
+        return batchResultDTOList;
     }
 
     @Override

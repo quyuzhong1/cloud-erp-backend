@@ -99,6 +99,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.SoOutstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
+import com.erp.server.wms.rocketmq.consumer.PlatformOutboundConsumerService;
 import com.erp.server.wms.service.*;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
@@ -185,6 +186,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Resource
+    private PlatformOutboundConsumerService platformOutboundConsumerService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -1421,7 +1424,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送数帝云
             List<SoOutstockDetailEntity> detailEntityList = detailMap.get(entity.getId());
             syncKingdeeSoOutstockService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
-
+            //删除三方仓发货单
+            if(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                thirdWarehouseDeliveryService.deleteByIds(Collections.singletonList(entity.getSourceId()));
+            }
             //清空销售订单的出库时间
             this.handleSoOutDate(Collections.singletonList(entity));
 
@@ -2737,14 +2743,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     newDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(newDetailList);
+                return createB2cSoOutstock(generateB2cDTO);
             } else if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(generateB2cDTO.getSourceType())){
+                SoB2cEntity soB2cEntity = soB2cFeign.getById(soB2cId);
                 ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestBySoId(generateB2cDTO.getSoId());
                 List<String> sourceCodes = new ArrayList<>();
                 sourceCodes.add(generateB2cDTO.getSoCode());
                 if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                     sourceCodes.add(thirdWarehouseDeliveryEntity.getCode());
-                    generateB2cDTO.setSourceId(thirdWarehouseDeliveryEntity.getId());
-                    generateB2cDTO.setSourceCode(thirdWarehouseDeliveryEntity.getCode());
                 }
                 // 海外仓出库信息补充
                 List<DmpThirdOutboundEntity> list = FeignQuery.create(DmpThirdOutboundEntity.class)
@@ -2755,16 +2761,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 DmpThirdOutboundEntity outboundEntity = list.get(0);
                 LocalDateTime outBoundTime = outboundEntity.getDateShipping();
+                PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
                 if(Objects.nonNull(outBoundTime)){
-                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+                    platformOutboundDTO.setOutBoundTime(outBoundTime);
                 }
-                //跟踪号
-                generateB2cDTO.setTrackNo(outboundEntity.getTrackingNo());
-                //运单号
-                generateB2cDTO.setTransportNo(outboundEntity.getTrackingNo());
+                platformOutboundDTO.setTrackNo(outboundEntity.getTrackingNo());
+                platformOutboundConsumerService.generateSoOut(soB2cEntity,thirdWarehouseDeliveryEntity,platformOutboundDTO,"");
+                return true;
             }
-            Boolean result = createB2cSoOutstock(generateB2cDTO);
-            return result;
+            return true;
         } else {
             String id = outstock.getId();
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
@@ -4046,6 +4051,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
+            //删除三方仓发货单
+            List<String> sourceIds = list.stream()
+                    .filter(obj -> SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(obj.getSourceType()))
+                    .map(SoOutstockEntity::getSourceId)
+                    .collect(Collectors.toList());
+            thirdWarehouseDeliveryService.deleteByIds(sourceIds);
 
             //清空销售订单的出库时间
             this.handleSoOutDate(removeList);

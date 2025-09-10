@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import io.seata.common.util.StringUtils;
@@ -70,6 +71,13 @@ public class SoReturnStockExcelListener extends AnalysisEventListener<SoReturnSt
         //时间
         if (CharSequenceUtil.isBlank(importExcelDTO.getBillDateStr())) {
             importExcelDTO.setBillDateStr(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            importExcelDTO.setBillDate(LocalDate.now());
+        }else {
+            try {
+                importExcelDTO.setBillDate(LocalDateUtil.stringToLocalDate(importExcelDTO.getBillDateStr()));
+            } catch (Exception e) {
+                errorMsgList.add("入库日期格式错误");
+            }
         }
 
         //存在错误数据则直接返回
