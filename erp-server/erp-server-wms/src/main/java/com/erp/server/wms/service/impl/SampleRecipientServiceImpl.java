@@ -694,6 +694,10 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品领用单不支持删除操作");
+        }
         // 删除明细数据
         boolean detailDeleteResult = sampleRecipientDetailService.lambdaUpdate()
             .eq(SampleRecipientDetailEntity::getMainId, id)

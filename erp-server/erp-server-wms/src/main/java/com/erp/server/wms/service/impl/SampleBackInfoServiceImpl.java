@@ -24,6 +24,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
@@ -54,6 +55,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -211,6 +213,10 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
 
         // 数据处理
         handleData(sampleBackInfoEntity);
+        
+        // 回填部门名称和仓库名称
+        fillDeptAndWarehouseNames(old);
+        fillDeptAndWarehouseNames(sampleBackInfoEntity);
         log.info("编辑 开始修改样品退回单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(sampleBackInfoEntity);
         if(!save) {
@@ -239,30 +245,71 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
                 .filter(id -> !newDetailIds.contains(id))
                 .collect(Collectors.toSet());
             if (!toDeleteIds.isEmpty()) {
+                // 查询要删除的明细信息用于日志记录
+                List<SampleBackDetailEntity> deleteDetails = existingDetails.stream()
+                    .filter(detail -> toDeleteIds.contains(detail.getId()))
+                    .collect(Collectors.toList());
+                
                 sampleBackDetailService.removeByIds(toDeleteIds);
+                
+                // 批量添加删除日志
+                List<Pair<String, String>> deletePairList = deleteDetails.stream()
+                    .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo()))
+                    .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除SKU【%s】", ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), deletePairList, "编辑操作");
             }
             
-            // 处理新增和更新
-            for (SampleBackDetailDTO.UpdateDTO detailDTO : addOrUpdateDTO.getDetailList()) {
-                if (StrUtil.isBlank(detailDTO.getId())) {
-                    // 新增明细
+            // 分离新增和更新的明细
+            List<SampleBackDetailDTO.UpdateDTO> addList = addOrUpdateDTO.getDetailList().stream()
+                .filter(e -> StringUtils.isBlank(e.getId()))
+                .collect(Collectors.toList());
+            List<SampleBackDetailDTO.UpdateDTO> updateList = addOrUpdateDTO.getDetailList().stream()
+                .filter(e -> StringUtils.isNotBlank(e.getId()))
+                .collect(Collectors.toList());
+
+            // 处理新增明细
+            List<SampleBackDetailEntity> addEntityList = new ArrayList<>();
+            if (CollUtil.isNotEmpty(addList)) {
+                for (SampleBackDetailDTO.UpdateDTO detailDTO : addList) {
+                    SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
+                    BeanMapperUtils.copy(detailDTO, detailEntity);
+                    detailEntity.setMainId(addOrUpdateDTO.getId());
+                    addEntityList.add(detailEntity);
+                }
+                
+                boolean saveResult = sampleBackDetailService.saveBatch(addEntityList);
+                if (!saveResult) {
+                    throw new ServiceException("样品退回单明细保存失败");
+                }
+                
+                // 批量添加新增日志
+                List<Pair<String, String>> addPairList = addEntityList.stream()
+                    .map(obj -> new Pair<>(addOrUpdateDTO.getId(), obj.getSkuNo()))
+                    .collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("添加SKU【%s】", ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), addPairList, "编辑操作");
+            }
+
+            // 处理更新明细
+            if (CollUtil.isNotEmpty(updateList)) {
+                for (SampleBackDetailDTO.UpdateDTO detailDTO : updateList) {
                     SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
                     BeanMapperUtils.copy(detailDTO, detailEntity);
                     detailEntity.setMainId(addOrUpdateDTO.getId());
                     
-                    boolean detailSave = sampleBackDetailService.save(detailEntity);
-                    if (!detailSave) {
-                        throw new ServiceException("样品退回单明细保存失败");
-                    }
-                } else {
-                    // 更新明细
-                    SampleBackDetailEntity detailEntity = new SampleBackDetailEntity();
-                    BeanMapperUtils.copy(detailDTO, detailEntity);
-                    detailEntity.setMainId(addOrUpdateDTO.getId());
+                    // 查找原有明细用于日志对比
+                    SampleBackDetailEntity oldDetail = existingDetails.stream()
+                        .filter(e -> Objects.equals(e.getId(), detailDTO.getId()))
+                        .findFirst()
+                        .orElse(null);
                     
                     boolean detailUpdate = sampleBackDetailService.updateById(detailEntity);
                     if (!detailUpdate) {
                         throw new ServiceException("样品退回单明细更新失败");
+                    }
+                    
+                    // 添加更新日志
+                    if (oldDetail != null) {
+                        operateLogService.addModuleOperateLogByObj(oldDetail, detailEntity, ModuleTypeEnum.SAMPLE_BACK_INFO.getCode(), addOrUpdateDTO.getId(), String.format("编辑SKU【%s】", oldDetail.getSkuNo()));
                     }
                 }
             }
@@ -611,6 +658,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     public BatchResultDTO delete(String id) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持删除操作");
+        }
+        
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -737,6 +790,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     * @param approveStatus
     */
     public void updateForApprove(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持审核操作");
+        }
+        
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
@@ -754,6 +813,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持反审核操作");
+        }
+        
         this.lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
             .set(SampleBackInfoEntity::getApproveUserId, "")
             .set(SampleBackInfoEntity::getApproveUserName, "")
@@ -767,6 +832,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持状态更新操作");
+        }
+        
         lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
         .set(SampleBackInfoEntity::getApproveStatus, approveStatus)
         .update(new SampleBackInfoEntity());
@@ -868,6 +939,39 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
             
             if (backQty != null && backQty > ledgerQty) {
                 throw new ServiceException(StrUtil.format("SKU【{}】退回数量不能大于台账数量", detail.getSkuNo()));
+            }
+        }
+    }
+
+    /**
+     * 查询并回填部门名称和仓库名称
+     */
+    private void fillDeptAndWarehouseNames(SampleBackInfoEntity entity) {
+        if (entity == null) {
+            return;
+        }
+
+        // 查询部门名称
+        if (StrUtil.isNotBlank(entity.getDeptId())) {
+            try {
+                SysDepartmentDTO department = sysUserFeign.getUserDeptById(entity.getDeptId());
+                if (department != null && StrUtil.isNotBlank(department.getName())) {
+                    entity.setDeptName(department.getName());
+                }
+            } catch (Exception e) {
+                log.warn("查询部门名称失败，部门ID：{}，错误：{}", entity.getDeptId(), e.getMessage());
+            }
+        }
+
+        // 查询仓库名称
+        if (StrUtil.isNotBlank(entity.getWarehouseId())) {
+            try {
+                WarehouseEntity warehouse = warehouseService.getById(entity.getWarehouseId());
+                if (warehouse != null && StrUtil.isNotBlank(warehouse.getName())) {
+                    entity.setWarehouseName(warehouse.getName());
+                }
+            } catch (Exception e) {
+                log.warn("查询仓库名称失败，仓库ID：{}，错误：{}", entity.getWarehouseId(), e.getMessage());
             }
         }
     }

@@ -165,10 +165,10 @@ eo.partition_id as partitionId
         eo.country_name AS countryName,
         eo.partition_id AS partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
         eod.ID AS detailId,
         eod.main_id AS mainId,
-        eod.source_detail_id AS sourceDetailId,
+        eod.sample_ledger_id AS sampleLedgerId,
         eod.sku_id AS skuId,
         eod.sku_no AS skuNo,
         eod.product_name AS productName,
