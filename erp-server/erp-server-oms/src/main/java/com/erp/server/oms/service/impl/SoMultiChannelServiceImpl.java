@@ -406,8 +406,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException(ApiError.ERROR_98014);
         }
         //只允许创建失败允许反审核
-        if (!Objects.equals(entity.getCreateStatus(), CreateStatusEnum.FAILED.getCode())) {
-            throw new ServiceException("只允许创建失败订单反审核");
+        if (!(Objects.equals(entity.getCreateStatus(), CreateStatusEnum.FAILED.getCode()) || Objects.equals(entity.getCreateStatus(), CreateStatusEnum.CANCEL.getCode()))) {
+            throw new ServiceException("只允许创建失败和取消订单支持反审核");
         }
         return true;
     }
@@ -607,6 +607,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 ApiResponse<CancelFulfillmentOrderResponse> cancelFulfillmentOrderResponseApiResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
                 this.lambdaUpdate()
                         .set(SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
+                        .set(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()), SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
                         .eq(SoMultiChannelEntity::getId, entity.getId()).update();
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelFulfillmentOrderResponseApiResponse.getData())), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getSoId(), "多渠道订单发货拦截");
             } catch (ApiException | LWAException e) {
@@ -614,8 +615,16 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "亚马逊取消订单失败" + e.getMessage());
             }
         }
+        Boolean b = dmpSyncFeign.batchNoNeedSyncBySourceCode(new BaseIdsDTO.SourceCodeDTO(Collections.singletonList(entity.getCode()), "反审核取消同步"));
+        if (!b) {
+            throw new ServiceException("反审核取消亚马逊订单同步失败");
+        }
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             this.cancelProcess(entity.getId());
+        }
+        if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            //反审核作废
+            this.disApprove(entity.getId());
         }
         //作废数据
         if (!entity.getInvalidStatus() && isValidate) {
