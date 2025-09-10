@@ -12,6 +12,7 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
         selectorExpression = RocketMqNewTag.DMP_PLATFORM_RECEIPT_TO_OMS_TAG,
         consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_RECEIPT_TO_OMS_GROUP)
 @Slf4j
-public class PlatformReceiptConsumerService extends AbstractNewPlatformConsumerHandler{
+public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformConsumerHandler {
 
 	@Resource
 	private SoReceiptService soReceiptService;
