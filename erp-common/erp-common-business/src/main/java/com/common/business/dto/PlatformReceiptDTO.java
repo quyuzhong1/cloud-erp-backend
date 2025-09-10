@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  *收款单消费DTO
@@ -71,4 +72,6 @@ public class PlatformReceiptDTO extends UniqueDto {
      * 第三方系统
      */
     private String thirdSystem;
+
+    private List<PlatformReceiptDetailDTO> detailList;
 }
