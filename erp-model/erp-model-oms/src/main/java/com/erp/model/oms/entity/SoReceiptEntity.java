@@ -84,6 +84,11 @@ public class SoReceiptEntity extends BaseEntity<SoReceiptEntity> {
     @TableField("source_id")
     private String sourceId;
     /**
+     * 平台订单Id
+     */
+    @TableField("platform_order_id")
+    private String platformOrderId;
+    /**
     * 审核时间
     */
     @TableField("approve_time")

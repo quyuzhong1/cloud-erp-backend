@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
  * 收款单来源
  */
 public enum SoReceiptSourceTypeEnum implements EnumMessage {
+    SELF_ADD("selfAdd", "手动新增"),
     SO_INFO("soInfo", "销售订单"),
     THIRD("third", "第三方"),
     ;
