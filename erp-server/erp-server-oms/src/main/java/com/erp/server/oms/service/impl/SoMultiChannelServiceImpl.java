@@ -622,10 +622,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             this.cancelProcess(entity.getId());
         }
-        if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
-            //反审核作废
-            this.disApprove(entity.getId());
-        }
         //作废数据
         if (!entity.getInvalidStatus() && isValidate) {
             this.lambdaUpdate()
