@@ -295,7 +295,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
         paramDTO.setShopIdList(queryDTO.getShopIds());
-        paramDTO.setType(RuleTypeEnum.PLATFORM.code);
+        paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.code);
         paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
