@@ -147,9 +147,6 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setSoId(updateDTO.getSoId());
             soReceiptDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
             soReceiptDetailEntity.setPaymentNo(updateDTO.getPaymentNo());
-            soReceiptDetailEntity.setDictReceiptMethod(updateDTO.getDictReceiptMethod());
-            soReceiptDetailEntity.setReceiptAccount(updateDTO.getReceiptAccount());
-            soReceiptDetailEntity.setReceiptDate(updateDTO.getReceiptDate());
             soReceiptDetailEntity.setRemark(updateDTO.getRemark());
             soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
             soReceiptDetailEntity.setId(updateDTO.getId());
