@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.dto.PlatformReceiptDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
 import com.common.business.service.SuperService;
@@ -162,4 +163,9 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     void autoApproveBySo(SoInfoEntity entity);
 
     SoReceiptEntity getByThirdSystemAndCode(String thirdSystem, String code);
+
+    void updateForDisApprove(String id, String approveStatus);
+
+    void handlePlatformConsumer(PlatformReceiptDTO dto);
+
 }

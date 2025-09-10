@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AttachDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import lombok.Data;
@@ -170,7 +171,14 @@ public class SoReceiptDetailDTO implements Serializable {
         @NotNull(message = "收款金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "收款金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal receiptAmount;
-
+        /**
+         * 平台明细id
+         */
+        private String platformDetailId;
+        /**
+         * 平台明细编号
+         */
+        private String platformDetailCode;
 
     }
 

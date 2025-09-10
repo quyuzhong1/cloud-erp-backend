@@ -63,6 +63,16 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     @TableField("receipt_amount")
     private BigDecimal receiptAmount;
 
+    /**
+     * 平台明细id
+     */
+    @TableField("platform_detail_id")
+    private String platformDetailId;
+    /**
+     * 平台明细编号
+     */
+    @TableField("platform_detail_code")
+    private String platformDetailCode;
 
     public static final String MAIN_ID = "main_id";
 

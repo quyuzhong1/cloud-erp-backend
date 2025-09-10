@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  *收款单消费DTO
@@ -38,10 +39,6 @@ public class PlatformReceiptDetailDTO extends UniqueDto {
      * 金额
      */
     private BigDecimal amount;
-    /**
-     * 平台删除标识
-     */
-    private Boolean platformIsDeleted;
 
     /**
      * 平台明细id
@@ -52,4 +49,15 @@ public class PlatformReceiptDetailDTO extends UniqueDto {
      * 是否作废
      */
     private Boolean isInvalid;
+
+
+    /**
+     * erp销售订单Id
+     */
+    private String erpSoId;
+
+    /**
+     * 附件列表
+     */
+    private List<AttachDTO> attachmentList;
 }
