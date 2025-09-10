@@ -498,7 +498,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
             soViewDTO.setApproveStatusName(ApproveStatusEnum.getName(soViewDTO.getApproveStatus()));
         }
-        return Collections.emptyList();
+        return soViewDTOList;
     }
 
     @Override

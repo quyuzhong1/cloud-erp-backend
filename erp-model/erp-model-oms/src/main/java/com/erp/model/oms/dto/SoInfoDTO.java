@@ -819,6 +819,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
 
         /**
          * 类型 来源
@@ -1522,6 +1526,10 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
         private String orderType;
 
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
         /**
          * 要货日期
          */
