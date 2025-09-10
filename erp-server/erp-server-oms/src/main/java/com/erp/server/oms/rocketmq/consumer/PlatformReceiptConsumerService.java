@@ -1,21 +1,14 @@
 package com.erp.server.oms.rocketmq.consumer;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.PlatformProductDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.business.dto.PlatformReceiptDetailDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.threadlocal.UserContext;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
-import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -108,7 +100,7 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 			dto.setErpPostedAccount(accountType.getName());
 		}
 
-		List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetailList();
+		List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetail();
 		//过滤掉作废的
 		if(CollectionUtils.isNotEmpty(platformReceiptDetailDTOList)){
 			List<PlatformReceiptDetailDTO> filterList = platformReceiptDetailDTOList.stream().filter(d -> !d.getIsInvalid()).collect(Collectors.toList());
@@ -124,7 +116,7 @@ public class PlatformReceiptConsumerService extends AbstractRestCloudPlatformCon
 				}
 			}
 
-			dto.setDetailList(filterList);
+			dto.setDetail(filterList);
 		}
 	}
 

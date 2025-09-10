@@ -887,7 +887,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setThirdCode(dto.getCode());
             addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
             List<SoReceiptDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
-            for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetailList()) {
+            List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
+            for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
                 SoReceiptDetailEntity existDetail = existList.stream().filter(v -> v.getPlatformDetailId().equals(platformReceiptDetailDTO.getPlatformDetailId())).findFirst().orElse(null);
                 if(Objects.isNull(existDetail)){
                     continue;
@@ -907,7 +908,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setDetailList(updateDTOList);
             this.update(addOrUpdateDTO);
             //处理删除的明细
-            List<String> platformDetailIds = dto.getDetailList().stream().map(PlatformReceiptDetailDTO::getPlatformDetailId).collect(Collectors.toList());
+            List<String> platformDetailIds = detailList.stream().map(PlatformReceiptDetailDTO::getPlatformDetailId).collect(Collectors.toList());
             List<SoReceiptDetailEntity> deleteDetailList = existList.stream().filter(v -> !platformDetailIds.contains(v.getPlatformDetailId())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soReceiptDetailService.removeByIds(deleteDetailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList()));
@@ -933,16 +934,18 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setThirdCode(dto.getCode());
             addDTO.setThirdSystem(dto.getThirdSystem());
             List<SoReceiptDetailDTO.AddDTO> detailAddDTOList = new ArrayList<>();
-            for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetailList()) {
-                SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
-                detailAddDTO.setReceiptAmount(platformReceiptDetailDTO.getAmount());
-                detailAddDTO.setRemark(platformReceiptDetailDTO.getRemark());
-                detailAddDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
-                detailAddDTO.setSoCode(platformReceiptDetailDTO.getSoCode());
-                detailAddDTO.setPlatformDetailCode(platformReceiptDetailDTO.getCode());
-                detailAddDTO.setSoId(platformReceiptDetailDTO.getErpSoId());
-                detailAddDTO.setPlatformDetailId(platformReceiptDetailDTO.getPlatformDetailId());
-                detailAddDTOList.add(detailAddDTO);
+            if(CollectionUtils.isNotEmpty(dto.getDetail())){
+                for (PlatformReceiptDetailDTO platformReceiptDetailDTO : dto.getDetail()) {
+                    SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
+                    detailAddDTO.setReceiptAmount(platformReceiptDetailDTO.getAmount());
+                    detailAddDTO.setRemark(platformReceiptDetailDTO.getRemark());
+                    detailAddDTO.setAttachmentList(platformReceiptDetailDTO.getAttachmentList());
+                    detailAddDTO.setSoCode(platformReceiptDetailDTO.getSoCode());
+                    detailAddDTO.setPlatformDetailCode(platformReceiptDetailDTO.getCode());
+                    detailAddDTO.setSoId(platformReceiptDetailDTO.getErpSoId());
+                    detailAddDTO.setPlatformDetailId(platformReceiptDetailDTO.getPlatformDetailId());
+                    detailAddDTOList.add(detailAddDTO);
+                }
             }
             addDTO.setDetailList(detailAddDTOList);
             this.add(addDTO);
@@ -965,7 +968,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             return true;
         }
         //校验明细
-        List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetailList();
+        List<PlatformReceiptDetailDTO> platformReceiptDetailDTOList = dto.getDetail();
         if(existList.size() != platformReceiptDetailDTOList.size()){
             return true;
         }

@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -8,7 +7,6 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -107,5 +105,5 @@ public class PlatformReceiptDTO extends UniqueDto {
      */
     private List<AttachDTO> attachmentList;
 
-    private List<PlatformReceiptDetailDTO> detailList;
+    private List<PlatformReceiptDetailDTO> detail;
 }
