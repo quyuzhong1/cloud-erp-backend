@@ -88,25 +88,6 @@ public class SoReceiptDetailDTO implements Serializable {
         private String paymentNo;
 
         /**
-        * 收款方式
-        */
-        private String dictReceiptMethod;
-
-        /**
-         * 收款方式名称
-         */
-        private String dictReceiptMethodName;
-        /**
-        * 收款账号
-        */
-        private String receiptAccount;
-
-        /**
-        * 收款日期
-        */
-        private LocalDate receiptDate;
-
-        /**
         * 备注
         */
         private String remark;
@@ -177,25 +158,6 @@ public class SoReceiptDetailDTO implements Serializable {
          * 附件列表
          */
         private List<AttachDTO> attachmentList;
-
-        /**
-        * 收款方式
-        */
-        @NotBlank(message = "收款方式不能为空")
-        @Size(max = 255,message = "收款方式最大长度不能超过255位")
-        private String dictReceiptMethod;
-
-        /**
-        * 收款账号
-        */
-        @NotBlank(message = "收款账号不能为空")
-        @Size(max = 255,message = "收款账号最大长度不能超过255位")
-        private String receiptAccount;
-
-        /**
-        * 收款日期
-        */
-        private LocalDate receiptDate;
 
         /**
         * 备注

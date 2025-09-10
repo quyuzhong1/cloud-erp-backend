@@ -103,7 +103,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 平台订单编号
          */
-        private BigDecimal platformOrderCode;
+        private String platformOrderCode;
         /**
          * 军区id
          */
@@ -839,6 +839,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
 
         /**
          * 类型 来源
@@ -977,13 +981,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
@@ -1094,6 +1096,12 @@ public class SoInfoDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
+
         /**
          * 审核状态code
          */
@@ -1548,6 +1556,10 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         /**
+         * 订单金额
+         */
+        private BigDecimal orderAmount;
+        /**
          * 要货日期
          */
         @NotNull(message = "要货日期不能为空", groups = {AddGroup.class})
@@ -1679,13 +1691,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
@@ -1702,7 +1712,6 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
          */
-        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
         private String receiveCondition;
 
         /**

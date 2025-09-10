@@ -404,6 +404,25 @@ public class SoReceiptDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 收款账号
+         */
+        private String receiptAccount;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiptDate;
+        /**
+         * 收款方式
+         */
+        private String dictReceiptMethod;
+
+        /**
+         * 收款方式名称
+         */
+        private String dictReceiptMethodName;
+
 
         /**
          * 销售组织id
@@ -528,7 +547,24 @@ public class SoReceiptDTO implements Serializable {
         @NotBlank(message = "客户Id不能为空")
         @Size(max = 32,message = "客户Id最大长度不能超过32位")
         private String customerId;
+        /**
+         * 收款方式
+         */
+        @NotBlank(message = "收款方式不能为空")
+        @Size(max = 255,message = "收款方式最大长度不能超过255位")
+        private String dictReceiptMethod;
 
+        /**
+         * 收款账号
+         */
+        @NotBlank(message = "收款账号不能为空")
+        @Size(max = 255,message = "收款账号最大长度不能超过255位")
+        private String receiptAccount;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiptDate;
         /**
         * 币种
         */
@@ -545,6 +581,11 @@ public class SoReceiptDTO implements Serializable {
         * 入账账户
         */
         private String postedAccount;
+
+        /**
+         * 销售组织Id
+         */
+        private String salesOrgId;
 
         /**
         * 来源类型
