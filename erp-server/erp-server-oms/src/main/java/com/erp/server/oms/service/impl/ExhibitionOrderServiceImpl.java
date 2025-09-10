@@ -245,7 +245,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         // 保存附件
         TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSave(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
+        omsAttachmentService.batchSaveOrUpdate(addDTO.getAttachmentUrlList(), addDTO.getAttachmentNameList(), tableName.value(), id);
 
         return new BaseResultDTO.AddDTO(id, code);
     }
@@ -463,7 +463,7 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         // 保存附件
         TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
-        omsAttachmentService.batchSave(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), id);
+        omsAttachmentService.batchSaveOrUpdate(addOrUpdateDTO.getAttachmentUrlList(), addOrUpdateDTO.getAttachmentNameList(), tableName.value(), id);
 
         return Boolean.TRUE;
     }
