@@ -1894,8 +1894,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailDTO.setSkuNo(item.getSkuNo()); // SKU编号
                 detailDTO.setActualQty(item.getOutQty() != null ? item.getOutQty() : item.getReservedQty()); // 实发数量：出库数量或待出库数量
                 detailDTO.setWarehouseLocation(item.getWarehouseLocation()); // 仓位
-                detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : "样品领用单【下推】其他出库单填写的备注"); // 出库备注
-                
+                detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : ""); // 出库备注
                 detailList.add(detailDTO);
             }
             
