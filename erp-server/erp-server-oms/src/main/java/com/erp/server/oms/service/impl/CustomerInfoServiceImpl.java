@@ -896,11 +896,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private void sendDhtPushTask(List<CustomerInfoEntity> list, String code) {
         //查询地址
         List<String> ids = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
-        List<CustomerAddressEntity> customerAddressEntities = customerAddressService.listByMainIdList(ids);
+        List<CustomerAddressEntity> customerAddressEntities = customerAddressService.listAllByMainIds(ids);
         for (CustomerInfoEntity customerInfo : list) {
             syncDhtService.createSyncCustomerTaskToDht(customerInfo,code);
         }
         for (CustomerAddressEntity customerAddressEntity : customerAddressEntities) {
+            code = customerAddressEntity.getIsDeleted() ? SyncOperateEnum.OPERATE_DELETE.getCode() : code;
             syncDhtService.createSyncCustomerAddressTaskToDht(customerAddressEntity,code);
         }
     }
