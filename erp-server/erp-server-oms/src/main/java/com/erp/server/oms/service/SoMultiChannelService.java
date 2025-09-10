@@ -5,6 +5,7 @@ import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -229,4 +230,11 @@ public interface SoMultiChannelService extends SuperService<SoMultiChannelEntity
      * @param outstockQtyDTOList
      */
     void updateSoMultiOutstockQty(List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList);
+
+    /**
+     * 构建多渠道订单发货单DTO
+     * @param dto
+     * @return
+     */
+    SoB2cDTO.SaveSoB2cDistributionDTO buildDistributionDTO(SoMultiChannelDTO.SaveDTO dto);
 }

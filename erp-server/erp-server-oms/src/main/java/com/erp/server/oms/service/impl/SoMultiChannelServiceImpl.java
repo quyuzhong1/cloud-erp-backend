@@ -28,6 +28,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.oms.dto.SoMultiChannelDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -410,8 +411,6 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("反审核取消亚马逊订单同步失败");
         }
 
-        //不通过发起拦截
-        deliveryIntercept(entity, true, false, "多渠道订单反审核");
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getDeliveryCode(), "多渠道订单主单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
@@ -424,9 +423,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        //只允许创建中和创建失败允许反审核
-        if (Objects.equals(entity.getCreateStatus(), CreateStatusEnum.CREATING.getCode())) {
-            throw new ServiceException("创建中不允许反审核");
+        //只允许创建失败允许反审核
+        if (!Objects.equals(entity.getCreateStatus(), CreateStatusEnum.FAILED.getCode())) {
+            throw new ServiceException("只允许创建失败订单反审核");
         }
         return true;
     }
@@ -846,6 +845,25 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
     }
 
+    @Override
+    public SoB2cDTO.SaveSoB2cDistributionDTO buildDistributionDTO(SoMultiChannelDTO.SaveDTO dto) {
+        SoB2cDTO.SaveSoB2cDistributionDTO saveSoB2cDistributionDTO = new SoB2cDTO.SaveSoB2cDistributionDTO();
+        List<String> soIds = dto.getDetailList().stream().map(SoMultiChannelDTO.SoViewDTO::getSoId).distinct().collect(Collectors.toList());
+        saveSoB2cDistributionDTO.setIds(soIds);
+        saveSoB2cDistributionDTO.setIsCover(Boolean.TRUE);
+        List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList = new ArrayList<>();
+        for (SoMultiChannelDTO.SoViewDTO soViewDTO : dto.getDetailList()) {
+            SoB2cDTO.SaveSoB2cDistributionDetailDTO saveSoB2cDistributionDetailDTO = new SoB2cDTO.SaveSoB2cDistributionDetailDTO();
+            saveSoB2cDistributionDetailDTO.setId(soViewDTO.getSoId());
+            saveSoB2cDistributionDetailDTO.setDetailId(soViewDTO.getSoDetailId());
+            saveSoB2cDistributionDetailDTO.setLogisticsChannelId(dto.getLogisticsChannelId());
+            saveSoB2cDistributionDetailDTO.setWarehouseId(dto.getDeliveryWarehouseId());
+            detailList.add(saveSoB2cDistributionDetailDTO);
+        }
+        saveSoB2cDistributionDTO.setDetailList(detailList);
+        return saveSoB2cDistributionDTO;
+    }
+
     private void fillData(List<SoMultiChannelDTO.SoViewDTO> soViewDTOS, String deliveryWarehouseId, String shopId) {
         if (CollUtil.isEmpty(soViewDTOS)) {
             return;
@@ -971,7 +989,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .set(SoMultiChannelEntity::getApproveTime, LocalDateTime.now())
                 .update(new SoMultiChannelEntity());
         //记录审核状态变更
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单审核操作【{}】备注【{}】", ApproveStatusEnum.getName(approveStatus), comment), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), id, "审核操作");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单审核操作【{}】备注【{}】", ApproveStatusEnum.getName(approveStatus), CharSequenceUtil.isNotBlank(comment) ? comment : ""), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), id, "审核操作");
     }
 
     /**
