@@ -61,9 +61,9 @@
         and red2.so_id = si.id
         ),0) as remainReceiptAmount,
             srd.receipt_amount as receiptAmount,
-            srd.receipt_account as receiptAccount,
-            srd.receipt_date as receiptDate,
-            srd.dict_receipt_method as dictReceiptMethod,
+        sr.receipt_account as receiptAccount,
+        sr.receipt_date as receiptDate,
+        sr.dict_receipt_method as dictReceiptMethod,
         sr.is_posted as isPosted,
         sr.posted_account as postedAccount,
         sr.source_type as sourceType,
@@ -75,8 +75,8 @@
         sr.update_user_name as updateUserName,
         srd.remark
         from so_receipt sr
-        inner join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
-        inner join customer_info ci on ci.id = sr.customer_id and ci.is_deleted = false
+        left join so_receipt_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        left join customer_info ci on ci.id = sr.customer_id and ci.is_deleted = false
         left join so_info si on srd.so_id = si.id and si.is_deleted = false
         where
         ${params.sqlMap.default}
@@ -152,9 +152,9 @@
                srd.id as detailId,
                sr.code,
                srd.receipt_amount as receiptAmount,
-               srd.receipt_date as receiptDate,
-               srd.dict_receipt_method as dictReceiptMethod,
-               srd.receipt_account as receiptAccount,
+               sr.receipt_date as receiptDate,
+               sr.dict_receipt_method as dictReceiptMethod,
+               sr.receipt_account as receiptAccount,
                srd.payment_no as paymentNo,
                sr.approve_status as approveStatus,
                srd.remark

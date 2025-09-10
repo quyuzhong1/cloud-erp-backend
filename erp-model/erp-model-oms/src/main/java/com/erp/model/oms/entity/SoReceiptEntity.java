@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -108,6 +109,33 @@ public class SoReceiptEntity extends BaseEntity<SoReceiptEntity> {
      */
     @TableField("receipt_amount")
     private BigDecimal receiptAmount;
+
+    /**
+     * 平台创建时间
+     */
+    @TableField("platform_create_time")
+    private LocalDateTime platformCreateTime;
+    /**
+     * 平台更新时间
+     */
+    @TableField("platform_update_time")
+    private LocalDateTime platformUpdateTime;
+
+    /**
+     * 收款方式
+     */
+    @TableField("dict_receipt_method")
+    private String dictReceiptMethod;
+    /**
+     * 收款账号
+     */
+    @TableField("receipt_account")
+    private String receiptAccount;
+    /**
+     * 收款日期
+     */
+    @TableField("receipt_date")
+    private LocalDate receiptDate;
 
     public static final String CODE = "code";
 

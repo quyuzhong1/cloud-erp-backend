@@ -51,21 +51,7 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     */
     @TableField("payment_no")
     private String paymentNo;
-    /**
-    * 收款方式
-    */
-    @TableField("dict_receipt_method")
-    private String dictReceiptMethod;
-    /**
-    * 收款账号
-    */
-    @TableField("receipt_account")
-    private String receiptAccount;
-    /**
-    * 收款日期
-    */
-    @TableField("receipt_date")
-    private LocalDate receiptDate;
+
     /**
     * 备注
     */

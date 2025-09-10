@@ -518,15 +518,15 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addDTO.setIsPosted(false);
             addDTO.setSourceType(SoReceiptSourceTypeEnum.SO_INFO.getCode());
             addDTO.setAttachmentList(add.getAttachmentList());
+            addDTO.setDictReceiptMethod(add.getDictReceiptMethod());
+            addDTO.setReceiptAccount(add.getReceiptAccount());
+            addDTO.setReceiptDate(add.getReceiptDate());
             SoReceiptDetailDTO.AddDTO detailAddDTO = new SoReceiptDetailDTO.AddDTO();
             detailAddDTO.setSoId(soInfo.getId());
             detailAddDTO.setSoCode(soInfo.getCode());
             detailAddDTO.setSourceDetailId(soInfo.getId());
             detailAddDTO.setPaymentNo(add.getPaymentNo());
             detailAddDTO.setAttachmentList(add.getDetailAttachmentList());
-            detailAddDTO.setDictReceiptMethod(add.getDictReceiptMethod());
-            detailAddDTO.setReceiptAccount(add.getReceiptAccount());
-            detailAddDTO.setReceiptDate(add.getReceiptDate());
             detailAddDTO.setRemark(add.getRemark());
             detailAddDTO.setReceiptAmount(add.getReceiptAmount());
             addDTO.setDetailList(Arrays.asList(detailAddDTO));
@@ -544,12 +544,12 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             updateDTO.setId(update.getId());
             updateDTO.setAttachmentList(update.getAttachmentList());
             updateDTO.setFromSoUpdate(true);
+            updateDTO.setReceiptDate(update.getReceiptDate());
+            updateDTO.setDictReceiptMethod(update.getDictReceiptMethod());
+            updateDTO.setReceiptAccount(update.getReceiptAccount());
             SoReceiptDetailDTO.UpdateDTO detailUpdateDTO = new SoReceiptDetailDTO.UpdateDTO();
             detailUpdateDTO.setId(update.getDetailId());
             detailUpdateDTO.setReceiptAmount(update.getReceiptAmount());
-            detailUpdateDTO.setReceiptDate(update.getReceiptDate());
-            detailUpdateDTO.setDictReceiptMethod(update.getDictReceiptMethod());
-            detailUpdateDTO.setReceiptAccount(update.getReceiptAccount());
             detailUpdateDTO.setPaymentNo(update.getPaymentNo());
             detailUpdateDTO.setRemark(update.getRemark());
             updateDTO.setDetailList(Arrays.asList(detailUpdateDTO));
@@ -719,6 +719,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         dto.setSoCodeList(soCodes);
         List<SoReceiptDTO.SoInfoAndReceiptDTO> soInfoDTOS = this.listSoReceiptBySoCode(dto);
         List<SoReceiptDetailDTO.ViewDTO> detailViewList = new ArrayList<>();
+        DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(entity.getDictReceiptMethod())).findFirst().orElse(null);
+        if(ObjectUtil.isNotEmpty(receiveMethod)) {
+            data.setDictReceiptMethodName(receiveMethod.getName());
+        }
         for (SoReceiptDetailEntity soReceiptDetailEntity : detailList) {
             SoReceiptDetailDTO.ViewDTO viewDTO = BeanMapperUtils.map(SoReceiptDetailDTO.ViewDTO.class, soReceiptDetailEntity);
             List<OmsAttachmentEntity> detailAttachList = detailAttachmentEntities.stream().filter(v -> v.getBusinessId().equals(soReceiptDetailEntity.getId())).collect(Collectors.toList());
@@ -729,10 +733,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             viewDTO.setApproveStatus(soInfoAndReceiptDTO.getApproveStatus());
             viewDTO.setApproveStatusName(ApproveStatusEnum.getName(soInfoAndReceiptDTO.getApproveStatus()));
             viewDTO.setRemainReceiptAmount(soInfoAndReceiptDTO.getRemainReceiptAmount());
-            DictBasicEntity receiveMethod  = receiveMethodList.stream().filter(v -> v.getValue().equals(soReceiptDetailEntity.getDictReceiptMethod())).findFirst().orElse(null);
-            if(ObjectUtil.isNotEmpty(receiveMethod)) {
-                viewDTO.setDictReceiptMethodName(receiveMethod.getName());
-            }
+
             detailViewList.add(viewDTO);
         }
         data.setDetailList(detailViewList);
