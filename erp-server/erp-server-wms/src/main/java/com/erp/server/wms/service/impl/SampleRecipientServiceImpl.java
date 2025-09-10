@@ -1526,9 +1526,24 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         
         List<SampleRecipientDTO.ViewGenerateOutboundOrderDTO> result = new ArrayList<>();
 
+        // 先查询样品领用单明细数据，获取对应的mainId
+        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
+                .in(SampleRecipientDetailEntity::getId, ids)
+                .list();
+
+        if (CollUtil.isEmpty(detailList)) {
+            return result;
+        }
+
+        // 按mainId分组，获取所有不重复的mainId
+        List<String> mainIds = detailList.stream()
+                .map(SampleRecipientDetailEntity::getMainId)
+                .distinct()
+                .collect(Collectors.toList());
+
         // 查询样品领用单主表信息
         List<SampleRecipientEntity> mainList = this.lambdaQuery()
-                .in(SampleRecipientEntity::getId, ids)
+                .in(SampleRecipientEntity::getId, mainIds)
                 .list();
 
         if (CollUtil.isEmpty(mainList)) {
@@ -1547,14 +1562,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             }
         }
 
-        // 查询样品领用单明细数据
-        List<SampleRecipientDetailEntity> detailList = sampleRecipientDetailService.lambdaQuery()
-                .in(SampleRecipientDetailEntity::getMainId, ids)
-                .list();
-
-        if (CollUtil.isEmpty(detailList)) {
-            return result;
-        }
 
         // 2. 验证勾选数据执行状态不能全部为已出库状态
         boolean hasNonCompleteOutstock = detailList.stream()
@@ -1887,8 +1894,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 detailDTO.setSkuNo(item.getSkuNo()); // SKU编号
                 detailDTO.setActualQty(item.getOutQty() != null ? item.getOutQty() : item.getReservedQty()); // 实发数量：出库数量或待出库数量
                 detailDTO.setWarehouseLocation(item.getWarehouseLocation()); // 仓位
-                detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : "样品领用单【下推】其他出库单填写的备注"); // 出库备注
-                
+                detailDTO.setRemark(StringUtils.isNotBlank(item.getRemark()) ? item.getRemark() : ""); // 出库备注
                 detailList.add(detailDTO);
             }
             
