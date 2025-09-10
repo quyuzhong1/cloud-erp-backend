@@ -166,7 +166,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("多渠道订单主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】卖家订单编号【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单", soMultiChannelEntity.getDeliveryCode(), soMultiChannelEntity.getDeliveryCode());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】卖家订单编号【{}】", UserContext.getDefaultLoginUser().getUserName(), "多渠道订单", soMultiChannelEntity.getCode(), soMultiChannelEntity.getDeliveryCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soMultiChannelEntity.getId(), "新增操作");
         //新增明细（如果有明细的话）
         List<SoMultiChannelDetailEntity> soMultiChannelDetailEntities = soMultiChannelDetailService.addDetail(soMultiChannelEntity, addDTO.getDetailList());
