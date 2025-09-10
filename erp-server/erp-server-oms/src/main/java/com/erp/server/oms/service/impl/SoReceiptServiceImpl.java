@@ -37,6 +37,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.dht.SyncDhtService;
 import com.erp.server.oms.mapper.SoReceiptMapper;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -84,6 +85,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private SyncDhtService syncDhtService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
@@ -420,6 +423,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             //更新销售订单的收款金额
             Map<String,BigDecimal> updateSoReceiptAmountMap = detailEntityList.stream().collect(Collectors.groupingBy(SoReceiptDetailEntity::getSoId,Collectors.mapping(SoReceiptDetailEntity::getReceiptAmount,Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
             soInfoService.updateSoReceiptAmount(updateSoReceiptAmountMap);
+            //创建推送订货通任务
+            syncDhtService.createSyncReceiptTaskToDht(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
         return Boolean.TRUE;
