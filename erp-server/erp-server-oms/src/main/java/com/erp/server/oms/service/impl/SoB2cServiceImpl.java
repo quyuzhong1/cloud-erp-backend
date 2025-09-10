@@ -10214,7 +10214,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.getB2cLogisticsByIds(ids);
     }
 
-    @Async
+    @Async("omsErpExecutor")
     @Override
     public void autoCalcEstimatedShippingCost(List<String> sob2cIds) {
         if(CollUtil.isEmpty(sob2cIds)){
@@ -10417,27 +10417,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate()
                 .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
                 .set(SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_APPROVING.getCode())
+                .set(SoB2cEntity::getIsMatchLogisticsRule, Boolean.TRUE)
                 .eq(SoB2cEntity::getId,entity.getId()).update();
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单状态由【{}】改为【{}】",SoB2cBillStatusEnum.getName(entity.getBillStatus()),SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
         //更新渠道
-        soB2cLogisticsService.lambdaUpdate().set(SoB2cLogisticsEntity::getLogisticsChannelId, soMultiChannelEntity.getLogisticsChannelId())
-                .set(SoB2cLogisticsEntity::getLogisticsChannelName, soMultiChannelEntity.getLogisticsChannelName())
-                .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId()).update();
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单物流渠道改为【{}】", soMultiChannelEntity.getLogisticsChannelName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
+//        soB2cLogisticsService.lambdaUpdate().set(SoB2cLogisticsEntity::getLogisticsChannelId, soMultiChannelEntity.getLogisticsChannelId())
+//                .set(SoB2cLogisticsEntity::getLogisticsChannelName, soMultiChannelEntity.getLogisticsChannelName())
+//                .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId()).update();
+//        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单物流渠道改为【{}】", soMultiChannelEntity.getLogisticsChannelName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
         //更新发货仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(soMultiChannelEntity.getDeliveryWarehouseId()));
-        if (CollUtil.isEmpty(warehouseList)){
-            throw new ServiceException("发货仓库【{}】不存在", soMultiChannelEntity.getDeliveryWarehouseName());
-        }
-        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        soB2cDetailService.lambdaUpdate().set(SoB2cDetailEntity::getWarehouseId, soMultiChannelEntity.getDeliveryWarehouseId())
-                .set(SoB2cDetailEntity::getWarehouseName, soMultiChannelEntity.getDeliveryWarehouseName())
-                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgId, accountingCompanyList.get(0).getId())
-                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgName, accountingCompanyList.get(0).getName())
-                .eq(SoB2cDetailEntity::getMainId,soMultiChannelEntity.getSoId()).update();
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单发货仓库改为【{}】,仓库组织【{}】",soMultiChannelEntity.getDeliveryWarehouseName(),CollUtil.isNotEmpty(accountingCompanyList) ? accountingCompanyList.get(0).getName()
-                : ""), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
+//        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(soMultiChannelEntity.getDeliveryWarehouseId()));
+//        if (CollUtil.isEmpty(warehouseList)){
+//            throw new ServiceException("发货仓库【{}】不存在", soMultiChannelEntity.getDeliveryWarehouseName());
+//        }
+//        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+//        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+//        soB2cDetailService.lambdaUpdate()
+//                .set(SoB2cDetailEntity::getWarehouseId, soMultiChannelEntity.getDeliveryWarehouseId())
+//                .set(SoB2cDetailEntity::getWarehouseName, soMultiChannelEntity.getDeliveryWarehouseName())
+//                .set(SoB2cDetailEntity::getIsMatchWarehouseRule, Boolean.TRUE)
+//                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgId, accountingCompanyList.get(0).getId())
+//                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgName, accountingCompanyList.get(0).getName())
+//                .eq(SoB2cDetailEntity::getMainId,soMultiChannelEntity.getSoId()).update();
+//        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单发货仓库改为【{}】,仓库组织【{}】",soMultiChannelEntity.getDeliveryWarehouseName(),CollUtil.isNotEmpty(accountingCompanyList) ? accountingCompanyList.get(0).getName()
+//                : ""), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
 
     }
 

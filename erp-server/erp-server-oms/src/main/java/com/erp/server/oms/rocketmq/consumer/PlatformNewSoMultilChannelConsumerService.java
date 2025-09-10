@@ -5,6 +5,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformFulfillOrderDTO;
 import com.common.business.dto.PlatformFulfillOrderDetailDTO;
+import com.common.business.dto.PlatformShipOrderDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -17,6 +19,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
+import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cService;
@@ -54,6 +57,8 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     private OperateLogService operateLogService;
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
+    @Resource
+    private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Override
     public String getBizName() {
@@ -93,6 +98,19 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
                     thirdWarehouseDelivery.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getCode());
                     thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
                 }
+                //调用第三方平台SDK声明发货
+                if (soB2cService.checkPlatformShipOrder(entity.getId())){
+                    try {
+                        PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
+                        platformShipOrderDTO.setSoB2cId(entity.getId());
+                        platformShipOrderDTO.setSubmitPlatformUniqueKey(entity.convertSubmitPlatformUniqueKey());
+                        platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
+                        platformShipOrderDTO.setHasNotOutStock(true);
+                        soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
+                    } catch (Exception e) {
+                        log.error("平台标发失败:{}", e.getMessage());
+                    }
+                }
             }
         }
     }
@@ -103,7 +121,7 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         }
         //更新发货数量
         detailEntityList.forEach(e -> {
-            int deliveryQty = detailList.stream().filter(f -> CharSequenceUtil.isNotBlank(f.getSourceDetailId()) && f.getSourceDetailId().equals(e.getId())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
+            int deliveryQty = detailList.stream().filter(f -> CharSequenceUtil.isNotBlank(f.getSourceDetailId()) && f.getSourceDetailId().equals(e.getSoDetailId())).mapToInt(PlatformFulfillOrderDetailDTO::getDeliveryQty).sum();
             if (deliveryQty > 0){
                 String outstockStatus;
                 e.setDeliveryQty(deliveryQty);
