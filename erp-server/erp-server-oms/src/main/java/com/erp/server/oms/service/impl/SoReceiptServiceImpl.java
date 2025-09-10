@@ -507,7 +507,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         //查询原有
         List<SoReceiptDTO.SoViewDTO> oldList = this.getSoViewDTO(soInfo);
         List<String> oldDetailIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoReceiptDTO.SoViewDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> newDetailIds = soReceiptDTOList.stream().map(SoReceiptDTO.SoViewDTO::getDetailId).filter(StrUtils::isNotEmpty).collect(Collectors.toList());
         List<SoReceiptDetailEntity> soReceiptDetailEntityList = CollectionUtil.isNotEmpty(oldDetailIds)? soReceiptDetailService.listByIds(oldDetailIds):new ArrayList<>();
         List<SoReceiptEntity> soReceiptEntityList = CollectionUtil.isNotEmpty(oldIds)?this.listByIds(oldIds):new ArrayList<>();
