@@ -146,6 +146,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        //第三方平台的不允许在ERP修改
+        if(old.getSourceType().equals(SoReceiptSourceTypeEnum.THIRD.getCode()) && !addOrUpdateDTO.getIsFromPlatform()){
+            throw new ServiceException("第三方平台的收款单不允许在ERP修改");
+        }
         SoReceiptEntity soReceiptEntity =  BeanMapperUtils.map(SoReceiptEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -343,6 +347,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 已审核支持反审核
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
+        }
+        //第三方平台的不允许在ERP修改
+        if(entity.getSourceType().equals(SoReceiptSourceTypeEnum.THIRD.getCode())){
+            throw new ServiceException("第三方平台的收款单不允许反审核");
         }
         List<SoReceiptDetailEntity> detailEntityList = soReceiptDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<String> soIds = detailEntityList.stream().map(SoReceiptDetailEntity::getSoId).distinct().collect(Collectors.toList());
@@ -886,6 +894,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             addOrUpdateDTO.setRemark(dto.getRemark());
             addOrUpdateDTO.setThirdCode(dto.getCode());
             addOrUpdateDTO.setThirdSystem(dto.getThirdSystem());
+            addOrUpdateDTO.setIsFromPlatform(true);
             List<SoReceiptDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             List<PlatformReceiptDetailDTO> detailList = CollectionUtils.isNotEmpty(dto.getDetail())?dto.getDetail():new ArrayList<>();
             for (PlatformReceiptDetailDTO platformReceiptDetailDTO : detailList) {
