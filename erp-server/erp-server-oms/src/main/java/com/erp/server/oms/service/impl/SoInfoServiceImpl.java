@@ -793,8 +793,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //是否虚拟仓缺货
         List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
-        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isVirtualScarce")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualScarce".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
         if(Objects.nonNull(isVirtualOutStock) || Objects.nonNull(isOutStock)){
             //查询全部数据，过滤出有缺货
             Page query = new Page(1,Integer.MAX_VALUE,false);

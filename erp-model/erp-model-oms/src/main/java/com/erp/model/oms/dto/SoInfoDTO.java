@@ -103,7 +103,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 平台订单编号
          */
-        private BigDecimal platformOrderCode;
+        private String platformOrderCode;
         /**
          * 军区id
          */

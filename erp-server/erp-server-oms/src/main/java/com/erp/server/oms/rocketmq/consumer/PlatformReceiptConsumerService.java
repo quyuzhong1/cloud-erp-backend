@@ -41,6 +41,7 @@ public class PlatformReceiptConsumerService extends AbstractNewPlatformConsumerH
 			return;
 		}
 
+
 	}
 
 }
