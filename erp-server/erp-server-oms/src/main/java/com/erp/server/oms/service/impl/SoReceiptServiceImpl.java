@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -634,6 +635,18 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             dto.setType(ApproveTypeEnum.PASS.getStatus());
             this.approveEnd(dto,soReceiptEntity);
         }
+    }
+
+    @Override
+    public SoReceiptEntity getByThirdSystemAndCode(String thirdSystem, String code) {
+        LambdaQueryWrapper<SoReceiptEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoReceiptEntity::getThirdSystem,thirdSystem);
+        queryWrapper.eq(SoReceiptEntity::getCode,code);
+        List<SoReceiptEntity> list = this.list(queryWrapper);
+        if(CollectionUtils.isNotEmpty(list)){
+            return list.get(0);
+        }
+        return null;
     }
 
     private void deleteByDetail(SoReceiptEntity soReceiptEntity, SoReceiptDetailEntity deleteDetailEntity) {

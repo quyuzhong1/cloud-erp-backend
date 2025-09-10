@@ -160,4 +160,6 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     void autoSubmitBySo(SoInfoEntity entity);
 
     void autoApproveBySo(SoInfoEntity entity);
+
+    SoReceiptEntity getByThirdSystemAndCode(String thirdSystem, String code);
 }

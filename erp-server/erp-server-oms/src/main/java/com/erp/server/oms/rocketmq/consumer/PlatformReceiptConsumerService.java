@@ -1,12 +1,16 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.oms.entity.SoReceiptEntity;
+import com.erp.server.oms.service.SoReceiptDetailService;
+import com.erp.server.oms.service.SoReceiptService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
@@ -24,8 +28,12 @@ import javax.annotation.Resource;
         consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_RECEIPT_TO_OMS_GROUP)
 @Slf4j
 public class PlatformReceiptConsumerService extends AbstractNewPlatformConsumerHandler{
+
 	@Resource
-	private PlatformListingConsumerService platformListingConsumerService;
+	private SoReceiptService soReceiptService;
+
+	@Resource
+	private SoReceiptDetailService soReceiptDetailService;
 
 	@Override
 	public String getBizName() {
@@ -40,7 +48,18 @@ public class PlatformReceiptConsumerService extends AbstractNewPlatformConsumerH
 			log.error("PlatformReceiptConsumerService.handle 收款单消费失败，参数为空");
 			return;
 		}
+		//查询是否存在
+		SoReceiptEntity exist = soReceiptService.getByThirdSystemAndCode(dto.getThirdSystem(),dto.getCode());
+		if(exist != null) {
+			//如果是作废，erp单据也要作废
+			//存在则更新
+			exist.setReceiptAmount(dto.getAmount());
+			exist.setCurrency(dto.getCurrency());
+			soReceiptService.updateById(exist);
+		}else{
+			//如果是作废，直接跳过
 
+		}
 
 	}
 

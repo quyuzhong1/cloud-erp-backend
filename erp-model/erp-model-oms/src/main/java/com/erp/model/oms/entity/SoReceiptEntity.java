@@ -137,6 +137,12 @@ public class SoReceiptEntity extends BaseEntity<SoReceiptEntity> {
     @TableField("receipt_date")
     private LocalDate receiptDate;
 
+    /**
+     * 作废状态
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
     public static final String CODE = "code";
 
     public static final String THIRD_CODE = "third_code";
