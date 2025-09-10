@@ -368,9 +368,9 @@ public class ExhibitionOrderDTO implements Serializable {
          */
         private String mainId;
         /**
-         * 主表id
+         * 来源id
          */
-        private String sourceDetailId;
+        private String sampleLedgerId;
 
     }
 
