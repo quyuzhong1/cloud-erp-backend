@@ -49,6 +49,16 @@ public class ThirdWarehouseFeignController extends BaseController {
         }
     }
 
+    @PostMapping("/queryOutboundOrder")
+    public ApiResult<String> queryOutboundOrder(@RequestBody ThirdWarehouseQueryOutboundReq queryOutboundReq) {
+        try {
+            ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(queryOutboundReq.getThirdWarehouseProvideCode());
+            return service.queryOutboundBill(queryOutboundReq, queryOutboundReq.getAuthId());
+        } catch (ServiceException serviceException) {
+            return failure(serviceException.getMsg());
+        }
+    }
+
     /**
      * 运费试算
      * @param params
