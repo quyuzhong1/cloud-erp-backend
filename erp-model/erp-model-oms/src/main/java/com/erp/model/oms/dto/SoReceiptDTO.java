@@ -616,6 +616,10 @@ public class SoReceiptDTO implements Serializable {
         private String remark;
 
         /**
+         * 来源自第三方更新
+         */
+        private Boolean isFromPlatform = false;
+        /**
          * 附件列表
          */
         private List<AttachDTO> attachmentList;
