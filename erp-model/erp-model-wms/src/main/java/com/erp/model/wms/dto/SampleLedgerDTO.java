@@ -175,6 +175,10 @@ public class SampleLedgerDTO implements Serializable {
          * SKU ID
          */
         private String skuId;
+        /**
+         * 是否禁用 true 禁用
+         */
+        private Boolean disabled;
 
     }
 

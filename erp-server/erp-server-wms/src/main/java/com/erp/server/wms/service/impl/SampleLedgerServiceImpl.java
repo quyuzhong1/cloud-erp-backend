@@ -13,6 +13,7 @@ import com.erp.model.wms.dto.SampleScrapDetailDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
 import com.erp.rpc.oms.feign.ExhibitionOrderFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SampleLedgerMapper;
 import com.erp.server.wms.service.SampleLedgerService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,6 +60,9 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
 
     @Resource
     private ExhibitionOrderFeign exhibitionOrderFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -321,8 +325,49 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
      * @param records 记录列表
      */
     private void fillList(List<SampleLedgerDTO.ListDTO> records) {
-        // TODO: 根据业务需求填充额外的数据
-        // 例如：填充关联的明细信息、计算字段等
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+
+        // 提取所有用户ID
+        List<String> userIds = records.stream()
+            .map(SampleLedgerDTO.ListDTO::getUserId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (CollUtil.isEmpty(userIds)) {
+            return;
+        }
+
+        try {
+            // 调用用户服务获取用户信息（包含禁用状态）
+            com.common.business.dto.base.BaseSearchDTO searchDTO = new com.common.business.dto.base.BaseSearchDTO();
+
+            com.common.core.controller.vo.ApiResult<List<com.common.business.dto.FindUserDTO>> userResult = sysUserFeign.userList(searchDTO);
+            
+            if (userResult != null && userResult.isSuccess() && CollUtil.isNotEmpty(userResult.getData())) {
+                // 构建用户ID到用户信息的映射
+                Map<String, com.common.business.dto.FindUserDTO> userMap = userResult.getData().stream()
+                    .collect(Collectors.toMap(
+                        com.common.business.dto.FindUserDTO::getUserId, 
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                    ));
+
+                // 填充用户禁用状态
+                for (SampleLedgerDTO.ListDTO record : records) {
+                    if (StringUtils.isNotBlank(record.getUserId())) {
+                        com.common.business.dto.FindUserDTO user = userMap.get(record.getUserId());
+                        if (user != null) {
+                            record.setDisabled(user.getDisabled());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取用户禁用状态失败，错误：{}", e.getMessage());
+        }
     }
 
     /**
