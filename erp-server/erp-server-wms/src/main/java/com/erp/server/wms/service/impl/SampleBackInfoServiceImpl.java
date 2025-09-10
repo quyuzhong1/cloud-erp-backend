@@ -611,6 +611,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     @Override
     public BatchResultDTO delete(String id) {
         SampleBackInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品退回单数据"));
+        
+        // 检查单据是否已作废
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持删除操作");
+        }
+        
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
@@ -737,6 +743,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     * @param approveStatus
     */
     public void updateForApprove(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持审核操作");
+        }
+        
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
@@ -754,6 +766,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持反审核操作");
+        }
+        
         this.lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
             .set(SampleBackInfoEntity::getApproveUserId, "")
             .set(SampleBackInfoEntity::getApproveUserName, "")
@@ -767,6 +785,12 @@ public class SampleBackInfoServiceImpl extends SuperServiceImpl<SampleBackInfoMa
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
+        // 检查单据是否已作废
+        SampleBackInfoEntity entity = super.getById(id);
+        if (entity != null && InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException("已作废的样品退回单不支持状态更新操作");
+        }
+        
         lambdaUpdate().eq(SampleBackInfoEntity::getId, id)
         .set(SampleBackInfoEntity::getApproveStatus, approveStatus)
         .update(new SampleBackInfoEntity());
