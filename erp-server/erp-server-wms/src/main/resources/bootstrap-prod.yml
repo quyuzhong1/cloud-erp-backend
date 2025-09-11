@@ -2,17 +2,17 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.10
+        server-addr: 172.16.100.101
         namespace: prod
       config:
-        server-addr: 172.16.100.10
+        server-addr: 172.16.100.101
         namespace: prod
         file-extension: yml
         shared-configs: common.yml,db-wms.yml,druid-common.yml,erp-third-party.yml
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.10:8848
+    server-addr: 172.16.100.101:8848
     namespace: seata-server
     group: SEATA_GROUP
 
