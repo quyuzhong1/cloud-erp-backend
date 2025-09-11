@@ -44,8 +44,8 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -85,6 +85,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -266,6 +267,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private SoMultiChannelFeign soMultiChannelFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -1517,7 +1520,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
     }
-    
+
     /**
      * 作废
      *
@@ -1627,7 +1630,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
-    
+
     /**
      * 分页列表
      *
@@ -1650,7 +1653,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(list,false);
         return new PagingVO<>(pageData);
     }
-    
+
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
@@ -2694,10 +2697,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
-        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
+        params.setPermissionSql(getPermissionSql(params.getPermissionSql()));
+        Page query = new Page(0, -1);
+        IPage pageData = baseMapper.paging(query, params);
+        List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new SoOutstockDTO.PagingTotalDTO(0,0,"0");
+        }
+        //处理分页数据
+        fillPaging(list,false);
+        SoOutstockDTO.PagingTotalDTO pagingTotalDTO = new SoOutstockDTO.PagingTotalDTO();
+        pagingTotalDTO.setActualTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getActualQty).reduce(Integer::sum).orElse(0));
+        pagingTotalDTO.setPlanTotalQty(list.stream().map(SoOutstockDTO.PagingViewDTO::getPlanQty).reduce(Integer::sum).orElse(0));
+        pagingTotalDTO.setTotalTaxAmount(list.stream().map(SoOutstockDTO.PagingViewDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add).stripTrailingZeros().toPlainString());
         return pagingTotalDTO;
     }
-    
+
     /**
      * 生成销售出库单
      *
@@ -4022,6 +4037,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(removeIdList);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+        //更新多渠道订单出库数量
+        updateSoMultiOutstockQty(removeList,soOutstockDetailEntityList);
 
         Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
 
@@ -4060,6 +4077,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         // 返回成功结果
         return resultDTOList;
+    }
+
+    private void updateSoMultiOutstockQty(List<SoOutstockEntity> removeList, List<SoOutstockDetailEntity> soOutstockDetailAllList) {
+        List<SoMultiChannelDetailDTO.OutstockQtyDTO> outstockQtyDTOList = new ArrayList<>();
+        soOutstockDetailAllList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getPlatformDetailId())).forEach(e -> {
+            SoMultiChannelDetailDTO.OutstockQtyDTO outstockQtyDTO = new SoMultiChannelDetailDTO.OutstockQtyDTO();
+            outstockQtyDTO.setPlatformDetailId(e.getPlatformDetailId());
+            outstockQtyDTO.setSoDetailId(e.getSoDetailId());
+            outstockQtyDTO.setOutstockQty(e.getActualQty());
+            removeList.stream().filter(f -> f.getId().equals(e.getMainId())).findFirst().ifPresent(f -> {
+                outstockQtyDTO.setDeliveryCode(f.getSourceCode());
+            });
+            outstockQtyDTOList.add(outstockQtyDTO);
+        });
+        if (CollUtil.isEmpty(outstockQtyDTOList)){
+            return;
+        }
+        soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 
     @Override
@@ -4103,6 +4138,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException("仅限B2B类型的且报关状态为待报关的出库单可生成报关单");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    @Override
+    public SoOutstockEntity getBySourceCode(String sourceCode) {
+        if (CharSequenceUtil.isBlank(sourceCode)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoOutstockEntity::getSourceCode,sourceCode).orderByDesc(SoOutstockEntity::getCreateTime).last(" limit 1 ").one();
     }
 
 

@@ -9,6 +9,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
@@ -33,6 +34,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSoOutstockDetailService;
+import com.erp.server.dmp.service.DmpSoOutstockService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +132,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         //如果是亚马逊的优惠额在明细里
         if (PlatformDictEnum.AMAZON.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
             totalDiscount = dmpSoDetailEntities.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            if(StringUtils.isNotBlank(dmpSoInfoEntity.getThirdCode()) && dmpSoInfoEntity.getThirdCode().startsWith("S")) {
+            	return result;
+            }
         }
 
 
@@ -781,6 +786,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     				}
     			}
             }
+            
+            shudiyunB2cOrderDTO.setSuite_no(dmpSoDetailEntity.getSuiteNo());
+            shudiyunB2cOrderDTO.setSuite_name(dmpSoDetailEntity.getSuiteName());
+            
+            if(shudiyunB2cOrderDTO.getGoods_transaction_quantity() == null || shudiyunB2cOrderDTO.getGoods_transaction_quantity() == 0) {
+            	shudiyunB2cOrderDTO.setGoods_status("已取消");
+            }
+            
             shudiyunB2cOrderDTO.setDefaultValue();
             if(selfAdd) {
             	if("线下订单".equals(shudiyunB2cOrderDTO.getTransaction_type())) {
@@ -871,9 +884,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         		.collect(Collectors.toList());
         Map<String, Object> wdtSoOutstockMap = new HashMap<>();
         if(CollUtil.isNotEmpty(wdtThirdCodeList)) {
-        	wdtSoOutstockMap = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, wdtThirdCodeList)
-        			.select(DmpSoOutstockDetailEntity::getSrcOrderDetailId).list()
-        			.stream().collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
+        	List<DmpSoOutstockDetailEntity> outStockDetailList = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getThirdOrderCode, wdtThirdCodeList).list();
+        	if(CollUtil.isNotEmpty(outStockDetailList)) {
+        		Set<String> finishIds = ApplicationContextUtils.getBean(DmpSoOutstockService.class).lambdaQuery().in(DmpSoOutstockEntity::getId, outStockDetailList.stream().map(DmpSoOutstockDetailEntity::getMainId).collect(Collectors.toList()))
+                		.eq(DmpSoOutstockEntity::getStatus, "110").select(DmpSoOutstockEntity::getId).list().stream().map(DmpSoOutstockEntity::getId).collect(Collectors.toSet());
+                wdtSoOutstockMap = outStockDetailList.stream().filter(o -> finishIds.contains(o.getMainId()))
+                		.collect(Collectors.toMap(DmpSoOutstockDetailEntity::getSrcOrderDetailId, DmpSoOutstockDetailEntity::getSrcOrderDetailId , (d1 , d2) -> d1));
+        	}
         }
         cacheMap.put("wdtSoOutstock", wdtSoOutstockMap);
         for(String changId : changeIds) {

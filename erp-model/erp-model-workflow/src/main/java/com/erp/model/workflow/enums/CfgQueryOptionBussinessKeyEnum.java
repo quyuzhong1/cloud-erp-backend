@@ -48,6 +48,7 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
 	SOPRICECHANGE("soPriceChange", "销售调价表"),
 	TRANSFERIN("transferIn", "分步式调入单"),
 	TRANSFEROUT("transferOut", "分步式调出单"),
+	SO_MULTI_CHANNEL("soMultiChannel", "多渠道订单"),
     ;
     /**
      * 类型

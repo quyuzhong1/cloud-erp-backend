@@ -676,11 +676,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     Map<String,String> handlerValueMap = new HashMap<>();
                     Map<String,String> remoteValues = new HashMap<>();
                     for (CfgApproveSyncFieldMapEntity entity : fieldList) {
-                        //获取CfgApproveSyncFieldMap对应该的配置记录
-                        CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
-                        if(Objects.isNull(queryOptionEntity)){
-                            continue;
-                        }
                         //设置原始值
                         Object fieldValue = variablesMap.getOrDefault(entity.getFieldSource(), "");
                         if(Objects.isNull(fieldValue)){
@@ -688,7 +683,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         }else {
                             handlerValueMap.put(entity.getFieldId(),String.valueOf(fieldValue));
                         }
-
+                        //获取CfgApproveSyncFieldMap对应该的配置记录
+                        CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
+                        if(Objects.isNull(queryOptionEntity)){
+                            continue;
+                        }
                         //判断是类型是common、主表还是明细
                         if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
                                 || queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
@@ -825,7 +824,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
             }else {
                 //如果变动字段中不存在规则条件中的字段，则返回false
-                boolean existField = fieldList.stream().anyMatch(diffFields::contains);
+                boolean existField = fieldList.stream().filter(e -> !Objects.equals(e, CfgQueryOptionExtendTypeEnum.NOTICENODE.getCode())).anyMatch(diffFields::contains);
                 if(!existField){
                     return Boolean.FALSE;
                 }
@@ -864,7 +863,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
                     //新增
-                    if(ThirdNoticePushRecordNoticeNodeEnum.ADD_RECORD.getCode().equals(feildValue)){
+                    else if(ThirdNoticePushRecordNoticeNodeEnum.ADD_RECORD.getCode().equals(feildValue)){
                         //不等于新增则返回false
                         if(!Objects.equals(ThirdNoticeRecordOperationTypeEnum.INSERT.getCode(), dto.getOperationType())){
                             return Boolean.FALSE;
@@ -872,7 +871,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
                     //新品 / 老品
-                    if(ThirdNoticePushRecordNoticeNodeEnum.NOT_SUBSEQUENT_BATCH.getCode().equals(feildValue) || ThirdNoticePushRecordNoticeNodeEnum.SUBSEQUENT_BATCH.getCode().equals(feildValue)){
+                    else if(ThirdNoticePushRecordNoticeNodeEnum.NOT_SUBSEQUENT_BATCH.getCode().equals(feildValue) || ThirdNoticePushRecordNoticeNodeEnum.SUBSEQUENT_BATCH.getCode().equals(feildValue)){
                         List<QcResultDTO.QcNoticeDTO> list = wmsTaskFeign.listQcResultMsg(Arrays.asList(businessId));
                         //判空
                         if(CollUtil.isEmpty(list)){
@@ -891,8 +890,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
                     }
                     //产品尺寸变更
-                    if(ThirdNoticePushRecordNoticeNodeEnum.QC_BACK_FILL_PACKAGING.getCode().equals(feildValue)){
+                    else if(ThirdNoticePushRecordNoticeNodeEnum.QC_BACK_FILL_PACKAGING.getCode().equals(feildValue)){
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
+                    }
+                    else {
+                        //表字段值变化
+                        if(diffFields.contains(feildValue)){
+                            variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
+                        }
                     }
                 }
             }

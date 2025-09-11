@@ -10,21 +10,39 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Address;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CODSettings;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.CreateFulfillmentOrderItemList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.DeliveryPreferences;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.DeliveryWindow;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeatureSettings;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentAction;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentPolicy;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.NotificationEmailList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.PaymentInformationList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ShippingSpeedCategory;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.time.OffsetDateTime;
 /**
- * The request body schema for the createFulfillmentOrder operation.
+ * The request body schema for the &#x60;createFulfillmentOrder&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class CreateFulfillmentOrderRequest {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -50,6 +68,9 @@ public class CreateFulfillmentOrderRequest {
   @SerializedName("destinationAddress")
   private Address destinationAddress = null;
 
+  @SerializedName("deliveryPreferences")
+  private DeliveryPreferences deliveryPreferences = null;
+
   @SerializedName("fulfillmentAction")
   private FulfillmentAction fulfillmentAction = null;
 
@@ -71,6 +92,9 @@ public class CreateFulfillmentOrderRequest {
   @SerializedName("items")
   private CreateFulfillmentOrderItemList items = null;
 
+  @SerializedName("paymentInformation")
+  private PaymentInformationList paymentInformation = null;
+
   public CreateFulfillmentOrderRequest marketplaceId(String marketplaceId) {
     this.marketplaceId = marketplaceId;
     return this;
@@ -80,7 +104,7 @@ public class CreateFulfillmentOrderRequest {
    * The marketplace the fulfillment order is placed against.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -95,10 +119,10 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * A fulfillment order identifier that the seller creates to track their fulfillment order. The SellerFulfillmentOrderId must be unique for each fulfillment order that a seller creates. If the seller&#39;s system already creates unique order identifiers, then these might be good values for them to use.
+   * A fulfillment order identifier that the seller creates to track their fulfillment order. The &#x60;SellerFulfillmentOrderId&#x60; must be unique for each fulfillment order that a seller creates. If the seller&#x27;s system already creates unique order identifiers, then these might be good values for them to use.
    * @return sellerFulfillmentOrderId
   **/
-
+  
   public String getSellerFulfillmentOrderId() {
     return sellerFulfillmentOrderId;
   }
@@ -113,10 +137,10 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * A fulfillment order identifier that the seller creates. This value displays as the order identifier in recipient-facing materials such as the outbound shipment packing slip. The value of DisplayableOrderId should match the order identifier that the seller provides to the recipient. The seller can use the SellerFulfillmentOrderId for this value or they can specify an alternate value if they want the recipient to reference an alternate order identifier.  The value must be an alpha-numeric or ISO 8859-1 compliant string from one to 40 characters in length. Cannot contain two spaces in a row. Leading and trailing white space is removed.
+   * A fulfillment order identifier that the seller creates. This value displays as the order identifier in recipient-facing materials such as the outbound shipment packing slip. The value of &#x60;DisplayableOrderId&#x60; should match the order identifier that the seller provides to the recipient. The seller can use the &#x60;SellerFulfillmentOrderId&#x60; for this value or they can specify an alternate value if they want the recipient to reference an alternate order identifier.  The value must be an alpha-numeric or ISO 8859-1 compliant string from one to 40 characters in length. Cannot contain two spaces in a row. Leading and trailing white space is removed.
    * @return displayableOrderId
   **/
-
+  
   public String getDisplayableOrderId() {
     return displayableOrderId;
   }
@@ -131,10 +155,10 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * The date and time of the fulfillment order. Displays as the order date in recipient-facing materials such as the outbound shipment packing slip.
+   * Get displayableOrderDate
    * @return displayableOrderDate
   **/
-
+  
   public String getDisplayableOrderDate() {
     return displayableOrderDate;
   }
@@ -152,7 +176,7 @@ public class CreateFulfillmentOrderRequest {
    * Order-specific text that appears in recipient-facing materials such as the outbound shipment packing slip.
    * @return displayableOrderComment
   **/
-
+  
   public String getDisplayableOrderComment() {
     return displayableOrderComment;
   }
@@ -167,10 +191,10 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * The shipping method for the fulfillment order.
+   * Get shippingSpeedCategory
    * @return shippingSpeedCategory
   **/
-
+  
   public ShippingSpeedCategory getShippingSpeedCategory() {
     return shippingSpeedCategory;
   }
@@ -188,7 +212,7 @@ public class CreateFulfillmentOrderRequest {
    * Get deliveryWindow
    * @return deliveryWindow
   **/
-
+  
   public DeliveryWindow getDeliveryWindow() {
     return deliveryWindow;
   }
@@ -203,16 +227,34 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * The destination address for the fulfillment order.
+   * Get destinationAddress
    * @return destinationAddress
   **/
-
+  
   public Address getDestinationAddress() {
     return destinationAddress;
   }
 
   public void setDestinationAddress(Address destinationAddress) {
     this.destinationAddress = destinationAddress;
+  }
+
+  public CreateFulfillmentOrderRequest deliveryPreferences(DeliveryPreferences deliveryPreferences) {
+    this.deliveryPreferences = deliveryPreferences;
+    return this;
+  }
+
+   /**
+   * Get deliveryPreferences
+   * @return deliveryPreferences
+  **/
+  
+  public DeliveryPreferences getDeliveryPreferences() {
+    return deliveryPreferences;
+  }
+
+  public void setDeliveryPreferences(DeliveryPreferences deliveryPreferences) {
+    this.deliveryPreferences = deliveryPreferences;
   }
 
   public CreateFulfillmentOrderRequest fulfillmentAction(FulfillmentAction fulfillmentAction) {
@@ -224,7 +266,7 @@ public class CreateFulfillmentOrderRequest {
    * Get fulfillmentAction
    * @return fulfillmentAction
   **/
-
+  
   public FulfillmentAction getFulfillmentAction() {
     return fulfillmentAction;
   }
@@ -242,7 +284,7 @@ public class CreateFulfillmentOrderRequest {
    * Get fulfillmentPolicy
    * @return fulfillmentPolicy
   **/
-
+  
   public FulfillmentPolicy getFulfillmentPolicy() {
     return fulfillmentPolicy;
   }
@@ -260,7 +302,7 @@ public class CreateFulfillmentOrderRequest {
    * Get codSettings
    * @return codSettings
   **/
-
+  
   public CODSettings getCodSettings() {
     return codSettings;
   }
@@ -278,7 +320,7 @@ public class CreateFulfillmentOrderRequest {
    * The two-character country code for the country from which the fulfillment order ships. Must be in ISO 3166-1 alpha-2 format.
    * @return shipFromCountryCode
   **/
-
+  
   public String getShipFromCountryCode() {
     return shipFromCountryCode;
   }
@@ -296,7 +338,7 @@ public class CreateFulfillmentOrderRequest {
    * Get notificationEmails
    * @return notificationEmails
   **/
-
+  
   public NotificationEmailList getNotificationEmails() {
     return notificationEmails;
   }
@@ -322,7 +364,7 @@ public class CreateFulfillmentOrderRequest {
    * A list of features and their fulfillment policies to apply to the order.
    * @return featureConstraints
   **/
-
+  
   public List<FeatureSettings> getFeatureConstraints() {
     return featureConstraints;
   }
@@ -337,10 +379,10 @@ public class CreateFulfillmentOrderRequest {
   }
 
    /**
-   * A list of items to include in the fulfillment order preview, including quantity.
+   * Get items
    * @return items
   **/
-
+  
   public CreateFulfillmentOrderItemList getItems() {
     return items;
   }
@@ -349,9 +391,27 @@ public class CreateFulfillmentOrderRequest {
     this.items = items;
   }
 
+  public CreateFulfillmentOrderRequest paymentInformation(PaymentInformationList paymentInformation) {
+    this.paymentInformation = paymentInformation;
+    return this;
+  }
+
+   /**
+   * Get paymentInformation
+   * @return paymentInformation
+  **/
+  
+  public PaymentInformationList getPaymentInformation() {
+    return paymentInformation;
+  }
+
+  public void setPaymentInformation(PaymentInformationList paymentInformation) {
+    this.paymentInformation = paymentInformation;
+  }
+
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -367,18 +427,20 @@ public class CreateFulfillmentOrderRequest {
         Objects.equals(this.shippingSpeedCategory, createFulfillmentOrderRequest.shippingSpeedCategory) &&
         Objects.equals(this.deliveryWindow, createFulfillmentOrderRequest.deliveryWindow) &&
         Objects.equals(this.destinationAddress, createFulfillmentOrderRequest.destinationAddress) &&
+        Objects.equals(this.deliveryPreferences, createFulfillmentOrderRequest.deliveryPreferences) &&
         Objects.equals(this.fulfillmentAction, createFulfillmentOrderRequest.fulfillmentAction) &&
         Objects.equals(this.fulfillmentPolicy, createFulfillmentOrderRequest.fulfillmentPolicy) &&
         Objects.equals(this.codSettings, createFulfillmentOrderRequest.codSettings) &&
         Objects.equals(this.shipFromCountryCode, createFulfillmentOrderRequest.shipFromCountryCode) &&
         Objects.equals(this.notificationEmails, createFulfillmentOrderRequest.notificationEmails) &&
         Objects.equals(this.featureConstraints, createFulfillmentOrderRequest.featureConstraints) &&
-        Objects.equals(this.items, createFulfillmentOrderRequest.items);
+        Objects.equals(this.items, createFulfillmentOrderRequest.items) &&
+        Objects.equals(this.paymentInformation, createFulfillmentOrderRequest.paymentInformation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(marketplaceId, sellerFulfillmentOrderId, displayableOrderId, displayableOrderDate, displayableOrderComment, shippingSpeedCategory, deliveryWindow, destinationAddress, fulfillmentAction, fulfillmentPolicy, codSettings, shipFromCountryCode, notificationEmails, featureConstraints, items);
+    return Objects.hash(marketplaceId, sellerFulfillmentOrderId, displayableOrderId, displayableOrderDate, displayableOrderComment, shippingSpeedCategory, deliveryWindow, destinationAddress, deliveryPreferences, fulfillmentAction, fulfillmentPolicy, codSettings, shipFromCountryCode, notificationEmails, featureConstraints, items, paymentInformation);
   }
 
 
@@ -395,6 +457,7 @@ public class CreateFulfillmentOrderRequest {
     sb.append("    shippingSpeedCategory: ").append(toIndentedString(shippingSpeedCategory)).append("\n");
     sb.append("    deliveryWindow: ").append(toIndentedString(deliveryWindow)).append("\n");
     sb.append("    destinationAddress: ").append(toIndentedString(destinationAddress)).append("\n");
+    sb.append("    deliveryPreferences: ").append(toIndentedString(deliveryPreferences)).append("\n");
     sb.append("    fulfillmentAction: ").append(toIndentedString(fulfillmentAction)).append("\n");
     sb.append("    fulfillmentPolicy: ").append(toIndentedString(fulfillmentPolicy)).append("\n");
     sb.append("    codSettings: ").append(toIndentedString(codSettings)).append("\n");
@@ -402,6 +465,7 @@ public class CreateFulfillmentOrderRequest {
     sb.append("    notificationEmails: ").append(toIndentedString(notificationEmails)).append("\n");
     sb.append("    featureConstraints: ").append(toIndentedString(featureConstraints)).append("\n");
     sb.append("    items: ").append(toIndentedString(items)).append("\n");
+    sb.append("    paymentInformation: ").append(toIndentedString(paymentInformation)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -410,7 +474,7 @@ public class CreateFulfillmentOrderRequest {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -418,4 +482,3 @@ public class CreateFulfillmentOrderRequest {
   }
 
 }
-

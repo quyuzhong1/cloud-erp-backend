@@ -7,11 +7,11 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 多渠道订单明细表 Mapper 接口
+ * 多渠道订单明细 Mapper 接口
  * </p>
  *
- * @author Jim
- * @since 2024-05-30
+ * @author zdy
+ * @since 2025-08-20
  */
 @Mapper
 public interface SoMultiChannelDetailMapper extends BaseMapper<SoMultiChannelDetailEntity> {

@@ -10,20 +10,33 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.Address;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeatureSettings;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentAction;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FulfillmentPolicy;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.NotificationEmailList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.ShippingSpeedCategory;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.UpdateFulfillmentOrderItemList;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
+import java.time.OffsetDateTime;
 /**
- * UpdateFulfillmentOrderRequest
+ * The request body schema for the &#x60;updateFulfillmentOrder&#x60; operation.
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class UpdateFulfillmentOrderRequest {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -32,7 +45,7 @@ public class UpdateFulfillmentOrderRequest {
   private String displayableOrderId = null;
 
   @SerializedName("displayableOrderDate")
-  private String displayableOrderDate = null;
+  private OffsetDateTime displayableOrderDate = null;
 
   @SerializedName("displayableOrderComment")
   private String displayableOrderComment = null;
@@ -70,7 +83,7 @@ public class UpdateFulfillmentOrderRequest {
    * The marketplace the fulfillment order is placed against.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -85,10 +98,10 @@ public class UpdateFulfillmentOrderRequest {
   }
 
    /**
-   * A fulfillment order identifier that the seller creates. This value displays as the order identifier in recipient-facing materials such as the outbound shipment packing slip. The value of DisplayableOrderId should match the order identifier that the seller provides to the recipient. The seller can use the SellerFulfillmentOrderId for this value or they can specify an alternate value if they want the recipient to reference an alternate order identifier.
+   * A fulfillment order identifier that the seller creates. This value displays as the order identifier in recipient-facing materials such as the outbound shipment packing slip. The value of &#x60;DisplayableOrderId&#x60; should match the order identifier that the seller provides to the recipient. The seller can use the &#x60;SellerFulfillmentOrderId&#x60; for this value or they can specify an alternate value if they want the recipient to reference an alternate order identifier.
    * @return displayableOrderId
   **/
-
+  
   public String getDisplayableOrderId() {
     return displayableOrderId;
   }
@@ -97,21 +110,21 @@ public class UpdateFulfillmentOrderRequest {
     this.displayableOrderId = displayableOrderId;
   }
 
-  public UpdateFulfillmentOrderRequest displayableOrderDate(String displayableOrderDate) {
+  public UpdateFulfillmentOrderRequest displayableOrderDate(OffsetDateTime displayableOrderDate) {
     this.displayableOrderDate = displayableOrderDate;
     return this;
   }
 
    /**
-   * The date and time of the fulfillment order. Displays as the order date in recipient-facing materials such as the outbound shipment packing slip.
+   * Get displayableOrderDate
    * @return displayableOrderDate
   **/
-
-  public String getDisplayableOrderDate() {
+  
+  public OffsetDateTime getDisplayableOrderDate() {
     return displayableOrderDate;
   }
 
-  public void setDisplayableOrderDate(String displayableOrderDate) {
+  public void setDisplayableOrderDate(OffsetDateTime displayableOrderDate) {
     this.displayableOrderDate = displayableOrderDate;
   }
 
@@ -124,7 +137,7 @@ public class UpdateFulfillmentOrderRequest {
    * Order-specific text that appears in recipient-facing materials such as the outbound shipment packing slip.
    * @return displayableOrderComment
   **/
-
+  
   public String getDisplayableOrderComment() {
     return displayableOrderComment;
   }
@@ -142,7 +155,7 @@ public class UpdateFulfillmentOrderRequest {
    * Get shippingSpeedCategory
    * @return shippingSpeedCategory
   **/
-
+  
   public ShippingSpeedCategory getShippingSpeedCategory() {
     return shippingSpeedCategory;
   }
@@ -157,10 +170,10 @@ public class UpdateFulfillmentOrderRequest {
   }
 
    /**
-   * The destination address for the fulfillment order.
+   * Get destinationAddress
    * @return destinationAddress
   **/
-
+  
   public Address getDestinationAddress() {
     return destinationAddress;
   }
@@ -178,7 +191,7 @@ public class UpdateFulfillmentOrderRequest {
    * Get fulfillmentAction
    * @return fulfillmentAction
   **/
-
+  
   public FulfillmentAction getFulfillmentAction() {
     return fulfillmentAction;
   }
@@ -196,7 +209,7 @@ public class UpdateFulfillmentOrderRequest {
    * Get fulfillmentPolicy
    * @return fulfillmentPolicy
   **/
-
+  
   public FulfillmentPolicy getFulfillmentPolicy() {
     return fulfillmentPolicy;
   }
@@ -214,7 +227,7 @@ public class UpdateFulfillmentOrderRequest {
    * The two-character country code for the country from which the fulfillment order ships. Must be in ISO 3166-1 alpha-2 format.
    * @return shipFromCountryCode
   **/
-
+  
   public String getShipFromCountryCode() {
     return shipFromCountryCode;
   }
@@ -232,7 +245,7 @@ public class UpdateFulfillmentOrderRequest {
    * Get notificationEmails
    * @return notificationEmails
   **/
-
+  
   public NotificationEmailList getNotificationEmails() {
     return notificationEmails;
   }
@@ -258,7 +271,7 @@ public class UpdateFulfillmentOrderRequest {
    * A list of features and their fulfillment policies to apply to the order.
    * @return featureConstraints
   **/
-
+  
   public List<FeatureSettings> getFeatureConstraints() {
     return featureConstraints;
   }
@@ -273,10 +286,10 @@ public class UpdateFulfillmentOrderRequest {
   }
 
    /**
-   * A list of items to include in the fulfillment order preview, including quantity.
+   * Get items
    * @return items
   **/
-
+  
   public UpdateFulfillmentOrderItemList getItems() {
     return items;
   }
@@ -287,7 +300,7 @@ public class UpdateFulfillmentOrderRequest {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -340,7 +353,7 @@ public class UpdateFulfillmentOrderRequest {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -348,4 +361,3 @@ public class UpdateFulfillmentOrderRequest {
   }
 
 }
-

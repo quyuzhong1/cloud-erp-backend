@@ -10,21 +10,26 @@
  * Do not edit the class manually.
  */
 
-
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound;
 
+import java.util.Objects;
+import java.util.Arrays;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentoutbound.FeatureSku;
 
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
 /**
- * The payload for the getFeatureSKU operation.
+ * The payload for the &#x60;getFeatureSKU&#x60; operation.
  */
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:44:18.412+08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2025-08-18T09:55:11.594451100+08:00[Asia/Shanghai]")
+
 public class GetFeatureSkuResult {
   @SerializedName("marketplaceId")
   private String marketplaceId = null;
@@ -50,7 +55,7 @@ public class GetFeatureSkuResult {
    * The requested marketplace.
    * @return marketplaceId
   **/
-
+  
   public String getMarketplaceId() {
     return marketplaceId;
   }
@@ -68,7 +73,7 @@ public class GetFeatureSkuResult {
    * The name of the feature.
    * @return featureName
   **/
-
+  
   public String getFeatureName() {
     return featureName;
   }
@@ -86,7 +91,7 @@ public class GetFeatureSkuResult {
    * When true, the seller SKU is eligible for the requested feature.
    * @return isEligible
   **/
-
+  
   public Boolean isIsEligible() {
     return isEligible;
   }
@@ -109,10 +114,10 @@ public class GetFeatureSkuResult {
   }
 
    /**
-   * A list of one or more reasons that the seller SKU is ineligibile for the feature.  Possible values: * MERCHANT_NOT_ENROLLED - The merchant isn&#39;t enrolled for the feature. * SKU_NOT_ELIGIBLE - The SKU doesn&#39;t reside in a warehouse that supports the feature. * INVALID_SKU - There is an issue with the SKU provided.
+   * A list of one or more reasons that the seller SKU is ineligibile for the feature.  Possible values: * &#x60;MERCHANT_NOT_ENROLLED&#x60; - The merchant isn&#x27;t enrolled for the feature. * &#x60;SKU_NOT_ELIGIBLE&#x60; - The SKU doesn&#x27;t reside in a warehouse that supports the feature. * &#x60;INVALID_SKU&#x60; - There is an issue with the SKU provided.
    * @return ineligibleReasons
   **/
-
+  
   public List<String> getIneligibleReasons() {
     return ineligibleReasons;
   }
@@ -127,10 +132,10 @@ public class GetFeatureSkuResult {
   }
 
    /**
-   * Information about the SKU, including the count available, identifiers, and a list of overlapping SKUs that share the same inventory pool.
+   * Get skuInfo
    * @return skuInfo
   **/
-
+  
   public FeatureSku getSkuInfo() {
     return skuInfo;
   }
@@ -141,7 +146,7 @@ public class GetFeatureSkuResult {
 
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(java.lang.Object o) {
     if (this == o) {
       return true;
     }
@@ -180,7 +185,7 @@ public class GetFeatureSkuResult {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
+  private String toIndentedString(java.lang.Object o) {
     if (o == null) {
       return "null";
     }
@@ -188,4 +193,3 @@ public class GetFeatureSkuResult {
   }
 
 }
-
