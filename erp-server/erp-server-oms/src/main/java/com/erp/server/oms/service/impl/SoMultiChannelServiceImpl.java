@@ -423,7 +423,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("已作废订单不允许删除");
         }
         //进行发货拦截
-        deliveryIntercept(entity, true, false, "多渠道订单删除");
+//        deliveryIntercept(entity, true, false, "多渠道订单删除");
         // 删除主单数据
         log.info("删除 开始删除多渠道订单主单主单数据，id：【{}】", id);
         super.removeById(id);
