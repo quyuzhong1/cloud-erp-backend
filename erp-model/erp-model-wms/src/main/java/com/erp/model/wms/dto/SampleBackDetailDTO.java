@@ -77,6 +77,11 @@ public class SampleBackDetailDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 台账id
+         */
+        private String sampleLedgerId;
+
 
     }
 
@@ -166,6 +171,10 @@ public class SampleBackDetailDTO implements Serializable {
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
+        /**
+         * 台账id
+         */
+        private String sampleLedgerId;
 
     }
 

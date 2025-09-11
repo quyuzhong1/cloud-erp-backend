@@ -109,6 +109,7 @@ public class SampleBackDetailExcelListener extends AnalysisEventListener<SampleB
                 }else {
                     addDTO.setUseUserId(skuAvailableQtyDTO.getUseUserId());
                     addDTO.setUseUserName(skuAvailableQtyDTO.getUseUserName());
+                    addDTO.setSampleLedgerId(skuAvailableQtyDTO.getSampleLedgerId());
                     // 校验退回数量不能超过可用数量
                     if(addDTO.getQty() != null && addDTO.getQty() > skuAvailableQtyDTO.getAvailableQty()){
                         errorMsgList.add("退回数量不能超过可用数量：" + skuAvailableQtyDTO.getAvailableQty());
