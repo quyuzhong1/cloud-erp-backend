@@ -10,7 +10,7 @@ package com.erp.model.plm.enums;
 public enum SkuTypeEnum {
     PLATFORM_SKU_NO("platform_sku_no", "客户SKU"),
     SKU("sku", "SKU"),
-    EAN("ean", "EAN");
+    EAN("ean", "EAN码");
 
     private String code;
     private String name;

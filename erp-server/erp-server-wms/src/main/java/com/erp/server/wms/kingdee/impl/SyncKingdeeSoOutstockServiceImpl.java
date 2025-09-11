@@ -657,6 +657,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
+            map.put("customerPO", detailEntity.getCustomerPO());
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             SoOutstockDetailDTO.DeliveryQtyDTO deliveryQtyDTO = deliveryQtyDTOS.stream().filter(req -> req.getId().equals(detailEntity.getId())).findFirst().orElse(new SoOutstockDetailDTO.DeliveryQtyDTO());
