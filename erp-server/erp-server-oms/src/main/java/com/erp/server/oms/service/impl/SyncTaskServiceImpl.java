@@ -76,6 +76,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private SyncKingdeeSoService syncKingdeeSoService;
+    @Resource
+    private SyncAmazonSoMultiChannelService syncAmazonSoMultiChannelService;
 
     @Resource
     private SoChangeService soChangeService;
@@ -120,6 +122,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private SoChangeDetailService soChangeDetailService;
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -302,6 +306,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SO_INFO:
                 resultList = newSyncSoInfo(sourceDetailList);
                 break;
+            case SO_MULTI_CHANNEL:
+                resultList = newSyncSoMultiChannel(sourceDetailList);
+                break;
             case SO_CHANGE:
                 resultList = newSyncSoChange(sourceDetailList);
                 break;
@@ -436,6 +443,32 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+    /**
+     * @param sourceDetailList
+     * @description: 同步多渠道订单
+     * @author Will
+     * @date: 2023/10/30 11:22
+     */
+    private Map<String, Map<String, Object>> newSyncSoMultiChannel(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String, Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<SoMultiChannelEntity> list = soMultiChannelService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncSoInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            SoMultiChannelEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncAmazonSoMultiChannelService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
     }

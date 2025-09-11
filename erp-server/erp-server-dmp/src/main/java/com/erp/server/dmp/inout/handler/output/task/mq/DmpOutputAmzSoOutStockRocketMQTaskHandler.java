@@ -111,17 +111,18 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
         if (null == mongoDTO){
             ServiceException.runError("亚马逊销售出库单填充数据失败:");
         }
-        if (mongoDTO.hasMultiChannel()){
-            // 多渠道订单不推送
-            return null;
-        }
+//        if (mongoDTO.hasMultiChannel()){
+//            // 多渠道订单不推送
+//            return null;
+//        }
 
         PlatformAmazonFulfilledShipmentsDTO fulfilledShipmentsDTO = SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(mongoDTO,
                 mongoDTO.getReportId(),
                 mongoDTO.getShopId(),
                 StrUtil.format("{}_{}_{}", mongoDTO.getAmazonOrderId(), mongoDTO.convertShipmentDate(), mongoDTO.getShopId()),
                 AmazonHandleStatusEnum.NONE.getCode(),
-                CleanStatusEnum.UNCLEAN.getCode()
+                CleanStatusEnum.UNCLEAN.getCode(),
+                mongoDTO.getSalesChannel()
         );
         PlatformSoOutStockDTO platformSoOutStockDTO = SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
                 fulfilledShipmentsDTO.getAmazonOrderId(),
@@ -130,12 +131,15 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
                 Collections.singletonList(fulfilledShipmentsDTO),
                 fulfilledShipmentsDTO.getWarehouseId(),
                 fulfilledShipmentsDTO.getWarehouseName(),
-                fulfilledShipmentsDTO.getFulfillmentCenterId());
+                fulfilledShipmentsDTO.getFulfillmentCenterId(),
+                fulfilledShipmentsDTO.getSalesChannel()
+        );
         if (null == mongoDTO.getShopId()){
             // 解析不到对应店铺, 默认推送
             platformSoOutStockDTO.setShopId(dmpEntity.getRequestShopId());
         }
         platformSoOutStockDTO.setCountry(dmpEntity.getShipCountry());
+        platformSoOutStockDTO.setMerchantOrderId(dmpEntity.getMerchantOrderId());
         return platformSoOutStockDTO;
     }
 

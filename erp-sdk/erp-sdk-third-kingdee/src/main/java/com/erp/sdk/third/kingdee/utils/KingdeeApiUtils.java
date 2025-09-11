@@ -30,23 +30,23 @@ public class KingdeeApiUtils {
 
     private String formId;
     
-    private Date createTime;
+    public static String APPID;
 
-    private static String APPID;
+    public static String USERNAME;
 
-    private static String USERNAME;
+    public static String SERVERURL;
 
-    private static String SERVERURL;
+    public static String APPSECRET;
 
-    private static String APPSECRET;
-
-	private static String DCID;
+    public static String DCID;
 
     private static Integer REQUEST_TIME_OUT;
 
     private static Integer STOCK_TIME_OUT;
 
     private static String SWITCH_TIME;
+    
+    public static Integer MAX_CLIENT_TOTAL = 100;
 
     @Value("${openApi.kingdee.switchTime}")
     private void setSwitchTime(String switchTime) {
@@ -88,29 +88,16 @@ public class KingdeeApiUtils {
         KingdeeApiUtils.STOCK_TIME_OUT = stockTimeout;
     }
     
-    public Date getCreateTime() {
-		return createTime;
-	}
-
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
-
-    public String getFormId() {
-		return formId;
-	}
-
+    @Value("${openApi.kingdee.maxClientTotal:100}")
+    public void setMaxClientTotal(Integer maxClientTotal) {
+        KingdeeApiUtils.MAX_CLIENT_TOTAL = maxClientTotal;
+    }
+    
 	public KingdeeApiUtils() {
     }
-
+	
     public KingdeeApiUtils(String formId) {
-        IdentifyInfo identifyInfo = new IdentifyInfo();
-        identifyInfo.setdCID(DCID);
-        identifyInfo.setAppId(APPID);
-        identifyInfo.setUserName(USERNAME);
-        identifyInfo.setServerUrl(SERVERURL);
-        identifyInfo.setAppSecret(APPSECRET);
-        this.client = new K3CloudApi(identifyInfo);
+        this.client = K3CloudApiThreadLocal.get();
         this.formId = formId;
     }
 

@@ -13,41 +13,35 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="approve_status" property="approveStatus" />
-       <result column="platform_code" property="platformCode" />
+       <result column="delivery_code" property="deliveryCode" />
+       <result column="delivery_platform" property="deliveryPlatform" />
        <result column="dict_platform" property="dictPlatform" />
+       <result column="platform_code" property="platformCode" />
        <result column="shop_id" property="shopId" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
+       <result column="shop_name" property="shopName" />
+       <result column="shipment_code" property="shipmentCode" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="track_no" property="trackNo" />
        <result column="bill_status" property="billStatus" />
-       <result column="pay_status" property="payStatus" />
-       <result column="amount" property="amount" />
-       <result column="currency" property="currency" />
-       <result column="exchange_rate" property="exchangeRate" />
-       <result column="shipping_fee" property="shippingFee" />
-       <result column="pay_time" property="payTime" />
-       <result column="pay_amount" property="payAmount" />
-       <result column="dict_pay_method" property="dictPayMethod" />
-       <result column="buyer_remark" property="buyerRemark" />
-       <result column="remark" property="remark" />
-       <result column="org_id" property="orgId" />
-       <result column="org_name" property="orgName" />
-       <result column="source_type" property="sourceType" />
-       <result column="source_id" property="sourceId" />
-       <result column="source_code" property="sourceCode" />
-       <result column="label_json" property="labelJson" />
-       <result column="bill_date" property="billDate" />
-       <result column="invalid_type" property="invalidType" />
-       <result column="platform_order_create_time" property="platformOrderCreateTime" />
-       <result column="shipping_order_no" property="shippingOrderNo" />
-       <result column="is_frozen" property="isFrozen" />
-       <result column="extend_data" property="extendData" />
-       <result column="platform_order_status" property="platformOrderStatus" />
-       <result column="is_cancel" property="isCancel" />
-       <result column="seller_order_code" property="sellerOrderCode" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
+       <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="delivery_time" property="deliveryTime" />
        <result column="approve_time" property="approveTime" />
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
+       <result column="sign_order_error" property="signOrderError" />
+       <result column="remark" property="remark" />
+        <result column="create_status" property="createStatus" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="delivery_shop_id" property="deliveryShopId" />
+       <result column="delivery_shop_name" property="deliveryShopName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -61,15 +55,64 @@
         update_time,
         version,
         is_deleted,
-        code, approve_status, platform_code, dict_platform, shop_id, invalid_status, invalid_remark, bill_status, pay_status, amount, currency, exchange_rate, shipping_fee, pay_time, pay_amount, dict_pay_method, buyer_remark, remark, org_id, org_name, source_type, source_id, source_code, label_json, bill_date, invalid_type, platform_order_create_time, shipping_order_no, is_frozen, extend_data, platform_order_status, is_cancel, seller_order_code, approve_time, approve_user_id, approve_user_name
+        code, delivery_code, delivery_platform, dict_platform, platform_code, shop_id, shop_name, shipment_code, approve_status, so_id, so_code, track_no,
+        bill_status, delivery_status, logistics_channel_id, logistics_channel_name, delivery_warehouse_id, delivery_warehouse_name, shipping_method,
+        delivery_time, approve_time, approve_user_id, approve_user_name, sign_order_error, remark,create_status,invalid_status,invalid_remark,
+        delivery_shop_id,delivery_shop_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from so_multi_channel where is_deleted = false group by approve_status
+        SELECT
+            smc.id,
+            smc.code,
+            smc.delivery_code as deliveryCode,
+            smc.delivery_platform as deliveryPlatform,
+            smc.delivery_shop_id as deliveryShopId,
+            smc.delivery_shop_name as deliveryShopName,
+            smc.shipment_code as shipmentCode,
+            smc.approve_status as approveStatus,
+            smc.create_status as createStatus,
+            smc.invalid_status as invalidStatus,
+            smc.dict_platform as dictPlatform,
+            smc.shop_id as shopId,
+            smc.shop_name as shopName,
+            smc.so_id as soId,
+            smc.so_code as soCode,
+            smc.platform_code as platformCode,
+            smc.track_no as trackNo,
+            smc.bill_status as billStatus,
+            smc.delivery_status as deliveryStatus,
+            smc.logistics_channel_id as logisticsChannelId,
+            smc.logistics_channel_name as logisticsChannelName,
+            smcd.id as detailId,
+            smcd.platform_spu_no as platformSpuNo,
+            smcd.platform_sku_no as platformSkuNo,
+            smcd.qty,
+            smcd.delivery_qty as deliveryQty,
+            smc.create_time as createTime,
+            smc.approve_time as approveTime,
+            smc.delivery_time as deliveryTime,
+            smc.create_user_name as createUserName,
+            smc.approve_user_name as approveUserName,
+            smc.remark,
+            smc.sign_order_error as signOrderError,
+            smcd.outstock_status as outstockStatus
+        FROM so_multi_channel smc
+        LEFT JOIN so_multi_channel_detail smcd on smcd.main_id=smc.id and smcd.is_deleted=false
+        WHERE
+            ${params.sqlMap.default}
+          and smc.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        smc.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$ListDTO">
@@ -77,14 +120,45 @@
     </select>
     <select id="tabList" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  so_multi_channel
-        WHERE is_deleted=FALSE
+        smc.approve_status AS tabFlag,
+        count(1)  AS count
+        FROM  so_multi_channel smc
+        WHERE smc.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY smc.approve_status
+    </select>
+    <select id="listSoMultiChannelBySoId" resultType="com.erp.model.oms.dto.SoMultiChannelDTO$SoViewDTO">
+        SELECT
+            sb2c.id as soId,
+            sb2c.code as soCode,
+            sb2c.approve_status as approveStatus,
+            sb2c.bill_status as billStatus,
+            sb2c.invalid_status as invalidStatus,
+            sb2c.dict_platform as dictPlatform,
+            sb2c.platform_code as platformCode,
+            sbd.id as soDetailId,
+            sbd.sku_id as skuId,
+            sbd.sku_no as skuNo,
+            sbd.qty as qty
+        FROM so_b2c sb2c
+        LEFT JOIN so_b2c_detail sbd on sbd.main_id = sb2c.id and sb2c.is_deleted = FALSE
+        WHERE sb2c.is_deleted = FALSE
+        AND sb2c.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getBySoId" resultType="com.erp.model.oms.entity.SoMultiChannelEntity">
+        select * from so_multi_channel where so_id=#{soId} order by create_time desc limit 1
+    </select>
+    <select id="queryMultiChannelDeliveryStatus" resultType="com.erp.model.oms.entity.SoMultiChannelEntity">
+        select * from so_multi_channel
+        where (delivery_status = '' or delivery_status='PING')
+        and is_deleted=false and create_status = 'success'
+        and bill_status != 'Cancelled'
+        order by create_time desc
     </select>
 
 </mapper>

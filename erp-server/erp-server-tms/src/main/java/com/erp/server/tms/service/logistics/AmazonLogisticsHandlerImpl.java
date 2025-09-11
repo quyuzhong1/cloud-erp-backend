@@ -7,12 +7,14 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Jim
@@ -109,5 +111,15 @@ public class AmazonLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
         return ApiResult.error(-1, "功能未开放");
 
+    }
+    /**
+     * 授权判断
+     *
+     * @param authMap
+     * @return
+     */
+    @Override
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
+        return success("授权成功");
     }
 }

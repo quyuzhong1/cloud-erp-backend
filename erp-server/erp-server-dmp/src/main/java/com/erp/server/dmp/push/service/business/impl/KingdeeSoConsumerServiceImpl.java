@@ -19,7 +19,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -60,7 +60,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.SAL_SALEORDER)
+    @KingdeeApi
     public void executeConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -72,7 +72,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
 
         /**
          * 反审核

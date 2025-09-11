@@ -14,8 +14,8 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.sdk.third.kingdee.utils.K3CloudApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApi;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiThreadLocal;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
@@ -47,7 +47,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @KingdeeApi(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL)
+    @KingdeeApi
     public void executeAssistantDataDetailConsumer(Map<String, Object> map) {
 
         //模块类型
@@ -60,7 +60,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = KingdeeApiThreadLocal.get();
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
 
         /**
          * 审核

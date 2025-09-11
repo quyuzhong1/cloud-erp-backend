@@ -20,21 +20,6 @@ public interface AmazonDownloadService {
 
 
     /**
-     * 处理订单详情下载
-     */
-    void handlerOrderDetailDownload(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, List<ShopInfoEntity> list);
-
-    /**
-     * 单处理订单详情下载
-     */
-    void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto, String handleKey);
-
-    /**
-     * 处理订单地址详情下载
-     */
-    void handlerAddressDetail(String key, List<PlatformApiTaskEntity> value, Integer size, String platform, String category, String business, List<ShopInfoEntity> list);
-
-    /**
      * 转换所有同账号关联店铺ID
      */
     List<String> convertQueryShopIds(List<PlatformApiTaskEntity> value, List<ShopInfoEntity> list);

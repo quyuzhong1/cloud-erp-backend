@@ -1,7 +1,5 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -9,21 +7,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
- * 多渠道订单请求响应实体
+ * 多渠道订单主表请求响应实体
  * </p>
  *
- * @author Jim
- * @since 2024-05-30
+ * @author zdy
+ * @since 2025-08-20
 */
 @Data
 @NoArgsConstructor
@@ -42,6 +41,7 @@ public class SoMultiChannelDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         private String tabFlagName;
 
          /**
          * 数量
@@ -78,186 +78,154 @@ public class SoMultiChannelDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 子表id
+         */
+        private String  detailId;
 
         /**
-        * 单据编码
+        * 单据编码【可排序】
         */
         private String code;
 
         /**
-        * 审核状态
+        * 卖家订单编号/发货单号【可排序】
         */
-        private String approveStatus;
+        private String deliveryCode;
 
         /**
-        * 平台订单号
+        * 发货平台【可排序】
         */
-        private String platformCode;
+        private String deliveryPlatform;
+        private String deliveryPlatformName;
 
         /**
-        * 销售平台
+        * 销售平台【可排序】
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
-        * 店铺
+        * 平台订单号【可排序】
+        */
+        private String platformCode;
+        /**
+         * 发货店铺id【可排序】
+         */
+        private String deliveryShopId;
+
+        /**
+         * 发货店铺名称【可排序】
+         */
+        private String deliveryShopName;
+        /**
+        * 店铺id【可排序】
         */
         private String shopId;
 
         /**
-        * (手动)作废状态（false未作废，true已作废）
+        * 店铺名称【可排序】
         */
-        private Boolean invalidStatus;
+        private String shopName;
 
         /**
-        * 作废原因
+        * 货件编号【可排序】
         */
-        private String invalidRemark;
+        private String shipmentCode;
 
         /**
-        * 订单状态
+        * 审核状态【可排序】
+        */
+        private String approveStatus;
+
+        /**
+        * 销售订单id【可排序】
+        */
+        private String soId;
+
+        /**
+        * 销售单据编码【可排序】
+        */
+        private String soCode;
+
+        /**
+        * 物流跟踪号【可排序】
+        */
+        private String trackNo;
+
+        /**
+        * 订单状态【可排序】
         */
         private String billStatus;
+        private String billStatusName;
 
         /**
-        * 付款状态（待付款、已付款）
+        * 发货状态【可排序】
         */
-        private String payStatus;
+        private String deliveryStatus;
+        private String deliveryStatusName;
 
         /**
-        * 订单金额
+        * 物流渠道id【可排序】
         */
-        private BigDecimal amount;
+        private String logisticsChannelId;
 
         /**
-        * 币别（原币）
+        * 物流渠道名【可排序】
         */
-        private String currency;
+        private String logisticsChannelName;
 
         /**
-        * 汇率
+        * 发货仓库id【可排序】
         */
-        private BigDecimal exchangeRate;
+        private String deliveryWarehouseId;
 
         /**
-        * 运费收入
+        * 发货仓库名称【可排序】
         */
-        private BigDecimal shippingFee;
+        private String deliveryWarehouseName;
 
         /**
-        * 付款时间
+        * 配送条件【可排序】
         */
-        private LocalDateTime payTime;
+        private String shippingMethod;
 
         /**
-        * 付款金额
+        * 发货时间【可排序】
         */
-        private BigDecimal payAmount;
+        private LocalDateTime deliveryTime;
 
         /**
-        * 付款方式
-        */
-        private String dictPayMethod;
-
-        /**
-        * 买家备注
-        */
-        private String buyerRemark;
-
-        /**
-        * 订单备注
-        */
-        private String remark;
-
-        /**
-        * 销售组织id
-        */
-        private String orgId;
-
-        /**
-        * 销售组织名称
-        */
-        private String orgName;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * 来源编码
-        */
-        private String sourceCode;
-
-        /**
-        * 标签json
-        */
-        private String labelJson;
-
-        /**
-        * 订单日期
-        */
-        private LocalDate billDate;
-
-        /**
-        * 作废类型（manual手动作废，automatic自动作废）
-        */
-        private String invalidType;
-
-        /**
-        * 平台创建时间
-        */
-        private LocalDateTime platformOrderCreateTime;
-
-        /**
-        * 第三方仓发货订单id
-        */
-        private String shippingOrderNo;
-
-        /**
-        * 是否冻结
-        */
-        private Boolean isFrozen;
-
-        /**
-        * 扩展的 值 当后续有需要扩展的类型的字段值存里面
-        */
-        private String extendData;
-
-        /**
-        * 平台订单状态
-        */
-        private String platformOrderStatus;
-
-        /**
-        * 平台是否取消
-        */
-        private Boolean isCancel;
-
-        /**
-        * 卖家订单编号
-        */
-        private String sellerOrderCode;
-
-        /**
-        * 审核时间
+        * 审核时间【可排序】
         */
         private LocalDateTime approveTime;
 
         /**
-        * 审核人id
+        * 审核人id【可排序】
         */
         private String approveUserId;
 
         /**
-        * 审核人姓名
+        * 审核人姓名【可排序】
         */
         private String approveUserName;
+
+
+        /**
+        * 订单异常标示【可排序】
+        */
+        private String signOrderError;
+
+        /**
+        * 订单备注【可排序】
+        */
+        private String remark;
+
+        /**
+         * 系统是否已出库【可排序】
+         */
+        private String outstockStatus;
+        private String outstockStatusName;
 
 
         /**
@@ -266,19 +234,41 @@ public class SoMultiChannelDTO implements Serializable {
         private String approveStatusName;
 
         /**
-        * 作废状态名称
-        */
-        private String invalidStatusName;
-
-        /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
-
         /**
-        * 创建人名称
+         * 创建状态【可排序】
+         */
+        private String createStatus;
+        private String createStatusName;
+        /**
+         * 作废状态 【可排序】
+         * true 作废
+         * false 未作废
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
+        /**
+        * 创建人名称【可排序】
         */
         private String createUserName;
+        /**
+         *平台产品ID
+         */
+        private String platformSpuNo;
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
+        /**
+         * 销售数量
+         */
+        private String qty;
+        /**
+         * 发货数量
+         */
+        private String deliveryQty;
     }
 
     /**
@@ -311,9 +301,21 @@ public class SoMultiChannelDTO implements Serializable {
         private String code;
 
         /**
-        * 审核状态
+        * 卖家订单编号/发货单号
         */
-        private String approveStatus;
+        private String deliveryCode;
+
+        /**
+        * 发货平台
+        */
+        private String deliveryPlatform;
+        private String deliveryPlatformName;
+
+        /**
+        * 销售平台
+        */
+        private String dictPlatform;
+        private String dictPlatformName;
 
         /**
         * 平台订单号
@@ -321,159 +323,112 @@ public class SoMultiChannelDTO implements Serializable {
         private String platformCode;
 
         /**
-        * 销售平台
-        */
-        private String dictPlatform;
-
-        /**
-        * 店铺
+        * 店铺id
         */
         private String shopId;
 
         /**
-        * (手动)作废状态（false未作废，true已作废）
+        * 店铺名称
         */
-        private Boolean invalidStatus;
+        private String shopName;
 
         /**
-        * 作废原因
+         * 店铺id
+         */
+        private String deliveryShopId;
+
+        /**
+         * 店铺名称
+         */
+        private String deliveryShopName;
+
+        /**
+        * 货件编号
         */
-        private String invalidRemark;
+        private String shipmentCode;
+
+        /**
+        * 审核状态
+        */
+        private String approveStatus;
+        private String approveStatusName;
+
+        /**
+         * 创建状态
+         */
+        private String createStatus;
+        private String createStatusName;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        private String invalidStatusName;
+
+        /**
+        * 销售订单id
+        */
+        private String soId;
+
+        /**
+        * 销售单据编码
+        */
+        private String soCode;
+
+        /**
+        * 物流跟踪号
+        */
+        private String trackNo;
 
         /**
         * 订单状态
         */
         private String billStatus;
+        private String billStatusName;
 
         /**
-        * 付款状态（待付款、已付款）
+        * 发货状态
         */
-        private String payStatus;
+        private String deliveryStatus;
+        private String deliveryStatusName;
 
         /**
-        * 订单金额
+        * 物流渠道id
         */
-        private BigDecimal amount;
+        private String logisticsChannelId;
 
         /**
-        * 币别（原币）
+        * 物流渠道名
         */
-        private String currency;
+        private String logisticsChannelName;
 
         /**
-        * 汇率
+        * 发货仓库id
         */
-        private BigDecimal exchangeRate;
+        private String deliveryWarehouseId;
 
         /**
-        * 运费收入
+        * 发货仓库名称
         */
-        private BigDecimal shippingFee;
+        private String deliveryWarehouseName;
 
         /**
-        * 付款时间
+        * 配送条件
         */
-        private LocalDateTime payTime;
+        private String shippingMethod;
 
         /**
-        * 付款金额
+        * 发货时间
         */
-        private BigDecimal payAmount;
-
-        /**
-        * 付款方式
-        */
-        private String dictPayMethod;
-
-        /**
-        * 买家备注
-        */
-        private String buyerRemark;
-
-        /**
-        * 订单备注
-        */
-        private String remark;
-
-        /**
-        * 销售组织id
-        */
-        private String orgId;
-
-        /**
-        * 销售组织名称
-        */
-        private String orgName;
-
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-
-        /**
-        * 来源id
-        */
-        private String sourceId;
-
-        /**
-        * 来源编码
-        */
-        private String sourceCode;
-
-        /**
-        * 标签json
-        */
-        private String labelJson;
-
-        /**
-        * 订单日期
-        */
-        private LocalDate billDate;
-
-        /**
-        * 作废类型（manual手动作废，automatic自动作废）
-        */
-        private String invalidType;
-
-        /**
-        * 平台创建时间
-        */
-        private LocalDateTime platformOrderCreateTime;
-
-        /**
-        * 第三方仓发货订单id
-        */
-        private String shippingOrderNo;
-
-        /**
-        * 是否冻结
-        */
-        private Boolean isFrozen;
-
-        /**
-        * 扩展的 值 当后续有需要扩展的类型的字段值存里面
-        */
-        private String extendData;
-
-        /**
-        * 平台订单状态
-        */
-        private String platformOrderStatus;
-
-        /**
-        * 平台是否取消
-        */
-        private Boolean isCancel;
-
-        /**
-        * 卖家订单编号
-        */
-        private String sellerOrderCode;
+        private LocalDateTime deliveryTime;
 
         /**
         * 审核时间
         */
         private LocalDateTime approveTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
         /**
         * 审核人id
@@ -486,6 +441,25 @@ public class SoMultiChannelDTO implements Serializable {
         private String approveUserName;
 
 
+        /**
+        * 订单异常标示
+        */
+        private String signOrderError;
+
+        /**
+        * 订单备注
+        */
+        private String remark;
+
+        /**
+        * 系统是否已出库
+        */
+        private String outstockStatus;
+        private String outstockStatusName;
+        /**
+         * 明细列表
+         */
+        private List<SoMultiChannelDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -495,7 +469,10 @@ public class SoMultiChannelDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 明细列表
+         */
+        private List<SoMultiChannelDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -518,199 +495,294 @@ public class SoMultiChannelDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台订单号
+        * 卖家订单编号/发货单号
         */
-        @NotBlank(message = "平台订单号不能为空")
-        @Size(max = 100,message = "平台订单号最大长度不能超过100位")
-        private String platformCode;
+//        @NotBlank(message = "卖家订单编号/发货单号不能为空")
+        @Size(max = 32,message = "卖家订单编号/发货单号最大长度不能超过32位")
+        private String deliveryCode;
+
+        /**
+        * 发货平台
+        */
+//        @NotBlank(message = "发货平台不能为空")
+        @Size(max = 32,message = "发货平台最大长度不能超过32位")
+        private String deliveryPlatform;
 
         /**
         * 销售平台
         */
-        @NotBlank(message = "销售平台不能为空")
+//        @NotBlank(message = "销售平台不能为空")
         @Size(max = 32,message = "销售平台最大长度不能超过32位")
         private String dictPlatform;
 
         /**
-        * 店铺
+        * 平台订单号
         */
-        @NotBlank(message = "店铺不能为空")
-        @Size(max = 19,message = "店铺最大长度不能超过19位")
+//        @NotBlank(message = "平台订单号不能为空")
+        @Size(max = 100,message = "平台订单号最大长度不能超过100位")
+        private String platformCode;
+
+        /**
+        * 店铺id
+        */
+//        @NotBlank(message = "店铺id不能为空")
+        @Size(max = 19,message = "店铺id最大长度不能超过19位")
         private String shopId;
+
+        /**
+        * 店铺名称
+        */
+//        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 100,message = "店铺名称最大长度不能超过100位")
+        private String shopName;
+
+        /**
+         * 发货店铺id
+         */
+        @NotBlank(message = "发货店铺id不能为空")
+        @Size(max = 19,message = "发货店铺id最大长度不能超过19位")
+        private String deliveryShopId;
+
+        /**
+         * 发货店铺名称
+         */
+//        @NotBlank(message = "发货店铺名称不能为空")
+        @Size(max = 100,message = "发货店铺名称最大长度不能超过100位")
+        private String deliveryShopName;
+
+        /**
+        * 货件编号
+        */
+//        @NotBlank(message = "货件编号不能为空")
+        @Size(max = 32,message = "货件编号最大长度不能超过32位")
+        private String shipmentCode;
+
+        /**
+        * 销售订单id
+        */
+        @NotBlank(message = "销售订单id不能为空")
+        @Size(max = 19,message = "销售订单id最大长度不能超过19位")
+        private String soId;
+
+        /**
+        * 销售单据编码
+        */
+//        @NotBlank(message = "销售单据编码不能为空")
+        @Size(max = 32,message = "销售单据编码最大长度不能超过32位")
+        private String soCode;
+
+        /**
+        * 物流跟踪号
+        */
+//        @NotBlank(message = "物流跟踪号不能为空")
+        @Size(max = 100,message = "物流跟踪号最大长度不能超过100位")
+        private String trackNo;
 
         /**
         * 订单状态
         */
-        @NotBlank(message = "订单状态不能为空")
+//        @NotBlank(message = "订单状态不能为空")
         @Size(max = 32,message = "订单状态最大长度不能超过32位")
         private String billStatus;
 
         /**
-        * 付款状态（待付款、已付款）
+        * 发货状态
         */
-        @NotBlank(message = "付款状态（待付款、已付款）不能为空")
-        @Size(max = 32,message = "付款状态（待付款、已付款）最大长度不能超过32位")
-        private String payStatus;
+//        @NotBlank(message = "发货状态不能为空")
+        @Size(max = 32,message = "发货状态最大长度不能超过32位")
+        private String deliveryStatus;
 
         /**
-        * 订单金额
+        * 物流渠道id
         */
-        @NotNull(message = "订单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal amount;
+        @NotBlank(message = "物流渠道id不能为空")
+        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
+        private String logisticsChannelId;
 
         /**
-        * 币别（原币）
+        * 物流渠道名
         */
-        @NotBlank(message = "币别（原币）不能为空")
-        @Size(max = 32,message = "币别（原币）最大长度不能超过32位")
-        private String currency;
+//        @NotBlank(message = "物流渠道名不能为空")
+        @Size(max = 100,message = "物流渠道名最大长度不能超过100位")
+        private String logisticsChannelName;
 
         /**
-        * 汇率
+        * 发货仓库id
         */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 10, fraction = 6, message = "汇率整数位不能超过10位，小数位不能超过6位")
-        private BigDecimal exchangeRate;
+        @NotBlank(message = "发货仓库id不能为空")
+        @Size(max = 19,message = "发货仓库id最大长度不能超过19位")
+        private String deliveryWarehouseId;
 
         /**
-        * 运费收入
+        * 发货仓库名称
         */
-        @NotNull(message = "运费收入不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal shippingFee;
+//        @NotBlank(message = "发货仓库名称不能为空")
+        @Size(max = 100,message = "发货仓库名称最大长度不能超过100位")
+        private String deliveryWarehouseName;
 
         /**
-        * 付款时间
+        * 配送条件
         */
-        private LocalDateTime payTime;
+        @NotBlank(message = "配送条件不能为空")
+        @Size(max = 32,message = "配送条件最大长度不能超过32位")
+        private String shippingMethod;
 
         /**
-        * 付款金额
+        * 发货时间
         */
-        @NotNull(message = "付款金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "付款金额整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal payAmount;
+        private LocalDateTime deliveryTime;
 
         /**
-        * 付款方式
+        * 订单异常标示
         */
-        @NotBlank(message = "付款方式不能为空")
-        @Size(max = 200,message = "付款方式最大长度不能超过200位")
-        private String dictPayMethod;
-
-        /**
-        * 买家备注
-        */
-        @NotBlank(message = "买家备注不能为空")
-        @Size(max = 255,message = "买家备注最大长度不能超过255位")
-        private String buyerRemark;
+//        @NotBlank(message = "订单异常标示不能为空")
+        @Size(max = 30,message = "订单异常标示最大长度不能超过30位")
+        private String signOrderError;
 
         /**
         * 订单备注
         */
-        @NotBlank(message = "订单备注不能为空")
-        @Size(max = 255,message = "订单备注最大长度不能超过255位")
+//        @NotBlank(message = "订单备注不能为空")
         private String remark;
-
-        /**
-        * 销售组织id
-        */
-        @NotBlank(message = "销售组织id不能为空")
-        @Size(max = 19,message = "销售组织id最大长度不能超过19位")
-        private String orgId;
-
-        /**
-        * 销售组织名称
-        */
-        @NotBlank(message = "销售组织名称不能为空")
-        @Size(max = 100,message = "销售组织名称最大长度不能超过100位")
-        private String orgName;
-
-        /**
-        * 来源类型
-        */
-        @NotBlank(message = "来源类型不能为空")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
-        private String sourceType;
-
-        /**
-        * 来源id
-        */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 500,message = "来源id最大长度不能超过500位")
-        private String sourceId;
-
-        /**
-        * 来源编码
-        */
-        private String sourceCode;
-
-        /**
-        * 标签json
-        */
-        @NotBlank(message = "标签json不能为空")
-        private String labelJson;
-
-        /**
-        * 订单日期
-        */
-        private LocalDate billDate;
-
-        /**
-        * 作废类型（manual手动作废，automatic自动作废）
-        */
-        @NotBlank(message = "作废类型（manual手动作废，automatic自动作废）不能为空")
-        @Size(max = 10,message = "作废类型（manual手动作废，automatic自动作废）最大长度不能超过10位")
-        private String invalidType;
-
-        /**
-        * 平台创建时间
-        */
-        @NotNull(message = "平台创建时间不能为空")
-        private LocalDateTime platformOrderCreateTime;
-
-        /**
-        * 第三方仓发货订单id
-        */
-        @NotBlank(message = "第三方仓发货订单id不能为空")
-        @Size(max = 50,message = "第三方仓发货订单id最大长度不能超过50位")
-        private String shippingOrderNo;
-
-        /**
-        * 是否冻结
-        */
-        @NotNull(message = "是否冻结不能为空")
-        private Boolean isFrozen;
-
-        /**
-        * 扩展的 值 当后续有需要扩展的类型的字段值存里面
-        */
-        @NotBlank(message = "扩展的 值 当后续有需要扩展的类型的字段值存里面不能为空")
-        private String extendData;
-
-        /**
-        * 平台订单状态
-        */
-        @NotBlank(message = "平台订单状态不能为空")
-        @Size(max = 64,message = "平台订单状态最大长度不能超过64位")
-        private String platformOrderStatus;
-
-        /**
-        * 平台是否取消
-        */
-        @NotNull(message = "平台是否取消不能为空")
-        private Boolean isCancel;
-
-        /**
-        * 卖家订单编号
-        */
-        @NotBlank(message = "卖家订单编号不能为空")
-        @Size(max = 255,message = "卖家订单编号最大长度不能超过255位")
-        private String sellerOrderCode;
-
-
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SoViewDTO {
+        /**
+         * 订单ID
+         */
+        private String soId;
+        /**
+         * 订单编码
+         */
+        private String soCode;
+        private String approveStatus;
+        private String billStatus;
+        /**
+         * 订单异常状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+        /**
+         * 销售平台名称
+         */
+        private String dictPlatformName;
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
+         * 订单详情ID
+         */
+        private String soDetailId;
+        /**
+         * 商品ID
+         */
+        private String skuId;
+        /**
+         * 商品编码
+         */
+        private String skuNo;
+        /**
+         * 商品名称
+         */
+        private String productName;
+        /**
+         * 订单数量
+         */
+        private Integer qty;
+        /**
+         * FBA可售
+         */
+        private Integer fulfillableQty;
+        /**
+         * 发货数量
+         */
+        @NotNull(message = "发货数量不能为空")
+        private Integer deliveryQty;
+        /**
+         * 平台SKU
+         */
+        @NotBlank(message = "平台SKU不能为空")
+        private String platformSkuNo;
+        /**
+         * FBA库存ID
+         */
+        private String fbaInventoryId;
+        /**
+         * 平台产品id
+         */
+        private String platformSpuNo;
+        /**
+         * _fn_商品编码
+         */
+        private String fnSku;
+        /**
+         * 平台商品名称
+         */
+        private String platformProductName;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class IdsDTO {
+        /**
+         * 订单ID列表
+         */
+        private List<String> soIds;
+        /**
+         * 店铺ID
+         */
+        private String shopId;
+        /**
+         * 发货仓库ID
+         */
+        private String deliveryWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SaveDTO {
+        /**
+         * 店铺ID
+         */
+        @NotBlank(message = "店铺ID不能为空")
+        private String shopId;
+        private String shopName;
+        private String deliveryPlatform;
+        @NotBlank(message = "发货仓库ID不能为空")
+        private String deliveryWarehouseId;
+        private String deliveryWarehouseName;
+        @NotBlank(message = "物流渠道ID不能为空")
+        private String logisticsChannelId;
+        private String logisticsChannelName;
+        @NotBlank(message = "配送条件不能为空")
+        private String shippingMethod;
+        private String remark;
+        /**
+         * 订单发货明细
+         */
+        @NotEmpty(message = "订单发货明细不能为空")
+        @Valid
+        private List<SoViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CreateResultDTO {
+        //多渠道订单id
+        private String id;
+        //发货单号
+        private String deliveryCode;
+
+        private String createStatus;
+        private String msg;
+
+    }
 }

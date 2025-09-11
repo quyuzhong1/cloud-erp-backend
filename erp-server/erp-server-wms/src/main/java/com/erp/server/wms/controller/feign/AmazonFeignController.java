@@ -7,7 +7,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
-import com.erp.server.wms.rocketmq.consumer.PlatformOtherOutStockConsumerService;
 import com.erp.server.wms.rocketmq.consumer.PlatformSoOutStockConsumerService;
 import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
@@ -34,8 +33,6 @@ public class AmazonFeignController extends BaseController{
     @Resource
     private PlatformSoOutStockConsumerService<?> platformSoOutStockConsumerService;
     @Resource
-    private PlatformOtherOutStockConsumerService<?> platformOtherOutStockConsumerService;
-    @Resource
     private CfgAmzFulfillmentCenterService cfgAmzFulfillmentCenterService;
 
     /**
@@ -45,16 +42,6 @@ public class AmazonFeignController extends BaseController{
     @PostMapping("/soOutStock/consumer")
     public ApiResult consumerPullShipment(@RequestBody PlatformSoOutStockDTO platformSoOutStockDTO){
         return platformSoOutStockConsumerService.handle(new JSONObject(platformSoOutStockDTO));
-    }
-
-
-    /**
-     * 直接消费销售出库单
-     * @author Jim
-     */
-    @PostMapping("/otherOutStock/consumer")
-    public ApiResult consumerPullShipment(@RequestBody PlatformOtherOutStockDTO dto){
-        return platformOtherOutStockConsumerService.handle(new JSONObject(dto));
     }
 
 

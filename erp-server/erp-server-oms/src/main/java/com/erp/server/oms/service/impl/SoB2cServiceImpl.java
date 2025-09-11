@@ -293,9 +293,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
 
     @Resource
-    private ShopSysUserAuthService shopSysUserAuthService;
-
-    @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
 
     @Resource
@@ -360,10 +357,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private AliExpressOrderService aliExpressOrderService;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
-
-    @Resource
-    @Qualifier("soB2cTabExecutorPool")
-    private ExecutorService soB2cTabExecutorPool;
     @Resource
     private CustomerInfoService customerInfoService;
     @Resource
@@ -373,15 +366,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private AuthDataFeign authDataFeign;
 
-    @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
-    @Lazy
-    @Resource
-    private SoPriceService soPriceService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
 
@@ -394,6 +381,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private SoB2cCoreService soB2cCoreService;
+    @Lazy
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -3030,6 +3020,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -3090,6 +3081,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @Author Luo_WG
      * @Date 2024/1/16 18:52
      **/
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO addIntercept(String remark, SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         //映射拦截单主表信息
         SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(entity);
@@ -3111,8 +3103,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //检测是否是API 对接的仓库
         List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(soB2cDetailEntityList.get(0).getWarehouseId()));
         Boolean isApi = CollectionUtils.isNotEmpty(overseasWarehouseList);
-        //三方仓直接调接口
-        if (isApi) {
+        //是否多渠道订单
+        boolean isMultiChannelOrder = false;
+        SoMultiChannelEntity soMultiChannelEntity = null;
+        if (CharSequenceUtil.isNotBlank(entity.getMultiChannelType())){
+            soMultiChannelEntity = soMultiChannelService.getBySoId(entity.getId(), Boolean.TRUE);
+            isMultiChannelOrder = Objects.nonNull(soMultiChannelEntity);
+            addDTO.setLogisticsChannelId(soMultiChannelEntity.getLogisticsChannelId());
+            addDTO.setLogisticsChannelName(soMultiChannelEntity.getLogisticsChannelName());
+            addDTO.setTransportNo(soMultiChannelEntity.getTrackNo());
+        }
+        if (isMultiChannelOrder){
+            //多渠道订单
+            addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
+            addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
+            //发货拦截
+            return soMultiChannelService.deliveryIntercept(soMultiChannelEntity, true, true, remark);
+        }else if (isApi) {
+            //三方仓直接调接口
             addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
             addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(overseasWarehouseList.get(0).getProviderCode());
@@ -4210,6 +4218,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
+            data.setMultiChannelTypeName(SoB2cMultiChannelTypeEnum.getName(data.getMultiChannelType()));
             if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
                 List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getLogisticsCode());
                 if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
@@ -10258,7 +10267,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.getB2cLogisticsByIds(ids);
     }
 
-    @Async
+    @Async("omsErpExecutor")
     @Override
     public void autoCalcEstimatedShippingCost(List<String> sob2cIds) {
         if(CollUtil.isEmpty(sob2cIds)){
@@ -10449,6 +10458,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getSoOutstockDate,null)
                 .in(SoB2cEntity::getId,clearOutDateSoIds)
                 .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSoB2cDistribution(SoMultiChannelEntity soMultiChannelEntity) {
+        SoB2cEntity entity = this.getById(soMultiChannelEntity.getSoId());
+        if (Objects.isNull(entity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
+        }
+        this.lambdaUpdate()
+                .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
+                .set(SoB2cEntity::getMultiChannelType, SoB2cMultiChannelTypeEnum.AMAZON_APPROVING.getCode())
+                .set(SoB2cEntity::getIsMatchLogisticsRule, Boolean.TRUE)
+                .eq(SoB2cEntity::getId,entity.getId()).update();
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单状态由【{}】改为【{}】",SoB2cBillStatusEnum.getName(entity.getBillStatus()),SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
+        //更新渠道
+//        soB2cLogisticsService.lambdaUpdate().set(SoB2cLogisticsEntity::getLogisticsChannelId, soMultiChannelEntity.getLogisticsChannelId())
+//                .set(SoB2cLogisticsEntity::getLogisticsChannelName, soMultiChannelEntity.getLogisticsChannelName())
+//                .eq(SoB2cLogisticsEntity::getMainId, soMultiChannelEntity.getSoId()).update();
+//        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单物流渠道改为【{}】", soMultiChannelEntity.getLogisticsChannelName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
+        //更新发货仓库
+//        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(soMultiChannelEntity.getDeliveryWarehouseId()));
+//        if (CollUtil.isEmpty(warehouseList)){
+//            throw new ServiceException("发货仓库【{}】不存在", soMultiChannelEntity.getDeliveryWarehouseName());
+//        }
+//        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+//        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+//        soB2cDetailService.lambdaUpdate()
+//                .set(SoB2cDetailEntity::getWarehouseId, soMultiChannelEntity.getDeliveryWarehouseId())
+//                .set(SoB2cDetailEntity::getWarehouseName, soMultiChannelEntity.getDeliveryWarehouseName())
+//                .set(SoB2cDetailEntity::getIsMatchWarehouseRule, Boolean.TRUE)
+//                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgId, accountingCompanyList.get(0).getId())
+//                .set(CollUtil.isNotEmpty(accountingCompanyList), SoB2cDetailEntity::getWarehouseOrgName, accountingCompanyList.get(0).getName())
+//                .eq(SoB2cDetailEntity::getMainId,soMultiChannelEntity.getSoId()).update();
+//        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新订单发货仓库改为【{}】,仓库组织【{}】",soMultiChannelEntity.getDeliveryWarehouseName(),CollUtil.isNotEmpty(accountingCompanyList) ? accountingCompanyList.get(0).getName()
+//                : ""), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(),"亚马逊多渠道发货");
+
     }
 
     @Override

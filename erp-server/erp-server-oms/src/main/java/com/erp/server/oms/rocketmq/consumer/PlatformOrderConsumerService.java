@@ -44,8 +44,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
-    @Resource
-    private PlatformSoMultiChannelConsumerService platformSoMultiChannelConsumerService;
 
 
     @Override
@@ -66,11 +64,6 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         log.info("[B2C订单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformOrderDTO dto = JSONUtil.toBean(ext.toString(), PlatformOrderDTO.class);
-        // 多渠道订单处理(兼容清洗)
-        if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(dto.getSourceType())){
-            platformSoMultiChannelConsumerService.handle(ext);
-            return ApiResult.success();
-        }
         //TIKTOK判断是否拆单或取消拆单，需要作废原单并且根据包裹号重新生成订单
         if(PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())){
             Boolean continueFlag = platformOrderConsumerHandleService.tiktokSplit(dto);
