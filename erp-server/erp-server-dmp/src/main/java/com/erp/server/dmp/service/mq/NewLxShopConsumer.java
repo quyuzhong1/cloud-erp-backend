@@ -1,9 +1,12 @@
 package com.erp.server.dmp.service.mq;
 
+import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.dmp.lingxing.ShopEntity;
+import com.erp.server.dmp.service.ShopInfoMappingService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +22,7 @@ import javax.annotation.Resource;
 public class NewLxShopConsumer extends AbstractNewPlatformConsumerHandler {
 
     @Resource
-    private MQLingxingConsumerService.ConsumerErpShopInfo consumerErpShopInfo;
+    private ShopInfoMappingService shopInfoMappingService;
 
     @Override
     public String getBizName() {
@@ -28,6 +31,8 @@ public class NewLxShopConsumer extends AbstractNewPlatformConsumerHandler {
 
     @Override
     public void handle(String data) {
-        consumerErpShopInfo.onMessage(data);
+        ShopEntity ext = JSONUtil.toBean(data, ShopEntity.class);
+        // 检查任务和记录平台店铺ID
+        shopInfoMappingService.saveAndHandle(ext);
     }
 }
